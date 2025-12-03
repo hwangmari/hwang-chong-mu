@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase"; // 아까 만든 supabase 설정 파일 경로
+import { supabase } from "../lib/supabase"; // 아까 만든 supabase 설정 파일 경로
 
 export default function CreateRoom() {
   const router = useRouter();

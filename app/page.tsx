@@ -1,5 +1,5 @@
 // app/page.tsx
-import CreateRoom from "./components/CreateRoom";
+import CreateRoom from "../components/CreateRoom";
 
 export default function Home() {
   return (
