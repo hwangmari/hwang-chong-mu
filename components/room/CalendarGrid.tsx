@@ -2,15 +2,15 @@ import { format, isSameDay } from "date-fns";
 import { UserVote } from "@/types";
 
 interface Props {
-  dates: (Date | null)[]; // 빈칸 포함된 그리드 데이터
+  dates: (Date | null)[];
   participants: UserVote[];
   currentUnavailable: Date[];
   step: "VOTING" | "CONFIRM";
   currentName: string;
   finalDate: Date | null;
-  candidateDate: Date | null;
   includeWeekend: boolean;
   onToggleDate: (date: Date) => void;
+  // candidateDate 제거됨
 }
 
 export default function CalendarGrid({
@@ -20,11 +20,9 @@ export default function CalendarGrid({
   step,
   currentName,
   finalDate,
-  candidateDate,
   includeWeekend,
   onToggleDate,
 }: Props) {
-  // 헬퍼 함수 내부 정의 (props로 받아도 되지만 여기서 계산하는게 깔끔함)
   const getUnavailableCount = (date: Date) =>
     participants.filter((p) =>
       p.unavailableDates.some((ud) => isSameDay(ud, date))
@@ -59,7 +57,7 @@ export default function CalendarGrid({
       <div
         className={`grid ${
           includeWeekend ? "grid-cols-7" : "grid-cols-5"
-        } gap-1 sm:gap-2`}
+        } gap-3`}
       >
         {dates.map((date, index) => {
           if (!date) return <div key={`empty-${index}`} />;
@@ -75,7 +73,6 @@ export default function CalendarGrid({
           const isFinalSelected =
             step === "CONFIRM" && finalDate && isSameDay(finalDate, date);
           const isBestDate = step === "CONFIRM" && unavailableCount === 0;
-          const isCandidate = candidateDate && isSameDay(candidateDate, date);
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
 
@@ -86,7 +83,7 @@ export default function CalendarGrid({
               className={`
                 aspect-square rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all border relative
                 ${
-                  isMySelection || isCandidate
+                  isMySelection
                     ? "border-2 border-black bg-white z-10"
                     : "border-transparent"
                 }
@@ -100,14 +97,14 @@ export default function CalendarGrid({
               style={{
                 backgroundColor: isFinalSelected
                   ? undefined
-                  : isMySelection || isCandidate
+                  : isMySelection
                   ? "white"
                   : `rgba(${baseColor}, ${intensity * 0.9})`,
               }}
             >
               <span
                 className={`text-sm sm:text-base font-bold ${
-                  isMySelection || isCandidate ? "!text-black" : ""
+                  isMySelection ? "!text-black" : ""
                 } ${
                   !isMySelection && !isFinalSelected && unavailableCount > 0
                     ? "text-white"

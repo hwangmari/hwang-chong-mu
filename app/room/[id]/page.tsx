@@ -1,175 +1,43 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import {
-  addDays,
-  parseISO,
-  startOfDay,
-  getDay,
-  isSameDay,
-  format,
-} from "date-fns";
-import { ko } from "date-fns/locale";
-
-// 분리한 컴포넌트 불러오기
+import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/components/room/RoomHeader";
 import CalendarGrid from "@/components/room/CalendarGrid";
-import BottomSheet from "@/components/room/BottomSheet";
+// BottomSheet import 제거됨
 import Modal from "@/components/common/Modal";
-// 타입 불러오기
-import { UserVote, ModalState } from "@/types";
+import { format, isSameDay } from "date-fns";
+import { ko } from "date-fns/locale";
 
 export default function RoomDetail() {
   const params = useParams();
   const roomId = params.id as string;
 
-  // --- [상태 관리] ---
-  const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState<"VOTING" | "CONFIRM">("VOTING");
-  const [room, setRoom] = useState<any>(null);
-  const [includeWeekend, setIncludeWeekend] = useState(false);
-  const [participants, setParticipants] = useState<UserVote[]>([]);
-
-  // 사용자 입력 상태
-  const [currentName, setCurrentName] = useState("");
-  const [currentUnavailable, setCurrentUnavailable] = useState<Date[]>([]);
-  const [finalDate, setFinalDate] = useState<Date | null>(null);
-  const [candidateDate, setCandidateDate] = useState<Date | null>(null);
-  const [modal, setModal] = useState<ModalState>({
-    isOpen: false,
-    type: "alert",
-    message: "",
-  });
-
-  // --- [데이터 불러오기] ---
-  const fetchData = useCallback(async () => {
-    if (!roomId) return;
-    try {
-      const { data: roomData } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("id", roomId)
-        .single();
-      setRoom(roomData);
-
-      const { data: partData } = await supabase
-        .from("participants")
-        .select("*")
-        .eq("room_id", roomId);
-      const formattedParticipants = (partData || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        unavailableDates: (p.unavailable_dates || []).map((d: string) =>
-          startOfDay(parseISO(d))
-        ),
-      }));
-      setParticipants(formattedParticipants);
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [roomId]);
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 3000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  // --- [로직: 달력 날짜 계산] ---
-  const startDate = room?.start_date
-    ? startOfDay(parseISO(room.start_date))
-    : startOfDay(new Date());
-  const rawDates = Array.from({ length: 21 }, (_, i) => addDays(startDate, i));
-  const displayDates = includeWeekend
-    ? rawDates
-    : rawDates.filter((d) => getDay(d) !== 0 && getDay(d) !== 6);
-
-  let emptyCount = 0;
-  if (displayDates.length > 0) {
-    const firstDay = getDay(displayDates[0]);
-    emptyCount = includeWeekend
-      ? firstDay
-      : firstDay - 1 < 0
-      ? 0
-      : firstDay - 1;
-  }
-  const calendarGrid = [...Array(emptyCount).fill(null), ...displayDates];
-
-  // --- [이벤트 핸들러] ---
-  const showAlert = (msg: string) =>
-    setModal({ isOpen: true, type: "alert", message: msg });
-  const showConfirm = (msg: string, action: () => void) =>
-    setModal({
-      isOpen: true,
-      type: "confirm",
-      message: msg,
-      onConfirm: action,
-    });
-  const closeModal = () => setModal((prev) => ({ ...prev, isOpen: false }));
-
-  const handleToggleDate = (date: Date) => {
-    if (step === "VOTING") {
-      if (!currentName) return showAlert("이름을 먼저 입력해주세요! 🐰");
-      setCurrentUnavailable((prev) =>
-        prev.some((d) => isSameDay(d, date))
-          ? prev.filter((d) => !isSameDay(d, date))
-          : [...prev, date]
-      );
-    } else {
-      setCandidateDate(date); // CONFIRM 단계
-    }
-  };
-
-  const handleSubmitVote = async () => {
-    if (!currentName) return showAlert("이름을 입력해주세요!");
-    const save = async () => {
-      try {
-        const dateStrings = currentUnavailable.map((d) =>
-          format(d, "yyyy-MM-dd")
-        );
-        await supabase
-          .from("participants")
-          .delete()
-          .eq("room_id", roomId)
-          .eq("name", currentName);
-        await supabase.from("participants").insert([
-          {
-            room_id: roomId,
-            name: currentName,
-            unavailable_dates: dateStrings,
-          },
-        ]);
-        showAlert(`${currentName}님 일정 저장 완료! 📝`);
-        setCurrentName("");
-        setCurrentUnavailable([]);
-        fetchData();
-      } catch {
-        showAlert("저장 중 에러가 발생했어요!");
-      }
-    };
-    currentUnavailable.length === 0
-      ? showConfirm("선택한 '안되는 날'이 없어요.\n모두 가능하신가요?", save)
-      : save();
-  };
-
-  const handleEditUser = (user: UserVote) =>
-    showConfirm(`${user.name}님 일정을 수정할까요?`, () => {
-      setCurrentName(user.name);
-      setCurrentUnavailable(user.unavailableDates);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-  const handleRescueUser = (user: UserVote) =>
-    showConfirm(`${user.name}님 일정을 재조율할까요?`, () => {
-      setStep("VOTING");
-      setFinalDate(null);
-      setCurrentName(user.name);
-      setCurrentUnavailable(user.unavailableDates);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+  const {
+    loading,
+    room,
+    step,
+    includeWeekend,
+    participants,
+    currentName,
+    currentUnavailable,
+    finalDate,
+    modal,
+    calendarGrid,
+    setIncludeWeekend,
+    setCurrentName,
+    setFinalDate,
+    setStep,
+    handleToggleDate,
+    handleSubmitVote,
+    handleGoToConfirm,
+    handleEditUser,
+    handleRescueUser,
+    handleReset,
+    closeModal,
+    showAlert,
+    showConfirm,
+  } = useRoom(roomId);
 
   if (loading)
     return (
@@ -179,7 +47,6 @@ export default function RoomDetail() {
     );
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
-  // 헬퍼 (결과 뷰용)
   const getUnavailablePeople = (d: Date) =>
     participants.filter((p) =>
       p.unavailableDates.some((ud) => isSameDay(ud, d))
@@ -191,7 +58,7 @@ export default function RoomDetail() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
-      <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative shadow-xl">
+      <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
         {/* 1. 헤더 */}
         <RoomHeader
           title={room.name}
@@ -200,7 +67,7 @@ export default function RoomDetail() {
           onToggleWeekend={() => setIncludeWeekend(!includeWeekend)}
         />
 
-        {/* 2. 입력 폼 (VOTING 단계만) */}
+        {/* 2. 입력 폼 */}
         {step === "VOTING" && (
           <div className="w-full flex gap-2 mb-4 animate-fade-in">
             <div className="flex-1 bg-white p-3 rounded-[1.5rem] shadow-sm border border-gray-200 flex items-center gap-3">
@@ -248,7 +115,6 @@ export default function RoomDetail() {
           step={step}
           currentName={currentName}
           finalDate={finalDate}
-          candidateDate={candidateDate}
           includeWeekend={includeWeekend}
           onToggleDate={handleToggleDate}
         />
@@ -346,12 +212,7 @@ export default function RoomDetail() {
               </div>
             </div>
             <button
-              onClick={() =>
-                showConfirm("다시 투표화면으로 갈까요?", () => {
-                  setStep("VOTING");
-                  setFinalDate(null);
-                })
-              }
+              onClick={handleReset}
               className="text-gray-400 underline text-sm hover:text-gray-600"
             >
               처음부터 다시 만들기
@@ -364,13 +225,7 @@ export default function RoomDetail() {
           <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[540px] z-30 px-6 pb-10 pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
             <button
-              onClick={() =>
-                participants.length === 0
-                  ? showAlert("참여자가 최소 1명은 있어야 해요!")
-                  : showConfirm("최종 날짜를 정하시겠습니까?", () =>
-                      setStep("CONFIRM")
-                    )
-              }
+              onClick={handleGoToConfirm}
               className="pointer-events-auto w-full py-4 bg-gray-900 text-white font-extrabold rounded-[1.5rem] hover:bg-black transition shadow-xl text-lg flex items-center justify-center gap-2"
             >
               <span>투표 마감하고 날짜 정하기</span>
@@ -379,23 +234,9 @@ export default function RoomDetail() {
           </div>
         )}
 
-        {/* 6. 바텀 시트 */}
-        {step === "CONFIRM" && (
-          <BottomSheet
-            date={candidateDate}
-            participants={participants}
-            onClose={() => setCandidateDate(null)}
-            onConfirm={() => {
-              if (candidateDate) {
-                setFinalDate(candidateDate);
-                setCandidateDate(null);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
-            }}
-          />
-        )}
+        {/* 바텀 시트 삭제됨 */}
 
-        {/* 7. 모달 */}
+        {/* 6. 모달 */}
         <Modal
           modal={modal}
           onClose={closeModal}
