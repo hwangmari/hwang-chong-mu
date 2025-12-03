@@ -215,7 +215,7 @@ export default function RoomDetail() {
               onClick={handleReset}
               className="text-gray-400 underline text-sm hover:text-gray-600"
             >
-              처음부터 다시 만들기
+              일정 다시 조정하기 'ㅁ'
             </button>
           </div>
         )}
