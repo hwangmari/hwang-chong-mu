@@ -7,8 +7,10 @@ import {
   getDay,
   isSameDay,
   format,
+  eachDayOfInterval, // ⭐ 추가: 기간 내 모든 날짜 생성
+  isWeekend, // ⭐ 추가: 주말 판별
 } from "date-fns";
-import { ko } from "date-fns/locale"; // 한국어 날짜 포맷용
+import { ko } from "date-fns/locale";
 import { UserVote, ModalState } from "@/types";
 
 export function useRoom(roomId: string) {
@@ -16,14 +18,15 @@ export function useRoom(roomId: string) {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"VOTING" | "CONFIRM">("VOTING");
   const [room, setRoom] = useState<any>(null);
-  const [includeWeekend, setIncludeWeekend] = useState(false);
-  const [participants, setParticipants] = useState<UserVote[]>([]);
 
+  // 초기값은 false지만, DB 데이터 로드 시 방 설정값으로 업데이트됩니다.
+  const [includeWeekend, setIncludeWeekend] = useState(false);
+
+  const [participants, setParticipants] = useState<UserVote[]>([]);
   const [currentName, setCurrentName] = useState("");
   const [currentUnavailable, setCurrentUnavailable] = useState<Date[]>([]);
   const [finalDate, setFinalDate] = useState<Date | null>(null);
 
-  // ★ candidateDate(바텀시트용) 삭제됨
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
     type: "alert",
@@ -39,11 +42,18 @@ export function useRoom(roomId: string) {
         .select("*")
         .eq("id", roomId)
         .single();
-      setRoom(roomData);
+
+      if (roomData) {
+        setRoom(roomData);
+        // ⭐ 방장이 설정한 주말 포함 여부를 초기 상태로 적용
+        setIncludeWeekend(roomData.include_weekend);
+      }
+
       const { data: partData } = await supabase
         .from("participants")
         .select("*")
         .eq("room_id", roomId);
+
       const formattedParticipants = (partData || []).map((p: any) => ({
         id: p.id,
         name: p.name,
@@ -64,27 +74,43 @@ export function useRoom(roomId: string) {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // --- [달력 데이터 계산] ---
-  const startDate = room?.start_date
-    ? startOfDay(parseISO(room.start_date))
-    : startOfDay(new Date());
-  const rawDates = Array.from({ length: 21 }, (_, i) => addDays(startDate, i));
-  const displayDates = includeWeekend
-    ? rawDates
-    : rawDates.filter((d) => getDay(d) !== 0 && getDay(d) !== 6);
+  // --- [달력 데이터 계산] ⭐ 핵심 수정 로직 ---
+  let calendarGrid: (Date | null)[] = [];
 
-  let emptyCount = 0;
-  if (displayDates.length > 0) {
-    const firstDay = getDay(displayDates[0]);
-    emptyCount = includeWeekend
-      ? firstDay
-      : firstDay - 1 < 0
-      ? 0
-      : firstDay - 1;
+  if (room) {
+    const startDate = startOfDay(parseISO(room.start_date));
+
+    // ⭐ 종료 날짜가 있으면 사용하고, 없으면(구버전 데이터 대비) 3주 뒤로 설정
+    const endDate = room.end_date
+      ? startOfDay(parseISO(room.end_date))
+      : addDays(startDate, 20);
+
+    // 1. 시작일부터 종료일까지 모든 날짜 생성
+    const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+
+    // 2. 주말 포함 여부에 따른 필터링
+    const displayDates = includeWeekend
+      ? allDays
+      : allDays.filter((d) => !isWeekend(d));
+
+    // 3. 앞쪽 빈칸(Padding) 채우기
+    if (displayDates.length > 0) {
+      const firstDayIndex = getDay(displayDates[0]); // 0(일) ~ 6(토)
+
+      // 주말 포함(일요일 시작): 일(0) -> 0칸
+      // 주말 미포함(월요일 시작): 월(1) -> 0칸, 화(2) -> 1칸 ...
+      const emptyCount = includeWeekend
+        ? firstDayIndex
+        : firstDayIndex === 0
+        ? 6
+        : firstDayIndex - 1;
+
+      const emptySlots = Array(emptyCount).fill(null);
+      calendarGrid = [...emptySlots, ...displayDates];
+    }
   }
-  const calendarGrid = [...Array(emptyCount).fill(null), ...displayDates];
 
-  // --- [핸들러 함수들] ---
+  // --- [핸들러 함수들 (기존 유지)] ---
   const showAlert = (msg: string) =>
     setModal({ isOpen: true, type: "alert", message: msg });
   const showConfirm = (msg: string, action: () => void) =>
@@ -105,7 +131,6 @@ export function useRoom(roomId: string) {
           : [...prev, date]
       );
     } else {
-      // ★ CONFIRM 모드 수정: 바텀시트 대신 바로 팝업 띄워서 확정
       const dateStr = format(date, "M월 d일 (E)", { locale: ko });
       showConfirm(`${dateStr}로\n최종 확정하시겠습니까?`, () => {
         setFinalDate(date);
@@ -157,22 +182,15 @@ export function useRoom(roomId: string) {
   };
 
   const handleGoToConfirm = () => {
-    // 1. 현재 저장된 인원
     const savedCount = participants.length;
-
-    // 2. 지금 작성 중인 사람이 있는지? (이름도 있고 날짜도 찍었으면 1명으로 칩니다)
     const isWriting =
       currentName.trim() !== "" && currentUnavailable.length > 0;
-
-    // 3. 총 예상 인원 계산
     const totalCount = savedCount + (isWriting ? 1 : 0);
 
-    // [방어 로직] 혼자서는 약속을 잡을 수 없어요! (최소 2명 체크)
     if (totalCount < 2) {
       return showAlert("최소 2명 이상 참여해야\n날짜를 정할 수 있어요! 👯‍♂️");
     }
 
-    // 4. 작성 중인 내용이 있다면? -> 저장하고 넘어가기
     if (isWriting) {
       showConfirm(
         "작성 중인 내용이 저장되지 않았어요! 😮\n저장하고 바로 넘어갈까요?",
@@ -184,7 +202,6 @@ export function useRoom(roomId: string) {
       return;
     }
 
-    // 5. 정상 진행
     showConfirm("투표를 마감하고\n최종 날짜를 정하시겠습니까?", () =>
       setStep("CONFIRM")
     );
@@ -222,7 +239,7 @@ export function useRoom(roomId: string) {
     currentUnavailable,
     finalDate,
     modal,
-    calendarGrid,
+    calendarGrid, // ⭐ 새로 계산된 그리드 반환
     setIncludeWeekend,
     setCurrentName,
     setFinalDate,

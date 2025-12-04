@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/components/room/RoomHeader";
 import CalendarGrid from "@/components/room/CalendarGrid";
-// BottomSheet import 제거됨
 import Modal from "@/components/common/Modal";
 import { format, isSameDay } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -23,7 +22,7 @@ export default function RoomDetail() {
     currentUnavailable,
     finalDate,
     modal,
-    calendarGrid,
+    calendarGrid, // ⭐ 훅에서 계산된 그리드 데이터 바로 사용
     setIncludeWeekend,
     setCurrentName,
     setFinalDate,
@@ -67,30 +66,6 @@ export default function RoomDetail() {
           onToggleWeekend={() => setIncludeWeekend(!includeWeekend)}
         />
 
-        {/* 2. 입력 폼 */}
-        {step === "VOTING" && (
-          <div className="w-full flex gap-2 mb-4 animate-fade-in">
-            <div className="flex-1 bg-white p-3 rounded-[1.5rem] shadow-sm border border-gray-200 flex items-center gap-3">
-              <span className="bg-gray-100 text-gray-600 p-2 rounded-full text-lg">
-                👤
-              </span>
-              <input
-                type="text"
-                placeholder="이름 입력"
-                value={currentName}
-                onChange={(e) => setCurrentName(e.target.value)}
-                className="flex-1 bg-transparent outline-none font-bold text-gray-900 placeholder-gray-300 min-w-0 text-sm sm:text-base"
-              />
-            </div>
-            <button
-              onClick={handleSubmitVote}
-              className="bg-gray-200 text-gray-600 font-bold rounded-[1.5rem] px-4 hover:bg-gray-300 hover:text-gray-800 transition shadow-sm whitespace-nowrap text-sm sm:text-base"
-            >
-              저장 💾
-            </button>
-          </div>
-        )}
-
         <div className="mb-2 text-center px-4 break-keep">
           <p
             className={
@@ -107,9 +82,27 @@ export default function RoomDetail() {
           </p>
         </div>
 
+        {/* 2. 입력 폼 */}
+        {step === "VOTING" && (
+          <div className="w-full flex gap-2 mb-4 animate-fade-in">
+            <div className="flex-1 bg-white p-2 rounded-[1.5rem] shadow-sm border border-gray-200 flex items-center gap-3">
+              <span className="p-2 bg-gray-100 text-gray-600 rounded-full text-lg">
+                👤
+              </span>
+              <input
+                type="text"
+                placeholder="이름 입력"
+                value={currentName}
+                onChange={(e) => setCurrentName(e.target.value)}
+                className="flex-1 bg-transparent outline-none font-bold text-gray-900 placeholder-gray-300 min-w-0 text-sm sm:text-base"
+              />
+            </div>
+          </div>
+        )}
+
         {/* 3. 달력 그리드 */}
         <CalendarGrid
-          dates={calendarGrid}
+          dates={calendarGrid} // ⭐ 훅에서 받은 데이터 바로 전달 (이전에는 여기서 함수 실행했었음)
           participants={participants}
           currentUnavailable={currentUnavailable}
           step={step}
@@ -118,6 +111,15 @@ export default function RoomDetail() {
           includeWeekend={includeWeekend}
           onToggleDate={handleToggleDate}
         />
+
+        <div className="w-full flex gap-2 mb-10 animate-fade-in">
+          <button
+            onClick={handleSubmitVote}
+            className="w-full p-3  bg-gray-200 text-gray-600 font-bold rounded-[1.5rem] px-4 hover:bg-gray-300 hover:text-gray-800 transition shadow-sm whitespace-nowrap text-sm sm:text-base"
+          >
+            일정 저장 💾
+          </button>
+        </div>
 
         {/* 4. 결과 카드 및 리스트 */}
         {!finalDate ? (
@@ -222,19 +224,17 @@ export default function RoomDetail() {
 
         {/* 5. 하단 플로팅 버튼 */}
         {step === "VOTING" && (
-          <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[540px] z-30 px-6 pb-10 pointer-events-none">
+          <div className="fixed bottom-0 right-0 z-30 px-6 pb-10 pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
             <button
               onClick={handleGoToConfirm}
-              className="pointer-events-auto w-full py-4 bg-gray-900 text-white font-extrabold rounded-[1.5rem] hover:bg-black transition shadow-xl text-lg flex items-center justify-center gap-2"
+              className="pointer-events-auto w-full p-4 bg-gray-900 text-white font-extrabold rounded-[1.5rem] hover:bg-black transition shadow-xl text-lg flex items-center justify-center gap-2"
             >
-              <span>투표 마감하고 날짜 정하기</span>
+              <span>투표 마감</span>
               <span>🐰</span>
             </button>
           </div>
         )}
-
-        {/* 바텀 시트 삭제됨 */}
 
         {/* 6. 모달 */}
         <Modal

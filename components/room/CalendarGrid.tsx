@@ -10,7 +10,6 @@ interface Props {
   finalDate: Date | null;
   includeWeekend: boolean;
   onToggleDate: (date: Date) => void;
-  // candidateDate 제거됨
 }
 
 export default function CalendarGrid({
@@ -28,6 +27,9 @@ export default function CalendarGrid({
       p.unavailableDates.some((ud) => isSameDay(ud, date))
     ).length;
 
+  // 🔥 [추가] 달력의 첫 번째 실제 날짜가 언제인지 찾음 (첫 날짜에 'N월' 표시하기 위함)
+  const firstDateIndex = dates.findIndex((d) => d !== null);
+
   return (
     <div
       className={`w-full bg-white p-4 sm:p-6 rounded-[2rem] shadow-lg border-2 mb-6 transition-colors ${
@@ -36,6 +38,7 @@ export default function CalendarGrid({
           : "border-gray-100"
       }`}
     >
+      {/* 요일 헤더 */}
       <div
         className={`grid ${
           includeWeekend ? "grid-cols-7" : "grid-cols-5"
@@ -54,6 +57,7 @@ export default function CalendarGrid({
         ))}
       </div>
 
+      {/* 날짜 그리드 */}
       <div
         className={`grid ${
           includeWeekend ? "grid-cols-7" : "grid-cols-5"
@@ -76,9 +80,14 @@ export default function CalendarGrid({
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
 
+          // 🔥 [추가] 1일이거나, 달력의 가장 첫 날짜인 경우 '월' 표시
+          const dayString = format(date, "d");
+          const showMonth = dayString === "1" || index === firstDateIndex;
+
           return (
             <button
-              key={index}
+              // Key를 날짜 문자열로 변경 (더 안전함)
+              key={date.toISOString()}
               onClick={() => onToggleDate(date)}
               className={`
                 aspect-square rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all border relative
@@ -102,21 +111,36 @@ export default function CalendarGrid({
                   : `rgba(${baseColor}, ${intensity * 0.9})`,
               }}
             >
+              {/* 🔥 [추가] 월 표시 (예: 2월) */}
+              {showMonth && (
+                <span
+                  className={`text-[10px] sm:text-xs font-extrabold absolute top-1 sm:top-1.5 leading-none ${
+                    isFinalSelected ? "text-gray-300" : "text-gray-400"
+                  }`}
+                >
+                  {format(date, "M월")}
+                </span>
+              )}
+
               <span
-                className={`text-sm sm:text-base font-bold ${
-                  isMySelection ? "!text-black" : ""
-                } ${
-                  !isMySelection && !isFinalSelected && unavailableCount > 0
-                    ? "text-white"
-                    : ""
-                } ${isFinalSelected ? "text-white" : ""} ${
-                  !isMySelection && !isFinalSelected && unavailableCount === 0
-                    ? "text-gray-500"
-                    : ""
-                }`}
+                className={`text-sm sm:text-base font-bold 
+                  ${showMonth ? "mt-3 sm:mt-4" : ""} 
+                  ${isMySelection ? "!text-black" : ""} 
+                  ${
+                    !isMySelection && !isFinalSelected && unavailableCount > 0
+                      ? "text-white"
+                      : ""
+                  } 
+                  ${isFinalSelected ? "text-white" : ""} 
+                  ${
+                    !isMySelection && !isFinalSelected && unavailableCount === 0
+                      ? "text-gray-500"
+                      : ""
+                  }`}
               >
-                {format(date, "d")}
+                {dayString}
               </span>
+
               {!isFinalSelected && unavailableCount > 0 && (
                 <span
                   className={`absolute -top-1 -right-1 text-white text-[9px] sm:text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${
