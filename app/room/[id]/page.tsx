@@ -61,12 +61,7 @@ export default function RoomDetail() {
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        <RoomHeader
-          title={room.name}
-          startDate={room.start_date}
-          includeWeekend={includeWeekend}
-          onToggleWeekend={() => setIncludeWeekend(!includeWeekend)}
-        />
+        <RoomHeader title={room.name} startDate={room.start_date} />
 
         <div className="mb-2 text-center px-4 break-keep">
           <p
