@@ -80,13 +80,6 @@ export default function CalendarGrid({
           const dayString = format(date, "d");
           const showMonth = dayString === "1" || index === firstDateIndex;
 
-          // 🔥 [수정] 월 텍스트 컬러 로직
-          const monthColor = isFinalSelected
-            ? "text-gray-300"
-            : isMySelection
-            ? "text-gray-500"
-            : "text-gray-300";
-
           return (
             <button
               key={date.toISOString()}
@@ -113,14 +106,6 @@ export default function CalendarGrid({
                   : `rgba(${baseColor}, ${intensity * 0.9})`,
               }}
             >
-              {showMonth && (
-                <span
-                  className={`text-[10px] sm:text-xs font-extrabold absolute top-1 sm:top-1.5 leading-none transition-colors ${monthColor}`}
-                >
-                  {format(date, "M월")}
-                </span>
-              )}
-
               <span
                 className={`text-sm sm:text-base font-bold 
                   ${isMySelection ? "!text-black" : ""} 
@@ -136,6 +121,14 @@ export default function CalendarGrid({
                       : ""
                   }`}
               >
+                {showMonth && (
+                  <span
+                    style={{ transform: "translate(-50%,0)" }}
+                    className={`left-[50%] text-[10px] sm:text-xs absolute top-1 sm:top-1.5 leading-none transition-colors`}
+                  >
+                    {format(date, "M월")}
+                  </span>
+                )}
                 {dayString}
               </span>
 

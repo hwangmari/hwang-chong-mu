@@ -6,21 +6,21 @@ import { supabase } from "@/lib/supabase";
 export default function useCreateRoom() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [isCustomPeriod, setIsCustomPeriod] = useState(false); // 🔥 날짜 직접 지정 모드 여부
+  const [isCustomPeriod, setIsCustomPeriod] = useState(false);
 
   const [formData, setFormData] = useState({
     roomName: "",
     startDate: "",
-    endDate: "", // 🔥 종료 날짜 필드 추가
+    endDate: "",
     includeWeekend: false,
   });
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const createRoom = async () => {
-    const { roomName, startDate, endDate } = formData;
+    const { roomName, startDate, endDate, includeWeekend } = formData;
 
     // 1. 기본 유효성 검사
     if (!roomName.trim()) {
@@ -32,25 +32,34 @@ export default function useCreateRoom() {
       return;
     }
 
-    // 🔥 종료 날짜 검증 로직 추가
     let finalEndDateString = "";
 
     if (isCustomPeriod) {
-      // 커스텀 모드일 때: 종료 날짜 필수 확인 & 시작일보다 뒤인지 확인
+      // 커스텀 모드
       if (!endDate) {
         alert("종료 날짜를 선택해주세요! 🏁");
         return;
       }
       if (new Date(endDate) < new Date(startDate)) {
-        alert("종료 날짜는 시작 날짜보다 빨라야 해요! ⏳"); // 혹은 같거나 뒤여야 함
+        alert("종료 날짜는 시작 날짜보다 빨라야 해요! ⏳");
         return;
       }
       finalEndDateString = endDate;
     } else {
-      // 기본 모드(3주)일 때: 자동 계산
+      // 🔥 [수정 1] 3주차 일요일까지 자동 계산 로직
       const start = new Date(startDate);
+      const dayOfWeek = start.getDay(); // 0(일) ~ 6(토)
+
+      // 이번 주 일요일까지 남은 일수 계산
+      // (일요일이면 0일, 월요일이면 6일 뒤가 일요일)
+      const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+
+      // 이번 주 일요일 + 2주(14일) 더하기 = 총 3주차 일요일
+      const totalDaysToAdd = daysUntilSunday + 14;
+
       const end = new Date(start);
-      end.setDate(start.getDate() + 21); // 3주 더하기
+      end.setDate(start.getDate() + totalDaysToAdd);
+
       finalEndDateString = end.toISOString().split("T")[0];
     }
 
@@ -64,7 +73,8 @@ export default function useCreateRoom() {
           {
             name: roomName,
             start_date: startDate,
-            end_date: finalEndDateString, // 🔥 계산된 종료일 사용
+            end_date: finalEndDateString,
+            include_weekend: includeWeekend, // 🔥 [수정 2] 주말 포함 여부 DB 전송 추가
           },
         ])
         .select();
@@ -85,8 +95,8 @@ export default function useCreateRoom() {
   return {
     formData,
     loading,
-    isCustomPeriod, // UI로 전달
-    setIsCustomPeriod, // UI로 전달
+    isCustomPeriod,
+    setIsCustomPeriod,
     handleChange,
     createRoom,
   };

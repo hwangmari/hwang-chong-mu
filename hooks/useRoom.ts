@@ -7,8 +7,8 @@ import {
   getDay,
   isSameDay,
   format,
-  eachDayOfInterval, // ⭐ 추가: 기간 내 모든 날짜 생성
-  isWeekend, // ⭐ 추가: 주말 판별
+  eachDayOfInterval,
+  isWeekend,
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { UserVote, ModalState } from "@/types";
@@ -18,14 +18,15 @@ export function useRoom(roomId: string) {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"VOTING" | "CONFIRM">("VOTING");
   const [room, setRoom] = useState<any>(null);
-
-  // 초기값은 false지만, DB 데이터 로드 시 방 설정값으로 업데이트됩니다.
   const [includeWeekend, setIncludeWeekend] = useState(false);
 
   const [participants, setParticipants] = useState<UserVote[]>([]);
   const [currentName, setCurrentName] = useState("");
   const [currentUnavailable, setCurrentUnavailable] = useState<Date[]>([]);
   const [finalDate, setFinalDate] = useState<Date | null>(null);
+
+  // ⭐ 추가: 수정 모드인지 확인하는 상태
+  const [isEditing, setIsEditing] = useState(false);
 
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
@@ -45,7 +46,6 @@ export function useRoom(roomId: string) {
 
       if (roomData) {
         setRoom(roomData);
-        // ⭐ 방장이 설정한 주말 포함 여부를 초기 상태로 적용
         setIncludeWeekend(roomData.include_weekend);
       }
 
@@ -74,52 +74,44 @@ export function useRoom(roomId: string) {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // --- [달력 데이터 계산] ⭐ 핵심 수정 로직 ---
+  // --- [달력 데이터 계산] ---
   let calendarGrid: (Date | null)[] = [];
-
   if (room) {
     const startDate = startOfDay(parseISO(room.start_date));
-
-    // ⭐ 종료 날짜가 있으면 사용하고, 없으면(구버전 데이터 대비) 3주 뒤로 설정
     const endDate = room.end_date
       ? startOfDay(parseISO(room.end_date))
       : addDays(startDate, 20);
 
-    // 1. 시작일부터 종료일까지 모든 날짜 생성
     const allDays = eachDayOfInterval({ start: startDate, end: endDate });
-
-    // 2. 주말 포함 여부에 따른 필터링
     const displayDates = includeWeekend
       ? allDays
       : allDays.filter((d) => !isWeekend(d));
 
-    // 3. 앞쪽 빈칸(Padding) 채우기
     if (displayDates.length > 0) {
-      const firstDayIndex = getDay(displayDates[0]); // 0(일) ~ 6(토)
-
-      // 주말 포함(일요일 시작): 일(0) -> 0칸
-      // 주말 미포함(월요일 시작): 월(1) -> 0칸, 화(2) -> 1칸 ...
+      const firstDayIndex = getDay(displayDates[0]);
       const emptyCount = includeWeekend
         ? firstDayIndex
         : firstDayIndex === 0
         ? 6
         : firstDayIndex - 1;
-
       const emptySlots = Array(emptyCount).fill(null);
       calendarGrid = [...emptySlots, ...displayDates];
     }
   }
 
-  // --- [핸들러 함수들 (기존 유지)] ---
+  // --- [핸들러 함수들] ---
   const showAlert = (msg: string) =>
     setModal({ isOpen: true, type: "alert", message: msg });
+
+  // ⭐ 모달 함수 수정 (함수 전달 안전하게)
   const showConfirm = (msg: string, action: () => void) =>
     setModal({
       isOpen: true,
       type: "confirm",
       message: msg,
-      onConfirm: action,
+      onConfirm: () => action(),
     });
+
   const closeModal = () => setModal((prev) => ({ ...prev, isOpen: false }));
 
   const handleToggleDate = (date: Date) => {
@@ -141,16 +133,19 @@ export function useRoom(roomId: string) {
 
   const handleSubmitVote = async () => {
     if (!currentName) return showAlert("이름을 입력해주세요!");
+
     const save = async () => {
       try {
         const dateStrings = currentUnavailable.map((d) =>
           format(d, "yyyy-MM-dd")
         );
+        // 기존 데이터 삭제 후 재입력 (Upsert 방식)
         await supabase
           .from("participants")
           .delete()
           .eq("room_id", roomId)
           .eq("name", currentName);
+
         await supabase.from("participants").insert([
           {
             room_id: roomId,
@@ -158,61 +153,91 @@ export function useRoom(roomId: string) {
             unavailable_dates: dateStrings,
           },
         ]);
+
         showAlert(`${currentName}님 일정 저장 완료! 📝`);
+        // ⭐ 저장 후 초기화 (수정 모드 해제)
         setCurrentName("");
         setCurrentUnavailable([]);
+        setIsEditing(false);
         fetchData();
       } catch {
         showAlert("저장 중 에러가 발생했어요!");
       }
     };
+
     if (currentUnavailable.length === 0) {
-      return new Promise<void>((resolve) => {
-        showConfirm(
-          "선택한 '안되는 날'이 없어요.\n모두 가능하신가요?",
-          async () => {
-            await save();
-            resolve();
-          }
-        );
-      });
+      showConfirm("선택한 '안되는 날'이 없어요.\n모두 가능하신가요?", save);
     } else {
       await save();
     }
+  };
+
+  // ⭐ 수정 모드 취소 함수
+  const cancelEdit = () => {
+    setCurrentName("");
+    setCurrentUnavailable([]);
+    setIsEditing(false);
   };
 
   const handleGoToConfirm = () => {
     const savedCount = participants.length;
     const isWriting =
       currentName.trim() !== "" && currentUnavailable.length > 0;
-    const totalCount = savedCount + (isWriting ? 1 : 0);
 
-    if (totalCount < 2) {
+    // 수정 중일 때는 카운트에서 제외하거나 포함하는 로직이 필요할 수 있으나,
+    // 여기서는 단순하게 기 저장된 인원 기준으로 체크합니다.
+    if (savedCount < 2) {
       return showAlert("최소 2명 이상 참여해야\n날짜를 정할 수 있어요! 👯‍♂️");
     }
 
     if (isWriting) {
       showConfirm(
-        "작성 중인 내용이 저장되지 않았어요! 😮\n저장하고 바로 넘어갈까요?",
-        async () => {
-          await handleSubmitVote();
+        "작성 중인 내용이 저장되지 않았어요!\n무시하고 마감할까요?",
+        () => {
           setStep("CONFIRM");
         }
       );
       return;
     }
-
     showConfirm("투표를 마감하고\n최종 날짜를 정하시겠습니까?", () =>
       setStep("CONFIRM")
     );
   };
 
+  // ⭐ 수정 버튼 핸들러 (수정 모드 ON)
   const handleEditUser = (user: UserVote) =>
-    showConfirm(`${user.name}님 일정을 수정할까요?`, () => {
+    showConfirm(`${user.name}님의 일정을\n수정하시겠습니까?`, () => {
       setCurrentName(user.name);
       setCurrentUnavailable(user.unavailableDates);
+      setIsEditing(true); // 수정 모드 켜기
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
+
+  // ⭐ [신규 기능] 삭제 버튼 핸들러
+  const handleDeleteUser = (user: UserVote) => {
+    showConfirm(
+      `정말 ${user.name}님의 정보를\n삭제하시겠습니까? 🗑️`,
+      async () => {
+        try {
+          await supabase
+            .from("participants")
+            .delete()
+            .eq("room_id", roomId)
+            .eq("name", user.name);
+
+          showAlert("삭제되었습니다.");
+
+          // 만약 수정 중이던 사람을 삭제했다면 입력폼도 초기화
+          if (currentName === user.name) {
+            cancelEdit();
+          }
+          fetchData();
+        } catch (e) {
+          showAlert("삭제 실패!");
+        }
+      }
+    );
+  };
 
   const handleRescueUser = (user: UserVote) =>
     showConfirm(`${user.name}님 일정을 재조율할까요?`, () => {
@@ -220,6 +245,7 @@ export function useRoom(roomId: string) {
       setFinalDate(null);
       setCurrentName(user.name);
       setCurrentUnavailable(user.unavailableDates);
+      setIsEditing(true); // 재조율도 일종의 수정이므로 true
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
@@ -227,6 +253,7 @@ export function useRoom(roomId: string) {
     showConfirm("다시 투표화면으로 갈까요?", () => {
       setStep("VOTING");
       setFinalDate(null);
+      setIsEditing(false);
     });
 
   return {
@@ -239,7 +266,8 @@ export function useRoom(roomId: string) {
     currentUnavailable,
     finalDate,
     modal,
-    calendarGrid, // ⭐ 새로 계산된 그리드 반환
+    calendarGrid,
+    isEditing, // ⭐ UI에서 사용하기 위해 반환
     setIncludeWeekend,
     setCurrentName,
     setFinalDate,
@@ -248,8 +276,10 @@ export function useRoom(roomId: string) {
     handleSubmitVote,
     handleGoToConfirm,
     handleEditUser,
+    handleDeleteUser, // ⭐ 반환
     handleRescueUser,
     handleReset,
+    cancelEdit, // ⭐ 반환
     closeModal,
     showAlert,
     showConfirm,

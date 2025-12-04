@@ -22,7 +22,8 @@ export default function RoomDetail() {
     currentUnavailable,
     finalDate,
     modal,
-    calendarGrid, // ⭐ 훅에서 계산된 그리드 데이터 바로 사용
+    calendarGrid,
+    isEditing, // ⭐ 추가된 상태
     setIncludeWeekend,
     setCurrentName,
     setFinalDate,
@@ -31,8 +32,10 @@ export default function RoomDetail() {
     handleSubmitVote,
     handleGoToConfirm,
     handleEditUser,
+    handleDeleteUser, // ⭐ 추가된 함수
     handleRescueUser,
     handleReset,
+    cancelEdit, // ⭐ 추가된 함수
     closeModal,
     showAlert,
     showConfirm,
@@ -58,7 +61,6 @@ export default function RoomDetail() {
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        {/* 1. 헤더 */}
         <RoomHeader
           title={room.name}
           startDate={room.start_date}
@@ -75,17 +77,26 @@ export default function RoomDetail() {
             }
           >
             {step === "VOTING"
-              ? currentName
+              ? // ⭐ 수정 중일 때 멘트 변경
+                isEditing
+                ? `${currentName}님의 일정을 수정 중입니다 ✏️`
+                : currentName
                 ? `${currentName}님, 안되는 날을 선택해주세요!`
                 : "👇 이름을 입력하고 일정을 등록하세요!"
               : "👑 최종 약속 날짜를 선택해주세요!"}
           </p>
         </div>
 
-        {/* 2. 입력 폼 */}
+        {/* 입력 폼 */}
         {step === "VOTING" && (
-          <div className="w-full flex gap-2 mb-4 animate-fade-in">
-            <div className="flex-1 bg-white p-2 rounded-[1.5rem] shadow-sm border border-gray-200 flex items-center gap-3">
+          <div className="w-full flex gap-2 mb-4 animate-fade-in relative">
+            <div
+              className={`flex-1 p-2 rounded-[1.5rem] shadow-sm border flex items-center gap-3 transition-colors ${
+                isEditing
+                  ? "bg-gray-100 border-gray-300"
+                  : "bg-white border-gray-200"
+              }`}
+            >
               <span className="p-2 bg-gray-100 text-gray-600 rounded-full text-lg">
                 👤
               </span>
@@ -94,15 +105,26 @@ export default function RoomDetail() {
                 placeholder="이름 입력"
                 value={currentName}
                 onChange={(e) => setCurrentName(e.target.value)}
-                className="flex-1 bg-transparent outline-none font-bold text-gray-900 placeholder-gray-300 min-w-0 text-sm sm:text-base"
+                readOnly={isEditing} // ⭐ 수정 중엔 읽기 전용
+                className={`flex-1 bg-transparent outline-none font-bold text-gray-900 placeholder-gray-300 min-w-0 text-sm sm:text-base ${
+                  isEditing ? "cursor-not-allowed text-gray-500" : ""
+                }`}
               />
+              {/* ⭐ 수정 중이거나 이름이 있을 때 취소 버튼 표시 */}
+              {(isEditing || currentName.length > 0) && (
+                <button
+                  onClick={cancelEdit}
+                  className="mr-2 text-gray-400 hover:text-gray-600 font-bold px-2"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* 3. 달력 그리드 */}
         <CalendarGrid
-          dates={calendarGrid} // ⭐ 훅에서 받은 데이터 바로 전달 (이전에는 여기서 함수 실행했었음)
+          dates={calendarGrid}
           participants={participants}
           currentUnavailable={currentUnavailable}
           step={step}
@@ -112,16 +134,18 @@ export default function RoomDetail() {
           onToggleDate={handleToggleDate}
         />
 
-        <div className="w-full flex gap-2 mb-10 animate-fade-in">
-          <button
-            onClick={handleSubmitVote}
-            className="w-full p-3  bg-gray-200 text-gray-600 font-bold rounded-[1.5rem] px-4 hover:bg-gray-300 hover:text-gray-800 transition shadow-sm whitespace-nowrap text-sm sm:text-base"
-          >
-            일정 저장 💾
-          </button>
-        </div>
+        {step === "VOTING" && (
+          <div className="w-full flex gap-2 mb-10 animate-fade-in">
+            <button
+              onClick={handleSubmitVote}
+              className="w-full p-3 bg-gray-200 text-gray-600 font-bold rounded-[1.5rem] px-4 hover:bg-gray-300 hover:text-gray-800 transition shadow-sm whitespace-nowrap text-sm sm:text-base"
+            >
+              {isEditing ? "수정 완료 💾" : "일정 저장 💾"}
+            </button>
+          </div>
+        )}
 
-        {/* 4. 결과 카드 및 리스트 */}
+        {/* 참여 현황 리스트 */}
         {!finalDate ? (
           <div className="w-full flex flex-col gap-3 mb-24">
             <h3 className="text-gray-900 font-bold ml-2 text-sm">
@@ -135,10 +159,13 @@ export default function RoomDetail() {
               participants.map((user, idx) => (
                 <div
                   key={idx}
-                  onClick={() => handleEditUser(user)}
-                  className="group bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-gray-400 hover:shadow-md transition"
+                  className="group relative bg-white p-3 pr-8 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:border-gray-400 hover:shadow-md"
                 >
-                  <div className="flex items-center gap-3">
+                  {/* 이름 부분 클릭 시 수정 */}
+                  <div
+                    className="flex items-center gap-3 cursor-pointer flex-1"
+                    onClick={() => handleEditUser(user)}
+                  >
                     <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs">
                       {user.name.slice(0, 1)}
                     </div>
@@ -146,19 +173,37 @@ export default function RoomDetail() {
                       {user.name}
                     </span>
                   </div>
+
+                  {/* 우측 정보 */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition">
-                      수정 ✎
-                    </span>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg font-bold">
+                    <button
+                      onClick={() => handleEditUser(user)}
+                      className="text-xs font-bold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity px-2"
+                    >
+                      수정
+                    </button>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center">
                       {user.unavailableDates.length}일 불가
                     </span>
                   </div>
+
+                  {/* ⭐ 삭제 버튼 추가 (우측 상단, 호버 시 등장) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // 부모 클릭 방지
+                      handleDeleteUser(user);
+                    }}
+                    className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                    title="삭제"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))
             )}
           </div>
         ) : (
+          // ... (확정 화면은 기존과 동일)
           <div className="w-full bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-gray-900 text-center animate-fade-in-up mb-24">
             <div className="text-4xl mb-4">🎉</div>
             <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
@@ -172,24 +217,21 @@ export default function RoomDetail() {
                 {format(finalDate, "M월 d일 (E)", { locale: ko })}
               </div>
             </div>
+            {/* ... 중간 내용 생략 (기존 코드 유지) ... */}
             <div className="grid grid-cols-2 gap-4 text-left mb-6">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="text-gray-400 font-bold text-xs mb-2">
                   참석 가능 🙆‍♂️
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {getAvailablePeople(finalDate).length > 0 ? (
-                    getAvailablePeople(finalDate).map((p, i) => (
-                      <span
-                        key={i}
-                        className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
-                      >
-                        {p.name}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-gray-300 text-xs">없음</span>
-                  )}
+                  {getAvailablePeople(finalDate).map((p, i) => (
+                    <span
+                      key={i}
+                      className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
+                    >
+                      {p.name}
+                    </span>
+                  ))}
                 </div>
               </div>
               <div className="bg-red-50 p-4 rounded-xl border border-red-100">
@@ -197,19 +239,15 @@ export default function RoomDetail() {
                   아쉽지만 불참 🙅‍♂️
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {getUnavailablePeople(finalDate).length > 0 ? (
-                    getUnavailablePeople(finalDate).map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleRescueUser(p)}
-                        className="bg-white text-red-400 text-xs px-2 py-1 rounded-lg border border-red-100 font-bold hover:bg-red-100 hover:scale-105 transition cursor-pointer"
-                      >
-                        {p.name} ✎
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-gray-400 text-xs">전원 참석!</span>
-                  )}
+                  {getUnavailablePeople(finalDate).map((p, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleRescueUser(p)}
+                      className="bg-white text-red-400 text-xs px-2 py-1 rounded-lg border border-red-100 font-bold hover:bg-red-100"
+                    >
+                      {p.name} ✎
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -222,7 +260,7 @@ export default function RoomDetail() {
           </div>
         )}
 
-        {/* 5. 하단 플로팅 버튼 */}
+        {/* ... (나머지 동일) ... */}
         {step === "VOTING" && (
           <div className="fixed bottom-0 right-0 z-30 px-6 pb-10 pointer-events-none">
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
@@ -236,7 +274,6 @@ export default function RoomDetail() {
           </div>
         )}
 
-        {/* 6. 모달 */}
         <Modal
           modal={modal}
           onClose={closeModal}
