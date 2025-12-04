@@ -52,7 +52,7 @@ export default function RoomForm({
             type="date"
             value={formData.startDate}
             onChange={(e) => onChange("startDate", e.target.value)}
-            className="block w-[240px] px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="block w-[240px] h-[50px] px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
           />
         </div>
 
@@ -91,7 +91,7 @@ export default function RoomForm({
               value={formData.endDate}
               min={formData.startDate} // 시작일 이전은 선택 불가하도록 막음
               onChange={(e) => onChange("endDate", e.target.value)}
-              className="block w-[240px] px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="block w-[240px]  h-[50px]  px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
             />
           </div>
         )}

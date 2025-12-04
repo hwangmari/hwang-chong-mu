@@ -27,7 +27,6 @@ export default function CalendarGrid({
       p.unavailableDates.some((ud) => isSameDay(ud, date))
     ).length;
 
-  // 🔥 [추가] 달력의 첫 번째 실제 날짜가 언제인지 찾음 (첫 날짜에 'N월' 표시하기 위함)
   const firstDateIndex = dates.findIndex((d) => d !== null);
 
   return (
@@ -38,7 +37,6 @@ export default function CalendarGrid({
           : "border-gray-100"
       }`}
     >
-      {/* 요일 헤더 */}
       <div
         className={`grid ${
           includeWeekend ? "grid-cols-7" : "grid-cols-5"
@@ -57,7 +55,6 @@ export default function CalendarGrid({
         ))}
       </div>
 
-      {/* 날짜 그리드 */}
       <div
         className={`grid ${
           includeWeekend ? "grid-cols-7" : "grid-cols-5"
@@ -80,16 +77,21 @@ export default function CalendarGrid({
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
 
-          // 🔥 [추가] 1일이거나, 달력의 가장 첫 날짜인 경우 '월' 표시
           const dayString = format(date, "d");
           const showMonth = dayString === "1" || index === firstDateIndex;
 
+          // 🔥 [수정] 월 텍스트 컬러 로직
+          const monthColor = isFinalSelected
+            ? "text-gray-300"
+            : isMySelection
+            ? "text-gray-500"
+            : "text-gray-300";
+
           return (
             <button
-              // Key를 날짜 문자열로 변경 (더 안전함)
               key={date.toISOString()}
               onClick={() => onToggleDate(date)}
-              className={`
+              className={`relative
                 aspect-square rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all border relative
                 ${
                   isMySelection
@@ -111,12 +113,9 @@ export default function CalendarGrid({
                   : `rgba(${baseColor}, ${intensity * 0.9})`,
               }}
             >
-              {/* 🔥 [추가] 월 표시 (예: 2월) */}
               {showMonth && (
                 <span
-                  className={`text-[10px] sm:text-xs font-extrabold absolute top-1 sm:top-1.5 leading-none ${
-                    isFinalSelected ? "text-gray-300" : "text-gray-400"
-                  }`}
+                  className={`text-[10px] sm:text-xs font-extrabold absolute top-1 sm:top-1.5 leading-none transition-colors ${monthColor}`}
                 >
                   {format(date, "M월")}
                 </span>
@@ -124,7 +123,6 @@ export default function CalendarGrid({
 
               <span
                 className={`text-sm sm:text-base font-bold 
-                  ${showMonth ? "mt-3 sm:mt-4" : ""} 
                   ${isMySelection ? "!text-black" : ""} 
                   ${
                     !isMySelection && !isFinalSelected && unavailableCount > 0
