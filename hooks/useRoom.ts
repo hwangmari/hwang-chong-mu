@@ -47,6 +47,12 @@ export function useRoom(roomId: string) {
       if (roomData) {
         setRoom(roomData);
         setIncludeWeekend(roomData.include_weekend);
+
+        // 🔥 [추가] DB에 확정된 날짜가 있다면 상태에 넣어주기!
+        if (roomData.confirmed_date) {
+          setFinalDate(parseISO(roomData.confirmed_date));
+          setStep("CONFIRM"); // 확정 화면 모드로 변경
+        }
       }
 
       const { data: partData } = await supabase
@@ -116,6 +122,7 @@ export function useRoom(roomId: string) {
 
   const handleToggleDate = (date: Date) => {
     if (step === "VOTING") {
+      // ... (기존 투표 로직 유지) ...
       if (!currentName) return showAlert("이름을 먼저 입력해주세요! 🐰");
       setCurrentUnavailable((prev) =>
         prev.some((d) => isSameDay(d, date))
@@ -123,10 +130,25 @@ export function useRoom(roomId: string) {
           : [...prev, date]
       );
     } else {
+      // 👑 확정 단계 로직 수정
       const dateStr = format(date, "M월 d일 (E)", { locale: ko });
-      showConfirm(`${dateStr}로\n최종 확정하시겠습니까?`, () => {
-        setFinalDate(date);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      const dbDateStr = format(date, "yyyy-MM-dd"); // DB 저장용 포맷
+
+      showConfirm(`${dateStr}로\n최종 확정하시겠습니까?`, async () => {
+        try {
+          // 🔥 [추가] Supabase에 확정 날짜 업데이트
+          const { error } = await supabase
+            .from("rooms")
+            .update({ confirmed_date: dbDateStr })
+            .eq("id", roomId);
+
+          if (error) throw error;
+
+          setFinalDate(date);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (e) {
+          showAlert("확정 중 오류가 발생했어요 😢");
+        }
       });
     }
   };
@@ -248,12 +270,21 @@ export function useRoom(roomId: string) {
       setIsEditing(true); // 재조율도 일종의 수정이므로 true
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
-
   const handleReset = () =>
-    showConfirm("다시 투표화면으로 갈까요?", () => {
-      setStep("VOTING");
-      setFinalDate(null);
-      setIsEditing(false);
+    showConfirm("확정을 취소하고\n다시 투표화면으로 갈까요?", async () => {
+      try {
+        // 🔥 [추가] DB에서 날짜 지우기 (null로 업데이트)
+        await supabase
+          .from("rooms")
+          .update({ confirmed_date: null })
+          .eq("id", roomId);
+
+        setStep("VOTING");
+        setFinalDate(null);
+        setIsEditing(false);
+      } catch (e) {
+        showAlert("취소 중 오류가 발생했어요.");
+      }
     });
 
   return {
