@@ -262,14 +262,36 @@ export function useRoom(roomId: string) {
   };
 
   const handleRescueUser = (user: UserVote) =>
-    showConfirm(`${user.name}님 일정을 재조율할까요?`, () => {
-      setStep("VOTING");
-      setFinalDate(null);
-      setCurrentName(user.name);
-      setCurrentUnavailable(user.unavailableDates);
-      setIsEditing(true); // 재조율도 일종의 수정이므로 true
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    showConfirm(
+      `${user.name}님을 위해\n약속 확정을 취소하고 재조율할까요?`,
+      async () => {
+        // async 추가
+        try {
+          // 🔥 [핵심] DB에서 확정 날짜를 지워야 투표 모드로 완전히 돌아갑니다.
+          const { error } = await supabase
+            .from("rooms")
+            .update({ confirmed_date: null })
+            .eq("id", roomId);
+
+          if (error) throw error;
+
+          // 상태 초기화 (투표 모드로 전환)
+          setStep("VOTING");
+          setFinalDate(null);
+
+          // 해당 유저의 정보 입력창에 세팅 (수정 모드 진입)
+          setCurrentName(user.name);
+          setCurrentUnavailable(user.unavailableDates);
+          setIsEditing(true);
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (e) {
+          console.error(e);
+          showAlert("재조율 처리 중 오류가 발생했어요 😢");
+        }
+      }
+    );
+
   const handleReset = () =>
     showConfirm("확정을 취소하고\n다시 투표화면으로 갈까요?", async () => {
       try {
