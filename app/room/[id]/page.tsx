@@ -197,8 +197,8 @@ export default function RoomDetail() {
 
             {/* 투표 마감 플로팅 버튼 (투표 모드일 때만) */}
             {step === "VOTING" && (
-              <div className="fixed bottom-0 right-0  z-30 px-6 pb-10 pointer-events-none">
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
+              <div className="fixed bottom-0 right-0  z-30 px-6 pb-10 ">
+                <div className="absolute inset-x-0 bottom-0 h-32  from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
                 <button
                   onClick={handleGoToConfirm}
                   className="pointer-events-auto w-full p-4 bg-gray-900 text-white font-extrabold rounded-[1.5rem] hover:bg-black transition shadow-xl text-lg flex items-center justify-center gap-2"
