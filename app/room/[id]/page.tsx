@@ -7,6 +7,8 @@ import CalendarGrid from "@/components/room/CalendarGrid";
 import Modal from "@/components/common/Modal";
 import { format, isSameDay } from "date-fns";
 import { ko } from "date-fns/locale";
+import PersonIcon from "@/components/icons/PersonIcon";
+import PeopleIcon from "@/components/icons/PeopleIcon";
 
 export default function RoomDetail() {
   const params = useParams();
@@ -61,7 +63,7 @@ export default function RoomDetail() {
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        {/* 1. 헤더 (항상 보임) */}
+        {/* 1. 헤더  */}
         <RoomHeader title={room.name} />
 
         {!finalDate && (
@@ -96,7 +98,7 @@ export default function RoomDetail() {
                   }`}
                 >
                   <span className="p-2 bg-gray-100 text-gray-600 rounded-full text-lg">
-                    👤
+                    <PersonIcon className="w-5 h-5" />
                   </span>
                   <input
                     type="text"
@@ -146,8 +148,9 @@ export default function RoomDetail() {
 
             {/* 참여 현황 리스트 (확정 전까지만 보임) */}
             <div className="w-full flex flex-col gap-3 mb-24">
-              <h3 className="text-gray-900 font-bold ml-2 text-sm">
-                👥 참여 현황 ({participants.length}명)
+              <h3 className="flex text-gray-600 font-bold text-sm">
+                <PeopleIcon className="w-5 h-5 mr-1 text-gray-600 " /> 참여 현황
+                ({participants.length}명)
               </h3>
               {participants.length === 0 ? (
                 <div className="text-center p-6 text-gray-400 bg-white rounded-2xl text-sm border border-dashed border-gray-300">

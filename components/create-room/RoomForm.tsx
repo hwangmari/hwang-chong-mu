@@ -1,3 +1,5 @@
+import Switch from "../common/Switch";
+
 interface RoomFormProps {
   formData: {
     roomName: string;
@@ -6,8 +8,9 @@ interface RoomFormProps {
     includeWeekend: boolean;
   };
   loading: boolean;
-  isCustomPeriod: boolean; // 🔥 추가됨
-  setIsCustomPeriod: (v: boolean) => void; // 🔥 추가됨
+  isCustomPeriod: boolean;
+  setIsCustomPeriod: (v: boolean) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void;
   onSubmit: () => void;
 }
@@ -64,25 +67,16 @@ export default function RoomForm({
           >
             종료 날짜 직접 지정하기
           </span>
-          <button
-            onClick={() => setIsCustomPeriod(!isCustomPeriod)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-              isCustomPeriod ? "bg-indigo-500" : "bg-gray-300"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
-                isCustomPeriod ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
+          <Switch
+            checked={isCustomPeriod}
+            onChange={setIsCustomPeriod}
+            label="종료 날짜 직접 입력 여부"
+          />
         </div>
 
         {/* 🔥 토글이 켜졌을 때만 나타나는 종료 날짜 입력창 */}
         {isCustomPeriod && (
           <div className="space-y-2 animate-fadeIn">
-            {" "}
-            {/* 부드럽게 나타나는 효과 */}
             <label className="text-xs font-bold text-gray-500 ml-1">
               종료 날짜
             </label>
@@ -97,21 +91,15 @@ export default function RoomForm({
         )}
       </div>
 
-      {/* 주말 포함 토글 (기존 코드 유지) */}
+      {/* 주말 포함 토글 */}
       <div className="flex items-center justify-between px-1">
         <span className="text-sm text-gray-600 font-medium">주말 포함</span>
-        <button
-          onClick={() => onChange("includeWeekend", !formData.includeWeekend)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-            formData.includeWeekend ? "bg-indigo-500" : "bg-gray-300"
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
-              formData.includeWeekend ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
-        </button>
+
+        <Switch
+          checked={formData.includeWeekend}
+          onChange={(isChecked) => onChange("includeWeekend", isChecked)}
+          label="주말 포함 여부"
+        />
       </div>
 
       {/* 버튼 */}

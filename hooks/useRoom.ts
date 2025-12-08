@@ -17,6 +17,7 @@ export function useRoom(roomId: string) {
   // --- [상태 관리] ---
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"VOTING" | "CONFIRM">("VOTING");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [room, setRoom] = useState<any>(null);
   const [includeWeekend, setIncludeWeekend] = useState(false);
 
@@ -60,6 +61,7 @@ export function useRoom(roomId: string) {
         .select("*")
         .eq("room_id", roomId);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedParticipants = (partData || []).map((p: any) => ({
         id: p.id,
         name: p.name,

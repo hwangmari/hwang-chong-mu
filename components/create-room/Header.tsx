@@ -11,7 +11,7 @@ export default function Header() {
         소거법으로 <strong className="text-red-400">
           안 되는 날
         </strong> 빼고 <strong className="text-blue-400">되는 날</strong>을
-        정해보세욥 'ㅅ'/
+        정해보세욥 &apos;ㅅ&apos;/
       </p>
     </div>
   );
