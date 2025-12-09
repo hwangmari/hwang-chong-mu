@@ -82,7 +82,7 @@ export default function useCreateRoom() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        router.push(`/room/${data[0].id}`);
+        router.push(`/meeting/room/${data[0].id}`);
       }
     } catch (error) {
       console.error("에러 발생:", error);

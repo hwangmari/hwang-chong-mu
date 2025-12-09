@@ -26,10 +26,7 @@ export default function RoomDetail() {
     modal,
     calendarGrid,
     isEditing, // ⭐ 추가된 상태
-    setIncludeWeekend,
     setCurrentName,
-    setFinalDate,
-    setStep,
     handleToggleDate,
     handleSubmitVote,
     handleGoToConfirm,
@@ -39,8 +36,6 @@ export default function RoomDetail() {
     handleReset,
     cancelEdit, // ⭐ 추가된 함수
     closeModal,
-    showAlert,
-    showConfirm,
   } = useRoom(roomId);
 
   if (loading)

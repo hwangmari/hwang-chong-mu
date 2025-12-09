@@ -6,7 +6,7 @@ export default function Header() {
         황총무의 약속 잡기
       </h1>
       <p className="text-sm text-gray-400">
-        약속 잡기 힘드시죠? 황총무가 깔끔하게 정리해드려요!
+        여러명이서 약속 잡기 힘드시죠? 황총무가 깔끔하게 정리해드려요!
         <br />
         소거법으로 <strong className="text-red-400">
           안 되는 날

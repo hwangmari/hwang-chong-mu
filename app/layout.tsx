@@ -1,20 +1,26 @@
-import type { Metadata, Viewport } from "next"; // Viewport 타입 추가
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-// 기존 메타데이터 (유지)
-export const metadata: Metadata = {
-  title: "황총무의 약속 잡기",
-  description: "우리들의 약속을 스마트하게",
-};
-
-// ★ [NEW] 뷰포트 설정 추가 (여기가 핵심입니다!)
+// ★ [전역] 뷰포트 설정 (모든 페이지 공통 적용)
+// 모바일에서 앱처럼 보이게 확대 방지
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // 사용자가 손가락으로 확대하지 못하게 막음
-  // (선택사항) 다크모드 대응 등 색상 테마
-  // themeColor: "#ffffff",
+  userScalable: false,
+  themeColor: "#ffffff",
+};
+
+// ★ [전역] 메타데이터 (기본값: 황총무의 실험실)
+export const metadata: Metadata = {
+  title: {
+    template: "%s | 황총무의 실험실", // 하위 페이지에서 제목을 정하면 뒤에 이게 붙음
+    default: "황총무의 실험실", // 하위 페이지에 제목이 없으면 이게 나옴
+  },
+  description: "복잡한 세상, 편하게 살기 위한 황총무의 귀여운 실험실 🧪",
+  icons: {
+    icon: "/favicon.ico", // 파비콘 설정 (있으면)
+  },
 };
 
 export default function RootLayout({
