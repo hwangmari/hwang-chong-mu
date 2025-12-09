@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import "../globals.css";
-
 // ★ [덮어쓰기] 약속 잡기 서비스 전용 메타데이터
 export const metadata: Metadata = {
   title: "황총무의 약속 잡기", // 브라우저 탭 이름이 이걸로 바뀝니다!
@@ -18,13 +16,5 @@ export default function MeetingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      {/* 필요하다면 여기에 약속 잡기 서비스만의 
-        공통 헤더나 배경색 설정을 추가할 수도 있습니다.
-        지금은 단순히 자식(페이지)만 보여줍니다.
-      */}
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
