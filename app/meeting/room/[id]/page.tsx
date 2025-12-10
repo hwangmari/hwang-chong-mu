@@ -9,6 +9,7 @@ import { format, isSameDay } from "date-fns";
 import { ko } from "date-fns/locale";
 import PersonIcon from "@/components/icons/PersonIcon";
 import PeopleIcon from "@/components/icons/PeopleIcon";
+import AddToCalendar from "@/components/common/AddToCalendar";
 
 export default function RoomDetail() {
   const params = useParams();
@@ -210,70 +211,77 @@ export default function RoomDetail() {
         )}
 
         {finalDate && (
-          <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
-            <div className="text-4xl mb-4">🎉</div>
-            <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-              약속 날짜 확정!
-            </h2>
-            <div className="bg-gray-50 p-6 rounded-2xl mb-6 mt-4 border border-gray-100">
-              <div className="text-gray-500 font-bold mb-1 text-xs">
-                {room.name}
+          <>
+            <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
+              <div className="text-4xl mb-4">🎉</div>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
+                약속 날짜 확정!
+              </h2>
+              <div className="bg-gray-50 p-6 rounded-2xl mb-6 mt-4 border border-gray-100">
+                <div className="text-gray-500 font-bold mb-1 text-xs">
+                  {room.name}
+                </div>
+                <div className="text-3xl font-black text-gray-900">
+                  {format(finalDate, "M월 d일 (E)", { locale: ko })}
+                </div>
               </div>
-              <div className="text-3xl font-black text-gray-900">
-                {format(finalDate, "M월 d일 (E)", { locale: ko })}
+
+              {/* 참석/불참 명단 */}
+              <div className="grid grid-cols-2 gap-4 text-left mb-6">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div className="text-gray-400 font-bold text-xs mb-2">
+                    참석 가능 🙆‍♂️
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {getAvailablePeople(finalDate).length > 0 ? (
+                      getAvailablePeople(finalDate).map((p, i) => (
+                        <span
+                          key={i}
+                          className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
+                        >
+                          {p.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-300 text-xs">없음</span>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                  <div className="text-red-400 font-bold text-xs mb-2">
+                    아쉽지만 불참 🙅‍♂️
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {getUnavailablePeople(finalDate).length > 0 ? (
+                      getUnavailablePeople(finalDate).map((p, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleRescueUser(p)}
+                          className="bg-white text-red-400 text-xs px-2 py-1 rounded-lg border border-red-100 font-bold hover:bg-red-100 hover:scale-105 transition cursor-pointer"
+                        >
+                          {p.name} ✎
+                        </button>
+                      ))
+                    ) : (
+                      <span className="text-gray-400 text-xs">전원 참석!</span>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              <button
+                onClick={handleReset}
+                className="text-gray-400 underline text-sm hover:text-gray-600"
+              >
+                일정 다시 조정하기
+              </button>
             </div>
 
-            {/* 참석/불참 명단 */}
-            <div className="grid grid-cols-2 gap-4 text-left mb-6">
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="text-gray-400 font-bold text-xs mb-2">
-                  참석 가능 🙆‍♂️
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {getAvailablePeople(finalDate).length > 0 ? (
-                    getAvailablePeople(finalDate).map((p, i) => (
-                      <span
-                        key={i}
-                        className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
-                      >
-                        {p.name}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-gray-300 text-xs">없음</span>
-                  )}
-                </div>
-              </div>
-              <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                <div className="text-red-400 font-bold text-xs mb-2">
-                  아쉽지만 불참 🙅‍♂️
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {getUnavailablePeople(finalDate).length > 0 ? (
-                    getUnavailablePeople(finalDate).map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleRescueUser(p)}
-                        className="bg-white text-red-400 text-xs px-2 py-1 rounded-lg border border-red-100 font-bold hover:bg-red-100 hover:scale-105 transition cursor-pointer"
-                      >
-                        {p.name} ✎
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-gray-400 text-xs">전원 참석!</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleReset}
-              className="text-gray-400 underline text-sm hover:text-gray-600"
-            >
-              일정 다시 조정하기
-            </button>
-          </div>
+            <AddToCalendar
+              title={room.name}
+              finalDate={format(finalDate, "yyyy-MM-dd")}
+            />
+          </>
         )}
 
         <Modal
