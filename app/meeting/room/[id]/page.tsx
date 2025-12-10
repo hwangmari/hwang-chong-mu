@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react"; // ✅ 필수!
 import { useParams } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/components/room/RoomHeader";
@@ -12,9 +13,81 @@ import PeopleIcon from "@/components/icons/PeopleIcon";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
 
+// --- [가이드 모달 컴포넌트] ---
+function GuideModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative overflow-hidden text-center">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition p-2"
+        >
+          ✕
+        </button>
+
+        <div className="text-5xl mb-4 mt-2">🐰</div>
+        <h3 className="text-xl font-extrabold text-gray-900 mb-2">
+          어떻게 쓰나요?
+        </h3>
+
+        <div className="text-left bg-gray-50 p-5 rounded-2xl text-sm text-gray-600 space-y-4 mb-6 leading-relaxed">
+          <p>
+            <span className="inline-block bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-xs font-bold mr-1">
+              Step 1
+            </span>
+            먼저 본인의 <b>이름</b>을 입력해주세요.
+          </p>
+          <p>
+            <span className="inline-block bg-red-100 text-red-500 px-2 py-0.5 rounded text-xs font-bold mr-1">
+              Step 2
+            </span>
+            달력에서{" "}
+            <b className="text-red-500 underline decoration-red-200 decoration-4">
+              참석 불가능한 날짜
+            </b>
+            를 눌러주세요! (빨간색 = 못 가는 날 🙅‍♂️)
+          </p>
+          <div className="border-t border-gray-200 pt-3 mt-2">
+            <span className="font-bold text-gray-800 text-xs">💡 꿀팁</span>
+            <p className="text-xs text-gray-500 mt-1">
+              혹시 <b>되는 날이 거의 없다면?</b>
+              <br />
+              캘린더 위의{" "}
+              <span className="bg-red-100 text-red-500 px-1 rounded font-bold text-[10px]">
+                다 안돼요
+              </span>{" "}
+              버튼을 누르고, <br />
+              <b>되는 날만 다시 눌러서</b> 해제하세요!
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition shadow-lg"
+        >
+          알겠어요! 👌
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- [메인 컴포넌트] ---
 export default function RoomDetail() {
   const params = useParams();
   const roomId = params.id as string;
+
+  // ✅ 가이드 모달 상태 (이제 에러 안 날 거예요!)
+  const [showGuide, setShowGuide] = useState(false);
 
   const {
     loading,
@@ -31,9 +104,9 @@ export default function RoomDetail() {
     setCurrentName,
     handleToggleDate,
     handleSubmitVote,
-    handleSubmitAbsent, // ✅ 추가됨
-    handleResetDates, // ✅ 추가됨
-    handleSelectAllDates, // ✅ 추가됨
+    handleSubmitAbsent,
+    handleResetDates,
+    handleSelectAllDates,
     handleGoToConfirm,
     handleEditUser,
     handleDeleteUser,
@@ -51,29 +124,35 @@ export default function RoomDetail() {
     );
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
-  // 불가능한 사람 필터 (불참자 제외, 해당 날짜 안되는 사람)
   const getUnavailablePeople = (d: Date) =>
     participants.filter(
       (p) => !p.isAbsent && p.unavailableDates.some((ud) => isSameDay(ud, d))
     );
 
-  // 가능한 사람 필터 (불참자 제외, 해당 날짜 되는 사람)
   const getAvailablePeople = (d: Date) =>
     participants.filter(
       (p) => !p.isAbsent && !p.unavailableDates.some((ud) => isSameDay(ud, d))
     );
 
-  // 아예 불참인 사람 필터 (항상 같음)
   const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        <RoomHeader title={room.name} />
+        {/* 헤더 및 물음표 버튼 */}
+        <div className="relative w-full mb-2">
+          <RoomHeader title={room.name} />
+          <button
+            onClick={() => setShowGuide(true)}
+            className="absolute top-0 right-2 w-8 h-8 bg-white border border-gray-200 rounded-full text-gray-400 font-bold shadow-sm hover:text-blue-600 hover:border-blue-200 hover:scale-110 transition flex items-center justify-center text-sm z-10"
+            aria-label="이용 가이드 보기"
+          >
+            ?
+          </button>
+        </div>
 
         {!finalDate && (
           <>
-            {/* 상단 멘트 */}
             <div className="mb-2 text-center px-4 break-keep">
               <p
                 className={
@@ -87,12 +166,11 @@ export default function RoomDetail() {
                     ? `${currentName}님의 일정을 수정 중입니다 ✏️`
                     : currentName
                     ? `${currentName}님, 안되는 날을 선택해주세요!`
-                    : "👇 이름을 입력하고 불가능한 일정을 등록하세요!"
+                    : "👇 이름을 입력하고 안되는 날(🙅‍♂️)을 선택하세요!"
                   : "👑 최종 약속 날짜를 선택해주세요!"}
               </p>
             </div>
 
-            {/* 입력 폼 */}
             {step === "VOTING" && (
               <div className="w-full flex gap-2 mb-4 animate-fade-in relative">
                 <div
@@ -127,7 +205,6 @@ export default function RoomDetail() {
               </div>
             )}
 
-            {/* 🔥 [추가] 빠른 선택 버튼 (다 돼요 / 다 안돼요) */}
             {step === "VOTING" && !isEditing && (
               <div className="w-full flex justify-center gap-2 mb-3 animate-fade-in">
                 <button
@@ -156,7 +233,6 @@ export default function RoomDetail() {
               onToggleDate={handleToggleDate}
             />
 
-            {/* 하단 액션 버튼들 */}
             {step === "VOTING" && (
               <div className="w-full flex flex-col gap-3 mb-10 animate-fade-in">
                 <button
@@ -166,7 +242,6 @@ export default function RoomDetail() {
                   {isEditing ? "수정 완료 💾" : "일정 저장 💾"}
                 </button>
 
-                {/* 🔥 [추가] 불참 버튼 */}
                 {!isEditing && (
                   <button
                     onClick={handleSubmitAbsent}
@@ -178,7 +253,6 @@ export default function RoomDetail() {
               </div>
             )}
 
-            {/* 참여 현황 리스트 */}
             <div className="w-full flex flex-col gap-3 mb-24">
               <h3 className="flex text-gray-600 font-bold text-sm">
                 <PeopleIcon className="w-5 h-5 mr-1 text-gray-600 " /> 참여 현황
@@ -229,7 +303,6 @@ export default function RoomDetail() {
                         수정
                       </button>
 
-                      {/* 🔥 상태 뱃지 표시 */}
                       {user.isAbsent ? (
                         <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center border border-gray-100">
                           불참 🥲
@@ -254,7 +327,6 @@ export default function RoomDetail() {
               )}
             </div>
 
-            {/* 마감 플로팅 버튼 */}
             {step === "VOTING" && (
               <div className="fixed bottom-0 right-0  z-30 px-6 pb-10 ">
                 <div className="absolute inset-x-0 bottom-0 h-32  from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
@@ -270,7 +342,6 @@ export default function RoomDetail() {
           </>
         )}
 
-        {/* 확정 화면 */}
         {finalDate && (
           <>
             <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
@@ -279,17 +350,12 @@ export default function RoomDetail() {
                 약속 날짜 확정!
               </h2>
               <div className="bg-gray-50 p-6 rounded-2xl mb-6 mt-4 border border-gray-100">
-                <div className="text-gray-500 font-bold mb-1 text-xs">
-                  {room.name}
-                </div>
                 <div className="text-3xl font-black text-gray-900">
                   {format(finalDate, "M월 d일 (E)", { locale: ko })}
                 </div>
               </div>
 
-              {/* 결과 명단 리스트 */}
               <div className="grid grid-cols-2 gap-4 text-left mb-6">
-                {/* 1. 참석 가능자 */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <div className="text-gray-400 font-bold text-xs mb-2">
                     참석 가능 🙆‍♂️
@@ -310,13 +376,11 @@ export default function RoomDetail() {
                   </div>
                 </div>
 
-                {/* 2. 불가능자 */}
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                   <div className="text-red-400 font-bold text-xs mb-2">
                     불가능 / 불참 🙅‍♂️
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {/* 불참자 + 날짜 안되는 사람 합쳐서 보여주기 */}
                     {[...getUnavailablePeople(finalDate), ...getAbsentPeople()]
                       .length > 0 ? (
                       [
@@ -357,6 +421,8 @@ export default function RoomDetail() {
             <ShareButton />
           </>
         )}
+
+        <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
         <Modal
           modal={modal}
