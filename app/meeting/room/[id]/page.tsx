@@ -10,6 +10,7 @@ import { ko } from "date-fns/locale";
 import PersonIcon from "@/components/icons/PersonIcon";
 import PeopleIcon from "@/components/icons/PeopleIcon";
 import AddToCalendar from "@/components/common/AddToCalendar";
+import ShareButton from "@/components/common/KakaoCalendarShare";
 
 export default function RoomDetail() {
   const params = useParams();
@@ -281,6 +282,7 @@ export default function RoomDetail() {
               title={room.name}
               finalDate={format(finalDate, "yyyy-MM-dd")}
             />
+            <ShareButton />
           </>
         )}
 
