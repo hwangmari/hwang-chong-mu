@@ -13,6 +13,7 @@ export const viewport: Viewport = {
 
 // ★ [전역] 메타데이터 (기본값: 황총무의 실험실)
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hwang-lab.kr"),
   title: {
     template: "%s | 황총무의 실험실", // 하위 페이지에서 제목을 정하면 뒤에 이게 붙음
     default: "황총무의 실험실", // 하위 페이지에 제목이 없으면 이게 나옴
