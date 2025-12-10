@@ -27,16 +27,19 @@ export default function RoomDetail() {
     finalDate,
     modal,
     calendarGrid,
-    isEditing, // ⭐ 추가된 상태
+    isEditing,
     setCurrentName,
     handleToggleDate,
     handleSubmitVote,
+    handleSubmitAbsent, // ✅ 추가됨
+    handleResetDates, // ✅ 추가됨
+    handleSelectAllDates, // ✅ 추가됨
     handleGoToConfirm,
     handleEditUser,
-    handleDeleteUser, // ⭐ 추가된 함수
+    handleDeleteUser,
     handleRescueUser,
     handleReset,
-    cancelEdit, // ⭐ 추가된 함수
+    cancelEdit,
     closeModal,
   } = useRoom(roomId);
 
@@ -48,24 +51,29 @@ export default function RoomDetail() {
     );
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
+  // 불가능한 사람 필터 (불참자 제외, 해당 날짜 안되는 사람)
   const getUnavailablePeople = (d: Date) =>
-    participants.filter((p) =>
-      p.unavailableDates.some((ud) => isSameDay(ud, d))
+    participants.filter(
+      (p) => !p.isAbsent && p.unavailableDates.some((ud) => isSameDay(ud, d))
     );
+
+  // 가능한 사람 필터 (불참자 제외, 해당 날짜 되는 사람)
   const getAvailablePeople = (d: Date) =>
     participants.filter(
-      (p) => !p.unavailableDates.some((ud) => isSameDay(ud, d))
+      (p) => !p.isAbsent && !p.unavailableDates.some((ud) => isSameDay(ud, d))
     );
+
+  // 아예 불참인 사람 필터 (항상 같음)
+  const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        {/* 1. 헤더  */}
         <RoomHeader title={room.name} />
 
         {!finalDate && (
           <>
-            {/* 멘트 */}
+            {/* 상단 멘트 */}
             <div className="mb-2 text-center px-4 break-keep">
               <p
                 className={
@@ -84,7 +92,7 @@ export default function RoomDetail() {
               </p>
             </div>
 
-            {/* 입력 폼 (투표 모드일 때만) */}
+            {/* 입력 폼 */}
             {step === "VOTING" && (
               <div className="w-full flex gap-2 mb-4 animate-fade-in relative">
                 <div
@@ -119,7 +127,24 @@ export default function RoomDetail() {
               </div>
             )}
 
-            {/* 달력 */}
+            {/* 🔥 [추가] 빠른 선택 버튼 (다 돼요 / 다 안돼요) */}
+            {step === "VOTING" && !isEditing && (
+              <div className="w-full flex justify-center gap-2 mb-3 animate-fade-in">
+                <button
+                  onClick={handleResetDates}
+                  className="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-full text-xs font-bold hover:bg-blue-200 transition"
+                >
+                  🙆‍♂️ 다 돼요 (초기화)
+                </button>
+                <button
+                  onClick={handleSelectAllDates}
+                  className="px-3 py-1.5 bg-red-100 text-red-500 rounded-full text-xs font-bold hover:bg-red-200 transition"
+                >
+                  🙅‍♂️ 다 안돼요 (전체선택)
+                </button>
+              </div>
+            )}
+
             <CalendarGrid
               dates={calendarGrid}
               participants={participants}
@@ -131,19 +156,29 @@ export default function RoomDetail() {
               onToggleDate={handleToggleDate}
             />
 
-            {/* 저장 버튼 (투표 모드일 때만) */}
+            {/* 하단 액션 버튼들 */}
             {step === "VOTING" && (
-              <div className="w-full flex gap-2 mb-10 animate-fade-in">
+              <div className="w-full flex flex-col gap-3 mb-10 animate-fade-in">
                 <button
                   onClick={handleSubmitVote}
-                  className="w-full p-3 bg-gray-200 text-gray-600 font-bold rounded-[1.5rem] px-4 hover:bg-gray-300 hover:text-gray-800 transition shadow-sm whitespace-nowrap text-sm sm:text-base"
+                  className="w-full p-3 bg-gray-900 text-white font-bold rounded-[1.5rem] px-4 hover:bg-black transition shadow-lg whitespace-nowrap text-sm sm:text-base"
                 >
                   {isEditing ? "수정 완료 💾" : "일정 저장 💾"}
                 </button>
+
+                {/* 🔥 [추가] 불참 버튼 */}
+                {!isEditing && (
+                  <button
+                    onClick={handleSubmitAbsent}
+                    className="w-full p-3 bg-transparent text-gray-400 font-medium text-xs hover:text-gray-600 underline transition"
+                  >
+                    이번 모임은 참석이 어려워요 🥲 (불참 알리기)
+                  </button>
+                )}
               </div>
             )}
 
-            {/* 참여 현황 리스트 (확정 전까지만 보임) */}
+            {/* 참여 현황 리스트 */}
             <div className="w-full flex flex-col gap-3 mb-24">
               <h3 className="flex text-gray-600 font-bold text-sm">
                 <PeopleIcon className="w-5 h-5 mr-1 text-gray-600 " /> 참여 현황
@@ -157,16 +192,32 @@ export default function RoomDetail() {
                 participants.map((user, idx) => (
                   <div
                     key={idx}
-                    className="group relative bg-white p-3 pr-8 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:border-gray-400 hover:shadow-md"
+                    className={`group relative bg-white p-3 pr-8 rounded-2xl shadow-sm border flex justify-between items-center transition-all hover:border-gray-400 hover:shadow-md ${
+                      user.isAbsent
+                        ? "border-gray-100 opacity-60"
+                        : "border-gray-100"
+                    }`}
                   >
                     <div
                       className="flex items-center gap-3 cursor-pointer flex-1"
                       onClick={() => handleEditUser(user)}
                     >
-                      <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                          user.isAbsent
+                            ? "bg-gray-100 text-gray-400"
+                            : "bg-blue-50 text-blue-600"
+                        }`}
+                      >
                         {user.name.slice(0, 1)}
                       </div>
-                      <span className="font-bold text-gray-700 text-sm">
+                      <span
+                        className={`font-bold text-sm ${
+                          user.isAbsent
+                            ? "text-gray-400 line-through"
+                            : "text-gray-700"
+                        }`}
+                      >
                         {user.name}
                       </span>
                     </div>
@@ -177,9 +228,17 @@ export default function RoomDetail() {
                       >
                         수정
                       </button>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center">
-                        {user.unavailableDates.length}일 불가
-                      </span>
+
+                      {/* 🔥 상태 뱃지 표시 */}
+                      {user.isAbsent ? (
+                        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center border border-gray-100">
+                          불참 🥲
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center">
+                          {user.unavailableDates.length}일 불가
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={(e) => {
@@ -195,7 +254,7 @@ export default function RoomDetail() {
               )}
             </div>
 
-            {/* 투표 마감 플로팅 버튼 (투표 모드일 때만) */}
+            {/* 마감 플로팅 버튼 */}
             {step === "VOTING" && (
               <div className="fixed bottom-0 right-0  z-30 px-6 pb-10 ">
                 <div className="absolute inset-x-0 bottom-0 h-32  from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
@@ -211,6 +270,7 @@ export default function RoomDetail() {
           </>
         )}
 
+        {/* 확정 화면 */}
         {finalDate && (
           <>
             <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
@@ -227,8 +287,9 @@ export default function RoomDetail() {
                 </div>
               </div>
 
-              {/* 참석/불참 명단 */}
+              {/* 결과 명단 리스트 */}
               <div className="grid grid-cols-2 gap-4 text-left mb-6">
+                {/* 1. 참석 가능자 */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <div className="text-gray-400 font-bold text-xs mb-2">
                     참석 가능 🙆‍♂️
@@ -248,17 +309,28 @@ export default function RoomDetail() {
                     )}
                   </div>
                 </div>
+
+                {/* 2. 불가능자 */}
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                   <div className="text-red-400 font-bold text-xs mb-2">
-                    아쉽지만 불참 🙅‍♂️
+                    불가능 / 불참 🙅‍♂️
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {getUnavailablePeople(finalDate).length > 0 ? (
-                      getUnavailablePeople(finalDate).map((p, i) => (
+                    {/* 불참자 + 날짜 안되는 사람 합쳐서 보여주기 */}
+                    {[...getUnavailablePeople(finalDate), ...getAbsentPeople()]
+                      .length > 0 ? (
+                      [
+                        ...getUnavailablePeople(finalDate),
+                        ...getAbsentPeople(),
+                      ].map((p, i) => (
                         <button
                           key={i}
                           onClick={() => handleRescueUser(p)}
-                          className="bg-white text-red-400 text-xs px-2 py-1 rounded-lg border border-red-100 font-bold hover:bg-red-100 hover:scale-105 transition cursor-pointer"
+                          className={`text-xs px-2 py-1 rounded-lg border font-bold hover:scale-105 transition cursor-pointer ${
+                            p.isAbsent
+                              ? "bg-gray-200 text-gray-500 border-gray-300 line-through"
+                              : "bg-white text-red-400 border-red-100 hover:bg-red-100"
+                          }`}
                         >
                           {p.name} ✎
                         </button>

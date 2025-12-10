@@ -3,6 +3,7 @@ export type UserVote = {
   id?: string;
   name: string;
   unavailableDates: Date[];
+  isAbsent?: boolean;
 };
 
 export type ModalState = {
