@@ -1,5 +1,6 @@
 "use client";
 
+import AdBanner from "@/components/common/AdBanner";
 import FooterTips from "@/components/create-room/FooterTips";
 import Header from "@/components/create-room/Header";
 import RoomForm from "@/components/create-room/RoomForm";
@@ -30,6 +31,7 @@ export default function CreateRoomPage() {
         />
       </div>
       <FooterTips />
+      <AdBanner />
     </div>
   );
 }

@@ -35,15 +35,16 @@ export default function RootLayout({
       <meta
         name="google-adsense-account"
         content="ca-pub-9383832812082051"
-      ></meta>{" "}
-      {/* 👇 애드센스 스크립트 추가 */}
-      <Script
-        async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9383832812082051"
-        crossOrigin="anonymous"
-        strategy="afterInteractive"
-      />
-      <body>{children}</body>
+      ></meta>
+      <body>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9383832812082051"
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
+        {children}
+      </body>
     </html>
   );
 }
