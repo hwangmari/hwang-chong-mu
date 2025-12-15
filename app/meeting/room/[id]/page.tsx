@@ -14,7 +14,6 @@ import PeopleIcon from "@/components/icons/PeopleIcon";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
 import { GuideModal } from "@/components/common/GuideModal";
-import AdBanner from "@/components/common/AdBanner";
 
 // --- [메인 페이지] ---
 export default function RoomDetail() {
@@ -324,8 +323,6 @@ export default function RoomDetail() {
             closeModal();
           }}
         />
-
-        <AdBanner />
       </main>
     </div>
   );
