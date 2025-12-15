@@ -194,17 +194,15 @@ export default function RoomDetail() {
                   <span className="text-xl">💾</span>
                 </button>
 
-                {!isEditing && (
-                  <button
-                    onClick={handleSubmitAbsent}
-                    className="w-full py-3 text-gray-400 font-medium text-xs hover:text-gray-600 transition flex items-center justify-center gap-1"
-                  >
-                    혹시 이번 모임은 어려우신가요?
-                    <span className="underline decoration-gray-300 underline-offset-4">
-                      불참 알리기 🥲
-                    </span>
-                  </button>
-                )}
+                <button
+                  onClick={handleSubmitAbsent}
+                  className="w-full py-3 text-gray-400 font-medium text-xs hover:text-gray-600 transition flex items-center justify-center gap-1"
+                >
+                  혹시 이번 모임은 어려우신가요?
+                  <span className="underline decoration-gray-300 underline-offset-4">
+                    불참 알리기 🥲
+                  </span>
+                </button>
               </div>
             )}
 
