@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react"; // ✅ 필수!
+// ✅ useState 필수!
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/components/room/RoomHeader";
@@ -12,81 +13,14 @@ import PersonIcon from "@/components/icons/PersonIcon";
 import PeopleIcon from "@/components/icons/PeopleIcon";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
+import { GuideModal } from "@/components/common/GuideModal";
 
-// --- [가이드 모달 컴포넌트] ---
-function GuideModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative overflow-hidden text-center">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition p-2"
-        >
-          ✕
-        </button>
-
-        <div className="text-5xl mb-4 mt-2">🐰</div>
-        <h3 className="text-xl font-extrabold text-gray-900 mb-2">
-          어떻게 쓰나요?
-        </h3>
-
-        <div className="text-left bg-gray-50 p-5 rounded-2xl text-sm text-gray-600 space-y-4 mb-6 leading-relaxed">
-          <p>
-            <span className="inline-block bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-xs font-bold mr-1">
-              Step 1
-            </span>
-            먼저 본인의 <b>이름</b>을 입력해주세요.
-          </p>
-          <p>
-            <span className="inline-block bg-red-100 text-red-500 px-2 py-0.5 rounded text-xs font-bold mr-1">
-              Step 2
-            </span>
-            달력에서{" "}
-            <b className="text-red-500 underline decoration-red-200 decoration-4">
-              참석 불가능한 날짜
-            </b>
-            를 눌러주세요! (빨간색 = 못 가는 날 🙅‍♂️)
-          </p>
-          <div className="border-t border-gray-200 pt-3 mt-2">
-            <span className="font-bold text-gray-800 text-xs">💡 꿀팁</span>
-            <p className="text-xs text-gray-500 mt-1">
-              혹시 <b>되는 날이 거의 없다면?</b>
-              <br />
-              캘린더 위의{" "}
-              <span className="bg-red-100 text-red-500 px-1 rounded font-bold text-[10px]">
-                다 안돼요
-              </span>{" "}
-              버튼을 누르고, <br />
-              <b>되는 날만 다시 눌러서</b> 해제하세요!
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="w-full py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition shadow-lg"
-        >
-          알겠어요! 👌
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// --- [메인 컴포넌트] ---
+// --- [메인 페이지] ---
 export default function RoomDetail() {
   const params = useParams();
   const roomId = params.id as string;
 
-  // ✅ 가이드 모달 상태 (이제 에러 안 날 거예요!)
+  // 가이드 모달 상태
   const [showGuide, setShowGuide] = useState(false);
 
   const {
@@ -139,7 +73,7 @@ export default function RoomDetail() {
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
       <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
-        {/* 헤더 및 물음표 버튼 */}
+        {/* 헤더 및 가이드 버튼 */}
         <div className="relative w-full mb-2">
           <RoomHeader title={room.name} />
           <button
@@ -161,13 +95,29 @@ export default function RoomDetail() {
                     : "text-gray-900 text-lg font-extrabold"
                 }
               >
-                {step === "VOTING"
-                  ? isEditing
-                    ? `${currentName}님의 일정을 수정 중입니다 ✏️`
-                    : currentName
-                    ? `${currentName}님, 안되는 날을 선택해주세요!`
-                    : "👇 이름을 입력하고 안되는 날(🙅‍♂️)을 선택하세요!"
-                  : "👑 최종 약속 날짜를 선택해주세요!"}
+                {step === "VOTING" ? (
+                  isEditing ? (
+                    `${currentName}님의 일정을 수정 중입니다 ✏️`
+                  ) : currentName ? (
+                    <>
+                      ${currentName}님,
+                      <b className="text-red-500 underline decoration-red-200 decoration-4">
+                        참석 불가능한 날짜
+                      </b>
+                      을 선택해주세요!
+                    </>
+                  ) : (
+                    <>
+                      👇 이름을 입력하고{" "}
+                      <b className="text-red-500 underline decoration-red-200 decoration-4">
+                        참석 불가능한 날짜
+                      </b>
+                      를 선택하세요!
+                    </>
+                  )
+                ) : (
+                  "👑 최종 약속 날짜를 선택해주세요!"
+                )}
               </p>
             </div>
 
@@ -205,19 +155,19 @@ export default function RoomDetail() {
               </div>
             )}
 
-            {step === "VOTING" && !isEditing && (
-              <div className="w-full flex justify-center gap-2 mb-3 animate-fade-in">
+            {step === "VOTING" && (
+              <div className="w-full flex justify-center gap-3 mb-2 animate-fade-in">
                 <button
                   onClick={handleResetDates}
-                  className="px-3 py-1.5 bg-blue-100 text-blue-600 rounded-full text-xs font-bold hover:bg-blue-200 transition"
+                  className="flex items-center gap-2 px-4 py-1 bg-white border border-blue-100 text-blue-600 rounded-full text-xs font-bold shadow-sm hover:shadow-md hover:bg-blue-50 transition-all active:scale-95"
                 >
-                  🙆‍♂️ 다 돼요 (초기화)
+                  <span className="text-lg">🙆‍♂️</span> 다 돼요 (초기화)
                 </button>
                 <button
                   onClick={handleSelectAllDates}
-                  className="px-3 py-1.5 bg-red-100 text-red-500 rounded-full text-xs font-bold hover:bg-red-200 transition"
+                  className="flex items-center gap-2 px-4 py-1 bg-white border border-red-100 text-[#FF6B6B] rounded-full text-xs font-bold shadow-sm hover:shadow-md hover:bg-red-50 transition-all active:scale-95"
                 >
-                  🙅‍♂️ 다 안돼요 (전체선택)
+                  <span className="text-lg">🙅‍♂️</span> 다 안돼요 (전체선택)
                 </button>
               </div>
             )}
@@ -237,23 +187,27 @@ export default function RoomDetail() {
               <div className="w-full flex flex-col gap-3 mb-10 animate-fade-in">
                 <button
                   onClick={handleSubmitVote}
-                  className="w-full p-3 bg-gray-900 text-white font-bold rounded-[1.5rem] px-4 hover:bg-black transition shadow-lg whitespace-nowrap text-sm sm:text-base"
+                  className="w-full p-3 bg-[#656565]  text-white font-bold rounded-2xl shadow-xl shadow-gray-200 hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  {isEditing ? "수정 완료 💾" : "일정 저장 💾"}
+                  <span>{isEditing ? "수정 완료" : "일정 저장하기"}</span>
+                  <span className="text-xl">💾</span>
                 </button>
 
                 {!isEditing && (
                   <button
                     onClick={handleSubmitAbsent}
-                    className="w-full p-3 bg-transparent text-gray-400 font-medium text-xs hover:text-gray-600 underline transition"
+                    className="w-full py-3 text-gray-400 font-medium text-xs hover:text-gray-600 transition flex items-center justify-center gap-1"
                   >
-                    이번 모임은 참석이 어려워요 🥲 (불참 알리기)
+                    혹시 이번 모임은 어려우신가요?
+                    <span className="underline decoration-gray-300 underline-offset-4">
+                      불참 알리기 🥲
+                    </span>
                   </button>
                 )}
               </div>
             )}
 
-            <div className="w-full flex flex-col gap-3 mb-24">
+            <div className="w-full flex flex-col gap-3 mb-10">
               <h3 className="flex text-gray-600 font-bold text-sm">
                 <PeopleIcon className="w-5 h-5 mr-1 text-gray-600 " /> 참여 현황
                 ({participants.length}명)
@@ -327,98 +281,35 @@ export default function RoomDetail() {
               )}
             </div>
 
+            {/* 투표 마감 플로팅 버튼 (소프트 블랙 Ver.) */}
             {step === "VOTING" && (
-              <div className="fixed bottom-0 right-0  z-30 px-6 pb-10 ">
-                <div className="absolute inset-x-0 bottom-0 h-32  from-[#F3F4F6] via-[#F3F4F6] to-transparent -z-10" />
+              <div className="fixed bottom-5 px-6 flex justify-center pointer-events-none">
+                {/* 배경 그라데이션 (텍스트 가독성용) */}
+                <div className=" bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent " />
+
                 <button
                   onClick={handleGoToConfirm}
-                  className="pointer-events-auto w-full p-4 bg-gray-900 text-white font-extrabold rounded-[1.5rem] hover:bg-black transition shadow-xl text-lg flex items-center justify-center gap-2"
+                  className="
+                    pointer-events-auto
+                    w-full max-w-[500px] py-4 px-6
+                    bg-[#454545] text-white  
+                    font-bold text-lg
+                    rounded-full
+                    shadow-xl shadow-gray-300/50
+                    flex items-center justify-center gap-2
+                    transform transition-all duration-300
+                    hover:bg-black hover:scale-[1.02] hover:shadow-2xl
+                    active:scale-95
+                    group
+                  "
                 >
-                  <span>투표 마감</span>
-                  <span>🐰</span>
+                  <span>투표 마감하기</span>
+                  <span className="group-hover:-translate-y-1 transition-transform">
+                    🐰
+                  </span>
                 </button>
               </div>
             )}
-          </>
-        )}
-
-        {finalDate && (
-          <>
-            <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
-              <div className="text-4xl mb-4">🎉</div>
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-                약속 날짜 확정!
-              </h2>
-              <div className="bg-gray-50 p-6 rounded-2xl mb-6 mt-4 border border-gray-100">
-                <div className="text-3xl font-black text-gray-900">
-                  {format(finalDate, "M월 d일 (E)", { locale: ko })}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-left mb-6">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="text-gray-400 font-bold text-xs mb-2">
-                    참석 가능 🙆‍♂️
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {getAvailablePeople(finalDate).length > 0 ? (
-                      getAvailablePeople(finalDate).map((p, i) => (
-                        <span
-                          key={i}
-                          className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
-                        >
-                          {p.name}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-gray-300 text-xs">없음</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                  <div className="text-red-400 font-bold text-xs mb-2">
-                    불가능 / 불참 🙅‍♂️
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {[...getUnavailablePeople(finalDate), ...getAbsentPeople()]
-                      .length > 0 ? (
-                      [
-                        ...getUnavailablePeople(finalDate),
-                        ...getAbsentPeople(),
-                      ].map((p, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleRescueUser(p)}
-                          className={`text-xs px-2 py-1 rounded-lg border font-bold hover:scale-105 transition cursor-pointer ${
-                            p.isAbsent
-                              ? "bg-gray-200 text-gray-500 border-gray-300 line-through"
-                              : "bg-white text-red-400 border-red-100 hover:bg-red-100"
-                          }`}
-                        >
-                          {p.name} ✎
-                        </button>
-                      ))
-                    ) : (
-                      <span className="text-gray-400 text-xs">전원 참석!</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleReset}
-                className="text-gray-400 underline text-sm hover:text-gray-600"
-              >
-                일정 다시 조정하기
-              </button>
-            </div>
-
-            <AddToCalendar
-              title={room.name}
-              finalDate={format(finalDate, "yyyy-MM-dd")}
-            />
-            <ShareButton />
           </>
         )}
 
