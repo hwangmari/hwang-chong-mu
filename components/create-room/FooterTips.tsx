@@ -1,3 +1,5 @@
+import AdBanner from "../common/AdBanner";
+
 export default function FooterTips() {
   return (
     <div className="mt-8 w-full max-w-md ">
@@ -60,6 +62,7 @@ export default function FooterTips() {
           </li>
         </ul>
       </div>
+      <AdBanner />
     </div>
   );
 }

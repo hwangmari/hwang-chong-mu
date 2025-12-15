@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 // ★ [전역] 뷰포트 설정 (모든 페이지 공통 적용)
 // 모바일에서 앱처럼 보이게 확대 방지
@@ -31,7 +32,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <meta
+        name="google-adsense-account"
+        content="ca-pub-9383832812082051"
+      ></meta>
+      <body>
+        {/* 👇 애드센스 스크립트 추가 */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9383832812082051"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        {children}
+      </body>
     </html>
   );
 }
