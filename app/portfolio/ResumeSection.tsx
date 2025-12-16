@@ -70,6 +70,20 @@ export default function ResumeSection() {
               </div>
             </div>
           </div>
+
+          {/* Education */}
+          <div>
+            <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              🎓 Education
+            </h3>
+            <div>
+              <h4 className="font-bold text-gray-900 text-sm">
+                강원대학교 (춘천)
+              </h4>
+              <p className="text-gray-500 text-xs">미술학과 서양화 전공</p>
+              <p className="text-gray-400 text-xs mt-1">2006 - 2010</p>
+            </div>
+          </div>
         </div>
 
         {/* [오른쪽] Work Experience (데이터 연동) */}

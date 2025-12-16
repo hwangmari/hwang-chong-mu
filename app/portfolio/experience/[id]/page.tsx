@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { experiences } from "@/app/data/experiences";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import ProjectItem from "./ProjectItem";
 
+// 메인 페이지 컴포넌트
 export default function ExperienceDetail() {
   const params = useParams();
   const id = params.id as string;
@@ -16,13 +19,13 @@ export default function ExperienceDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="min-h-screen text-gray-900 font-sans bg-gray-100">
       {/* 1. 헤더 */}
-      <div className="bg-gray-50 border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-16">
           <Link
             href="/portfolio"
-            className="text-gray-500 hover:text-gray-900 text-sm mb-6 inline-block"
+            className="text-gray-400 hover:text-gray-900 text-sm mb-6 inline-block transition-colors"
           >
             ← 포트폴리오 메인으로 돌아가기
           </Link>
@@ -38,50 +41,13 @@ export default function ExperienceDetail() {
       </div>
 
       {/* 2. 상세 프로젝트 리스트 */}
-      <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in-up">
+      <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in-up  ">
         <h2 className="text-2xl font-bold mb-8">🔥 Key Projects</h2>
 
         <div className="space-y-12">
           {data.projects.map((project, idx) => (
-            <div
-              key={idx}
-              className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex flex-col md:flex-row justify-between items-start gap-2 mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
-                  {project.title}
-                </h3>
-                <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">
-                  {project.period}
-                </span>
-              </div>
-
-              <p className="text-gray-600 mb-6 font-medium">
-                {project.description}
-              </p>
-
-              <div className="mb-6">
-                <h4 className="text-sm font-bold text-gray-800 mb-2">
-                  수행 업무
-                </h4>
-                <ul className="list-disc list-outside ml-4 text-sm text-gray-600 space-y-1 leading-relaxed">
-                  {project.tasks.map((task, i) => (
-                    <li key={i}>{task}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {project.techStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
+            // 분리한 컴포넌트 사용
+            <ProjectItem key={idx} project={project} />
           ))}
         </div>
       </div>
