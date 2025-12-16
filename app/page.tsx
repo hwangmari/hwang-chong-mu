@@ -40,20 +40,18 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* 2. (준비중) N빵 계산기 카드 */}
-        <div className="bg-gray-100 p-6 rounded-[2rem] border border-transparent flex items-center gap-4 opacity-60 cursor-not-allowed">
-          <div className="w-14 h-14 bg-gray-200 text-gray-400 rounded-2xl flex items-center justify-center text-2xl">
-            💸
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-500">N빵 계산기</h2>
-            <p className="text-sm text-gray-400">준비 중입니다... 🚧</p>
-          </div>
-        </div>
+        {/* 👇 [수정] 심플하고 깔끔한 아웃라인 버튼 */}
+        <Link
+          href="/portfolio"
+          className="w-full mt-4 py-4 rounded-[1.5rem] border border-dashed border-gray-300 text-gray-400 font-bold text-sm flex items-center justify-center gap-2 hover:border-solid hover:border-gray-400 hover:text-gray-800 hover:bg-white transition-all"
+        >
+          <span>Developer Portfolio</span>
+          <span>👩‍💻</span>
+        </Link>
       </div>
 
       {/* 하단 카피라이트 */}
-      <footer className="absolute bottom-6 text-gray-300 text-xs font-medium">
+      <footer className="mt-6 text-gray-300 text-xs font-medium">
         © 2025 Hwang Chongmu. All rights reserved.
       </footer>
     </main>
