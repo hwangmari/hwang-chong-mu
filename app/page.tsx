@@ -1,59 +1,187 @@
-// app/page.tsx (새로 생성)
+"use client"; // Styled Components는 클라이언트 컴포넌트입니다.
+
 import Link from "next/link";
+import styled, { keyframes } from "styled-components";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 font-sans">
+    <MainContainer>
       {/* 🐰 프로필 영역 */}
-      <div className="text-center mb-12 animate-fade-in-up">
-        <div className="w-24 h-24 bg-white rounded-full shadow-lg mx-auto mb-4 flex items-center justify-center text-5xl border-4 border-indigo-50">
-          🐰
-        </div>
-        <h1 className="text-3xl font-black text-gray-900 mb-2">
-          황총무의 실험실
-        </h1>
-        <p className="text-gray-500 font-medium">
-          복잡한 건 제가 할게요, 총총총... 🐾
-        </p>
-      </div>
+      <ProfileSection>
+        <Avatar>🐰</Avatar>
+        <Title>황총무의 실험실</Title>
+        <Description>복잡한 건 제가 할게요, 총총총... 🐾</Description>
+      </ProfileSection>
 
-      {/* 📂 프로젝트 목록 (그리드) */}
-      <div className="w-full max-w-md grid gap-4">
+      {/* 📂 프로젝트 목록 그리드 */}
+      <GridContainer>
         {/* 1. 약속 잡기 카드 */}
-        <Link
-          href="/meeting"
-          className="group bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition-all flex items-center gap-4 cursor-pointer"
-        >
-          <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-            📅
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-              약속 잡기
-            </h2>
-            <p className="text-sm text-gray-400">
-              친구들과 일정을 가장 쉽게 잡는 법
-            </p>
-          </div>
-          <div className="text-gray-300 group-hover:translate-x-1 transition-transform">
-            ➔
-          </div>
+        <Link href="/meeting" passHref legacyBehavior>
+          <Card as="a">
+            <IconBox>📅</IconBox>
+            <CardContent>
+              <CardTitle>약속 잡기</CardTitle>
+              <CardDesc>친구들과 일정을 가장 쉽게 잡는 법</CardDesc>
+            </CardContent>
+            <ArrowIcon>➔</ArrowIcon>
+          </Card>
         </Link>
 
-        {/* 👇 [수정] 심플하고 깔끔한 아웃라인 버튼 */}
-        <Link
-          href="/portfolio"
-          className="w-full mt-4 py-4 rounded-[1.5rem] border border-dashed border-gray-300 text-gray-400 font-bold text-sm flex items-center justify-center gap-2 hover:border-solid hover:border-gray-400 hover:text-gray-800 hover:bg-white transition-all"
-        >
-          <span>Developer Portfolio</span>
-          <span>👩‍💻</span>
+        {/* 2. 포트폴리오 버튼 */}
+        <Link href="/portfolio" passHref legacyBehavior>
+          <PortfolioButton as="a">
+            <span>Developer Portfolio</span>
+            <span>👩‍💻</span>
+          </PortfolioButton>
         </Link>
-      </div>
+      </GridContainer>
 
       {/* 하단 카피라이트 */}
-      <footer className="mt-6 text-gray-300 text-xs font-medium">
-        © 2025 Hwang Chongmu. All rights reserved.
-      </footer>
-    </main>
+      <Footer>© 2025 Hwang Chongmu. All rights reserved.</Footer>
+    </MainContainer>
   );
 }
+
+// ✨ 스타일 정의
+const MainContainer = styled.main`
+  min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+`;
+
+const ProfileSection = styled.div`
+  text-align: center;
+  margin-bottom: 3rem;
+`;
+
+const Avatar = styled.div`
+  width: 6rem;
+  height: 6rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  border: 4px solid ${({ theme }) => theme.colors.blue50};
+`;
+
+const Title = styled.h1`
+  font-size: 1.875rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+  margin-bottom: 0.5rem;
+`;
+
+const Description = styled.p`
+  color: ${({ theme }) => theme.colors.gray500};
+  font-weight: 500;
+`;
+
+const GridContainer = styled.div`
+  width: 100%;
+  max-width: 28rem;
+  display: grid;
+  gap: 1rem;
+`;
+
+const IconBox = styled.div`
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: ${({ theme }) => theme.colors.blue50};
+  color: ${({ theme }) => theme.colors.blue600};
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  transition: transform 0.2s;
+`;
+
+const CardTitle = styled.h2`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+  transition: color 0.2s;
+`;
+
+const ArrowIcon = styled.div`
+  color: ${({ theme }) => theme.colors.gray300};
+  transition: transform 0.2s;
+`;
+
+// Link 컴포넌트를 감싸기 위해 'as="a"'를 사용하거나 스타일된 div를 만듦
+const Card = styled.div`
+  background-color: ${({ theme }) => theme.colors.white};
+  padding: 1.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none; // a태그일 때 밑줄 제거
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: ${({ theme }) => theme.colors.blue200};
+
+    ${IconBox} {
+      transform: scale(1.1);
+    }
+    ${CardTitle} {
+      color: ${({ theme }) => theme.colors.blue600};
+    }
+    ${ArrowIcon} {
+      transform: translateX(0.25rem);
+    }
+  }
+`;
+
+const CardContent = styled.div`
+  flex: 1;
+`;
+
+const CardDesc = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.gray400};
+`;
+
+const PortfolioButton = styled.a`
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  border: 1px dashed ${({ theme }) => theme.colors.gray300};
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    border-style: solid;
+    border-color: ${({ theme }) => theme.colors.gray400};
+    color: ${({ theme }) => theme.colors.gray800};
+    background-color: ${({ theme }) => theme.colors.white};
+  }
+`;
+
+const Footer = styled.footer`
+  margin-top: 1.5rem;
+  color: ${({ theme }) => theme.colors.gray300};
+  font-size: 0.75rem;
+  font-weight: 500;
+`;

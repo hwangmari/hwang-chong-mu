@@ -1,25 +1,33 @@
 "use client";
 
-import ProjectCard from "./ProjectCard";
+import styled from "styled-components";
+import Typography from "@/components/common/Typography";
 import PortfolioInfo from "./PortfolioInfo";
-import ResumeSection from "./ResumeSection"; // 👈 [추가]
+import ProjectCard from "./ProjectCard";
+import ResumeSection from "./ResumeSection";
 
 export default function PortfolioPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-yellow-200">
-      {/* 1. 헤더 */}
+    <StPageContainer>
+      {/* 1. 헤더 (프로필) */}
       <PortfolioInfo />
-      <div className="border"></div>
+
+      <StDivider />
+
       {/* 2. 이력서 섹션 */}
       <ResumeSection />
-      {/* 3. 프로젝트 섹션 */}
-      <section className="bg-gray-50 py-20 border-t border-gray-100">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-2xl font-bold mb-10 flex items-center gap-2">
-            🚀 Toy Projects
-          </h2>
 
-          <div className="space-y-12">
+      {/* 3. 프로젝트 섹션 */}
+      <StProjectSection>
+        <StSectionInner>
+          {/* Typography는 로직 컴포넌트이므로 St 안 붙임 */}
+          <StSectionTitleWrapper>
+            <Typography variant="h2" as="h2">
+              🚀 Toy Projects
+            </Typography>
+          </StSectionTitleWrapper>
+
+          <StProjectList>
             <ProjectCard
               title="황총무의 약속 잡기 (Hwang's Planner)"
               category="Service"
@@ -27,10 +35,11 @@ export default function PortfolioPage() {
               linkUrl="/meeting"
               description={
                 <>
-                  단톡방에서 약속 날짜를 잡을 때 발생하는 <b>"무한 되묻기"</b>{" "}
-                  문제를 해결하기 위해 개발한 <b>소거법 기반 스케줄러</b>입니다.
-                  '되는 날'을 찾는 대신 '안 되는 날'을 제거하는 역발상 UX로 약속
-                  확정 시간을 단축시켰습니다.
+                  단톡방에서 약속 날짜를 잡을 때 발생하는{" "}
+                  <b>&quot;무한 되묻기&quot;</b> 문제를 해결하기 위해 개발한{" "}
+                  <b>소거법 기반 스케줄러</b>입니다. &apos;되는 날&apos;을 찾는
+                  대신 &apos;안 되는 날&apos;을 제거하는 역발상 UX로 약속 확정
+                  시간을 단축시켰습니다.
                 </>
               }
               techStack={[
@@ -49,13 +58,63 @@ export default function PortfolioPage() {
                 tech: "3주치 동적 캘린더 알고리즘 구현 (date-fns), SEO 최적화를 통한 애드센스 승인.",
               }}
             />
-          </div>
-        </div>
-      </section>
+          </StProjectList>
+        </StSectionInner>
+      </StProjectSection>
+
       {/* 4. 푸터 */}
-      <footer className="py-10 text-center text-gray-400 text-xs">
-        © 2025 Hwang Hye kyeong. All rights reserved.
-      </footer>
-    </div>
+      <StFooter>
+        <Typography variant="caption" color="gray400" align="center">
+          © 2025 Hwang Hye kyeong. All rights reserved.
+        </Typography>
+      </StFooter>
+    </StPageContainer>
   );
 }
+
+// ✨ 스타일 정의 (St 프리픽스 적용)
+
+const StPageContainer = styled.div`
+  min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray900};
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* 드래그 시 하이라이트 색상 */
+  &::selection {
+    background-color: ${({ theme }) => theme.colors.yellow200};
+  }
+`;
+
+const StDivider = styled.div`
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
+`;
+
+const StProjectSection = styled.section`
+  background-color: ${({ theme }) => theme.colors.gray50};
+  padding: 5rem 0; /* py-20 */
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+const StSectionInner = styled.div`
+  max-width: 56rem; /* max-w-4xl */
+  margin: 0 auto;
+  padding: 0 1.5rem; /* px-6 */
+`;
+
+const StSectionTitleWrapper = styled.div`
+  margin-bottom: 2.5rem; /* mb-10 */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const StProjectList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem; /* space-y-12 */
+`;
+
+const StFooter = styled.footer`
+  padding: 2.5rem 0; /* py-10 */
+`;

@@ -1,42 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { experiences } from "@/app/data/experiences"; // 데이터 import
+import styled, { css, keyframes } from "styled-components";
+import { experiences } from "@/app/data/experiences";
+import Typography from "@/components/common/Typography";
 
 export default function ResumeSection() {
   return (
-    <section className="max-w-4xl mx-auto px-6 py-16 animate-fade-in-up delay-100">
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-12">
-        {/* [왼쪽] Skills (기존과 동일) */}
-        <div className="space-y-10">
+    <StSectionContainer>
+      <StGridWrapper>
+        {/* [왼쪽] Skills & Education */}
+        <StLeftColumn>
+          {/* 🛠 Skills */}
           <div>
-            <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              🛠 Skills
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <h4 className="font-bold text-gray-900 mb-2 text-sm">
-                  Framework & Lib
-                </h4>
-                <div className="flex flex-wrap gap-2">
+            <StSectionTitle>
+              <Typography variant="h2" as="h3">
+                🛠 Skills
+              </Typography>
+            </StSectionTitle>
+
+            <StSkillGroupWrapper>
+              {/* 1. Framework & Lib */}
+              <StSkillItem>
+                <StSkillTitle>Framework & Lib</StSkillTitle>
+                <StTagList>
                   {["React", "Svelte", "Angular", "Next.js", "TypeScript"].map(
                     (skill) => (
-                      <span
-                        key={skill}
-                        className="px-3 py-1 bg-gray-900 text-white text-xs rounded-lg font-bold"
-                      >
+                      <StSkillTag key={skill} $variant="black">
                         {skill}
-                      </span>
+                      </StSkillTag>
                     )
                   )}
-                </div>
-              </div>
-              {/* ... (나머지 스킬 섹션은 그대로 유지) ... */}
-              <div>
-                <h4 className="font-bold text-gray-900 mb-2 text-sm">
-                  Styling & UI
-                </h4>
-                <div className="flex flex-wrap gap-2">
+                </StTagList>
+              </StSkillItem>
+
+              {/* 2. Styling & UI */}
+              <StSkillItem>
+                <StSkillTitle>Styling & UI</StSkillTitle>
+                <StTagList>
                   {[
                     "SCSS",
                     "styled-components",
@@ -46,89 +47,268 @@ export default function ResumeSection() {
                     "Cross Browsing",
                     "Responsive Web",
                   ].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg font-medium"
-                    >
+                    <StSkillTag key={skill} $variant="gray">
                       {skill}
-                    </span>
+                    </StSkillTag>
                   ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900 mb-2 text-sm">
-                  Collaboration
-                </h4>
-                <div className="flex flex-wrap gap-2">
+                </StTagList>
+              </StSkillItem>
+
+              {/* 3. Collaboration */}
+              <StSkillItem>
+                <StSkillTitle>Collaboration</StSkillTitle>
+                <StTagList>
                   {["Git", "Jira", "Wiki", "Agile"].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg font-medium"
-                    >
+                    <StSkillTag key={skill} $variant="blue">
                       {skill}
-                    </span>
+                    </StSkillTag>
                   ))}
-                </div>
-              </div>
-            </div>
+                </StTagList>
+              </StSkillItem>
+            </StSkillGroupWrapper>
           </div>
 
-          {/* Education */}
+          {/* 🎓 Education */}
           <div>
-            <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
-              🎓 Education
-            </h3>
+            <StSectionTitle>
+              <Typography variant="h2" as="h3">
+                🎓 Education
+              </Typography>
+            </StSectionTitle>
             <div>
-              <h4 className="font-bold text-gray-900 text-sm">
+              <Typography variant="body2" color="gray900" className="fw-700">
                 강원대학교 (춘천)
-              </h4>
-              <p className="text-gray-500 text-xs">미술학과 서양화 전공</p>
-              <p className="text-gray-400 text-xs mt-1">2006 - 2010</p>
+              </Typography>
+              <Typography variant="caption" color="gray500">
+                미술학과 서양화 전공
+              </Typography>
+              <Typography variant="caption" color="gray400" className="mt-1">
+                2006 - 2010
+              </Typography>
             </div>
           </div>
-        </div>
+        </StLeftColumn>
 
-        {/* [오른쪽] Work Experience (데이터 연동) */}
-        <div>
-          <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            💼 Experience
-          </h3>
+        {/* [오른쪽] Work Experience */}
+        <StRightColumn>
+          <StSectionTitle>
+            <Typography variant="h2" as="h3">
+              💼 Experience
+            </Typography>
+          </StSectionTitle>
 
-          <div className="space-y-12 border-l-2 border-gray-100 ml-3 pl-8 relative">
-            {/* 데이터 매핑 */}
+          <StTimelineList>
             {experiences.map((exp) => (
-              <div key={exp.id} className="relative group">
-                <span
-                  className={`absolute -left-[41px] top-1 w-5 h-5 rounded-full ${exp.color} border-4 border-white shadow-sm`}
-                ></span>
+              <StTimelineItem key={exp.id}>
+                {/* 🔥 데이터의 bg-xxx 클래스를 받아서 색상 매핑 */}
+                <StTimelineDot $colorClass={exp.color} />
 
-                {/* 🔗 링크 연결: 클릭 시 상세 페이지로 이동 */}
-                <Link
-                  href={`/portfolio/experience/${exp.id}`}
-                  className="block group-hover:opacity-80 transition-opacity"
-                >
-                  <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <StExperienceLink href={`/portfolio/experience/${exp.id}`}>
+                  <StCompanyHeader>
                     {exp.company}
-                    <span className="text-xs text-gray-400 font-normal border border-gray-200 px-2 py-0.5 rounded-full group-hover:bg-gray-100 transition">
-                      상세보기 ↗
-                    </span>
-                  </h4>
-                  <p className="text-gray-700 font-bold text-sm mb-1">
+                    <StDetailBadge>상세보기 ↗</StDetailBadge>
+                  </StCompanyHeader>
+                  <Typography
+                    variant="body2"
+                    color="gray700"
+                    className="mb-1 fw-700"
+                  >
                     {exp.role}
-                  </p>
-                  <p className="text-gray-400 text-xs mb-4">{exp.period}</p>
-                </Link>
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="gray400"
+                    className="mb-1"
+                  >
+                    {exp.period}
+                  </Typography>
+                </StExperienceLink>
 
-                <ul className="list-disc list-outside text-gray-600 text-sm space-y-2 ml-4 leading-relaxed">
+                <StSummaryList>
                   {exp.summary.map((line, idx) => (
                     <li key={idx}>{line}</li>
                   ))}
-                </ul>
-              </div>
+                </StSummaryList>
+              </StTimelineItem>
             ))}
-          </div>
-        </div>
-      </div>
-    </section>
+          </StTimelineList>
+        </StRightColumn>
+      </StGridWrapper>
+    </StSectionContainer>
   );
 }
+
+// ✨ 스타일 정의 (St 프리픽스 적용)
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StSectionContainer = styled.section`
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  animation: ${fadeInUp} 0.8s ease-out forwards;
+  animation-delay: 0.1s;
+  opacity: 0;
+`;
+
+const StGridWrapper = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    grid-template-columns: 1fr 2fr;
+  }
+`;
+
+const StLeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+`;
+
+const StRightColumn = styled.div``;
+
+const StSectionTitle = styled.div`
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+// === Skills Styles ===
+const StSkillGroupWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const StSkillItem = styled.div``;
+
+const StSkillTitle = styled.h4`
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+`;
+
+const StTagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const StSkillTag = styled.span<{ $variant: "black" | "gray" | "blue" }>`
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  ${({ $variant, theme }) => {
+    switch ($variant) {
+      case "black":
+        return css`
+          background-color: ${theme.colors.gray900};
+          color: ${theme.colors.white};
+        `;
+      case "gray":
+        return css`
+          background-color: ${theme.colors.gray100};
+          color: ${theme.colors.gray700};
+          font-weight: 500;
+        `;
+      case "blue":
+        return css`
+          background-color: ${theme.colors.blue50};
+          color: ${theme.colors.blue700};
+          font-weight: 500;
+        `;
+    }
+  }}
+`;
+
+// === Timeline Styles ===
+const StTimelineList = styled.div`
+  border-left: 2px solid ${({ theme }) => theme.colors.gray100};
+  margin-left: 0.75rem;
+  padding-left: 2rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+`;
+
+const StTimelineItem = styled.div`
+  position: relative;
+
+  /* Hover 시 상세보기 버튼 효과 */
+  &:hover {
+    .detail-badge {
+      background-color: ${({ theme }) => theme.colors.gray100};
+    }
+    a {
+      opacity: 0.8;
+    }
+  }
+`;
+
+const StTimelineDot = styled.span<{ $colorClass: string }>`
+  position: absolute;
+  left: -2.6rem;
+  top: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: 4px solid ${({ theme }) => theme.colors.white};
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  background-color: ${({ theme, $colorClass }) => {
+    if ($colorClass.includes("orange-500")) return theme.colors.orange500;
+    if ($colorClass.includes("yellow-400")) return theme.colors.yellow400;
+    if ($colorClass.includes("blue-600")) return theme.colors.blue600;
+    if ($colorClass.includes("gray-400")) return theme.colors.gray400;
+    if ($colorClass.includes("black")) return theme.colors.black;
+    return theme.colors.gray200;
+  }};
+`;
+
+const StExperienceLink = styled(Link)`
+  display: block;
+  transition: opacity 0.2s;
+`;
+
+const StCompanyHeader = styled.h4`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+`;
+
+const StDetailBadge = styled.span.attrs({ className: "detail-badge" })`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 400;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+`;
+
+const StSummaryList = styled.ul`
+  list-style-type: disc;
+  list-style-position: outside;
+  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.875rem;
+  line-height: 1.625;
+  margin-left: 1rem;
+
+  li + li {
+    margin-top: 0.5rem;
+  }
+`;

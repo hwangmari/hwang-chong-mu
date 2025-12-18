@@ -1,14 +1,16 @@
 "use client";
 
+import Typography from "@/components/common/Typography";
 import Link from "next/link";
 import { ReactNode } from "react";
+import styled from "styled-components";
 
 interface ProjectCardProps {
   title: string;
   category: string;
   period: string;
   linkUrl: string;
-  description: ReactNode; // HTML 태그(<b> 등)를 포함하기 위해 ReactNode 사용
+  description: ReactNode;
   techStack: string[];
   details: {
     problem: string;
@@ -27,55 +29,169 @@ export default function ProjectCard({
   details,
 }: ProjectCardProps) {
   return (
-    <article className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300">
-      {/* 상단: 제목 및 링크 */}
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
-            <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md">
-              {category}
-            </span>
-          </div>
-          <p className="text-gray-500 text-sm">{period}</p>
-        </div>
-        <Link
-          href={linkUrl}
-          className="px-5 py-2 bg-gray-900 text-white font-bold rounded-xl text-sm hover:bg-black transition flex items-center gap-2"
-        >
+    <StCardContainer>
+      {/* 상단: 제목, 뱃지, 링크 */}
+      <StHeader>
+        <StTitleGroup>
+          <StTitleRow>
+            {/* Logic Component: Typography */}
+            <Typography variant="h3" as="h3">
+              {title}
+            </Typography>
+            {/* Styled Component: StCategoryBadge */}
+            <StCategoryBadge>{category}</StCategoryBadge>
+          </StTitleRow>
+          <Typography variant="caption" color="gray500">
+            {period}
+          </Typography>
+        </StTitleGroup>
+
+        <StServiceLink href={linkUrl} target="_blank">
           서비스 바로가기 🔗
-        </Link>
-      </div>
+        </StServiceLink>
+      </StHeader>
 
       {/* 설명 및 기술 스택 */}
-      <div className="mb-6">
-        <p className="text-gray-700 leading-relaxed mb-4 text-sm md:text-base">
-          {description}
-        </p>
-        <div className="flex flex-wrap gap-2 mt-3">
+      <StBody>
+        <StDescriptionWrapper>
+          <Typography variant="body2" color="gray700">
+            {description}
+          </Typography>
+        </StDescriptionWrapper>
+
+        <StTechStackList>
           {techStack.map((tech) => (
-            <span
-              key={tech}
-              className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg"
-            >
-              {tech}
-            </span>
+            <StTechTag key={tech}>{tech}</StTechTag>
           ))}
-        </div>
-      </div>
+        </StTechStackList>
+      </StBody>
 
       {/* 상세 내용 (Problem / Solution / Tech) */}
-      <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 text-sm text-gray-700 space-y-3">
-        <p>
-          <b className="text-blue-600">Problem:</b> {details.problem}
-        </p>
-        <p>
-          <b className="text-blue-600">Solution:</b> {details.solution}
-        </p>
-        <p>
-          <b className="text-blue-600">Tech:</b> {details.tech}
-        </p>
-      </div>
-    </article>
+      <StDetailsBox>
+        <StDetailRow>
+          <StDetailLabel>Problem:</StDetailLabel> {details.problem}
+        </StDetailRow>
+        <StDetailRow>
+          <StDetailLabel>Solution:</StDetailLabel> {details.solution}
+        </StDetailRow>
+        <StDetailRow>
+          <StDetailLabel>Tech:</StDetailLabel> {details.tech}
+        </StDetailRow>
+      </StDetailsBox>
+    </StCardContainer>
   );
 }
+
+// ✨ 스타일 정의 (St 프리픽스 적용)
+
+const StCardContainer = styled.article`
+  background-color: ${({ theme }) => theme.colors.white};
+  padding: 2rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  transition: box-shadow 0.3s;
+
+  &:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const StHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+`;
+
+const StTitleGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const StTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+`;
+
+const StCategoryBadge = styled.span`
+  background-color: ${({ theme }) => theme.colors.green100};
+  color: ${({ theme }) => theme.colors.green700};
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+`;
+
+const StServiceLink = styled(Link)`
+  padding: 0.5rem 1.25rem;
+  background-color: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.white};
+  font-weight: 700;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.black};
+  }
+`;
+
+const StBody = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const StDescriptionWrapper = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const StTechStackList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+`;
+
+const StTechTag = styled.span`
+  padding: 0.25rem 0.75rem;
+  background-color: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+`;
+
+const StDetailsBox = styled.div`
+  background-color: ${({ theme }) => theme.colors.blue50};
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.blue100};
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.gray700};
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const StDetailRow = styled.p`
+  line-height: 1.5;
+`;
+
+const StDetailLabel = styled.b`
+  color: ${({ theme }) => theme.colors.blue600};
+  font-weight: 700;
+  margin-right: 0.25rem;
+`;
