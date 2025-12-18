@@ -1,0 +1,201 @@
+"use client";
+
+import styled, { css, keyframes } from "styled-components";
+import { format, isSameDay } from "date-fns";
+import { ko } from "date-fns/locale";
+import Typography from "@/components/common/Typography";
+import { UserVote } from "@/types";
+
+interface Props {
+  roomName: string;
+  finalDate: Date;
+  participants: UserVote[];
+  onReset: () => void;
+  onRescueUser: (user: UserVote) => void;
+}
+
+export default function ConfirmedResultCard({
+  roomName,
+  finalDate,
+  participants,
+  onReset,
+  onRescueUser,
+}: Props) {
+  const getUnavailablePeople = (d: Date) =>
+    participants.filter(
+      (p) => !p.isAbsent && p.unavailableDates.some((ud) => isSameDay(ud, d))
+    );
+
+  const getAvailablePeople = (d: Date) =>
+    participants.filter(
+      (p) => !p.isAbsent && !p.unavailableDates.some((ud) => isSameDay(ud, d))
+    );
+
+  const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
+
+  return (
+    <StResultCard>
+      <div className="text-4xl mb-4">🎉</div>
+      <Typography variant="h3" as="h3" className="fw-900 mb-1">
+        약속 날짜 확정!
+      </Typography>
+
+      <StDateBox>
+        <Typography variant="caption" color="gray500" className="fw-700 mb-1">
+          {roomName}
+        </Typography>
+        <Typography variant="h2" className="fw-900 text-center">
+          {format(finalDate, "M월 d일 (E)", { locale: ko })}
+        </Typography>
+      </StDateBox>
+
+      {/* 결과 명단 리스트 */}
+      <StResultGrid>
+        {/* 1. 참석 가능자 */}
+        <StResultColumn $type="available">
+          <Typography variant="caption" color="gray400" className="fw-700 mb-2">
+            참석 가능 🙆‍♂️
+          </Typography>
+          <div className="flex flex-wrap gap-1">
+            {getAvailablePeople(finalDate).length > 0 ? (
+              getAvailablePeople(finalDate).map((p, i) => (
+                <StNameTag key={i}>{p.name}</StNameTag>
+              ))
+            ) : (
+              <span className="text-gray-300 text-xs">없음</span>
+            )}
+          </div>
+        </StResultColumn>
+
+        {/* 2. 불가능자 */}
+        <StResultColumn $type="unavailable">
+          <Typography variant="caption" className="text-red-400 fw-700 mb-2">
+            불가능 / 불참 🙅‍♂️
+          </Typography>
+          <div className="flex flex-wrap gap-1">
+            {[...getUnavailablePeople(finalDate), ...getAbsentPeople()].length >
+            0 ? (
+              [...getUnavailablePeople(finalDate), ...getAbsentPeople()].map(
+                (p, i) => (
+                  <StRescueButton
+                    key={i}
+                    onClick={() => onRescueUser(p)}
+                    $isAbsent={p.isAbsent}
+                  >
+                    {p.name} ✎
+                  </StRescueButton>
+                )
+              )
+            ) : (
+              <span className="text-gray-400 text-xs">전원 참석!</span>
+            )}
+          </div>
+        </StResultColumn>
+      </StResultGrid>
+
+      <StRetryButton onClick={onReset}>일정 다시 조정하기</StRetryButton>
+    </StResultCard>
+  );
+}
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StResultCard = styled.div`
+  width: 100%;
+  background-color: ${({ theme }) => theme.colors.white};
+  padding: 1.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 4px solid ${({ theme }) => theme.colors.gray900};
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: 1rem;
+  animation: ${fadeInUp} 0.5s ease-out;
+`;
+
+const StDateBox = styled.div`
+  background-color: ${({ theme }) => theme.colors.gray50};
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+const StResultGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  text-align: left;
+  margin-bottom: 1.5rem;
+`;
+
+const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+
+  ${({ $type, theme }) =>
+    $type === "available"
+      ? css`
+          background-color: ${theme.colors.gray50};
+          border-color: ${theme.colors.gray100};
+        `
+      : css`
+          background-color: #fef2f2;
+          border-color: #fee2e2;
+        `}
+`;
+
+const StNameTag = styled.span`
+  background-color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray800};
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  font-weight: 700;
+`;
+
+const StRescueButton = styled.button<{ $isAbsent: boolean }>`
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid;
+  font-weight: 700;
+  transition: transform 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  ${({ $isAbsent, theme }) =>
+    $isAbsent
+      ? css`
+          background-color: ${theme.colors.gray200};
+          color: ${theme.colors.gray500};
+          border-color: ${theme.colors.gray300};
+          text-decoration: line-through;
+        `
+      : css`
+          background-color: ${theme.colors.white};
+          color: #f87171;
+          border-color: #fee2e2;
+          &:hover {
+            background-color: #fef2f2;
+          }
+        `}
+`;
+
+const StRetryButton = styled.button`
+  color: ${({ theme }) => theme.colors.gray400};
+  text-decoration: underline;
+  font-size: 0.875rem;
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+`;
