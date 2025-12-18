@@ -16,8 +16,8 @@ export default function Home() {
       {/* 📂 프로젝트 목록 그리드 */}
       <GridContainer>
         {/* 1. 약속 잡기 카드 */}
-        <Link href="/meeting" passHref legacyBehavior>
-          <Card as="a">
+        <Link href="/meeting" passHref>
+          <Card>
             <IconBox>📅</IconBox>
             <CardContent>
               <CardTitle>약속 잡기</CardTitle>
@@ -28,7 +28,7 @@ export default function Home() {
         </Link>
 
         {/* 2. 포트폴리오 버튼 */}
-        <Link href="/portfolio" passHref legacyBehavior>
+        <Link href="/portfolio" passHref>
           <PortfolioButton as="a">
             <span>Developer Portfolio</span>
             <span>👩‍💻</span>

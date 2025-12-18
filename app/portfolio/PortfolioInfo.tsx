@@ -77,15 +77,13 @@ const StProfileWrapper = styled.div`
 `;
 
 const StTextContent = styled.div`
-  display: flex;
-  flex-direction: column;
   gap: 1rem;
 `;
 
 const StBadgeBox = styled.span`
   display: inline-block;
   background-color: ${({ theme }) => theme.colors.gray900};
-  border-radius: 9999px;
+  border-radius: 0.75rem;
   padding: 0.25rem 0.75rem;
   margin-bottom: 0.5rem;
   font-size: 0.75rem;

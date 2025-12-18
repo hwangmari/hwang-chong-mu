@@ -32,12 +32,12 @@ export default function ExperienceDetail() {
           <TitleRow>
             {/* 데이터에 있는 Tailwind 클래스를 prop으로 넘김 */}
             <CompanyDot $colorClass={data.color} />
-            <Typography variant="h1" as="h1">
+            <Typography variant="h2" as="h2">
               {data.company}
             </Typography>
           </TitleRow>
 
-          <Typography variant="h2" as="h2" color="gray600">
+          <Typography variant="h3" as="h3" color="gray600">
             {data.role}
           </Typography>
           <Typography variant="caption" color="gray400">
@@ -117,8 +117,8 @@ const TitleRow = styled.div`
 
 // 🔥 색상 매핑 로직 (ResumeSection과 동일)
 const CompanyDot = styled.span<{ $colorClass: string }>`
-  width: 0.75rem; /* w-3 */
-  height: 0.75rem; /* h-3 */
+  width: 1rem; /* w-3 */
+  height: 1rem; /* h-3 */
   border-radius: 9999px;
 
   /* 데이터 문자열에 따라 테마 색상 적용 */

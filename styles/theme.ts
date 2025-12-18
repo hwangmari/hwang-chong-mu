@@ -26,7 +26,7 @@ export const theme = {
     orange50: "#fff7ed",
     orange500: "#f97316",
     yellow200: "#fef08a",
-    yellow400: "",
+    yellow400: "#facc15",
   },
 
   // 반응형 미디어 쿼리

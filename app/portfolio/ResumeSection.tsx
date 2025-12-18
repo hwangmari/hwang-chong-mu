@@ -257,12 +257,11 @@ const StTimelineItem = styled.div`
 
 const StTimelineDot = styled.span<{ $colorClass: string }>`
   position: absolute;
-  left: -2.6rem;
-  top: 0.25rem;
-  width: 1.25rem;
-  height: 1.25rem;
+  left: -2.5rem;
+  top: 0.5rem;
+  width: 0.9rem;
+  height: 0.9rem;
   border-radius: 9999px;
-  border: 4px solid ${({ theme }) => theme.colors.white};
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
   background-color: ${({ theme, $colorClass }) => {
@@ -306,6 +305,7 @@ const StSummaryList = styled.ul`
   color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.875rem;
   line-height: 1.625;
+  margin-top: 1rem;
   margin-left: 1rem;
 
   li + li {
