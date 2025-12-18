@@ -39,6 +39,8 @@ export default function ResumeSection() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     "SCSS",
+                    "styled-components",
+                    "SCSS (CSS Modules)",
                     "AdorableCSS",
                     "Tailwind CSS",
                     "Cross Browsing",

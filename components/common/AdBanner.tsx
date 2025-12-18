@@ -5,14 +5,22 @@ import { useEffect } from "react";
 
 export default function AdBanner() {
   useEffect(() => {
-    try {
-      // 광고 스크립트 푸시 (에러 방지용 try-catch)
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (err) {
-      console.error("AdSense Error:", err);
-    }
+    const pushAd = () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adsbygoogle = (window as any).adsbygoogle;
+        // 광고 단위가 존재하고, 아직 처리되지 않은 ins 태그가 있을 때만 push
+        if (adsbygoogle) {
+          adsbygoogle.push({});
+        }
+      } catch (e) {
+        // 에러 로그를 굳이 남기지 않거나, 특정 조건에서만 남김
+      }
+    };
+
+    // 마운트 시 약간의 지연을 주어 DOM이 확실히 로드된 후 실행
+    const timer = setTimeout(pushAd, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
