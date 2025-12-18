@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useMemo } from "react";
+import styled, { css } from "styled-components";
 import { eachDayOfInterval, addWeeks, isSameDay } from "date-fns";
 
 const DateSelector = () => {
@@ -28,42 +31,99 @@ const DateSelector = () => {
   };
 
   return (
-    <div>
+    <StContainer>
       {/* 상단 컨트롤 버튼 */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={handleSelectAll}
-          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold hover:bg-blue-200"
-        >
+      <StControlGroup>
+        <StControlButton onClick={handleSelectAll} $variant="blue">
           🙆‍♂️ 다 돼요! (전체 선택)
-        </button>
-        <button
-          onClick={handleDeselectAll}
-          className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-bold hover:bg-gray-200"
-        >
+        </StControlButton>
+        <StControlButton onClick={handleDeselectAll} $variant="gray">
           🙅‍♂️ 싹 비우기 (초기화)
-        </button>
-      </div>
+        </StControlButton>
+      </StControlGroup>
 
       {/* 달력 그리드 */}
-      <div className="grid grid-cols-7 gap-2">
+      <StCalendarGrid>
         {allDates.map((date) => {
           const isSelected = selectedDates.some((d) => isSameDay(d, date));
           return (
-            <button
+            <StDateButton
               key={date.toString()}
               onClick={() => toggleDate(date)}
-              className={`p-2 rounded-lg transition ${
-                isSelected
-                  ? "bg-blue-500 text-white" // 선택됨
-                  : "bg-gray-50 text-gray-400" // 선택 안됨
-              }`}
+              $isSelected={isSelected}
             >
               {date.getDate()}
-            </button>
+            </StDateButton>
           );
         })}
-      </div>
-    </div>
+      </StCalendarGrid>
+    </StContainer>
   );
 };
+
+export default DateSelector;
+
+// ✨ 스타일 정의 (St 프리픽스)
+
+const StContainer = styled.div`
+  width: 100%;
+`;
+
+const StControlGroup = styled.div`
+  display: flex;
+  gap: 0.5rem; /* gap-2 */
+  margin-bottom: 1rem; /* mb-4 */
+`;
+
+const StControlButton = styled.button<{ $variant: "blue" | "gray" }>`
+  padding: 0.25rem 0.75rem; /* px-3 py-1 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 700; /* font-bold */
+  transition: background-color 0.2s;
+
+  ${({ $variant, theme }) =>
+    $variant === "blue"
+      ? css`
+          background-color: #dbeafe; /* blue-100 */
+          color: #1d4ed8; /* blue-700 */
+          &:hover {
+            background-color: #bfdbfe; /* blue-200 */
+          }
+        `
+      : css`
+          background-color: ${theme.colors.gray100};
+          color: ${theme.colors.gray600};
+          &:hover {
+            background-color: ${theme.colors.gray200};
+          }
+        `}
+`;
+
+const StCalendarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* grid-cols-7 */
+  gap: 0.5rem; /* gap-2 */
+`;
+
+const StDateButton = styled.button<{ $isSelected: boolean }>`
+  padding: 0.5rem; /* p-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: all 0.2s;
+  font-weight: 500;
+
+  ${({ $isSelected, theme }) =>
+    $isSelected
+      ? css`
+          background-color: #3b82f6; /* blue-500 */
+          color: ${theme.colors.white};
+        `
+      : css`
+          background-color: ${theme.colors.gray50};
+          color: ${theme.colors.gray400};
+
+          &:hover {
+            background-color: ${theme.colors.gray100};
+          }
+        `}
+`;

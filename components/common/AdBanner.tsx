@@ -1,7 +1,7 @@
-// components/common/AdBanner.tsx
 "use client";
 
 import { useEffect } from "react";
+import styled from "styled-components";
 
 export default function AdBanner() {
   useEffect(() => {
@@ -14,7 +14,7 @@ export default function AdBanner() {
           adsbygoogle.push({});
         }
       } catch (e) {
-        // 에러 로그를 굳이 남기지 않거나, 특정 조건에서만 남김
+        // 에러 로그 생략
       }
     };
 
@@ -24,8 +24,8 @@ export default function AdBanner() {
   }, []);
 
   return (
-    // 광고 영역 wrapper (가운데 정렬 & 넘침 방지)
-    <div className="w-full flex justify-center my-6 overflow-hidden bg-gray-50 min-h-[100px] items-center text-gray-300 text-xs">
+    <StAdContainer>
+      {/* 구글 애드센스 스크립트가 이 ins 태그 안에 광고를 삽입합니다 */}
       <ins
         className="adsbygoogle"
         style={{ display: "block", width: "100%" }}
@@ -34,6 +34,24 @@ export default function AdBanner() {
         data-ad-format="auto"
         data-full-width-responsive="true"
       ></ins>
-    </div>
+    </StAdContainer>
   );
 }
+
+// ✨ 스타일 정의 (St 프리픽스)
+
+const StAdContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0; /* my-6 */
+  overflow: hidden;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  min-height: 100px;
+  color: ${({ theme }) => theme.colors.gray300};
+  font-size: 0.75rem; /* text-xs */
+
+  /* 광고가 로드되기 전이나 에러 시 보여줄 스타일 */
+  text-align: center;
+`;

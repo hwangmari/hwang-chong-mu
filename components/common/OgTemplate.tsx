@@ -1,15 +1,32 @@
-// components/OgTemplate.tsx
 import React from "react";
 
-type Props = {
+// ✅ 테마 타입 정의
+type ThemeType = "blue" | "orange" | "lab";
+
+interface OgTemplateProps {
   title: string;
   subtitle: string;
   emoji: string;
-  theme: "blue" | "orange" | "lab"; // ✅ 'lab' 추가
-};
+  theme: ThemeType;
+}
 
-export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
-  const colors = {
+// ✅ 컬러 팔레트 타입 정의
+interface ColorPalette {
+  bg: string;
+  textMain: string;
+  textSub: string;
+  badgeBg: string;
+  badgeText: string;
+}
+
+export const OgTemplate = ({
+  title,
+  subtitle,
+  emoji,
+  theme,
+}: OgTemplateProps) => {
+  // 🎨 테마별 색상 정의
+  const themeColors: Record<ThemeType, ColorPalette> = {
     blue: {
       bg: "#EFF6FF",
       textMain: "#1E3A8A",
@@ -24,17 +41,17 @@ export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
       badgeBg: "#FFEDD5",
       badgeText: "#C2410C",
     },
-    // 🐰 메인 화면용 'Lab' 테마 (추가됨)
+    // 🐰 메인 화면용 'Lab' 테마
     lab: {
-      bg: "#F9FAFB", // 스크린샷과 똑같은 연한 회색 배경
-      textMain: "#111827", // 아주 진한 차콜색 (거의 검정)
-      textSub: "#6B7280", // 차분한 회색
-      badgeBg: "#FFFFFF", // 흰색 뱃지
-      badgeText: "#374151", // 진한 회색 텍스트
+      bg: "#F9FAFB",
+      textMain: "#111827",
+      textSub: "#6B7280",
+      badgeBg: "#FFFFFF",
+      badgeText: "#374151",
     },
   };
 
-  const style = colors[theme];
+  const colors = themeColors[theme];
 
   return (
     <div
@@ -45,7 +62,7 @@ export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: style.bg,
+        background: colors.bg,
         fontFamily: '"Noto Sans KR", sans-serif',
       }}
     >
@@ -66,11 +83,12 @@ export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
           style={{
             fontSize: 70,
             fontWeight: 900,
-            color: style.textMain,
+            color: colors.textMain,
             textAlign: "center",
             marginBottom: 10,
             lineHeight: 1.1,
             letterSpacing: "-0.03em",
+            whiteSpace: "pre-wrap", // 줄바꿈 지원
           }}
         >
           {title}
@@ -79,10 +97,11 @@ export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
         {/* 서브 타이틀 */}
         <div
           style={{
-            fontSize: 32, // 조금 더 작고 차분하게
-            color: style.textSub,
+            fontSize: 32,
+            color: colors.textSub,
             fontWeight: 500,
             marginTop: 10,
+            textAlign: "center",
           }}
         >
           {subtitle}
@@ -93,12 +112,15 @@ export const OgTemplate = ({ title, subtitle, emoji, theme }: Props) => {
           style={{
             marginTop: 60,
             padding: "12px 30px",
-            background: style.badgeBg,
+            background: colors.badgeBg,
             borderRadius: 50,
-            color: style.badgeText,
+            color: colors.badgeText,
             fontSize: 22,
             fontWeight: 700,
-            // lab 테마일 때만 그림자 살짝 추가
+            display: "flex", // 뱃지 내부 정렬
+            alignItems: "center",
+            justifyContent: "center",
+            // lab 테마일 때만 그림자 효과
             boxShadow:
               theme === "lab" ? "0 4px 6px -1px rgba(0, 0, 0, 0.05)" : "none",
           }}

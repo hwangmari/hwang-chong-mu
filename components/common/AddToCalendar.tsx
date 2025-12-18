@@ -1,9 +1,11 @@
-// components/AddToCalendar.tsx
+"use client";
+
 import React from "react";
+import styled, { css } from "styled-components";
 
 type Props = {
   title: string;
-  finalDate: string; // 예: "2025-12-10" (YYYY-MM-DD 형식)
+  finalDate: string; // 예: "2025-12-10"
 };
 
 const AddToCalendar = ({ title, finalDate }: Props) => {
@@ -12,15 +14,11 @@ const AddToCalendar = ({ title, finalDate }: Props) => {
 
   // 1. 구글 캘린더 링크 생성
   const handleGoogleCalendar = () => {
-    // 구글은 끝나는 날짜를 다음날로 잡아야 해당일 하루종일로 잡힘
-    // 혹은 시작일/종료일을 똑같이 YYYYMMDD 형태로 보내면 하루종일로 인식하기도 함
-    // 가장 확실한 방법: 시작일(YYYYMMDD) / 종료일(YYYYMMDD + 1일)
-
     const dateObj = new Date(finalDate);
     dateObj.setDate(dateObj.getDate() + 1); // 하루 더하기
     const nextDay = dateObj.toISOString().split("T")[0].replace(/-/g, "");
 
-    const dates = `${cleanDate}/${nextDay}`; // YYYYMMDD/YYYYMMDD (시간 없음)
+    const dates = `${cleanDate}/${nextDay}`; // YYYYMMDD/YYYYMMDD
 
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
       title
@@ -31,12 +29,10 @@ const AddToCalendar = ({ title, finalDate }: Props) => {
 
   // 2. .ics 파일 생성 (카카오/애플 호환)
   const handleICalendar = () => {
-    // 종료일 계산 (다음날)
     const dateObj = new Date(finalDate);
     dateObj.setDate(dateObj.getDate() + 1);
     const nextDay = dateObj.toISOString().split("T")[0].replace(/-/g, "");
 
-    // iCal 형식에서 하루 종일은 VALUE=DATE 속성을 씁니다.
     const icsContent = `
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -64,21 +60,48 @@ END:VCALENDAR`.trim();
   };
 
   return (
-    <div className="flex gap-2 justify-center mt-4 ">
-      <button
-        onClick={handleGoogleCalendar}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm font-medium"
-      >
+    <StContainer>
+      <StCalendarButton onClick={handleGoogleCalendar} $variant="google">
         Google 캘린더 저장
-      </button>
-      <button
-        onClick={handleICalendar}
-        className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition text-sm font-medium"
-      >
+      </StCalendarButton>
+      <StCalendarButton onClick={handleICalendar} $variant="ical">
         내 폰 캘린더에 저장 📅
-      </button>
-    </div>
+      </StCalendarButton>
+    </StContainer>
   );
 };
 
 export default AddToCalendar;
+
+// ✨ 스타일 정의 (St 프리픽스)
+
+const StContainer = styled.div`
+  display: flex;
+  gap: 0.5rem; /* gap-2 */
+  justify-content: center;
+  margin-top: 1rem; /* mt-4 */
+`;
+
+const StCalendarButton = styled.button<{ $variant: "google" | "ical" }>`
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  border-radius: 0.25rem; /* rounded (4px) */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  transition: background-color 0.2s;
+  color: ${({ $variant }) => ($variant === "google" ? "#ffffff" : "#000000")};
+
+  ${({ $variant }) =>
+    $variant === "google"
+      ? css`
+          background-color: #3b82f6; /* blue-500 */
+          &:hover {
+            background-color: #2563eb; /* blue-600 */
+          }
+        `
+      : css`
+          background-color: #facc15; /* yellow-400 */
+          &:hover {
+            background-color: #eab308; /* yellow-500 */
+          }
+        `}
+`;

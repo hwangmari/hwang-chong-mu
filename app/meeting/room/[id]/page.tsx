@@ -3,6 +3,7 @@
 // ✅ useState 필수!
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import styled, { keyframes, css } from "styled-components";
 import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/components/room/RoomHeader";
 import CalendarGrid from "@/components/room/CalendarGrid";
@@ -15,6 +16,7 @@ import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
 import { GuideModal } from "@/components/common/GuideModal";
 import AdBanner from "@/components/common/AdBanner";
+import Typography from "@/components/common/Typography";
 
 // --- [메인 페이지] ---
 export default function RoomDetail() {
@@ -51,12 +53,8 @@ export default function RoomDetail() {
     closeModal,
   } = useRoom(roomId);
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F3F4F6] text-gray-400 font-bold">
-        로딩중...🐰
-      </div>
-    );
+  if (loading) return <StLoadingContainer>로딩중...🐰</StLoadingContainer>;
+
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
   const getUnavailablePeople = (d: Date) =>
@@ -72,105 +70,79 @@ export default function RoomDetail() {
   const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex justify-center overflow-x-hidden">
-      <main className="w-full min-w-[320px] max-w-[540px] bg-[#F3F4F6] min-h-screen flex flex-col items-center py-8 px-4 pb-40 font-sans text-gray-900 relative">
+    <StPageContainer>
+      <StMainWrapper>
         {/* 헤더 및 가이드 버튼 */}
-        <div className="relative w-full mb-2">
+        <StHeaderWrapper>
           <RoomHeader title={room.name} />
-          <button
+          <StGuideButton
             onClick={() => setShowGuide(true)}
-            className="absolute top-0 right-2 w-8 h-8 bg-white border border-gray-200 rounded-full text-gray-400 font-bold shadow-sm hover:text-blue-600 hover:border-blue-200 hover:scale-110 transition flex items-center justify-center text-sm z-10"
             aria-label="이용 가이드 보기"
           >
             ?
-          </button>
-        </div>
+          </StGuideButton>
+        </StHeaderWrapper>
 
         {!finalDate && (
           <>
-            <div className="mb-2 text-center px-4 break-keep">
-              <p
-                className={
-                  step === "VOTING"
-                    ? "text-gray-500 text-sm font-bold"
-                    : "text-gray-900 text-lg font-extrabold"
-                }
+            <StGuideTextWrapper>
+              <Typography
+                variant={step === "VOTING" ? "body2" : "h2"}
+                color={step === "VOTING" ? "gray500" : "gray900"}
+                className={step === "VOTING" ? "fw-700" : "fw-900"}
               >
                 {step === "VOTING" ? (
                   isEditing ? (
                     `${currentName}님의 일정을 수정 중입니다 ✏️`
                   ) : currentName ? (
                     <>
-                      ${currentName}님,
-                      <b className="text-red-500 underline decoration-red-200 decoration-4">
-                        참석 불가능한 날짜
-                      </b>
-                      을 선택해주세요!
+                      {currentName}님,{" "}
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택해주세요!
                     </>
                   ) : (
                     <>
                       👇 이름을 입력하고{" "}
-                      <b className="text-red-500 underline decoration-red-200 decoration-4">
-                        참석 불가능한 날짜
-                      </b>
-                      를 선택하세요!
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택하세요!
                     </>
                   )
                 ) : (
                   "👑 최종 약속 날짜를 선택해주세요!"
                 )}
-              </p>
-            </div>
+              </Typography>
+            </StGuideTextWrapper>
 
             {step === "VOTING" && (
-              <div className="w-full flex gap-2 mb-4 animate-fade-in relative">
-                <div
-                  className={`flex-1 p-2 rounded-[1.5rem] shadow-sm border flex items-center gap-3 transition-colors ${
-                    isEditing
-                      ? "bg-gray-100 border-gray-300"
-                      : "bg-white border-gray-200"
-                  }`}
-                >
-                  <span className="p-2 bg-gray-100 text-gray-600 rounded-full text-lg">
+              <StInputWrapper className="animate-fade-in">
+                <StNameInputBox $isEditing={isEditing}>
+                  <StIconBadge>
                     <PersonIcon className="w-5 h-5" />
-                  </span>
-                  <input
+                  </StIconBadge>
+                  <StNameInput
                     type="text"
                     placeholder="이름 입력"
                     value={currentName}
                     onChange={(e) => setCurrentName(e.target.value)}
                     readOnly={isEditing}
-                    className={`flex-1 bg-transparent outline-none font-bold text-gray-900 placeholder-gray-300 min-w-0 text-sm sm:text-base ${
-                      isEditing ? "cursor-not-allowed text-gray-500" : ""
-                    }`}
+                    disabled={isEditing}
                   />
                   {(isEditing || currentName.length > 0) && (
-                    <button
-                      onClick={cancelEdit}
-                      className="mr-2 text-gray-400 hover:text-gray-600 font-bold px-2"
-                    >
-                      ✕
-                    </button>
+                    <StResetButton onClick={cancelEdit}>✕</StResetButton>
                   )}
-                </div>
-              </div>
+                </StNameInputBox>
+              </StInputWrapper>
             )}
 
             {step === "VOTING" && (
-              <div className="w-full flex justify-center gap-3 mb-2 animate-fade-in">
-                <button
-                  onClick={handleResetDates}
-                  className="flex items-center gap-2 px-4 py-1 bg-white border border-blue-100 text-blue-600 rounded-full text-xs font-bold shadow-sm hover:shadow-md hover:bg-blue-50 transition-all active:scale-95"
-                >
-                  <span className="text-lg">🙆‍♂️</span> 다 돼요 (초기화)
-                </button>
-                <button
-                  onClick={handleSelectAllDates}
-                  className="flex items-center gap-2 px-4 py-1 bg-white border border-red-100 text-[#FF6B6B] rounded-full text-xs font-bold shadow-sm hover:shadow-md hover:bg-red-50 transition-all active:scale-95"
-                >
-                  <span className="text-lg">🙅‍♂️</span> 다 안돼요 (전체선택)
-                </button>
-              </div>
+              <StActionButtonsWrapper className="animate-fade-in">
+                <StActionButton $variant="blue" onClick={handleResetDates}>
+                  <span className="emoji">🙆‍♂️</span> 다 돼요 (초기화)
+                </StActionButton>
+                <StActionButton $variant="red" onClick={handleSelectAllDates}>
+                  <span className="emoji">🙅‍♂️</span> 다 안돼요 (전체선택)
+                </StActionButton>
+              </StActionButtonsWrapper>
             )}
 
             <CalendarGrid
@@ -185,178 +157,135 @@ export default function RoomDetail() {
             />
 
             {step === "VOTING" && (
-              <div className="w-full flex flex-col gap-3 mb-10 animate-fade-in">
-                <button
-                  onClick={handleSubmitVote}
-                  className="w-full p-3 bg-[#656565]  text-white font-bold rounded-2xl shadow-xl shadow-gray-200 hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
+              <StSubmitSection className="animate-fade-in">
+                <StSubmitButton onClick={handleSubmitVote}>
                   <span>{isEditing ? "수정 완료" : "일정 저장하기"}</span>
                   <span className="text-xl">💾</span>
-                </button>
+                </StSubmitButton>
 
-                <button
-                  onClick={handleSubmitAbsent}
-                  className="w-full py-3 text-gray-400 font-medium text-xs hover:text-gray-600 transition flex items-center justify-center gap-1"
-                >
+                <StAbsentButton onClick={handleSubmitAbsent}>
                   혹시 이번 모임은 어려우신가요?
-                  <span className="underline decoration-gray-300 underline-offset-4">
-                    불참 알리기 🥲
-                  </span>
-                </button>
-              </div>
+                  <span className="underline">불참 알리기 🥲</span>
+                </StAbsentButton>
+              </StSubmitSection>
             )}
 
-            <div className="w-full flex flex-col gap-3 mb-10">
-              <h3 className="flex text-gray-600 font-bold text-sm">
-                <PeopleIcon className="w-5 h-5 mr-1 text-gray-600 " /> 참여 현황
-                ({participants.length}명)
-              </h3>
+            <StParticipantSection>
+              <StSectionTitle>
+                <PeopleIcon className="w-5 h-5 mr-1" /> 참여 현황 (
+                {participants.length}명)
+              </StSectionTitle>
+
               {participants.length === 0 ? (
-                <div className="text-center p-6 text-gray-400 bg-white rounded-2xl text-sm border border-dashed border-gray-300">
-                  등록된 일정 없음
-                </div>
+                <StEmptyState>등록된 일정 없음</StEmptyState>
               ) : (
                 participants.map((user, idx) => (
-                  <div
+                  <StUserCard
                     key={idx}
-                    className={`group relative bg-white p-3 pr-8 rounded-2xl shadow-sm border flex justify-between items-center transition-all hover:border-gray-400 hover:shadow-md ${
-                      user.isAbsent
-                        ? "border-gray-100 opacity-60"
-                        : "border-gray-100"
-                    }`}
+                    $isAbsent={user.isAbsent}
+                    onClick={() => handleEditUser(user)}
+                    className="group"
                   >
-                    <div
-                      className="flex items-center gap-3 cursor-pointer flex-1"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                          user.isAbsent
-                            ? "bg-gray-100 text-gray-400"
-                            : "bg-blue-50 text-blue-600"
-                        }`}
-                      >
+                    <StUserInfo>
+                      <StAvatar $isAbsent={user.isAbsent}>
                         {user.name.slice(0, 1)}
-                      </div>
-                      <span
-                        className={`font-bold text-sm ${
-                          user.isAbsent
-                            ? "text-gray-400 line-through"
-                            : "text-gray-700"
-                        }`}
-                      >
+                      </StAvatar>
+                      <StUserName $isAbsent={user.isAbsent}>
                         {user.name}
-                      </span>
-                    </div>
+                      </StUserName>
+                    </StUserInfo>
+
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="text-xs font-bold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity px-2"
-                      >
-                        수정
-                      </button>
+                      <StEditLabel className="edit-label">수정</StEditLabel>
 
                       {user.isAbsent ? (
-                        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center border border-gray-100">
-                          불참 🥲
-                        </span>
+                        <StStatusBadge $status="absent">불참 🥲</StStatusBadge>
                       ) : (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg font-bold min-w-[60px] text-center">
+                        <StStatusBadge $status="unavailable">
                           {user.unavailableDates.length}일 불가
-                        </span>
+                        </StStatusBadge>
                       )}
                     </div>
-                    <button
+
+                    <StDeleteButton
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteUser(user);
                       }}
-                      className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                      className="delete-btn"
                     >
                       ✕
-                    </button>
-                  </div>
+                    </StDeleteButton>
+                  </StUserCard>
                 ))
               )}
-            </div>
+            </StParticipantSection>
 
-            {/* 투표 마감 플로팅 버튼 (소프트 블랙 Ver.) */}
+            {/* 투표 마감 플로팅 버튼 */}
             {step === "VOTING" && (
-              <div className="fixed bottom-5 px-6 flex justify-center pointer-events-none">
-                {/* 배경 그라데이션 (텍스트 가독성용) */}
-                <div className=" bg-gradient-to-t from-[#F3F4F6] via-[#F3F4F6] to-transparent " />
-
-                <button
-                  onClick={handleGoToConfirm}
-                  className="
-                    pointer-events-auto
-                    w-full max-w-[500px] py-4 px-6
-                    bg-[#454545] text-white  
-                    font-bold text-lg
-                    rounded-full
-                    shadow-xl shadow-gray-300/50
-                    flex items-center justify-center gap-2
-                    transform transition-all duration-300
-                    hover:bg-black hover:scale-[1.02] hover:shadow-2xl
-                    active:scale-95
-                    group
-                  "
-                >
+              <StFloatingContainer>
+                <StFloatingGradient />
+                <StFinishButton onClick={handleGoToConfirm} className="group">
                   <span>투표 마감하기</span>
-                  <span className="group-hover:-translate-y-1 transition-transform">
-                    🐰
-                  </span>
-                </button>
-              </div>
+                  <span className="icon">🐰</span>
+                </StFinishButton>
+              </StFloatingContainer>
             )}
           </>
         )}
 
-        {/* 2. 🔥 [복구됨] 확정 화면 (이 부분이 빠져서 안 나왔던 거예요!) */}
+        {/* 2. 🔥 확정 화면 */}
         {finalDate && (
           <>
-            <div className="w-full bg-white p-6 rounded-[2rem] shadow-xl border-4 border-gray-900 text-center animate-fade-in-up mb-8 mt-4">
+            <StResultCard className="animate-fade-in-up">
               <div className="text-4xl mb-4">🎉</div>
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
+              <Typography variant="h2" as="h2" className="fw-900 mb-1">
                 약속 날짜 확정!
-              </h2>
-              <div className="bg-gray-50 p-6 rounded-2xl mb-6 mt-4 border border-gray-100">
-                <div className="text-gray-500 font-bold mb-1 text-xs">
+              </Typography>
+
+              <StDateBox>
+                <Typography
+                  variant="caption"
+                  color="gray500"
+                  className="fw-700 mb-1"
+                >
                   {room.name}
-                </div>
-                <div className="text-3xl font-black text-gray-900">
+                </Typography>
+                <Typography variant="h1" as="div" className="fw-900">
                   {format(finalDate, "M월 d일 (E)", { locale: ko })}
-                </div>
-              </div>
+                </Typography>
+              </StDateBox>
 
               {/* 결과 명단 리스트 */}
-              <div className="grid grid-cols-2 gap-4 text-left mb-6">
+              <StResultGrid>
                 {/* 1. 참석 가능자 */}
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="text-gray-400 font-bold text-xs mb-2">
+                <StResultColumn $type="available">
+                  <Typography
+                    variant="caption"
+                    color="gray400"
+                    className="fw-700 mb-2"
+                  >
                     참석 가능 🙆‍♂️
-                  </div>
+                  </Typography>
                   <div className="flex flex-wrap gap-1">
                     {getAvailablePeople(finalDate).length > 0 ? (
                       getAvailablePeople(finalDate).map((p, i) => (
-                        <span
-                          key={i}
-                          className="bg-white text-gray-800 text-xs px-2 py-1 rounded-lg border border-gray-200 font-bold"
-                        >
-                          {p.name}
-                        </span>
+                        <StNameTag key={i}>{p.name}</StNameTag>
                       ))
                     ) : (
                       <span className="text-gray-300 text-xs">없음</span>
                     )}
                   </div>
-                </div>
+                </StResultColumn>
 
                 {/* 2. 불가능자 */}
-                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                  <div className="text-red-400 font-bold text-xs mb-2">
+                <StResultColumn $type="unavailable">
+                  <Typography
+                    variant="caption"
+                    className="text-red-400 fw-700 mb-2"
+                  >
                     불가능 / 불참 🙅‍♂️
-                  </div>
+                  </Typography>
                   <div className="flex flex-wrap gap-1">
                     {[...getUnavailablePeople(finalDate), ...getAbsentPeople()]
                       .length > 0 ? (
@@ -364,32 +293,25 @@ export default function RoomDetail() {
                         ...getUnavailablePeople(finalDate),
                         ...getAbsentPeople(),
                       ].map((p, i) => (
-                        <button
+                        <StRescueButton
                           key={i}
                           onClick={() => handleRescueUser(p)}
-                          className={`text-xs px-2 py-1 rounded-lg border font-bold hover:scale-105 transition cursor-pointer ${
-                            p.isAbsent
-                              ? "bg-gray-200 text-gray-500 border-gray-300 line-through"
-                              : "bg-white text-red-400 border-red-100 hover:bg-red-100"
-                          }`}
+                          $isAbsent={p.isAbsent}
                         >
                           {p.name} ✎
-                        </button>
+                        </StRescueButton>
                       ))
                     ) : (
                       <span className="text-gray-400 text-xs">전원 참석!</span>
                     )}
                   </div>
-                </div>
-              </div>
+                </StResultColumn>
+              </StResultGrid>
 
-              <button
-                onClick={handleReset}
-                className="text-gray-400 underline text-sm hover:text-gray-600"
-              >
+              <StRetryButton onClick={handleReset}>
                 일정 다시 조정하기
-              </button>
-            </div>
+              </StRetryButton>
+            </StResultCard>
 
             <AddToCalendar
               title={room.name}
@@ -411,7 +333,597 @@ export default function RoomDetail() {
         />
 
         <AdBanner />
-      </main>
-    </div>
+      </StMainWrapper>
+    </StPageContainer>
   );
 }
+
+// ✨ 스타일 정의 (St 프리픽스)
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StLoadingContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 700;
+`;
+
+const StPageContainer = styled.div`
+  min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.gray50}; /* #F3F4F6 */
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+`;
+
+const StMainWrapper = styled.main`
+  width: 100%;
+  min-width: 320px;
+  max-width: 540px;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 10rem 1rem; /* py-8 px-4 pb-40 */
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: ${({ theme }) => theme.colors.gray900};
+  position: relative;
+`;
+
+const StHeaderWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.5rem;
+`;
+
+const StGuideButton = styled.button`
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 9999px;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 700;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  z-index: 10;
+  transition: all 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.blue600};
+    border-color: ${({ theme }) => theme.colors.blue200};
+    transform: scale(1.1);
+  }
+`;
+
+const StGuideTextWrapper = styled.div`
+  margin-bottom: 0.5rem;
+  text-align: center;
+  padding: 0 1rem;
+  word-break: keep-all;
+`;
+
+const StHighlightText = styled.b`
+  color: #ef4444; /* red-500 */
+  text-decoration: underline;
+  text-decoration-color: #fecaca; /* red-200 */
+  text-decoration-thickness: 4px;
+`;
+
+// === Input Section ===
+
+const StInputWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+const StNameInputBox = styled.div<{ $isEditing: boolean }>`
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: background-color 0.2s;
+
+  ${({ $isEditing, theme }) =>
+    $isEditing
+      ? css`
+          background-color: ${theme.colors.gray100};
+          border-color: ${theme.colors.gray300};
+        `
+      : css`
+          background-color: ${theme.colors.white};
+          border-color: ${theme.colors.gray200};
+        `}
+`;
+
+const StIconBadge = styled.span`
+  padding: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray600};
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const StNameInput = styled.input`
+  flex: 1;
+  background-color: transparent;
+  outline: none;
+  border: none;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+  min-width: 0;
+  font-size: 0.875rem;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.gray300};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: ${({ theme }) => theme.colors.gray500};
+  }
+
+  @media ${({ theme }) => theme.media.desktop} {
+    font-size: 1rem;
+  }
+`;
+
+const StResetButton = styled.button`
+  margin-right: 0.5rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 700;
+  padding: 0 0.5rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+`;
+
+// === Action Buttons ===
+
+const StActionButtonsWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+const StActionButton = styled.button<{ $variant: "blue" | "red" }>`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 1rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .emoji {
+    font-size: 1.125rem;
+  }
+
+  ${({ $variant, theme }) =>
+    $variant === "blue"
+      ? css`
+          border-color: ${theme.colors.blue100};
+          color: ${theme.colors.blue600};
+          &:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background-color: ${theme.colors.blue50};
+          }
+        `
+      : css`
+          border-color: #fee2e2; /* red-100 */
+          color: #ff6b6b;
+          &:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background-color: #fef2f2; /* red-50 */
+          }
+        `}
+`;
+
+// === Submit Section ===
+
+const StSubmitSection = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+const StSubmitButton = styled.button`
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #656565;
+  color: ${({ theme }) => theme.colors.white};
+  font-weight: 700;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+const StAbsentButton = styled.button`
+  width: 100%;
+  padding: 0.75rem 0;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 500;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+
+  .underline {
+    text-decoration: underline;
+    text-decoration-color: ${({ theme }) => theme.colors.gray300};
+    text-underline-offset: 4px;
+  }
+`;
+
+// === Participant Section ===
+
+const StParticipantSection = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+`;
+
+const StSectionTitle = styled.h3`
+  display: flex;
+  color: ${({ theme }) => theme.colors.gray600};
+  font-weight: 700;
+  font-size: 0.875rem;
+  align-items: center;
+`;
+
+const StEmptyState = styled.div`
+  text-align: center;
+  padding: 1.5rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  background-color: ${({ theme }) => theme.colors.white};
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  border: 1px dashed ${({ theme }) => theme.colors.gray300};
+`;
+
+const StUserCard = styled.div<{ $isAbsent: boolean }>`
+  position: relative;
+  background-color: ${({ theme }) => theme.colors.white};
+  padding: 0.75rem;
+  padding-right: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+
+  ${({ $isAbsent, theme }) =>
+    $isAbsent
+      ? css`
+          border-color: ${theme.colors.gray100};
+          opacity: 0.6;
+        `
+      : css`
+          border-color: ${theme.colors.gray100};
+          &:hover {
+            border-color: ${theme.colors.gray400};
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          }
+        `}
+
+  /* Group Hover 효과를 위해 자식 요소에서 .edit-label 등을 참조 */
+  &:hover .edit-label,
+  &:hover .delete-btn {
+    opacity: 1;
+  }
+`;
+
+const StUserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  flex: 1;
+`;
+
+const StAvatar = styled.div<{ $isAbsent: boolean }>`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+
+  ${({ $isAbsent, theme }) =>
+    $isAbsent
+      ? css`
+          background-color: ${theme.colors.gray100};
+          color: ${theme.colors.gray400};
+        `
+      : css`
+          background-color: ${theme.colors.blue50};
+          color: ${theme.colors.blue600};
+        `}
+`;
+
+const StUserName = styled.span<{ $isAbsent: boolean }>`
+  font-weight: 700;
+  font-size: 0.875rem;
+  ${({ $isAbsent, theme }) =>
+    $isAbsent
+      ? css`
+          color: ${theme.colors.gray400};
+          text-decoration: line-through;
+        `
+      : css`
+          color: ${theme.colors.gray700};
+        `}
+`;
+
+const StEditLabel = styled.button`
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6366f1; /* indigo-500 */
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding: 0 0.5rem;
+`;
+
+const StStatusBadge = styled.span<{ $status: "absent" | "unavailable" }>`
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+
+  ${({ $status, theme }) =>
+    $status === "absent"
+      ? css`
+          color: ${theme.colors.gray400};
+          background-color: ${theme.colors.gray50};
+          border: 1px solid ${theme.colors.gray100};
+        `
+      : css`
+          color: ${theme.colors.gray500};
+          background-color: ${theme.colors.gray100};
+        `}
+`;
+
+const StDeleteButton = styled.button`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: ${({ theme }) => theme.colors.gray300};
+  opacity: 0;
+  transition: all 0.2s;
+  padding: 0.25rem;
+
+  &:hover {
+    color: #ef4444; /* red-500 */
+  }
+`;
+
+// === Floating Button ===
+
+const StFloatingContainer = styled.div`
+  position: fixed;
+  bottom: 1.25rem;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  width: 100%;
+  max-width: 540px; /* 메인 컨테이너와 동일하게 제한 */
+`;
+
+const StFloatingGradient = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5rem;
+  background: linear-gradient(to top, #f3f4f6, #f3f4f6, transparent);
+  z-index: -1;
+`;
+
+const StFinishButton = styled.button`
+  pointer-events: auto;
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem 1.5rem;
+  background-color: #454545;
+  color: ${({ theme }) => theme.colors.white};
+  font-weight: 700;
+  font-size: 1.125rem;
+  border-radius: 9999px;
+  box-shadow: 0 20px 25px -5px rgba(209, 213, 219, 0.5); /* shadow-gray-300/50 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.black};
+    transform: scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .icon {
+    transition: transform 0.2s;
+  }
+
+  &:hover .icon {
+    transform: translateY(-4px);
+  }
+`;
+
+// === Result Card (확정 화면) ===
+
+const StResultCard = styled.div`
+  width: 100%;
+  background-color: ${({ theme }) => theme.colors.white};
+  padding: 1.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 4px solid ${({ theme }) => theme.colors.gray900};
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: 1rem;
+  animation: ${fadeInUp} 0.5s ease-out;
+`;
+
+const StDateBox = styled.div`
+  background-color: ${({ theme }) => theme.colors.gray50};
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+const StResultGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  text-align: left;
+  margin-bottom: 1.5rem;
+`;
+
+const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+
+  ${({ $type, theme }) =>
+    $type === "available"
+      ? css`
+          background-color: ${theme.colors.gray50};
+          border-color: ${theme.colors.gray100};
+        `
+      : css`
+          background-color: #fef2f2; /* red-50 */
+          border-color: #fee2e2; /* red-100 */
+        `}
+`;
+
+const StNameTag = styled.span`
+  background-color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray800};
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  font-weight: 700;
+`;
+
+const StRescueButton = styled.button<{ $isAbsent: boolean }>`
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid;
+  font-weight: 700;
+  transition: transform 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  ${({ $isAbsent, theme }) =>
+    $isAbsent
+      ? css`
+          background-color: ${theme.colors.gray200};
+          color: ${theme.colors.gray500};
+          border-color: ${theme.colors.gray300};
+          text-decoration: line-through;
+        `
+      : css`
+          background-color: ${theme.colors.white};
+          color: #f87171; /* red-400 */
+          border-color: #fee2e2; /* red-100 */
+          &:hover {
+            background-color: #fef2f2;
+          }
+        `}
+`;
+
+const StRetryButton = styled.button`
+  color: ${({ theme }) => theme.colors.gray400};
+  text-decoration: underline;
+  font-size: 0.875rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+`;
