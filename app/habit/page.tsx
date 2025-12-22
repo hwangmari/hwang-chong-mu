@@ -35,7 +35,6 @@ export default function CreateHabitPage() {
       .single();
 
     if (error) {
-      console.error(error);
       alert("방 생성에 실패했습니다.");
     } else {
       router.push(`/habit/${data.id}`);

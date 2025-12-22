@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
+import { ModalProvider } from "@/components/common/ModalProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,7 +32,9 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
 
-        <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+        <StyledComponentsRegistry>
+          <ModalProvider>{children}</ModalProvider>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

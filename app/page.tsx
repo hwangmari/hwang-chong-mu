@@ -166,7 +166,7 @@ const CardDesc = styled.p`
   color: ${({ theme }) => theme.colors.gray400};
 `;
 
-const PortfolioButton = styled.a`
+const PortfolioButton = styled.div`
   width: 100%;
   margin-top: 1rem;
   padding: 1rem;

@@ -1,29 +1,28 @@
 "use client";
 
-import { useEffect, useState, use } from "react"; // Next.js 15+ 에서는 params를 use()로 감쌈
+import { useEffect, useState, use } from "react";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import InstallGuide from "@/components/common/InstallGuide";
 import MonthlyTracker from "../MonthlyTracker";
 
-// params 타입 정의
 export default function HabitRoomPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // params 언래핑 (Next.js 15 방식)
   const { id } = use(params);
-  const [goal, setGoal] = useState<{ title: string; emoji: string } | null>(
-    null
-  );
-
-  // ✅ 가이드 모달 상태
+  // ✅ color 타입 추가
+  const [goal, setGoal] = useState<{
+    title: string;
+    emoji: string;
+    color: string;
+  } | null>(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
 
-  // 방 정보 가져오기
   useEffect(() => {
     const fetchGoal = async () => {
+      // ✅ color 컬럼도 같이 가져오기
       const { data } = await supabase
         .from("goals")
         .select("*")
@@ -44,10 +43,12 @@ export default function HabitRoomPage({
         <SubTitle>꾸준함이 재능을 이긴다!</SubTitle>
       </Header>
 
-      {/* goal_id를 넘겨서 이 방의 데이터만 다루도록 함 */}
-      <MonthlyTracker goalId={Number(id)} />
+      {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
+      <MonthlyTracker
+        goalId={Number(id)}
+        themeColor={goal.color || "#22c55e"}
+      />
 
-      {/* ✅ 가이드 컴포넌트 연결 */}
       <InstallGuide
         isOpen={showInstallGuide}
         onClose={() => setShowInstallGuide(false)}
@@ -56,38 +57,7 @@ export default function HabitRoomPage({
   );
 }
 
-// ✨ 스타일 추가
-const TopBar = styled.div`
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  justify-content: flex-end; /* 오른쪽 정렬 */
-  margin-bottom: 1rem;
-`;
-
-const MenuButton = styled.button`
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid #e2e8f0;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: white;
-    color: #3b82f6;
-    border-color: #3b82f6;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  }
-`;
-
+// ... (스타일은 기존 유지) ...
 const MainContainer = styled.main`
   min-height: 100vh;
   background-color: #f8fafc;
@@ -96,28 +66,24 @@ const MainContainer = styled.main`
   align-items: center;
   padding: 2rem 1rem;
 `;
-
+// ... (나머지 스타일들)
 const Header = styled.div`
   text-align: center;
   margin-bottom: 2rem;
 `;
-
 const Emoji = styled.div`
   font-size: 3rem;
   margin-bottom: 0.5rem;
 `;
-
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 900;
   color: #0f172a;
 `;
-
 const SubTitle = styled.p`
   color: #64748b;
   margin-top: 0.5rem;
 `;
-
 const Loading = styled.div`
   display: flex;
   justify-content: center;
