@@ -15,6 +15,7 @@ export default function ProjectSection() {
         </StSectionTitleWrapper>
 
         <StProjectList>
+          {/* 1. 약속 잡기 프로젝트 */}
           <ProjectCard
             title="황총무의 약속 잡기 (Hwang's Planner)"
             category="Service"
@@ -43,6 +44,37 @@ export default function ProjectSection() {
               solution:
                 "불가능한 날짜(Unavailable Dates)를 우선 소거하여 남는 날짜를 도출하는 로직 구현.",
               tech: "3주치 동적 캘린더 알고리즘 구현 (date-fns), SEO 최적화를 통한 애드센스 승인.",
+            }}
+          />
+
+          {/* ✅ 2. 습관 관리 프로젝트 (추가됨!) */}
+          <ProjectCard
+            title="황총무의 습관 관리 (Hwang's Habit Tracker)"
+            category="Service"
+            period="2025.12.22 - 진행 중 (1인 개발)"
+            linkUrl="/habit"
+            description={
+              <>
+                작심삼일로 끝나는 습관을 <b>&quot;잔디 심기&quot;</b>의 시각적
+                즐거움으로 지속하게 만드는 <b>게이미피케이션 습관 트래커</b>
+                입니다. 달력의 날짜가 목표 달성률에 따라 <b>나만의 테마 컬러</b>
+                로 진하게 물들어가는 과정을 통해, 성취감을 직관적으로
+                시각화했습니다.
+              </>
+            }
+            techStack={[
+              "Next.js 14",
+              "TypeScript",
+              "Styled Components",
+              "Supabase",
+              "date-fns",
+            ]}
+            details={{
+              problem:
+                "단순 체크리스트는 동기부여가 약하고, 한 달 전체의 성실함(흐름)을 한눈에 파악하기 어려움.",
+              solution:
+                "GitHub Contribution Graph에서 영감을 받은 '농도 캘린더' UI 구현 및 비밀번호 공유 방식을 통한 간편한 그룹 생성.",
+              tech: "Context API를 활용한 전역 모달(Global Modal) 모듈화, 커스텀 훅(useModal) 설계를 통한 비즈니스 로직 분리.",
             }}
           />
         </StProjectList>

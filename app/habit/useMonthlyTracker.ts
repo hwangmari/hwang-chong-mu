@@ -1,0 +1,173 @@
+// components/habit/useMonthlyTracker.ts
+import { useState, useEffect, useCallback } from "react";
+import { format, startOfMonth, endOfMonth } from "date-fns";
+import { supabase } from "@/lib/supabase";
+import { useModal } from "@/components/common/ModalProvider";
+
+export interface GoalItem {
+  id: number;
+  title: string;
+  goal_id: number;
+}
+
+export function useMonthlyTracker(goalId: number) {
+  const { openConfirm, openAlert } = useModal();
+
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showWeekends, setShowWeekends] = useState(true);
+
+  const [items, setItems] = useState<GoalItem[]>([]);
+  const [monthlyLogs, setMonthlyLogs] = useState<
+    { date: string; count: number }[]
+  >([]);
+  const [dailyCompletedIds, setDailyCompletedIds] = useState<number[]>([]);
+
+  // 1. 초기 설정 로드
+  useEffect(() => {
+    const savedSetting = localStorage.getItem(`showWeekends_${goalId}`);
+    if (savedSetting !== null) setShowWeekends(savedSetting === "true");
+  }, [goalId]);
+
+  const toggleWeekends = () => {
+    const nextValue = !showWeekends;
+    setShowWeekends(nextValue);
+    localStorage.setItem(`showWeekends_${goalId}`, String(nextValue));
+  };
+
+  // 2. 데이터 Fetching
+  const fetchGoalItems = useCallback(async () => {
+    const { data } = await supabase
+      .from("goal_items")
+      .select("*")
+      .eq("goal_id", goalId)
+      .order("id");
+    if (data) setItems(data);
+  }, [goalId]);
+
+  const fetchMonthlyLogs = useCallback(
+    async (date: Date) => {
+      const start = format(startOfMonth(date), "yyyy-MM-dd");
+      const end = format(endOfMonth(date), "yyyy-MM-dd");
+
+      // (최적화) goal_items ID를 먼저 가져오는 쿼리
+      const { data: currentItems } = await supabase
+        .from("goal_items")
+        .select("id")
+        .eq("goal_id", goalId);
+      if (!currentItems?.length) {
+        setMonthlyLogs([]);
+        return;
+      }
+
+      const itemIds = currentItems.map((i) => i.id);
+      const { data: logs } = await supabase
+        .from("goal_logs")
+        .select("completed_at")
+        .in("item_id", itemIds)
+        .gte("completed_at", start)
+        .lte("completed_at", end);
+
+      if (logs) {
+        const counts: Record<string, number> = {};
+        logs.forEach(
+          (log) =>
+            (counts[log.completed_at] = (counts[log.completed_at] || 0) + 1)
+        );
+        setMonthlyLogs(
+          Object.entries(counts).map(([date, count]) => ({ date, count }))
+        );
+      }
+    },
+    [goalId]
+  );
+
+  const fetchDailyLogs = useCallback(
+    async (date: Date) => {
+      const dateStr = format(date, "yyyy-MM-dd");
+      const { data: currentItems } = await supabase
+        .from("goal_items")
+        .select("id")
+        .eq("goal_id", goalId);
+      if (!currentItems?.length) {
+        setDailyCompletedIds([]);
+        return;
+      }
+
+      const itemIds = currentItems.map((i) => i.id);
+      const { data } = await supabase
+        .from("goal_logs")
+        .select("item_id")
+        .in("item_id", itemIds)
+        .eq("completed_at", dateStr);
+      if (data) setDailyCompletedIds(data.map((l) => l.item_id));
+    },
+    [goalId]
+  );
+
+  useEffect(() => {
+    fetchGoalItems();
+  }, [fetchGoalItems]);
+  useEffect(() => {
+    fetchMonthlyLogs(currentDate);
+  }, [currentDate, fetchMonthlyLogs]);
+  useEffect(() => {
+    fetchDailyLogs(selectedDate);
+  }, [selectedDate, fetchDailyLogs]);
+
+  // 3. 액션 핸들러
+  const addItem = async (title: string) => {
+    if (!title.trim()) return;
+    await supabase.from("goal_items").insert({ goal_id: goalId, title });
+    fetchGoalItems();
+  };
+
+  const deleteItem = async (itemId: number) => {
+    const isConfirmed = await openConfirm("정말 이 목표를 삭제하시겠습니까?");
+    if (isConfirmed) {
+      await supabase.from("goal_items").delete().eq("id", itemId);
+      await fetchGoalItems();
+      fetchMonthlyLogs(currentDate);
+      await openAlert("삭제되었습니다! 🗑️");
+    }
+  };
+
+  const toggleComplete = async (itemId: number) => {
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const isDone = dailyCompletedIds.includes(itemId);
+
+    if (isDone) {
+      await supabase
+        .from("goal_logs")
+        .delete()
+        .match({ item_id: itemId, completed_at: dateStr });
+      setDailyCompletedIds((prev) => prev.filter((id) => id !== itemId));
+    } else {
+      await supabase
+        .from("goal_logs")
+        .insert({ item_id: itemId, completed_at: dateStr });
+      setDailyCompletedIds((prev) => [...prev, itemId]);
+    }
+    // 로그 업데이트 (낙관적 업데이트 로직 생략하고 심플하게 다시 fetch)
+    fetchMonthlyLogs(currentDate);
+  };
+
+  return {
+    state: {
+      currentDate,
+      selectedDate,
+      showWeekends,
+      items,
+      monthlyLogs,
+      dailyCompletedIds,
+    },
+    actions: {
+      setCurrentDate,
+      setSelectedDate,
+      toggleWeekends,
+      addItem,
+      deleteItem,
+      toggleComplete,
+    },
+  };
+}

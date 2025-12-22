@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
+import FooterGuide from "@/components/common/FooterGuide";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
@@ -89,42 +90,31 @@ export default function CreateHabitPage() {
           </Button>
         </Card>
 
-        {/* 👇 새로 추가된 가이드 섹션 */}
-        <FooterTips>
-          <TipTitle>💡 습관 방, 이렇게 써보세요!</TipTitle>
-          <TipList>
-            <TipItem>
-              <TipIcon>👀</TipIcon>
-              <div>
-                <strong>눈으로 보는 성취감</strong>
-                <p>
-                  머릿속 의지는 약하지만, 눈에 보이는 기록은 강력해요. 하루하루
-                  채워지는 잔디를 보며 동기부여를 얻으세요.
-                </p>
-              </div>
-            </TipItem>
-            <TipItem>
-              <TipIcon>🐣</TipIcon>
-              <div>
-                <strong>작은 것부터 시작하기</strong>
-                <p>
-                  &apos;매일 10km 뛰기&apos;보다는 &apos;운동화 신기&apos;부터!
-                  아주 사소한 목표라도 꾸준히 체크하는 게 중요해요.
-                </p>
-              </div>
-            </TipItem>
-            <TipItem>
-              <TipIcon>🎨</TipIcon>
-              <div>
-                <strong>나만의 컬러로 물들이기</strong>
-                <p>
-                  내가 가장 좋아하는 색을 골라보세요. 달력이 그 색으로 가득 찰
-                  때의 짜릿함을 느껴보세요!
-                </p>
-              </div>
-            </TipItem>
-          </TipList>
-        </FooterTips>
+        {/* ✅ 습관 관리용 데이터 주입 */}
+        <FooterGuide
+          title="💡 습관 방, 이렇게 써보세요!"
+          // story는 없으므로 생략 (자동으로 팁 리스트만 나옴)
+          tips={[
+            {
+              icon: <TipIcon>👀</TipIcon>,
+              title: "눈으로 보는 성취감",
+              description:
+                "머릿속 의지는 약하지만, 눈에 보이는 기록은 강력해요. 하루하루 채워지는 잔디를 보며 동기부여를 얻으세요.",
+            },
+            {
+              icon: <TipIcon>🐣</TipIcon>,
+              title: "작은 것부터 시작하기",
+              description:
+                "'매일 10km 뛰기'보다는 '운동화 신기'부터! 아주 사소한 목표라도 꾸준히 체크하는 게 중요해요.",
+            },
+            {
+              icon: <TipIcon>🎨</TipIcon>,
+              title: "나만의 컬러로 물들이기",
+              description:
+                "내가 가장 좋아하는 색을 골라보세요. 달력이 그 색으로 가득 찰 때의 짜릿함을 느껴보세요!",
+            },
+          ]}
+        />
       </ContentWrapper>
     </Container>
   );

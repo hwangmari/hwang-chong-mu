@@ -58,7 +58,7 @@ export default function ParticipantList({
               }}
               className="delete-btn"
             >
-              ✕
+              <DeleteOutlineIcon sx={{ fontSize: 20 }} />{" "}
             </StDeleteButton>
           </StUserCard>
         ))
