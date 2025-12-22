@@ -11,3 +11,15 @@ export interface ModalState {
   message: string;
   onConfirm?: () => void;
 }
+
+// types/index.ts 에 추가
+export interface Habit {
+  id: number;
+  title: string;
+  icon: string;
+}
+
+export interface HabitLog {
+  habit_id: number;
+  completed_at: string;
+}

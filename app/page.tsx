@@ -1,7 +1,7 @@
 "use client"; // Styled Components는 클라이언트 컴포넌트입니다.
 
 import Link from "next/link";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 
 export default function Home() {
   return (
@@ -27,9 +27,21 @@ export default function Home() {
           </Card>
         </Link>
 
-        {/* 2. 포트폴리오 버튼 */}
+        {/* ✅ 2. 습관 관리 카드 (추가됨!) */}
+        <Link href="/habit" passHref>
+          <Card>
+            <IconBox>🥕</IconBox>
+            <CardContent>
+              <CardTitle>습관 관리</CardTitle>
+              <CardDesc>매일매일 쌓이는 성실함의 농도</CardDesc>
+            </CardContent>
+            <ArrowIcon>➔</ArrowIcon>
+          </Card>
+        </Link>
+
+        {/* 3. 포트폴리오 버튼 */}
         <Link href="/portfolio" passHref>
-          <PortfolioButton as="a">
+          <PortfolioButton>
             <span>Developer Portfolio</span>
             <span>👩‍💻</span>
           </PortfolioButton>
@@ -42,7 +54,7 @@ export default function Home() {
   );
 }
 
-// ✨ 스타일 정의
+// ✨ 스타일 정의 (기존과 동일)
 const MainContainer = styled.main`
   min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.gray50};
@@ -116,7 +128,6 @@ const ArrowIcon = styled.div`
   transition: transform 0.2s;
 `;
 
-// Link 컴포넌트를 감싸기 위해 'as="a"'를 사용하거나 스타일된 div를 만듦
 const Card = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
@@ -128,7 +139,7 @@ const Card = styled.div`
   gap: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  text-decoration: none; // a태그일 때 밑줄 제거
+  text-decoration: none;
 
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
