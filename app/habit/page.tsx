@@ -105,13 +105,19 @@ export default function CreateHabitPage() {
               icon: <TipIcon>🐣</TipIcon>,
               title: "작은 것부터 시작하기",
               description:
-                "'매일 10km 뛰기'보다는 '운동화 신기'부터! 아주 사소한 목표라도 꾸준히 체크하는 게 중요해요.",
+                "'매일 10km 뛰기'보다는 '밖에 나가기'부터! 아주 사소한 목표라도 꾸준히 체크하는 게 중요해요.",
             },
             {
               icon: <TipIcon>🎨</TipIcon>,
               title: "나만의 컬러로 물들이기",
               description:
                 "내가 가장 좋아하는 색을 골라보세요. 달력이 그 색으로 가득 찰 때의 짜릿함을 느껴보세요!",
+            },
+            {
+              icon: <TipIcon>👯</TipIcon>,
+              title: "스터디 출석부로 쓰기",
+              description:
+                "목표 이름에 '루이, '후' 처럼 친구 이름을 적어보세요. 서로의 출석률을 체크하며 선의의 경쟁을 할 수 있어요!",
             },
           ]}
         />
