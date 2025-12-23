@@ -20,9 +20,10 @@ interface Props {
   monthlyLogs: { date: string; count: number }[];
   totalItemsCount: number;
   onSelectDate: (date: Date) => void;
+  hoveredItemId: number | null;
+  rawLogs: { item_id: number; completed_at: string }[];
 }
 
-// 🎨 농도 조절 헬퍼
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -35,9 +36,11 @@ export default function CalendarGrid({
   selectedDate,
   showWeekends,
   themeColor,
-  monthlyLogs,
+  monthlyLogs = [], // ✅ 기본값 추가 (안전장치)
   totalItemsCount,
   onSelectDate,
+  hoveredItemId,
+  rawLogs = [], // ✅ 기본값 추가 (안전장치)
 }: Props) {
   const monthStart = startOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({
@@ -54,11 +57,22 @@ export default function CalendarGrid({
     : weekDays.filter((_, i) => i !== 0 && i !== 6);
   const today = new Date();
 
-  const getIntensityColor = (dateStr: string) => {
-    const log = monthlyLogs.find((l) => l.date === dateStr);
+  // ✅ [수정] 호버 + 일반 상태 모두 처리하는 함수
+  const getCellColor = (dateStr: string) => {
+    // 1. 특정 아이템 호버 중일 때
+    if (hoveredItemId !== null) {
+      const isDone = rawLogs?.some(
+        (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
+      );
+      return isDone ? themeColor : "#f3f4f6";
+    }
+
+    // 2. 평상시 (전체 농도 보기)
+    const log = monthlyLogs?.find((l) => l.date === dateStr);
     const count = log ? log.count : 0;
     const total = totalItemsCount || 1;
     const ratio = count / total;
+
     if (ratio === 0) return "#f3f4f6";
     if (ratio <= 0.3) return hexToRgba(themeColor, 0.3);
     if (ratio <= 0.6) return hexToRgba(themeColor, 0.6);
@@ -77,7 +91,8 @@ export default function CalendarGrid({
         return (
           <StDateCell
             key={dateStr}
-            $bgColor={getIntensityColor(dateStr)}
+            // ✅ [중요] 여기서 getCellColor를 써야 합니다!
+            $bgColor={getCellColor(dateStr)}
             $isCurrentMonth={isSameMonth(day, monthStart)}
             $isSelected={isSameDay(day, selectedDate)}
             $borderColor={themeColor}
@@ -92,7 +107,7 @@ export default function CalendarGrid({
   );
 }
 
-// ✨ 스타일 정의
+// ... (스타일 생략 - 기존과 동일) ...
 const StCalendarGrid = styled.div<{ $columns: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $columns }) => $columns}, 1fr);
@@ -113,6 +128,7 @@ const StDateCell = styled.div<{
   $isSelected: boolean;
   $borderColor: string;
 }>`
+  position: relative;
   aspect-ratio: 1;
   background-color: ${({ $bgColor }) => $bgColor};
   border-radius: 12px;
@@ -126,7 +142,7 @@ const StDateCell = styled.div<{
   border: 2px solid
     ${({ $isSelected, $borderColor }) =>
       $isSelected ? $borderColor : "transparent"};
-  transition: all 0.2s;
+  transition: background-color 0.2s;
   &:hover {
     transform: scale(1.1);
   }
@@ -137,9 +153,13 @@ const StDateText = styled.span<{ $isToday?: boolean }>`
   color: #374151;
 `;
 const StTodayDot = styled.div<{ $color: string }>`
-  width: 4px;
-  height: 4px;
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
   border-radius: 50%;
-  background-color: ${({ $color }) => $color};
+  background-color: #000;
   opacity: 0.8;
 `;

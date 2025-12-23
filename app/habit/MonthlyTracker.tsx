@@ -2,9 +2,9 @@
 
 import styled from "styled-components";
 import { format, addMonths, subMonths } from "date-fns";
-import { useMonthlyTracker } from "./useMonthlyTracker"; // ✅ 커스텀 훅
-import CalendarGrid from "./CalendarGrid"; // ✅ 분리된 달력
-import TodoList from "./TodoList"; // ✅ 분리된 리스트
+import { useMonthlyTracker } from "./useMonthlyTracker";
+import CalendarGrid from "./CalendarGrid";
+import TodoList from "./TodoList";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
@@ -15,6 +15,7 @@ interface Props {
 
 export default function MonthlyTracker({ goalId, themeColor }: Props) {
   const { state, actions } = useMonthlyTracker(goalId);
+  // ✅ [수정] state에서 hoveredItemId, rawLogs 구조분해 할당
   const {
     currentDate,
     selectedDate,
@@ -22,6 +23,8 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
     items,
     monthlyLogs,
     dailyCompletedIds,
+    hoveredItemId,
+    rawLogs,
   } = state;
 
   return (
@@ -58,6 +61,9 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
         monthlyLogs={monthlyLogs}
         totalItemsCount={items.length}
         onSelectDate={actions.setSelectedDate}
+        // ✅ [추가] 달력에 호버 정보 전달
+        hoveredItemId={hoveredItemId}
+        rawLogs={rawLogs}
       />
 
       {/* ✅ 할 일 목록 */}
@@ -69,12 +75,14 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
         onToggle={actions.toggleComplete}
         onDelete={actions.deleteItem}
         onAdd={actions.addItem}
+        // ✅ [추가] 리스트에 호버 핸들러 전달
+        onHoverItem={actions.setHoveredItemId}
       />
     </StContainer>
   );
 }
 
-// ✨ 컨테이너 스타일만 남김
+// ... (스타일은 그대로 유지)
 const StContainer = styled.div`
   width: 100%;
   max-width: 400px;

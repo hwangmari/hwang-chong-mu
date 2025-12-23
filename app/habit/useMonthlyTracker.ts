@@ -17,6 +17,12 @@ export function useMonthlyTracker(goalId: number) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showWeekends, setShowWeekends] = useState(true);
 
+  // ✅ [추가 1] 호버된 아이템 ID와 원본 로그 상태
+  const [hoveredItemId, setHoveredItemId] = useState<number | null>(null);
+  const [rawLogs, setRawLogs] = useState<
+    { item_id: number; completed_at: string }[]
+  >([]);
+
   const [items, setItems] = useState<GoalItem[]>([]);
   const [monthlyLogs, setMonthlyLogs] = useState<
     { date: string; count: number }[]
@@ -25,18 +31,20 @@ export function useMonthlyTracker(goalId: number) {
 
   // 1. 초기 설정 로드
   useEffect(() => {
+    if (!goalId || isNaN(goalId)) return;
     const savedSetting = localStorage.getItem(`showWeekends_${goalId}`);
     if (savedSetting !== null) setShowWeekends(savedSetting === "true");
   }, [goalId]);
 
   const toggleWeekends = () => {
+    if (!goalId || isNaN(goalId)) return;
     const nextValue = !showWeekends;
     setShowWeekends(nextValue);
     localStorage.setItem(`showWeekends_${goalId}`, String(nextValue));
   };
 
-  // 2. 데이터 Fetching
   const fetchGoalItems = useCallback(async () => {
+    if (!goalId || isNaN(goalId)) return;
     const { data } = await supabase
       .from("goal_items")
       .select("*")
@@ -47,28 +55,32 @@ export function useMonthlyTracker(goalId: number) {
 
   const fetchMonthlyLogs = useCallback(
     async (date: Date) => {
+      if (!goalId || isNaN(goalId)) return;
       const start = format(startOfMonth(date), "yyyy-MM-dd");
       const end = format(endOfMonth(date), "yyyy-MM-dd");
 
-      // (최적화) goal_items ID를 먼저 가져오는 쿼리
       const { data: currentItems } = await supabase
         .from("goal_items")
         .select("id")
         .eq("goal_id", goalId);
       if (!currentItems?.length) {
         setMonthlyLogs([]);
+        setRawLogs([]); // 초기화
         return;
       }
 
       const itemIds = currentItems.map((i) => i.id);
+      // ✅ [수정] item_id도 같이 가져오기
       const { data: logs } = await supabase
         .from("goal_logs")
-        .select("completed_at")
+        .select("item_id, completed_at")
         .in("item_id", itemIds)
         .gte("completed_at", start)
         .lte("completed_at", end);
 
       if (logs) {
+        setRawLogs(logs); // ✅ 원본 로그 저장
+
         const counts: Record<string, number> = {};
         logs.forEach(
           (log) =>
@@ -84,6 +96,7 @@ export function useMonthlyTracker(goalId: number) {
 
   const fetchDailyLogs = useCallback(
     async (date: Date) => {
+      if (!goalId || isNaN(goalId)) return;
       const dateStr = format(date, "yyyy-MM-dd");
       const { data: currentItems } = await supabase
         .from("goal_items")
@@ -115,7 +128,6 @@ export function useMonthlyTracker(goalId: number) {
     fetchDailyLogs(selectedDate);
   }, [selectedDate, fetchDailyLogs]);
 
-  // 3. 액션 핸들러
   const addItem = async (title: string) => {
     if (!title.trim()) return;
     await supabase.from("goal_items").insert({ goal_id: goalId, title });
@@ -148,11 +160,11 @@ export function useMonthlyTracker(goalId: number) {
         .insert({ item_id: itemId, completed_at: dateStr });
       setDailyCompletedIds((prev) => [...prev, itemId]);
     }
-    // 로그 업데이트 (낙관적 업데이트 로직 생략하고 심플하게 다시 fetch)
     fetchMonthlyLogs(currentDate);
   };
 
   return {
+    // ✅ [추가 2] state와 actions에 호버 관련 항목 내보내기
     state: {
       currentDate,
       selectedDate,
@@ -160,6 +172,8 @@ export function useMonthlyTracker(goalId: number) {
       items,
       monthlyLogs,
       dailyCompletedIds,
+      hoveredItemId,
+      rawLogs,
     },
     actions: {
       setCurrentDate,
@@ -168,6 +182,7 @@ export function useMonthlyTracker(goalId: number) {
       addItem,
       deleteItem,
       toggleComplete,
+      setHoveredItemId,
     },
   };
 }

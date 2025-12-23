@@ -26,6 +26,8 @@ interface Props {
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onAdd: (title: string) => void;
+
+  onHoverItem: (id: number | null) => void;
 }
 
 export default function TodoList({
@@ -36,6 +38,7 @@ export default function TodoList({
   onToggle,
   onDelete,
   onAdd,
+  onHoverItem,
 }: Props) {
   const [newItemTitle, setNewItemTitle] = useState("");
 
@@ -60,6 +63,8 @@ export default function TodoList({
           <StTodoItem
             key={item.id}
             onClick={() => onToggle(item.id)}
+            onMouseEnter={() => onHoverItem(item.id)}
+            onMouseLeave={() => onHoverItem(null)}
             $done={completedIds.includes(item.id)}
             $activeColor={hexToRgba(themeColor, 0.15)}
           >
@@ -68,11 +73,9 @@ export default function TodoList({
               $color={themeColor}
             >
               {completedIds.includes(item.id) ? (
-                <CheckCircleIcon sx={{ fontSize: 20, color: themeColor }} />
+                <CheckCircleIcon sx={{ fontSize: 20, color: "white" }} />
               ) : (
-                <RadioButtonUncheckedIcon
-                  sx={{ fontSize: 20, color: "#d1d5db" }}
-                />
+                <RadioButtonUncheckedIcon sx={{ fontSize: 20 }} />
               )}
             </StCheckCircle>
             <StTodoText
