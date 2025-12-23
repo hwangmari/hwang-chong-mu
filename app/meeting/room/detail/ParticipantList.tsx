@@ -2,6 +2,7 @@
 
 import styled, { css } from "styled-components";
 import PeopleIcon from "@/components/icons/PeopleIcon";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { UserVote } from "@/types";
 
 interface Props {
