@@ -19,7 +19,6 @@ export default function Header() {
 }
 
 // ✨ 스타일 정의 (St 프리픽스)
-
 const StHeaderContainer = styled.div`
   text-align: center;
   margin-bottom: 2rem; /* mb-8 */

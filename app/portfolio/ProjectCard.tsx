@@ -126,7 +126,7 @@ const StTitleRow = styled.div`
 
 const StCategoryBadge = styled.span`
   background-color: ${({ theme }) => theme.colors.green100};
-  color: ${({ theme }) => theme.colors.green700};
+  color: ${({ theme }) => theme.colors.green600};
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.25rem 0.5rem;

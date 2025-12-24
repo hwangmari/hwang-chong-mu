@@ -17,6 +17,7 @@ import ExpenseList from "../ExpenseList";
 import MemberManager from "../MemberManager";
 import SettlementReport from "../SettlementReport";
 import CalcMainContent from "../CalcMainContent";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 // Types (필요시 types/index.ts로 이동)
 interface Expense {
@@ -92,45 +93,39 @@ export default function CalcDetailParamsPage() {
 
   return (
     <StContainer>
-      <CalcHeader onShare={handleShare} />
+      <StWrapper>
+        <CalcHeader onShare={handleShare} />
 
-      {/* ✅ 중복 코드 제거 및 컴포넌트 교체 */}
-      <CalcMainContent
-        members={members}
-        expenses={expenses}
-        settlementResult={settlementResult}
-        onAddMember={handleAddMember}
-        onDeleteMember={handleDeleteMember}
-        onAddExpense={handleAddExpense}
-        onDeleteExpense={handleDeleteExpense}
-        onUpdateExpense={handleUpdateExpense}
-      />
-      {/* 하단 팁 가이드 */}
-      <FooterGuide
-        title="💡 정산 꿀팁"
-        tips={[
-          {
-            icon: <div>🔗</div>,
-            title: "링크 공유",
-            description:
-              "위의 공유 버튼을 눌러 링크를 복사해 단톡방에 올리세요.",
-          },
-          {
-            icon: <div>💾</div>,
-            title: "자동 저장",
-            description:
-              "이 페이지는 고유한 주소를 가지고 있어 언제든 다시 들어올 수 있어요.",
-          },
-        ]}
-      />
+        {/* ✅ 중복 코드 제거 및 컴포넌트 교체 */}
+        <CalcMainContent
+          members={members}
+          expenses={expenses}
+          settlementResult={settlementResult}
+          onAddMember={handleAddMember}
+          onDeleteMember={handleDeleteMember}
+          onAddExpense={handleAddExpense}
+          onDeleteExpense={handleDeleteExpense}
+          onUpdateExpense={handleUpdateExpense}
+        />
+        {/* 하단 팁 가이드 */}
+        <FooterGuide
+          title="💡 정산 꿀팁"
+          tips={[
+            {
+              icon: "🔗",
+              title: "링크 공유",
+              description:
+                "위의 공유 버튼을 눌러 링크를 복사해 단톡방에 올리세요.",
+            },
+            {
+              icon: "💾",
+              title: "자동 저장",
+              description:
+                "이 페이지는 고유한 주소를 가지고 있어 언제든 다시 들어올 수 있어요.",
+            },
+          ]}
+        />
+      </StWrapper>
     </StContainer>
   );
 }
-
-const StContainer = styled.div`
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-  background-color: ${({ theme }) => theme.semantic.bg};
-  min-height: 100vh;
-`;

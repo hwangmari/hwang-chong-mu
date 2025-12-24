@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import FooterGuide from "@/components/common/FooterGuide";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
@@ -44,8 +45,8 @@ export default function CreateHabitPage() {
   };
 
   return (
-    <Container>
-      <ContentWrapper>
+    <StContainer>
+      <StWrapper>
         <Card>
           <IconWrapper
             onClick={() =>
@@ -121,27 +122,12 @@ export default function CreateHabitPage() {
             },
           ]}
         />
-      </ContentWrapper>
-    </Container>
+      </StWrapper>
+    </StContainer>
   );
 }
 
 // ✨ 스타일 정의
-const Container = styled.div`
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  background-color: #f8fafc;
-  padding: 2rem 1rem;
-`;
-
-const ContentWrapper = styled.div`
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem; /* 카드와 팁 사이 간격 */
-`;
 
 const Card = styled.div`
   background: white;
@@ -152,7 +138,6 @@ const Card = styled.div`
   border: 1px solid #f1f5f9;
 `;
 
-// ... (기존 IconWrapper, Title, Input, ColorSection 등 스타일 유지) ...
 const IconWrapper = styled.div`
   font-size: 4rem;
   margin-bottom: 1.5rem;

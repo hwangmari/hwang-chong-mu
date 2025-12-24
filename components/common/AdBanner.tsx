@@ -41,14 +41,12 @@ export default function AdBanner() {
 // ✨ 스타일 정의 (St 프리픽스)
 
 const StAdContainer = styled.div`
-  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 1.5rem 0; /* my-6 */
   overflow: hidden;
   background-color: ${({ theme }) => theme.colors.gray50};
-  min-height: 100px;
   color: ${({ theme }) => theme.colors.gray300};
   font-size: 0.75rem; /* text-xs */
 

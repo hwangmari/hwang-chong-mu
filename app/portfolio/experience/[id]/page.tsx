@@ -30,7 +30,6 @@ export default function ExperienceDetail() {
           <BackLink href="/portfolio">← 포트폴리오 메인으로 돌아가기</BackLink>
 
           <TitleRow>
-            {/* 데이터에 있는 Tailwind 클래스를 prop으로 넘김 */}
             <CompanyDot $colorClass={data.color} />
             <Typography variant="h2" as="h2">
               {data.company}
@@ -91,16 +90,16 @@ const HeaderWrapper = styled.div`
 `;
 
 const HeaderContent = styled.div`
-  max-width: 56rem; /* max-w-4xl */
+  max-width: 56rem;
   margin: 0 auto;
-  padding: 4rem 1.5rem; /* py-16 px-6 */
+  padding: 4rem 1.5rem;
 `;
 
 const BackLink = styled(Link)`
   display: inline-block;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.gray400};
-  margin-bottom: 1.5rem; /* mb-6 */
+  margin-bottom: 1.5rem;
   transition: color 0.2s;
 
   &:hover {
@@ -111,8 +110,8 @@ const BackLink = styled(Link)`
 const TitleRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem; /* gap-3 */
-  margin-bottom: 0.5rem; /* mb-2 */
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 `;
 
 // 🔥 색상 매핑 로직 (ResumeSection과 동일)
@@ -134,19 +133,19 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
 
 // === Body Styles ===
 const BodyContent = styled.div`
-  max-width: 56rem; /* max-w-4xl */
+  max-width: 56rem;
   margin: 0 auto;
-  padding: 3rem 1.5rem; /* py-12 px-6 */
+  padding: 3rem 1.5rem;
 
   animation: ${fadeInUp} 0.8s ease-out forwards;
 `;
 
 const SectionTitleWrapper = styled.div`
-  margin-bottom: 2rem; /* mb-8 */
+  margin-bottom: 2rem;
 `;
 
 const ProjectList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3rem; /* space-y-12 */
+  gap: 3rem;
 `;

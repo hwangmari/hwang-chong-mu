@@ -18,6 +18,8 @@ import DateControlButtons from "../detail/DateControlButtons";
 import FloatingFinishButton from "../detail/FloatingFinishButton";
 import NameInput from "../detail/NameInput";
 import VoteSubmitButtons from "../detail/VoteSubmitButtons";
+import ParticipantList from "../detail/ParticipantList";
+import { StWrapper, StContainer } from "@/components/styled/layout.styled";
 
 // 🔥 분리된 컴포넌트 임포트
 
@@ -57,8 +59,8 @@ export default function RoomDetail() {
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
   return (
-    <StPageContainer>
-      <StMainWrapper>
+    <StContainer>
+      <StWrapper>
         {/* 헤더 및 가이드 버튼 */}
         <StHeaderWrapper>
           <RoomHeader title={room.name} />
@@ -171,8 +173,8 @@ export default function RoomDetail() {
           }}
         />
         <AdBanner />
-      </StMainWrapper>
-    </StPageContainer>
+      </StWrapper>
+    </StContainer>
   );
 }
 
@@ -185,29 +187,6 @@ const StLoadingContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.gray50};
   color: ${({ theme }) => theme.colors.gray400};
   font-weight: 700;
-`;
-
-const StPageContainer = styled.div`
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.gray50};
-  display: flex;
-  justify-content: center;
-  overflow-x: hidden;
-`;
-
-const StMainWrapper = styled.main`
-  width: 100%;
-  min-width: 320px;
-  max-width: 540px;
-  background-color: ${({ theme }) => theme.colors.gray50};
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem 10rem 1rem;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  color: ${({ theme }) => theme.colors.gray900};
-  position: relative;
 `;
 
 const StHeaderWrapper = styled.div`

@@ -9,7 +9,6 @@ interface Props {
 export default function FloatingFinishButton({ onFinish }: Props) {
   return (
     <StFloatingContainer>
-      <StFloatingGradient />
       <StFinishButton onClick={onFinish} className="group">
         <span>투표 마감하기</span>
         <span className="icon">🐰</span>
@@ -27,16 +26,7 @@ const StFloatingContainer = styled.div`
   pointer-events: none;
   width: 100%;
   max-width: 540px;
-`;
-
-const StFloatingGradient = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 5rem;
-  background: linear-gradient(to top, #f3f4f6, #f3f4f6, transparent);
-  z-index: -1;
+  z-index: 10;
 `;
 
 const StFinishButton = styled.button`

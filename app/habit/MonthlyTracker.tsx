@@ -7,6 +7,7 @@ import CalendarGrid from "./CalendarGrid";
 import TodoList from "./TodoList";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { StSection } from "@/components/styled/layout.styled";
 
 interface Props {
   goalId: number;
@@ -28,7 +29,7 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
   } = state;
 
   return (
-    <StContainer>
+    <StSection>
       <StHeaderWrapper>
         <StHeader>
           <StNavButton
@@ -78,19 +79,11 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
         // ✅ [추가] 리스트에 호버 핸들러 전달
         onHoverItem={actions.setHoveredItemId}
       />
-    </StContainer>
+    </StSection>
   );
 }
 
 // ... (스타일은 그대로 유지)
-const StContainer = styled.div`
-  width: 100%;
-  max-width: 400px;
-  background: white;
-  border-radius: 24px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-`;
 const StHeaderWrapper = styled.div`
   display: flex;
   justify-content: space-between;

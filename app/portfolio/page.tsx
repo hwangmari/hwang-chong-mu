@@ -8,7 +8,7 @@ import ProjectSection from "./ProjectSection";
 
 export default function PortfolioPage() {
   return (
-    <StPageContainer>
+    <StContainer>
       {/* 1. 헤더 (프로필) */}
       <PortfolioInfo />
 
@@ -26,13 +26,13 @@ export default function PortfolioPage() {
           © 2025 Hwang Hye kyeong. All rights reserved.
         </Typography>
       </StFooter>
-    </StPageContainer>
+    </StContainer>
   );
 }
 
 // ✨ 스타일 정의
 
-const StPageContainer = styled.div`
+const StContainer = styled.div`
   min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray900};

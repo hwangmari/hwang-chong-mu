@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import InstallGuide from "@/components/common/InstallGuide";
 import MonthlyTracker from "../MonthlyTracker";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 export default function HabitRoomPage({
   params,
@@ -36,36 +37,29 @@ export default function HabitRoomPage({
   if (!goal) return <Loading>방 찾는 중... 🥕</Loading>;
 
   return (
-    <MainContainer>
-      <Header>
-        <Emoji>{goal.emoji}</Emoji>
-        <Title>{goal.title}</Title>
-        <SubTitle>꾸준함이 재능을 이긴다!</SubTitle>
-      </Header>
+    <StContainer>
+      <StWrapper>
+        <Header>
+          <Emoji>{goal.emoji}</Emoji>
+          <Title>{goal.title}</Title>
+          <SubTitle>꾸준함이 재능을 이긴다!</SubTitle>
+        </Header>
 
-      {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
-      <MonthlyTracker
-        goalId={Number(id)}
-        themeColor={goal.color || "#22c55e"}
-      />
+        {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
+        <MonthlyTracker
+          goalId={Number(id)}
+          themeColor={goal.color || "#22c55e"}
+        />
 
-      <InstallGuide
-        isOpen={showInstallGuide}
-        onClose={() => setShowInstallGuide(false)}
-      />
-    </MainContainer>
+        <InstallGuide
+          isOpen={showInstallGuide}
+          onClose={() => setShowInstallGuide(false)}
+        />
+      </StWrapper>
+    </StContainer>
   );
 }
 
-// ... (스타일은 기존 유지) ...
-const MainContainer = styled.main`
-  min-height: 100vh;
-  background-color: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem;
-`;
 // ... (나머지 스타일들)
 const Header = styled.div`
   text-align: center;

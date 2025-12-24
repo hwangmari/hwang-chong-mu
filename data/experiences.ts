@@ -23,7 +23,7 @@ export const experiences: ExperienceData[] = [
     id: "hanwha",
     company: "한화생명",
     role: "다이렉트 웹 개발 / 디지털프로덕트팀 - 세일즈파트 (대리)",
-    period: "2023.08 - 현재",
+    period: "2023.08 - 재직중",
     color: "bg-orange-500",
     summary: [
       "다이렉트 웹 서비스 및 백오피스 프론트엔드 개발 및 운영",
@@ -83,7 +83,7 @@ export const experiences: ExperienceData[] = [
     id: "kakao-ent",
     company: "카카오 엔터프라이즈",
     role: "워크개발 / 마크업개발파트",
-    period: "2020.07 - 2023.08",
+    period: "2020.07 - 2023.08 3년 2개월",
     color: "bg-yellow-400",
     summary: [
       "React, Svelte, Angular 등 다양한 프레임워크 기반의 대규모 서비스 구축 및 운영",
@@ -178,7 +178,7 @@ export const experiences: ExperienceData[] = [
     id: "musinsa",
     company: "29CM(무신사)",
     role: "Platform / Cell FE",
-    period: "2017.02 - 2020.07",
+    period: "2017.02 - 2020.07 3년 6개월",
     color: "bg-black",
     summary: [
       "AngularJS 기반의 29CM 사이트 전면 개편 및 유지보수 전담",
@@ -243,7 +243,7 @@ export const experiences: ExperienceData[] = [
     id: "douzone",
     company: "더존 비즈온",
     role: "UI 개발팀 (전임)",
-    period: "2016.05 - 2016.12",
+    period: "2016.05 - 2016.12 8개월",
     color: "bg-blue-600",
     summary: [
       "비즈니스 플랫폼 WEHAGO 신규 프로젝트의 초기 React 마크업 구조 설계",
@@ -271,7 +271,7 @@ export const experiences: ExperienceData[] = [
     id: "hivelab",
     company: "하이브랩",
     role: "UIT 웹표준개발팀 (전임)",
-    period: "2012.09 - 2016.05",
+    period: "2012.09 - 2016.05 3년 9개월",
     color: "bg-gray-400",
     summary: [
       "국내 대형 포털(Naver) 및 커머스(CJ) 사이트의 웹 표준 마크업 및 운영",
