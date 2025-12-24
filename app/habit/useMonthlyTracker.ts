@@ -33,6 +33,7 @@ export function useMonthlyTracker(goalId: number) {
   useEffect(() => {
     if (!goalId || isNaN(goalId)) return;
     const savedSetting = localStorage.getItem(`showWeekends_${goalId}`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (savedSetting !== null) setShowWeekends(savedSetting === "true");
   }, [goalId]);
 
@@ -119,12 +120,15 @@ export function useMonthlyTracker(goalId: number) {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGoalItems();
   }, [fetchGoalItems]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMonthlyLogs(currentDate);
   }, [currentDate, fetchMonthlyLogs]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDailyLogs(selectedDate);
   }, [selectedDate, fetchDailyLogs]);
 

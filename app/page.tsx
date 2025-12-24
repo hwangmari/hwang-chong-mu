@@ -39,7 +39,19 @@ export default function Home() {
           </Card>
         </Link>
 
-        {/* 3. 포트폴리오 버튼 */}
+        {/* 💸 3. N빵 계산기 카드 (New!) */}
+        <Link href="/calc" passHref>
+          <Card>
+            <IconBox>💸</IconBox>
+            <CardContent>
+              <CardTitle>N빵 계산기</CardTitle>
+              <CardDesc>복잡한 셈은 덜어내고 추억만 남기는 법</CardDesc>
+            </CardContent>
+            <ArrowIcon>➔</ArrowIcon>
+          </Card>
+        </Link>
+
+        {/* 포트폴리오 버튼 */}
         <Link href="/portfolio" passHref>
           <PortfolioButton>
             <span>Developer Portfolio</span>
