@@ -1,8 +1,5 @@
 "use client";
 import styled from "styled-components";
-import Link from "next/link";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-
 interface Props {
   onSave?: () => void;
   onShare?: () => void;
@@ -12,11 +9,6 @@ interface Props {
 export default function CalcHeader({ onSave, onShare, isLoading }: Props) {
   return (
     <StHeader>
-      <Link href="/">
-        <StBackButton>
-          <ArrowBackIosNewIcon style={{ fontSize: "1.2rem" }} />
-        </StBackButton>
-      </Link>
       <StTitle>💸 황총무 N빵 계산기</StTitle>
 
       {onShare ? (
@@ -38,28 +30,6 @@ const StHeader = styled.div`
   justify-content: center;
   align-items: flex-start;
   min-height: 2.5rem; /* 높이 확보 */
-`;
-
-const StBackButton = styled.span`
-  position: absolute;
-  left: 0;
-  display: flex; /* 아이콘 중앙 정렬 */
-  align-items: center;
-  justify-content: center;
-
-  /* ✅ 컬러 및 호버 효과 */
-  color: ${({ theme }) => theme.colors.gray400};
-  padding: 0.5rem; /* 터치 영역 확보 */
-  margin-left: -0.5rem; /* 패딩만큼 왼쪽으로 이동 */
-  border-radius: 50%;
-  transition: all 0.2s;
-  cursor: pointer;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.gray700};
-    background-color: ${({ theme }) =>
-      theme.colors.gray100}; /* 은은한 배경 추가 */
-  }
 `;
 
 const StTitle = styled.h1`

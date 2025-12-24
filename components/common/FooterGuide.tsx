@@ -66,6 +66,8 @@ export default function FooterGuide({ title, story, tips }: FooterGuideProps) {
 // ✨ 스타일 정의 (St 프리픽스)
 
 const StFooterContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   margin-top: 1rem;
   gap: 1.5rem;
 `;

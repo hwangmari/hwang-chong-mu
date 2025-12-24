@@ -4,6 +4,8 @@ import "./globals.css";
 import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
 import { ModalProvider } from "@/components/common/ModalProvider";
+import CommonHeader from "@/components/common/GlobalHeader";
+import GlobalHeader from "@/components/common/GlobalHeader";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,7 +35,11 @@ export default function RootLayout({
         />
 
         <StyledComponentsRegistry>
-          <ModalProvider>{children}</ModalProvider>
+          <ModalProvider>
+            {/* 공통 헤더 적용 */}
+            <GlobalHeader />
+            {children}
+          </ModalProvider>
         </StyledComponentsRegistry>
       </body>
     </html>
