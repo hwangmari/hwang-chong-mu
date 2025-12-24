@@ -11,6 +11,10 @@ export default function Home() {
         <Avatar>🐰</Avatar>
         <Title>황총무의 실험실</Title>
         <Description>복잡한 건 제가 할게요, 총총총... 🐾</Description>
+        {/* ✅ 추가된 멘트 */}
+        <SubDescription>
+          일상의 번거로움을 덜어주는 <b>다정한 도구들</b>을 연구합니다.
+        </SubDescription>
       </ProfileSection>
 
       {/* 📂 프로젝트 목록 그리드 */}
@@ -110,7 +114,6 @@ const Description = styled.p`
 
 const GridContainer = styled.div`
   width: 100%;
-  max-width: 28rem;
   display: grid;
   gap: 1rem;
 `;
@@ -207,4 +210,15 @@ const Footer = styled.footer`
   color: ${({ theme }) => theme.colors.gray300};
   font-size: 0.75rem;
   font-weight: 500;
+`;
+const SubDescription = styled.p`
+  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.5;
+
+  b {
+    color: ${({ theme }) => theme.colors.blue500}; /* 포인트 컬러 */
+    font-weight: 600;
+  }
 `;

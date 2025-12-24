@@ -1,4 +1,4 @@
-// app/data/experiences.ts
+// data/experiences.ts
 
 export interface ExperienceData {
   id: string;

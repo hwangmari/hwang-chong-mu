@@ -1,7 +1,7 @@
 "use client";
+import { Expense } from "@/types";
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import { Expense } from "@/types";
 
 interface Props {
   expenses: Expense[];

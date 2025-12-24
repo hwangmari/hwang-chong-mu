@@ -115,7 +115,6 @@ export default function CalcPage() {
 }
 
 const StContainer = styled.div`
-  max-width: 600px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   background-color: ${({ theme }) => theme.semantic.bg};

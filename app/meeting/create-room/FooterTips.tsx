@@ -69,7 +69,6 @@ export default function FooterTips() {
 const StFooterContainer = styled.div`
   margin-top: 2rem; /* mt-8 */
   width: 100%;
-  max-width: 28rem; /* max-w-md */
 `;
 
 // === 브랜드 스토리 (Story) ===

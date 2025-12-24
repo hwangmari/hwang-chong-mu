@@ -2,8 +2,8 @@
 
 import styled from "styled-components";
 import AdBanner from "@/components/common/AdBanner";
-import Header from "@/components/create-room/Header";
-import RoomForm from "@/components/create-room/RoomForm";
+import Header from "@/app/meeting/create-room/Header";
+import RoomForm from "@/app/meeting/create-room/RoomForm";
 import useCreateRoom from "@/hooks/useCreateRoom";
 import FooterGuide from "@/components/common/FooterGuide"; // ✅ 공통 컴포넌트
 
@@ -109,7 +109,6 @@ const StFormCard = styled.div`
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
   width: 100%;
-  max-width: 28rem; /* max-w-md */
   border: 1px solid ${({ theme }) => theme.colors.gray100};
 
   /* 하단 요소들과의 간격을 위해 마진 추가 가능 */

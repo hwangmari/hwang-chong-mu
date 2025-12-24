@@ -20,7 +20,8 @@ interface Expense {
 interface CalcMainContentProps {
   members: string[];
   expenses: Expense[];
-  settlementResult: any; // 타입 정의가 복잡하면 일단 any 또는 hooks의 리턴 타입 활용
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  settlementResult: any;
 
   // Handlers
   onAddMember: (name: string) => void;

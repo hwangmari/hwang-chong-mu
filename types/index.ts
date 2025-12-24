@@ -23,3 +23,14 @@ export interface HabitLog {
   habit_id: number;
   completed_at: string;
 }
+
+export type ExpenseType = "COMMON" | "PERSONAL";
+
+// 지출 내역 인터페이스
+export interface Expense {
+  id: number;
+  payer: string;
+  description: string;
+  amount: number;
+  type: ExpenseType;
+}

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import styled from "styled-components";
 import { useRoom } from "@/hooks/useRoom";
-import RoomHeader from "@/components/room/RoomHeader";
-import CalendarGrid from "@/components/room/CalendarGrid";
+import RoomHeader from "@/app/meeting/room/detail/RoomHeader";
+import CalendarGrid from "@/app/meeting/room/detail/CalendarGrid";
 import Modal from "@/components/common/Modal";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
@@ -17,7 +17,6 @@ import ConfirmedResultCard from "../detail/ConfirmedResultCard";
 import DateControlButtons from "../detail/DateControlButtons";
 import FloatingFinishButton from "../detail/FloatingFinishButton";
 import NameInput from "../detail/NameInput";
-import ParticipantList from "../detail/ParticipantList";
 import VoteSubmitButtons from "../detail/VoteSubmitButtons";
 
 // 🔥 분리된 컴포넌트 임포트

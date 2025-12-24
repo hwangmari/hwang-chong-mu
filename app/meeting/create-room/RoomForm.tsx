@@ -1,5 +1,5 @@
 import styled, { keyframes } from "styled-components";
-import Switch from "../common/Switch";
+import Switch from "../../../components/common/Switch";
 
 interface RoomFormProps {
   formData: {

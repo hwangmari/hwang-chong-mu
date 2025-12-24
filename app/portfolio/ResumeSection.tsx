@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import styled, { css, keyframes } from "styled-components";
-import { experiences } from "@/app/data/experiences";
+import { experiences } from "@/data/experiences";
 import Typography from "@/components/common/Typography";
 
 export default function ResumeSection() {
