@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import FooterGuide from "@/components/common/FooterGuide";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import {
+  StContainer,
+  StSection,
+  StWrapper,
+} from "@/components/styled/layout.styled";
+import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
@@ -47,18 +52,34 @@ export default function CreateHabitPage() {
   return (
     <StContainer>
       <StWrapper>
-        <Card>
-          <IconWrapper
-            onClick={() =>
-              setEmoji(
-                ["🐰", "🔥", "💪", "📚", "🧘"][Math.floor(Math.random() * 5)]
-              )
+        <StSection>
+          <PageIntro
+            icon={
+              <IconWrapper
+                onClick={() =>
+                  setEmoji(
+                    ["🐰", "🔥", "💪", "📚", "🧘", "✨"][
+                      Math.floor(Math.random() * 6)
+                    ]
+                  )
+                }
+              >
+                {emoji}
+              </IconWrapper>
             }
-          >
-            {emoji}
-          </IconWrapper>
-
-          <Title>어떤 습관을 만드실 건가요?</Title>
+            title="황총무의 꾸준한 습관"
+            description={
+              <>
+                매번 실패하는 <StHighlight $color="red">작심삼일</StHighlight>은
+                이제 안녕! 👋
+                <br />
+                황총무와 함께 <StHighlight $color="blue">
+                  매일매일
+                </StHighlight>{" "}
+                빈틈없이 채워가요 &apos;ㅅ&apos;/
+              </>
+            }
+          />
 
           <Input
             placeholder="예: 매일 30분 운동하기"
@@ -89,7 +110,7 @@ export default function CreateHabitPage() {
           >
             {loading ? "생성 중..." : "습관 방 만들기 ➔"}
           </Button>
-        </Card>
+        </StSection>
 
         {/* ✅ 습관 관리용 데이터 주입 */}
         <FooterGuide
@@ -128,15 +149,6 @@ export default function CreateHabitPage() {
 }
 
 // ✨ 스타일 정의
-
-const Card = styled.div`
-  background: white;
-  padding: 2.5rem 2rem;
-  border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
-  text-align: center;
-  border: 1px solid #f1f5f9;
-`;
 
 const IconWrapper = styled.div`
   font-size: 4rem;

@@ -1,4 +1,5 @@
 "use client";
+import ShareButton from "@/components/common/KakaoCalendarShare";
 import React, { useState } from "react";
 import styled from "styled-components";
 
@@ -24,7 +25,10 @@ export default function MemberManager({
 
   return (
     <StSection>
-      <StSectionTitle>👥 참여 멤버 ({members.length}명)</StSectionTitle>
+      <StTitle>
+        <StSectionTitle>👥 참여 멤버 ({members.length}명)</StSectionTitle>
+        <ShareButton />
+      </StTitle>
       <StFlexRow>
         <StTags>
           {members.length === 0 ? (
@@ -67,11 +71,15 @@ const StSection = styled.section`
   margin-bottom: 1.5rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
+const StTitle = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+`;
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray800};
-  margin-bottom: 1.25rem;
 `;
 const StFlexRow = styled.div`
   display: flex;

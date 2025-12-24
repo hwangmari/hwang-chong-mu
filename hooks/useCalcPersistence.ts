@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { ExpenseType } from "@/types"; // 타입 정의 필요 (아래 참고)
+import { ExpenseType } from "@/types";
 
 interface Expense {
   id: number;
@@ -16,104 +16,113 @@ export const useCalcPersistence = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // 1. 데이터 저장하기 (Create)
-  const saveRoomData = async (members: string[], expenses: Expense[]) => {
-    if (members.length === 0) {
-      alert("멤버를 최소 1명 이상 추가해주세요!");
-      return;
-    }
-
+  // [CREATE] 1. 방 새로 만들기
+  const createRoom = async (roomName: string) => {
     setLoading(true);
     try {
-      // 1-1. 정산 방(Room) 생성
+      // 1. 방 생성 (입력받은 이름으로 저장)
       const { data: roomData, error: roomError } = await supabase
         .from("calc_rooms")
-        .insert([{ room_name: "황총무 정산" }]) // 필요시 이름 입력받기 가능
+        .insert([{ room_name: roomName }]) // 여기가 핵심!
         .select()
         .single();
 
       if (roomError) throw roomError;
-      const roomId = roomData.id;
 
-      // 1-2. 멤버 저장
-      const memberInserts = members.map((name) => ({
-        room_id: roomId,
-        name: name,
-      }));
-      const { error: memberError } = await supabase
-        .from("calc_members")
-        .insert(memberInserts);
+      const newRoomId = roomData.id;
 
-      if (memberError) throw memberError;
-
-      // 1-3. 지출 내역 저장
-      if (expenses.length > 0) {
-        const expenseInserts = expenses.map((e) => ({
-          room_id: roomId,
-          payer: e.payer,
-          description: e.description,
-          amount: e.amount,
-          type: e.type,
-        }));
-
-        const { error: expenseError } = await supabase
-          .from("calc_expenses")
-          .insert(expenseInserts);
-
-        if (expenseError) throw expenseError;
-      }
-
-      alert("저장되었습니다! URL을 복사해서 공유하세요. 🔗");
-
-      // 저장된 방의 ID가 포함된 URL로 이동 (새로고침 해도 유지됨)
-      router.push(`/calc/${roomId}`);
+      // 2. 페이지 이동 (경로를 /calc/ 로 통일!)
+      // 주의: 아까 만드신 폴더가 app/calc/[id] 라면 /calc/ 로 가야 합니다.
+      router.push(`/calc/${newRoomId}`);
     } catch (error) {
-      console.error("저장 중 오류 발생:", error);
-      alert("저장에 실패했습니다. 😭");
+      console.error("생성 실패:", error);
+      alert("방 생성에 실패했습니다. 😭");
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. 데이터 불러오기 (Read) - [id]/page.tsx 에서 사용
+  // [UPDATE] 2. 기존 방 데이터 업데이트 (이 함수가 꼭 있어야 해요!)
+  const updateRoomData = async (
+    roomId: string,
+    members: string[],
+    expenses: Expense[]
+  ) => {
+    try {
+      console.log("자동 저장 시작...", roomId); // 디버깅용 로그
+      // 1. 기존 데이터 삭제 (덮어쓰기 위해)
+      await supabase.from("calc_members").delete().eq("room_id", roomId);
+      await supabase.from("calc_expenses").delete().eq("room_id", roomId);
+
+      // 2. 새로운 데이터 저장
+      await saveDetailsToSupabase(roomId, members, expenses);
+      console.log("자동 저장 완료 ✅");
+    } catch (error) {
+      console.error("업데이트 실패:", error);
+    }
+  };
+
+  // [HELPER] 공통 저장 로직
+  const saveDetailsToSupabase = async (
+    roomId: string,
+    members: string[],
+    expenses: Expense[]
+  ) => {
+    if (members.length > 0) {
+      const memberInserts = members.map((name) => ({ room_id: roomId, name }));
+      const { error } = await supabase
+        .from("calc_members")
+        .insert(memberInserts);
+      if (error) throw error;
+    }
+    if (expenses.length > 0) {
+      const expenseInserts = expenses.map((e) => ({
+        room_id: roomId,
+        payer: e.payer,
+        description: e.description,
+        amount: e.amount,
+        type: e.type,
+      }));
+      const { error } = await supabase
+        .from("calc_expenses")
+        .insert(expenseInserts);
+      if (error) throw error;
+    }
+  };
+
+  // [READ] 불러오기
   const fetchRoomData = async (roomId: string) => {
     setLoading(true);
     try {
-      // 멤버 조회
-      const { data: memberData, error: memberError } = await supabase
+      const { data: memberData } = await supabase
         .from("calc_members")
         .select("name")
         .eq("room_id", roomId);
-
-      if (memberError) throw memberError;
-
-      // 지출 조회
-      const { data: expenseData, error: expenseError } = await supabase
+      const { data: expenseData } = await supabase
         .from("calc_expenses")
         .select("*")
         .eq("room_id", roomId)
         .order("id", { ascending: true });
 
-      if (expenseError) throw expenseError;
-
       return {
-        members: memberData.map((m) => m.name),
-        expenses: expenseData.map((e) => ({
-          id: e.id,
-          payer: e.payer,
-          description: e.description,
-          amount: e.amount,
-          type: e.type as ExpenseType,
-        })),
+        members: memberData?.map((m) => m.name) || [],
+        expenses:
+          expenseData?.map((e) => ({
+            id: e.id,
+            payer: e.payer,
+            description: e.description,
+            amount: e.amount,
+            type: e.type as ExpenseType,
+          })) || [],
       };
     } catch (error) {
-      console.error("데이터 로딩 실패:", error);
-      alert("데이터를 불러오지 못했습니다.");
+      console.error("로딩 실패:", error);
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  return { saveRoomData, fetchRoomData, loading };
+  // ★★★ 여기 return에 updateRoomData가 포함되어 있어야 합니다!
+  return { createRoom, updateRoomData, fetchRoomData, loading };
 };

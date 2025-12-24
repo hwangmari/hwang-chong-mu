@@ -1,84 +1,65 @@
 "use client";
-
-import React, { useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
-import { ExpenseType } from "@/types";
-
-// Components
-
-// Hook
-import { useCalculator } from "@/hooks/useCalculator";
-import { useCalcPersistence } from "@/hooks/useCalcPersistence"; // ✅ 추가
-import CalcHeader from "./CalcHeader";
 import FooterGuide from "@/components/common/FooterGuide";
-import CalcMainContent from "./CalcMainContent";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import {
+  StContainer,
+  StSection,
+  StWrapper,
+} from "@/components/styled/layout.styled";
+import PageIntro, { StHighlight } from "@/components/common/PageIntro";
+import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 
-interface Expense {
-  id: number;
-  payer: string;
-  description: string;
-  amount: number;
-  type: ExpenseType;
-}
+export default function CreateRoomPage() {
+  // const router = useRouter(); // 훅 내부에서 처리함
+  const [roomName, setRoomName] = useState("");
 
-export default function CalcPage() {
-  const [members, setMembers] = useState<string[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  // ★ 훅 연결하기
+  const { createRoom, loading } = useCalcPersistence();
 
-  // ✅ 저장 로직 훅 사용
-  const { saveRoomData, loading } = useCalcPersistence();
+  const handleCreate = () => {
+    if (!roomName.trim()) {
+      alert("모임 이름을 입력해주세요!");
+      return;
+    }
 
-  // ... (기존 핸들러 로직들: handleAddMember 등 동일하게 유지) ...
-  const handleAddMember = (name: string) => {
-    /*...*/ setMembers([...members, name]);
+    // ★ DB에 저장 요청 (이동은 훅이 알아서 해줌)
+    createRoom(roomName);
   };
-  const handleDeleteMember = (name: string) => {
-    /*...*/ setMembers(members.filter((m) => m !== name));
-  };
-  const handleAddExpense = (
-    payer: string,
-    desc: string,
-    amount: number,
-    type: ExpenseType
-  ) => {
-    /*...*/ setExpenses([
-      ...expenses,
-      { id: Date.now(), payer, description: desc, amount, type },
-    ]);
-  };
-  const handleDeleteExpense = (id: number) => {
-    /*...*/ setExpenses(expenses.filter((e) => e.id !== id));
-  };
-  const handleUpdateExpense = (id: number, amount: number) => {
-    /*...*/ setExpenses(
-      expenses.map((e) => (e.id === id ? { ...e, amount } : e))
-    );
-  };
-
-  const settlementResult = useCalculator(members, expenses);
 
   return (
     <StContainer>
       <StWrapper>
-        {/* ✅ 저장 버튼 연결 */}
-        <CalcHeader
-          onSave={() => saveRoomData(members, expenses)}
-          isLoading={loading}
-        />
-        {/* ✅ 중복 코드 제거 및 컴포넌트 교체 */}
-        <CalcMainContent
-          members={members}
-          expenses={expenses}
-          settlementResult={settlementResult}
-          onAddMember={handleAddMember}
-          onDeleteMember={handleDeleteMember}
-          onAddExpense={handleAddExpense}
-          onDeleteExpense={handleDeleteExpense}
-          onUpdateExpense={handleUpdateExpense}
-        />
+        {/* 1. 메인 카드 영역 */}
+        <StSection>
+          <PageIntro
+            icon="💸"
+            title="황총무의 똑똑한 엔빵"
+            description={
+              <>
+                누가 누구에게 얼마를? 머리 아픈 계산은 이제 그만!
+                <br />
+                <StHighlight $color="red">복잡한 송금</StHighlight> 대신{" "}
+                <StHighlight $color="blue">최소한의 이체</StHighlight>로
+                끝내보세요 &apos;ㅅ&apos;/
+              </>
+            }
+          />
+          <StInput
+            placeholder="예: 강릉 여행, 팀 회식, 30주년 동창회"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            autoFocus
+            disabled={loading} // 로딩 중엔 입력 막기
+          />
 
-        {/* ✅ 하단 가이드 추가 */}
+          <StCreateButton onClick={handleCreate} disabled={loading}>
+            {loading ? "생성 중... ⏳" : "정산 방 만들기 ➔"}
+          </StCreateButton>
+        </StSection>
+
+        {/* 2. 하단 가이드 (작성해주신 내용 그대로 적용) */}
         <FooterGuide
           title="💡 정산 꿀팁, 이렇게 써보세요!"
           tips={[
@@ -112,3 +93,53 @@ export default function CalcPage() {
     </StContainer>
   );
 }
+
+// --- 스타일 정의 (황총무 테마) ---
+
+const StInput = styled.input`
+  width: 100%;
+  padding: 18px;
+  font-size: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  margin-bottom: 40px;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s;
+  background-color: #fafafa;
+  color: #333;
+
+  /* 포커스 시: 시크한 다크 그레이 테두리 & 그림자 */
+  &:focus {
+    border-color: #333;
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05); /* 은은한 회색 그림자 */
+  }
+  &::placeholder {
+    color: #bbb;
+  }
+`;
+
+const StCreateButton = styled.button`
+  width: 100%;
+  padding: 18px;
+
+  /* ✅ 핵심 변경: 황총무 시그니처 블랙 */
+  background-color: #1a1a1a;
+
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 그림자도 블랙 계열로 */
+
+  &:hover {
+    background-color: #333; /* 호버 시 살짝 연해짐 */
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+`;

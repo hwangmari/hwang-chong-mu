@@ -1,25 +1,20 @@
 "use client";
+import styled from "styled-components";
 
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
 import { useParams } from "next/navigation";
 import { ExpenseType } from "@/types";
 
 // Components
-import FooterGuide from "@/components/common/FooterGuide"; // 하단 팁 추가
+import FooterGuide from "@/components/common/FooterGuide";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 // Hooks
 import { useCalculator } from "@/hooks/useCalculator";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
-import CalcHeader from "../CalcHeader";
-import ExpenseInput from "../ExpenseInput";
-import ExpenseList from "../ExpenseList";
-import MemberManager from "../MemberManager";
-import SettlementReport from "../SettlementReport";
 import CalcMainContent from "../CalcMainContent";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
-// Types (필요시 types/index.ts로 이동)
+// Types
 interface Expense {
   id: number;
   payer: string;
@@ -31,61 +26,68 @@ interface Expense {
 export default function CalcDetailParamsPage() {
   const params = useParams();
   const roomId = params.id as string;
+  const { fetchRoomData, updateRoomData } = useCalcPersistence();
 
-  // 상태 관리
   const [members, setMembers] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
-  // DB 훅
-  const { fetchRoomData, saveRoomData, loading } = useCalcPersistence();
-
-  // ✅ 1. 데이터 불러오기
   useEffect(() => {
     if (roomId) {
       fetchRoomData(roomId).then((data) => {
         if (data) {
-          setMembers(data.members);
-          setExpenses(data.expenses);
+          setMembers(data.members || []);
+          setExpenses(data.expenses || []);
         }
       });
     }
-  }, [roomId]); // fetchRoomData는 dependency 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
-  // ✅ 2. 공유하기 핸들러 (URL 복사)
-  const handleShare = async () => {
-    try {
-      const url = window.location.href; // 현재 페이지 주소
-      await navigator.clipboard.writeText(url);
-      alert("링크가 복사되었습니다! 친구들에게 공유하세요. 🔗");
-    } catch (err) {
-      console.error(err);
-      alert("링크 복사에 실패했습니다. URL을 직접 복사해주세요.");
+  const updateAndSave = (newMembers: string[], newExpenses: Expense[]) => {
+    // 화면(State) 업데이트
+    setMembers(newMembers);
+    setExpenses(newExpenses);
+
+    // ★ 중요: 기존 saveRoomData 대신 updateRoomData 사용
+    // DB 업데이트 (자동 저장)
+    if (roomId) {
+      updateRoomData(roomId, newMembers, newExpenses);
     }
   };
-
-  // 핸들러들 (수정/업데이트용 - 필요시 update 로직으로 교체 가능)
   const handleAddMember = (name: string) => {
-    setMembers([...members, name]);
+    const newMembers = [...members, name];
+    updateAndSave(newMembers, expenses);
   };
+
   const handleDeleteMember = (name: string) => {
-    setMembers(members.filter((m) => m !== name));
+    const newMembers = members.filter((m) => m !== name);
+    // 멤버 삭제 시 해당 멤버의 지출 내역 처리도 필요할 수 있음 (일단은 유지)
+    updateAndSave(newMembers, expenses);
   };
+
   const handleAddExpense = (
     payer: string,
     desc: string,
     amount: number,
     type: ExpenseType
   ) => {
-    setExpenses([
+    const newExpenses = [
       ...expenses,
       { id: Date.now(), payer, description: desc, amount, type },
-    ]);
+    ];
+    updateAndSave(members, newExpenses);
   };
+
   const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter((e) => e.id !== id));
+    const newExpenses = expenses.filter((e) => e.id !== id);
+    updateAndSave(members, newExpenses);
   };
+
   const handleUpdateExpense = (id: number, amount: number) => {
-    setExpenses(expenses.map((e) => (e.id === id ? { ...e, amount } : e)));
+    const newExpenses = expenses.map((e) =>
+      e.id === id ? { ...e, amount } : e
+    );
+    updateAndSave(members, newExpenses);
   };
 
   // 정산 계산
@@ -94,9 +96,6 @@ export default function CalcDetailParamsPage() {
   return (
     <StContainer>
       <StWrapper>
-        <CalcHeader onShare={handleShare} />
-
-        {/* ✅ 중복 코드 제거 및 컴포넌트 교체 */}
         <CalcMainContent
           members={members}
           expenses={expenses}
@@ -107,21 +106,19 @@ export default function CalcDetailParamsPage() {
           onDeleteExpense={handleDeleteExpense}
           onUpdateExpense={handleUpdateExpense}
         />
-        {/* 하단 팁 가이드 */}
+
         <FooterGuide
           title="💡 정산 꿀팁"
           tips={[
             {
               icon: "🔗",
-              title: "링크 공유",
-              description:
-                "위의 공유 버튼을 눌러 링크를 복사해 단톡방에 올리세요.",
+              title: "링크 공유하기",
+              description: "상단의 공유 버튼을 눌러 친구들을 초대하세요.",
             },
             {
               icon: "💾",
-              title: "자동 저장",
-              description:
-                "이 페이지는 고유한 주소를 가지고 있어 언제든 다시 들어올 수 있어요.",
+              title: "자동 저장됨",
+              description: "입력하는 내용은 실시간으로 자동 저장됩니다.",
             },
           ]}
         />

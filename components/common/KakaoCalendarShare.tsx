@@ -18,7 +18,7 @@ const ShareButton = () => {
 
   return (
     <StShareButton onClick={handleCopy} $copied={copied}>
-      {copied ? <>✅ 복사 완료!</> : <>🔗 약속 링크 복사하기</>}
+      {copied ? <>✅ </> : <>🔗</>}
     </StShareButton>
   );
 };
