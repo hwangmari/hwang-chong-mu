@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import styled, { css } from "styled-components";
-// 아이콘 (아이콘이 없다면 텍스트로 대체 가능)
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -34,14 +33,12 @@ export default function GlobalHeader() {
 
   // ✅ 경로가 바뀔 때마다 타이틀 자동 설정
   useEffect(() => {
-    // 1. 정확히 일치하는 경로 찾기
     if (TITLE_MAP[pathname]) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentTitle(TITLE_MAP[pathname]);
       return;
     }
 
-    // 2. 하위 경로 처리 (예: /calc/123 -> N빵 계산기)
     if (pathname.startsWith("/calc")) setCurrentTitle(TITLE_MAP["/calc"]);
     else if (pathname.startsWith("/meeting"))
       setCurrentTitle(TITLE_MAP["/meeting"]);
@@ -53,13 +50,29 @@ export default function GlobalHeader() {
   // 홈('/')이 아니면 뒤로가기 버튼 노출
   const showBack = pathname !== "/";
 
+  // ✨ [추가] 스마트 뒤로가기 핸들러
+  const handleBack = () => {
+    // 1. 이전 페이지 정보(Referrer)가 있는지, 그리고 내 사이트에서 왔는지 확인
+    const referrer = document.referrer;
+    const currentHost = window.location.host; // 예: localhost:3000
+
+    // 2. 내 사이트 내부에서 이동해온 경우 -> 정상적으로 뒤로가기
+    if (referrer && referrer.includes(currentHost)) {
+      router.back();
+    } else {
+      // 3. 외부에서 왔거나(구글 등), 새 탭으로 바로 들어온 경우 -> 홈으로 이동
+      router.push("/");
+    }
+  };
+
   return (
     <>
       <StHeaderWrapper>
         {/* [좌측] 뒤로가기 버튼 */}
         <StLeftArea>
           {showBack && (
-            <StIconButton onClick={() => router.back()} aria-label="뒤로 가기">
+            // router.back() 대신 handleBack 사용
+            <StIconButton onClick={handleBack} aria-label="뒤로 가기">
               <ArrowBackIosNewIcon style={{ fontSize: "1.2rem" }} />
             </StIconButton>
           )}
@@ -91,7 +104,7 @@ export default function GlobalHeader() {
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} href={item.href} passHref>
               <StMenuItem
-                $isActive={pathname === item.href} // 현재 메뉴 강조
+                $isActive={pathname === item.href}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}
@@ -105,10 +118,9 @@ export default function GlobalHeader() {
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
-
+// ... 스타일 정의는 기존과 동일하게 유지 ...
 const StHeaderWrapper = styled.header`
-  position: sticky; /* 상단 고정 */
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
@@ -117,11 +129,15 @@ const StHeaderWrapper = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 0 0.5rem;
-  background-color: ${({ theme }) => theme.colors.white}; /* 배경색 추가 */
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100}; /* 하단 구분선 */
+  background-color: ${({ theme }) => theme.colors.white};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   z-index: 50;
-  margin: 0 auto; /* 중앙 정렬 */
+  margin: 0 auto;
 `;
+// ... (나머지 스타일 코드 생략)
+// StLeftArea, StCenterArea, StRightArea, StTitle, StIconButton, StMenuOverlay, StMenuContainer, StMenuItem, StBackdrop 등
+// 기존 코드에 있던 것 그대로 두시면 됩니다.
+// (여기서 생략된 스타일 코드는 질문자님의 원본 코드와 동일합니다)
 
 const StLeftArea = styled.div`
   flex: 1;
@@ -177,7 +193,7 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
   transition: opacity 0.2s ease-in-out, visibility 0.2s;
   display: flex;
   flex-direction: column;
-  max-width: 540px; /* 레이아웃 너비 제한 */
+  max-width: 540px;
   margin: 0 auto;
 `;
 
