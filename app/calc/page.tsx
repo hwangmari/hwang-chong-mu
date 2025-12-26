@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import styled from "styled-components";
 import FooterGuide from "@/components/common/FooterGuide";
 import {
   StContainer,
@@ -10,6 +9,7 @@ import {
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CreateButton from "@/components/common/CreateButton";
+import Input from "@/components/common/Input";
 
 export default function CreateRoomPage() {
   // const router = useRouter(); // 훅 내부에서 처리함
@@ -46,16 +46,20 @@ export default function CreateRoomPage() {
               </>
             }
           />
-          <StInput
+          <Input
             placeholder="예: 강릉 여행, 팀 회식, 30주년 동창회"
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             autoFocus
-            disabled={loading} // 로딩 중엔 입력 막기
+            disabled={loading}
           />
 
-          <CreateButton onClick={handleCreate} isLoading={loading}>
+          <CreateButton
+            onClick={handleCreate}
+            isLoading={loading}
+            className="mt-4"
+          >
             정산 방 만들기 ➔
           </CreateButton>
         </StSection>
@@ -94,51 +98,3 @@ export default function CreateRoomPage() {
     </StContainer>
   );
 }
-
-// --- 스타일 정의 (황총무 테마) ---
-
-const StInput = styled.input`
-  width: 100%;
-  padding: 18px;
-  font-size: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  outline: none;
-  transition: all 0.2s;
-  background-color: #fafafa;
-  color: #333;
-
-  &:focus {
-    border-color: #333;
-    background-color: white;
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05); /* 은은한 회색 그림자 */
-  }
-  &::placeholder {
-    color: #bbb;
-  }
-`;
-
-const StCreateButton = styled.button`
-  width: 100%;
-  padding: 18px;
-
-  /* ✅ 핵심 변경: 황총무 시그니처 블랙 */
-  background-color: #1a1a1a;
-
-  color: white;
-  font-size: 17px;
-  font-weight: 700;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 0.1s, opacity 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 그림자도 블랙 계열로 */
-
-  &:hover {
-    background-color: #333; /* 호버 시 살짝 연해짐 */
-  }
-  &:active {
-    transform: scale(0.98);
-  }
-`;

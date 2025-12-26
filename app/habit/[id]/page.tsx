@@ -5,7 +5,6 @@ import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import MonthlyTracker from "../MonthlyTracker";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
-import CommentSection from "../CommentSection";
 
 export default function HabitRoomPage({
   params,
@@ -19,7 +18,6 @@ export default function HabitRoomPage({
     emoji: string;
     color: string;
   } | null>(null);
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
     const fetchGoal = async () => {

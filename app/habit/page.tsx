@@ -12,6 +12,7 @@ import {
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
+import Input from "@/components/common/Input";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
@@ -107,6 +108,7 @@ export default function CreateHabitPage() {
             onClick={createGoal}
             bgColor={selectedColor}
             isLoading={loading}
+            className="mt-4"
           >
             습관 방 만들기 ➔
           </CreateButton>
@@ -165,23 +167,8 @@ const IconWrapper = styled.div`
   }
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 1rem 1.2rem;
-  border-radius: 16px;
-  border: 2px solid #e2e8f0;
-  font-size: 1rem;
-  margin-bottom: 2rem;
-  outline: none;
-  transition: all 0.2s;
-  &:focus {
-    border-color: #94a3b8;
-    box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.1);
-  }
-`;
-
 const ColorSection = styled.div`
-  margin-bottom: 2.5rem;
+  margin: 1.5rem 0;
   text-align: left;
 `;
 
@@ -221,73 +208,6 @@ const ColorCircle = styled.button<{ $color: string; $isSelected: boolean }>`
   transition: all 0.2s;
   &:hover {
     transform: scale(1.15);
-  }
-`;
-
-const Button = styled.button<{ $bgColor: string }>`
-  width: 100%;
-  padding: 1.1rem;
-  background: ${({ $bgColor }) => $bgColor};
-  color: white;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px ${({ $bgColor }) => $bgColor}40;
-  &:hover {
-    filter: brightness(1.05);
-    transform: translateY(-2px);
-  }
-  &:disabled {
-    background: #cbd5e1;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-// 👇 FooterTips 스타일 정의
-const FooterTips = styled.div`
-  padding: 1.5rem;
-  background: #f1f5f9; /* 은은한 회색 배경 */
-  border-radius: 20px;
-  color: #475569;
-`;
-
-const TipTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #334155;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const TipList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const TipItem = styled.li`
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  font-size: 0.9rem;
-  line-height: 1.5;
-
-  strong {
-    display: block;
-    color: #1e293b;
-    margin-bottom: 2px;
-  }
-
-  p {
-    color: #64748b;
-    font-size: 0.85rem;
   }
 `;
 
