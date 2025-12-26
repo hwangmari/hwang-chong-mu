@@ -45,7 +45,6 @@ export default function HabitRoomPage({
           </Title>
         </Header>
 
-        {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
         <MonthlyTracker
           goalId={Number(id)}
           themeColor={goal.color || "#22c55e"}

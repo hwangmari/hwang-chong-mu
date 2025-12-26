@@ -25,14 +25,14 @@ export default function MemberManager({
 
   return (
     <StSection>
-      <StTitle>
-        <StSectionTitle>👥 참여 멤버 ({members.length}명)</StSectionTitle>
+      <StSectionTitle>👥 참여 멤버 ({members.length}명)</StSectionTitle>
+      <StFixedButton>
         <ShareButton />
-      </StTitle>
+      </StFixedButton>
       <StFlexRow>
         <StTags>
           {members.length === 0 ? (
-            <StEmptyMsg>함께 여행한 멤버를 추가해주세요.</StEmptyMsg>
+            <StEmptyMsg>정산할 멤버를 추가해주세요.</StEmptyMsg>
           ) : (
             members.map((m) => (
               <StTag key={m}>
@@ -63,6 +63,11 @@ export default function MemberManager({
 }
 
 // ... (스타일 컴포넌트들은 기존과 동일합니다)
+const StFixedButton = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+`;
 const StSection = styled.section`
   background: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
@@ -70,11 +75,6 @@ const StSection = styled.section`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   margin-bottom: 1.5rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
-`;
-const StTitle = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
 `;
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;
@@ -85,6 +85,7 @@ const StFlexRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-top: 1rem;
 `;
 const StTags = styled.div`
   display: flex;

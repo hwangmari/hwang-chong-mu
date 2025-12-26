@@ -72,7 +72,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
                       {e.type === "PERSONAL" && <StGrayBadge>개인</StGrayBadge>}
                     </div>
 
-                    {/* ✅ [수정됨] 통합된 하나의 스타일 컴포넌트 사용 */}
                     <StRightSection>
                       {editingId === e.id ? (
                         <>
@@ -170,9 +169,11 @@ const StGroupContainer = styled.div`
 
 const StPayerHeader = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
+
   .name {
     font-size: 1rem;
     font-weight: 700;
@@ -205,7 +206,8 @@ const StList = styled.ul`
 `;
 
 const StListItem = styled.li<{ $isPersonal: boolean }>`
-  padding: 0.75rem 0.5rem;
+  margin-left: 0.7rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   background-color: transparent;
   color: ${({ theme, $isPersonal }) =>

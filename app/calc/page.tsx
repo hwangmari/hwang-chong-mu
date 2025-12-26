@@ -102,18 +102,15 @@ const StInput = styled.input`
   font-size: 16px;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
-  margin-bottom: 40px;
-  text-align: center;
+  margin-bottom: 20px;
   outline: none;
   transition: all 0.2s;
   background-color: #fafafa;
   color: #333;
 
-  /* 포커스 시: 시크한 다크 그레이 테두리 & 그림자 */
   &:focus {
     border-color: #333;
     background-color: white;
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05); /* 은은한 회색 그림자 */
   }
   &::placeholder {
     color: #bbb;

@@ -2,56 +2,145 @@
 
 import React, { useState } from "react";
 import styled, { css } from "styled-components";
+import CheckOutlinedIcon from "@mui/icons-material/CheckOutlined";
+import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
+interface ShareButtonProps {
+  title?: string;
+  description?: string;
+}
 
-const ShareButton = () => {
-  const [copied, setCopied] = useState(false);
+const ShareButton = ({ title, description }: ShareButtonProps) => {
+  const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // 2초 뒤 원상복구
-    } catch (err) {
-      alert("링크 복사에 실패했습니다.");
+  const handleShare = async () => {
+    const url = window.location.href;
+
+    // 1. 모바일 디바이스 체크 (User Agent)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // 2. 모바일 + 공유 기능 지원 시 -> 네이티브 공유
+    if (isMobile && navigator.share) {
+      try {
+        await navigator.share({
+          title: title, // props로 받은 제목 사용
+          text: description, // props로 받은 본문 사용
+          url: url,
+        });
+      } catch (err) {
+        console.log("공유 취소됨");
+      }
+    } else {
+      // PC: URL 복사
+      try {
+        await navigator.clipboard.writeText(url);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        alert("링크 복사에 실패했습니다.");
+      }
     }
   };
 
   return (
-    <StShareButton onClick={handleCopy} $copied={copied}>
-      {copied ? <>✅ </> : <>🔗</>}
-    </StShareButton>
+    <StContainer>
+      <StShareButton
+        onClick={handleShare}
+        $isCopied={isCopied}
+        aria-label="약속 링크 공유하기"
+      >
+        {isCopied ? <CheckOutlinedIcon /> : <ShareOutlinedIcon />}
+      </StShareButton>
+
+      {/* 툴팁 (PC 복사 시에만 등장) */}
+      <StTooltip $show={isCopied}>링크 복사 완료</StTooltip>
+    </StContainer>
   );
 };
 
 export default ShareButton;
 
-// ✨ 스타일 정의 (St 프리픽스)
+// ✨ 스타일 정의 (St 프리픽스 적용)
 
-const StShareButton = styled.button<{ $copied: boolean }>`
-  margin-top: 1rem; /* mt-4 */
-  padding: 0.5rem 1rem; /* px-4 py-2 */
-  border-radius: 0.5rem; /* rounded (조금 더 부드럽게 0.5rem 적용) */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
+const StContainer = styled.div`
+  position: relative; /* 툴팁 위치 기준점 */
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 */
-  transition: all 0.2s ease-in-out;
+`;
 
-  /* 상태에 따른 스타일 분기 */
-  ${({ $copied, theme }) =>
-    $copied
+const StShareButton = styled.button<{ $isCopied: boolean }>`
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  flex-shrink: 0;
+
+  svg {
+    width: 1.5rem; /* 24px (Material Default) */
+    height: 1.5rem;
+  }
+
+  ${({ $isCopied, theme }) =>
+    $isCopied
       ? css`
           background-color: #22c55e; /* green-500 */
-          color: ${theme.colors.white};
+          color: white;
           cursor: default;
+          transform: scale(1.1);
         `
       : css`
-          background-color: ${theme.colors.gray200};
-          color: ${theme.colors.gray700};
+          background-color: ${theme.colors.gray100};
+          color: ${theme.colors.gray600};
 
           &:hover {
-            background-color: ${theme.colors.gray300};
+            background-color: ${theme.colors.gray200};
+            color: ${theme.colors.gray800};
           }
+          &:active {
+            transform: scale(0.95);
+          }
+        `}
+`;
+
+const StTooltip = styled.div<{ $show: boolean }>`
+  position: absolute;
+  right: 100%; /* 버튼 왼쪽으로 배치 */
+  top: 50%;
+  margin-right: 0.75rem; /* 버튼과 간격 */
+  padding: 0.25rem 0.5rem;
+  background-color: ${({ theme }) => theme.colors.gray800};
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.375rem;
+  white-space: nowrap;
+  pointer-events: none; /* 툴팁이 클릭 방해하지 않도록 */
+  transition: all 0.2s ease-in-out;
+
+  /* 말풍선 꼬리 (선택 사항) */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -4px;
+    margin-top: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: transparent transparent transparent
+      ${({ theme }) => theme.colors.gray800};
+  }
+
+  /* 애니메이션: 투명도 + 위치 이동 */
+  ${({ $show }) =>
+    $show
+      ? css`
+          opacity: 1;
+          transform: translateY(-50%) translateX(0);
+        `
+      : css`
+          opacity: 0;
+          transform: translateY(-50%) translateX(0.5rem);
         `}
 `;
