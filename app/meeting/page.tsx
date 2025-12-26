@@ -106,7 +106,7 @@ export default function CreateRoomPage() {
             },
           ]}
         />
-        <AdBanner />
+        {/* <AdBanner /> */}
       </StWrapper>
     </StContainer>
   );

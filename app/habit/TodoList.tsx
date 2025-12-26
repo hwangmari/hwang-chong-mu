@@ -2,7 +2,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { format } from "date-fns";
-import { GoalItem } from "./useMonthlyTracker";
+import { GoalItem } from "./useMonthlyTracker"; //
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
@@ -10,7 +10,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import AddIcon from "@mui/icons-material/Add";
 
-// 🎨 농도 조절 헬퍼 (중복이지만 간단하니까 여기도 둠)
+// 🎨 농도 조절 헬퍼
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -54,21 +54,37 @@ export default function TodoList({
   return (
     <StDailySection>
       <StDailyTitle>
-        <span>📅 {format(selectedDate, "M월 d일")}</span>
-        <StProgressBadge $color={themeColor}>{completionRate}%</StProgressBadge>
-      </StDailyTitle>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>📅 {format(selectedDate, "M월 d일")}</span>
+          {/* 100% 달성 시 축하 이모지 보여주기 */}
+          {completionRate === 100 && items.length > 0 && <span>🎉</span>}
+        </div>
 
+        {/* 기존 뱃지 스타일을 조금 더 심플하게 숫자만 표시 */}
+        <StRateText $color={themeColor}>{completionRate}% 달성</StRateText>
+      </StDailyTitle>
+      {/* ✅ [추가] 시각적 만족감을 주는 게이지 바 */}
+      <StProgressBarBg>
+        <StProgressBarFill $width={completionRate} $color={themeColor} />
+      </StProgressBarBg>
       <StTodoList>
         {items.map((item) => (
           <StTodoItem
             key={item.id}
-            onClick={() => onToggle(item.id)}
+            // ❌ 기존: onClick={() => onToggle(item.id)} 삭제! (전체 클릭 시 토글 방지)
+
+            // ✅ 달력 하이라이트 기능은 유지 (PC: 호버, 모바일: 텍스트 터치 시 동작)
             onMouseEnter={() => onHoverItem(item.id)}
             onMouseLeave={() => onHoverItem(null)}
             $done={completedIds.includes(item.id)}
             $activeColor={hexToRgba(themeColor, 0.15)}
           >
+            {/* ✅ 체크박스 아이콘을 클릭했을 때만 토글되도록 변경 */}
             <StCheckCircle
+              onClick={(e) => {
+                e.stopPropagation(); // 이벤트가 부모로 퍼지는 것 방지
+                onToggle(item.id);
+              }}
               $done={completedIds.includes(item.id)}
               $color={themeColor}
             >
@@ -78,20 +94,21 @@ export default function TodoList({
                 <RadioButtonUncheckedIcon sx={{ fontSize: 20 }} />
               )}
             </StCheckCircle>
+
             <StTodoText
               $done={completedIds.includes(item.id)}
               $color={themeColor}
             >
               {item.title}
             </StTodoText>
+
             <StDeleteButton
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(item.id);
               }}
             >
-              <DeleteOutlineIcon sx={{ fontSize: 20 }} />{" "}
-              {/* ✅ 이모지 대신 아이콘 */}
+              <DeleteOutlineIcon sx={{ fontSize: 20 }} />
             </StDeleteButton>
           </StTodoItem>
         ))}
@@ -152,12 +169,13 @@ const StTodoItem = styled.div<{ $done: boolean; $activeColor: string }>`
   background: ${({ $done, $activeColor }) =>
     $done ? $activeColor : "#f9fafb"};
   border-radius: 12px;
-  cursor: pointer;
+  /* cursor: pointer; -> 기존 포인터는 유지해도 좋지만, 텍스트 클릭 시 아무 일도 안 일어난다는 걸 알리기 위해 default로 바꿔도 됨 */
   transition: all 0.2s;
   &:hover {
     filter: brightness(0.95);
   }
 `;
+
 const StCheckCircle = styled.div<{ $done: boolean; $color: string }>`
   width: 20px;
   height: 20px;
@@ -169,14 +187,19 @@ const StCheckCircle = styled.div<{ $done: boolean; $color: string }>`
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
+  cursor: pointer; /* ✅ 여기에 포인터 추가 (여기가 클릭 가능 영역임을 표시) */
+  flex-shrink: 0; /* 아이콘 찌그러짐 방지 */
 `;
+
 const StTodoText = styled.span<{ $done: boolean; $color: string }>`
   font-weight: 500;
   font-size: 0.95rem;
   color: ${({ $done, $color }) => ($done ? $color : "#4b5563")};
   text-decoration: ${({ $done }) => ($done ? "line-through" : "none")};
   flex: 1;
+  /* cursor: help; // 원한다면 텍스트에 마우스 올리면 '확인용'이라는 의미로 커서 변경 가능 */
 `;
+
 const StDeleteButton = styled.button`
   background: none;
   border: none;
@@ -222,4 +245,29 @@ const StAddButton = styled.button<{ $bgColor: string }>`
     background: #cbd5e1;
     cursor: not-allowed;
   }
+`;
+
+const StRateText = styled.span<{ $color: string }>`
+  font-size: 0.8rem;
+  color: ${({ $color }) => $color};
+  font-weight: 800;
+`;
+
+// 🌑 게이지 배경 (회색 트랙)
+const StProgressBarBg = styled.div`
+  width: 100%;
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 3px;
+  margin-bottom: 1.5rem; /* 리스트와의 간격 */
+  overflow: hidden; /* 넘치는 부분 자르기 */
+`;
+
+// 🌕 게이지 채움 (실제 퍼센트)
+const StProgressBarFill = styled.div<{ $width: number; $color: string }>`
+  height: 100%;
+  width: ${({ $width }) => $width}%;
+  background-color: ${({ $color }) => $color};
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); /* 슥- 차오르는 애니메이션 */
 `;

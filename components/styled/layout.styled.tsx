@@ -23,4 +23,8 @@ export const StSection = styled.div`
   border-radius: 24px;
   padding: 1.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 20px;
+  }
 `;

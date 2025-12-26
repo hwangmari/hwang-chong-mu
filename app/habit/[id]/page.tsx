@@ -41,9 +41,9 @@ export default function HabitRoomPage({
     <StContainer>
       <StWrapper>
         <Header>
-          <Emoji>{goal.emoji}</Emoji>
-          <Title>{goal.title}</Title>
-          <SubTitle>꾸준함이 재능을 이긴다!</SubTitle>
+          <Title>
+            {goal.emoji} {goal.title}
+          </Title>
         </Header>
 
         {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
@@ -52,10 +52,6 @@ export default function HabitRoomPage({
           themeColor={goal.color || "#22c55e"}
         />
 
-        <InstallGuide
-          isOpen={showInstallGuide}
-          onClose={() => setShowInstallGuide(false)}
-        />
         <CommentSection
           goalId={Number(id)}
           themeColor={goal.color || "#22c55e"}
@@ -70,18 +66,10 @@ const Header = styled.div`
   text-align: center;
   margin-bottom: 2rem;
 `;
-const Emoji = styled.div`
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-`;
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 900;
   color: #0f172a;
-`;
-const SubTitle = styled.p`
-  color: #64748b;
-  margin-top: 0.5rem;
 `;
 const Loading = styled.div`
   display: flex;
