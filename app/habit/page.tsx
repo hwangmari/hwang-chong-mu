@@ -17,7 +17,7 @@ const COLORS = [
   { name: "Red", value: "#ed3654", label: "로즈" },
   { name: "Orange", value: "#FB923C", label: "오렌지" },
   { name: "Yellow", value: "#efb520", label: "엠버" },
-  { name: "Green", value: "#23c788", label: "에메랄드" },
+  { name: "Green", value: "#14b8a6", label: "에메랄드" },
   { name: "Blue", value: "#3B82F6", label: "스카이" },
   { name: "Indigo", value: "#6366F1", label: "인디고" },
   { name: "Slate", value: "#475569", label: "슬레이트" },
