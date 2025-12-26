@@ -1,11 +1,7 @@
 import styled from "styled-components";
 // 공통 레이아웃
 export const StContainer = styled.div`
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.gray50};
   padding: 2rem 1rem;
-  overflow-x: hidden;
-  font-family: ui-sans-serif, system-ui, sans-serif;
 `;
 
 export const StWrapper = styled.div`
@@ -18,11 +14,12 @@ export const StWrapper = styled.div`
 `;
 
 export const StSection = styled.div`
-  width: 100%;
-  background: white;
-  border-radius: 24px;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   @media (max-width: 768px) {
     padding: 1rem;
     border-radius: 20px;

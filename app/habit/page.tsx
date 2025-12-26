@@ -14,19 +14,19 @@ import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
-  { name: "Blue", value: "#3378e7", label: "파랑" },
-  { name: "Purple", value: "#981bcd", label: "보라" },
-  { name: "Pink", value: "#ec4874", label: "핑크" },
-  { name: "Orange", value: "#ef941e", label: "주황" },
-  { name: "Yellow", value: "#ead70a", label: "노랑" },
-  { name: "Teal", value: "#14b8a6", label: "청록" },
-  { name: "Slate", value: "#475569", label: "다크" },
+  { name: "Red", value: "#ed3654", label: "로즈" },
+  { name: "Orange", value: "#FB923C", label: "오렌지" },
+  { name: "Yellow", value: "#efb520", label: "엠버" },
+  { name: "Green", value: "#23c788", label: "에메랄드" },
+  { name: "Blue", value: "#3B82F6", label: "스카이" },
+  { name: "Indigo", value: "#6366F1", label: "인디고" },
+  { name: "Slate", value: "#475569", label: "슬레이트" },
 ];
 
 export default function CreateHabitPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [emoji, setEmoji] = useState("🐰");
+  const [emoji, setEmoji] = useState("🥕");
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
   const [loading, setLoading] = useState(false);
 
@@ -57,8 +57,8 @@ export default function CreateHabitPage() {
               <IconWrapper
                 onClick={() =>
                   setEmoji(
-                    ["🐰", "🔥", "💪", "📚", "🧘", "✨"][
-                      Math.floor(Math.random() * 6)
+                    ["🥕", "🐰", "🔥", "💪", "📚", "🧘", "✨"][
+                      Math.floor(Math.random() * 7)
                     ]
                   )
                 }
@@ -135,13 +135,7 @@ export default function CreateHabitPage() {
                 "내가 가장 좋아하는 색을 골라보세요. 달력이 그 색으로 가득 찰 때의 짜릿함을 느껴보세요!",
             },
             {
-              icon: <TipIcon>👯</TipIcon>,
-              title: "출석부로 쓰기",
-              description:
-                "목표 이름에 '푸바오, 루이, 후이' 처럼 친구 이름을 적어보세요. 서로의 출석률을 체크하며 선의의 경쟁을 할 수 있어요!. 특히! 운동 메이트 참석률 체크 추천해요! ",
-            },
-            {
-              icon: <TipIcon>👯</TipIcon>,
+              icon: <TipIcon>🔖</TipIcon>,
               title: "출석부로 쓰기",
               description:
                 "목표 이름에 '푸바오, 루이, 후이' 처럼 친구 이름을 적어보세요. 서로의 출석률을 체크하며 선의의 경쟁을 할 수 있어요!. 특히! 운동 메이트 참석률 체크 추천해요! ",
@@ -162,23 +156,12 @@ export default function CreateHabitPage() {
 // ✨ 스타일 정의
 
 const IconWrapper = styled.div`
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: inline-block;
   &:hover {
     transform: scale(1.2) rotate(10deg);
   }
-`;
-
-const Title = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 2rem;
-  word-break: keep-all;
-  line-height: 1.3;
 `;
 
 const Input = styled.input`

@@ -134,7 +134,7 @@ const GlobalStyle = createGlobalStyle`
   body {
     font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     color: ${({ theme }) => theme.colors.gray900};
-    background-color: ${({ theme }) => theme.colors.white};
+    background-color: ${({ theme }) => theme.colors.gray50};
     line-height: 1.5;word-break: keep-all;
   }
   

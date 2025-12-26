@@ -1,4 +1,5 @@
 "use client";
+import { StSection } from "@/components/styled/layout.styled";
 import { Expense } from "@/types";
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
@@ -125,14 +126,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
 }
 
 // --- Styles ---
-
-const StSection = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
-  border-radius: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  margin-bottom: 1.5rem;
-`;
 
 const StHeaderRow = styled.div`
   display: flex;

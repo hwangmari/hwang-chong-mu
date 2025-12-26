@@ -12,18 +12,18 @@ import CloseIcon from "@mui/icons-material/Close";
 // ✅ 경로별 타이틀 매핑
 const TITLE_MAP: Record<string, string> = {
   "/": "황총무의 실험실",
-  "/calc": "💸 N빵 계산기",
-  "/meeting": "🐰 약속 잡기",
-  "/habit": "📅 습관 관리",
-  "/portfolio": "👨‍💻 포트폴리오",
+  "/calc": "N빵 계산기",
+  "/meeting": "약속 잡기",
+  "/habit": "습관 관리",
+  "/portfolio": "포트폴리오",
 };
 
 // ✅ 메뉴 목록
 const NAV_ITEMS = [
-  { label: "🏠 홈으로", href: "/" },
-  { label: "💸 N빵 계산기", href: "/calc" },
-  { label: "🐰 약속 잡기", href: "/meeting" },
-  { label: "📅 습관 관리", href: "/habit" },
+  { label: "홈으로", href: "/" },
+  { label: "N빵 계산기", href: "/calc" },
+  { label: "약속 잡기", href: "/meeting" },
+  { label: "습관 관리", href: "/habit" },
 ];
 
 export default function GlobalHeader() {

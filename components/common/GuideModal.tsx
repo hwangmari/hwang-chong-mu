@@ -26,17 +26,15 @@ export const GuideModal = ({
         {/* 스크롤 가능한 컨텐츠 영역 */}
         <StScrollContent>
           {/* 사용법 */}
-          <StSection>
-            <p className="mb-2">
-              <StStepBadge $color="blue">Step 1</StStepBadge>
-              본인의 <b>이름</b>을 입력해주세요.
-            </p>
-            <p>
-              <StStepBadge $color="red">Step 2</StStepBadge>
-              달력에서 <StRedUnderline>참석 불가능한 날짜</StRedUnderline>를
-              눌러주세요! (빨간색 = 못 가는 날 🙅‍♂️)
-            </p>
-          </StSection>
+          <p className="mb-2">
+            <StStepBadge $color="blue">Step 1</StStepBadge>
+            본인의 <b>이름</b>을 입력해주세요.
+          </p>
+          <p>
+            <StStepBadge $color="red">Step 2</StStepBadge>
+            달력에서 <StRedUnderline>참석 불가능한 날짜</StRedUnderline>를
+            눌러주세요! (빨간색 = 못 가는 날 🙅‍♂️)
+          </p>
 
           {/* 꿀팁 섹션 */}
           <StTipSection>
@@ -176,13 +174,6 @@ const StScrollContent = styled.div`
   scrollbar-width: none; /* Firefox */
   &::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
-  }
-`;
-
-const StSection = styled.div`
-  margin-bottom: 1rem;
-  p {
-    margin-bottom: 0.5rem;
   }
 `;
 

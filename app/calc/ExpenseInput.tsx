@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { ExpenseType } from "@/types";
+import { StSection } from "@/components/styled/layout.styled";
 
 interface Props {
   members: string[];
@@ -95,16 +96,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   );
 }
 
-// 스타일 컴포넌트 (StSection, StSectionTitle 등은 중복되므로 별도 파일로 분리하거나 각각 선언 필요)
-// 편의상 여기에 필요한 스타일만 포함합니다. (실제로는 common UI 폴더에 StSection 등을 두는게 좋습니다)
-const StSection = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-`;
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 700;

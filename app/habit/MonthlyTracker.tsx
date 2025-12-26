@@ -175,12 +175,6 @@ const StCalendarArea = styled.div`
   }
 `;
 
-const StDivider = styled.hr`
-  border: none;
-  border-top: 1px dashed #e2e8f0;
-  margin: 1rem 0 1.5rem 0;
-`;
-
 // ... (기존 스타일 유지)
 const StHeaderWrapper = styled.div`
   display: flex;

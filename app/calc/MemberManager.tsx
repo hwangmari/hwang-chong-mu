@@ -1,5 +1,6 @@
 "use client";
 import ShareButton from "@/components/common/KakaoCalendarShare";
+import { StSection } from "@/components/styled/layout.styled";
 import React, { useState } from "react";
 import styled from "styled-components";
 
@@ -67,14 +68,6 @@ const StFixedButton = styled.div`
   position: absolute;
   top: 1rem;
   right: 1.5rem;
-`;
-const StSection = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;

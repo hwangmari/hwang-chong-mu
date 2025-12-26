@@ -31,7 +31,7 @@ const StHeaderContainer = styled.div`
 `;
 
 const StIcon = styled.div`
-  font-size: 3rem; /* 아이콘 크기를 조금 키워 시원하게 */
+  font-size: 4rem;
   margin-bottom: 0.5rem;
 `;
 
