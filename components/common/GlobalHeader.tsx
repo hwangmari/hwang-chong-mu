@@ -38,7 +38,6 @@ export default function GlobalHeader() {
       setCurrentTitle(TITLE_MAP[pathname]);
       return;
     }
-
     if (pathname.startsWith("/calc")) setCurrentTitle(TITLE_MAP["/calc"]);
     else if (pathname.startsWith("/meeting"))
       setCurrentTitle(TITLE_MAP["/meeting"]);
@@ -46,6 +45,16 @@ export default function GlobalHeader() {
       setCurrentTitle(TITLE_MAP["/habit"]);
     else setCurrentTitle("황총무의 실험실");
   }, [pathname]);
+
+  // ✨ [추가] 경로가 바뀌면 스크롤을 맨 위로 올리고, 메뉴 닫기
+  useEffect(() => {
+    // 1. 메뉴 닫기 (페이지 이동했으니까)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMenuOpen(false);
+
+    // 2. 윈도우 스크롤 맨 위로 (즉시 이동)
+    window.scrollTo(0, 0);
+  }, [pathname]); // pathname이 바뀔 때마다 실행
 
   // 홈('/')이 아니면 뒤로가기 버튼 노출
   const showBack = pathname !== "/";
