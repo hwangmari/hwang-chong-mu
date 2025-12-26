@@ -11,7 +11,7 @@ interface ProjectCardProps {
   period: string;
   linkUrl: string;
   description: ReactNode;
-  techStack: string[];
+  techStack?: string[];
   details: {
     problem: string;
     solution: string;
@@ -60,7 +60,7 @@ export default function ProjectCard({
         </StDescriptionWrapper>
 
         <StTechStackList>
-          {techStack.map((tech) => (
+          {techStack?.map((tech) => (
             <StTechTag key={tech}>{tech}</StTechTag>
           ))}
         </StTechStackList>

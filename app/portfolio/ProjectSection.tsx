@@ -4,15 +4,31 @@ import styled from "styled-components";
 import Typography from "@/components/common/Typography";
 import ProjectCard from "./ProjectCard";
 
+// ✅ 공통 핵심 스택 정의
+const CORE_STACK = ["Next.js 14", "TypeScript", "Supabase", "Vercel"];
+
 export default function ProjectSection() {
   return (
     <StProjectSection>
       <StSectionInner>
-        <StSectionTitleWrapper>
-          <Typography variant="h2" as="h2">
-            🚀 Toy Projects
-          </Typography>
-        </StSectionTitleWrapper>
+        {/* 섹션 타이틀 & 공통 스택 영역 */}
+        <StHeaderGroup>
+          <StSectionTitleWrapper>
+            <Typography variant="h2" as="h2">
+              🚀 Toy Projects
+            </Typography>
+          </StSectionTitleWrapper>
+
+          {/* 🔹 공통 기술 스택 (상단 배치) */}
+          <StCommonStackWrapper>
+            <span className="label">Core Tech Stack :</span>
+            <div className="badge-list">
+              {CORE_STACK.map((tech) => (
+                <StCoreBadge key={tech}>{tech}</StCoreBadge>
+              ))}
+            </div>
+          </StCommonStackWrapper>
+        </StHeaderGroup>
 
         <StProjectList>
           {/* 1. 약속 잡기 프로젝트 */}
@@ -23,31 +39,22 @@ export default function ProjectSection() {
             linkUrl="/meeting"
             description={
               <>
-                단톡방에서 약속 날짜를 잡을 때 발생하는{" "}
-                <b>&quot;무한 되묻기&quot;</b> 문제를 해결하기 위해 개발한{" "}
-                <b>소거법 기반 스케줄러</b>입니다. &apos;되는 날&apos;을 찾는
-                대신 &apos;안 되는 날&apos;을 제거하는 역발상 UX로 약속 확정
-                시간을 단축시켰습니다.
+                단톡방의 비효율적인 일정 조율 문제를 <b>&quot;소거법&quot;</b>
+                으로 해결한 스케줄러입니다. 모두가 되는 날을 취합하는 대신,{" "}
+                <b>&quot;안 되는 날&quot;을 먼저 지우는 역발상 UX</b>를 통해
+                약속 확정 시간을 획기적으로 단축시켰습니다.
               </>
             }
-            techStack={[
-              "Next.js 14",
-              "TypeScript",
-              "Tailwind CSS",
-              "Supabase",
-              "Vercel",
-              "Google AdSense",
-            ]}
             details={{
               problem:
-                "다수 인원의 일정 조율 시, 긍정 응답(되는 날)만으로는 교집합을 찾기 어렵고 시간이 오래 걸림.",
+                "다수 인원의 일정이 파편화되어 교집합(공통일)을 찾기 어렵고, 의사소통 비용이 과다하게 발생.",
               solution:
-                "불가능한 날짜(Unavailable Dates)를 우선 소거하여 남는 날짜를 도출하는 로직 구현.",
-              tech: "3주치 동적 캘린더 알고리즘 구현 (date-fns), SEO 최적화를 통한 애드센스 승인.",
+                "참여자들의 '불가능한 날짜'를 우선 제거하여 최적의 합의점을 빠르게 도출하는 소거 로직(Negative Selection) 적용.",
+              tech: "date-fns를 활용한 3주치 동적 캘린더 생성 알고리즘 구현 및 메타태그 최적화(SEO)를 통한 검색 유입 확보.",
             }}
           />
 
-          {/* ✅ 2. 습관 관리 프로젝트 (추가됨!) */}
+          {/* 2. 습관 관리 프로젝트 */}
           <ProjectCard
             title="황총무의 습관 관리 (Hwang's Habit Tracker)"
             category="Service"
@@ -55,30 +62,22 @@ export default function ProjectSection() {
             linkUrl="/habit"
             description={
               <>
-                작심삼일로 끝나는 습관을 <b>&quot;잔디 심기&quot;</b>의 시각적
-                즐거움으로 지속하게 만드는 <b>게이미피케이션 습관 트래커</b>
-                입니다. 달력의 날짜가 목표 달성률에 따라 <b>나만의 테마 컬러</b>
-                로 진하게 물들어가는 과정을 통해, 성취감을 직관적으로
-                시각화했습니다.
+                작심삼일을 <b>&quot;잔디 심기&quot;</b>의 재미로 극복하는 습관
+                트래커입니다. 목표를 달성할수록 <b>나만의 컬러</b>로 진하게
+                물드는 달력을 보며, 하루의 노력을 직관적으로 확인하고 성취감을
+                느낄 수 있습니다.
               </>
             }
-            techStack={[
-              "Next.js 14",
-              "TypeScript",
-              "Styled Components",
-              "Supabase",
-              "date-fns",
-            ]}
             details={{
               problem:
-                "단순 체크리스트는 동기부여가 약하고, 한 달 전체의 성실함(흐름)을 한눈에 파악하기 어려움.",
+                "텍스트 기반 체크리스트의 시각적 피드백 부족 및 월간 달성 흐름 파악의 한계.",
               solution:
-                "GitHub Contribution Graph에서 영감을 받은 '농도 캘린더' UI 구현 및 비밀번호 공유 방식을 통한 간편한 그룹 생성.",
-              tech: "Context API를 활용한 전역 모달(Global Modal) 모듈화, 커스텀 훅(useModal) 설계를 통한 비즈니스 로직 분리.",
+                "활동 빈도를 색상 농도로 표현하는 히트맵(Heatmap) UI를 도입해 성취감을 시각화.",
+              tech: "Context API로 전역 모달 시스템을 구축하고, 커스텀 훅으로 제어 로직을 추상화하여 재사용성 증대.",
             }}
           />
 
-          {/* 💸 3. N빵 계산기 프로젝트 (New!) */}
+          {/* 3. N빵 계산기 프로젝트 */}
           <ProjectCard
             title="황총무의 N빵 계산기 (Hwang's Expense Splitter)"
             category="Service"
@@ -95,19 +94,12 @@ export default function ProjectSection() {
                 있습니다.
               </>
             }
-            techStack={[
-              "Next.js 14",
-              "TypeScript",
-              "Styled Components",
-              "Supabase",
-              "Greedy Algorithm",
-            ]}
             details={{
               problem:
-                "여행 직후 수많은 지출 내역과 복잡한 이체 관계(A가 낸 돈, B가 낸 돈...)를 수기로 정리하다 보면 계산 실수가 잦고 스트레스가 발생함.",
+                "다자간 지출 내역 정리 시 발생하는 N:N 정산 로직의 복잡성 해결 필요.",
               solution:
-                "탐욕 알고리즘(Greedy Algorithm)을 적용해 송금 횟수를 최소화하고, '영수증 및 티켓' 메타포를 활용한 시각적 리포트 페이지 제공.",
-              tech: "복잡한 계산 로직(useCalculator)과 데이터 영속성(useCalcPersistence)을 커스텀 훅으로 분리하여 비즈니스 로직의 응집도 강화.",
+                "최소 이체 경로를 파악해 송금 단계를 최적화하고, 결과를 시각화된 리포트로 제공.",
+              tech: "핵심 기능인 '정산 계산'과 '데이터 저장'을 커스텀 훅으로 모듈화하여 관심사를 명확히 분리(SoC).",
             }}
           />
         </StProjectList>
@@ -116,29 +108,74 @@ export default function ProjectSection() {
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
+// ✨ 스타일 정의
 
 const StProjectSection = styled.section`
   background-color: ${({ theme }) => theme.colors.gray50};
-  padding: 5rem 0; /* py-20 */
+  padding: 5rem 0;
   border-top: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
 const StSectionInner = styled.div`
-  max-width: 56rem; /* max-w-4xl */
+  max-width: 56rem;
   margin: 0 auto;
-  padding: 0 1.5rem; /* px-6 */
+  padding: 0 1.5rem;
+`;
+
+const StHeaderGroup = styled.div`
+  margin-bottom: 3rem;
+  /* 모바일에서는 세로, PC에서는 가로/세로 자유롭게 배치 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `;
 
 const StSectionTitleWrapper = styled.div`
-  margin-bottom: 2.5rem; /* mb-10 */
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
+/* 공통 기술 스택 영역 스타일 */
+const StCommonStackWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  .label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.gray600};
+    margin-right: 0.25rem;
+  }
+
+  .badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+`;
+
+/* 코어 뱃지 스타일 (일반 뱃지보다 조금 더 강조됨) */
+const StCoreBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray500};
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
+`;
+
 const StProjectList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3rem; /* space-y-12 */
+  gap: 3rem;
 `;

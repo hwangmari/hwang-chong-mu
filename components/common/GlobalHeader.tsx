@@ -11,18 +11,18 @@ import CloseIcon from "@mui/icons-material/Close";
 // ✅ 경로별 타이틀 매핑
 const TITLE_MAP: Record<string, string> = {
   "/": "황총무의 실험실",
-  "/calc": "N빵 계산기",
   "/meeting": "약속 잡기",
   "/habit": "습관 관리",
+  "/calc": "N빵 계산기",
   "/portfolio": "포트폴리오",
 };
 
 // ✅ 메뉴 목록
 const NAV_ITEMS = [
   { label: "홈으로", href: "/" },
-  { label: "N빵 계산기", href: "/calc" },
   { label: "약속 잡기", href: "/meeting" },
   { label: "습관 관리", href: "/habit" },
+  { label: "N빵 계산기", href: "/calc" },
 ];
 
 export default function GlobalHeader() {
@@ -143,10 +143,6 @@ const StHeaderWrapper = styled.header`
   z-index: 50;
   margin: 0 auto;
 `;
-// ... (나머지 스타일 코드 생략)
-// StLeftArea, StCenterArea, StRightArea, StTitle, StIconButton, StMenuOverlay, StMenuContainer, StMenuItem, StBackdrop 등
-// 기존 코드에 있던 것 그대로 두시면 됩니다.
-// (여기서 생략된 스타일 코드는 질문자님의 원본 코드와 동일합니다)
 
 const StLeftArea = styled.div`
   flex: 1;
@@ -202,24 +198,17 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
   transition: opacity 0.2s ease-in-out, visibility 0.2s;
   display: flex;
   flex-direction: column;
-  max-width: 540px;
   margin: 0 auto;
 `;
 
 const StMenuContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.white};
-  border-bottom-left-radius: 1rem;
-  border-bottom-right-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 `;
 
 const StMenuItem = styled.div<{ $isActive: boolean }>`
   padding: 1rem;
-  border-radius: 0.75rem;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;

@@ -39,9 +39,8 @@ export default function ResumeSection() {
                 <StSkillTitle>Styling & UI</StSkillTitle>
                 <StTagList>
                   {[
-                    "SCSS",
-                    "styled-components",
                     "SCSS (CSS Modules)",
+                    "styled-components",
                     "AdorableCSS",
                     "Tailwind CSS",
                     "Cross Browsing",
@@ -58,7 +57,7 @@ export default function ResumeSection() {
               <StSkillItem>
                 <StSkillTitle>Collaboration</StSkillTitle>
                 <StTagList>
-                  {["Git", "Jira", "Wiki", "Agile"].map((skill) => (
+                  {["Git", "Jira", "Wiki", "Agile", "Figma"].map((skill) => (
                     <StSkillTag key={skill} $variant="blue">
                       {skill}
                     </StSkillTag>

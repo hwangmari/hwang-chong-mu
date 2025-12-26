@@ -14,13 +14,13 @@ import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
+  { name: "Slate", value: "#5e606d", label: "슬레이트" },
   { name: "Red", value: "#ed3654", label: "로즈" },
   { name: "Orange", value: "#FB923C", label: "오렌지" },
   { name: "Yellow", value: "#efb520", label: "엠버" },
   { name: "Green", value: "#14b8a6", label: "에메랄드" },
   { name: "Blue", value: "#3378e7", label: "스카이" },
   { name: "Indigo", value: "#6366F1", label: "인디고" },
-  { name: "Slate", value: "#475569", label: "슬레이트" },
 ];
 
 export default function CreateHabitPage() {
