@@ -91,7 +91,6 @@ const HeaderWrapper = styled.div`
 `;
 
 const HeaderContent = styled.div`
-  max-width: 56rem;
   margin: 0 auto;
   padding: 4rem 1.5rem;
 `;
@@ -134,7 +133,6 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
 
 // === Body Styles ===
 const BodyContent = styled.div`
-  max-width: 56rem;
   margin: 0 auto;
   padding: 3rem 1.5rem;
 

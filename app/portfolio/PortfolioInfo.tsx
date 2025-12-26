@@ -2,53 +2,50 @@
 
 import Link from "next/link";
 import styled, { keyframes } from "styled-components";
-import Typography from "@/components/common/Typography";
+import Introduction from "./Introduction";
+import ProfileCard from "./ProfileCard";
 
 export default function PortfolioInfo() {
   return (
     <StHeaderContainer>
       <StProfileWrapper>
-        <StTextContent>
-          {/* 🏷️ 뱃지 */}
+        {/* [좌측] 텍스트 및 소개 영역 */}
+        <StMainContent>
           <StBadgeBox>Frontend Developer</StBadgeBox>
 
-          {/* 🦁 메인 타이틀 */}
-          <StMainTitleWrapper>
-            <Typography variant="h1" as="h1" color="gray900">
-              사용자의 불편함을 <br className="desktop-only" />
-              <span className="text-blue-600 fw-700">기술로 해결하는</span>{" "}
-              황혜경입니다.
-            </Typography>
-          </StMainTitleWrapper>
+          <Introduction />
 
-          {/* 🐰 설명글 */}
-          <Typography variant="body1" color="gray500">
-            복잡한 문제를 단순하게 정의하고, <br />
-            주도적으로 서비스를 만들어가는 것을 좋아합니다.
-            <br />
-            운동과 기록을 즐기며, 끊임없이 성장하는 개발자입니다.
-          </Typography>
-        </StTextContent>
+          {/* 🔗 링크 영역 (소개글 하단 배치) */}
+          <StLinkGroup>
+            <StExternalLink
+              href="https://github.com/hwangmari/"
+              target="_blank"
+            >
+              GitHub ↗
+            </StExternalLink>
+            <StExternalLink
+              href="https://blog.naver.com/hwangmari"
+              target="_blank"
+            >
+              Blog ↗
+            </StExternalLink>
+            <StSeparator>|</StSeparator>
+            <StExternalLink href="mailto:hwangmari@naver.com">
+              Email
+            </StExternalLink>
+          </StLinkGroup>
+        </StMainContent>
 
-        <StAvatarBox>👩‍💻</StAvatarBox>
+        {/* [우측] 프로필 카드 (Sticky 사이드바) */}
+        <StSidebar>
+          <ProfileCard />
+        </StSidebar>
       </StProfileWrapper>
-
-      {/* 🔗 링크 영역 */}
-      <StLinkGroup>
-        <StExternalLink href="https://github.com/hwangmari/" target="_blank">
-          GitHub ↗
-        </StExternalLink>
-        <StExternalLink href="https://blog.naver.com/hwangmari" target="_blank">
-          Blog ↗
-        </StExternalLink>
-        <StSeparator>|</StSeparator>
-        <StExternalLink href="mailto:hwangmari@naver.com">Email</StExternalLink>
-      </StLinkGroup>
     </StHeaderContainer>
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스 적용)
+// ✨ 스타일 정의
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -58,83 +55,71 @@ const fadeInUp = keyframes`
 const StHeaderContainer = styled.header`
   max-width: 56rem;
   margin: 0 auto;
-  padding: 5rem 1.5rem;
+  padding: 4rem 1.5rem; /* 상하 여백 조정 */
   animation: ${fadeInUp} 0.8s ease-out forwards;
 `;
 
 const StProfileWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  gap: 3rem;
 
+  /* PC 화면 설정 */
   @media ${({ theme }) => theme.media.desktop} {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
   }
 `;
 
-const StTextContent = styled.div`
-  gap: 1rem;
+const StMainContent = styled.div`
+  flex: 1; /* 남은 공간 모두 차지 */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0; /* Flex 자식 요소 넘침 방지 */
+`;
+
+const StSidebar = styled.aside`
+  width: 100%;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    width: 180px;
+    flex-shrink: 0;
+    position: sticky; /* 스크롤 따라오기 */
+    top: 6rem;
+    display: flex;
+    justify-content: flex-end;
+  }
 `;
 
 const StBadgeBox = styled.span`
   display: inline-block;
   background-color: ${({ theme }) => theme.colors.gray900};
-  border-radius: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
   color: ${({ theme }) => theme.colors.white};
-`;
-
-const StMainTitleWrapper = styled.div`
-  .desktop-only {
-    display: none;
-    @media ${({ theme }) => theme.media.desktop} {
-      display: block;
-    }
-  }
-`;
-
-const StAvatarBox = styled.div`
-  width: 6rem;
-  height: 6rem;
-  background-color: ${({ theme }) => theme.colors.gray100};
-  border-radius: 9999px;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2.25rem;
-  flex-shrink: 0;
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-
-  @media ${({ theme }) => theme.media.desktop} {
-    width: 8rem;
-    height: 8rem;
-  }
+  border-radius: 9999px; /* 둥근 캡슐 모양 */
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  align-self: flex-start; /* 왼쪽 정렬 */
 `;
 
 const StLinkGroup = styled.div`
+  margin-top: 1rem;
   display: flex;
   gap: 1rem;
   align-items: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.gray600};
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 
 const StExternalLink = styled(Link)`
-  transition: all 0.2s;
-  text-decoration-thickness: 2px;
+  transition: color 0.2s;
   color: ${({ theme }) => theme.colors.gray600};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.blue600}; /* 브랜드 컬러 포인트 */
     text-decoration: underline;
     text-underline-offset: 4px;
   }
@@ -142,4 +127,5 @@ const StExternalLink = styled(Link)`
 
 const StSeparator = styled.span`
   color: ${({ theme }) => theme.colors.gray300};
+  font-size: 0.8rem;
 `;
