@@ -15,7 +15,7 @@ export default function ExperienceDetail() {
   if (!data) {
     return (
       <NotFoundContainer>
-        <Typography variant="body1" color="gray500" align="center">
+        <Typography variant="body1" color="gray500">
           찾을 수 없는 페이지입니다. 😢
         </Typography>
       </NotFoundContainer>
@@ -81,6 +81,7 @@ const NotFoundContainer = styled.div`
   padding: 5rem 0;
   display: flex;
   justify-content: center;
+  text-align: center;
 `;
 
 // === Header Styles ===
