@@ -117,7 +117,7 @@ const StProjectSection = styled.section`
 `;
 
 const StSectionInner = styled.div`
-  max-width: 56rem;
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 0 1.5rem;
 `;

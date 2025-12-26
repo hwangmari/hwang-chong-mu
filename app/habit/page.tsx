@@ -11,6 +11,7 @@ import {
   StWrapper,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
+import CreateButton from "@/components/common/CreateButton";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
@@ -102,13 +103,13 @@ export default function CreateHabitPage() {
             </ColorGrid>
           </ColorSection>
 
-          <Button
+          <CreateButton
             onClick={createGoal}
-            disabled={loading}
-            $bgColor={selectedColor}
+            bgColor={selectedColor}
+            isLoading={loading}
           >
-            {loading ? "생성 중..." : "습관 방 만들기 ➔"}
-          </Button>
+            습관 방 만들기 ➔
+          </CreateButton>
         </StSection>
 
         {/* ✅ 습관 관리용 데이터 주입 */}

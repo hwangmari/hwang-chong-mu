@@ -91,6 +91,7 @@ const HeaderWrapper = styled.div`
 `;
 
 const HeaderContent = styled.div`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 4rem 1.5rem;
 `;
@@ -116,8 +117,8 @@ const TitleRow = styled.div`
 
 // 🔥 색상 매핑 로직 (ResumeSection과 동일)
 const CompanyDot = styled.span<{ $colorClass: string }>`
-  width: 1rem; /* w-3 */
-  height: 1rem; /* h-3 */
+  width: 1rem;
+  height: 1rem;
   border-radius: 9999px;
 
   /* 데이터 문자열에 따라 테마 색상 적용 */
@@ -133,6 +134,7 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
 
 // === Body Styles ===
 const BodyContent = styled.div`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 3rem 1.5rem;
 

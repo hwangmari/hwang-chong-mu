@@ -24,7 +24,7 @@ const StFloatingContainer = styled.div`
   justify-content: center;
   pointer-events: none;
   width: 100%;
-  max-width: 540px;
+  max-width: ${({ theme }) => theme.layout.narrowWidth};
   z-index: 10;
 `;
 

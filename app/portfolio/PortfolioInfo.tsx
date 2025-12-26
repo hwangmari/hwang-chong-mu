@@ -53,7 +53,7 @@ const fadeInUp = keyframes`
 `;
 
 const StHeaderContainer = styled.header`
-  max-width: 56rem;
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 4rem 1.5rem; /* 상하 여백 조정 */
   animation: ${fadeInUp} 0.8s ease-out forwards;

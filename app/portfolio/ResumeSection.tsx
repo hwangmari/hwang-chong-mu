@@ -145,7 +145,7 @@ const fadeInUp = keyframes`
 `;
 
 const StSectionContainer = styled.section`
-  max-width: 56rem;
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 4rem 1.5rem;
   animation: ${fadeInUp} 0.8s ease-out forwards;

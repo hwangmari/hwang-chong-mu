@@ -76,7 +76,10 @@ const colors = {
 
 export const theme = {
   colors,
-
+  layout: {
+    maxWidth: "56rem",
+    narrowWidth: "540px",
+  },
   // 의미론적 별칭 (Semantic Aliases)
   semantic: {
     primary: colors.blue600,

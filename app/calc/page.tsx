@@ -9,6 +9,7 @@ import {
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
+import CreateButton from "@/components/common/CreateButton";
 
 export default function CreateRoomPage() {
   // const router = useRouter(); // 훅 내부에서 처리함
@@ -54,9 +55,9 @@ export default function CreateRoomPage() {
             disabled={loading} // 로딩 중엔 입력 막기
           />
 
-          <StCreateButton onClick={handleCreate} disabled={loading}>
-            {loading ? "생성 중... ⏳" : "정산 방 만들기 ➔"}
-          </StCreateButton>
+          <CreateButton onClick={handleCreate} isLoading={loading}>
+            정산 방 만들기 ➔
+          </CreateButton>
         </StSection>
 
         {/* 2. 하단 가이드 (작성해주신 내용 그대로 적용) */}

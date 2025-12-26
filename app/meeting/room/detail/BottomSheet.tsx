@@ -81,7 +81,7 @@ const slideUp = keyframes`
 const StOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.4); /* bg-black/40 */
+  background-color: rgba(0, 0, 0, 0.4);
   z-index: 40;
   animation: ${fadeIn} 0.3s ease-out;
   cursor: pointer;
@@ -94,22 +94,22 @@ const StSheetContainer = styled.div`
   right: 0;
   margin: 0 auto;
   width: 100%;
-  max-width: 540px;
+  max-width: ${({ theme }) => theme.layout.narrowWidth};
   background-color: ${({ theme }) => theme.colors.white};
   z-index: 50;
   border-top-left-radius: 2rem;
   border-top-right-radius: 2rem;
-  padding: 2rem 2rem 3rem 2rem; /* p-8 pb-12 */
+  padding: 2rem 2rem 3rem 2rem;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-  animation: ${slideUp} 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* 부드러운 슬라이드 */
+  animation: ${slideUp} 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
 const StDragHandle = styled.div`
-  width: 3rem; /* w-12 */
-  height: 0.375rem; /* h-1.5 */
+  width: 3rem;
+  height: 0.375rem;
   background-color: ${({ theme }) => theme.colors.gray200};
   border-radius: 9999px;
-  margin: 0 auto 1.5rem auto; /* mx-auto mb-6 */
+  margin: 0 auto 1.5rem;
 `;
 
 const StContentWrapper = styled.div`

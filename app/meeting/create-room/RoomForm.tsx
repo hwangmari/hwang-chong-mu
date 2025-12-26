@@ -1,5 +1,6 @@
 import styled, { keyframes } from "styled-components";
 import Switch from "../../../components/common/Switch";
+import CreateButton from "@/components/common/CreateButton";
 
 interface RoomFormProps {
   formData: {
@@ -92,9 +93,9 @@ export default function RoomForm({
       </StToggleRow>
 
       {/* 4. 버튼 */}
-      <StSubmitButton onClick={onSubmit} disabled={loading}>
-        {loading ? "생성 중..." : "방 만들기 🐰"}
-      </StSubmitButton>
+      <CreateButton onClick={onSubmit} isLoading={loading}>
+        방 만들기 ➔
+      </CreateButton>
     </StFormContainer>
   );
 }
@@ -178,26 +179,4 @@ const StToggleLabel = styled.span`
   font-weight: 500;
   color: ${({ theme }) => theme.colors.gray600};
   cursor: pointer;
-`;
-
-const StSubmitButton = styled.button`
-  width: 100%;
-  padding: 1rem 0; /* py-4 */
-  background-color: ${({ theme }) => theme.colors.gray900}; /* slate-900 */
-  color: ${({ theme }) => theme.colors.white};
-  border-radius: 0.75rem; /* rounded-xl */
-  font-weight: 700;
-  font-size: 1.125rem; /* text-lg */
-  margin-top: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* shadow-lg */
-  transition: background-color 0.2s, opacity 0.2s;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.black}; /* slate-800 느낌 */
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `;
