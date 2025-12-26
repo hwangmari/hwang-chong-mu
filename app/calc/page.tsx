@@ -111,6 +111,7 @@ const StInput = styled.input`
   &:focus {
     border-color: #333;
     background-color: white;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05); /* 은은한 회색 그림자 */
   }
   &::placeholder {
     color: #bbb;

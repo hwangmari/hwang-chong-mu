@@ -22,6 +22,7 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   // 멤버가 변경되면 payer 유효성 체크 및 자동 선택
   useEffect(() => {
     if (members.length > 0 && (!payer || !members.includes(payer))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPayer(members[0]);
     }
   }, [members, payer]);
