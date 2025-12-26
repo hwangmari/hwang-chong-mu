@@ -87,6 +87,7 @@ const StInput = styled.input<{ $isError: boolean }>`
 
   /* 날짜 입력(date)일 때 텍스트 높이 보정 */
   &[type="date"] {
-    font-family: var(--font-pretendard); /* 숫자 폰트 정렬 */
+    width: 220px;
+    text-align: left;
   }
 `;
