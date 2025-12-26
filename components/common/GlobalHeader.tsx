@@ -101,9 +101,6 @@ export default function GlobalHeader() {
         </StMenuContainer>
         <StBackdrop onClick={() => setIsMenuOpen(false)} />
       </StMenuOverlay>
-
-      {/* 헤더 높이만큼 여백 확보 (컨텐츠가 헤더에 가려지지 않도록) */}
-      <StHeaderSpacer />
     </>
   );
 }
@@ -111,7 +108,7 @@ export default function GlobalHeader() {
 // ✨ 스타일 정의 (St 프리픽스)
 
 const StHeaderWrapper = styled.header`
-  position: fixed; /* 상단 고정 */
+  position: sticky; /* 상단 고정 */
   top: 0;
   left: 0;
   right: 0;
@@ -123,12 +120,7 @@ const StHeaderWrapper = styled.header`
   background-color: ${({ theme }) => theme.colors.white}; /* 배경색 추가 */
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100}; /* 하단 구분선 */
   z-index: 50;
-  max-width: 540px; /* 모바일 레이아웃 너비 제한에 맞춤 (필요시 제거) */
   margin: 0 auto; /* 중앙 정렬 */
-`;
-
-const StHeaderSpacer = styled.div`
-  height: 3.5rem; /* 헤더 높이만큼 공간 차지 */
 `;
 
 const StLeftArea = styled.div`

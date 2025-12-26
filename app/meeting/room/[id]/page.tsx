@@ -127,14 +127,11 @@ export default function RoomDetail() {
             />
 
             {step === "VOTING" && (
-              <>
-                <VoteSubmitButtons
-                  isEditing={isEditing}
-                  onSubmitVote={handleSubmitVote}
-                  onSubmitAbsent={handleSubmitAbsent}
-                />
-                <FloatingFinishButton onFinish={handleGoToConfirm} />
-              </>
+              <VoteSubmitButtons
+                isEditing={isEditing}
+                onSubmitVote={handleSubmitVote}
+                onSubmitAbsent={handleSubmitAbsent}
+              />
             )}
 
             <ParticipantList
@@ -142,6 +139,9 @@ export default function RoomDetail() {
               onEdit={handleEditUser}
               onDelete={handleDeleteUser}
             />
+            {step === "VOTING" && (
+              <FloatingFinishButton onFinish={handleGoToConfirm} />
+            )}
           </>
         )}
 
@@ -172,7 +172,6 @@ export default function RoomDetail() {
             closeModal();
           }}
         />
-        <AdBanner />
       </StWrapper>
     </StContainer>
   );

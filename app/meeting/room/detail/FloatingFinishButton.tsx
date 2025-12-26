@@ -18,9 +18,8 @@ export default function FloatingFinishButton({ onFinish }: Props) {
 }
 
 const StFloatingContainer = styled.div`
-  position: fixed;
-  bottom: 1.25rem;
-  padding: 0 1.5rem;
+  position: sticky;
+  bottom: 0;
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -32,7 +31,6 @@ const StFloatingContainer = styled.div`
 const StFinishButton = styled.button`
   pointer-events: auto;
   width: 100%;
-  max-width: 500px;
   padding: 1rem 1.5rem;
   background-color: #454545;
   color: ${({ theme }) => theme.colors.white};

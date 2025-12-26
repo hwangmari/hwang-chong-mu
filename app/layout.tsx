@@ -4,7 +4,6 @@ import "./globals.css";
 import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
 import { ModalProvider } from "@/components/common/ModalProvider";
-import CommonHeader from "@/components/common/GlobalHeader";
 import GlobalHeader from "@/components/common/GlobalHeader";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,15 +24,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      {/* 애드센스 스크립트 */}
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9383832812082051"
+        crossOrigin="anonymous"
+        strategy="lazyOnload"
+      />
       <body className={inter.className}>
-        {/* 애드센스 스크립트 */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9383832812082051"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
-
         <StyledComponentsRegistry>
           <ModalProvider>
             {/* 공통 헤더 적용 */}

@@ -62,7 +62,6 @@ type ColorType = keyof typeof theme.colors;
 interface TypographyProps {
   variant?: VariantType;
   color?: ColorType;
-  align?: "left" | "center" | "right";
   children: React.ReactNode;
   className?: string;
 }
@@ -71,7 +70,6 @@ interface TypographyProps {
 const Txt = styled.p<{
   $variant: VariantType;
   $color: ColorType;
-  $align?: string;
 }>`
   margin: 0;
   padding: 0;
@@ -81,16 +79,12 @@ const Txt = styled.p<{
 
   // 2. Color 적용 (theme에서 가져옴)
   color: ${({ theme, $color }) => theme.colors[$color]};
-
-  // 3. 정렬
-  text-align: ${({ $align }) => $align || "left"};
 `;
 
 // 🎁 컴포넌트 내보내기
 export default function Typography({
   variant = "body2",
   color = "gray900",
-  align,
   children,
   className,
   ...props // as prop 등을 받기 위함
@@ -100,7 +94,6 @@ export default function Typography({
       as="p" // 기본 태그
       $variant={variant}
       $color={color}
-      $align={align}
       className={className}
       {...props} // 여기서 as="h1" 같은게 들어오면 덮어씌워짐
     >

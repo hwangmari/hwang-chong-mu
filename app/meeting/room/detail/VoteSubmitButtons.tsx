@@ -45,7 +45,7 @@ const StSubmitSection = styled.div`
 const StSubmitButton = styled.button`
   width: 100%;
   padding: 0.75rem;
-  background-color: #656565;
+  background-color: ${({ theme }) => theme.colors.gray400};
   color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   border-radius: 1rem;

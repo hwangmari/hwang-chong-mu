@@ -1,102 +1,106 @@
+const colors = {
+  white: "#ffffff",
+  black: "#000000",
+
+  // 1. Neutral (Pure Gray) - 제공해주신 값 적용
+  // 기존 Slate 대신 채도가 없는 깔끔한 회색으로 교체했습니다.
+  gray50: "oklch(0.985 0 0)",
+  gray100: "oklch(0.97 0 0)",
+  gray200: "oklch(0.922 0 0)",
+  gray300: "oklch(0.87 0 0)",
+  gray400: "oklch(0.708 0 0)",
+  gray500: "oklch(0.556 0 0)",
+  gray600: "oklch(0.439 0 0)",
+  gray700: "oklch(0.371 0 0)",
+  gray800: "oklch(0.269 0 0)",
+  gray900: "oklch(0.205 0 0)",
+  gray950: "oklch(0.145 0 0)", // 950 추가됨 (아주 깊은 검은색에 가까운 회색)
+
+  // 2. Primary (Blue & Indigo)
+  blue50: "oklch(0.97 0.014 254.604)",
+  blue100: "oklch(0.932 0.032 255.585)",
+  blue200: "oklch(0.882 0.059 254.128)",
+  blue500: "oklch(0.623 0.214 259.815)",
+  blue600: "oklch(0.546 0.245 262.881)",
+  blue700: "oklch(0.488 0.243 264.376)",
+
+  indigo50: "oklch(0.962 0.018 272.314)",
+  indigo100: "oklch(0.93 0.034 272.788)",
+  indigo500: "oklch(0.585 0.233 277.117)",
+  indigo600: "oklch(0.511 0.262 276.966)",
+
+  // 3. Functional Colors
+  // Yellow (주의/강조)
+  yellow50: "oklch(0.987 0.026 102.212)",
+  yellow100: "oklch(0.973 0.071 103.193)",
+  yellow200: "oklch(0.945 0.129 101.54)",
+  yellow400: "oklch(0.852 0.199 91.936)",
+  yellow500: "oklch(0.795 0.184 86.047)",
+  yellow600: "oklch(0.681 0.162 75.834)",
+
+  // Green (성공/완료)
+  green50: "oklch(0.982 0.018 155.826)",
+  green100: "oklch(0.962 0.044 156.743)",
+  green200: "oklch(0.925 0.084 155.995)",
+  green500: "oklch(0.723 0.219 149.579)",
+  green600: "oklch(0.627 0.194 149.214)",
+
+  // Teal (Positive)
+  teal50: "oklch(0.984 0.014 180.72)",
+  teal100: "oklch(0.953 0.051 180.801)",
+  teal200: "oklch(0.91 0.096 180.426)",
+  teal500: "oklch(0.704 0.14 182.503)",
+  teal600: "oklch(0.6 0.118 184.704)",
+
+  // Rose (Negative)
+  rose50: "oklch(0.969 0.015 12.422)",
+  rose100: "oklch(0.941 0.03 12.58)",
+  rose200: "oklch(0.892 0.058 10.001)",
+  rose500: "oklch(0.645 0.246 16.439)",
+  rose600: "oklch(0.586 0.253 17.585)",
+
+  // Amber (Warning)
+  amber50: "oklch(0.987 0.022 95.277)",
+  amber100: "oklch(0.962 0.059 95.617)",
+  amber200: "oklch(0.924 0.12 95.746)",
+  amber500: "oklch(0.769 0.188 70.08)",
+  amber600: "oklch(0.666 0.179 58.318)",
+
+  // Orange (Sender)
+  orange50: "oklch(0.98 0.016 73.684)",
+  orange100: "oklch(0.954 0.038 75.164)",
+  orange200: "oklch(0.901 0.076 70.697)",
+  orange500: "oklch(0.705 0.213 47.604)",
+  orange600: "oklch(0.646 0.222 41.116)",
+};
+
 export const theme = {
-  colors: {
-    white: "#ffffff",
-    black: "#000000",
-
-    // 1. Neutral (Slate Gray) - 차분하고 고급스러운 회색
-    gray50: "#f8fafc",
-    gray100: "#f1f5f9",
-    gray200: "#e2e8f0",
-    gray300: "#cbd5e1",
-    gray400: "#94a3b8",
-    gray500: "#64748b",
-    gray600: "#475569",
-    gray700: "#334155",
-    gray800: "#1e293b",
-    gray900: "#0f172a",
-
-    // 2. Primary (Royal Blue & Indigo) - 황총무의 신뢰
-    blue50: "#eff6ff",
-    blue100: "#dbeafe",
-    blue200: "#bfdbfe", // 수정 (기존값 중복 수정)
-    blue500: "#3b82f6",
-    blue600: "#2563eb", // Main Brand
-    blue700: "#1d4ed8",
-
-    indigo50: "#eef2ff",
-    indigo100: "#e0e7ff", // 추가
-    indigo500: "#6366f1", // 추가
-    indigo600: "#4f46e5", // Sub Action
-
-    // 3. Functional Colors (Tailwind Standard Palette)
-
-    // ✅ [NEW] Yellow (주의/강조/별점)
-    yellow50: "#fefce8",
-    yellow100: "#fef9c3",
-    yellow200: "#fef08a",
-    yellow400: "#facc15",
-    yellow500: "#eab308",
-    yellow600: "#ca8a04",
-
-    // ✅ [NEW] Green (성공/완료 - Teal보다 더 일반적인 녹색)
-    green50: "#f0fdf4",
-    green100: "#dcfce7",
-    green200: "#bbf7d0",
-    green500: "#22c55e",
-    green600: "#16a34a",
-
-    // Teal (Positive - 돈 받을 때)
-    teal50: "#f0fdfa",
-    teal100: "#ccfbf1",
-    teal200: "#99f6e4",
-    teal500: "#14b8a6", // 추가
-    teal600: "#0d9488",
-
-    // Rose (Negative - 돈 줄 때)
-    rose50: "#fff1f2",
-    rose100: "#ffe4e6",
-    rose200: "#fecdd3",
-    rose500: "#f43f5e",
-    rose600: "#e11d48",
-
-    // Amber (Warning/Gold)
-    amber50: "#fffbeb", // 추가
-    amber100: "#fef3c7",
-    amber200: "#fde68a", // 추가
-    amber500: "#f59e0b",
-    amber600: "#d97706", // 추가
-
-    // Orange (Sender)
-    orange50: "#fff7ed",
-    orange100: "#ffedd5",
-    orange200: "#fed7aa",
-    orange500: "#f97316",
-    orange600: "#ea580c",
-  },
+  colors,
 
   // 의미론적 별칭 (Semantic Aliases)
   semantic: {
-    primary: "#2563eb", // blue600
-    primaryLight: "#eff6ff", // blue50
-    secondary: "#4f46e5", // indigo600
+    primary: colors.blue600,
+    primaryLight: colors.blue50,
+    secondary: colors.indigo600,
 
-    success: "#0d9488", // teal600
-    successBg: "#f0fdfa", // teal50
+    success: colors.teal600,
+    successBg: colors.teal50,
 
-    danger: "#e11d48", // rose600
-    dangerBg: "#fff1f2", // rose50
+    danger: colors.rose600,
+    dangerBg: colors.rose50,
 
-    warning: "#eab308", // yellow500 (추가됨)
-    warningBg: "#fefce8", // yellow50 (추가됨)
+    warning: colors.yellow500,
+    warningBg: colors.yellow50,
 
-    text: "#0f172a", // gray900
-    subText: "#64748b", // gray500
-    border: "#e2e8f0", // gray200
-    bg: "#f8fafc", // gray50
+    // Gray값이 Neutral로 변경되었으므로, 텍스트/배경도 더 깔끔해집니다.
+    text: colors.gray900,
+    subText: colors.gray500,
+    border: colors.gray200,
+    bg: colors.gray50,
 
-    sender: "#f97316", // orange500
-    senderBg: "#fff7ed", // orange50
-    senderBorder: "#fed7aa", // orange200
+    sender: colors.orange500,
+    senderBg: colors.orange50,
+    senderBorder: colors.orange200,
   },
 
   media: {
