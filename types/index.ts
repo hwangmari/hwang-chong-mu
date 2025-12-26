@@ -1,8 +1,8 @@
 export interface UserVote {
-  id?: string; // DB ID (가끔 없을 수도 있으니 선택적으로 둠)
+  id?: string;
   name: string;
   unavailableDates: Date[];
-  isAbsent: boolean; // ✅ 물음표(?) 제거! 무조건 true 아니면 false
+  isAbsent: boolean;
 }
 
 export interface ModalState {
@@ -12,7 +12,6 @@ export interface ModalState {
   onConfirm?: () => void;
 }
 
-// types/index.ts 에 추가
 export interface Habit {
   id: number;
   title: string;
@@ -33,4 +32,11 @@ export interface Expense {
   description: string;
   amount: number;
   type: ExpenseType;
+}
+export interface GoalComment {
+  id: number;
+  goal_id: number;
+  nickname: string;
+  content: string;
+  created_at: string;
 }

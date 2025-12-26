@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import InstallGuide from "@/components/common/InstallGuide";
 import MonthlyTracker from "../MonthlyTracker";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import CommentSection from "../CommentSection";
 
 export default function HabitRoomPage({
   params,
@@ -54,6 +55,10 @@ export default function HabitRoomPage({
         <InstallGuide
           isOpen={showInstallGuide}
           onClose={() => setShowInstallGuide(false)}
+        />
+        <CommentSection
+          goalId={Number(id)}
+          themeColor={goal.color || "#22c55e"}
         />
       </StWrapper>
     </StContainer>
