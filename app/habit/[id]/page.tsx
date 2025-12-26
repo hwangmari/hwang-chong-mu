@@ -3,7 +3,6 @@
 import { useEffect, useState, use } from "react";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
-import InstallGuide from "@/components/common/InstallGuide";
 import MonthlyTracker from "../MonthlyTracker";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import CommentSection from "../CommentSection";
@@ -48,11 +47,6 @@ export default function HabitRoomPage({
 
         {/* ✅ goal.color를 themeColor prop으로 전달 (없으면 기본 초록색) */}
         <MonthlyTracker
-          goalId={Number(id)}
-          themeColor={goal.color || "#22c55e"}
-        />
-
-        <CommentSection
           goalId={Number(id)}
           themeColor={goal.color || "#22c55e"}
         />

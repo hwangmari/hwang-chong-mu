@@ -12,13 +12,19 @@ import PersonIcon from "@mui/icons-material/Person";
 interface Props {
   goalId: number;
   themeColor: string;
+  selectedDate: Date;
 }
 
-export default function CommentSection({ goalId, themeColor }: Props) {
+export default function CommentSection({
+  goalId,
+  themeColor,
+  selectedDate,
+}: Props) {
   const [comments, setComments] = useState<GoalComment[]>([]);
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const dateStr = format(selectedDate, "yyyy-MM-dd");
 
   // 댓글 목록 불러오기
   const fetchComments = useCallback(async () => {
@@ -26,10 +32,11 @@ export default function CommentSection({ goalId, themeColor }: Props) {
       .from("goal_comments")
       .select("*")
       .eq("goal_id", goalId)
+      .eq("record_date", dateStr)
       .order("created_at", { ascending: false });
 
     if (data) setComments(data);
-  }, [goalId]);
+  }, [goalId, dateStr]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -47,6 +54,7 @@ export default function CommentSection({ goalId, themeColor }: Props) {
       goal_id: goalId,
       nickname,
       content,
+      record_date: dateStr,
     });
 
     if (error) {
@@ -76,19 +84,18 @@ export default function CommentSection({ goalId, themeColor }: Props) {
 
   return (
     <StCommentContainer>
-      <StTitle>💬 응원 한마디</StTitle>
+      <StTitle>📝 {format(selectedDate, "M월 d일")}의 기록</StTitle>
 
-      {/* 입력 폼 */}
       <StForm>
         <StInputGroup>
           <StNicknameInput
-            placeholder="닉네임"
+            placeholder="이름" // 닉네임 -> 이름 (조금 더 차분하게)
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             $focusColor={themeColor}
           />
           <StContentInput
-            placeholder="함께 응원해주세요! (엔터로 등록)"
+            placeholder="오늘 활동은 어땠나요? (엔터로 등록)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) =>
@@ -109,7 +116,10 @@ export default function CommentSection({ goalId, themeColor }: Props) {
       {/* 댓글 리스트 */}
       <StCommentList>
         {comments.length === 0 ? (
-          <StEmptyState>첫 번째 응원을 남겨보세요! 🎉</StEmptyState>
+          <StEmptyState>
+            {format(selectedDate, "M월 d일")}의 기록이 없어요. 첫 기록을
+            남겨보세요! ✍️
+          </StEmptyState>
         ) : (
           comments.map((comment) => (
             <StCommentItem key={comment.id}>
@@ -121,10 +131,13 @@ export default function CommentSection({ goalId, themeColor }: Props) {
               <StBubbleWrapper>
                 <StBubbleHeader>
                   <StNickname>{comment.nickname}</StNickname>
+                  {/* 작성 시간만 간단히 표시 */}
                   <StDate>
-                    {format(new Date(comment.created_at), "MM.dd HH:mm")}
+                    {format(new Date(comment.created_at), "HH:mm")}
                   </StDate>
                   <StDeleteBtn onClick={() => handleDelete(comment.id)}>
+                    {" "}
+                    {/* handleDelete는 기존 로직 유지 */}
                     <DeleteOutlineIcon sx={{ fontSize: 16 }} />
                   </StDeleteBtn>
                 </StBubbleHeader>

@@ -14,12 +14,11 @@ import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 
 // 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
 const COLORS = [
-  { name: "Green", value: "#22c55e", label: "초록" },
-  { name: "Blue", value: "#3b82f6", label: "파랑" },
-  { name: "Purple", value: "#a855f7", label: "보라" },
-  { name: "Pink", value: "#ec4899", label: "핑크" },
-  { name: "Orange", value: "#f97316", label: "주황" },
-  { name: "Yellow", value: "#eab308", label: "노랑" },
+  { name: "Blue", value: "#3378e7", label: "파랑" },
+  { name: "Purple", value: "#981bcd", label: "보라" },
+  { name: "Pink", value: "#ec4874", label: "핑크" },
+  { name: "Orange", value: "#ef941e", label: "주황" },
+  { name: "Yellow", value: "#ead70a", label: "노랑" },
   { name: "Teal", value: "#14b8a6", label: "청록" },
   { name: "Slate", value: "#475569", label: "다크" },
 ];
@@ -140,6 +139,18 @@ export default function CreateHabitPage() {
               title: "출석부로 쓰기",
               description:
                 "목표 이름에 '푸바오, 루이, 후이' 처럼 친구 이름을 적어보세요. 서로의 출석률을 체크하며 선의의 경쟁을 할 수 있어요!. 특히! 운동 메이트 참석률 체크 추천해요! ",
+            },
+            {
+              icon: <TipIcon>👯</TipIcon>,
+              title: "출석부로 쓰기",
+              description:
+                "목표 이름에 '푸바오, 루이, 후이' 처럼 친구 이름을 적어보세요. 서로의 출석률을 체크하며 선의의 경쟁을 할 수 있어요!. 특히! 운동 메이트 참석률 체크 추천해요! ",
+            },
+            {
+              icon: <TipIcon>✏️</TipIcon>, // 아이콘: 연필
+              title: "기록은 기억을 이긴다",
+              description:
+                "그날의 컨디션, 날씨, 핑계거리 무엇이든 좋아요. 짧게라도 남겨두면 나중에 나를 분석하는 훌륭한 데이터가 됩니다.",
             },
           ]}
         />
