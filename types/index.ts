@@ -1,5 +1,5 @@
 export interface UserVote {
-  id?: string;
+  id: string | number;
   name: string;
   unavailableDates: Date[];
   isAbsent: boolean;

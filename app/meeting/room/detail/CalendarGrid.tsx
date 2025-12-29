@@ -13,6 +13,7 @@ interface Props {
   finalDate: Date | null;
   includeWeekend: boolean;
   onToggleDate: (date: Date) => void;
+  hoveredUserId: string | number | null;
 }
 
 export default function CalendarGrid({
@@ -24,6 +25,7 @@ export default function CalendarGrid({
   finalDate,
   includeWeekend,
   onToggleDate,
+  hoveredUserId,
 }: Props) {
   const getUnavailableCount = (date: Date) =>
     participants.filter((p) =>
@@ -35,7 +37,7 @@ export default function CalendarGrid({
   const weekDays = includeWeekend
     ? ["일", "월", "화", "수", "목", "금", "토"]
     : ["월", "화", "수", "목", "금"];
-
+  const hoveredUser = participants.find((p) => p.id === hoveredUserId);
   return (
     <StGridContainer $step={step}>
       {/* 요일 헤더 */}
@@ -64,7 +66,9 @@ export default function CalendarGrid({
             step === "CONFIRM" && finalDate && isSameDay(finalDate, date);
 
           const isBestDate = step === "CONFIRM" && unavailableCount === 0;
-
+          const isHoveredDate = hoveredUser?.unavailableDates.some((ud) =>
+            isSameDay(ud, date)
+          );
           // 배경색 로직 (Typing 모드일 땐 회색, 아닐 땐 붉은색)
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
@@ -82,6 +86,7 @@ export default function CalendarGrid({
               $isBestDate={isBestDate}
               $dynamicBg={dynamicBg}
               $unavailableCount={unavailableCount}
+              $isHoveredDate={!!isHoveredDate}
             >
               {/* 날짜 텍스트 (월/일) */}
               <StDateText>
@@ -174,6 +179,7 @@ const StDateButton = styled.button<{
   $isBestDate: boolean;
   $dynamicBg: string;
   $unavailableCount: number;
+  $isHoveredDate: boolean;
 }>`
   position: relative;
   aspect-ratio: 1 / 1; /* aspect-square */
@@ -204,6 +210,14 @@ const StDateButton = styled.button<{
     if ($unavailableCount > 0) return theme.colors.white; // 배경이 진하므로 글자는 흰색
     return theme.colors.gray500; // 기본 (배경 없을 때)
   }};
+  ${({ $isHoveredDate }) =>
+    $isHoveredDate &&
+    css`
+      transform: scale(1.05);
+      z-index: 15;
+      border: 1px solid #000;
+      box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
+    `}
 
   /* 3. 테두리 및 효과 로직 */
   ${({ $isMySelection, theme }) =>

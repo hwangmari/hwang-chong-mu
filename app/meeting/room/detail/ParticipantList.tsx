@@ -9,13 +9,25 @@ interface Props {
   participants: UserVote[];
   onEdit: (user: UserVote) => void;
   onDelete: (user: UserVote) => void;
+  hoveredUserId: string | number | null;
+  setHoveredUserId: (id: string | number | null) => void;
 }
 
 export default function ParticipantList({
   participants,
   onEdit,
   onDelete,
+  hoveredUserId,
+  setHoveredUserId,
 }: Props) {
+  const handleInteraction = (id: string | number) => {
+    // 이미 선택된 상태에서 클릭하면 해제 (모바일 UX)
+    if (hoveredUserId === id) {
+      setHoveredUserId(null);
+    } else {
+      setHoveredUserId(id);
+    }
+  };
   return (
     <StParticipantSection>
       <StSectionTitle>
@@ -30,8 +42,12 @@ export default function ParticipantList({
           <StUserCard
             key={idx}
             $isAbsent={user.isAbsent}
-            onClick={() => onEdit(user)}
+            $isActive={hoveredUserId === user.id} // ✨ 활성 상태 전달
             className="group"
+            // ✨ 이벤트 바인딩
+            onClick={() => handleInteraction(user.id)}
+            onMouseEnter={() => setHoveredUserId(user.id)}
+            onMouseLeave={() => setHoveredUserId(null)}
           >
             <StUserInfo>
               <StAvatar $isAbsent={user.isAbsent}>
@@ -41,7 +57,15 @@ export default function ParticipantList({
             </StUserInfo>
 
             <div className="flex items-center gap-2">
-              <StEditLabel className="edit-label">수정</StEditLabel>
+              <StEditLabel
+                className="edit-label"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(user);
+                }}
+              >
+                수정
+              </StEditLabel>
 
               {user.isAbsent ? (
                 <StStatusBadge $status="absent">불참 🥲</StStatusBadge>
@@ -93,8 +117,7 @@ const StEmptyState = styled.div`
   font-size: 0.875rem;
   border: 1px dashed ${({ theme }) => theme.colors.gray300};
 `;
-
-const StUserCard = styled.div<{ $isAbsent: boolean }>`
+const StUserCard = styled.div<{ $isAbsent: boolean; $isActive?: boolean }>`
   position: relative;
   background-color: ${({ theme }) => theme.colors.white};
   padding: 0.75rem;
@@ -106,9 +129,21 @@ const StUserCard = styled.div<{ $isAbsent: boolean }>`
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s;
+  cursor: pointer; /* 커서 포인터 추가 */
 
-  ${({ $isAbsent, theme }) =>
-    $isAbsent
+  /* ✨ 활성화 상태($isActive)일 때 스타일 추가 */
+  ${({ $isActive, theme }) =>
+    $isActive &&
+    css`
+      border-color: #6366f1; /* Indigo Color */
+      background-color: #eef2ff; /* 연한 Indigo 배경 */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    `}
+
+  ${({ $isAbsent, theme, $isActive }) =>
+    !$isActive && // 활성화되지 않았을 때만 기존 로직 적용
+    ($isAbsent
       ? css`
           border-color: ${theme.colors.gray100};
           opacity: 0.6;
@@ -119,7 +154,7 @@ const StUserCard = styled.div<{ $isAbsent: boolean }>`
             border-color: ${theme.colors.gray400};
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
           }
-        `}
+        `)}
 
   &:hover .edit-label,
   &:hover .delete-btn {
