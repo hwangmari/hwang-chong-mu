@@ -71,10 +71,12 @@ export default function RoomDetail() {
             ?
           </StGuideButton>
         </StHeaderWrapper>
+      </StWrapper>
 
-        {/* 1️⃣ 투표 화면 (VOTING) */}
-        {!finalDate && (
-          <>
+      {/* 1️⃣ 투표 화면 (VOTING) */}
+      {!finalDate && (
+        <>
+          <StWrapper>
             <StGuideTextWrapper>
               <Typography
                 variant={step === "VOTING" ? "body2" : "h2"}
@@ -117,72 +119,92 @@ export default function RoomDetail() {
                 />
               </>
             )}
-
-            <CalendarGrid
-              dates={calendarGrid}
-              participants={participants}
-              currentUnavailable={currentUnavailable}
-              step={step}
-              currentName={currentName}
-              finalDate={finalDate}
-              includeWeekend={includeWeekend}
-              onToggleDate={handleToggleDate}
-              hoveredUserId={hoveredUserId}
-            />
-
-            {step === "VOTING" && (
-              <VoteSubmitButtons
-                isEditing={isEditing}
-                onSubmitVote={handleSubmitVote}
-                onSubmitAbsent={handleSubmitAbsent}
+          </StWrapper>
+          <StBox>
+            <div className="lft">
+              <CalendarGrid
+                dates={calendarGrid}
+                participants={participants}
+                currentUnavailable={currentUnavailable}
+                step={step}
+                currentName={currentName}
+                finalDate={finalDate}
+                includeWeekend={includeWeekend}
+                onToggleDate={handleToggleDate}
+                hoveredUserId={hoveredUserId}
               />
-            )}
 
-            <ParticipantList
-              participants={participants}
-              onEdit={handleEditUser}
-              onDelete={handleDeleteUser}
-              hoveredUserId={hoveredUserId}
-              setHoveredUserId={setHoveredUserId}
-            />
-            {step === "VOTING" && (
-              <FloatingFinishButton onFinish={handleGoToConfirm} />
-            )}
-          </>
-        )}
+              {step === "VOTING" && (
+                <VoteSubmitButtons
+                  isEditing={isEditing}
+                  onSubmitVote={handleSubmitVote}
+                  onSubmitAbsent={handleSubmitAbsent}
+                />
+              )}
+            </div>
+            <div className="rgt">
+              <ParticipantList
+                participants={participants}
+                onEdit={handleEditUser}
+                onDelete={handleDeleteUser}
+                hoveredUserId={hoveredUserId}
+                setHoveredUserId={setHoveredUserId}
+              />
+            </div>
+          </StBox>
 
-        {/* 2️⃣ 확정 화면 (CONFIRM) */}
-        {finalDate && (
-          <>
-            <ConfirmedResultCard
-              roomName={room.name}
-              finalDate={finalDate}
-              participants={participants}
-              onReset={handleReset}
-              onRescueUser={handleRescueUser}
-            />
-            <AddToCalendar
-              title={room.name}
-              finalDate={format(finalDate, "yyyy-MM-dd")}
-            />
-            <ShareButton />
-          </>
-        )}
+          {step === "VOTING" && (
+            <FloatingFinishButton onFinish={handleGoToConfirm} />
+          )}
+        </>
+      )}
 
-        <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
-        <Modal
-          modal={modal}
-          onClose={closeModal}
-          onConfirm={() => {
-            if (modal.onConfirm) modal.onConfirm();
-            closeModal();
-          }}
-        />
-      </StWrapper>
+      {/* 2️⃣ 확정 화면 (CONFIRM) */}
+      {finalDate && (
+        <StWrapper>
+          <ConfirmedResultCard
+            roomName={room.name}
+            finalDate={finalDate}
+            participants={participants}
+            onReset={handleReset}
+            onRescueUser={handleRescueUser}
+          />
+          <AddToCalendar
+            title={room.name}
+            finalDate={format(finalDate, "yyyy-MM-dd")}
+          />
+          <ShareButton />
+        </StWrapper>
+      )}
+
+      <GuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+      <Modal
+        modal={modal}
+        onClose={closeModal}
+        onConfirm={() => {
+          if (modal.onConfirm) modal.onConfirm();
+          closeModal();
+        }}
+      />
     </StContainer>
   );
 }
 
+const StBox = styled.div`
+  max-width: 540px;
+  margin: 0 auto;
+  @media ${({ theme }) => theme.media.desktop} {
+    display: flex;
+    max-width: 1024px;
+    gap: 20px;
+    & > div {
+      flex: 1;
+    }
+    .rgt {
+      padding-top: 20px;
+    }
+  }
+`;
 // ✨ 페이지 전용 스타일
 const StLoadingContainer = styled.div`
   min-height: 100vh;
