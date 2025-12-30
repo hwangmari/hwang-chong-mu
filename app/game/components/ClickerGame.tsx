@@ -166,7 +166,7 @@ const StGameArea = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: 400px;
 `;
 const StBigButton = styled.button`
   width: 200px;

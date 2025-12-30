@@ -63,6 +63,16 @@ export default function GlobalHeader() {
 
   // ✨ [추가] 스마트 뒤로가기 핸들러
   const handleBack = () => {
+    // 1. 게임방 안에 있을 때
+    const isGameRoom =
+      pathname.startsWith("/game/") && pathname.split("/").length > 2;
+
+    if (isGameRoom) {
+      // 🚨 뒤로가기 실행 (이제 강제로 /game으로 보내지 않음!)
+      router.back();
+      return;
+    }
+
     // 1. 이전 페이지 정보(Referrer)가 있는지, 그리고 내 사이트에서 왔는지 확인
     const referrer = document.referrer;
     const currentHost = window.location.host; // 예: localhost:3000

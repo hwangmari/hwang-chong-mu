@@ -95,7 +95,7 @@ export default function GameLobbyPage() {
         <StInputGroup>
           <Input
             label="방 제목 (필수)"
-            placeholder="예: 오늘 점심 내기, 2차 술값 몰아주기"
+            placeholder="예: 커피 내기"
             value={roomTitle}
             onChange={(e) => setRoomTitle(e.target.value)}
           />
