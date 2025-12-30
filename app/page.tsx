@@ -55,13 +55,13 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* ✨ . 술자리 오락실*/}
+        {/* ✨ 4.황총무 게임방*/}
         <Link href="/game" passHref>
           <StCard>
             <StIconBox>🎮</StIconBox>
             <StCardContent>
-              <StCardTitle>술자리 오락실</StCardTitle>
-              <StCardDesc>텔레파시 & 랜덤 게임</StCardDesc>
+              <StCardTitle>황총무 게임방</StCardTitle>
+              <StCardDesc>랜덤 게임</StCardDesc>
             </StCardContent>
             <StArrowIcon>➔</StArrowIcon>
           </StCard>
