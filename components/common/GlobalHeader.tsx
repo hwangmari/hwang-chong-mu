@@ -14,6 +14,7 @@ const TITLE_MAP: Record<string, string> = {
   "/meeting": "약속 잡기",
   "/habit": "습관 관리",
   "/calc": "N빵 계산기",
+  "/game": "황총무 게임방",
   "/portfolio": "포트폴리오",
 };
 
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { label: "약속 잡기", href: "/meeting" },
   { label: "습관 관리", href: "/habit" },
   { label: "N빵 계산기", href: "/calc" },
+  { label: "황총무 게임방", href: "/game" },
 ];
 
 export default function GlobalHeader() {

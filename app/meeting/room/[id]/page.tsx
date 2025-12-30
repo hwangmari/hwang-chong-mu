@@ -150,12 +150,11 @@ export default function RoomDetail() {
                 hoveredUserId={hoveredUserId}
                 setHoveredUserId={setHoveredUserId}
               />
+              {step === "VOTING" && (
+                <FloatingFinishButton onFinish={handleGoToConfirm} />
+              )}
             </div>
           </StBox>
-
-          {step === "VOTING" && (
-            <FloatingFinishButton onFinish={handleGoToConfirm} />
-          )}
         </>
       )}
 

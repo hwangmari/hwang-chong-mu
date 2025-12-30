@@ -43,13 +43,25 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* 💸 3. N빵 계산기 카드 (New!) */}
+        {/* 💸 3. N빵 계산기 카드*/}
         <Link href="/calc" passHref>
           <StCard>
             <StIconBox>💸</StIconBox>
             <StCardContent>
               <StCardTitle>N빵 계산기</StCardTitle>
               <StCardDesc>복잡한 셈은 덜어내고 추억만 남기는 법</StCardDesc>
+            </StCardContent>
+            <StArrowIcon>➔</StArrowIcon>
+          </StCard>
+        </Link>
+
+        {/* ✨ . 술자리 오락실*/}
+        <Link href="/game" passHref>
+          <StCard>
+            <StIconBox>🎮</StIconBox>
+            <StCardContent>
+              <StCardTitle>술자리 오락실</StCardTitle>
+              <StCardDesc>텔레파시 & 랜덤 게임</StCardDesc>
             </StCardContent>
             <StArrowIcon>➔</StArrowIcon>
           </StCard>

@@ -47,7 +47,7 @@ export default function CreateRoomPage() {
             }
           />
           <Input
-            placeholder="예: 강릉 여행, 팀 회식, 30주년 동창회"
+            placeholder="예: 강릉 여행"
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -90,7 +90,7 @@ export default function CreateRoomPage() {
               icon: "🧐",
               title: "투명한 영수증 관리",
               description:
-                "'이거 무슨 돈이야?' 나중에 딴소리 없도록! 누가, 어디서, 무엇을 썼는지 기록하여 모두가 납득하는 깔끔한 정산을 만드세요.",
+                "누가, 어디서, 무엇을 썼는지 기록하여 깔끔한 정산을 만드세요.",
             },
           ]}
         />
