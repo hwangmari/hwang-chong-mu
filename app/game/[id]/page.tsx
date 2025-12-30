@@ -8,7 +8,8 @@ import CreateButton from "@/components/common/CreateButton";
 import Input from "@/components/common/Input";
 import TelepathyGame from "../components/TelepathyGame";
 import ClickerGame from "../components/ClickerGame";
-import WheelGame from "../components/WheelGame"; // 돌림판 컴포넌트
+import WheelGame from "../components/WheelGame";
+import LadderGame from "../components/LadderGame";
 
 // 게임 종류
 const GAME_TYPES = [
@@ -30,8 +31,13 @@ const GAME_TYPES = [
     emoji: "🎡",
     desc: "오늘의 벌칙 당첨자는 누구?",
   },
+  {
+    id: "ladder",
+    name: "사다리 타기",
+    emoji: "🪜",
+    desc: "운명의 사다리를 타보자!",
+  }, // ✨ 추가
 ];
-
 export default function GameRoomPage() {
   const params = useParams();
   const roomId = params?.id as string;
@@ -296,6 +302,15 @@ export default function GameRoomPage() {
         )}
         {selectedGame === "wheel" && (
           <WheelGame
+            roomId={roomId}
+            isHost={isHost}
+            participants={participants}
+            roomData={roomData}
+            onEndGame={handleEndGame}
+          />
+        )}
+        {selectedGame === "ladder" && (
+          <LadderGame
             roomId={roomId}
             isHost={isHost}
             participants={participants}
