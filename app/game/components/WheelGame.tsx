@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 interface Props {
   roomId: string;
@@ -151,59 +152,54 @@ export default function WheelGame({
 
   return (
     <StContainer>
-      <StHeader>
-        <StTitle>🎡 복불복 돌림판</StTitle>
-        <StSubTitle>오늘의 주인공은 누구?</StSubTitle>
-      </StHeader>
+      <StWrapper>
+        <StHeader>
+          <StTitle>🎡 복불복 돌림판</StTitle>
+          <StSubTitle>오늘의 주인공은 누구?</StSubTitle>
+        </StHeader>
 
-      <StWheelWrapper>
-        <StCanvas
-          ref={canvasRef}
-          width={320}
-          height={320}
-          $rotation={rotation}
-        />
-        {/* 핀: 상단 중앙 */}
-        <StPointer>▼</StPointer>
-      </StWheelWrapper>
+        <StWheelWrapper>
+          <StCanvas
+            ref={canvasRef}
+            width={320}
+            height={320}
+            $rotation={rotation}
+          />
+          {/* 핀: 상단 중앙 */}
+          <StPointer>▼</StPointer>
+        </StWheelWrapper>
 
-      <StResultArea>
-        {winner ? (
-          <StWinnerBox>
-            🎉 당첨: <StWinnerName>{winner}</StWinnerName> 🎉
-          </StWinnerBox>
-        ) : (
-          <StStatus>
-            {isSpinning ? "두구두구두구..." : "돌려돌려 돌림판!"}
-          </StStatus>
-        )}
-      </StResultArea>
-
-      {isHost && (
-        <StFooter>
-          <CreateButton onClick={handleSpin} disabled={isSpinning}>
-            {isSpinning ? "돌아가는 중..." : "돌리기 (SPIN) 🎲"}
-          </CreateButton>
-          {!isSpinning && rotation > 0 && (
-            <StSubButton onClick={handleReset}>다시 하기 (리셋)</StSubButton>
+        <StResultArea>
+          {winner ? (
+            <StWinnerBox>
+              🎉 당첨: <StWinnerName>{winner}</StWinnerName> 🎉
+            </StWinnerBox>
+          ) : (
+            <StStatus>
+              {isSpinning ? "두구두구두구..." : "돌려돌려 돌림판!"}
+            </StStatus>
           )}
-          <StSubButton onClick={onEndGame} style={{ marginTop: "0.5rem" }}>
-            다른 게임 하기
-          </StSubButton>
-        </StFooter>
-      )}
+        </StResultArea>
+
+        {isHost && (
+          <StFooter>
+            <CreateButton onClick={handleSpin} disabled={isSpinning}>
+              {isSpinning ? "돌아가는 중..." : "돌리기 (SPIN) 🎲"}
+            </CreateButton>
+            {!isSpinning && rotation > 0 && (
+              <StSubButton onClick={handleReset}>다시 하기 (리셋)</StSubButton>
+            )}
+            <StSubButton onClick={onEndGame} style={{ marginTop: "0.5rem" }}>
+              다른 게임 하기
+            </StSubButton>
+          </StFooter>
+        )}
+      </StWrapper>
     </StContainer>
   );
 }
 
 // ✨ 스타일
-const StContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-`;
 const StHeader = styled.div`
   text-align: center;
   margin-bottom: 1rem;

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 interface Props {
   roomId: string;
@@ -281,37 +282,41 @@ export default function LadderGame({
   if (!ladderData) {
     return (
       <StContainer>
-        <StHeader>
-          <StTitle>🪜 사다리 타기</StTitle>
-          <StSubTitle>결과를 입력하고 생성하세요</StSubTitle>
-        </StHeader>
+        <StWrapper>
+          <StHeader>
+            <StTitle>🪜 사다리 타기</StTitle>
+            <StSubTitle>결과를 입력하고 생성하세요</StSubTitle>
+          </StHeader>
 
-        {isHost ? (
-          <StSetupArea>
-            <StGridHeader>
-              <span>총 {participants.length}개의 결과가 필요합니다.</span>
-              <StShuffleBtn onClick={handleShuffle}>🔀 순서 섞기</StShuffleBtn>
-            </StGridHeader>
+          {isHost ? (
+            <StSetupArea>
+              <StGridHeader>
+                <span>총 {participants.length}개의 결과가 필요합니다.</span>
+                <StShuffleBtn onClick={handleShuffle}>
+                  🔀 순서 섞기
+                </StShuffleBtn>
+              </StGridHeader>
 
-            <StGrid>
-              {inputs.map((val, i) => (
-                <StInputRow key={i}>
-                  <StLabel>결과 {i + 1}</StLabel>
-                  <StSmallInput
-                    value={val}
-                    onChange={(e) => handleInputChange(i, e.target.value)}
-                    placeholder="예: 꽝, 1만원"
-                  />
-                </StInputRow>
-              ))}
-            </StGrid>
-            <CreateButton onClick={handleGenerate}>
-              사다리 생성하기 ✨
-            </CreateButton>
-          </StSetupArea>
-        ) : (
-          <StWaiting>방장님이 사다리를 세팅 중입니다...</StWaiting>
-        )}
+              <StGrid>
+                {inputs.map((val, i) => (
+                  <StInputRow key={i}>
+                    <StLabel>결과 {i + 1}</StLabel>
+                    <StSmallInput
+                      value={val}
+                      onChange={(e) => handleInputChange(i, e.target.value)}
+                      placeholder="예: 꽝, 1만원"
+                    />
+                  </StInputRow>
+                ))}
+              </StGrid>
+              <CreateButton onClick={handleGenerate}>
+                사다리 생성하기 ✨
+              </CreateButton>
+            </StSetupArea>
+          ) : (
+            <StWaiting>방장님이 사다리를 세팅 중입니다...</StWaiting>
+          )}
+        </StWrapper>
       </StContainer>
     );
   }
@@ -319,73 +324,69 @@ export default function LadderGame({
   // 2. 게임 모드
   return (
     <StContainer>
-      <StHeader>
-        <StTitle>🪜 운명의 사다리</StTitle>
-        <StSubTitle>이름을 누르면 길이 보입니다!</StSubTitle>
-      </StHeader>
+      <StWrapper>
+        <StHeader>
+          <StTitle>🪜 운명의 사다리</StTitle>
+          <StSubTitle>이름을 누르면 길이 보입니다!</StSubTitle>
+        </StHeader>
 
-      <StGameArea>
-        <StUserRow>
-          {participants.map((p, i) => (
-            <StUserBtn
-              key={p.id}
-              onClick={() => handleUserClick(i)}
-              $color={COLORS[i % COLORS.length]}
-              $isActive={selectedUserIdx === i}
-            >
-              {p.nickname}
-            </StUserBtn>
-          ))}
-        </StUserRow>
+        <StGameArea>
+          <StUserRow>
+            {participants.map((p, i) => (
+              <StUserBtn
+                key={p.id}
+                onClick={() => handleUserClick(i)}
+                $color={COLORS[i % COLORS.length]}
+                $isActive={selectedUserIdx === i}
+              >
+                {p.nickname}
+              </StUserBtn>
+            ))}
+          </StUserRow>
 
-        {/* 캔버스 영역 */}
-        <canvas
-          ref={canvasRef}
-          width={340}
-          height={400}
-          style={{ width: "100%", maxWidth: "340px" }}
-        />
+          {/* 캔버스 영역 */}
+          <canvas
+            ref={canvasRef}
+            width={340}
+            height={400}
+            style={{ width: "100%", maxWidth: "340px" }}
+          />
 
-        <StResultRow>
-          {results.map((r, i) => (
-            <StResultBox
-              key={i}
-              $isHighlight={
-                // 현재 선택된 유저의 도착지점인지 계산해서 하이라이트
-                selectedUserIdx !== null &&
-                (() => {
-                  let c = selectedUserIdx;
-                  for (let s = 0; s < 20; s++) {
-                    if (c < participants.length - 1 && bridges[s][c]) c++;
-                    else if (c > 0 && bridges[s][c - 1]) c--;
-                  }
-                  return c === i;
-                })()
-              }
-            >
-              {r}
-            </StResultBox>
-          ))}
-        </StResultRow>
-      </StGameArea>
+          <StResultRow>
+            {results.map((r, i) => (
+              <StResultBox
+                key={i}
+                $isHighlight={
+                  // 현재 선택된 유저의 도착지점인지 계산해서 하이라이트
+                  selectedUserIdx !== null &&
+                  (() => {
+                    let c = selectedUserIdx;
+                    for (let s = 0; s < 20; s++) {
+                      if (c < participants.length - 1 && bridges[s][c]) c++;
+                      else if (c > 0 && bridges[s][c - 1]) c--;
+                    }
+                    return c === i;
+                  })()
+                }
+              >
+                {r}
+              </StResultBox>
+            ))}
+          </StResultRow>
+        </StGameArea>
 
-      {isHost && (
-        <StFooter>
-          <StSubButton onClick={handleReset}>다시 세팅하기</StSubButton>
-          <StSubButton onClick={onEndGame}>게임 종료</StSubButton>
-        </StFooter>
-      )}
+        {isHost && (
+          <StFooter>
+            <StSubButton onClick={handleReset}>다시 세팅하기</StSubButton>
+            <StSubButton onClick={onEndGame}>게임 종료</StSubButton>
+          </StFooter>
+        )}
+      </StWrapper>
     </StContainer>
   );
 }
 
 // ✨ 스타일
-const StContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
 const StHeader = styled.div`
   text-align: center;
   margin-bottom: 0.5rem;

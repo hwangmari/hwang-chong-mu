@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 interface Props {
   roomId: string;
@@ -56,57 +57,53 @@ export default function ClickerGame({
 
   return (
     <StContainer>
-      <StHeader>
-        <StTitle>🔥 광클 대전 🔥</StTitle>
-        <StSubTitle>먼저 {GOAL_SCORE}번 누르는 사람이 승리!</StSubTitle>
-      </StHeader>
+      <StWrapper>
+        <StHeader>
+          <StTitle>🔥 광클 대전 🔥</StTitle>
+          <StSubTitle>먼저 {GOAL_SCORE}번 누르는 사람이 승리!</StSubTitle>
+        </StHeader>
 
-      <StScoreBoard>
-        {participants
-          .sort((a, b) => (b.score || 0) - (a.score || 0))
-          .map((p, idx) => (
-            <StUserRow key={p.id} $isMe={p.id === myId} $rank={idx + 1}>
-              <StRank>{idx + 1}위</StRank>
-              <StName>{p.nickname}</StName>
-              <StBarContainer>
-                <StBar
-                  style={{
-                    width: `${Math.min(
-                      ((p.score || 0) / GOAL_SCORE) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </StBarContainer>
-              <StScore>{p.score || 0}</StScore>
-            </StUserRow>
-          ))}
-      </StScoreBoard>
+        <StScoreBoard>
+          {participants
+            .sort((a, b) => (b.score || 0) - (a.score || 0))
+            .map((p, idx) => (
+              <StUserRow key={p.id} $isMe={p.id === myId} $rank={idx + 1}>
+                <StRank>{idx + 1}위</StRank>
+                <StName>{p.nickname}</StName>
+                <StBarContainer>
+                  <StBar
+                    style={{
+                      width: `${Math.min(
+                        ((p.score || 0) / GOAL_SCORE) * 100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </StBarContainer>
+                <StScore>{p.score || 0}</StScore>
+              </StUserRow>
+            ))}
+        </StScoreBoard>
 
-      <StGameArea>
-        {winner ? (
-          <StWinnerBox>🎉 우승: {winner} 🎉</StWinnerBox>
-        ) : (
-          <StBigButton onClick={handleClick}>PUSH!!</StBigButton>
+        <StGameArea>
+          {winner ? (
+            <StWinnerBox>🎉 우승: {winner} 🎉</StWinnerBox>
+          ) : (
+            <StBigButton onClick={handleClick}>PUSH!!</StBigButton>
+          )}
+        </StGameArea>
+
+        {isHost && (
+          <StFooter>
+            <CreateButton onClick={onEndGame}>게임 종료</CreateButton>
+          </StFooter>
         )}
-      </StGameArea>
-
-      {isHost && (
-        <StFooter>
-          <CreateButton onClick={onEndGame}>게임 종료</CreateButton>
-        </StFooter>
-      )}
+      </StWrapper>
     </StContainer>
   );
 }
 
 // 스타일
-const StContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
 const StHeader = styled.div`
   text-align: center;
 `;

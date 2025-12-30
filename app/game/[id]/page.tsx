@@ -10,6 +10,7 @@ import TelepathyGame from "../components/TelepathyGame";
 import ClickerGame from "../components/ClickerGame";
 import WheelGame from "../components/WheelGame";
 import LadderGame from "../components/LadderGame";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 // 게임 종류
 const GAME_TYPES = [
@@ -281,189 +282,190 @@ export default function GameRoomPage() {
   if (status === "playing") {
     return (
       <StContainer>
-        {selectedGame === "telepathy" && (
-          <TelepathyGame
-            roomId={roomId}
-            isHost={isHost}
-            myId={myId}
-            participants={participants}
-            roomData={roomData}
-            onEndGame={handleEndGame}
-          />
-        )}
-        {selectedGame === "clicker" && (
-          <ClickerGame
-            roomId={roomId}
-            isHost={isHost}
-            myId={myId}
-            participants={participants}
-            onEndGame={handleEndGame}
-          />
-        )}
-        {selectedGame === "wheel" && (
-          <WheelGame
-            roomId={roomId}
-            isHost={isHost}
-            participants={participants}
-            roomData={roomData}
-            onEndGame={handleEndGame}
-          />
-        )}
-        {selectedGame === "ladder" && (
-          <LadderGame
-            roomId={roomId}
-            isHost={isHost}
-            participants={participants}
-            roomData={roomData}
-            onEndGame={handleEndGame}
-          />
-        )}
+        <StWrapper>
+          {selectedGame === "telepathy" && (
+            <TelepathyGame
+              roomId={roomId}
+              isHost={isHost}
+              myId={myId}
+              participants={participants}
+              roomData={roomData}
+              onEndGame={handleEndGame}
+            />
+          )}
+          {selectedGame === "clicker" && (
+            <ClickerGame
+              roomId={roomId}
+              isHost={isHost}
+              myId={myId}
+              participants={participants}
+              onEndGame={handleEndGame}
+            />
+          )}
+          {selectedGame === "wheel" && (
+            <WheelGame
+              roomId={roomId}
+              isHost={isHost}
+              participants={participants}
+              roomData={roomData}
+              onEndGame={handleEndGame}
+            />
+          )}
+          {selectedGame === "ladder" && (
+            <LadderGame
+              roomId={roomId}
+              isHost={isHost}
+              participants={participants}
+              roomData={roomData}
+              onEndGame={handleEndGame}
+            />
+          )}
+        </StWrapper>
       </StContainer>
     );
   }
 
   return (
     <StContainer>
-      <StBoardHeader>
-        <StRoomTitle>{roomData?.title || "게임방"}</StRoomTitle>
-        <StShareButton onClick={copyLink}>🔗 링크 복사</StShareButton>
-      </StBoardHeader>
+      <StWrapper>
+        <StBoardHeader>
+          <StRoomTitle>{roomData?.title || "게임방"}</StRoomTitle>
+          <StShareButton onClick={copyLink}>🔗 링크 복사</StShareButton>
+        </StBoardHeader>
 
-      <StGameSection>
-        <StLabel>👇 오늘의 게임</StLabel>
-        {isHost ? (
-          <StGameGrid>
-            {GAME_TYPES.map((g) => (
-              <StGameCard
-                key={g.id}
-                $active={selectedGame === g.id}
-                onClick={() => handleSelectGame(g.id)}
-              >
-                <StCardEmoji>{g.emoji}</StCardEmoji>
-                <StCardContent>
-                  <StCardTitle>{g.name}</StCardTitle>
-                  <StCardDesc>{g.desc}</StCardDesc>
-                </StCardContent>
-                {selectedGame === g.id && <StCheck>✔</StCheck>}
-              </StGameCard>
+        <StGameSection>
+          <StLabel>👇 오늘의 게임</StLabel>
+          {isHost ? (
+            <StGameGrid>
+              {GAME_TYPES.map((g) => (
+                <StGameCard
+                  key={g.id}
+                  $active={selectedGame === g.id}
+                  onClick={() => handleSelectGame(g.id)}
+                >
+                  <StCardEmoji>{g.emoji}</StCardEmoji>
+                  <StCardContent>
+                    <StCardTitle>{g.name}</StCardTitle>
+                    <StCardDesc>{g.desc}</StCardDesc>
+                  </StCardContent>
+                  {selectedGame === g.id && <StCheck>✔</StCheck>}
+                </StGameCard>
+              ))}
+            </StGameGrid>
+          ) : (
+            <StSelectedGameBanner>
+              {(() => {
+                const game = GAME_TYPES.find((g) => g.id === selectedGame);
+                return (
+                  <>
+                    <StBannerEmoji>{game?.emoji}</StBannerEmoji>
+                    <StBannerText>
+                      <StBannerTitle>{game?.name}</StBannerTitle>
+                      <StBannerDesc>{game?.desc}</StBannerDesc>
+                    </StBannerText>
+                  </>
+                );
+              })()}
+            </StSelectedGameBanner>
+          )}
+        </StGameSection>
+
+        <StParticipantBoard>
+          <StParticipantHeader>
+            <StLabel style={{ marginBottom: 0 }}>
+              참가자 ({participants.length}명)
+            </StLabel>
+          </StParticipantHeader>
+
+          {/* ✨ 방장 전용: 게스트 추가 입력창 */}
+          {selectedGame === "wheel" && (
+            <>
+              {isHost && (
+                <StGuestInputWrapper>
+                  <StGuestInput
+                    placeholder="이름만 입력해서 추가 (예: 철수)"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddGuest()}
+                  />
+                  <StGuestAddButton onClick={handleAddGuest}>
+                    +
+                  </StGuestAddButton>
+                </StGuestInputWrapper>
+              )}
+            </>
+          )}
+
+          <StList>
+            {participants.map((p) => (
+              <StCommentRow key={p.id} $isMe={p.id === myId}>
+                <StAvatar>{p.is_host ? "👑" : "🙂"}</StAvatar>
+                <StBubble>
+                  <StName>{p.nickname}</StName>
+                  {p.message && <StMessage>{p.message}</StMessage>}
+                </StBubble>
+              </StCommentRow>
             ))}
-          </StGameGrid>
-        ) : (
-          <StSelectedGameBanner>
-            {(() => {
-              const game = GAME_TYPES.find((g) => g.id === selectedGame);
-              return (
-                <>
-                  <StBannerEmoji>{game?.emoji}</StBannerEmoji>
-                  <StBannerText>
-                    <StBannerTitle>{game?.name}</StBannerTitle>
-                    <StBannerDesc>{game?.desc}</StBannerDesc>
-                  </StBannerText>
-                </>
-              );
-            })()}
-          </StSelectedGameBanner>
-        )}
-      </StGameSection>
+            {participants.length === 0 && (
+              <StEmpty>아직 아무도 없어요.</StEmpty>
+            )}
+          </StList>
+        </StParticipantBoard>
 
-      <StParticipantBoard>
-        <StParticipantHeader>
-          <StLabel style={{ marginBottom: 0 }}>
-            참가자 ({participants.length}명)
-          </StLabel>
-        </StParticipantHeader>
-
-        {/* ✨ 방장 전용: 게스트 추가 입력창 */}
+        <StFooterAction>
+          {isJoined ? (
+            isHost ? (
+              <CreateButton onClick={handleStartGame}>
+                게임 시작하기 🚀
+              </CreateButton>
+            ) : (
+              <StWaitingMsg>방장님이 시작하길 기다리는 중...</StWaitingMsg>
+            )
+          ) : (
+            <StJoinForm>
+              <StJoinTitle>✋ 참가 신청서</StJoinTitle>
+              <StFormRow>
+                <Input
+                  placeholder="닉네임"
+                  value={joinName}
+                  onChange={(e) => setJoinName(e.target.value)}
+                />
+                <Input
+                  placeholder="비번(4자리)"
+                  type="password"
+                  value={joinPw}
+                  onChange={(e) => setJoinPw(e.target.value)}
+                />
+              </StFormRow>
+              <Input
+                placeholder="한마디 (선택)"
+                value={joinMsg}
+                onChange={(e) => setJoinMsg(e.target.value)}
+              />
+              <CreateButton onClick={handleJoin} isLoading={loading}>
+                등록하기
+              </CreateButton>
+            </StJoinForm>
+          )}
+        </StFooterAction>
         {selectedGame === "wheel" && (
           <>
-            {isHost && (
-              <StGuestInputWrapper>
-                <StGuestInput
-                  placeholder="이름만 입력해서 추가 (예: 철수)"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddGuest()}
-                />
-                <StGuestAddButton onClick={handleAddGuest}>+</StGuestAddButton>
-              </StGuestInputWrapper>
+            {status === "countdown" && (
+              <StDimOverlay>
+                <StCountNumber>{count === 0 ? "GO!" : count}</StCountNumber>
+                <StCountText>
+                  {GAME_TYPES.find((g) => g.id === selectedGame)?.name} 시작!
+                </StCountText>
+              </StDimOverlay>
             )}
           </>
         )}
-
-        <StList>
-          {participants.map((p) => (
-            <StCommentRow key={p.id} $isMe={p.id === myId}>
-              <StAvatar>{p.is_host ? "👑" : "🙂"}</StAvatar>
-              <StBubble>
-                <StName>{p.nickname}</StName>
-                {p.message && <StMessage>{p.message}</StMessage>}
-              </StBubble>
-            </StCommentRow>
-          ))}
-          {participants.length === 0 && <StEmpty>아직 아무도 없어요.</StEmpty>}
-        </StList>
-      </StParticipantBoard>
-
-      <StFooterAction>
-        {isJoined ? (
-          isHost ? (
-            <CreateButton onClick={handleStartGame}>
-              게임 시작하기 🚀
-            </CreateButton>
-          ) : (
-            <StWaitingMsg>방장님이 시작하길 기다리는 중...</StWaitingMsg>
-          )
-        ) : (
-          <StJoinForm>
-            <StJoinTitle>✋ 참가 신청서</StJoinTitle>
-            <StFormRow>
-              <Input
-                placeholder="닉네임"
-                value={joinName}
-                onChange={(e) => setJoinName(e.target.value)}
-              />
-              <Input
-                placeholder="비번(4자리)"
-                type="password"
-                value={joinPw}
-                onChange={(e) => setJoinPw(e.target.value)}
-              />
-            </StFormRow>
-            <Input
-              placeholder="한마디 (선택)"
-              value={joinMsg}
-              onChange={(e) => setJoinMsg(e.target.value)}
-            />
-            <CreateButton onClick={handleJoin} isLoading={loading}>
-              등록하기
-            </CreateButton>
-          </StJoinForm>
-        )}
-      </StFooterAction>
-
-      {status === "countdown" && (
-        <StDimOverlay>
-          <StCountNumber>{count === 0 ? "GO!" : count}</StCountNumber>
-          <StCountText>
-            {GAME_TYPES.find((g) => g.id === selectedGame)?.name} 시작!
-          </StCountText>
-        </StDimOverlay>
-      )}
+      </StWrapper>
     </StContainer>
   );
 }
 
 // ✨ 스타일 정의
-const StContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: #f0f2f5;
-  max-width: 600px;
-  margin: 0 auto;
-  position: relative;
-  overflow-y: hidden;
-`;
 const StBoardHeader = styled.div`
   padding: 1.5rem 1.5rem 0.5rem;
   background: white;
@@ -667,10 +669,7 @@ const StEmpty = styled.p`
 `;
 
 const StFooterAction = styled.div`
-  background: white;
   padding: 1.5rem;
-  border-top: 1px solid #eee;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   z-index: 10;
 `;
 const StWaitingMsg = styled.p`

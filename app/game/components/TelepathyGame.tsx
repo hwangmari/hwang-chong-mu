@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 // 텔레파시 게임 질문 데이터
 const QUESTIONS = [
@@ -91,93 +92,89 @@ export default function TelepathyGame({
   };
 
   return (
-    <StGameContainer>
-      {question ? (
-        <>
-          <StQuestionCard>
-            <StBadge>Q.</StBadge>
-            <StQuestionText>{question.q}</StQuestionText>
-          </StQuestionCard>
+    <StContainer>
+      <StWrapper>
+        {question ? (
+          <>
+            <StQuestionCard>
+              <StBadge>Q.</StBadge>
+              <StQuestionText>{question.q}</StQuestionText>
+            </StQuestionCard>
 
-          <StVersusContainer>
-            <StOptionButton
-              $color="blue"
-              $selected={myChoice === "A"}
-              $isResult={roomData.is_result_open}
-              onClick={() => handleSelect("A")}
-            >
-              <StLabel>A</StLabel>
-              <StText>{question.a}</StText>
-              {roomData.is_result_open && (
-                <StVoters>
-                  {participants
-                    .filter((p) => p.selected_answer === "A")
-                    .map((p) => (
-                      <span key={p.id}>{p.nickname}</span>
-                    ))}
-                </StVoters>
-              )}
-            </StOptionButton>
+            <StVersusContainer>
+              <StOptionButton
+                $color="blue"
+                $selected={myChoice === "A"}
+                $isResult={roomData.is_result_open}
+                onClick={() => handleSelect("A")}
+              >
+                <StLabel>A</StLabel>
+                <StText>{question.a}</StText>
+                {roomData.is_result_open && (
+                  <StVoters>
+                    {participants
+                      .filter((p) => p.selected_answer === "A")
+                      .map((p) => (
+                        <span key={p.id}>{p.nickname}</span>
+                      ))}
+                  </StVoters>
+                )}
+              </StOptionButton>
 
-            <StVersusText>VS</StVersusText>
+              <StVersusText>VS</StVersusText>
 
-            <StOptionButton
-              $color="red"
-              $selected={myChoice === "B"}
-              $isResult={roomData.is_result_open}
-              onClick={() => handleSelect("B")}
-            >
-              <StLabel>B</StLabel>
-              <StText>{question.b}</StText>
-              {roomData.is_result_open && (
-                <StVoters>
-                  {participants
-                    .filter((p) => p.selected_answer === "B")
-                    .map((p) => (
-                      <span key={p.id}>{p.nickname}</span>
-                    ))}
-                </StVoters>
-              )}
-            </StOptionButton>
-          </StVersusContainer>
-        </>
-      ) : (
-        <StWaiting>
-          {isHost ? (
-            <CreateButton onClick={handleNextQuestion}>
-              첫 문제 출제하기 🎲
-            </CreateButton>
-          ) : (
-            <p>문제를 기다리는 중...</p>
-          )}
-        </StWaiting>
-      )}
+              <StOptionButton
+                $color="red"
+                $selected={myChoice === "B"}
+                $isResult={roomData.is_result_open}
+                onClick={() => handleSelect("B")}
+              >
+                <StLabel>B</StLabel>
+                <StText>{question.b}</StText>
+                {roomData.is_result_open && (
+                  <StVoters>
+                    {participants
+                      .filter((p) => p.selected_answer === "B")
+                      .map((p) => (
+                        <span key={p.id}>{p.nickname}</span>
+                      ))}
+                  </StVoters>
+                )}
+              </StOptionButton>
+            </StVersusContainer>
+          </>
+        ) : (
+          <StWaiting>
+            {isHost ? (
+              <CreateButton onClick={handleNextQuestion}>
+                첫 문제 출제하기 🎲
+              </CreateButton>
+            ) : (
+              <p>문제를 기다리는 중...</p>
+            )}
+          </StWaiting>
+        )}
 
-      {isHost && (
-        <StControls>
-          {roomData.is_result_open ? (
-            <CreateButton onClick={handleNextQuestion}>
-              다음 문제 ➡️
-            </CreateButton>
-          ) : (
-            <CreateButton onClick={handleShowResult} disabled={!question}>
-              결과 공개 👀
-            </CreateButton>
-          )}
-          <StSubButton onClick={onEndGame}>게임 종료</StSubButton>
-        </StControls>
-      )}
-    </StGameContainer>
+        {isHost && (
+          <StControls>
+            {roomData.is_result_open ? (
+              <CreateButton onClick={handleNextQuestion}>
+                다음 문제 ➡️
+              </CreateButton>
+            ) : (
+              <CreateButton onClick={handleShowResult} disabled={!question}>
+                결과 공개 👀
+              </CreateButton>
+            )}
+            <StSubButton onClick={onEndGame}>게임 종료</StSubButton>
+          </StControls>
+        )}
+      </StWrapper>
+    </StContainer>
   );
 }
 
 // 스타일 (간략화)
-const StGameContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
 const StQuestionCard = styled.div`
   background: white;
   padding: 1.5rem;
