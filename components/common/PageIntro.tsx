@@ -16,7 +16,11 @@ export default function PageIntro({
 }: PageIntroProps) {
   return (
     <StHeaderContainer>
-      {icon && <StIcon>{icon}</StIcon>}
+      {icon && (
+        <StLogo>
+          <StIcon>{icon}</StIcon>
+        </StLogo>
+      )}
       <StTitle>{title}</StTitle>
       {description && <StDescription>{description}</StDescription>}
     </StHeaderContainer>
@@ -44,6 +48,8 @@ const StTitle = styled.h1`
 `;
 
 const StDescription = styled.div`
+  width: 80%;
+  margin: 0 auto;
   font-size: 1rem;
   color: #888;
   line-height: 1.6;
@@ -52,7 +58,23 @@ const StDescription = styled.div`
 
 // 🖍️ 강조 텍스트용 컴포넌트 (부모에서 import해서 사용 가능)
 export const StHighlight = styled.strong<{ $color?: "red" | "blue" }>`
+  display: inline-block;
   font-weight: 700;
   color: ${({ $color }) =>
     $color === "red" ? "#f87171" : $color === "blue" ? "#60a5fa" : "#333"};
+`;
+
+const StLogo = styled.div`
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  animation: bounce 2s infinite;
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
 `;

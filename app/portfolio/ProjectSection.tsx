@@ -102,6 +102,29 @@ export default function ProjectSection() {
               tech: "핵심 기능인 '정산 계산'과 '데이터 저장'을 커스텀 훅으로 모듈화하여 관심사를 명확히 분리(SoC).",
             }}
           />
+          {/* 4. 게임방 프로젝트 */}
+          <ProjectCard
+            title="황총무 게임방 (Hwang's Game Room)"
+            category="Toy Project"
+            period="2025.12 - 진행 중 (1인 개발)"
+            linkUrl="/game"
+            description={
+              <>
+                회식이나 모임 자리에서 계산자나 벌칙자를 정할 때 유용한{" "}
+                <b>실시간 멀티플레이 웹 게임</b> 서비스입니다. 복잡한 앱 설치
+                없이 <b>URL 링크 공유</b>만으로 누구나 쉽게 참여할 수 있으며,
+                사다리 타기, 돌림판, 광클 대전 등 다양한 게임의 진행 상황이{" "}
+                <b>참여자 전원에게 실시간 동기화</b>됩니다.
+              </>
+            }
+            details={{
+              problem:
+                "오프라인 모임에서 빠르고 공정하게 내기(벌칙/정산)를 진행할 수 있는 접근성 높은 도구의 부재.",
+              solution:
+                "Supabase Realtime을 활용하여 별도 소켓 서버 구축 없이 참여자 간 게임 상태를 0.1초 단위로 동기화.",
+              tech: "Canvas API로 사다리/돌림판을 직접 드로잉하고, DB 구독(Subscription) 모델을 통해 실시간 인터랙션 최적화.",
+            }}
+          />
         </StProjectList>
       </StSectionInner>
     </StProjectSection>

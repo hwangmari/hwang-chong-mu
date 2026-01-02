@@ -6,6 +6,14 @@ import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import Input from "@/components/common/Input";
+import FooterGuide from "@/components/common/FooterGuide";
+import {
+  StContainer,
+  StSection,
+  StWrapper,
+} from "@/components/styled/layout.styled";
+import PageIntro from "@/components/common/PageIntro";
+import { GAME_GUIDE_DATA } from "@/data/footerGuides";
 
 export default function GameLobbyPage() {
   const router = useRouter();
@@ -83,104 +91,66 @@ export default function GameLobbyPage() {
 
   return (
     <StContainer>
-      <StHeader>
-        <StLogo>🎮</StLogo>
-        <StTitle>황총무 게임방</StTitle>
-        <StDesc>친구들을 초대해서 한판 붙자!</StDesc>
-      </StHeader>
+      <StWrapper>
+        <PageIntro
+          icon="🎮"
+          title="황총무 게임방"
+          description="친구들을 초대해서 한판 붙자!"
+        />
 
-      <StCard>
-        <StSectionTitle>👇 방 만들기</StSectionTitle>
+        <StSection>
+          <StSectionTitle>👇 방 만들기</StSectionTitle>
+          <StInputGroup>
+            <Input
+              label="방 제목 (필수)"
+              placeholder="예: 커피 내기"
+              value={roomTitle}
+              onChange={(e) => setRoomTitle(e.target.value)}
+            />
+          </StInputGroup>
 
-        <StInputGroup>
-          <Input
-            label="방 제목 (필수)"
-            placeholder="예: 커피 내기"
-            value={roomTitle}
-            onChange={(e) => setRoomTitle(e.target.value)}
-          />
-        </StInputGroup>
+          <StDivider />
 
-        <StDivider />
+          <StSectionTitle>👤 내 정보</StSectionTitle>
+          <StInputGroup>
+            <Input
+              label="닉네임"
+              placeholder="이름"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+            />
+            <Input
+              label="비밀번호"
+              placeholder="재접속용 (숫자 4자리)"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Input
+              label="한마디 (선택)"
+              placeholder="각오 한마디!"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+          </StInputGroup>
 
-        <StSectionTitle>👤 내 정보</StSectionTitle>
-        <StInputGroup>
-          <Input
-            label="닉네임"
-            placeholder="이름"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-          />
-          <Input
-            label="비밀번호"
-            placeholder="재접속용 (숫자 4자리)"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Input
-            label="한마디 (선택)"
-            placeholder="각오 한마디!"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-        </StInputGroup>
-
-        <StButtonWrapper>
-          <CreateButton onClick={createRoom} isLoading={loading}>
-            방 만들고 입장하기 ➔
-          </CreateButton>
-        </StButtonWrapper>
-      </StCard>
+          <StButtonWrapper>
+            <CreateButton onClick={createRoom} isLoading={loading}>
+              방 만들고 입장하기 ➔
+            </CreateButton>
+          </StButtonWrapper>
+        </StSection>
+        <FooterGuide
+          title={GAME_GUIDE_DATA.title}
+          story={GAME_GUIDE_DATA.story}
+          tips={GAME_GUIDE_DATA.tips}
+        />
+      </StWrapper>
     </StContainer>
   );
 }
 
 // ✨ 스타일
-const StContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 2rem 1rem;
-  background-color: #f0f2f5;
-`;
-const StHeader = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
-`;
-const StLogo = styled.div`
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-  animation: bounce 2s infinite;
-  @keyframes bounce {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-`;
-const StTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: 900;
-  color: #111;
-  margin-bottom: 0.5rem;
-`;
-const StDesc = styled.p`
-  color: #666;
-  font-size: 1rem;
-`;
-const StCard = styled.div`
-  background: white;
-  width: 100%;
-  max-width: 450px;
-  padding: 2rem;
-  border-radius: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-`;
 const StSectionTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: bold;
