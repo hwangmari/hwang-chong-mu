@@ -6,6 +6,7 @@ export const StContainer = styled.div`
 
 export const StWrapper = styled.div`
   min-width: 320px;
+  width: 100%;
   max-width: ${({ theme }) => theme.layout.narrowWidth};
   margin: 0 auto;
   background-color: ${({ theme }) => theme.colors.gray50};

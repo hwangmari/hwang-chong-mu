@@ -12,7 +12,7 @@ interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   participants: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  roomData: any;
+  roomData: any; // 로컬 모드일 땐 undefined일 수 있음
   onEndGame: () => void;
 }
 
@@ -39,7 +39,7 @@ export default function WheelGame({
   const [winner, setWinner] = useState<string | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  // 1. 돌림판 그리기 (12시 시작 기준)
+  // 1. 돌림판 그리기 (참가자 변경 시 리렌더링)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || participants.length === 0) return;
@@ -52,9 +52,7 @@ export default function WheelGame({
     const radius = canvas.width / 2 - 10;
 
     const arc = (2 * Math.PI) / participants.length;
-
-    // ✨ [수정] 시작 각도를 -90도(12시 방향)로 설정
-    const startAngleOffset = -Math.PI / 2;
+    const startAngleOffset = -Math.PI / 2; // 12시 방향 시작
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -62,8 +60,6 @@ export default function WheelGame({
       ctx.beginPath();
       ctx.fillStyle = COLORS[i % COLORS.length];
       ctx.moveTo(centerX, centerY);
-
-      // ✨ 12시부터 시계방향으로 그리기
       ctx.arc(
         centerX,
         centerY,
@@ -77,7 +73,6 @@ export default function WheelGame({
       // 텍스트 그리기
       ctx.save();
       ctx.translate(centerX, centerY);
-      // 텍스트도 조각의 중앙에 맞춰 회전
       ctx.rotate(i * arc + arc / 2 + startAngleOffset);
       ctx.textAlign = "right";
       ctx.fillStyle = "#fff";
@@ -87,25 +82,30 @@ export default function WheelGame({
     });
   }, [participants]);
 
-  // 2. 회전 신호 감지
+  // ✨ 2. [온라인 모드 전용] Supabase 데이터 감지
   useEffect(() => {
+    // 로컬 모드면 이 useEffect는 무시합니다.
+    if (roomId === "local") return;
+
     if (roomData?.current_question) {
       const targetRotation = parseFloat(roomData.current_question);
       if (targetRotation !== rotation && targetRotation > 0) {
-        // eslint-disable-next-line react-hooks/immutability
         spinWheel(targetRotation);
       }
     } else {
+      // 리셋 신호 감지
       setRotation(0);
       setWinner(null);
       setIsSpinning(false);
     }
-  }, [roomData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomData, roomId]); // roomId 추가
 
+  // ✨ 3. 공통 회전 로직 (실제 애니메이션 트리거)
   const spinWheel = (deg: number) => {
     setWinner(null);
     setIsSpinning(true);
-    setRotation(deg);
+    setRotation(deg); // 여기서 회전 각도 상태 변경 -> CSS transition 작동
 
     // 4초 후 결과 계산
     setTimeout(() => {
@@ -114,15 +114,13 @@ export default function WheelGame({
     }, 4000);
   };
 
-  // ✨ 3. 우승자 계산 로직 (12시 시작 기준)
+  // 4. 우승자 계산
   const calculateWinner = (finalDegree: number) => {
     const count = participants.length;
-    const degreePerSlice = 360 / count;
+    if (count === 0) return;
 
-    // 휠은 시계방향으로 돕니다.
-    // 핀은 12시에 고정되어 있습니다.
-    // 조각 0번도 12시부터 시작합니다.
-    // 따라서 (360 - 회전각)을 하면 핀이 가리키는 조각의 위치가 나옵니다.
+    const degreePerSlice = 360 / count;
+    // 12시 핀 기준 계산
     const winningIndex = Math.floor(
       ((360 - (finalDegree % 360)) % 360) / degreePerSlice
     );
@@ -132,22 +130,38 @@ export default function WheelGame({
     }
   };
 
+  // ✨ 5. 버튼 핸들러 (로컬 vs 온라인 분기 처리)
   const handleSpin = async () => {
     if (isSpinning) return;
     const randomDeg = 1800 + Math.random() * 1800; // 5~10바퀴 랜덤
-    await supabase
-      .from("game_rooms")
-      .update({
-        current_question: String(Math.floor(randomDeg)),
-      })
-      .eq("id", roomId);
+
+    if (roomId === "local") {
+      // [로컬 모드] DB 안 거치고 바로 실행
+      spinWheel(randomDeg);
+    } else {
+      // [온라인 모드] DB 업데이트 -> useEffect가 감지해서 spinWheel 실행
+      await supabase
+        .from("game_rooms")
+        .update({
+          current_question: String(Math.floor(randomDeg)),
+        })
+        .eq("id", roomId);
+    }
   };
 
   const handleReset = async () => {
-    await supabase
-      .from("game_rooms")
-      .update({ current_question: null })
-      .eq("id", roomId);
+    if (roomId === "local") {
+      // [로컬 모드] 바로 리셋
+      setRotation(0);
+      setWinner(null);
+      setIsSpinning(false);
+    } else {
+      // [온라인 모드] DB 리셋
+      await supabase
+        .from("game_rooms")
+        .update({ current_question: null })
+        .eq("id", roomId);
+    }
   };
 
   return (
@@ -165,7 +179,6 @@ export default function WheelGame({
             height={320}
             $rotation={rotation}
           />
-          {/* 핀: 상단 중앙 */}
           <StPointer>▼</StPointer>
         </StWheelWrapper>
 
@@ -186,9 +199,12 @@ export default function WheelGame({
             <CreateButton onClick={handleSpin} disabled={isSpinning}>
               {isSpinning ? "돌아가는 중..." : "돌리기 (SPIN) 🎲"}
             </CreateButton>
+
+            {/* 회전이 끝났거나(결과 나옴) or 회전값이 있을 때 리셋 버튼 노출 */}
             {!isSpinning && rotation > 0 && (
               <StSubButton onClick={handleReset}>다시 하기 (리셋)</StSubButton>
             )}
+
             <StSubButton onClick={onEndGame} style={{ marginTop: "0.5rem" }}>
               다른 게임 하기
             </StSubButton>
@@ -199,7 +215,7 @@ export default function WheelGame({
   );
 }
 
-// ✨ 스타일
+// ✨ 스타일 (기존과 동일)
 const StHeader = styled.div`
   text-align: center;
   margin-bottom: 1rem;
@@ -231,7 +247,6 @@ const StCanvas = styled.canvas<{ $rotation: number }>`
   transform: ${({ $rotation }) => `rotate(${$rotation}deg)`};
 `;
 
-// 핀 스타일 (가운데 상단 고정)
 const StPointer = styled.div`
   position: absolute;
   top: -25px;

@@ -2,33 +2,32 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import styled from "styled-components";
-import { supabase } from "@/lib/supabase";
-import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 interface Props {
-  roomId: string;
+  participants: { id: string; nickname: string }[];
   isHost: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  participants: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  roomData: any;
+  roomId: string;
   onEndGame: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  roomData?: any;
 }
 
 const COLORS = [
-  "#FF6384",
-  "#36A2EB",
-  "#FFCE56",
-  "#4BC0C0",
-  "#9966FF",
-  "#FF9F40",
-  "#C9CBCF",
-  "#E7E9ED",
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#96CEB4",
+  "#FFEEAD",
+  "#D4A5A5",
+  "#9B59B6",
+  "#3498DB",
 ];
 
+const COLUMN_WIDTH = 80;
+
 // 난수 생성기
-const Mulberry32 = (a: number) => {
+const mulberry32 = (a: number) => {
   return () => {
     let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -37,65 +36,52 @@ const Mulberry32 = (a: number) => {
   };
 };
 
-export default function LadderGame({
-  roomId,
-  isHost,
-  participants,
-  roomData,
-  onEndGame,
-}: Props) {
+export default function LadderGame({ participants }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // 상태 관리
   const [results, setResults] = useState<string[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [ladderData, setLadderData] = useState<any>(null);
-  const [inputs, setInputs] = useState<string[]>([]);
-
-  // ✨ 현재 선택된(하이라이트할) 유저 인덱스
+  const [seed, setSeed] = useState<number>(1);
   const [selectedUserIdx, setSelectedUserIdx] = useState<number | null>(null);
 
-  // 초기 세팅
-  useEffect(() => {
-    if (participants.length > 0 && inputs.length === 0) {
-      setInputs(
-        Array(participants.length)
-          .fill("")
-          .map((_, i) => (i % 2 === 0 ? "통과" : "벌주"))
-      );
-    }
-  }, [participants]);
+  // ✨ 변경: 모달 대신 하단에 표시할 "도착한 사람 정보" 상태
+  // index: 사다리 하단 위치, value: { name: 이름, originalIdx: 원래 유저 인덱스(색상용) }
+  const [finalDestinations, setFinalDestinations] = useState<
+    ({ name: string; originalIdx: number } | null)[]
+  >([]);
 
-  // DB 데이터 동기화
-  useEffect(() => {
-    if (roomData?.current_question) {
-      try {
-        const parsed = JSON.parse(roomData.current_question);
-        setLadderData(parsed);
-        setResults(parsed.results);
-      } catch (e) {
-        setLadderData(null);
-      }
-    } else {
-      setLadderData(null);
-      setSelectedUserIdx(null); // 리셋 시 선택 해제
-    }
-  }, [roomData]);
+  // 캔버스 너비
+  const gameWidth = useMemo(() => {
+    return Math.max(340, participants.length * COLUMN_WIDTH);
+  }, [participants.length]);
 
-  // ✨ 사다리 구조 고정 (Memoization)
+  // 1. 초기화 로직
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResults((prev) => {
+      const targetLen = participants.length;
+      if (targetLen === 0) return [];
+      if (prev.length === targetLen) return prev;
+      return Array(targetLen)
+        .fill("")
+        .map((_, i) => prev[i] || "");
+    });
+    setSelectedUserIdx(null);
+    setFinalDestinations([]); // 인원 바뀌면 결과 표시 초기화
+  }, [participants.length]);
+
+  // 2. 사다리 구조 계산
   const bridges = useMemo(() => {
-    if (!ladderData || participants.length === 0) return [];
-
+    if (participants.length < 2) return [];
     const count = participants.length;
-    const steps = 20;
-    const rand = Mulberry32(ladderData.seed);
+    const steps = 12;
+    const rand = mulberry32(seed);
     const grid: boolean[][] = [];
 
     for (let s = 0; s < steps; s++) {
       grid[s] = [];
       for (let c = 0; c < count - 1; c++) {
-        // 50% 확률로 다리 생성
         const hasBridge = rand() > 0.5;
-        // 연속된 다리 방지
         if (hasBridge && (c === 0 || !grid[s][c - 1])) {
           grid[s][c] = true;
         } else {
@@ -104,434 +90,516 @@ export default function LadderGame({
       }
     }
     return grid;
-  }, [ladderData, participants.length]);
+  }, [participants.length, seed]);
 
-  // ✨ 화면 그리기 (데이터나 선택된 유저가 바뀔 때마다 실행)
-  useEffect(() => {
-    if (ladderData && canvasRef.current) {
-      drawLadder();
+  // 3. 꽝(벌칙) 개수 조절
+  const boomCount = results.filter((r) => r === "꽝").length;
+
+  const handleBoomControl = (increment: number) => {
+    setResults((prev) => {
+      const next = [...prev];
+      if (increment > 0) {
+        const emptyIdx = next.indexOf("");
+        if (emptyIdx !== -1) {
+          next[emptyIdx] = "꽝";
+        } else {
+          const passIdx = next.findIndex((r) => r !== "꽝");
+          if (passIdx !== -1) next[passIdx] = "꽝";
+        }
+      } else {
+        const boomIdx = next.lastIndexOf("꽝");
+        if (boomIdx !== -1) next[boomIdx] = "";
+      }
+      return next;
+    });
+  };
+
+  const handleFillPass = () => {
+    setResults((prev) => prev.map((r) => (r === "" ? "통과" : r)));
+  };
+
+  // 4. 일반 기능 핸들러
+  const handleShuffle = () => {
+    setSeed(Math.floor(Math.random() * 100000));
+    setSelectedUserIdx(null);
+    setFinalDestinations([]); // 섞으면 결과 숨기기
+  };
+
+  // 결과 위치 계산 헬퍼
+  const getDestinationIndex = (startIdx: number) => {
+    let c = startIdx;
+    const steps = 12;
+    for (let s = 0; s < steps; s++) {
+      if (c < participants.length - 1 && bridges[s][c]) c++;
+      else if (c > 0 && bridges[s][c - 1]) c--;
     }
-  }, [ladderData, bridges, selectedUserIdx]);
+    return c;
+  };
 
-  // -------------------- 🎨 그리기 로직 --------------------
+  // ✨ 변경: 전체 결과 보기 (모달 대신 하단 상태 업데이트)
+  const handleShowAllResults = () => {
+    // 이미 결과가 나와있으면 토글(숨기기) 할 수도 있고, 그냥 둘 수도 있음.
+    // 여기선 갱신하는 로직으로 작성.
+    const destinations = new Array(participants.length).fill(null);
 
-  const drawLadder = () => {
+    participants.forEach((p, startIdx) => {
+      const endIdx = getDestinationIndex(startIdx);
+      destinations[endIdx] = {
+        name: p.nickname,
+        originalIdx: startIdx,
+      };
+    });
+
+    setFinalDestinations(destinations);
+  };
+
+  const handleResultChange = (idx: number, val: string) => {
+    const newResults = [...results];
+    newResults[idx] = val;
+    setResults(newResults);
+  };
+
+  // 5. 캔버스 그리기 및 애니메이션
+  useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !ladderData) return;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const width = canvas.width;
+    canvas.width = gameWidth;
+    canvas.height = 400;
+
+    const width = gameWidth;
     const height = canvas.height;
     const count = participants.length;
+
     const colWidth = width / count;
-    const steps = 20;
-    const stepHeight = (height - 80) / steps; // 상하 여백 40씩
+    const steps = 12;
+    const stepHeight = (height - 60) / steps;
 
-    // 1. 캔버스 초기화
-    ctx.clearRect(0, 0, width, height);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    const drawBaseLadder = () => {
+      ctx.clearRect(0, 0, width, height);
+      if (count < 2) return;
 
-    // 2. 기본 사다리 (회색) 그리기
-    // 세로선
-    participants.forEach((_, i) => {
-      const x = i * colWidth + colWidth / 2;
-      ctx.beginPath();
-      ctx.moveTo(x, 40);
-      ctx.lineTo(x, height - 40);
-      ctx.strokeStyle = "#e0e0e0"; // 연한 회색
-      ctx.lineWidth = 4;
-      ctx.stroke();
-    });
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-    // 가로선
-    for (let s = 0; s < steps; s++) {
-      for (let c = 0; c < count - 1; c++) {
-        if (bridges[s][c]) {
-          const x = c * colWidth + colWidth / 2;
-          const y = 40 + s * stepHeight + stepHeight / 2;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + colWidth, y);
-          ctx.strokeStyle = "#e0e0e0";
-          ctx.lineWidth = 4;
-          ctx.stroke();
+      for (let i = 0; i < count; i++) {
+        const x = i * colWidth + colWidth / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, 30);
+        ctx.lineTo(x, height - 30);
+        ctx.strokeStyle = "#e9ecef";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+      for (let s = 0; s < steps; s++) {
+        for (let c = 0; c < count - 1; c++) {
+          if (bridges[s][c]) {
+            const x = c * colWidth + colWidth / 2;
+            const y = 30 + s * stepHeight + stepHeight / 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + colWidth, y);
+            ctx.strokeStyle = "#e9ecef";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+          }
         }
       }
-    }
+    };
 
-    // 3. ✨ 선택된 유저 경로 하이라이트 (색깔 선)
-    if (selectedUserIdx !== null) {
-      drawUserPath(ctx, selectedUserIdx, colWidth, stepHeight);
-    }
-  };
+    drawBaseLadder();
 
-  const drawUserPath = (
-    ctx: CanvasRenderingContext2D,
-    userIdx: number,
-    colWidth: number,
-    stepHeight: number
-  ) => {
-    const color = COLORS[userIdx % COLORS.length];
-    const steps = 20;
-    const height = ctx.canvas.height;
+    if (selectedUserIdx === null) return;
 
-    let currCol = userIdx;
+    // 경로 계산
+    const pathPoints: { x: number; y: number }[] = [];
+    let currCol = selectedUserIdx;
     let currX = currCol * colWidth + colWidth / 2;
-    let currY = 40;
+    let currY = 30;
 
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 8; // 굵게!
-    ctx.moveTo(currX, currY);
+    pathPoints.push({ x: currX, y: currY });
 
-    // 경로 추적하며 선 긋기
     for (let s = 0; s < steps; s++) {
-      const nextY = 40 + s * stepHeight + stepHeight / 2;
-
-      // 세로 이동
-      ctx.lineTo(currX, nextY);
+      const nextY = 30 + s * stepHeight + stepHeight / 2;
+      pathPoints.push({ x: currX, y: nextY });
       currY = nextY;
 
-      // 가로 이동 체크
       if (currCol < participants.length - 1 && bridges[s][currCol]) {
-        // 오른쪽으로 이동
         const nextX = currX + colWidth;
-        ctx.lineTo(nextX, currY);
+        pathPoints.push({ x: nextX, y: currY });
         currX = nextX;
         currCol++;
       } else if (currCol > 0 && bridges[s][currCol - 1]) {
-        // 왼쪽으로 이동
         const nextX = currX - colWidth;
-        ctx.lineTo(nextX, currY);
+        pathPoints.push({ x: nextX, y: currY });
         currX = nextX;
         currCol--;
       }
     }
+    pathPoints.push({ x: currX, y: height - 30 });
 
-    // 마지막 바닥까지
-    ctx.lineTo(currX, height - 40);
-    ctx.stroke();
+    // 애니메이션
+    let animationFrameId: number;
+    let progress = 0;
+    const speed = 0.5;
+    const color = COLORS[selectedUserIdx % COLORS.length];
 
-    // 도착 지점에 동그라미 표시
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.arc(currX, height - 40, 8, 0, Math.PI * 2);
-    ctx.fill();
-  };
+    const animate = () => {
+      drawBaseLadder();
 
-  // -------------------- 핸들러 --------------------
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 6;
+      ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
 
-  const handleUserClick = (idx: number) => {
-    // 1. 경로 표시 (State 변경 -> useEffect에서 그리기 호출됨)
-    setSelectedUserIdx(idx);
-
-    // 2. 결과 계산 (로직은 그리기와 동일)
-    let currCol = idx;
-    const steps = 20;
-    for (let s = 0; s < steps; s++) {
-      if (currCol < participants.length - 1 && bridges[s][currCol]) {
-        currCol++;
-      } else if (currCol > 0 && bridges[s][currCol - 1]) {
-        currCol--;
+      const maxIndex = Math.floor(progress);
+      for (let i = 0; i < maxIndex; i++) {
+        ctx.lineTo(pathPoints[i + 1].x, pathPoints[i + 1].y);
       }
-    }
 
-    // 3. 결과 알림 (살짝 딜레이 줘서 선이 그려진 뒤 뜨게 함)
-    setTimeout(() => {
-      // alert 대신 UI에 띄워도 좋지만, 일단 alert로 유지
-      // alert(`[${participants[idx].nickname}]님 결과: ${results[currCol]}`);
-    }, 100);
-  };
+      if (maxIndex < pathPoints.length - 1) {
+        const p1 = pathPoints[maxIndex];
+        const p2 = pathPoints[maxIndex + 1];
+        const t = progress - maxIndex;
+        const curX = p1.x + (p2.x - p1.x) * t;
+        const curY = p1.y + (p2.y - p1.y) * t;
+        ctx.lineTo(curX, curY);
+      }
 
-  const handleGenerate = async () => {
-    if (inputs.some((val) => !val.trim()))
-      return alert("모든 결과 칸을 채워주세요!");
-    const seed = Math.floor(Math.random() * 10000);
-    const data = { seed, results: inputs };
-    await supabase
-      .from("game_rooms")
-      .update({ current_question: JSON.stringify(data) })
-      .eq("id", roomId);
-  };
+      ctx.stroke();
 
-  const handleReset = async () => {
-    await supabase
-      .from("game_rooms")
-      .update({ current_question: null })
-      .eq("id", roomId);
-  };
+      if (progress >= pathPoints.length - 1) {
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(
+          pathPoints[pathPoints.length - 1].x,
+          pathPoints[pathPoints.length - 1].y,
+          8,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        return;
+      }
 
-  const handleInputChange = (idx: number, val: string) => {
-    const newInputs = [...inputs];
-    newInputs[idx] = val;
-    setInputs(newInputs);
-  };
+      progress += speed;
+      if (progress > pathPoints.length - 1) progress = pathPoints.length - 1;
 
-  const handleShuffle = () => {
-    const newInputs = [...inputs];
-    for (let i = newInputs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newInputs[i], newInputs[j]] = [newInputs[j], newInputs[i]];
-    }
-    setInputs(newInputs);
-  };
+      animationFrameId = requestAnimationFrame(animate);
+    };
 
-  // 1. 설정 모드
-  if (!ladderData) {
-    return (
-      <StContainer>
-        <StWrapper>
-          <StHeader>
-            <StTitle>🪜 사다리 타기</StTitle>
-            <StSubTitle>결과를 입력하고 생성하세요</StSubTitle>
-          </StHeader>
+    animate();
 
-          {isHost ? (
-            <StSetupArea>
-              <StGridHeader>
-                <span>총 {participants.length}개의 결과가 필요합니다.</span>
-                <StShuffleBtn onClick={handleShuffle}>
-                  🔀 순서 섞기
-                </StShuffleBtn>
-              </StGridHeader>
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [participants, bridges, selectedUserIdx, gameWidth]);
 
-              <StGrid>
-                {inputs.map((val, i) => (
-                  <StInputRow key={i}>
-                    <StLabel>결과 {i + 1}</StLabel>
-                    <StSmallInput
-                      value={val}
-                      onChange={(e) => handleInputChange(i, e.target.value)}
-                      placeholder="예: 꽝, 1만원"
-                    />
-                  </StInputRow>
-                ))}
-              </StGrid>
-              <CreateButton onClick={handleGenerate}>
-                사다리 생성하기 ✨
-              </CreateButton>
-            </StSetupArea>
-          ) : (
-            <StWaiting>방장님이 사다리를 세팅 중입니다...</StWaiting>
-          )}
-        </StWrapper>
-      </StContainer>
-    );
-  }
-
-  // 2. 게임 모드
   return (
     <StContainer>
       <StWrapper>
         <StHeader>
-          <StTitle>🪜 운명의 사다리</StTitle>
-          <StSubTitle>이름을 누르면 길이 보입니다!</StSubTitle>
+          <StTitle>🪜 사다리 타기</StTitle>
+          <p style={{ color: "#999", fontSize: "0.85rem" }}>
+            멤버를 클릭하면 사다리를 타고 내려갑니다.
+          </p>
         </StHeader>
 
-        <StGameArea>
-          <StUserRow>
-            {participants.map((p, i) => (
-              <StUserBtn
-                key={p.id}
-                onClick={() => handleUserClick(i)}
-                $color={COLORS[i % COLORS.length]}
-                $isActive={selectedUserIdx === i}
-              >
-                {p.nickname}
-              </StUserBtn>
-            ))}
-          </StUserRow>
+        <StToolbar>
+          <div className="group">
+            <span>💣 꽝 개수</span>
+            <button
+              onClick={() => handleBoomControl(-1)}
+              disabled={boomCount <= 0}
+            >
+              -
+            </button>
+            <span className="count">{boomCount}</span>
+            <button
+              onClick={() => handleBoomControl(1)}
+              disabled={boomCount >= participants.length}
+            >
+              +
+            </button>
+          </div>
+          <button className="text-btn" onClick={handleFillPass}>
+            나머지 통과로 채우기
+          </button>
+        </StToolbar>
 
-          {/* 캔버스 영역 */}
-          <canvas
-            ref={canvasRef}
-            width={340}
-            height={400}
-            style={{ width: "100%", maxWidth: "340px" }}
-          />
+        <StScrollContainer>
+          <StGameBoard $width={gameWidth}>
+            <StRow>
+              {participants.map((p, i) => (
+                <StUserItem key={p.id}>
+                  <StUserButton
+                    $color={COLORS[i % COLORS.length]}
+                    $isActive={selectedUserIdx === i}
+                    onClick={() => setSelectedUserIdx(i)}
+                  >
+                    {p.nickname}
+                  </StUserButton>
+                </StUserItem>
+              ))}
+            </StRow>
 
-          <StResultRow>
-            {results.map((r, i) => (
-              <StResultBox
-                key={i}
-                $isHighlight={
-                  // 현재 선택된 유저의 도착지점인지 계산해서 하이라이트
+            <canvas ref={canvasRef} />
+
+            <StRow>
+              {results.map((res, i) => {
+                const isTarget =
                   selectedUserIdx !== null &&
-                  (() => {
-                    let c = selectedUserIdx;
-                    for (let s = 0; s < 20; s++) {
-                      if (c < participants.length - 1 && bridges[s][c]) c++;
-                      else if (c > 0 && bridges[s][c - 1]) c--;
-                    }
-                    return c === i;
-                  })()
-                }
-              >
-                {r}
-              </StResultBox>
-            ))}
-          </StResultRow>
-        </StGameArea>
+                  getDestinationIndex(selectedUserIdx) === i;
 
-        {isHost && (
-          <StFooter>
-            <StSubButton onClick={handleReset}>다시 세팅하기</StSubButton>
-            <StSubButton onClick={onEndGame}>게임 종료</StSubButton>
-          </StFooter>
-        )}
+                // ✨ 여기에 도착한 사람 정보가 있으면 가져오기
+                const destInfo = finalDestinations[i];
+
+                return (
+                  <StResultItem key={i}>
+                    {/* 결과 입력창 (통과, 꽝 등) */}
+                    <StResultInput
+                      value={res}
+                      onChange={(e) => handleResultChange(i, e.target.value)}
+                      $isTarget={isTarget}
+                      $color={
+                        selectedUserIdx !== null
+                          ? COLORS[selectedUserIdx % COLORS.length]
+                          : "#333"
+                      }
+                      placeholder="결과"
+                    />
+
+                    {/* ✨ 전체 결과 보기 시 나타나는 이름 */}
+                    <StMatchedName
+                      $isVisible={!!destInfo}
+                      $color={
+                        destInfo
+                          ? COLORS[destInfo.originalIdx % COLORS.length]
+                          : "transparent"
+                      }
+                    >
+                      {destInfo ? destInfo.name : "-"}
+                    </StMatchedName>
+                  </StResultItem>
+                );
+              })}
+            </StRow>
+          </StGameBoard>
+        </StScrollContainer>
+
+        <StControls>
+          <button onClick={handleShuffle} className="secondary">
+            🔄 사다리 섞기
+          </button>
+          <button onClick={handleShowAllResults} className="primary">
+            👀 전체 결과 보기
+          </button>
+        </StControls>
+
+        {/* 모달 관련 코드 삭제됨 */}
       </StWrapper>
     </StContainer>
   );
 }
 
-// ✨ 스타일
+// --- 스타일 컴포넌트 ---
+
 const StHeader = styled.div`
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 10px;
 `;
 const StTitle = styled.h2`
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 800;
   color: #333;
-  margin-bottom: 0.2rem;
-`;
-const StSubTitle = styled.p`
-  font-size: 0.9rem;
-  color: #666;
+  margin-bottom: 5px;
 `;
 
-const StSetupArea = styled.div`
-  background: white;
-  padding: 1.5rem;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-const StGridHeader = styled.div`
+const StToolbar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-`;
-const StShuffleBtn = styled.button`
-  background: #eee;
-  border: none;
-  padding: 0.3rem 0.6rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  &:hover {
-    background: #ddd;
+  background: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9rem;
+    button {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      font-weight: bold;
+      &:active {
+        background: #eee;
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    .count {
+      min-width: 20px;
+      text-align: center;
+      color: #ff6b6b;
+      font-size: 1.1rem;
+    }
+  }
+  .text-btn {
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    color: #666;
+    text-decoration: underline;
+    cursor: pointer;
+    &:hover {
+      color: #333;
+    }
   }
 `;
 
-const StGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
-`;
-const StInputRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-`;
-const StLabel = styled.span`
-  font-size: 0.8rem;
-  color: #888;
-  font-weight: bold;
-`;
-const StSmallInput = styled.input`
+const StScrollContainer = styled.div`
   width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 0.95rem;
-  font-weight: bold;
+  overflow-x: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 20px 0;
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+  }
 `;
 
-const StGameArea = styled.div`
-  background: white;
-  padding: 1rem;
-  border-radius: 16px;
-  overflow-x: auto;
+const StGameBoard = styled.div<{ $width: number }>`
+  width: ${({ $width }) => $width}px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 0 20px;
+`;
+
+const StRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+`;
+const StUserItem = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const StUserButton = styled.button<{ $color: string; $isActive: boolean }>`
+  background-color: ${({ $isActive, $color }) =>
+    $isActive ? $color : "white"};
+  color: ${({ $isActive, $color }) => ($isActive ? "white" : $color)};
+  border: 2px solid ${({ $color }) => $color};
+  border-radius: 50px;
+  padding: 6px 12px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: ${({ $isActive, $color }) =>
+    $isActive ? `0 4px 10px ${$color}40` : "none"};
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+const StResultItem = styled.div`
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-`;
-const StUserRow = styled.div`
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  max-width: 340px;
-  margin-bottom: 0.5rem;
+  padding: 0 5px;
+  min-height: 80px;
 `;
 
-const StUserBtn = styled.button<{ $color: string; $isActive: boolean }>`
-  background: ${({ $color, $isActive }) => ($isActive ? $color : "white")};
-  color: ${({ $color, $isActive }) => ($isActive ? "white" : $color)};
-  border: 2px solid ${({ $color }) => $color};
-  padding: 0.3rem 0.6rem;
-  border-radius: 99px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-  transform: ${({ $isActive }) => ($isActive ? "scale(1.1)" : "scale(1)")};
-  white-space: nowrap;
-  overflow: hidden;
-  max-width: 60px;
-  text-overflow: ellipsis;
-`;
-
-const StResultRow = styled.div`
-  display: flex;
-  justify-content: space-around;
+const StResultInput = styled.input<{ $isTarget: boolean; $color: string }>`
   width: 100%;
-  max-width: 340px;
-  margin-top: 0.5rem;
-`;
-const StResultBox = styled.div<{ $isHighlight?: boolean }>`
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: ${({ $isHighlight }) => ($isHighlight ? "white" : "#333")};
-  background: ${({ $isHighlight }) => ($isHighlight ? "#333" : "#f8f9fa")};
-  width: 100%;
+  padding: 8px 0;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.3rem 0.2rem;
-  border-radius: 6px;
-  transition: all 0.2s;
-  transform: ${({ $isHighlight }) =>
-    $isHighlight ? "scale(1.1)" : "scale(1)"};
-`;
-
-const StFooter = styled.div`
-  margin-top: auto;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-`;
-const StSubButton = styled.button`
-  background: none;
   border: none;
-  color: #888;
-  padding: 0.5rem;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.9rem;
-`;
-const StWaiting = styled.div`
-  text-align: center;
-  color: #888;
-  padding: 2rem;
+  border-bottom: 2px solid
+    ${({ $isTarget, $color }) => ($isTarget ? $color : "#eee")};
+  background: ${({ $isTarget, $color }) =>
+    $isTarget ? `${$color}20` : "transparent"};
+  color: #333;
   font-weight: bold;
+  font-size: 0.9rem;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s;
+  &:focus {
+    outline: none;
+    border-bottom-color: #333;
+    background: #f8f9fa;
+  }
+  &::placeholder {
+    color: #ddd;
+    font-weight: normal;
+  }
+`;
+
+// ✨ 새로 추가된 스타일: 결과 아래 표시되는 이름
+const StMatchedName = styled.div<{ $isVisible: boolean; $color: string }>`
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: ${({ $color }) => $color};
+  opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
+  transform: ${({ $isVisible }) =>
+    $isVisible ? "translateY(0)" : "translateY(-5px)"};
+  transition: all 0.3s ease;
+  white-space: nowrap;
+`;
+
+const StControls = styled.div`
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-bottom: 20px;
+
+  button {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: transform 0.1s;
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+  .secondary {
+    background: #f1f3f5;
+    color: #333;
+  }
+  .primary {
+    background: #333;
+    color: white;
+  }
 `;
