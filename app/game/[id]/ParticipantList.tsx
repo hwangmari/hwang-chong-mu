@@ -33,10 +33,14 @@ export default function ParticipantList({
       {isHost && (
         <StGuestInputWrapper>
           <StGuestInput
-            placeholder="이름만 입력해서 추가 (예: 철수)"
+            placeholder="이름만 입력해서 깍두기 추가"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onAddGuest()}
+            onKeyDown={(e) => {
+              // ✨ [수정] 한글 조합 중(isComposing)일 때는 이벤트 막기
+              if (e.nativeEvent.isComposing) return;
+              if (e.key === "Enter") onAddGuest();
+            }}
           />
           <StGuestAddButton onClick={onAddGuest}>+</StGuestAddButton>
         </StGuestInputWrapper>

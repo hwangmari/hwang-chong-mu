@@ -33,7 +33,7 @@ export default function CommentSection({
       .select("*")
       .eq("goal_id", goalId)
       .eq("record_date", dateStr)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (data) setComments(data);
   }, [goalId, dateStr]);

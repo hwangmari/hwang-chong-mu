@@ -15,7 +15,7 @@ import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
-import { StSection } from "@/components/styled/layout.styled";
+import { StFlexBox, StSection } from "@/components/styled/layout.styled";
 
 interface Props {
   goalId: number;
@@ -38,90 +38,93 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <>
-      <StSection>
-        {/* ✅ [추가] 달력 토글 헤더 */}
-        <StToggleHeader onClick={() => setIsExpanded(!isExpanded)}>
-          <StToggleTitle>
-            <CalendarMonthIcon sx={{ color: themeColor }} />
-            <span>
-              {isExpanded ? "주간만 보기 (접기)" : "월간 전체 보기 (펼치기)"}
-            </span>
-          </StToggleTitle>
-          <StToggleIconWrapper>
-            {isExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
-          </StToggleIconWrapper>
-        </StToggleHeader>
+    <StFlexBox>
+      <div className="flex-lft-box">
+        <StSection>
+          {/* ✅ [추가] 달력 토글 헤더 */}
+          <StToggleHeader onClick={() => setIsExpanded(!isExpanded)}>
+            <StToggleTitle>
+              <CalendarMonthIcon sx={{ color: themeColor }} />
+              <span>
+                {isExpanded ? "주간만 보기 (접기)" : "월간 전체 보기 (펼치기)"}
+              </span>
+            </StToggleTitle>
+            <StToggleIconWrapper>
+              {isExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+            </StToggleIconWrapper>
+          </StToggleHeader>
 
-        {/* ✅ 달력 영역: 항상 렌더링하되 isExpanded prop 전달 */}
-        <StCalendarArea>
-          {/* 월간 보기일 때만 '월 이동 버튼' 표시 (주간일 땐 굳이 필요 없음) */}
-          {isExpanded && (
-            <StHeaderWrapper>
-              <StHeader>
-                <StNavButton
-                  onClick={() =>
-                    actions.setCurrentDate(subMonths(currentDate, 1))
-                  }
+          {/* ✅ 달력 영역: 항상 렌더링하되 isExpanded prop 전달 */}
+          <StCalendarArea>
+            {/* 월간 보기일 때만 '월 이동 버튼' 표시 (주간일 땐 굳이 필요 없음) */}
+            {isExpanded && (
+              <StHeaderWrapper>
+                <StHeader>
+                  <StNavButton
+                    onClick={() =>
+                      actions.setCurrentDate(subMonths(currentDate, 1))
+                    }
+                  >
+                    <ArrowBackIosIcon sx={{ fontSize: 18 }} />
+                  </StNavButton>
+                  <StMonthTitle>
+                    {format(currentDate, "yyyy년 M월")}
+                  </StMonthTitle>
+                  <StNavButton
+                    onClick={() =>
+                      actions.setCurrentDate(addMonths(currentDate, 1))
+                    }
+                  >
+                    <ArrowForwardIosIcon sx={{ fontSize: 18 }} />
+                  </StNavButton>
+                </StHeader>
+                <StWeekendToggle
+                  onClick={actions.toggleWeekends}
+                  $active={showWeekends}
+                  $color={themeColor}
                 >
-                  <ArrowBackIosIcon sx={{ fontSize: 18 }} />
-                </StNavButton>
-                <StMonthTitle>{format(currentDate, "yyyy년 M월")}</StMonthTitle>
-                <StNavButton
-                  onClick={() =>
-                    actions.setCurrentDate(addMonths(currentDate, 1))
-                  }
-                >
-                  <ArrowForwardIosIcon sx={{ fontSize: 18 }} />
-                </StNavButton>
-              </StHeader>
-              <StWeekendToggle
-                onClick={actions.toggleWeekends}
-                $active={showWeekends}
-                $color={themeColor}
-              >
-                {showWeekends ? "주말 끄기" : "주말 보기"}
-              </StWeekendToggle>
-            </StHeaderWrapper>
-          )}
+                  {showWeekends ? "주말 끄기" : "주말 보기"}
+                </StWeekendToggle>
+              </StHeaderWrapper>
+            )}
 
-          <CalendarGrid
-            currentDate={currentDate}
+            <CalendarGrid
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              showWeekends={showWeekends}
+              themeColor={themeColor}
+              monthlyLogs={monthlyLogs}
+              totalItemsCount={items.length}
+              onSelectDate={(date) => {
+                actions.setSelectedDate(date);
+              }}
+              hoveredItemId={hoveredItemId}
+              rawLogs={rawLogs}
+              isExpanded={isExpanded}
+            />
+          </StCalendarArea>
+
+          {/* ✅ 할 일 목록 (항상 보임) */}
+          <TodoList
             selectedDate={selectedDate}
-            showWeekends={showWeekends}
+            items={items}
+            completedIds={dailyCompletedIds}
             themeColor={themeColor}
-            monthlyLogs={monthlyLogs}
-            totalItemsCount={items.length}
-            onSelectDate={(date) => {
-              actions.setSelectedDate(date);
-              // 날짜 선택 시 자동으로 접고 싶으면 아래 주석 해제
-              // setIsExpanded(false);
-            }}
-            hoveredItemId={hoveredItemId}
-            rawLogs={rawLogs}
-            isExpanded={isExpanded} // ✅ 상태 전달
+            onToggle={actions.toggleComplete}
+            onDelete={actions.deleteItem}
+            onAdd={actions.addItem}
+            onHoverItem={actions.setHoveredItemId}
           />
-        </StCalendarArea>
-
-        {/* ✅ 할 일 목록 (항상 보임) */}
-        <TodoList
-          selectedDate={selectedDate}
-          items={items}
-          completedIds={dailyCompletedIds}
+        </StSection>
+      </div>
+      <div className="flex-rgt-box">
+        <CommentSection
+          goalId={goalId}
           themeColor={themeColor}
-          onToggle={actions.toggleComplete}
-          onDelete={actions.deleteItem}
-          onAdd={actions.addItem}
-          onHoverItem={actions.setHoveredItemId}
+          selectedDate={selectedDate}
         />
-      </StSection>
-
-      <CommentSection
-        goalId={goalId}
-        themeColor={themeColor}
-        selectedDate={selectedDate}
-      />
-    </>
+      </div>
+    </StFlexBox>
   );
 }
 

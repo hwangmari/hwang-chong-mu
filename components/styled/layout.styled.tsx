@@ -25,3 +25,18 @@ export const StSection = styled.div`
     border-radius: 20px;
   }
 `;
+
+export const StFlexBox = styled.div`
+  max-width: 540px;
+  margin: 0 auto;
+  @media ${({ theme }) => theme.media.desktop} {
+    display: flex;
+    max-width: 1024px;
+    gap: 40px;
+    & > div {
+      flex: 1;
+    }
+    .flex-rgt-box {
+    }
+  }
+`;

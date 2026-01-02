@@ -110,7 +110,7 @@ export default function GameRoomPage() {
           loading={logic.loading}
         />
 
-        {logic.status === "countdown" && (
+        {/* {logic.status === "countdown" && (
           <StDimOverlay>
             <StCountNumber>
               {logic.count === 0 ? "GO!" : logic.count}
@@ -119,7 +119,7 @@ export default function GameRoomPage() {
               {GAME_TYPES.find((g) => g.id === logic.selectedGame)?.name} 시작!
             </StCountText>
           </StDimOverlay>
-        )}
+        )} */}
       </StWrapper>
     </StContainer>
   );

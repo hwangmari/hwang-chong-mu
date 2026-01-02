@@ -17,7 +17,11 @@ import FloatingFinishButton from "../detail/FloatingFinishButton";
 import NameInput from "../detail/NameInput";
 import VoteSubmitButtons from "../detail/VoteSubmitButtons";
 import ParticipantList from "../detail/ParticipantList";
-import { StWrapper, StContainer } from "@/components/styled/layout.styled";
+import {
+  StWrapper,
+  StContainer,
+  StFlexBox,
+} from "@/components/styled/layout.styled";
 import { useState } from "react";
 
 export default function RoomDetail() {
@@ -120,8 +124,8 @@ export default function RoomDetail() {
               </>
             )}
           </StWrapper>
-          <StBox>
-            <div className="lft">
+          <StFlexBox>
+            <div className="flex-lft-box">
               <CalendarGrid
                 dates={calendarGrid}
                 participants={participants}
@@ -142,7 +146,7 @@ export default function RoomDetail() {
                 />
               )}
             </div>
-            <div className="rgt">
+            <div className="flex-rgt-box">
               <ParticipantList
                 participants={participants}
                 onEdit={handleEditUser}
@@ -154,7 +158,7 @@ export default function RoomDetail() {
                 <FloatingFinishButton onFinish={handleGoToConfirm} />
               )}
             </div>
-          </StBox>
+          </StFlexBox>
         </>
       )}
 
@@ -189,21 +193,6 @@ export default function RoomDetail() {
   );
 }
 
-const StBox = styled.div`
-  max-width: 540px;
-  margin: 0 auto;
-  @media ${({ theme }) => theme.media.desktop} {
-    display: flex;
-    max-width: 1024px;
-    gap: 20px;
-    & > div {
-      flex: 1;
-    }
-    .rgt {
-      padding-top: 20px;
-    }
-  }
-`;
 // ✨ 페이지 전용 스타일
 const StLoadingContainer = styled.div`
   min-height: 100vh;

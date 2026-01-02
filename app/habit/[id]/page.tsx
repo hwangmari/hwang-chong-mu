@@ -42,12 +42,11 @@ export default function HabitRoomPage({
             {goal.emoji} {goal.title}
           </Title>
         </Header>
-
-        <MonthlyTracker
-          goalId={Number(id)}
-          themeColor={goal.color || "#22c55e"}
-        />
       </StWrapper>
+      <MonthlyTracker
+        goalId={Number(id)}
+        themeColor={goal.color || "#22c55e"}
+      />
     </StContainer>
   );
 }

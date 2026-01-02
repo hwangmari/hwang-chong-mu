@@ -43,26 +43,21 @@ export default function CalendarGrid({
   rawLogs = [],
   isExpanded,
 }: Props) {
-  // ✅ [수정] 변수 선언 중복 제거 및 정리
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
 
-  // 1. 월간 보기 날짜들
   const monthDays = eachDayOfInterval({
     start: startOfWeek(monthStart),
     end: endOfWeek(monthEnd),
   });
 
-  // 2. 주간 보기 날짜들
   const weekDaysRange = eachDayOfInterval({
     start: startOfWeek(selectedDate),
     end: endOfWeek(selectedDate),
   });
 
-  // ✅ 모드에 따라 날짜 범위 결정
   const targetDays = isExpanded ? monthDays : weekDaysRange;
 
-  // 주말 필터링
   const filteredDays = showWeekends
     ? targetDays
     : targetDays.filter((day) => !isWeekend(day));
@@ -73,8 +68,9 @@ export default function CalendarGrid({
     : weekDays.filter((_, i) => i !== 0 && i !== 6);
   const today = new Date();
 
+  // 배경색 및 텍스트 색상 결정 로직
   const getCellStyles = (dateStr: string) => {
-    // 1. 특정 아이템 호버 중일 때
+    // 1. 특정 아이템 호버 중일 때 (달성률과 관계없이 수행 여부만 표시)
     if (hoveredItemId !== null) {
       const isDone = rawLogs?.some(
         (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
@@ -108,11 +104,16 @@ export default function CalendarGrid({
         const isToday = isSameDay(day, today);
         const { bg, isDarkBg } = getCellStyles(dateStr);
 
+        // ✅ 달성률 계산 로직 추가
+        const log = monthlyLogs?.find((l) => l.date === dateStr);
+        const count = log?.count ?? 0;
+        const total = totalItemsCount || 1;
+        const percentage = Math.round((count / total) * 100);
+
         return (
           <StDateCell
             key={dateStr}
             $bgColor={bg}
-            // ✅ 여기서 계산된 투명도 값을 넘겨줍니다.
             $opacity={isExpanded ? (isSameMonth(day, monthStart) ? 1 : 0.3) : 1}
             $isSelected={isSameDay(day, selectedDate)}
             $borderColor={themeColor}
@@ -121,6 +122,12 @@ export default function CalendarGrid({
             <StDateText $isToday={isToday} $isDarkBg={isDarkBg}>
               {format(day, "d")}
             </StDateText>
+
+            {/* ✅ 달성률 표시 (0%보다 클 때만, 혹은 호버 중이 아닐 때만 표시 등 조건 조절 가능) */}
+            {hoveredItemId === null && percentage > 0 && (
+              <StRateText $isDarkBg={isDarkBg}>{percentage}%</StRateText>
+            )}
+
             {isToday && <StTodayDot $color={isDarkBg ? "white" : themeColor} />}
           </StDateCell>
         );
@@ -146,7 +153,6 @@ const StWeekDay = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-// ✅ [수정] $isCurrentMonth 제거하고 $opacity만 사용하도록 정리
 const StDateCell = styled.div<{
   $bgColor: string;
   $opacity: number;
@@ -154,7 +160,7 @@ const StDateCell = styled.div<{
   $borderColor: string;
 }>`
   position: relative;
-  aspect-ratio: 1;
+  /* aspect-ratio: 1; */
   background-color: ${({ $bgColor }) => $bgColor};
   border-radius: 14px;
   display: flex;
@@ -162,9 +168,8 @@ const StDateCell = styled.div<{
   gap: 2px;
   align-items: center;
   justify-content: center;
+  min-height: 70px;
   cursor: pointer;
-
-  /* ✅ 수정된 부분: opacity 속성 하나로 통합하고 세미콜론 추가 */
   opacity: ${({ $opacity }) => $opacity};
 
   /* 선택된 날짜 테두리 */
@@ -182,10 +187,22 @@ const StDateCell = styled.div<{
 `;
 
 const StDateText = styled.span<{ $isToday?: boolean; $isDarkBg: boolean }>`
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: ${({ $isToday }) => ($isToday ? "900" : "600")};
   color: ${({ $isDarkBg }) => ($isDarkBg ? "white" : "#374151")};
   transition: color 0.2s;
+  /* 숫자가 중앙보다 살짝 위로 오게 하려면 아래 마진 조정 */
+  margin-bottom: 2px;
+`;
+
+// ✅ [추가] 달성률 텍스트 스타일
+const StRateText = styled.span<{ $isDarkBg: boolean }>`
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: ${({ $isDarkBg }) =>
+    $isDarkBg ? "rgba(255, 255, 255, 0.9)" : "#6b7280"};
+  position: absolute;
+  bottom: 6px;
 `;
 
 const StTodayDot = styled.div<{ $color: string }>`
