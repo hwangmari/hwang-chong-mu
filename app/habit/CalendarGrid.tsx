@@ -72,20 +72,40 @@ export default function CalendarGrid({
   const getCellStyles = (
     dateStr: string
   ): { bg: string; isDarkBg: boolean; isHoverTarget?: boolean } => {
-    // 1. 특정 아이템 호버 중일 때
+    // [1] 일단 원래의 농도(Heatmap) 색상을 먼저 계산해둡니다.
+    const log = monthlyLogs?.find((l) => l.date === dateStr);
+    const count = log ? log.count : 0;
+    const total = totalItemsCount || 1;
+    const ratio = count / total;
+
+    let originalStyle = { bg: "#f3f4f6", isDarkBg: false }; // 기본값
+
+    if (ratio > 0) {
+      if (ratio <= 0.3) {
+        originalStyle = { bg: hexToRgba(themeColor, 0.3), isDarkBg: false };
+      } else if (ratio <= 0.6) {
+        originalStyle = { bg: hexToRgba(themeColor, 0.6), isDarkBg: true };
+      } else if (ratio < 1) {
+        originalStyle = { bg: hexToRgba(themeColor, 0.85), isDarkBg: true };
+      } else {
+        originalStyle = { bg: themeColor, isDarkBg: true };
+      }
+    }
+
+    // [2] 호버 상태 체크
     if (hoveredItemId !== null) {
       const isDone = rawLogs?.some(
         (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
       );
 
       if (isDone) {
-        // ✅ 실천한 날: 테마색 배경 + 강조 효과(isHoverTarget: true)
+        // ✅ 수행한 날: 원래 농도 색상 유지 + 강조 효과(isHoverTarget: true)
         return {
-          bg: themeColor,
-          isDarkBg: true,
+          ...originalStyle,
           isHoverTarget: true,
         };
       } else {
+        // ✂️ 수행 안 한 날: 색상을 날려버림 (기본 회색으로 리셋)
         return {
           bg: "#f3f4f6",
           isDarkBg: false,
@@ -94,19 +114,10 @@ export default function CalendarGrid({
       }
     }
 
-    // 2. 평상시 (호버 안 했을 때 - 기존 로직 유지)
-    const log = monthlyLogs?.find((l) => l.date === dateStr);
-    const count = log ? log.count : 0;
-    const total = totalItemsCount || 1;
-    const ratio = count / total;
-
-    if (ratio === 0) return { bg: "#f3f4f6", isDarkBg: false };
-    if (ratio <= 0.3)
-      return { bg: hexToRgba(themeColor, 0.3), isDarkBg: false };
-    if (ratio <= 0.6) return { bg: hexToRgba(themeColor, 0.6), isDarkBg: true };
-    if (ratio < 1) return { bg: hexToRgba(themeColor, 0.85), isDarkBg: true };
-    return { bg: themeColor, isDarkBg: true };
+    // [3] 호버 안 했을 때는 원래 계산한 스타일 반환
+    return originalStyle;
   };
+
   return (
     <StCalendarGrid $columns={showWeekends ? 7 : 5}>
       {filteredWeekDays.map((day) => (
@@ -116,7 +127,6 @@ export default function CalendarGrid({
         const dateStr = format(day, "yyyy-MM-dd");
         const isToday = isSameDay(day, today);
 
-        // 👈 2. 여기서 isHoverTarget도 같이 꺼내옵니다.
         const { bg, isDarkBg, isHoverTarget } = getCellStyles(dateStr);
 
         const log = monthlyLogs?.find((l) => l.date === dateStr);
@@ -132,14 +142,13 @@ export default function CalendarGrid({
             $isSelected={isSameDay(day, selectedDate)}
             $borderColor={themeColor}
             onClick={() => onSelectDate(day)}
-            // 👈 3. style.isHoverTarget이 아니라 변수 그대로 넣습니다.
             $isHoverTarget={isHoverTarget}
           >
             <StDateText $isToday={isToday} $isDarkBg={isDarkBg}>
               {format(day, "d")}
             </StDateText>
 
-            {hoveredItemId === null && percentage > 0 && (
+            {percentage > 0 && (
               <StRateText $isDarkBg={isDarkBg}>{percentage}%</StRateText>
             )}
 
@@ -205,7 +214,7 @@ const StDateCell = styled.div<{
   ${(props) =>
     props.$isHoverTarget &&
     css`
-      transform: scale(1.05);
+      transform: scale(1.02);
       z-index: 15;
       border: 1px solid #000;
       box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
