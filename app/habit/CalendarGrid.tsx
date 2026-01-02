@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components"; // 👈 1. { css } 추가
 import {
   format,
   startOfMonth,
@@ -69,18 +69,32 @@ export default function CalendarGrid({
   const today = new Date();
 
   // 배경색 및 텍스트 색상 결정 로직
-  const getCellStyles = (dateStr: string) => {
-    // 1. 특정 아이템 호버 중일 때 (달성률과 관계없이 수행 여부만 표시)
+  const getCellStyles = (
+    dateStr: string
+  ): { bg: string; isDarkBg: boolean; isHoverTarget?: boolean } => {
+    // 1. 특정 아이템 호버 중일 때
     if (hoveredItemId !== null) {
       const isDone = rawLogs?.some(
         (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
       );
-      return isDone
-        ? { bg: themeColor, isDarkBg: true }
-        : { bg: "#f3f4f6", isDarkBg: false };
+
+      if (isDone) {
+        // ✅ 실천한 날: 테마색 배경 + 강조 효과(isHoverTarget: true)
+        return {
+          bg: themeColor,
+          isDarkBg: true,
+          isHoverTarget: true,
+        };
+      } else {
+        return {
+          bg: "#f3f4f6",
+          isDarkBg: false,
+          isHoverTarget: false,
+        };
+      }
     }
 
-    // 2. 평상시 (농도 보기)
+    // 2. 평상시 (호버 안 했을 때 - 기존 로직 유지)
     const log = monthlyLogs?.find((l) => l.date === dateStr);
     const count = log ? log.count : 0;
     const total = totalItemsCount || 1;
@@ -93,7 +107,6 @@ export default function CalendarGrid({
     if (ratio < 1) return { bg: hexToRgba(themeColor, 0.85), isDarkBg: true };
     return { bg: themeColor, isDarkBg: true };
   };
-
   return (
     <StCalendarGrid $columns={showWeekends ? 7 : 5}>
       {filteredWeekDays.map((day) => (
@@ -102,9 +115,10 @@ export default function CalendarGrid({
       {filteredDays.map((day) => {
         const dateStr = format(day, "yyyy-MM-dd");
         const isToday = isSameDay(day, today);
-        const { bg, isDarkBg } = getCellStyles(dateStr);
 
-        // ✅ 달성률 계산 로직 추가
+        // 👈 2. 여기서 isHoverTarget도 같이 꺼내옵니다.
+        const { bg, isDarkBg, isHoverTarget } = getCellStyles(dateStr);
+
         const log = monthlyLogs?.find((l) => l.date === dateStr);
         const count = log?.count ?? 0;
         const total = totalItemsCount || 1;
@@ -118,12 +132,13 @@ export default function CalendarGrid({
             $isSelected={isSameDay(day, selectedDate)}
             $borderColor={themeColor}
             onClick={() => onSelectDate(day)}
+            // 👈 3. style.isHoverTarget이 아니라 변수 그대로 넣습니다.
+            $isHoverTarget={isHoverTarget}
           >
             <StDateText $isToday={isToday} $isDarkBg={isDarkBg}>
               {format(day, "d")}
             </StDateText>
 
-            {/* ✅ 달성률 표시 (0%보다 클 때만, 혹은 호버 중이 아닐 때만 표시 등 조건 조절 가능) */}
             {hoveredItemId === null && percentage > 0 && (
               <StRateText $isDarkBg={isDarkBg}>{percentage}%</StRateText>
             )}
@@ -153,14 +168,15 @@ const StWeekDay = styled.div`
   margin-bottom: 0.5rem;
 `;
 
+// 👈 4. $isHoverTarget 타입 추가 (옵셔널 ? 로 처리)
 const StDateCell = styled.div<{
   $bgColor: string;
   $opacity: number;
   $isSelected: boolean;
   $borderColor: string;
+  $isHoverTarget?: boolean;
 }>`
   position: relative;
-  /* aspect-ratio: 1; */
   background-color: ${({ $bgColor }) => $bgColor};
   border-radius: 14px;
   display: flex;
@@ -184,25 +200,33 @@ const StDateCell = styled.div<{
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 10;
   }
+
+  /* 조건부 css 적용 */
+  ${(props) =>
+    props.$isHoverTarget &&
+    css`
+      transform: scale(1.05);
+      z-index: 15;
+      border: 1px solid #000;
+      box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
+    `}
 `;
 
 const StDateText = styled.span<{ $isToday?: boolean; $isDarkBg: boolean }>`
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: ${({ $isToday }) => ($isToday ? "900" : "600")};
   color: ${({ $isDarkBg }) => ($isDarkBg ? "white" : "#374151")};
   transition: color 0.2s;
-  /* 숫자가 중앙보다 살짝 위로 오게 하려면 아래 마진 조정 */
   margin-bottom: 2px;
 `;
 
-// ✅ [추가] 달성률 텍스트 스타일
 const StRateText = styled.span<{ $isDarkBg: boolean }>`
-  font-size: 0.6rem;
+  font-size: 0.5rem;
   font-weight: 500;
   color: ${({ $isDarkBg }) =>
     $isDarkBg ? "rgba(255, 255, 255, 0.9)" : "#6b7280"};
   position: absolute;
-  bottom: 6px;
+  bottom: 10px;
 `;
 
 const StTodayDot = styled.div<{ $color: string }>`
