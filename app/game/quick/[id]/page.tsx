@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import styled from "styled-components";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import {
+  StContainer,
+  StWaitingBox,
+  StWrapper,
+} from "@/components/styled/layout.styled";
 import Input from "@/components/common/Input";
-
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 // ✨ 게임 컴포넌트 import (경로 확인 필요)
 import LadderGame from "../../components/LadderGame";
 import WheelGame from "../../components/WheelGame";
+import FooterGuide from "@/components/common/FooterGuide";
 // import ClickerGame from "../../components/ClickerGame";
 // import TelepathyGame from "../../components/TelepathyGame";
 
@@ -67,8 +72,13 @@ export default function QuickGamePage() {
       <StWrapper>
         {/* 헤더 */}
         <StHeader>
-          <StBackButton onClick={() => router.back()}>← 나가기</StBackButton>
-          <StTitle>{gameName}</StTitle>
+          <StBackButton
+            onClick={() => router.push("/game")}
+            aria-label="뒤로 가기"
+          >
+            <ArrowBackIcon fontSize="medium" />
+          </StBackButton>
+          <StTitle>함께 할 멤버를 추가해주세요</StTitle>
         </StHeader>
 
         {/* ✨ 멤버 관리 패널 (항상 상단에 노출) */}
@@ -97,13 +107,8 @@ export default function QuickGamePage() {
         </StControlPanel>
       </StWrapper>
       {/* ✨ 게임 영역 */}
-
       {participants.length < 2 ? (
-        <StWrapper>
-          <StWaitingBox>
-            <p>최소 2명 이상의 참가자가 필요합니다.</p>
-          </StWaitingBox>
-        </StWrapper>
+        <StWaitingBox>최소 2명 이상의 참가자가 필요합니다.</StWaitingBox>
       ) : (
         <>
           {/* 사다리 게임: 참가자 데이터가 실시간으로 전달됨 */}
@@ -128,6 +133,42 @@ export default function QuickGamePage() {
           )}
         </>
       )}
+      <StWrapper>
+        <FooterGuide
+          title="이용 가이드"
+          tips={[
+            {
+              icon: "⌨️",
+              title: "빠른 멤버 추가",
+              description:
+                "이름을 입력하고 엔터(Enter)를 치면 마우스 클릭 없이 빠르게 추가됩니다.",
+            },
+            {
+              icon: "🎮",
+              title: "게임 자동 생성",
+              description:
+                "최소 2명의 멤버가 등록되면 게임 화면이 아래에 자동으로 나타납니다.",
+            },
+            {
+              icon: "✨",
+              title: "손쉬운 명단 수정",
+              description:
+                "오타가 났나요? 이름표 옆의 (×) 버튼을 누르면 즉시 목록에서 제외됩니다.",
+            },
+            // 👇 사다리 게임일 때만 노출되는 항목
+            ...(gameId === "ladder"
+              ? [
+                  {
+                    icon: "📝",
+                    title: "결과 직접 수정",
+                    description:
+                      "멤버 추가는 물론, 사다리 아래쪽의 결과 텍스트를 클릭해 원하는 내용으로 변경할 수 있습니다.",
+                  },
+                ]
+              : []),
+          ]}
+        />
+      </StWrapper>
     </StContainer>
   );
 }
@@ -135,27 +176,42 @@ export default function QuickGamePage() {
 // --- ✨ 스타일 컴포넌트 ---
 
 const StHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  position: relative;
   margin-bottom: 20px;
+  margin-bottom: 20px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
-
 const StBackButton = styled.button`
-  background: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
   border: none;
-  color: #666;
-  font-size: 0.9rem;
   cursor: pointer;
-  text-align: left;
-  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%; // 원형 클릭 효과
+  color: #333; // 기본 아이콘 색상 (필요시 변경)
+  transition: all 0.2s ease-in-out; // 부드러운 전환 효과
+
   &:hover {
-    color: #333;
+    background-color: rgba(0, 0, 0, 0.05); // 호버 시 연한 회색 배경
+    transform: translateX(-3px); // 왼쪽으로 살짝 이동하는 애니메이션
+    color: #000; // 호버 시 색상 진하게
+  }
+
+  &:active {
+    transform: scale(0.95) translateX(-3px); // 클릭 시 살짝 눌리는 느낌
   }
 `;
-
 const StTitle = styled.h1`
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
   color: #333;
 `;
@@ -237,16 +293,4 @@ const StEmptyMsg = styled.span`
   color: #aaa;
   font-size: 0.9rem;
   padding: 5px;
-`;
-
-const StWaitingBox = styled.div`
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
-  border-radius: 12px;
-  color: #aaa;
-  border: 2px dashed #e9ecef;
 `;

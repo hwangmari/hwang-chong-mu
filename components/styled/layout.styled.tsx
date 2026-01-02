@@ -4,6 +4,7 @@ export const StContainer = styled.div`
   padding: 2rem 1rem;
 `;
 
+/** 공통 max width 520 */
 export const StWrapper = styled.div`
   min-width: 320px;
   width: 100%;
@@ -14,6 +15,21 @@ export const StWrapper = styled.div`
   position: relative;
 `;
 
+/** 웨이팅 박스 */
+export const StWaitingBox = styled.div`
+  max-width: ${({ theme }) => theme.layout.narrowWidth};
+  height: 200px;
+  display: flex;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 12px;
+  color: #aaa;
+  border: 2px dashed #e9ecef;
+`;
+
+/** 박스라인 */
 export const StSection = styled.div`
   background: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
@@ -27,6 +43,7 @@ export const StSection = styled.div`
   }
 `;
 
+/** PC 반응형 flex박스 */
 export const StFlexBox = styled.div`
   max-width: 540px;
   margin: 0 auto;
