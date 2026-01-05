@@ -15,11 +15,11 @@ interface Props {
 
 const COLORS = [
   "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#96CEB4",
-  "#FFEEAD",
-  "#D4A5A5",
+  "#34bab1",
+  "#364FC7",
+  "#4db083",
+  "#f2cf42",
+  "#cf6767",
   "#9B59B6",
   "#3498DB",
 ];
@@ -44,8 +44,7 @@ export default function LadderGame({ participants }: Props) {
   const [seed, setSeed] = useState<number>(1);
   const [selectedUserIdx, setSelectedUserIdx] = useState<number | null>(null);
 
-  // ✨ 변경: 모달 대신 하단에 표시할 "도착한 사람 정보" 상태
-  // index: 사다리 하단 위치, value: { name: 이름, originalIdx: 원래 유저 인덱스(색상용) }
+  // index: 사다리 하단 위치, value: { name: 이름, originalIdx: 원래 유저 인덱스 }
   const [finalDestinations, setFinalDestinations] = useState<
     ({ name: string; originalIdx: number } | null)[]
   >([]);
@@ -67,7 +66,7 @@ export default function LadderGame({ participants }: Props) {
         .map((_, i) => prev[i] || "");
     });
     setSelectedUserIdx(null);
-    setFinalDestinations([]); // 인원 바뀌면 결과 표시 초기화
+    setFinalDestinations([]);
   }, [participants.length]);
 
   // 2. 사다리 구조 계산
@@ -136,12 +135,11 @@ export default function LadderGame({ participants }: Props) {
     return c;
   };
 
-  // ✨ 변경: 전체 결과 보기 (모달 대신 하단 상태 업데이트)
+  // 전체 결과 보기
   const handleShowAllResults = () => {
-    // 이미 결과가 나와있으면 토글(숨기기) 할 수도 있고, 그냥 둘 수도 있음.
-    // 여기선 갱신하는 로직으로 작성.
-    const destinations = new Array(participants.length).fill(null);
+    setSelectedUserIdx(null); // 애니메이션 중단
 
+    const destinations = new Array(participants.length).fill(null);
     participants.forEach((p, startIdx) => {
       const endIdx = getDestinationIndex(startIdx);
       destinations[endIdx] = {
@@ -149,7 +147,6 @@ export default function LadderGame({ participants }: Props) {
         originalIdx: startIdx,
       };
     });
-
     setFinalDestinations(destinations);
   };
 
@@ -177,6 +174,48 @@ export default function LadderGame({ participants }: Props) {
     const steps = 12;
     const stepHeight = (height - 60) / steps;
 
+    // ✅ [Fix] useEffect 내부에서만 사용할 목적지 계산 함수를 여기서 정의합니다.
+    // (외부 함수인 getDestinationIndex에 의존하지 않게 하여 에러 방지)
+    const getLocalDestinationIndex = (startIdx: number) => {
+      let c = startIdx;
+      for (let s = 0; s < steps; s++) {
+        if (c < count - 1 && bridges[s][c]) c++;
+        else if (c > 0 && bridges[s][c - 1]) c--;
+      }
+      return c;
+    };
+
+    // --- [Helper] 경로 좌표 계산 함수 ---
+    const getPathPoints = (startIdx: number) => {
+      const points: { x: number; y: number }[] = [];
+      let currCol = startIdx;
+      let currX = currCol * colWidth + colWidth / 2;
+      let currY = 30;
+
+      points.push({ x: currX, y: currY });
+
+      for (let s = 0; s < steps; s++) {
+        const nextY = 30 + s * stepHeight + stepHeight / 2;
+        points.push({ x: currX, y: nextY });
+        currY = nextY;
+
+        if (currCol < participants.length - 1 && bridges[s][currCol]) {
+          const nextX = currX + colWidth;
+          points.push({ x: nextX, y: currY });
+          currX = nextX;
+          currCol++;
+        } else if (currCol > 0 && bridges[s][currCol - 1]) {
+          const nextX = currX - colWidth;
+          points.push({ x: nextX, y: currY });
+          currX = nextX;
+          currCol--;
+        }
+      }
+      points.push({ x: currX, y: height - 30 });
+      return points;
+    };
+
+    // --- 기본 사다리 그리기 ---
     const drawBaseLadder = () => {
       ctx.clearRect(0, 0, width, height);
       if (count < 2) return;
@@ -184,6 +223,7 @@ export default function LadderGame({ participants }: Props) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
+      // 세로선
       for (let i = 0; i < count; i++) {
         const x = i * colWidth + colWidth / 2;
         ctx.beginPath();
@@ -193,6 +233,7 @@ export default function LadderGame({ participants }: Props) {
         ctx.lineWidth = 4;
         ctx.stroke();
       }
+      // 가로선
       for (let s = 0; s < steps; s++) {
         for (let c = 0; c < count - 1; c++) {
           if (bridges[s][c]) {
@@ -211,36 +252,46 @@ export default function LadderGame({ participants }: Props) {
 
     drawBaseLadder();
 
+    // A. 전체 결과 보기 모드 ("꽝"만 그리기)
+    if (finalDestinations.length > 0 && selectedUserIdx === null) {
+      participants.forEach((_, startIdx) => {
+        // ✅ [Fix] 여기서 위에서 만든 내부 함수를 사용합니다.
+        const endIdx = getLocalDestinationIndex(startIdx);
+
+        // 도착지의 결과 텍스트 확인
+        const resultVal = results[endIdx];
+
+        // "꽝"일 경우에만 경로 그리기
+        if (resultVal === "꽝") {
+          const path = getPathPoints(startIdx);
+          const color = COLORS[startIdx % COLORS.length];
+
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 5;
+          ctx.lineCap = "round";
+
+          ctx.moveTo(path[0].x, path[0].y);
+          for (let i = 1; i < path.length; i++) {
+            ctx.lineTo(path[i].x, path[i].y);
+          }
+          ctx.stroke();
+
+          // 도착점 동그라미
+          const last = path[path.length - 1];
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      return;
+    }
+
+    // B. 한 명만 선택했을 때 (애니메이션)
     if (selectedUserIdx === null) return;
 
-    // 경로 계산
-    const pathPoints: { x: number; y: number }[] = [];
-    let currCol = selectedUserIdx;
-    let currX = currCol * colWidth + colWidth / 2;
-    let currY = 30;
-
-    pathPoints.push({ x: currX, y: currY });
-
-    for (let s = 0; s < steps; s++) {
-      const nextY = 30 + s * stepHeight + stepHeight / 2;
-      pathPoints.push({ x: currX, y: nextY });
-      currY = nextY;
-
-      if (currCol < participants.length - 1 && bridges[s][currCol]) {
-        const nextX = currX + colWidth;
-        pathPoints.push({ x: nextX, y: currY });
-        currX = nextX;
-        currCol++;
-      } else if (currCol > 0 && bridges[s][currCol - 1]) {
-        const nextX = currX - colWidth;
-        pathPoints.push({ x: nextX, y: currY });
-        currX = nextX;
-        currCol--;
-      }
-    }
-    pathPoints.push({ x: currX, y: height - 30 });
-
-    // 애니메이션
+    const pathPoints = getPathPoints(selectedUserIdx);
     let animationFrameId: number;
     let progress = 0;
     const speed = 0.5;
@@ -267,7 +318,6 @@ export default function LadderGame({ participants }: Props) {
         const curY = p1.y + (p2.y - p1.y) * t;
         ctx.lineTo(curX, curY);
       }
-
       ctx.stroke();
 
       if (progress >= pathPoints.length - 1) {
@@ -295,7 +345,14 @@ export default function LadderGame({ participants }: Props) {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [participants, bridges, selectedUserIdx, gameWidth]);
+  }, [
+    participants,
+    bridges,
+    selectedUserIdx,
+    gameWidth,
+    finalDestinations,
+    results,
+  ]);
 
   return (
     <StContainer>
@@ -337,7 +394,10 @@ export default function LadderGame({ participants }: Props) {
                   <StUserButton
                     $color={COLORS[i % COLORS.length]}
                     $isActive={selectedUserIdx === i}
-                    onClick={() => setSelectedUserIdx(i)}
+                    onClick={() => {
+                      setFinalDestinations([]); // 개별 클릭 시 전체 결과 모드 해제
+                      setSelectedUserIdx(i);
+                    }}
                   >
                     {p.nickname}
                   </StUserButton>
@@ -349,16 +409,13 @@ export default function LadderGame({ participants }: Props) {
 
             <StRow>
               {results.map((res, i) => {
+                const destInfo = finalDestinations[i];
                 const isTarget =
                   selectedUserIdx !== null &&
                   getDestinationIndex(selectedUserIdx) === i;
 
-                // ✨ 여기에 도착한 사람 정보가 있으면 가져오기
-                const destInfo = finalDestinations[i];
-
                 return (
                   <StResultItem key={i}>
-                    {/* 결과 입력창 (통과, 꽝 등) */}
                     <StResultInput
                       value={res}
                       onChange={(e) => handleResultChange(i, e.target.value)}
@@ -371,7 +428,6 @@ export default function LadderGame({ participants }: Props) {
                       placeholder="결과"
                     />
 
-                    {/* ✨ 전체 결과 보기 시 나타나는 이름 */}
                     <StMatchedName
                       $isVisible={!!destInfo}
                       $color={
@@ -397,15 +453,13 @@ export default function LadderGame({ participants }: Props) {
             👀 전체 결과 보기
           </button>
         </StControls>
-
-        {/* 모달 관련 코드 삭제됨 */}
       </StWrapper>
     </StContainer>
   );
 }
 
-// --- 스타일 컴포넌트 ---
-
+// ... 스타일 컴포넌트 생략 (이전과 동일) ...
+// 아래에 스타일 컴포넌트 정의가 그대로 들어갑니다.
 const StHeader = styled.div`
   text-align: center;
   margin-bottom: 10px;
@@ -562,7 +616,6 @@ const StResultInput = styled.input<{ $isTarget: boolean; $color: string }>`
   }
 `;
 
-// ✨ 새로 추가된 스타일: 결과 아래 표시되는 이름
 const StMatchedName = styled.div<{ $isVisible: boolean; $color: string }>`
   margin-top: 8px;
   font-size: 0.85rem;
