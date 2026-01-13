@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
 import PlaceIcon from "@mui/icons-material/Place";
-import StarIcon from "@mui/icons-material/Star"; // 별점 아이콘용(데코)
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 declare global {
   interface Window {
@@ -54,7 +53,8 @@ export default function FoodPage() {
       // 🔍 핵심: 좌표 기준 검색 (FD6=음식점 카테고리 코드)
       ps.categorySearch(
         "FD6",
-        (data, status) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (data: SetStateAction<any[]>, status: any) => {
           if (status === window.kakao.maps.services.Status.OK) {
             setPlaces(data);
             setStatus("");
