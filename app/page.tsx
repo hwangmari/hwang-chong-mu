@@ -19,7 +19,7 @@ export default function Home() {
 
       {/* 📂 프로젝트 목록 그리드 */}
       <StGridContainer>
-        {/* 1. 약속 잡기 카드 */}
+        {/* 약속 잡기 카드 */}
         <Link href="/meeting" passHref>
           <StCard>
             <StIconBox>📅</StIconBox>
@@ -31,7 +31,7 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* ✅ 2. 습관 관리 카드 (추가됨!) */}
+        {/* ✅ 습관 관리 카드 */}
         <Link href="/habit" passHref>
           <StCard>
             <StIconBox>🥕</StIconBox>
@@ -43,7 +43,19 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* 💸 3. N빵 계산기 카드*/}
+        {/* ✅ 체중 관리 */}
+        <Link href="/diet" passHref>
+          <StCard>
+            <StIconBox>⚖️</StIconBox>
+            <StCardContent>
+              <StCardTitle>체중 관리 </StCardTitle>
+              <StCardDesc>평생 숙제 다이어트 해보자고!</StCardDesc>
+            </StCardContent>
+            <StArrowIcon>➔</StArrowIcon>
+          </StCard>
+        </Link>
+
+        {/* 💸 N빵 계산기 카드*/}
         <Link href="/calc" passHref>
           <StCard>
             <StIconBox>💸</StIconBox>
@@ -55,7 +67,7 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* ✨ 4.황총무 게임방*/}
+        {/* ✨ 황총무 게임방*/}
         <Link href="/game" passHref>
           <StCard>
             <StIconBox>🎮</StIconBox>

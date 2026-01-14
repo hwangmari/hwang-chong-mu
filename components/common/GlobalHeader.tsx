@@ -13,6 +13,7 @@ const TITLE_MAP: Record<string, string> = {
   "/": "황총무의 실험실",
   "/meeting": "약속 잡기",
   "/habit": "습관 관리",
+  "/diet": "체중 관리",
   "/calc": "N빵 계산기",
   "/game": "황총무 게임방",
   "/portfolio": "포트폴리오",
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { label: "홈으로", href: "/" },
   { label: "약속 잡기", href: "/meeting" },
   { label: "습관 관리", href: "/habit" },
+  { label: "체중 관리", href: "/diet" },
   { label: "N빵 계산기", href: "/calc" },
   { label: "황총무 게임방", href: "/game" },
 ];
@@ -78,6 +80,8 @@ export default function GlobalHeader() {
       setCurrentTitle("약속 잡기");
     } else if (pathname.startsWith("/habit")) {
       setCurrentTitle("습관 관리");
+    } else if (pathname.startsWith("/diet")) {
+      setCurrentTitle("체중 관리");
     } else {
       setCurrentTitle("황총무의 실험실");
     }
