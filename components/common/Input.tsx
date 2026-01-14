@@ -36,7 +36,7 @@ const StContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* 라벨과 인풋 사이 간격 */
+  gap: 0.3rem; /* 라벨과 인풋 사이 간격 */
   & + div {
     margin-top: 1rem;
   }

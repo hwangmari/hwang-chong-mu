@@ -52,7 +52,7 @@ export default function DietMealInput({
 // ✨ 스타일 정의 (이동됨)
 const InputRow = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
   margin-top: 1rem;
 `;
