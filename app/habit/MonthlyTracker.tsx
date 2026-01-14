@@ -6,6 +6,7 @@ import { format, addMonths, subMonths } from "date-fns";
 import { useMonthlyTracker } from "./useMonthlyTracker";
 import CalendarGrid from "./CalendarGrid";
 import TodoList from "./TodoList";
+import HabitRanking from "./HabitRanking";
 import CommentSection from "./CommentSection"; // (이전 단계에서 추가한 댓글 컴포넌트)
 
 // 아이콘 추가
@@ -14,6 +15,10 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 🏆 트로피 아이콘 추가
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown"; // 🔽 화살표 아이콘 추가
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp"; // 🔼 화살표 아이콘 추가
 
 import { StFlexBox, StSection } from "@/components/styled/layout.styled";
 
@@ -36,7 +41,7 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
   } = state;
 
   const [isExpanded, setIsExpanded] = useState(false);
-
+  const [showRanking, setShowRanking] = useState(false);
   return (
     <StFlexBox>
       <div className="flex-lft-box">
@@ -123,6 +128,35 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
           themeColor={themeColor}
           selectedDate={selectedDate}
         />
+
+        {/* ✅ 순위 보기 버튼 & 랭킹 컴포넌트 */}
+        <StRankingSection>
+          <StRankingToggleButton
+            onClick={() => setShowRanking(!showRanking)}
+            $isOpen={showRanking}
+          >
+            <div className="btn-content">
+              🏆
+              <span>
+                {showRanking
+                  ? "명예의 전당 접기"
+                  : `${format(currentDate, "M월")} 순위 보기`}
+              </span>
+            </div>
+            {showRanking ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </StRankingToggleButton>
+
+          {/* showRanking이 true일 때만 표시 */}
+          {showRanking && (
+            <StRankingWrapper>
+              <HabitRanking
+                items={items}
+                rawLogs={rawLogs}
+                themeColor={themeColor}
+              />
+            </StRankingWrapper>
+          )}
+        </StRankingSection>
       </div>
     </StFlexBox>
   );
@@ -224,5 +258,54 @@ const StNavButton = styled.button`
   display: flex; /* 아이콘 수직 정렬용 */
   &:hover {
     color: #4b5563;
+  }
+`;
+
+const StRankingSection = styled.div`
+  margin-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1rem;
+`;
+
+const StRankingToggleButton = styled.button<{ $isOpen: boolean }>`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: ${({ $isOpen }) => ($isOpen ? "#f8fafc" : "white")};
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #475569;
+  font-weight: 600;
+
+  &:hover {
+    background-color: #f1f5f9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`;
+
+const StRankingWrapper = styled.div`
+  margin-top: 10px;
+  animation: slideDown 0.3s ease-out;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 `;
