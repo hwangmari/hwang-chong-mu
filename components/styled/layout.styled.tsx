@@ -2,6 +2,8 @@ import styled from "styled-components";
 // 공통 레이아웃
 export const StContainer = styled.div`
   padding: 2rem 1rem;
+  max-width: 1024px;
+  margin: 0 auto;
 `;
 
 /** 공통 max width 520 */
@@ -50,8 +52,14 @@ export const StFlexBox = styled.div`
   @media ${({ theme }) => theme.media.desktop} {
     display: flex;
     max-width: 1024px;
-    gap: 40px;
+    gap: 30px;
+    align-items: flex-start;
     & > div {
+      flex: 1;
+    }
+    .flex-lft-box {
+      position: sticky;
+      top: 80px;
       flex: 1;
     }
     .flex-rgt-box {
