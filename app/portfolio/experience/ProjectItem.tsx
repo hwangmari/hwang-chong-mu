@@ -4,11 +4,14 @@ import { useState } from "react";
 import Image from "next/image";
 import styled, { keyframes } from "styled-components";
 import Typography from "@/components/common/Typography";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function ProjectItem({ project }: { project: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const hasImages = project.images && project.images.length > 0;
+  const [isListOpen, setIsListOpen] = useState(false);
 
   return (
     <StContainer>
@@ -43,7 +46,7 @@ export default function ProjectItem({ project }: { project: any }) {
         <StPeriodBadge>{project.period}</StPeriodBadge>
       </StTitleGroup>
 
-      {/* 2. 설명 */}
+      {/* 2. 설명: body2 유지 (요청사항 반영) */}
       <div className="mb-6">
         <Typography variant="body2" color="gray600">
           {project.description}
@@ -52,7 +55,7 @@ export default function ProjectItem({ project }: { project: any }) {
 
       {/* 3. 수행 업무 리스트 */}
       <div className="mb-6">
-        <Typography variant="label" color="gray800" className="block mb-2">
+        <Typography variant="body2" color="gray800" className="block mb-3">
           수행 업무
         </Typography>
         <StTaskList>
@@ -73,7 +76,8 @@ export default function ProjectItem({ project }: { project: any }) {
       {hasImages && (
         <StImageSection>
           <StToggleButton onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? "🔼 이미지 접기" : "📷 프로젝트 이미지 보기"}
+            {isOpen ? "프로젝트 이미지 접기" : "프로젝트 이미지 보기"}
+            {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </StToggleButton>
 
           {isOpen && (
@@ -94,6 +98,19 @@ export default function ProjectItem({ project }: { project: any }) {
           )}
         </StImageSection>
       )}
+
+      {project.projectItemList && (
+        <StToggleArea>
+          <StToggleButton onClick={() => setIsListOpen(!isListOpen)}>
+            {isListOpen ? "캠페인 리스트 접기" : "캠페인 리스트 보기"}
+            {isListOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </StToggleButton>
+
+          {isListOpen && (
+            <StToggleContent>{project.projectItemList}</StToggleContent>
+          )}
+        </StToggleArea>
+      )}
     </StContainer>
   );
 }
@@ -106,7 +123,7 @@ const fadeIn = keyframes`
 
 const StContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
+  padding: 1.75rem;
   border-radius: 1.5rem;
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -118,7 +135,7 @@ const StContainer = styled.div`
   }
 
   @media ${({ theme }) => theme.media.desktop} {
-    padding: 2rem;
+    padding: 2.5rem;
   }
 `;
 
@@ -126,7 +143,7 @@ const StTitleGroup = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.75rem;
 
   @media ${({ theme }) => theme.media.desktop} {
     flex-direction: row;
@@ -142,8 +159,8 @@ const StExternalLink = styled.a`
   align-items: center;
 
   svg {
-    width: 1rem;
-    height: 1rem;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   &:hover {
@@ -152,38 +169,40 @@ const StExternalLink = styled.a`
 `;
 
 const StPeriodBadge = styled.span`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 0.85rem; /* ✅ 요청사항 반영: Badge 크기 증가 */
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.gray500};
   background-color: ${({ theme }) => theme.colors.gray50};
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.35rem;
 `;
 
 const StTaskList = styled.ul`
   list-style-type: disc;
   list-style-position: outside;
-  margin-left: 1rem;
-  font-size: 0.875rem;
+  margin-left: 1.25rem;
+  font-size: 1rem; /* ✅ 요청사항 반영: List 크기 증가 */
   color: ${({ theme }) => theme.colors.gray600};
-  line-height: 1.625;
+  line-height: 1.6;
 
   li + li {
-    margin-top: 0.25rem;
+    margin-top: 0.35rem;
   }
 `;
 
 const StTechList = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+  margin-top: 0.5rem;
 `;
 
 const StTechTag = styled.span`
-  padding: 0.25rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   background-color: ${({ theme }) => theme.colors.yellow200};
-  color: ${({ theme }) => theme.colors.gray500};
-  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.85rem; /* ✅ 요청사항 반영: Tag 크기 증가 */
   font-weight: 700;
   border-radius: 0.5rem;
 `;
@@ -192,8 +211,8 @@ const StTechTag = styled.span`
 
 const StImageSection = styled.div`
   border-top: 1px solid ${({ theme }) => theme.colors.gray100};
-  padding-top: 1rem;
-  margin-top: 1rem;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
 `;
 
 const StToggleButton = styled.button`
@@ -203,16 +222,17 @@ const StToggleButton = styled.button`
   gap: 0.5rem;
   width: 100%;
 
-  font-size: 0.875rem;
+  font-size: 1rem; /* ✅ 요청사항 반영: Button Text 크기 증가 */
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray500};
+  color: ${({ theme }) => theme.colors.gray600};
   background-color: ${({ theme }) => theme.colors.gray50};
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   border-radius: 0.75rem;
   transition: all 0.2s;
 
   &:hover {
     color: ${({ theme }) => theme.colors.gray900};
+    background-color: ${({ theme }) => theme.colors.gray100};
   }
 
   @media ${({ theme }) => theme.media.desktop} {
@@ -224,8 +244,8 @@ const StToggleButton = styled.button`
 const StImageGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
   animation: ${fadeIn} 0.5s ease-out;
 
   @media ${({ theme }) => theme.media.desktop} {
@@ -246,4 +266,28 @@ const StNextImage = styled(Image)`
   height: auto;
   object-fit: cover;
   display: block;
+`;
+
+const StToggleArea = styled.div`
+  margin-top: 1.5rem;
+`;
+
+const StToggleContent = styled.div`
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background-color: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #eee;
+
+  animation: fadeIn 0.3s ease-in-out;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;

@@ -20,11 +20,11 @@ export default function ResumeSection() {
             </StSectionTitle>
 
             <StSkillGroupWrapper>
-              {/* 1. Framework & Lib */}
+              {/* 1. Languages & Frameworks */}
               <StSkillItem>
-                <StSkillTitle>Framework & Lib</StSkillTitle>
+                <StSkillTitle>Languages & Frameworks</StSkillTitle>
                 <StTagList>
-                  {["React", "Svelte", "Angular", "Next.js", "TypeScript"].map(
+                  {["TypeScript", "Next.js", "React", "Svelte", "Angular"].map(
                     (skill) => (
                       <StSkillTag key={skill} $variant="black">
                         {skill}
@@ -40,11 +40,12 @@ export default function ResumeSection() {
                 <StTagList>
                   {[
                     "SCSS (CSS Modules)",
-                    "styled-components",
-                    "AdorableCSS",
+                    "Styled Components",
                     "Tailwind CSS",
-                    "Cross Browsing",
+                    "Ant Design",
+                    "Adorable CSS",
                     "Responsive Web",
+                    "Cross Browsing",
                   ].map((skill) => (
                     <StSkillTag key={skill} $variant="gray">
                       {skill}
@@ -53,11 +54,19 @@ export default function ResumeSection() {
                 </StTagList>
               </StSkillItem>
 
-              {/* 3. Collaboration */}
+              {/* 3. Build & Tools */}
               <StSkillItem>
-                <StSkillTitle>Collaboration</StSkillTitle>
+                <StSkillTitle>Infra & Tools</StSkillTitle>
                 <StTagList>
-                  {["Git", "Jira", "Wiki", "Agile", "Figma"].map((skill) => (
+                  {[
+                    "Monorepo (Turbo)",
+                    "Git",
+                    "Slack",
+                    "Jira",
+                    "Wiki",
+                    "Agile",
+                    "Figma",
+                  ].map((skill) => (
                     <StSkillTag key={skill} $variant="blue">
                       {skill}
                     </StSkillTag>

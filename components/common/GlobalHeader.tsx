@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 
-// ✅ 1. 기본 경로별 타이틀
+/** 기본 경로별 타이틀 */
 const TITLE_MAP: Record<string, string> = {
   "/": "황총무의 실험실",
   "/meeting": "약속 잡기",
@@ -19,12 +20,21 @@ const TITLE_MAP: Record<string, string> = {
   "/portfolio": "포트폴리오",
 };
 
-// ✅ 2. 게임 ID별 한글 타이틀 매핑 (URL의 영어 ID -> 한글 변환용)
+/** 게임 ID 매핑 */
 const GAME_NAMES: Record<string, string> = {
   ladder: "사다리 타기",
   wheel: "돌림판",
   clicker: "광클 대전",
   telepathy: "텔레파시",
+};
+
+/** 경력(회사) ID별 회사명 매핑 */
+const EXPERIENCE_NAMES: Record<string, string> = {
+  hanwha: "한화생명",
+  "kakao-ent": "카카오 엔터프라이즈",
+  musinsa: "29CM(무신사)",
+  douzone: "더존 비즈온",
+  hivelab: "하이브랩",
 };
 
 const NAV_ITEMS = [
@@ -34,6 +44,7 @@ const NAV_ITEMS = [
   { label: "체중 관리", href: "/diet" },
   { label: "N빵 계산기", href: "/calc" },
   { label: "황총무 게임방", href: "/game" },
+  { label: "포트폴리오", href: "/portfolio" },
 ];
 
 export default function GlobalHeader() {
@@ -42,71 +53,68 @@ export default function GlobalHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("황총무의 실험실");
 
-  // ✅ 경로가 바뀔 때마다 타이틀 분석 및 설정
   useEffect(() => {
-    // 1. 메뉴 닫기 및 스크롤 초기화
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMenuOpen(false);
     window.scrollTo(0, 0);
 
-    // 2. 정확히 일치하는 경로가 있으면 바로 적용 (예: /game, /calc)
+    /** 1. 정확히 일치하는 경로 (예: /portfolio 메인) */
     if (TITLE_MAP[pathname]) {
       setCurrentTitle(TITLE_MAP[pathname]);
       return;
     }
 
-    // 3. ✨ [수정] 게임 하위 경로 처리 로직 강화
+    /** 2. 게임 하위 경로 처리 */
     if (pathname.startsWith("/game")) {
-      const parts = pathname.split("/"); // ["", "game", "quick", "ladder"] 형태
-
-      // 3-1. 빠른 시작 (예: /game/quick/ladder)
+      const parts = pathname.split("/");
       if (parts[2] === "quick" && parts[3]) {
-        const gameName = GAME_NAMES[parts[3]]; // 영어 ID를 한글로 변환
+        const gameName = GAME_NAMES[parts[3]];
         setCurrentTitle(gameName ? `${gameName}` : "빠른 게임");
-      }
-      // 3-2. 온라인 방 (예: /game/12345)
-      else if (parts.length > 2) {
-        // 숫자 ID면 대기실, 아니면 그냥 게임방
+      } else if (parts.length > 2) {
         const isRoomId = !isNaN(Number(parts[2]));
         setCurrentTitle(isRoomId ? "게임 대기실" : "황총무 게임방");
       } else {
         setCurrentTitle("황총무 게임방");
       }
-    }
-    // 4. 기타 서브 경로 처리
-    else if (pathname.startsWith("/calc")) {
-      setCurrentTitle("N빵 계산기");
-    } else if (pathname.startsWith("/meeting")) {
+    } // 4. 포트폴리오 관련 경로 (경력 기술서 & 캠페인)
+    else if (pathname.startsWith("/portfolio")) {
+      // 4-1. 경력 기술서 상세 (/portfolio/experience/...)
+      if (pathname.startsWith("/portfolio/experience")) {
+        const parts = pathname.split("/");
+        if (parts.length > 3) {
+          const id = parts[3];
+          // EXPERIENCE_NAMES는 상단에 정의되어 있다고 가정
+          const companyName = EXPERIENCE_NAMES[id] || decodeURIComponent(id);
+          setCurrentTitle(companyName);
+        } else {
+          setCurrentTitle("경력 기술서");
+        }
+      }
+      // ✅ 4-2. [추가] 캠페인 (/portfolio/campaigns)
+      else if (pathname.startsWith("/portfolio/campaigns")) {
+        setCurrentTitle("캠페인");
+      }
+      // 4-3. 그 외 포트폴리오 메인
+      else {
+        setCurrentTitle("포트폴리오");
+      }
+    } else if (pathname.startsWith("/calc")) setCurrentTitle("N빵 계산기");
+    /** 4. 나머지 경로 처리 */ else if (pathname.startsWith("/meeting"))
       setCurrentTitle("약속 잡기");
-    } else if (pathname.startsWith("/habit")) {
-      setCurrentTitle("습관 관리");
-    } else if (pathname.startsWith("/diet")) {
-      setCurrentTitle("체중 관리");
-    } else {
-      setCurrentTitle("황총무의 실험실");
-    }
+    else if (pathname.startsWith("/habit")) setCurrentTitle("습관 관리");
+    else if (pathname.startsWith("/diet")) setCurrentTitle("체중 관리");
+    else setCurrentTitle("황총무의 실험실");
   }, [pathname]);
 
-  // 홈('/')이 아니면 뒤로가기 버튼 노출
   const showBack = pathname !== "/";
 
-  // 스마트 뒤로가기 핸들러
   const handleBack = () => {
-    // ✨ 게임방 내부 깊은 곳(게임 중)에 있다면
     if (pathname.startsWith("/game/") && pathname.split("/").length > 2) {
-      // 빠른 시작 내부라면 게임 선택 화면(/game)으로 보내는 게 깔끔할 수도 있음
       if (pathname.includes("/quick")) {
-        // 만약 '목록으로' 가고 싶다면 router.replace('/game?mode=quick') 등을 쓸 수 있지만
-        // 지금은 router.back()이 가장 자연스럽습니다.
         router.back();
         return;
       }
     }
-
-    // 기본 뒤로가기 로직
-    const referrer = document.referrer;
-    const currentHost = window.location.host;
-    if (referrer && referrer.includes(currentHost)) {
+    if (window.history.length > 1) {
       router.back();
     } else {
       router.push("/");
@@ -116,36 +124,25 @@ export default function GlobalHeader() {
   return (
     <>
       <StHeaderWrapper>
-        {/* [좌측] 뒤로가기 버튼 */}
-        <StLeftArea>
-          {showBack && (
-            <StIconButton onClick={handleBack} aria-label="뒤로 가기">
-              <ArrowBackIosNewIcon style={{ fontSize: "1.2rem" }} />
-            </StIconButton>
-          )}
-        </StLeftArea>
-
-        {/* [중앙] 타이틀 */}
-        <StCenterArea>
-          <StTitle>{currentTitle}</StTitle>
-        </StCenterArea>
-
-        {/* [우측] 메뉴 버튼 */}
-        <StRightArea>
-          <StIconButton
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="메뉴 열기"
-          >
-            {isMenuOpen ? (
-              <CloseIcon style={{ fontSize: "1.5rem" }} />
-            ) : (
-              <MenuIcon style={{ fontSize: "1.5rem" }} />
+        <div className="center-box">
+          <StLeftArea>
+            {showBack && (
+              <StIconButton onClick={handleBack} aria-label="뒤로 가기">
+                <ArrowBackIosNewIcon style={{ fontSize: "1.2rem" }} />
+              </StIconButton>
             )}
-          </StIconButton>
-        </StRightArea>
+          </StLeftArea>
+          <StCenterArea>
+            <StTitle>{currentTitle}</StTitle>
+          </StCenterArea>
+          <StRightArea>
+            <StIconButton onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
+            </StIconButton>
+          </StRightArea>
+        </div>
       </StHeaderWrapper>
 
-      {/* 메뉴 드로어 (기존 동일) */}
       <StMenuOverlay $isOpen={isMenuOpen}>
         <StMenuContainer>
           {NAV_ITEMS.map((item) => (
@@ -165,49 +162,50 @@ export default function GlobalHeader() {
   );
 }
 
-// ... 스타일 컴포넌트 (기존 코드와 동일하게 유지) ...
+// ... 스타일 컴포넌트 기존 유지 ...
 const StHeaderWrapper = styled.header`
   position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  height: 3.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 0.5rem;
+
   background-color: ${({ theme }) => theme.colors.white};
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   z-index: 50;
   margin: 0 auto;
+  .center-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: ${({ theme }) => theme.layout.maxWidth};
+    height: 3.5rem;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
 `;
-
+// (나머지 스타일 생략 - 기존과 동일)
 const StLeftArea = styled.div`
   flex: 1;
   display: flex;
   justify-content: flex-start;
 `;
-
 const StCenterArea = styled.div`
   flex: 2;
   display: flex;
   justify-content: center;
   align-items: center;
 `;
-
 const StRightArea = styled.div`
   flex: 1;
   display: flex;
   justify-content: flex-end;
 `;
-
 const StTitle = styled.h1`
   font-size: 1.125rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray900};
   white-space: nowrap;
 `;
-
 const StIconButton = styled.button`
   display: flex;
   align-items: center;
@@ -216,14 +214,11 @@ const StIconButton = styled.button`
   height: 2.5rem;
   border-radius: 50%;
   color: ${({ theme }) => theme.colors.gray600};
-  transition: all 0.2s;
-
   &:hover {
     background-color: ${({ theme }) => theme.colors.gray50};
     color: ${({ theme }) => theme.colors.gray900};
   }
 `;
-
 const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 3.5rem;
@@ -233,25 +228,20 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
   z-index: 100;
   visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  transition: opacity 0.2s ease-in-out, visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   display: flex;
   flex-direction: column;
-  margin: 0 auto;
 `;
-
 const StMenuContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.white};
   display: flex;
   flex-direction: column;
 `;
-
 const StMenuItem = styled.div<{ $isActive: boolean }>`
   padding: 1rem;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
-
   ${({ $isActive, theme }) =>
     $isActive
       ? css`
@@ -266,7 +256,6 @@ const StMenuItem = styled.div<{ $isActive: boolean }>`
           }
         `}
 `;
-
 const StBackdrop = styled.div`
   flex: 1;
   background-color: rgba(0, 0, 0, 0.4);

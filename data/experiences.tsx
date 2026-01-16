@@ -1,5 +1,8 @@
 // data/experiences.ts
 
+import ProjectItemList from "@/app/portfolio/experience/ProjectItemList";
+import { ReactNode } from "react";
+
 export interface ExperienceData {
   id: string;
   company: string;
@@ -14,6 +17,7 @@ export interface ExperienceData {
     tasks: string[]; // 수행 업무 (불렛 포인트)
     techStack: string[];
     link?: string;
+    projectItemList?: ReactNode;
     images?: string[]; // 👈 [추가] 이미지 경로 배열 (선택사항)
   }[];
 }
@@ -28,7 +32,7 @@ export const experiences: ExperienceData[] = [
     summary: [
       "다이렉트 웹 서비스 및 백오피스 프론트엔드 개발 및 운영",
       "HSP 상담 플랫폼 신규 시스템 마이그레이션 (Legacy → Next.js)",
-      "3개 플랫폼(코어/다이렉트/홈페이지) 연동 이슈 해결 및 운영 안정화",
+      "보장분석 서비스 ",
     ],
     projects: [
       {
@@ -194,24 +198,33 @@ export const experiences: ExperienceData[] = [
         tasks: [
           "AngularJS 기반 SPA(Single Page Application) 구조로 PC/Mobile 반응형 웹 구현",
           "프론트 UI 리소스 절감을 위한 'One-Source Multi-Use' 반응형 전략 수립 및 구현",
-          "개편 오픈 이후 전체 소스 관리(Git) 및 레거시 코드 리팩토링 전담",
+          "개편 오픈 이후 전체 소스 관리(Git) 및 코드 리팩토링 전담",
           "기획/디자인 의도를 기술적으로 구현 가능한 최적의 형태로 제안하며 협업 프로세스 개선",
         ],
-        techStack: ["AngularJS", "RxJS", "SCSS", "Gulp"],
+        techStack: ["AngularJS", "SCSS", "Git"],
       },
       {
         title: "브랜드 캠페인 & 미디어 PT",
         period: "2017.07 - 상시 진행",
         description:
-          "삼성화재, 렉서스 등 주요 브랜드의 인터랙티브 캠페인 페이지 개발",
+          "삼성화재, 렉서스 등 주요 브랜드의 고도화된 인터랙티브 캠페인 페이지 개발 및 기술 지원",
         tasks: [
-          "삼성화재 1차, 2차 캠페인 등 고난도 인터랙션 페이지 개발 (앤어워드 &Award 2회 수상)",
-          "기존 템플릿의 한계를 넘는 '세로형 PT' 및 스크롤 인터랙션 구현으로 매출 증대 기여",
-          "마크업에서 구현 가능한 애니메이션 샘플 페이지를 선제작하여 디자이너에게 가이드 제시",
+          "브랜딩 미디어 팀의 고감도 콘텐츠를 웹 경험으로 완벽히 구현",
+          "사용자 몰입도를 극대화하여 미디어 광고 매출 증대 및 타 브랜드 제휴 확대 견인",
+          "삼성화재, 렉서스 등 브랜드별 아이덴티티를 녹여낸 스크롤 기반 스토리텔링 및 마이크로 인터랙션 구현 ",
+          "삼성화재 1차, 2차 캠페인 - 어워드 2회 수상",
+          "기존 템플릿의 제약을 넘는 '세로형 PT' 포맷을 기술적으로 정립하고, 고해상도 미디어의 렌더링 성능 최적화 및 스크롤 이벤트 튜닝 수행",
           "한정된 플랫폼 특성 내에서 최상의 UX/Design 퀄리티를 내기 위한 기술적 해법 제공",
+          "디자인 의도를 100% 구현하기 위해 애니메이션 프로토타입을 선제작하여 제안",
+          "기획-디자인-개발 간의 시너지를 위한 기술적 가이드 주도",
         ],
-        techStack: ["HTML5", "CSS3 (Animation)", "JavaScript", "GSAP"],
-        link: "/portfolio/campaigns", // 아까 만든 아카이브 페이지 연결!
+        techStack: [
+          "HTML5",
+          "CSS3 (Keyframe/Transition)",
+          "JavaScript (ES5/ES6)",
+          "jQuery",
+        ],
+        projectItemList: <ProjectItemList />,
       },
       {
         title: "29TV (숏폼 비디오 커머스)",
@@ -243,7 +256,7 @@ export const experiences: ExperienceData[] = [
     id: "douzone",
     company: "더존 비즈온",
     role: "UI 개발팀 (전임)",
-    period: "2016.05 - 2016.12 8개월",
+    period: "2016.05 - 2016.12 7개월",
     color: "bg-blue-600",
     summary: [
       "비즈니스 플랫폼 WEHAGO 신규 프로젝트의 초기 React 마크업 구조 설계",

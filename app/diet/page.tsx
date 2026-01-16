@@ -68,8 +68,7 @@ export default function CreateDietPage() {
 
           <Input
             label="목표 몸무게 (kg)"
-            placeholder="예: 50.5 (선택사항)"
-            type="number"
+            placeholder="예: 55 (선택사항)"
             value={targetWeight}
             onChange={(e) => setTargetWeight(e.target.value)}
           />

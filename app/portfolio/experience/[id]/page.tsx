@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import styled, { keyframes } from "styled-components";
-import ProjectItem from "./ProjectItem"; // (경로 확인 필요)
+import ProjectItem from "../ProjectItem"; // (경로 확인 필요)
 import Typography from "@/components/common/Typography"; // 👈 Typography 활용
 import { experiences } from "@/data/experiences";
 
@@ -27,8 +27,6 @@ export default function ExperienceDetail() {
       {/* 1. 헤더 */}
       <HeaderWrapper>
         <HeaderContent>
-          <BackLink href="/portfolio">← 포트폴리오 메인으로 돌아가기</BackLink>
-
           <TitleRow>
             <CompanyDot $colorClass={data.color} />
             <Typography variant="h2" as="h2">
@@ -93,19 +91,7 @@ const HeaderWrapper = styled.div`
 const HeaderContent = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
-  padding: 4rem 1.5rem;
-`;
-
-const BackLink = styled(Link)`
-  display: inline-block;
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  margin-bottom: 1.5rem;
-  transition: color 0.2s;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.gray900};
-  }
+  padding: 3rem 1.5rem 2rem;
 `;
 
 const TitleRow = styled.div`
