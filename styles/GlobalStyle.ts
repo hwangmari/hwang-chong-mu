@@ -128,6 +128,15 @@ const utilities = css`
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
+  .w-5 {
+    width: 20px;
+  }
+  .h-5 {
+    height: 20px;
+  }
+  .text-center {
+    text-align: center;
+  }
 `;
 
 const GlobalStyle = createGlobalStyle`

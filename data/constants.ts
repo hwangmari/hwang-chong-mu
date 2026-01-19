@@ -4,8 +4,27 @@ export interface CampaignItem {
   id: string;
   date: string;
   title: string;
-  url: string; // 링크가 없으면 빈 문자열 ""
+  url: string;
 }
+
+export const HSP_HISTORY_DATA: CampaignItem[] = [
+  {
+    id: "2025-10",
+    date: "2025.10.15",
+    title: "운영 연계 확장 서비스 오픈",
+    url: "",
+  },
+  { id: "2025-06", date: "2025.06.20", title: "프로젝트 착수", url: "" },
+];
+
+export const DIRECT_HISTORY_DATA: CampaignItem[] = [
+  {
+    id: "2023-08",
+    date: "2023.08 ~ 2024.06",
+    title: "온슈어 스프린트 대응 ",
+    url: "",
+  },
+];
 
 export const CAMPAIGN_LIST: CampaignItem[] = [
   // 2020

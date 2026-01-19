@@ -31,7 +31,7 @@ export default function ParticipantList({
   return (
     <StParticipantSection>
       <StSectionTitle>
-        <PeopleIcon className="w-5 h-5 mr-1" /> 참여 현황 ({participants.length}
+        <PeopleIcon className="w-5 h-5" /> 참여 현황 ({participants.length}
         명)
       </StSectionTitle>
 
@@ -106,6 +106,7 @@ const StSectionTitle = styled.h3`
   font-weight: 700;
   font-size: 0.875rem;
   align-items: center;
+  gap: 0.25rem;
 `;
 
 const StEmptyState = styled.div`

@@ -1,25 +1,44 @@
 // data/experiences.ts
 
-import ProjectItemList from "@/app/portfolio/experience/ProjectItemList";
-import { ReactNode } from "react";
+import {
+  CAMPAIGN_LIST,
+  DIRECT_HISTORY_DATA,
+  HSP_HISTORY_DATA,
+} from "./constants";
+// 1. 리스트에 들어갈 개별 아이템 타입 (기존 CampaignItem 구조와 동일)
+export interface HistoryItem {
+  id: string | number;
+  date: string;
+  title: string;
+  url?: string;
+}
+
+// 2. 프로젝트 아이템 리스트 정보를 담을 객체 타입 정의
+export interface ProjectItemListData {
+  title: string; // "Campaign Archive" 처럼 버튼에 쓸 제목
+  items: HistoryItem[]; // 실제 리스트 데이터 배열
+  description?: string; // "2017 - 2020..." 같은 설명 (선택사항)
+}
 
 export interface ExperienceData {
   id: string;
   company: string;
   role: string;
   period: string;
-  color: string; // 타임라인 점 색상
-  summary: string[]; // 메인 페이지 노출용 요약
+  color: string;
+  summary: string[];
   description: string;
   projects: {
     title: string;
     period: string;
     description: string;
-    tasks: string[]; // 수행 업무 (불렛 포인트)
+    tasks: string[];
     techStack: string[];
     link?: string;
-    projectItemList?: ReactNode;
-    images?: string[]; // 👈 [추가] 이미지 경로 배열 (선택사항)
+
+    projectItemList?: ProjectItemListData;
+
+    images?: string[];
   }[];
 }
 
@@ -36,7 +55,7 @@ export const experiences: ExperienceData[] = [
       "보장분석 서비스",
     ],
     description:
-      "이곳에서 프론트엔드 개발자로 전향하여, 레거시 시스템을 모던 아키텍처로 마이그레이션 하는 업무를 주도했습니다.\n특히, React와 TypeScript를 도입하여 생산성을 30% 향상시켰습니다.",
+      "프론트 엔드 전향 완벽히 함 ㅋ\n PM 으로 서비스 운영 및 리소스 관리 협업을 통해 업무롤 정리",
     projects: [
       {
         title: "보장분석",
@@ -51,39 +70,6 @@ export const experiences: ExperienceData[] = [
           "SCSS",
           "Figma",
         ],
-      },
-      {
-        title: "D2F",
-        period: "2025.07 ~",
-        description: "",
-        tasks: ["", ""],
-        techStack: [
-          "Next.js",
-          "React",
-          "TypeScript",
-          "Styled Components",
-          "SCSS",
-          "Figma",
-        ],
-      },
-      {
-        title: "HSP 상담 플랫폼 고도화 & 운영",
-        period: "2025.06 ~ 상시 운영",
-        description:
-          "기존 레거시 상담 시스템을 Next.js 기반의 CSR 환경으로 전면 마이그레이션",
-
-        // 🔹 여기가 핵심입니다! (4가지 역량으로 분류)
-        tasks: ["", ""],
-        techStack: [
-          "Next.js",
-          "React",
-          "TypeScript",
-          "Styled Components",
-          "SCSS",
-          "Figma",
-        ],
-
-        projectItemList: <ProjectItemList />,
       },
       {
         title: "HSP 상담 플랫폼 마이그레이션",
@@ -106,6 +92,12 @@ export const experiences: ExperienceData[] = [
           "SCSS",
           "Figma",
         ],
+        images: ["/images/hanwha_hsp_2025.png"],
+        projectItemList: {
+          title: "HSP상담 운영 고도화",
+          description: " History",
+          items: HSP_HISTORY_DATA,
+        },
       },
 
       {
@@ -126,6 +118,11 @@ export const experiences: ExperienceData[] = [
           "SCSS",
           "Figma",
         ],
+        projectItemList: {
+          title: "다이렉트 웹 신규 서비스",
+          description: " History",
+          items: DIRECT_HISTORY_DATA,
+        },
       },
     ],
   },
@@ -241,20 +238,20 @@ export const experiences: ExperienceData[] = [
     projects: [
       {
         title: "29CM 사이트 개편 및 운영",
-        period: "2017.05 - 2020.07",
+        period: "2017.05. ~ 2018.02. 오픈 /  ~ 유지보수",
         description:
           "Angular 기반의 PC/Mobile 원페이지 반응형 웹 구축 및 통합 유지보수",
         tasks: [
           "AngularJS 기반 SPA(Single Page Application) 구조로 PC/Mobile 반응형 웹 구현",
           "프론트 UI 리소스 절감을 위한 'One-Source Multi-Use' 반응형 전략 수립 및 구현",
-          "개편 오픈 이후 전체 소스 관리(Git) 및 코드 리팩토링 전담",
+          "개편 오픈 이후 유지 보수 및 추가 리뉴얼 관련하여 29CM 전체 소스 관리를 맡아 전담 관리",
           "기획/디자인 의도를 기술적으로 구현 가능한 최적의 형태로 제안하며 협업 프로세스 개선",
         ],
         techStack: ["AngularJS", "SCSS", "Git"],
       },
       {
         title: "브랜드 캠페인 & 미디어 PT",
-        period: "2017.07 - 상시 진행",
+        period: "2017.07. ~ : 단기 프로젝트성 이벤트 ",
         description:
           "삼성화재, 렉서스 등 주요 브랜드의 고도화된 인터랙티브 캠페인 페이지 개발 및 기술 지원",
         tasks: [
@@ -273,11 +270,15 @@ export const experiences: ExperienceData[] = [
           "JavaScript (ES5/ES6)",
           "jQuery",
         ],
-        projectItemList: <ProjectItemList />,
+        projectItemList: {
+          title: "PT Campaign History",
+          description: "2017 - 2020 29CM ",
+          items: CAMPAIGN_LIST,
+        },
       },
       {
         title: "29TV (숏폼 비디오 커머스)",
-        period: "2019.09 - 2020.01",
+        period: "2019.09. ~ 2020.01. 오픈",
         description: "29초 영상 큐레이션 서비스 신규 구축",
         tasks: [
           "PC와 모바일에 완벽 대응하는 반응형 비디오 플레이어 UI 구현",
@@ -289,7 +290,7 @@ export const experiences: ExperienceData[] = [
       },
       {
         title: "컬쳐 캘린더 (Culture Calendar)",
-        period: "2019.01 - 2019.03",
+        period: "2019.01. ~ 2019.3. 오픈 (매달 추가 운영 진행)",
         description: "월간 문화 콘텐츠를 소개하는 캘린더 서비스 (매월 운영)",
         tasks: [
           "기획자 부재 상황에서 주도적으로 UI 레이아웃 및 인터랙션 아이디어 제안",

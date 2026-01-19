@@ -6,7 +6,7 @@ import styled, { keyframes } from "styled-components";
 import ProjectItem from "../ProjectItem"; // (경로 확인 필요)
 import Typography from "@/components/common/Typography"; // 👈 Typography 활용
 import { experiences } from "@/data/experiences";
-
+import { CAMPAIGN_LIST } from "@/data/constants";
 export default function ExperienceDetail() {
   const params = useParams();
   const id = params.id as string;

@@ -7,6 +7,7 @@ import styled, { keyframes } from "styled-components";
 import Typography from "@/components/common/Typography";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import ProjectItemList from "./ProjectItemList";
 
 export default function ProjectItem({
   project,
@@ -110,12 +111,20 @@ export default function ProjectItem({
       {project.projectItemList && (
         <StToggleArea>
           <StToggleButton onClick={() => setIsListOpen(!isListOpen)}>
-            {isListOpen ? "캠페인 리스트 접기" : "캠페인 리스트 보기"}
+            {isListOpen
+              ? `${project.projectItemList.title} - 리스트 접기`
+              : `${project.projectItemList.title} - 리스트 보기`}
             {isListOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </StToggleButton>
 
           {isListOpen && (
-            <StToggleContent>{project.projectItemList}</StToggleContent>
+            <StToggleContent>
+              <ProjectItemList
+                items={project.projectItemList.items}
+                title={project.projectItemList.title} // 필요하면 전달
+                description={project.projectItemList.description} // 필요하면 전달
+              />
+            </StToggleContent>
           )}
         </StToggleArea>
       )}

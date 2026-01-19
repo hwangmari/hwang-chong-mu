@@ -2,16 +2,35 @@
 
 import styled from "styled-components";
 import { useMemo } from "react";
-import { CAMPAIGN_LIST, CampaignItem } from "../../../data/constants";
 
-export default function ProjectItemList() {
-  // 로직은 기존과 동일
+// 데이터 타입 정의 (필요에 따라 types.ts로 분리 가능)
+export interface HistoryItem {
+  id: number | string;
+  date: string; // format: "YYYY.MM.DD"
+  title: string;
+  url?: string;
+}
+
+interface ProjectItemListProps {
+  items: HistoryItem[]; // 외부에서 주입받을 데이터
+  title?: string; // 선택적: 제목 (예: Campaign Archive)
+  description?: string; // 선택적: 설명
+}
+
+export default function ProjectItemList({
+  items,
+  title,
+  description,
+}: ProjectItemListProps) {
   const groupedData = useMemo(() => {
-    const sortedList = [...CAMPAIGN_LIST].sort(
+    // items가 없으면 빈 배열 처리
+    if (!items || items.length === 0) return { years: [], groups: {} };
+
+    const sortedList = [...items].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    const groups: Record<string, CampaignItem[]> = {};
+    const groups: Record<string, HistoryItem[]> = {};
 
     sortedList.forEach((item) => {
       const year = item.date.split(".")[0];
@@ -24,14 +43,17 @@ export default function ProjectItemList() {
     const years = Object.keys(groups).sort((a, b) => Number(b) - Number(a));
 
     return { years, groups };
-  }, []);
+  }, [items]);
 
   return (
     <StContainer>
-      <StHeader>
-        <StPageTitle>Campaign Archive</StPageTitle>
-        <StDescription>2017 - 2020 29CM PT Campaign History</StDescription>
-      </StHeader>
+      {/* 제목이나 설명이 있을 때만 헤더 렌더링 */}
+      {(title || description) && (
+        <StHeader>
+          {title && <StPageTitle>{title}</StPageTitle>}
+          {description && <StDescription>{description}</StDescription>}
+        </StHeader>
+      )}
 
       <StTimelineContainer>
         {groupedData.years.map((year) => (
@@ -71,12 +93,12 @@ export default function ProjectItemList() {
   );
 }
 
-// --- 스타일 컴포넌트 수정됨 ---
+// --- 스타일 컴포넌트 (기존과 동일) ---
 
 const StContainer = styled.div`
   width: 100%;
   margin: 0;
-  padding: 0.5rem 0 0 0; // 상단 패딩 최소화
+  padding: 0.5rem 0 0 0;
 `;
 
 const StHeader = styled.div`
@@ -85,15 +107,14 @@ const StHeader = styled.div`
 `;
 
 const StPageTitle = styled.h3`
-  // h2 -> h3
-  font-size: 1.1rem; // 2.2rem -> 1.1rem 대폭 축소
+  font-size: 1.1rem;
   font-weight: 700;
   color: #333;
   margin-bottom: 0.2rem;
 `;
 
 const StDescription = styled.p`
-  font-size: 0.85rem; // 1rem -> 0.85rem
+  font-size: 0.85rem;
   color: #999;
 `;
 
@@ -117,32 +138,32 @@ const StLeftCol = styled.div`
 `;
 
 const StStickyYear = styled.div`
-  font-size: 1.1rem; // 1.8rem -> 1.1rem 축소
+  font-size: 1.1rem;
   font-weight: 800;
   color: #444;
   text-align: right;
-  padding-right: 1rem; // 간격 축소
+  padding-right: 1rem;
   line-height: 1.2;
 `;
 
 const StRightCol = styled.div`
   flex: 1;
   border-left: 2px solid #e5e5e5;
-  padding-bottom: 2rem; // 3rem -> 2rem
+  padding-bottom: 2rem;
 `;
 
 const StItemWrapper = styled.div`
   position: relative;
-  padding-left: 1.25rem; // 2rem -> 1.25rem
-  margin-bottom: 8px; // 12px -> 8px
+  padding-left: 1.25rem;
+  margin-bottom: 8px;
 `;
 
 const StDot = styled.div`
   position: absolute;
-  left: -4px; // 선 두께 고려 (-1 + -3)
-  top: 0.9rem; // 카드 높이에 맞춰 조정
-  width: 6px; // 8px -> 6px
-  height: 6px; // 8px -> 6px
+  left: -4px;
+  top: 0.9rem;
+  width: 6px;
+  height: 6px;
   background-color: #fff;
   border: 2px solid #ccc;
   border-radius: 50%;
@@ -150,12 +171,11 @@ const StDot = styled.div`
   transition: all 0.2s;
 `;
 
-// 카드 공통 스타일 (패딩과 폰트 축소)
 const cardStyles = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 1rem; // 1rem 1.25rem -> 0.6rem 1rem
+  padding: 0.6rem 1rem;
   background-color: #fff;
   border: 1px solid #eee;
   border-radius: 6px;
@@ -168,9 +188,9 @@ const StLink = styled.a`
   cursor: pointer;
 
   &:hover {
-    background-color: #fff; // 배경색 유지
+    background-color: #fff;
     border-color: #888;
-    transform: translateX(2px); // 이동 거리 축소
+    transform: translateX(2px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
@@ -189,7 +209,7 @@ const StDisabledBox = styled.div`
 
 const StDate = styled.span`
   font-family: monospace;
-  font-size: 0.75rem; // 0.85rem -> 0.75rem
+  font-size: 0.75rem;
   color: #999;
   margin-right: 0.8rem;
   min-width: 35px;
@@ -197,8 +217,8 @@ const StDate = styled.span`
 
 const StTitle = styled.span`
   flex: 1;
-  font-size: 0.9rem; // 1rem -> 0.9rem
-  font-weight: 500; // 600 -> 500
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #444;
 `;
 
