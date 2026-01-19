@@ -108,11 +108,12 @@ const StYearSection = styled.div`
 `;
 
 const StLeftCol = styled.div`
-  width: 60px; // 100px -> 60px 축소
+  width: 60px;
   flex-shrink: 0;
   position: sticky;
   top: 70px;
   z-index: 10;
+  margin-bottom: 54px;
 `;
 
 const StStickyYear = styled.div`

@@ -10,6 +10,7 @@ export interface ExperienceData {
   period: string;
   color: string; // 타임라인 점 색상
   summary: string[]; // 메인 페이지 노출용 요약
+  description: string;
   projects: {
     title: string;
     period: string;
@@ -32,45 +33,84 @@ export const experiences: ExperienceData[] = [
     summary: [
       "다이렉트 웹 서비스 및 백오피스 프론트엔드 개발 및 운영",
       "HSP 상담 플랫폼 신규 시스템 마이그레이션 (Legacy → Next.js)",
-      "보장분석 서비스 ",
+      "보장분석 서비스",
     ],
+    description:
+      "이곳에서 프론트엔드 개발자로 전향하여, 레거시 시스템을 모던 아키텍처로 마이그레이션 하는 업무를 주도했습니다.\n특히, React와 TypeScript를 도입하여 생산성을 30% 향상시켰습니다.",
     projects: [
+      {
+        title: "보장분석",
+        period: "2026.01 ~",
+        description: "",
+        tasks: ["", ""],
+        techStack: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Styled Components",
+          "SCSS",
+          "Figma",
+        ],
+      },
       {
         title: "D2F",
         period: "2025.07 ~",
         description: "",
-        tasks: [""],
-        techStack: ["Next.js", "React", "TypeScript", "SCSS", "Git/Notion"],
+        tasks: ["", ""],
+        techStack: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Styled Components",
+          "SCSS",
+          "Figma",
+        ],
       },
       {
-        title: "HSP 상담 플랫폼 고도화 & 마이그레이션",
-        period: "2025.01 ~",
+        title: "HSP 상담 플랫폼 고도화 & 운영",
+        period: "2025.06 ~ 상시 운영",
         description:
-          "기존 레거시 상담 시스템을 Next.js 기반의 CSR 환경으로 전면 마이그레이션하고, 3개 플랫폼(코어/다이렉트/홈페이지) 간의 복잡한 연동 구조를 재설계하여 안정적으로 오픈했습니다.",
+          "기존 레거시 상담 시스템을 Next.js 기반의 CSR 환경으로 전면 마이그레이션",
 
         // 🔹 여기가 핵심입니다! (4가지 역량으로 분류)
+        tasks: ["", ""],
+        techStack: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Styled Components",
+          "SCSS",
+          "Figma",
+        ],
+
+        projectItemList: <ProjectItemList />,
+      },
+      {
+        title: "HSP 상담 플랫폼 마이그레이션",
+        period: "2025.01 ~ 05",
+        description:
+          "기존 레거시 상담 시스템을 Next.js 기반의 CSR 환경으로 전면 마이그레이션",
         tasks: [
-          // 1. 기술적 기여 (Tech)
           "SSR → CSR(Next.js) 전환 및 React-Query 도입으로 비동기 상태 관리 최적화",
           "FP 리스트 호출 시점 최적화(지역 선택 시 호출)로 불필요한 트래픽 감소",
-          "서버 시간 기준 타임 로직 구현 및 휴일 대응 UX 고도화",
-
-          // 2. 시스템 연계 & 문제 해결 (Problem Solving)
-          "3개 플랫폼(코어/다이렉트/홈페이지) 간 데이터 정합성 이슈 해결 (UTM, DI_GUBUN 누락 대응)",
-          "잠재고객 안심번호 누락 이슈 식별 및 복호화 로직 구현으로 만족도 조사 전송률 100% 복구",
           "외부 유입(이벤트 배너, GA) 트래킹 로직 재설계 및 파라미터 처리",
-
-          // 3. 커뮤니케이션 & 문서화 (Soft Skill)
           "기획서 부재 상황에서 역으로 API 흐름과 UI/UX를 설계하여 개발 주도",
-          "구두로 전해지던 히스토리를 Notion에 문서화 (API 흐름도, 에러 케이스, 실패 대응 매뉴얼)",
+          "구두로 전해지던 히스토리를 Figma 문서화 (API 흐름도, 에러 케이스, 실패 대응 매뉴얼)",
           "운영 중단 없는 2단계 순차적 오픈 전략 수립 및 성공",
         ],
-        techStack: ["Next.js", "React", "TypeScript", "SCSS", "Git/Notion"],
+        techStack: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Styled Components",
+          "SCSS",
+          "Figma",
+        ],
       },
 
       {
         title: "다이렉트 웹 & 백오피스",
-        period: "2023.08 ~",
+        period: "2023.08 ~ 2024.12",
         description:
           "보험 상품 가입을 위한 다이렉트 웹 서비스 및 내부 운영을 위한 백오피스 시스템 개발",
         tasks: [
@@ -78,7 +118,14 @@ export const experiences: ExperienceData[] = [
           "백오피스 내 상품 관리 및 운영 효율화를 위한 기능 개발",
           "디자인 시스템 가이드 준수 및 공통 컴포넌트화",
         ],
-        techStack: ["React", "TypeScript", "SCSS"],
+        techStack: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Styled Components",
+          "SCSS",
+          "Figma",
+        ],
       },
     ],
   },
@@ -94,6 +141,7 @@ export const experiences: ExperienceData[] = [
       "카카오워크 투표/할일 등 주요 기능을 4종 OS(Win/Mac/iOS/Android) 웹뷰로 구현",
       "CSS Variables를 활용한 다크모드 시스템 구축 및 반응형 레이아웃 최적화",
     ],
+    description: "",
     projects: [
       {
         title: "카카오워크 투표 (Vote)",
@@ -189,6 +237,7 @@ export const experiences: ExperienceData[] = [
       "삼성화재 등 대규모 트래픽 캠페인 페이지 인터랙션 개발 (앤어워드 2회 수상)",
       "기획 부재 상황을 주도적인 UI/UX 제안으로 해결하며 협업 주도",
     ],
+    description: "",
     projects: [
       {
         title: "29CM 사이트 개편 및 운영",
@@ -263,6 +312,7 @@ export const experiences: ExperienceData[] = [
       "1인 마크업 개발자로서 외부 인력 가이드라인 수립 및 리딩",
       "외부 인력 산출물의 품질 이슈 해결을 위한 핵심 모듈 전면 재개발 (Quality Assurance)",
     ],
+    description: "",
     projects: [
       {
         title: "WEHAGO 신규 프로젝트 구축",
@@ -291,6 +341,7 @@ export const experiences: ExperienceData[] = [
       "IE6부터 최신 브라우저까지 완벽한 크로스 브라우징(Cross-Browsing) 구현 역량 보유",
       "웹 접근성(Web Accessibility) 준수 및 대규모 서비스 운영 프로세스 체득",
     ],
+    description: "",
     projects: [
       {
         title: "CJ오쇼핑 파견 및 운영",

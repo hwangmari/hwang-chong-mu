@@ -31,6 +31,10 @@ const variants = {
     font-size: 1.125rem;
     font-weight: 700;
   `,
+  h4: css`
+    font-size: 1.1rem;
+    font-weight: 700;
+  `,
   // 🐰 본문 (큰 글씨)
   body1: css`
     font-size: 1.125rem;

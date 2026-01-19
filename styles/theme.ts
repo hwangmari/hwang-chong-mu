@@ -77,7 +77,7 @@ const colors = {
 export const theme = {
   colors,
   layout: {
-    maxWidth: "56rem",
+    maxWidth: "1025px",
     narrowWidth: "540px",
   },
   // 의미론적 별칭 (Semantic Aliases)

@@ -40,6 +40,14 @@ export default function ExperienceDetail() {
           <Typography variant="caption" color="gray400">
             {data.period}
           </Typography>
+          {data.description && (
+            <DescriptionWrapper>
+              <Typography variant="h4" as="h4" className="mb-2">
+                Work Summary
+              </Typography>
+              <Typography color="gray700">{data.description}</Typography>
+            </DescriptionWrapper>
+          )}
         </HeaderContent>
       </HeaderWrapper>
 
@@ -47,13 +55,13 @@ export default function ExperienceDetail() {
       <BodyContent>
         <SectionTitleWrapper>
           <Typography variant="h2" as="h2">
-            🔥 Key Projects
+            Key Projects
           </Typography>
         </SectionTitleWrapper>
 
         <ProjectList>
           {data.projects.map((project, idx) => (
-            <ProjectItem key={idx} project={project} />
+            <ProjectItem key={idx} project={project} color={data.color} />
           ))}
         </ProjectList>
       </BodyContent>
@@ -62,7 +70,6 @@ export default function ExperienceDetail() {
 }
 
 // ✨ 스타일 정의
-
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -91,21 +98,21 @@ const HeaderWrapper = styled.div`
 const HeaderContent = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
-  padding: 3rem 1.5rem 2rem;
+  padding: 3rem 1.25rem 2rem;
 `;
 
 const TitleRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.45rem;
   margin-bottom: 0.5rem;
 `;
 
 // 🔥 색상 매핑 로직 (ResumeSection과 동일)
 const CompanyDot = styled.span<{ $colorClass: string }>`
-  width: 1rem;
-  height: 1rem;
-  border-radius: 9999px;
+  width: 12px;
+  height: 26px;
+  border-radius: 7px;
 
   /* 데이터 문자열에 따라 테마 색상 적용 */
   background-color: ${({ theme, $colorClass }) => {
@@ -122,7 +129,7 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
 const BodyContent = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 3rem 1.25rem;
 
   animation: ${fadeInUp} 0.8s ease-out forwards;
 `;
@@ -135,4 +142,12 @@ const ProjectList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 3rem;
+`;
+
+// ✨ [추가됨] 설명 영역 스타일
+const DescriptionWrapper = styled.div`
+  margin-top: 2rem; /* 프로젝트 리스트와의 간격 */
+  padding-top: 1rem;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray300}; /* 구분선 (선택사항) */
+  white-space: pre-wrap; /* 줄바꿈 등 서식을 유지 */
 `;

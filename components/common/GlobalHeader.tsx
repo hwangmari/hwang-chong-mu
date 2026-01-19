@@ -145,16 +145,18 @@ export default function GlobalHeader() {
 
       <StMenuOverlay $isOpen={isMenuOpen}>
         <StMenuContainer>
-          {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href} passHref>
-              <StMenuItem
-                $isActive={pathname === item.href}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </StMenuItem>
-            </Link>
-          ))}
+          <div className="center-box">
+            {NAV_ITEMS.map((item) => (
+              <Link key={item.href} href={item.href} passHref>
+                <StMenuItem
+                  $isActive={pathname === item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </StMenuItem>
+              </Link>
+            ))}
+          </div>
         </StMenuContainer>
         <StBackdrop onClick={() => setIsMenuOpen(false)} />
       </StMenuOverlay>
@@ -234,8 +236,10 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
 `;
 const StMenuContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.white};
-  display: flex;
-  flex-direction: column;
+  .center-box {
+    max-width: ${({ theme }) => theme.layout.narrowWidth};
+    margin: 0 auto;
+  }
 `;
 const StMenuItem = styled.div<{ $isActive: boolean }>`
   padding: 1rem;

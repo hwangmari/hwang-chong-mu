@@ -23,6 +23,7 @@ import WeightChart from "./WeightChart";
 import DietMealInput from "./DietMealInput";
 import { StFlexBox } from "@/components/styled/layout.styled";
 import { useModal } from "@/components/common/ModalProvider"; // ✅ 공통 모달 훅
+import AnalysisCard from "./AnalysisCard";
 
 interface LogData {
   id?: number;
@@ -212,14 +213,34 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
   const toTags = (str: string) => (str ? str.split(",") : []);
   const fromTags = (tags: string[]) => tags.join(",");
 
-  const getWeightDiff = () => {
-    if (!log.weight_morning || !yesterdayLog?.weight_dinner) return null;
-    const todayMorning = parseFloat(log.weight_morning);
-    const yesterdayDinner = parseFloat(yesterdayLog.weight_dinner);
-    if (isNaN(todayMorning) || isNaN(yesterdayDinner)) return null;
-    return todayMorning - yesterdayDinner;
+  const parseWeight = (str: string | undefined) => {
+    const val = parseFloat(str || "");
+    return isNaN(val) ? null : val;
   };
-  const diff = getWeightDiff();
+
+  // 1. 필요한 몸무게 데이터 추출
+  const w_prev_dinner = parseWeight(yesterdayLog?.weight_dinner); // 전날 저녁
+  const w_curr_morning = parseWeight(log.weight_morning); // 오늘 아침
+  const w_curr_dinner = parseWeight(log.weight_dinner); // 오늘 저녁
+
+  // 2. 변화량 계산
+  // A. 밤사이 변화 (보통 마이너스여야 좋음)
+  const overnightDiff =
+    w_curr_morning !== null && w_prev_dinner !== null
+      ? w_curr_morning - w_prev_dinner
+      : null;
+
+  // B. 낮 동안 변화 (보통 플러스가 됨)
+  const daytimeDiff =
+    w_curr_dinner !== null && w_curr_morning !== null
+      ? w_curr_dinner - w_curr_morning
+      : null;
+
+  // C. 최종 비교 (오늘 저녁 - 어제 저녁) = A + B
+  const totalDiff =
+    w_curr_dinner !== null && w_prev_dinner !== null
+      ? w_curr_dinner - w_prev_dinner
+      : null;
 
   return (
     <>
@@ -255,32 +276,20 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
                 </ToggleBtn>
               </ToggleWrapper>
             </ChartHeader>
+
             <WeightChart
               logs={chartLogs}
               currentDate={currentDate}
               viewMode={viewMode}
             />
-
-            {diff !== null && (
-              <AnalysisCard $isLoss={diff < 0}>
-                <div className="icon">{diff < 0 ? "🎉" : "💪"}</div>
-                <div className="content">
-                  <div className="title">
-                    {diff < 0
-                      ? "밤사이 살이 빠졌어요!"
-                      : "어제 저녁보다 조금 늘었어요"}
-                  </div>
-                  <div className="desc">
-                    어제 저녁보다{" "}
-                    <span className="highlight">
-                      {Math.abs(diff).toFixed(1)}kg
-                    </span>{" "}
-                    {diff < 0 ? "감량 성공 📉" : "증가했어요"}
-                  </div>
-                </div>
-              </AnalysisCard>
-            )}
           </SectionCard>
+
+          {/* ✅ [수정] 컴포넌트로 깔끔하게 교체! */}
+          <AnalysisCard
+            overnightDiff={overnightDiff}
+            daytimeDiff={daytimeDiff}
+            totalDiff={totalDiff}
+          />
         </div>
 
         <div className="flex-rgt-box">
@@ -421,53 +430,7 @@ const SectionTitle = styled.h3`
   color: #374151;
   margin-bottom: 1rem;
 `;
-const popIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-const AnalysisCard = styled.div<{ $isLoss: boolean }>`
-  margin-top: 1.5rem;
-  padding: 1rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-  ${({ $isLoss }) =>
-    $isLoss
-      ? css`
-          background-color: #ecfdf5;
-          border: 1px solid #a7f3d0;
-          color: #065f46;
-        `
-      : css`
-          background-color: #fff7ed;
-          border: 1px solid #fed7aa;
-          color: #9a3412;
-        `}
-
-  .icon {
-    font-size: 1.8rem;
-  }
-  .content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .title {
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-  .desc {
-    font-size: 0.85rem;
-    opacity: 0.9;
-  }
-  .highlight {
-    font-weight: 800;
-    font-size: 1rem;
-  }
-`;
 const FormGrid = styled.div`
   display: flex;
   flex-direction: column;

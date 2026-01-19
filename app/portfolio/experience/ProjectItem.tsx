@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -7,8 +8,13 @@ import Typography from "@/components/common/Typography";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ProjectItem({ project }: { project: any }) {
+export default function ProjectItem({
+  project,
+  color,
+}: {
+  project: any;
+  color: any;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const hasImages = project.images && project.images.length > 0;
   const [isListOpen, setIsListOpen] = useState(false);
@@ -55,7 +61,7 @@ export default function ProjectItem({ project }: { project: any }) {
 
       {/* 3. 수행 업무 리스트 */}
       <div className="mb-6">
-        <Typography variant="body2" color="gray800" className="block mb-3">
+        <Typography variant="h4" color="gray800" className="block mb-3">
           수행 업무
         </Typography>
         <StTaskList>
@@ -68,7 +74,9 @@ export default function ProjectItem({ project }: { project: any }) {
       {/* 4. 기술 스택 */}
       <StTechList>
         {project.techStack.map((tech: string) => (
-          <StTechTag key={tech}>{tech}</StTechTag>
+          <StTechTag $customColor={color} key={tech}>
+            {tech}
+          </StTechTag>
         ))}
       </StTechList>
 
@@ -123,7 +131,7 @@ const fadeIn = keyframes`
 
 const StContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 1.75rem;
+  padding: 1.75rem 1rem;
   border-radius: 1.5rem;
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -141,9 +149,9 @@ const StContainer = styled.div`
 
 const StTitleGroup = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.75rem;
+  align-items: center;
 
   @media ${({ theme }) => theme.media.desktop} {
     flex-direction: row;
@@ -171,8 +179,8 @@ const StExternalLink = styled.a`
 const StPeriodBadge = styled.span`
   font-size: 0.85rem; /* ✅ 요청사항 반영: Badge 크기 증가 */
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.gray500};
-  background-color: ${({ theme }) => theme.colors.gray50};
+  color: ${({ theme }) => theme.colors.gray700};
+  background-color: ${({ theme }) => theme.colors.gray200};
   padding: 0.35rem 0.6rem;
   border-radius: 0.35rem;
 `;
@@ -198,12 +206,26 @@ const StTechList = styled.div`
   margin-top: 0.5rem;
 `;
 
-const StTechTag = styled.span`
-  padding: 0.35rem 0.85rem;
-  background-color: ${({ theme }) => theme.colors.yellow200};
+const StTechTag = styled.span<{ $customColor?: string }>`
+  padding: 0.25rem 0.65rem;
+
+  background-color: ${({ theme, $customColor }) => {
+    // 값이 없을 경우 기본값
+    if (!$customColor) return theme.colors.yellow200;
+
+    // 문자열에 포함된 텍스트로 테마 색상 매핑
+    if ($customColor.includes("orange-500")) return theme.colors.orange200;
+    if ($customColor.includes("yellow-400")) return theme.colors.yellow200;
+    if ($customColor.includes("blue-600")) return theme.colors.blue200;
+    if ($customColor.includes("black")) return theme.colors.gray300;
+    if ($customColor.includes("gray-400")) return theme.colors.gray100;
+
+    // 매칭되는게 없으면 기본값
+    return theme.colors.yellow200;
+  }};
   color: ${({ theme }) => theme.colors.gray600};
-  font-size: 0.85rem; /* ✅ 요청사항 반영: Tag 크기 증가 */
-  font-weight: 700;
+  font-size: 0.75rem; /* ✅ 요청사항 반영: Tag 크기 증가 */
+  font-weight: 600;
   border-radius: 0.5rem;
 `;
 

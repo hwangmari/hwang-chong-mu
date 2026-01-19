@@ -83,6 +83,9 @@ const utilities = css`
   .mb-2 {
     margin-bottom: 0.5rem;
   }
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
   .mb-4 {
     margin-bottom: 1rem;
   }
