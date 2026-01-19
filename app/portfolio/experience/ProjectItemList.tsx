@@ -3,18 +3,19 @@
 import styled from "styled-components";
 import { useMemo } from "react";
 
-// 데이터 타입 정의 (필요에 따라 types.ts로 분리 가능)
+// 1. description 배열 타입 추가
 export interface HistoryItem {
   id: number | string;
-  date: string; // format: "YYYY.MM.DD"
+  date: string;
   title: string;
+  description?: string[]; // 👈 추가됨
   url?: string;
 }
 
 interface ProjectItemListProps {
-  items: HistoryItem[]; // 외부에서 주입받을 데이터
-  title?: string; // 선택적: 제목 (예: Campaign Archive)
-  description?: string; // 선택적: 설명
+  items: HistoryItem[];
+  title?: string;
+  description?: string;
 }
 
 export default function ProjectItemList({
@@ -23,7 +24,6 @@ export default function ProjectItemList({
   description,
 }: ProjectItemListProps) {
   const groupedData = useMemo(() => {
-    // items가 없으면 빈 배열 처리
     if (!items || items.length === 0) return { years: [], groups: {} };
 
     const sortedList = [...items].sort(
@@ -45,9 +45,29 @@ export default function ProjectItemList({
     return { years, groups };
   }, [items]);
 
+  // 렌더링 헬퍼 함수 (링크/비링크 공통 구조)
+  const renderContent = (item: HistoryItem) => (
+    <>
+      <StDate>{item.date.slice(5)}</StDate>
+
+      {/* 2. 제목과 설명을 감싸는 컨테이너 (StContent) */}
+      <StContent>
+        <StTitle>{item.title}</StTitle>
+        {item.description && item.description.length > 0 && (
+          <StDescList>
+            {item.description.map((desc, idx) => (
+              <StDescItem key={idx}>{desc}</StDescItem>
+            ))}
+          </StDescList>
+        )}
+      </StContent>
+
+      <StArrow>{item.url ? "↗" : "-"}</StArrow>
+    </>
+  );
+
   return (
     <StContainer>
-      {/* 제목이나 설명이 있을 때만 헤더 렌더링 */}
       {(title || description) && (
         <StHeader>
           {title && <StPageTitle>{title}</StPageTitle>}
@@ -72,16 +92,10 @@ export default function ProjectItemList({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <StDate>{item.date.slice(5)}</StDate>
-                      <StTitle>{item.title}</StTitle>
-                      <StArrow>↗</StArrow>
+                      {renderContent(item)}
                     </StLink>
                   ) : (
-                    <StDisabledBox>
-                      <StDate>{item.date.slice(5)}</StDate>
-                      <StTitle>{item.title}</StTitle>
-                      <StArrow>-</StArrow>
-                    </StDisabledBox>
+                    <StDisabledBox>{renderContent(item)}</StDisabledBox>
                   )}
                 </StItemWrapper>
               ))}
@@ -93,11 +107,10 @@ export default function ProjectItemList({
   );
 }
 
-// --- 스타일 컴포넌트 (기존과 동일) ---
+// --- 스타일 컴포넌트 ---
 
 const StContainer = styled.div`
   width: 100%;
-  margin: 0;
   padding: 0.5rem 0 0 0;
 `;
 
@@ -155,13 +168,13 @@ const StRightCol = styled.div`
 const StItemWrapper = styled.div`
   position: relative;
   padding-left: 1.25rem;
-  margin-bottom: 8px;
+  margin-bottom: 12px; /* 간격 살짝 늘림 */
 `;
 
 const StDot = styled.div`
   position: absolute;
   left: -4px;
-  top: 0.9rem;
+  top: 1.2rem; /* 카드 높이 변화에 따라 위치 조정 */
   width: 6px;
   height: 6px;
   background-color: #fff;
@@ -171,14 +184,15 @@ const StDot = styled.div`
   transition: all 0.2s;
 `;
 
+// 기존 cardStyles에서 align-items를 flex-start로 변경 (내용이 길어질 수 있으므로)
 const cardStyles = `
   display: flex;
-  align-items: center;
+  align-items: flex-start; 
   justify-content: space-between;
-  padding: 0.6rem 1rem;
+  padding: 1rem;
   background-color: #fff;
   border: 1px solid #eee;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s;
 `;
 
@@ -191,7 +205,7 @@ const StLink = styled.a`
     background-color: #fff;
     border-color: #888;
     transform: translateX(2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   &:hover ~ ${StDot}, &:hover ${StDot} {
@@ -211,19 +225,52 @@ const StDate = styled.span`
   font-family: monospace;
   font-size: 0.75rem;
   color: #999;
-  margin-right: 0.8rem;
+  margin-right: 1rem;
   min-width: 35px;
+  margin-top: 2px; /* 텍스트 줄맞춤 */
+`;
+
+/* 3. 새로 추가된 컨텐츠 래퍼 및 설명 스타일 */
+const StContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 `;
 
 const StTitle = styled.span`
-  flex: 1;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #444;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+`;
+
+const StDescList = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const StDescItem = styled.li`
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.5;
+  position: relative;
+  padding-left: 10px;
+  margin-bottom: 2px;
+
+  /* 불렛 포인트 커스텀 */
+  &::before {
+    content: "-";
+    position: absolute;
+    left: 0;
+    color: #999;
+  }
 `;
 
 const StArrow = styled.span`
   font-size: 0.8rem;
   color: #ddd;
-  margin-left: 0.5rem;
+  margin-left: 0.8rem;
+  margin-top: 2px;
 `;

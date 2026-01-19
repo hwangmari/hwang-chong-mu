@@ -119,7 +119,7 @@ export const experiences: ExperienceData[] = [
           "Figma",
         ],
         projectItemList: {
-          title: "다이렉트 웹 신규 서비스",
+          title: "다이렉트 웹 운영 및 신규 서비스 ",
           description: " History",
           items: DIRECT_HISTORY_DATA,
         },

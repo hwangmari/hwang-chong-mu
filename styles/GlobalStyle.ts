@@ -140,7 +140,7 @@ const utilities = css`
 `;
 
 const GlobalStyle = createGlobalStyle`
-  /* ... (기존 리셋 스타일 유지) ... */
+ 
   * { box-sizing: border-box; padding: 0; margin: 0; }
   
   body {

@@ -4,9 +4,9 @@ export interface CampaignItem {
   id: string;
   date: string;
   title: string;
+  description?: string[]; // 상세 내용을 위한 선택적 필드 추가
   url: string;
 }
-
 export const HSP_HISTORY_DATA: CampaignItem[] = [
   {
     id: "2025-10",
@@ -16,12 +16,46 @@ export const HSP_HISTORY_DATA: CampaignItem[] = [
   },
   { id: "2025-06", date: "2025.06.20", title: "프로젝트 착수", url: "" },
 ];
-
 export const DIRECT_HISTORY_DATA: CampaignItem[] = [
   {
-    id: "2023-08",
-    date: "2023.08 ~ 2024.06",
-    title: "온슈어 스프린트 대응 ",
+    id: "2023-09-01",
+    date: "2023.09.01 ~ 2024.05.30",
+    title: "온슈어 스프린트 대응",
+    description: [],
+    url: "",
+  },
+  {
+    id: "2024-10-07", // 중복 id 수정
+    date: "2024.10.07 ~ 10.16",
+    title: "보험상담안내",
+    description: [],
+    url: "",
+  },
+  {
+    id: "2024-10-13", // 중복 id 수정
+    date: "2024.10.13 ~ 11.06",
+    title: "공용 Footer 및 약관 페이지 고도화", // 핵심 제목만 남김
+    description: [
+      "공용 Footer 컴포넌트 수정 및 업데이트",
+      "iframe을 활용한 약관 페이지 구현",
+      "각 약관별 경로 생성 및 관리",
+      "온슈어 레거시 Footer에서 사용되는 경로 정리",
+      "적응형에서 반응형 원페이지로 변경",
+    ],
+    url: "",
+  },
+  {
+    id: "2024-09-09",
+    date: "2024.09.09 ~ 09.20",
+    title: "다이렉트AI 상담하기 서비스 마크업",
+    description: [],
+    url: "",
+  },
+  {
+    id: "2024-04-01",
+    date: "2024.04.01 ~ 07.02",
+    title: "보장분석 신규 서비스 마크업",
+    description: [],
     url: "",
   },
 ];
