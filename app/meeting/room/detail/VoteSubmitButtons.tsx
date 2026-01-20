@@ -44,18 +44,20 @@ const StSubmitSection = styled.div`
 
 const StSubmitButton = styled.button`
   width: 100%;
-  padding: 0.75rem;
+  padding: 1rem;
   background-color: ${({ theme }) => theme.colors.gray400};
   color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s;
+  font-size: 1rem;
 
   &:hover {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
