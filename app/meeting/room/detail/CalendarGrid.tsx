@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import styled, { css } from "styled-components";
 import { format, isSameDay } from "date-fns";
 import { UserVote } from "@/types";
@@ -27,37 +28,51 @@ export default function CalendarGrid({
   onToggleDate,
   hoveredUserId,
 }: Props) {
-  const getUnavailableCount = (date: Date) =>
+  // [상태 추가] 모바일 대응: 현재 툴팁이 열려있는 날짜의 Key 저장
+  const [openTooltipDate, setOpenTooltipDate] = useState<string | null>(null);
+
+  const getUnavailableUsers = (date: Date) =>
     participants.filter((p) =>
-      p.unavailableDates.some((ud) => isSameDay(ud, date))
-    ).length;
+      p.unavailableDates.some((ud) => isSameDay(ud, date)),
+    );
 
   const firstDateIndex = dates.findIndex((d) => d !== null);
 
   const weekDays = includeWeekend
     ? ["일", "월", "화", "수", "목", "금", "토"]
     : ["월", "화", "수", "목", "금"];
+
   const hoveredUser = participants.find((p) => p.id === hoveredUserId);
+
+  // [핸들러 추가] 배지 클릭 시 툴팁 토글 (날짜 선택 방지)
+  const handleBadgeClick = (e: React.MouseEvent, dateKey: string) => {
+    e.stopPropagation(); // 부모 버튼의 클릭 이벤트 전파 중단
+    setOpenTooltipDate((prev) => (prev === dateKey ? null : dateKey));
+  };
+
+  // [핸들러 추가] 배경 클릭 시 툴팁 닫기
+  const closeAllTooltips = () => setOpenTooltipDate(null);
+
   return (
-    <StGridContainer $step={step}>
-      {/* 요일 헤더 */}
+    <StGridContainer $step={step} onClick={closeAllTooltips}>
       <StWeekHeader $includeWeekend={includeWeekend}>
         {weekDays.map((day) => (
           <StWeekDay key={day}>{day}</StWeekDay>
         ))}
       </StWeekHeader>
 
-      {/* 날짜 그리드 */}
       <StDaysGrid $includeWeekend={includeWeekend}>
         {dates.map((date, index) => {
           if (!date) return <div key={`empty-${index}`} />;
 
-          const unavailableCount = getUnavailableCount(date);
+          const dateKey = date.toISOString(); // 고유 키 생성
+          const unavailableUsers = getUnavailableUsers(date);
+          const unavailableCount = unavailableUsers.length;
+
           const totalParticipants = participants.length;
           const intensity =
             totalParticipants > 0 ? unavailableCount / totalParticipants : 0;
 
-          // 상태 계산
           const isMySelection =
             step === "VOTING" &&
             currentUnavailable.some((d) => isSameDay(d, date));
@@ -67,9 +82,9 @@ export default function CalendarGrid({
 
           const isBestDate = step === "CONFIRM" && unavailableCount === 0;
           const isHoveredDate = hoveredUser?.unavailableDates.some((ud) =>
-            isSameDay(ud, date)
+            isSameDay(ud, date),
           );
-          // 배경색 로직 (Typing 모드일 땐 회색, 아닐 땐 붉은색)
+
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
           const dynamicBg = `rgba(${baseColor}, ${intensity * 0.9})`;
@@ -77,9 +92,12 @@ export default function CalendarGrid({
           const dayString = format(date, "d");
           const showMonth = dayString === "1" || index === firstDateIndex;
 
+          // 현재 날짜의 툴팁이 열려있는지 확인
+          const isTooltipOpen = openTooltipDate === dateKey;
+
           return (
             <StDateButton
-              key={date.toISOString()}
+              key={dateKey}
               onClick={() => onToggleDate(date)}
               $isMySelection={isMySelection}
               $isFinalSelected={!!isFinalSelected}
@@ -88,7 +106,6 @@ export default function CalendarGrid({
               $unavailableCount={unavailableCount}
               $isHoveredDate={!!isHoveredDate}
             >
-              {/* 날짜 텍스트 (월/일) */}
               <StDateText>
                 {showMonth && (
                   <StMonthLabel>{format(date, "M월")}</StMonthLabel>
@@ -96,14 +113,26 @@ export default function CalendarGrid({
                 {dayString}
               </StDateText>
 
-              {/* 불가능 인원 수 뱃지 */}
+              {/* 툴팁 및 배지 영역 */}
               {!isFinalSelected && unavailableCount > 0 && (
-                <StCountBadge $isTypingMode={isTypingMode}>
-                  {unavailableCount}
-                </StCountBadge>
+                <StBadgeGroup
+                  onClick={(e) => handleBadgeClick(e, dateKey)} // 클릭 이벤트 연결
+                >
+                  <StCountBadge $isTypingMode={isTypingMode}>
+                    {unavailableCount}
+                  </StCountBadge>
+
+                  {/* Typing 모드가 아닐 때만 툴팁 표시 가능 */}
+                  {!isTypingMode && (
+                    <StTooltip $isOpen={isTooltipOpen}>
+                      {unavailableUsers.map((user) => (
+                        <div key={user.id}>{user.name}</div>
+                      ))}
+                    </StTooltip>
+                  )}
+                </StBadgeGroup>
               )}
 
-              {/* 추천 뱃지 (확정 단계에서 불가능 0명일 때) */}
               {step === "CONFIRM" &&
                 unavailableCount === 0 &&
                 !isFinalSelected && <StRecommendBadge>추천👍</StRecommendBadge>}
@@ -115,56 +144,57 @@ export default function CalendarGrid({
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
+// --- 스타일 정의 ---
 
 const StGridContainer = styled.div<{ $step: "VOTING" | "CONFIRM" }>`
   width: 100%;
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 1rem; /* p-4 */
+  padding: 1rem;
   border-radius: 2rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* shadow-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border: 2px solid;
-  margin-bottom: 1.5rem; /* mb-6 */
-  transition: border-color 0.3s, box-shadow 0.3s;
+  margin-bottom: 1.5rem;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 
   ${({ $step, theme }) =>
     $step === "CONFIRM"
       ? css`
           border-color: ${theme.colors.gray900};
-          box-shadow: 0 4px 6px -1px rgba(209, 213, 219, 0.5); /* shadow-gray-300 */
+          box-shadow: 0 4px 6px -1px rgba(209, 213, 219, 0.5);
         `
       : css`
           border-color: ${theme.colors.gray100};
         `}
 
   @media ${({ theme }) => theme.media.desktop} {
-    padding: 1.5rem; /* sm:p-6 */
+    padding: 1.5rem;
   }
 `;
 
-// 그리드 레이아웃 공통 믹스인
 const gridLayout = css<{ $includeWeekend: boolean }>`
   display: grid;
   grid-template-columns: ${({ $includeWeekend }) =>
     $includeWeekend ? "repeat(7, 1fr)" : "repeat(5, 1fr)"};
-  gap: 0.75rem; /* gap-3 */
+  gap: 0.75rem;
 `;
 
 const StWeekHeader = styled.div<{ $includeWeekend: boolean }>`
   ${gridLayout}
-  margin-bottom: 0.75rem; /* mb-3 */
-  padding-bottom: 0.5rem; /* pb-2 */
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
 const StWeekDay = styled.div`
   text-align: center;
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 800; /* font-extrabold */
+  font-size: 0.75rem;
+  font-weight: 800;
   color: ${({ theme }) => theme.colors.gray400};
 
   @media ${({ theme }) => theme.media.desktop} {
-    font-size: 0.875rem; /* sm:text-sm */
+    font-size: 0.875rem;
   }
 `;
 
@@ -172,7 +202,6 @@ const StDaysGrid = styled.div<{ $includeWeekend: boolean }>`
   ${gridLayout}
 `;
 
-// 날짜 버튼 (핵심 스타일)
 const StDateButton = styled.button<{
   $isMySelection: boolean;
   $isFinalSelected: boolean;
@@ -182,8 +211,8 @@ const StDateButton = styled.button<{
   $isHoveredDate: boolean;
 }>`
   position: relative;
-  aspect-ratio: 1 / 1; /* aspect-square */
-  border-radius: 0.75rem; /* rounded-xl */
+  aspect-ratio: 1 / 1;
+  border-radius: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -191,7 +220,6 @@ const StDateButton = styled.button<{
   transition: all 0.2s;
   border: 1px solid transparent;
 
-  /* 1. 배경색 우선순위 로직 */
   background-color: ${({
     $isFinalSelected,
     $isMySelection,
@@ -200,16 +228,16 @@ const StDateButton = styled.button<{
   }) => {
     if ($isFinalSelected) return theme.colors.gray900;
     if ($isMySelection) return theme.colors.white;
-    return $dynamicBg; // 계산된 열지도 색상
+    return $dynamicBg;
   }};
 
-  /* 2. 텍스트 색상 우선순위 로직 */
   color: ${({ $isFinalSelected, $isMySelection, $unavailableCount, theme }) => {
     if ($isFinalSelected) return theme.colors.white;
     if ($isMySelection) return theme.colors.black;
-    if ($unavailableCount > 0) return theme.colors.white; // 배경이 진하므로 글자는 흰색
-    return theme.colors.gray500; // 기본 (배경 없을 때)
+    if ($unavailableCount > 0) return theme.colors.white;
+    return theme.colors.gray500;
   }};
+
   ${({ $isHoveredDate }) =>
     $isHoveredDate &&
     css`
@@ -219,7 +247,6 @@ const StDateButton = styled.button<{
       box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
     `}
 
-  /* 3. 테두리 및 효과 로직 */
   ${({ $isMySelection, theme }) =>
     $isMySelection &&
     css`
@@ -232,7 +259,7 @@ const StDateButton = styled.button<{
     css`
       border: 1px solid ${theme.colors.gray900};
       transform: scale(1.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); /* shadow-xl */
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       z-index: 20;
     `}
 
@@ -240,16 +267,16 @@ const StDateButton = styled.button<{
     $isBestDate &&
     !$isFinalSelected &&
     css`
-      box-shadow: 0 0 0 2px ${theme.colors.gray400}; /* ring-2 ring-gray-400 */
+      box-shadow: 0 0 0 2px ${theme.colors.gray400};
     `}
 
   @media ${({ theme }) => theme.media.desktop} {
-    border-radius: 1rem; /* sm:rounded-2xl */
+    border-radius: 1rem;
   }
 `;
 
 const StDateText = styled.span`
-  font-size: 0.875rem; /* text-sm */
+  font-size: 0.875rem;
   font-weight: 700;
   position: relative;
   display: flex;
@@ -257,29 +284,41 @@ const StDateText = styled.span`
   align-items: center;
 
   @media ${({ theme }) => theme.media.desktop} {
-    font-size: 1rem; /* sm:text-base */
+    font-size: 1rem;
   }
 `;
 
 const StMonthLabel = styled.span`
   position: absolute;
-  top: -0.8rem; /* 모바일 위치 조정 */
+  top: -0.8rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.625rem; /* text-[10px] */
+  font-size: 0.625rem;
   line-height: 1;
   white-space: nowrap;
 
   @media ${({ theme }) => theme.media.desktop} {
     top: -1rem;
-    font-size: 0.75rem; /* sm:text-xs */
+    font-size: 0.75rem;
   }
 `;
 
-const StCountBadge = styled.span<{ $isTypingMode: boolean }>`
+// [NEW] 뱃지와 툴팁을 감싸는 컨테이너
+const StBadgeGroup = styled.div`
   position: absolute;
   top: -0.25rem;
   right: -0.25rem;
+  z-index: 25;
+  cursor: pointer; /* 클릭 가능 표시 */
+
+  /* PC Hover 대응: 마우스 올리면 하위 툴팁 표시 */
+  &:hover > div:last-child {
+    display: block;
+    opacity: 1;
+  }
+`;
+
+const StCountBadge = styled.div<{ $isTypingMode: boolean }>`
   width: 1rem;
   height: 1rem;
   border-radius: 9999px;
@@ -287,16 +326,52 @@ const StCountBadge = styled.span<{ $isTypingMode: boolean }>`
   align-items: center;
   justify-content: center;
   color: ${({ theme }) => theme.colors.white};
-  font-size: 0.5625rem; /* text-[9px] */
+  font-size: 0.5625rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-  background-color: ${
-    ({ $isTypingMode, theme }) =>
-      $isTypingMode ? theme.colors.gray400 : "#fb7185" /* rose-400 */
-  };
+  background-color: ${({ $isTypingMode, theme }) =>
+    $isTypingMode ? theme.colors.gray400 : "#fb7185"};
 
   @media ${({ theme }) => theme.media.desktop} {
-    font-size: 0.625rem; /* sm:text-[10px] */
+    font-size: 0.625rem;
+  }
+`;
+
+// [NEW] 툴팁 스타일 (상태에 따른 제어 포함)
+const StTooltip = styled.div<{ $isOpen: boolean }>`
+  /* 기본 숨김, 하지만 $isOpen이 true면 표시 */
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+
+  position: absolute;
+  bottom: 120%; /* 뱃지 위쪽에 표시 */
+  left: 50%;
+  transform: translateX(-50%);
+
+  background-color: rgba(31, 41, 55, 0.95); /* gray-800 */
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  pointer-events: none; /* 툴팁 자체는 클릭 방해 X */
+  transition: opacity 0.2s;
+
+  /* 툴팁 꼬리 */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: rgba(31, 41, 55, 0.95) transparent transparent transparent;
+  }
+
+  @media ${({ theme }) => theme.media.desktop} {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
   }
 `;
 
@@ -307,7 +382,7 @@ const StRecommendBadge = styled.span`
   transform: translateX(-50%);
   background-color: ${({ theme }) => theme.colors.gray800};
   color: ${({ theme }) => theme.colors.white};
-  font-size: 0.5rem; /* text-[8px] */
+  font-size: 0.5rem;
   padding: 0.125rem 0.375rem;
   border-radius: 9999px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -315,6 +390,6 @@ const StRecommendBadge = styled.span`
   white-space: nowrap;
 
   @media ${({ theme }) => theme.media.desktop} {
-    font-size: 0.5625rem; /* sm:text-[9px] */
+    font-size: 0.5625rem;
   }
 `;
