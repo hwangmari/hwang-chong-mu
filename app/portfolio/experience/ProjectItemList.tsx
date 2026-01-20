@@ -27,7 +27,7 @@ export default function ProjectItemList({
     if (!items || items.length === 0) return { years: [], groups: {} };
 
     const sortedList = [...items].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 
     const groups: Record<string, HistoryItem[]> = {};
@@ -48,21 +48,22 @@ export default function ProjectItemList({
   // 렌더링 헬퍼 함수 (링크/비링크 공통 구조)
   const renderContent = (item: HistoryItem) => (
     <>
-      <StDate>{item.date.slice(5)}</StDate>
+      <StTitleDate>
+        <StDate>{item.date.slice(5)}</StDate>
+        {/* 2. 제목과 설명을 감싸는 컨테이너 (StContent) */}
+        <StContent>
+          <StTitle>{item.title}</StTitle>
+        </StContent>
+        <StArrow>{item.url ? "↗" : "-"}</StArrow>
+      </StTitleDate>
 
-      {/* 2. 제목과 설명을 감싸는 컨테이너 (StContent) */}
-      <StContent>
-        <StTitle>{item.title}</StTitle>
-        {item.description && item.description.length > 0 && (
-          <StDescList>
-            {item.description.map((desc, idx) => (
-              <StDescItem key={idx}>{desc}</StDescItem>
-            ))}
-          </StDescList>
-        )}
-      </StContent>
-
-      <StArrow>{item.url ? "↗" : "-"}</StArrow>
+      {item.description && item.description.length > 0 && (
+        <StDescList>
+          {item.description.map((desc, idx) => (
+            <StDescItem key={idx}>{desc}</StDescItem>
+          ))}
+        </StDescList>
+      )}
     </>
   );
 
@@ -136,18 +137,13 @@ const StTimelineContainer = styled.div`
   flex-direction: column;
 `;
 
-const StYearSection = styled.div`
-  display: flex;
-  align-items: flex-start;
-`;
-
 const StLeftCol = styled.div`
   width: 60px;
   flex-shrink: 0;
   position: sticky;
   top: 70px;
   z-index: 10;
-  margin-bottom: 54px;
+  margin: 10px 0 54px;
 `;
 
 const StStickyYear = styled.div`
@@ -165,10 +161,26 @@ const StRightCol = styled.div`
   padding-bottom: 2rem;
 `;
 
+const StYearSection = styled.div`
+  display: flex;
+  align-items: flex-start;
+  &:last-child {
+    ${StLeftCol} {
+      margin: 10px 0 20px;
+    }
+    ${StRightCol} {
+      padding-bottom: 0;
+    }
+  }
+`;
+
 const StItemWrapper = styled.div`
   position: relative;
   padding-left: 1.25rem;
-  margin-bottom: 12px; /* 간격 살짝 늘림 */
+  margin-bottom: 12px;
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const StDot = styled.div`
@@ -184,11 +196,7 @@ const StDot = styled.div`
   transition: all 0.2s;
 `;
 
-// 기존 cardStyles에서 align-items를 flex-start로 변경 (내용이 길어질 수 있으므로)
 const cardStyles = `
-  display: flex;
-  align-items: flex-start; 
-  justify-content: space-between;
   padding: 1rem;
   background-color: #fff;
   border: 1px solid #eee;
@@ -197,6 +205,7 @@ const cardStyles = `
 `;
 
 const StLink = styled.a`
+  display: block;
   ${cardStyles}
   text-decoration: none;
   cursor: pointer;
@@ -213,6 +222,11 @@ const StLink = styled.a`
     border-color: #555;
   }
 `;
+const StTitleDate = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+`;
 
 const StDisabledBox = styled.div`
   ${cardStyles}
@@ -227,10 +241,9 @@ const StDate = styled.span`
   color: #999;
   margin-right: 1rem;
   min-width: 35px;
-  margin-top: 2px; /* 텍스트 줄맞춤 */
+  margin-top: 2px;
 `;
 
-/* 3. 새로 추가된 컨텐츠 래퍼 및 설명 스타일 */
 const StContent = styled.div`
   flex: 1;
   display: flex;
@@ -247,6 +260,7 @@ const StTitle = styled.span`
 
 const StDescList = styled.ul`
   margin: 0;
+  margin-top: 12px;
   padding: 0;
   list-style: none;
 `;

@@ -33,61 +33,64 @@ export default function ConfirmedResultCard({
 
   const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
 
+  const unavailableList = [
+    ...getUnavailablePeople(finalDate),
+    ...getAbsentPeople(),
+  ];
+
   return (
     <StResultCard>
-      <div className="text-4xl mb-4">🎉</div>
-      <Typography variant="h3" as="h3" className="fw-900 mb-1">
+      <StEmoji>🎉</StEmoji>
+
+      <StTitle variant="h3" as="h3">
         약속 날짜 확정!
-      </Typography>
+      </StTitle>
 
       <StDateBox>
-        <Typography variant="caption" color="gray500" className="fw-700 mb-1">
+        <StRoomName variant="caption" color="gray500">
           {roomName}
-        </Typography>
-        <Typography variant="h2" className="fw-900 text-center">
+        </StRoomName>
+        <StDateDisplay variant="h2">
           {format(finalDate, "M월 d일 (E)", { locale: ko })}
-        </Typography>
+        </StDateDisplay>
       </StDateBox>
 
       {/* 결과 명단 리스트 */}
       <StResultGrid>
         {/* 1. 참석 가능자 */}
         <StResultColumn $type="available">
-          <Typography variant="caption" color="gray400" className="fw-700 mb-2">
+          <StSectionTitle variant="caption" color="gray400">
             참석 가능 🙆‍♂️
-          </Typography>
+          </StSectionTitle>
           <StResultCell>
             {getAvailablePeople(finalDate).length > 0 ? (
               getAvailablePeople(finalDate).map((p, i) => (
                 <StNameTag key={i}>{p.name}</StNameTag>
               ))
             ) : (
-              <span className="text-gray-300 text-xs">없음</span>
+              <StEmptyText>없음</StEmptyText>
             )}
           </StResultCell>
         </StResultColumn>
 
         {/* 2. 불가능자 */}
         <StResultColumn $type="unavailable">
-          <Typography variant="caption" className="text-red-400 fw-700 mb-2">
+          <StUnavailableTitle variant="caption">
             불가능 / 불참 🙅‍♂️
-          </Typography>
+          </StUnavailableTitle>
           <StResultCell>
-            {[...getUnavailablePeople(finalDate), ...getAbsentPeople()].length >
-            0 ? (
-              [...getUnavailablePeople(finalDate), ...getAbsentPeople()].map(
-                (p, i) => (
-                  <StRescueButton
-                    key={i}
-                    onClick={() => onRescueUser(p)}
-                    $isAbsent={p.isAbsent}
-                  >
-                    {p.name} ✎
-                  </StRescueButton>
-                ),
-              )
+            {unavailableList.length > 0 ? (
+              unavailableList.map((p, i) => (
+                <StRescueButton
+                  key={i}
+                  onClick={() => onRescueUser(p)}
+                  $isAbsent={p.isAbsent}
+                >
+                  {p.name} ✎
+                </StRescueButton>
+              ))
             ) : (
-              <span className="text-gray-400 text-xs">전원 참석!</span>
+              <StSuccessText>전원 참석!</StSuccessText>
             )}
           </StResultCell>
         </StResultColumn>
@@ -98,11 +101,13 @@ export default function ConfirmedResultCard({
   );
 }
 
+// --- Animation ---
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
+// --- Components ---
 const StResultCard = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.colors.white};
@@ -116,6 +121,17 @@ const StResultCard = styled.div`
   animation: ${fadeInUp} 0.5s ease-out;
 `;
 
+const StEmoji = styled.div`
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  margin-bottom: 1rem;
+`;
+
+const StTitle = styled(Typography)`
+  font-weight: 900;
+  margin-bottom: 0.25rem;
+`;
+
 const StDateBox = styled.div`
   background-color: ${({ theme }) => theme.colors.gray50};
   padding: 1.5rem;
@@ -125,17 +141,24 @@ const StDateBox = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
+// "fw-700 mb-1" 대체
+const StRoomName = styled(Typography)`
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+`;
+
+// "fw-900 text-center" 대체
+const StDateDisplay = styled(Typography)`
+  font-weight: 900;
+  text-align: center;
+`;
+
 const StResultGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   text-align: left;
   margin-bottom: 1.5rem;
-`;
-const StResultCell = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
 `;
 
 const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
@@ -150,9 +173,28 @@ const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
           border-color: ${theme.colors.gray100};
         `
       : css`
-          background-color: #fef2f2;
-          border-color: #fee2e2;
+          background-color: #fef2f2; /* red-50 */
+          border-color: #fee2e2; /* red-100 */
         `}
+`;
+
+const StSectionTitle = styled(Typography)`
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+`;
+
+const StUnavailableTitle = styled(Typography)`
+  color: #f87171;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+`;
+
+const StResultCell = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 12px;
 `;
 
 const StNameTag = styled.span`
@@ -194,6 +236,14 @@ const StRescueButton = styled.button<{ $isAbsent: boolean }>`
             background-color: #fef2f2;
           }
         `}
+`;
+
+const StEmptyText = styled.span`
+  color: ${({ theme }) => theme.colors.gray300};
+`;
+
+const StSuccessText = styled.span`
+  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StRetryButton = styled.button`

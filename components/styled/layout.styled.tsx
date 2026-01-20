@@ -49,6 +49,10 @@ export const StSection = styled.div`
 export const StFlexBox = styled.div`
   max-width: 540px;
   margin: 0 auto;
+
+  .flex-rgt-box {
+    margin-top: 20px;
+  }
   @media ${({ theme }) => theme.media.desktop} {
     display: flex;
     max-width: 1024px;
@@ -63,6 +67,7 @@ export const StFlexBox = styled.div`
       flex: 1;
     }
     .flex-rgt-box {
+      margin-top: 0;
     }
   }
 `;

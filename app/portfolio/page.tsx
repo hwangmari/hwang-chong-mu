@@ -36,9 +36,12 @@ const StContainer = styled.div`
   min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray900};
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
 
-  /* 드래그 시 하이라이트 색상 (테마에 yellow200이 없다면 yellow400 등으로 대체 추천) */
   &::selection {
     background-color: ${({ theme }) => theme.colors.yellow400};
   }
@@ -49,5 +52,5 @@ const StDivider = styled.div`
 `;
 
 const StFooter = styled.footer`
-  padding: 2.5rem 0; /* py-10 */
+  padding: 2.5rem 0;
 `;

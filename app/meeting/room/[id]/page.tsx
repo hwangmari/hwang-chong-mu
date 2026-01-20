@@ -31,7 +31,7 @@ export default function RoomDetail() {
 
   // ✨ 수정됨: Hook은 반드시 조건부 return 이전에 선언되어야 합니다.
   const [hoveredUserId, setHoveredUserId] = useState<string | number | null>(
-    null
+    null,
   );
 
   const {
@@ -176,7 +176,6 @@ export default function RoomDetail() {
             title={room.name}
             finalDate={format(finalDate, "yyyy-MM-dd")}
           />
-          <ShareButton />
         </StWrapper>
       )}
 
