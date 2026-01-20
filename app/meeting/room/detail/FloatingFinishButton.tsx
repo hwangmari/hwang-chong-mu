@@ -19,11 +19,11 @@ export default function FloatingFinishButton({ onFinish }: Props) {
 
 const StFloatingContainer = styled.div`
   position: sticky;
-  left: 0;
+
   right: 0;
   bottom: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   pointer-events: none;
   width: 100%;
   z-index: 10;

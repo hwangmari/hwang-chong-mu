@@ -23,12 +23,12 @@ export default function ConfirmedResultCard({
 }: Props) {
   const getUnavailablePeople = (d: Date) =>
     participants.filter(
-      (p) => !p.isAbsent && p.unavailableDates.some((ud) => isSameDay(ud, d))
+      (p) => !p.isAbsent && p.unavailableDates.some((ud) => isSameDay(ud, d)),
     );
 
   const getAvailablePeople = (d: Date) =>
     participants.filter(
-      (p) => !p.isAbsent && !p.unavailableDates.some((ud) => isSameDay(ud, d))
+      (p) => !p.isAbsent && !p.unavailableDates.some((ud) => isSameDay(ud, d)),
     );
 
   const getAbsentPeople = () => participants.filter((p) => p.isAbsent);
@@ -56,7 +56,7 @@ export default function ConfirmedResultCard({
           <Typography variant="caption" color="gray400" className="fw-700 mb-2">
             참석 가능 🙆‍♂️
           </Typography>
-          <div className="flex flex-wrap gap-1">
+          <StResultCell>
             {getAvailablePeople(finalDate).length > 0 ? (
               getAvailablePeople(finalDate).map((p, i) => (
                 <StNameTag key={i}>{p.name}</StNameTag>
@@ -64,7 +64,7 @@ export default function ConfirmedResultCard({
             ) : (
               <span className="text-gray-300 text-xs">없음</span>
             )}
-          </div>
+          </StResultCell>
         </StResultColumn>
 
         {/* 2. 불가능자 */}
@@ -72,7 +72,7 @@ export default function ConfirmedResultCard({
           <Typography variant="caption" className="text-red-400 fw-700 mb-2">
             불가능 / 불참 🙅‍♂️
           </Typography>
-          <div className="flex flex-wrap gap-1">
+          <StResultCell>
             {[...getUnavailablePeople(finalDate), ...getAbsentPeople()].length >
             0 ? (
               [...getUnavailablePeople(finalDate), ...getAbsentPeople()].map(
@@ -84,12 +84,12 @@ export default function ConfirmedResultCard({
                   >
                     {p.name} ✎
                   </StRescueButton>
-                )
+                ),
               )
             ) : (
               <span className="text-gray-400 text-xs">전원 참석!</span>
             )}
-          </div>
+          </StResultCell>
         </StResultColumn>
       </StResultGrid>
 
@@ -131,6 +131,11 @@ const StResultGrid = styled.div`
   gap: 1rem;
   text-align: left;
   margin-bottom: 1.5rem;
+`;
+const StResultCell = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 `;
 
 const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
