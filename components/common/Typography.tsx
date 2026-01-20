@@ -28,7 +28,7 @@ const variants = {
   `,
   // 🦊 카드 타이틀
   h3: css`
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 700;
   `,
   h4: css`

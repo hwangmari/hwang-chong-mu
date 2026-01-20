@@ -23,8 +23,8 @@ export default function ProjectItem({
   return (
     <StContainer>
       {/* 1. 상단: 타이틀, 링크, 기간 */}
-      <StTitleGroup className="mb-4">
-        <div className="flex items-center gap-2">
+      <StTitleGroup>
+        <StTitleRow>
           <Typography variant="h3" as="h3">
             {project.title}
           </Typography>
@@ -49,28 +49,30 @@ export default function ProjectItem({
               </svg>
             </StExternalLink>
           )}
-        </div>
+        </StTitleRow>
         <StPeriodBadge>{project.period}</StPeriodBadge>
       </StTitleGroup>
 
-      {/* 2. 설명: body2 유지 (요청사항 반영) */}
-      <div className="mb-6">
+      {/* 2. 설명 */}
+      <StSection>
         <Typography variant="body2" color="gray600">
           {project.description}
         </Typography>
-      </div>
+      </StSection>
 
       {/* 3. 수행 업무 리스트 */}
-      <div className="mb-6">
-        <Typography variant="h4" color="gray800" className="block mb-3">
-          수행 업무
-        </Typography>
+      <StSection>
+        <StTaskTitleWrapper>
+          <Typography variant="h4" color="gray800">
+            수행 업무
+          </Typography>
+        </StTaskTitleWrapper>
         <StTaskList>
           {project.tasks.map((task: string, i: number) => (
             <li key={i}>{task}</li>
           ))}
         </StTaskList>
-      </div>
+      </StSection>
 
       {/* 4. 기술 스택 */}
       <StTechList>
@@ -91,15 +93,19 @@ export default function ProjectItem({
 
           {isOpen && (
             <StImageGrid>
-              {project.images.map((img: string, idx: number) => (
-                <StImageFrame key={idx}>
+              {project.images?.map((img: any, idx: number) => (
+                <StImageFrame key={idx} className={img.className}>
                   <StNextImage
-                    src={img}
-                    alt={`${project.title} screenshot ${idx + 1}`}
-                    width={0}
-                    height={0}
+                    src={img.src}
+                    alt={img.alt || `${project.title} screenshot ${idx + 1}`}
+                    width={img.width || 0}
+                    height={img.height || 0}
                     sizes="100vw"
                     priority={idx === 0}
+                    style={{
+                      width: img.width ? "auto" : "100%",
+                      height: "auto",
+                    }}
                   />
                 </StImageFrame>
               ))}
@@ -121,8 +127,8 @@ export default function ProjectItem({
             <StToggleContent>
               <ProjectItemList
                 items={project.projectItemList.items}
-                title={project.projectItemList.title} // 필요하면 전달
-                description={project.projectItemList.description} // 필요하면 전달
+                title={project.projectItemList.title}
+                description={project.projectItemList.description}
               />
             </StToggleContent>
           )}
@@ -141,32 +147,34 @@ const fadeIn = keyframes`
 const StContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
   padding: 1.75rem 1rem;
-  border-radius: 1.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s;
-
-  &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
+  margin: 0 -1.25rem;
 
   @media ${({ theme }) => theme.media.desktop} {
     padding: 2.5rem;
+    margin: 0;
+    border-radius: 1.5rem;
+    border: 1px solid ${({ theme }) => theme.colors.gray100};
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s;
+    &:hover {
+      box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
   }
 `;
 
 const StTitleGroup = styled.div`
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
   align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+`;
 
-  @media ${({ theme }) => theme.media.desktop} {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
+const StTitleRow = styled.div`
+  display: flex;
+  align-items: center; /* className="flex items-center" 대체 */
 `;
 
 const StExternalLink = styled.a`
@@ -174,6 +182,7 @@ const StExternalLink = styled.a`
   transition: color 0.2s;
   display: flex;
   align-items: center;
+  margin-left: 0.5rem; /* 타이틀과의 간격 확보 */
 
   svg {
     width: 1.25rem;
@@ -186,19 +195,28 @@ const StExternalLink = styled.a`
 `;
 
 const StPeriodBadge = styled.span`
-  font-size: 0.85rem; /* ✅ 요청사항 반영: Badge 크기 증가 */
+  font-size: 0.85rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.gray700};
-  background-color: ${({ theme }) => theme.colors.gray200};
-  padding: 0.35rem 0.6rem;
-  border-radius: 0.35rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  white-space: nowrap; /* 줄바꿈 방지 */
+`;
+
+/* 설명 및 리스트를 감싸는 섹션 (className="mb-6" 대체) */
+const StSection = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+/* 수행 업무 타이틀 래퍼 (className="block mb-1" 대체) */
+const StTaskTitleWrapper = styled.div`
+  display: block;
+  margin-bottom: 0.25rem;
 `;
 
 const StTaskList = styled.ul`
   list-style-type: disc;
   list-style-position: outside;
   margin-left: 1.25rem;
-  font-size: 1rem; /* ✅ 요청사항 반영: List 크기 증가 */
+  font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.gray600};
   line-height: 1.6;
 
@@ -219,21 +237,16 @@ const StTechTag = styled.span<{ $customColor?: string }>`
   padding: 0.25rem 0.65rem;
 
   background-color: ${({ theme, $customColor }) => {
-    // 값이 없을 경우 기본값
     if (!$customColor) return theme.colors.yellow200;
-
-    // 문자열에 포함된 텍스트로 테마 색상 매핑
     if ($customColor.includes("orange-500")) return theme.colors.orange200;
     if ($customColor.includes("yellow-400")) return theme.colors.yellow200;
     if ($customColor.includes("blue-600")) return theme.colors.blue200;
     if ($customColor.includes("black")) return theme.colors.gray300;
     if ($customColor.includes("gray-400")) return theme.colors.gray100;
-
-    // 매칭되는게 없으면 기본값
     return theme.colors.yellow200;
   }};
   color: ${({ theme }) => theme.colors.gray600};
-  font-size: 0.75rem; /* ✅ 요청사항 반영: Tag 크기 증가 */
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: 0.5rem;
 `;
@@ -253,17 +266,17 @@ const StToggleButton = styled.button`
   gap: 0.5rem;
   width: 100%;
 
-  font-size: 1rem; /* ✅ 요청사항 반영: Button Text 크기 증가 */
+  font-size: 1rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray600};
-  background-color: ${({ theme }) => theme.colors.gray50};
+  background-color: ${({ theme }) => theme.colors.gray100};
   padding: 0.75rem 1.25rem;
   border-radius: 0.75rem;
   transition: all 0.2s;
 
   &:hover {
     color: ${({ theme }) => theme.colors.gray900};
-    background-color: ${({ theme }) => theme.colors.gray100};
+    background-color: ${({ theme }) => theme.colors.gray200};
   }
 
   @media ${({ theme }) => theme.media.desktop} {
@@ -280,19 +293,20 @@ const StImageGrid = styled.div`
   animation: ${fadeIn} 0.5s ease-out;
 
   @media ${({ theme }) => theme.media.desktop} {
-    grid-template-columns: 1fr 1fr;
+    /* grid-template-columns: 1fr 1fr; 필요시 주석 해제 */
   }
 `;
 
 const StImageFrame = styled.div`
+  position: relative;
+  overflow: hidden;
+`;
+
+const StNextImage = styled(Image)`
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  position: relative;
-`;
-
-const StNextImage = styled(Image)`
   width: 100%;
   height: auto;
   object-fit: cover;

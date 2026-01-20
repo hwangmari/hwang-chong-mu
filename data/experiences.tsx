@@ -1,11 +1,12 @@
 // data/experiences.ts
+// data/experiences.ts 상단에 추가
 
 import {
   CAMPAIGN_LIST,
   DIRECT_HISTORY_DATA,
   HSP_HISTORY_DATA,
 } from "./constants";
-// 1. 리스트에 들어갈 개별 아이템 타입 (기존 CampaignItem 구조와 동일)
+/** 리스트에 들어갈 개별 아이템 타입 (기존 CampaignItem 구조와 동일) */
 export interface HistoryItem {
   id: string | number;
   date: string;
@@ -13,7 +14,15 @@ export interface HistoryItem {
   url?: string;
 }
 
-// 2. 프로젝트 아이템 리스트 정보를 담을 객체 타입 정의
+/** 이미지 아이템을 위한 인터페이스 정의 */
+export interface ProjectImage {
+  src: string; // 이미지 경로
+  width?: number; // 너비 (선택)
+  height?: number; // 높이 (선택)
+  alt?: string; // 대체 텍스트 (접근성용)
+  className?: string; // 특정 이미지에만 줄 CSS 클래스 (선택)
+}
+/** 프로젝트 아이템 리스트 정보를 담을 객체 타입 정의 */
 export interface ProjectItemListData {
   title: string; // "Campaign Archive" 처럼 버튼에 쓸 제목
   items: HistoryItem[]; // 실제 리스트 데이터 배열
@@ -38,7 +47,7 @@ export interface ExperienceData {
 
     projectItemList?: ProjectItemListData;
 
-    images?: string[];
+    images?: ProjectImage[];
   }[];
 }
 
@@ -92,9 +101,14 @@ export const experiences: ExperienceData[] = [
           "SCSS",
           "Figma",
         ],
-        images: ["/images/hanwha_hsp_2025.png"],
+        images: [
+          {
+            src: "/images/hanwha_hsp.png",
+            alt: "한화생명 HSP 상담 서비스 개편 ",
+          },
+        ],
         projectItemList: {
-          title: "HSP상담 운영 고도화",
+          title: "HSP상담 운영 및 고도화",
           description: " History",
           items: HSP_HISTORY_DATA,
         },
@@ -131,93 +145,126 @@ export const experiences: ExperienceData[] = [
     id: "kakao-ent",
     company: "카카오 엔터프라이즈",
     role: "워크개발 / 마크업개발파트",
-    period: "2020.07 - 2023.08 3년 2개월",
+    period: "2020.07 - 2023.08 (3년 2개월)",
     color: "bg-yellow-400",
     summary: [
-      "React, Svelte, Angular 등 다양한 프레임워크 기반의 대규모 서비스 구축 및 운영",
-      "카카오워크 투표/할일 등 주요 기능을 4종 OS(Win/Mac/iOS/Android) 웹뷰로 구현",
-      "CSS Variables를 활용한 다크모드 시스템 구축 및 반응형 레이아웃 최적화",
+      "React, Svelte, Angular 등 다양한 프론트엔드 프레임워크 기반의 대규모 서비스 구축 및 운영",
+      "카카오워크 내 주요 기능(투표/할일)을 4종 OS(Win/Mac/iOS/Android) 대응 웹뷰로 구현",
+      "CSS Variables 및 Atomic CSS(AdorableCSS)를 도입하여 다크모드 시스템 및 스타일 아키텍처 구축",
     ],
-    description: "",
+    description:
+      "다양한 기술 스택(React, Svelte, Angular)을 넘나들며 엔터프라이즈급 서비스의 UI/UX를 책임졌습니다.\n특히 4가지 OS 환경에 대응하는 크로스 플랫폼 웹뷰 개발을 통해, 네이티브 앱과 이질감 없는 고품질의 웹 경험을 구현하는 데 주력했습니다.",
     projects: [
       {
         title: "카카오워크 투표 (Vote)",
         period: "2023.03 - 2023.06",
         description:
-          "4종 OS(Mac, Win, iOS, Android) 네이티브 앱 내 웹뷰로 투표 기능 구현",
+          "4종 OS(Win, Mac, iOS, Android) 네이티브 앱 내 탑재되는 웹뷰 기반 투표 서비스 구축",
         tasks: [
-          "React 컴포넌트 개발 및 CSS Module(SCSS, AdorableCSS) 스타일링",
-          "공통 요소는 스타일만 분기 처리하고, 전체 레이아웃은 모바일/데스크탑을 분리하여 코드 관리 효율화",
-          "CSS Variables(:root)를 활용한 다크모드 테마 시스템 구축",
-          "TypeScript Props 상태 관리 및 스타일 제어 로직 구현",
+          "React 기반 컴포넌트 개발 및 Atomic CSS(AdorableCSS)를 활용한 스타일링 시스템 구축",
+          "OS별(Mobile/Desktop) UX 차이를 고려한 반응형 레이아웃 분기 처리 및 공통 로직 모듈화",
+          "CSS Variables(:root)를 활용한 'System/Dark/Light' 테마 스위칭 시스템 설계 및 적용",
+          "TypeScript Props 인터페이스 설계를 통한 데이터 상태 관리 및 스타일 제어 로직 구현",
         ],
         techStack: ["React", "TypeScript", "SCSS", "AdorableCSS"],
-        images: ["/images/kakao_vote.png"],
+        images: [
+          {
+            src: "/images/kakao_vote.png",
+            width: 300,
+            alt: "카카오워크 투표 ",
+          },
+        ],
       },
       {
         title: "카카오워크 할 일 (Todo)",
+        link: "https://www.kakaowork.com/about/task#tab1",
         period: "2022.08 - 2023.04",
         description:
-          "기존 네이티브 앱 서비스를 웹(PC, Mobile)으로 전환하며 사용성 및 기능 개선",
+          "기존 네이티브 앱 기능을 웹(Svelte)으로 전환(Migration)하여 유지보수 효율성 및 사용성 개선",
         tasks: [
-          "Svelte 기반 컴포넌트 개발 및 기존 네이티브 기능의 웹 마이그레이션",
-          "User Agent 분기를 통해 모바일 특화 UX와 공통 기능을 효율적으로 관리",
-          "앱 리사이징 정책에 따른 PC 앱 사이즈별 반응형 레이아웃 구현",
-          "TypeScript 및 SCSS/AdorableCSS를 활용한 정교한 스타일링",
+          "고성능 프레임워크 Svelte를 도입하여 네이티브 앱 수준의 빠른 렌더링 속도와 반응성 확보",
+          "User Agent 감지를 통한 OS별 분기 처리로 모바일/데스크탑 환경에 최적화된 UX 제공",
+          "Window Resize 이벤트에 대응하는 반응형 레이아웃 정책 수립 및 구현",
+          "복잡한 할 일 관리 상태(완료, 미완료, 수정 등)에 따른 정교한 UI 인터랙션 구현",
         ],
         techStack: ["Svelte", "TypeScript", "SCSS", "AdorableCSS"],
-        images: ["/images/kakao_todo.png", "/images/kakao_todo_m.png"],
+        images: [
+          {
+            src: "/images/kakao_todo.png",
+            alt: "카카오워크 할일 PC ",
+          },
+          {
+            src: "/images/kakao_todo_m.png",
+            width: 300,
+            alt: "카카오워크 할일 모바일 ",
+          },
+        ],
       },
       {
-        title: "카카오워크 음성채팅",
+        title: "카카오워크 음성채팅 웹뷰 구현",
         period: "2022.06 - 2022.09",
-        description: "PC 클라이언트(Mac, Win) 음성채팅 기능을 웹뷰로 구현",
+        description:
+          "PC 클라이언트(Win, Mac) 내 음성채팅 기능을 위한 고도화된 UI 개발",
         tasks: [
-          "FE 개발이 선행된 Svelte 코드 위에 디자인 입히는 작업 수행 (협업 최적화)",
-          "기능 개발자(FE)가 로직에 집중할 수 있도록 마크업 및 스타일링 전담 지원",
-          "복잡한 음성 채팅 UI의 상태별 스타일 정의",
+          "비즈니스 로직(JS)과 뷰 레이어(UI)의 효율적인 협업을 위해 마크업 및 스타일링 아키텍처 전담 설계",
+          "다자간 통화 시 발생하는 다양한 사용자 상태(발화 중, 음소거, 연결 대기 등)별 UI/UX 시나리오 구현",
+          "Svelte 기반 코드 위에서 디자인 정합성을 100% 맞추기 위한 미세 스타일 튜닝",
         ],
         techStack: ["Svelte", "SCSS", "AdorableCSS"],
-        images: ["/images/kakao_voice.png"],
+        images: [
+          {
+            src: "/images/kakao_voice.png",
+            width: 500,
+            alt: "카카오워크 음성 채팅 ",
+          },
+        ],
       },
       {
-        title: "근태 2.0 (Admin/User)",
+        title: "근태 2.0 (Attendance System)",
         period: "2021.07 - 2022.06",
         description:
-          "PC 브라우저 기반의 카카오워크 근태 관리 서비스 (Drop 프로젝트)",
+          "PC 브라우저 기반의 차세대 카카오워크 근태 관리 서비스 프로토타이핑 및 개발",
         tasks: [
-          "5개 직군(기획, UX, 디자인, 마크업, FE) 협업을 통한 아이데이션 및 우선순위 조율",
-          "빠른 테스트를 위한 데모 페이지 개발 및 사이드 이슈 사전 식별",
-          "Svelte, Vite 기반의 빠른 개발 환경 구축 및 사용자 화면 개발 주도",
+          "5개 직군(기획, UX, 디자인, 마크업, FE)이 참여하는 Agile 조직에서 개발 및 아이데이션 주도",
+          "Vite + Svelte 도입으로 빌드 속도 최적화 및 빠른 개발 사이클(DX) 환경 구축",
+          "복잡한 근태 정책을 직관적으로 보여주는 대시보드 UI 및 관리자(Admin) 페이지 개발",
+          "초기 데모 페이지의 신속한 개발을 통해 기획 단계에서의 리스크 사전 식별 및 방향성 수립",
         ],
         techStack: ["Svelte", "TypeScript", "Vite"],
         images: [
-          "/images/kakao_attendance_1.png",
-          "/images/kakao_attendance_2.png",
+          {
+            src: "/images/kakao_attendance_1.png",
+            alt: "카카오워크 근태 ",
+          },
+          {
+            src: "/images/kakao_attendance_2.png",
+            alt: "카카오워크 근태 ",
+          },
         ],
       },
       {
-        title: "카카오 i 엔터프라이즈 빌더",
+        title: "카카오 i 엔터프라이즈 빌더 2.0",
         period: "2021.02 - 2023.03",
-        description: "PC 브라우저 기반의 봇 빌더 서비스 리팩토링 및 고도화",
+        description:
+          "PC 기반 챗봇 빌더 서비스의 프레임워크 마이그레이션 및 리팩토링",
         tasks: [
-          "Angular → React 프레임워크 마이그레이션 수행 (홀딩 기간 활용)",
-          "AdorableCSS 첫 도입 및 리팩토링을 통한 스타일 코드 관리 최적화",
-          "복잡한 빌더 UI의 인터랙션 및 상태 관리 로직 구현",
+          "Legacy(Angular)에서 Modern(React) 스택으로의 점진적 마이그레이션 수행",
+          "Atomic CSS 방법론(AdorableCSS) 첫 도입으로 방대한 스타일 코드의 중복 제거 및 경량화",
+          "복잡한 봇 시나리오 설계를 위한 'Drag & Drop' 인터랙션 및 상태 관리 UI 구현",
         ],
         techStack: ["React", "TypeScript", "Vite", "SCSS"],
         link: "https://kakaoenterprise.gitbook.io/kakao-i-builder/",
       },
       {
-        title: "서비스 운영 및 최적화 (Others)",
+        title: "전사 서비스 운영 및 품질 고도화",
         period: "2020.07 - 2021.01",
         description:
-          "카카오 엔터프라이즈의 다양한 서비스 유지보수 및 품질 개선",
+          "카카오 엔터프라이즈 주요 서비스의 UI 유지보수 및 성능/웹 접근성 개선",
         tasks: [
-          "카카오엔터프라이즈 영입 사이트: 전체 마크업 교체 및 반응형 대응으로 퀄리티 향상",
-          "이메일 템플릿: PC/Mobile 가독성을 고려한 반응형 제작 및 다크모드 대응",
-          "캐스퍼 어시스턴트: 정적 페이지 내 애니메이션 적용 및 이미지 레이지 로드로 속도 개선",
-          "카카오 i 어드민: Angular + Material UI 기반 디자인 수정",
+          "카카오엔터프라이즈 공식 사이트: 시멘틱 마크업 전면 교체 및 반응형 UI 최적화",
+          "이메일 템플릿 시스템: 다크모드 대응 및 크로스 클라이언트(Outlook, Gmail 등) 호환성 확보",
+          "캐스퍼 어시스턴트: 이미지 Lazy Loading 및 CSS 애니메이션 최적화로 렌더링 성능 개선",
+          "카카오 i 어드민: Angular Material 기반의 UI 커스터마이징 및 디자인 고도화",
         ],
         techStack: ["HTML/CSS", "Angular", "Responsive"],
       },
@@ -227,42 +274,69 @@ export const experiences: ExperienceData[] = [
     id: "musinsa",
     company: "29CM(무신사)",
     role: "Platform / Cell FE",
-    period: "2017.02 - 2020.07 3년 6개월",
+    period: "2017.02 - 2020.07 (3년 6개월)",
     color: "bg-black",
     summary: [
-      "AngularJS 기반의 29CM 사이트 전면 개편 및 유지보수 전담",
-      "삼성화재 등 대규모 트래픽 캠페인 페이지 인터랙션 개발 (앤어워드 2회 수상)",
-      "기획 부재 상황을 주도적인 UI/UX 제안으로 해결하며 협업 주도",
+      "AngularJS 기반 29CM 웹 서비스 전면 리뉴얼 및 PC/Mobile 통합 운영 리딩",
+      "삼성화재, 렉서스 등 대규모 트래픽 미디어 캠페인의 인터랙션 개발 주도 (앤어워드 2회 수상)",
+      "기획 공백을 메우는 주도적인 UI/UX 제안과 공통 모듈화로 개발 생산성 및 협업 효율 증대",
     ],
-    description: "",
+    description:
+      "마크업과 프론트엔드의 경계에서 최상의 UI 퀄리티를 구현했습니다.\n서비스 전면 개편부터 운영까지 전 과정을 주도하였으며, 특히 고도화된 인터랙션이 필요한 브랜드 캠페인을 성공적으로 이끌며 기술이 브랜딩에 기여하는 경험을 쌓았습니다.",
     projects: [
       {
-        title: "29CM 사이트 개편 및 운영",
-        period: "2017.05. ~ 2018.02. 오픈 /  ~ 유지보수",
+        title: "29CM 사이트 전면 개편 및 통합 운영",
+        link: "https://www.29cm.co.kr/",
+        period: "2017.05 ~ 2018.02 (이후 상시 운영)",
         description:
-          "Angular 기반의 PC/Mobile 원페이지 반응형 웹 구축 및 통합 유지보수",
+          "AngularJS 기반의 PC/Mobile 원페이지 반응형 웹(SPA) 구축 및 통합 유지보수 총괄",
         tasks: [
-          "AngularJS 기반 SPA(Single Page Application) 구조로 PC/Mobile 반응형 웹 구현",
-          "프론트 UI 리소스 절감을 위한 'One-Source Multi-Use' 반응형 전략 수립 및 구현",
-          "개편 오픈 이후 유지 보수 및 추가 리뉴얼 관련하여 29CM 전체 소스 관리를 맡아 전담 관리",
-          "기획/디자인 의도를 기술적으로 구현 가능한 최적의 형태로 제안하며 협업 프로세스 개선",
+          "메인, 상품상세, 장바구니, 주문서 등 커머스 핵심 영역 및 매거진/이벤트 페이지 전면 개편",
+          "OSMU(One-Source Multi-Use) 반응형 전략 수립으로 PC/Mobile 중복 개발 리소스 50% 이상 절감",
+          "SPA(Single Page Application) 구조 도입으로 페이지 전환 속도 및 사용자 경험 개선",
+          "개편 이후 29CM 전체 레거시 소스 및 신규 기능 개발에 대한 전담 관리 수행",
+          "기획/디자인 의도를 기술적으로 최적화하여 구현하는 'Tech-Design' 가이드라인 주도",
         ],
         techStack: ["AngularJS", "SCSS", "Git"],
       },
       {
-        title: "브랜드 캠페인 & 미디어 PT",
-        period: "2017.07. ~ : 단기 프로젝트성 이벤트 ",
+        title: "공통 UI 컴포넌트 패키지 'ruler' 개발",
+        period: "2017.05 ~ 상시 운영",
         description:
-          "삼성화재, 렉서스 등 주요 브랜드의 고도화된 인터랙티브 캠페인 페이지 개발 및 기술 지원",
+          "UI 일관성 유지 및 개발 생산성 향상을 위한 사내 공통 컴포넌트 라이브러리 구축",
         tasks: [
-          "브랜딩 미디어 팀의 고감도 콘텐츠를 웹 경험으로 완벽히 구현",
-          "사용자 몰입도를 극대화하여 미디어 광고 매출 증대 및 타 브랜드 제휴 확대 견인",
-          "삼성화재, 렉서스 등 브랜드별 아이덴티티를 녹여낸 스크롤 기반 스토리텔링 및 마이크로 인터랙션 구현 ",
-          "삼성화재 1차, 2차 캠페인 - 어워드 2회 수상",
-          "기존 템플릿의 제약을 넘는 '세로형 PT' 포맷을 기술적으로 정립하고, 고해상도 미디어의 렌더링 성능 최적화 및 스크롤 이벤트 튜닝 수행",
-          "한정된 플랫폼 특성 내에서 최상의 UX/Design 퀄리티를 내기 위한 기술적 해법 제공",
-          "디자인 의도를 100% 구현하기 위해 애니메이션 프로토타입을 선제작하여 제안",
-          "기획-디자인-개발 간의 시너지를 위한 기술적 가이드 주도",
+          "전사적으로 파편화된 UI 요소를 통합 관리하는 컴포넌트 패키지 'ruler' 설계 및 배포 프로세스 정립",
+          "버전 관리(Versioning) 시스템 도입으로 다수 프로젝트 간의 스타일 충돌 방지 및 유지보수 안정성 확보",
+          "반복되는 UI 코드를 모듈화/자산화하여 마크업 및 프론트엔드 작업 시간 단축에 기여",
+          "Git 기반의 중앙화된 소스 관리로 디자이너와 개발자 간의 산출물 정합성 100% 유지",
+        ],
+        techStack: ["AngularJS", "SCSS", "Git"],
+        images: [
+          {
+            src: "/images/29cm_ruler_1.png",
+            alt: "29CM 공통 컴포넌트 패키지 ruler 구조",
+          },
+          {
+            src: "/images/29cm_ruler_2.png",
+            alt: "29CM 공통 컴포넌트 패키지 ruler 구조",
+          },
+          {
+            src: "/images/29cm_ruler_3.png",
+            alt: "29CM 공통 컴포넌트 패키지 ruler 구조",
+          },
+        ],
+      },
+      {
+        title: "인터랙티브 브랜드 캠페인 & 미디어 PT",
+        period: "2017.07 ~ (프로젝트성)",
+        description:
+          "삼성화재, 렉서스 등 주요 브랜드 제휴 캠페인을 위한 고성능 인터랙션 페이지 개발",
+        tasks: [
+          "정적인 웹 경험을 넘어선 스크롤 기반 스토리텔링 및 마이크로 인터랙션(Micro-interaction) 구현",
+          "고해상도 이미지/영상 리소스의 렌더링 성능 최적화로 버벅임 없는 스크롤 경험 제공",
+          "기존 플랫폼의 제약을 뛰어넘는 '세로형 PT' 포맷을 기술적으로 정립하여 광고 매출 증대에 기여",
+          "디자인 의도의 100% 구현을 위해 애니메이션 프로토타입을 선제작하여 역제안하는 등 협업 주도",
+          "성과: 삼성화재 1차/2차 캠페인 앤어워드( &Award) 2회 수상 기여",
         ],
         techStack: [
           "HTML5",
@@ -277,28 +351,38 @@ export const experiences: ExperienceData[] = [
         },
       },
       {
-        title: "29TV (숏폼 비디오 커머스)",
-        period: "2019.09. ~ 2020.01. 오픈",
-        description: "29초 영상 큐레이션 서비스 신규 구축",
+        title: "29TV (숏폼 비디오 커머스 플랫폼)",
+        period: "2019.09 ~ 2020.01",
+        description: "29초 영상 큐레이션을 통한 신규 V-Commerce 서비스 구축",
         tasks: [
-          "PC와 모바일에 완벽 대응하는 반응형 비디오 플레이어 UI 구현",
-          "동영상 데이터 로딩 속도 최적화 및 크로스 브라우징 플레이어 대응",
-          "영상 콘텐츠 기반의 새로운 커머스 경험(V-Commerce) 구조 설계 및 개발",
+          "다양한 디바이스 환경에 대응하는 반응형 비디오 플레이어 UI/UX 개발",
+          "동영상 데이터 프리로딩(Pre-loading) 및 지연 로딩 적용으로 초기 로딩 속도 최적화",
+          "크로스 브라우징 이슈 해결을 통해 모바일 웹 및 인앱 브라우저 호환성 확보",
         ],
         techStack: ["AngularJS", "Video.js", "SCSS"],
-        images: ["/images/29cm_tv.png"],
+        images: [
+          {
+            src: "/images/29cm_tv.png",
+            alt: "29CM 숏폼 비디오 커머스 ",
+          },
+        ],
       },
       {
-        title: "컬쳐 캘린더 (Culture Calendar)",
-        period: "2019.01. ~ 2019.3. 오픈 (매달 추가 운영 진행)",
-        description: "월간 문화 콘텐츠를 소개하는 캘린더 서비스 (매월 운영)",
+        title: "월간 컬쳐 캘린더 (Culture Calendar)",
+        period: "2019.01 ~ 2019.03",
+        description: "월간 문화 콘텐츠 큐레이션 서비스 개발 및 운영",
         tasks: [
-          "기획자 부재 상황에서 주도적으로 UI 레이아웃 및 인터랙션 아이디어 제안",
-          "FE 개발자와의 긴밀한 협업을 통해 데이터 바인딩 로직과 마크업 구조 최적화",
-          "단순 정보 나열이 아닌, 사용자가 흥미를 느낄 수 있는 동적 캘린더 UI 구현",
+          "기획서가 부재한 상황에서, 주도적으로 UI 레이아웃 및 인터랙션 시나리오를 설계하여 제안",
+          "단순 정보 나열 방식을 탈피한 동적 캘린더 UI 구현으로 사용자 체류 시간 증대 유도",
+          "데이터 바인딩 로직과 마크업 구조를 분리/최적화하여 유지보수 용이성 확보",
         ],
         techStack: ["HTML", "SCSS", "JavaScript"],
-        images: ["/images/29cm_c.png"],
+        images: [
+          {
+            src: "/images/29cm_c.png",
+            alt: "29CM 캘린더 ",
+          },
+        ],
       },
     ],
   },
@@ -306,28 +390,38 @@ export const experiences: ExperienceData[] = [
     id: "douzone",
     company: "더존 비즈온",
     role: "UI 개발팀 (전임)",
-    period: "2016.05 - 2016.12 7개월",
+    period: "2016.05 - 2016.12 (7개월)",
     color: "bg-blue-600",
     summary: [
-      "비즈니스 플랫폼 WEHAGO 신규 프로젝트의 초기 React 마크업 구조 설계",
-      "1인 마크업 개발자로서 외부 인력 가이드라인 수립 및 리딩",
-      "외부 인력 산출물의 품질 이슈 해결을 위한 핵심 모듈 전면 재개발 (Quality Assurance)",
+      "기업용 비즈니스 플랫폼 WEHAGO의 초기 React UI 아키텍처 및 마크업 표준 설계",
+      "1인 리드 개발자로서 외부 협력사/프리랜서 인력의 개발 가이드라인 수립 및 품질 관리",
+      "비즈니스 핵심 모듈의 UI 안정성 확보를 위한 코드 리팩토링 및 최적화 (Quality Assurance)",
     ],
-    description: "",
+    description:
+      "WEHAGO 플랫폼의 런칭 초기 멤버로서, 당시 생소했던 React 환경의 UI 개발 표준을 정립했습니다.\n1인 개발자라는 환경 속에서도 외부 인력을 효율적으로 리딩하여 방대한 B2B 서비스의 UI 퀄리티를 상향 평준화시켰습니다.",
     projects: [
       {
-        title: "WEHAGO 신규 프로젝트 구축",
+        title: "WEHAGO 플랫폼 초기 구축 및 표준화",
         period: "2016.05 - 2016.12",
         description:
-          "기업용 비즈니스 플랫폼 WEHAGO의 초기 UI 아키텍처 설계 및 핵심 기능 개발",
+          "초대형 B2B 플랫폼(WEHAGO)의 초기 UI 기반을 다지고 핵심 기능을 구현",
         tasks: [
-          "React 기반의 신규 프로젝트 UI/마크업 구조 설계 및 컴포넌트 개발",
-          "촉박한 일정 속 1인 개발자로서 외부 프리랜서/협력사를 위한 'UI 개발 표준 가이드라인' 제작 및 배포",
-          "외부 인력 산출물의 퀄리티 이슈를 식별하고, 안정성을 위해 핵심 리스트 및 모듈 전면 재개발 (Refactoring)",
-          "방대한 B2B 서비스 모듈 구현 (회계관리, 전자세금계산서, 인사급여, 스마트A, 커뮤니케이션 등)",
+          "React 기반의 신규 프로젝트 UI 컴포넌트 구조 설계 및 마크업 표준화 (Component Architecture)",
+          "다수의 외부 프리랜서 및 협력사와의 협업을 위한 'UI 개발 컨벤션 가이드라인' 제작 및 배포",
+          "외부 산출물의 퀄리티 이슈를 해결하기 위해 리스트, 그리드 등 핵심 UI 모듈 전면 재개발(Refactoring)",
+          "복잡도가 높은 엔터프라이즈급 화면(회계관리, 전자세금계산서, 인사급여, 스마트A 등) UI 정밀 구현",
         ],
         techStack: ["React.js", "HTML5/CSS3", "SCSS", "Git"],
-        images: ["/images/douzone_1.png", "/images/douzone_2.png"],
+        images: [
+          {
+            src: "/images/douzone_1.png",
+            alt: "더존 비즈온 WEHAGO UI",
+          },
+          {
+            src: "/images/douzone_2.png",
+            alt: "더존 비즈온 WEHAGO UI",
+          },
+        ],
       },
     ],
   },
@@ -342,7 +436,8 @@ export const experiences: ExperienceData[] = [
       "IE6부터 최신 브라우저까지 완벽한 크로스 브라우징(Cross-Browsing) 구현 역량 보유",
       "웹 접근성(Web Accessibility) 준수 및 대규모 서비스 운영 프로세스 체득",
     ],
-    description: "",
+    description:
+      "첫회사인 만큼  일하는 방법을 차근차근 배울수 있었던 하이브랩. 대형 회사와 협업 또는 파견으로 운영 방식과 업무롤에 대한 이해도를 높이며 경험을 쌓았습니다. ",
     projects: [
       {
         title: "CJ오쇼핑 파견 및 운영",
@@ -356,7 +451,12 @@ export const experiences: ExperienceData[] = [
           "웹 접근성 지침을 준수하여 장애인 및 고령자도 이용 가능한 마크업 구현",
         ],
         techStack: ["HTML5", "CSS3", "jQuery", "Web Accessibility"],
-        images: ["/images/hivelab_1.png"],
+        images: [
+          {
+            src: "/images/hivelab_1.png",
+            alt: "하이브랩 CJ 파견",
+          },
+        ],
       },
       {
         title: "네이버(NAVER) 서비스 운영",
