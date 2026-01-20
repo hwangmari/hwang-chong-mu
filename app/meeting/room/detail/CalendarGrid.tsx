@@ -319,8 +319,8 @@ const StBadgeGroup = styled.div`
 `;
 
 const StCountBadge = styled.div<{ $isTypingMode: boolean }>`
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
