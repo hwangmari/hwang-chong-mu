@@ -1,8 +1,16 @@
 "use client";
 
-import styled from "styled-components";
 import Typography from "@/components/common/Typography";
 import ProjectCard from "./ProjectCard";
+import {
+  StProjectSection,
+  StSectionInner,
+  StHeaderGroup,
+  StSectionTitleWrapper,
+  StCommonStackWrapper,
+  StCoreBadge,
+  StProjectList,
+} from "./ProjectSection.styled";
 
 // ✅ 공통 핵심 스택 정의
 const CORE_STACK = ["Next.js 14", "TypeScript", "Supabase", "Vercel"];
@@ -130,75 +138,3 @@ export default function ProjectSection() {
     </StProjectSection>
   );
 }
-
-// ✨ 스타일 정의
-
-const StProjectSection = styled.section`
-  background-color: ${({ theme }) => theme.colors.gray50};
-  padding: 5rem 0;
-  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
-`;
-
-const StSectionInner = styled.div`
-  max-width: ${({ theme }) => theme.layout.maxWidth};
-  margin: 0 auto;
-  padding: 0 1.5rem;
-`;
-
-const StHeaderGroup = styled.div`
-  margin-bottom: 3rem;
-  /* 모바일에서는 세로, PC에서는 가로/세로 자유롭게 배치 */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const StSectionTitleWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-/* 공통 기술 스택 영역 스타일 */
-const StCommonStackWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 1rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-
-  .label {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: ${({ theme }) => theme.colors.gray600};
-    margin-right: 0.25rem;
-  }
-
-  .badge-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-`;
-
-/* 코어 뱃지 스타일 (일반 뱃지보다 조금 더 강조됨) */
-const StCoreBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray500};
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-`;
-
-const StProjectList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-`;
