@@ -1,15 +1,26 @@
 "use client";
 
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { useMemo } from "react";
+import Image from "next/image";
 
-// 1. description 배열 타입 추가
+// 1. 이미지 데이터 타입 정의
+export interface HistoryImage {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  className?: string;
+}
+
+// 2. 기존 인터페이스에 images 배열 추가
 export interface HistoryItem {
   id: number | string;
   date: string;
   title: string;
-  description?: string[]; // 👈 추가됨
+  description?: string[];
   url?: string;
+  images?: HistoryImage[]; // 👈 추가됨
 }
 
 interface ProjectItemListProps {
@@ -45,24 +56,44 @@ export default function ProjectItemList({
     return { years, groups };
   }, [items]);
 
-  // 렌더링 헬퍼 함수 (링크/비링크 공통 구조)
+  // 렌더링 헬퍼 함수
   const renderContent = (item: HistoryItem) => (
     <>
       <StTitleDate>
         <StDate>{item.date.slice(5)}</StDate>
-        {/* 2. 제목과 설명을 감싸는 컨테이너 (StContent) */}
         <StContent>
           <StTitle>{item.title}</StTitle>
         </StContent>
         <StArrow>{item.url ? "↗" : "-"}</StArrow>
       </StTitleDate>
 
+      {/* 설명 목록 렌더링 */}
       {item.description && item.description.length > 0 && (
         <StDescList>
           {item.description.map((desc, idx) => (
             <StDescItem key={idx}>{desc}</StDescItem>
           ))}
         </StDescList>
+      )}
+
+      {/* 3. 이미지 그리드 렌더링 로직 수정 */}
+      {item.images && item.images.length > 0 && (
+        <StImageGrid>
+          {item.images.map((img, idx) => (
+            <StImageFrame key={idx} className={img.className}>
+              <StNextImage
+                src={img.src}
+                alt={img.alt}
+                width={img.width || 500} // 기본값 설정
+                height={img.height || 600}
+                // width/height를 모를 경우 fill={true} 사용 고려
+                style={{
+                  height: "auto",
+                }}
+              />
+            </StImageFrame>
+          ))}
+        </StImageGrid>
       )}
     </>
   );
@@ -109,6 +140,18 @@ export default function ProjectItemList({
 }
 
 // --- 스타일 컴포넌트 ---
+
+// 4. 애니메이션 정의 (누락되었던 부분)
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const StContainer = styled.div`
   width: 100%;
@@ -186,7 +229,7 @@ const StItemWrapper = styled.div`
 const StDot = styled.div`
   position: absolute;
   left: -4px;
-  top: 1.2rem; /* 카드 높이 변화에 따라 위치 조정 */
+  top: 1.2rem;
   width: 6px;
   height: 6px;
   background-color: #fff;
@@ -222,6 +265,7 @@ const StLink = styled.a`
     border-color: #555;
   }
 `;
+
 const StTitleDate = styled.div`
   display: flex;
   align-items: flex-start;
@@ -273,7 +317,6 @@ const StDescItem = styled.li`
   padding-left: 10px;
   margin-bottom: 2px;
 
-  /* 불렛 포인트 커스텀 */
   &::before {
     content: "-";
     position: absolute;
@@ -287,4 +330,33 @@ const StArrow = styled.span`
   color: #ddd;
   margin-left: 0.8rem;
   margin-top: 2px;
+`;
+
+const StImageGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  animation: ${fadeIn} 0.5s ease-out;
+
+  /* 테마가 있다면 아래 주석 해제 후 사용하세요 */
+  /*
+  @media ${({ theme }) => theme?.media?.desktop || "min-width: 1024px"} {
+    grid-template-columns: 1fr 1fr;
+  }
+  */
+`;
+
+const StImageFrame = styled.div`
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+`;
+
+const StNextImage = styled(Image)`
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: block;
 `;

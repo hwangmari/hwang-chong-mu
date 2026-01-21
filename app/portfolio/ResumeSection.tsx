@@ -29,7 +29,7 @@ export default function ResumeSection() {
                       <StSkillTag key={skill} $variant="black">
                         {skill}
                       </StSkillTag>
-                    )
+                    ),
                   )}
                 </StTagList>
               </StSkillItem>
@@ -66,6 +66,7 @@ export default function ResumeSection() {
                     "Wiki",
                     "Agile",
                     "Figma",
+                    "Zeplin",
                   ].map((skill) => (
                     <StSkillTag key={skill} $variant="blue">
                       {skill}

@@ -40,12 +40,13 @@ export default function ExperienceDetail() {
           <Typography variant="caption" color="gray400">
             {data.period}
           </Typography>
-          {data.description && (
+          {data.workSummary && (
             <DescriptionWrapper>
               <Typography variant="h4" as="h4" className="mb-2">
                 Work Summary
               </Typography>
-              <Typography color="gray700">{data.description}</Typography>
+
+              <Typography color="gray700">{data.workSummary}</Typography>
             </DescriptionWrapper>
           )}
         </HeaderContent>

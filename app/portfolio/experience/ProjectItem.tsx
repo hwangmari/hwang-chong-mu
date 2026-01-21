@@ -314,6 +314,8 @@ const StNextImage = styled(Image)`
 `;
 
 const StToggleArea = styled.div`
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
+  padding-top: 1.5rem;
   margin-top: 1.5rem;
 `;
 
