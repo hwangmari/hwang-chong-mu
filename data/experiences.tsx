@@ -81,17 +81,16 @@ export const experiences: ExperienceData[] = [
         ],
       },
       {
-        title: "HSP 상담 플랫폼 마이그레이션",
-        period: "2025.01 ~ 05",
+        title: "HSP 상담 플랫폼 마이그레이션 & 고도화",
+        period: "2025.01 ~ 상시운영",
         description:
-          "기존 레거시 상담 시스템을 Next.js 기반의 CSR 환경으로 전면 마이그레이션",
+          "기존 레거시 상담 시스템을 Next.js 기반으로 전면 개편하고, 이후 D2F 및 전자명함 등 신규 비즈니스 기능을 지속적으로 확장",
         tasks: [
           "SSR → CSR(Next.js) 전환 및 React-Query 도입으로 비동기 상태 관리 최적화",
-          "FP 리스트 호출 시점 최적화(지역 선택 시 호출)로 불필요한 트래픽 감소",
-          "외부 유입(이벤트 배너, GA) 트래킹 로직 재설계 및 파라미터 처리",
-          "기획서 부재 상황에서 역으로 API 흐름과 UI/UX를 설계하여 개발 주도",
-          "구두로 전해지던 히스토리를 Figma 문서화 (API 흐름도, 에러 케이스, 실패 대응 매뉴얼)",
-          "운영 중단 없는 2단계 순차적 오픈 전략 수립 및 성공",
+          "기획서 부재 상황에서 역으로 API 흐름과 UI/UX를 설계하여 개발 주도 및 Figma 문서화",
+          "FP 리스트 호출 최적화(Lazy Loading) 및 외부 유입 트래킹 로직 재설계",
+          "운영 중단 없는 2단계 순차적 오픈 전략 수립 및 성공적 런칭 (3월)",
+          "오픈 이후 전자명함, D2F 연계 등 신규 비즈니스 요구사항을 애자일하게 반영하여 플랫폼 고도화",
         ],
         techStack: [
           "Next.js",
@@ -108,22 +107,24 @@ export const experiences: ExperienceData[] = [
           },
         ],
         projectItemList: {
-          title: "HSP상담 운영 및 고도화",
-          description: " History",
+          title: "HSP상담 구축 및 운영 히스토리",
+          description: "Development History",
           items: HSP_HISTORY_DATA,
         },
       },
-
       {
-        title: "다이렉트 웹 & 백오피스",
+        title: "다이렉트 웹 & 백오피스 운영",
         period: "2023.08 ~ 2024.12",
         description:
-          "보험 상품 가입을 위한 다이렉트 웹 서비스 및 내부 운영을 위한 백오피스 시스템 개발",
+          "보험 상품 가입을 위한 대고객 다이렉트 웹 서비스 및 내부 운영 효율화를 위한 백오피스 시스템 개발",
         tasks: [
-          "React 기반의 컴포넌트 개발 및 유지보수",
-          "백오피스 내 상품 관리 및 운영 효율화를 위한 기능 개발",
-          "디자인 시스템 가이드 준수 및 공통 컴포넌트화",
+          "React 기반의 대고객 서비스 컴포넌트 개발 및 유지보수",
+          "신규 서비스(AI 상담, 보장분석)의 UI 마크업 및 인터랙션 로직 구현",
+          "파편화되어 있던 다이렉트 웹과 온슈어 상품 페이지 간의 '공통 레이아웃 가이드'를 주도적으로 제안 및 정립하여 중복 개발 리소스 최소화",
+          "공용 Footer 및 약관 페이지를 적응형에서 '반응형'으로 리팩토링하여 유지보수 효율 증대",
+          "백오피스 기능 고도화 프론트엔드 개발",
         ],
+
         techStack: [
           "Next.js",
           "React",
@@ -133,8 +134,8 @@ export const experiences: ExperienceData[] = [
           "Figma",
         ],
         projectItemList: {
-          title: "다이렉트 웹 운영 및 신규 서비스 ",
-          description: " History",
+          title: "다이렉트 웹 운영 및 신규 서비스 상세",
+          description: "Project History",
           items: DIRECT_HISTORY_DATA,
         },
       },

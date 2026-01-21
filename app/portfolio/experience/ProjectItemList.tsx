@@ -197,7 +197,7 @@ const StDot = styled.div`
 `;
 
 const cardStyles = `
-  padding: 1rem;
+  padding: .9rem;
   background-color: #fff;
   border: 1px solid #eee;
   border-radius: 8px;
