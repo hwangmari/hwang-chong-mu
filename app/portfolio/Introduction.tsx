@@ -32,7 +32,6 @@ export default function Introduction() {
 }
 
 // ✨ 스타일 정의
-
 const StIntroSection = styled.section`
   max-width: 40rem;
   display: flex;

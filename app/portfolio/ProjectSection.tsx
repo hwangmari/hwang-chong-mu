@@ -39,33 +39,53 @@ export default function ProjectSection() {
         </StHeaderGroup>
 
         <StProjectList>
-          {/* 1. 약속 잡기 프로젝트 */}
           <ProjectCard
-            title="황총무의 약속 잡기 (Hwang's Planner)"
-            category="Service"
+            title="황총무의 약속 잡기 "
             period="2025.12.01 - 진행 중 (1인 개발)"
             linkUrl="/meeting"
             description={
               <>
                 단톡방의 비효율적인 일정 조율 문제를 <b>&quot;소거법&quot;</b>
-                으로 해결한 스케줄러입니다. 모두가 되는 날을 취합하는 대신,{" "}
+                으로 해결한 스케줄러입니다. <br />
+                모두가 되는 날을 취합하는 대신,{" "}
                 <b>&quot;안 되는 날&quot;을 먼저 지우는 역발상 UX</b>를 통해
                 약속 확정 시간을 획기적으로 단축시켰습니다.
               </>
             }
             details={{
               problem:
-                "다수 인원의 일정이 파편화되어 교집합(공통일)을 찾기 어렵고, 의사소통 비용이 과다하게 발생.",
+                "N명의 일정이 파편화된 단톡방에서 '교집합'을 찾기 위해 발생하는 불필요한 의사소통 비용과 인지적 피로감을 해소하고자 기획했습니다.",
               solution:
-                "참여자들의 '불가능한 날짜'를 우선 제거하여 최적의 합의점을 빠르게 도출하는 소거 로직(Negative Selection) 적용.",
-              tech: "date-fns를 활용한 3주치 동적 캘린더 생성 알고리즘 구현 및 메타태그 최적화(SEO)를 통한 검색 유입 확보.",
+                "모두가 되는 날을 취합하는 기존 방식 대신, '안 되는 날'을 우선 소거하는 역발상(Negative Selection) 로직을 설계하여 의사결정 시간을 획기적으로 단축했습니다.",
+              tech: "date-fns 기반의 배열 연산 최적화로 즉각적인 반응성을 확보하고, Next-SEO를 도입해 URL 공유 시점의 UX(미리보기)까지 세심하게 고려했습니다.",
             }}
+            // ✅ 추가: 로직 흐름 시각화 데이터
+            logicSteps={[]}
+            // ✅ 추가: 개발 히스토리 데이터
+            historyLogs={[
+              {
+                ver: "v1.2",
+                date: "26.01",
+                content: "Next-SEO 적용 및 카카오톡 공유 프리뷰(OG Tag) 최적화",
+              },
+              {
+                ver: "v1.1",
+                date: "25.12",
+                content:
+                  "date-fns 연산 로직 Memoization으로 렌더링 성능 30% 개선",
+              },
+              {
+                ver: "v1.0",
+                date: "25.12",
+                content:
+                  "서비스 런칭 및 소거법(Negative Selection) 알고리즘 구현",
+              },
+            ]}
           />
 
           {/* 2. 습관 관리 프로젝트 */}
           <ProjectCard
-            title="황총무의 습관 관리 (Hwang's Habit Tracker)"
-            category="Service"
+            title="황총무의 습관 관리 "
             period="2025.12.22 - 진행 중 (1인 개발)"
             linkUrl="/habit"
             description={
@@ -87,8 +107,7 @@ export default function ProjectSection() {
 
           {/* 3. N빵 계산기 프로젝트 */}
           <ProjectCard
-            title="황총무의 N빵 계산기 (Hwang's Expense Splitter)"
-            category="Service"
+            title="황총무의 N빵 계산기 "
             period="2025.12.24 - 진행 중 (1인 개발)"
             linkUrl="/calc"
             description={
@@ -112,8 +131,7 @@ export default function ProjectSection() {
           />
           {/* 4. 게임방 프로젝트 */}
           <ProjectCard
-            title="황총무 게임방 (Hwang's Game Room)"
-            category="Toy Project"
+            title="황총무 게임방"
             period="2025.12 - 진행 중 (1인 개발)"
             linkUrl="/game"
             description={

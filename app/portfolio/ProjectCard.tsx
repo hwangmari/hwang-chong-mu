@@ -4,10 +4,10 @@ import Typography from "@/components/common/Typography";
 import Link from "next/link";
 import { ReactNode } from "react";
 import styled from "styled-components";
+import LogicFlowChart, { DevLog } from "./ProjectVisuals";
 
 interface ProjectCardProps {
   title: string;
-  category: string;
   period: string;
   linkUrl: string;
   description: ReactNode;
@@ -17,16 +17,20 @@ interface ProjectCardProps {
     solution: string;
     tech: string;
   };
+  logicSteps?: string[];
+  edgeCase?: { condition: string; result: string };
+  historyLogs?: { ver: string; date: string; content: string }[];
 }
 
 export default function ProjectCard({
   title,
-  category,
   period,
   linkUrl,
   description,
   techStack,
   details,
+  logicSteps,
+  historyLogs,
 }: ProjectCardProps) {
   return (
     <StCardContainer>
@@ -38,8 +42,6 @@ export default function ProjectCard({
             <Typography variant="h3" as="h3">
               {title}
             </Typography>
-            {/* Styled Component: StCategoryBadge */}
-            <StCategoryBadge>{category}</StCategoryBadge>
           </StTitleRow>
           <Typography variant="caption" color="gray500">
             {period}
@@ -69,15 +71,21 @@ export default function ProjectCard({
       {/* 상세 내용 (Problem / Solution / Tech) */}
       <StDetailsBox>
         <StDetailRow>
-          <StDetailLabel>Problem:</StDetailLabel> {details.problem}
+          <StDetailLabel>기획 배경:</StDetailLabel> {details.problem}
         </StDetailRow>
         <StDetailRow>
-          <StDetailLabel>Solution:</StDetailLabel> {details.solution}
+          <StDetailLabel>해결 전략:</StDetailLabel> {details.solution}
         </StDetailRow>
         <StDetailRow>
-          <StDetailLabel>Tech:</StDetailLabel> {details.tech}
+          <StDetailLabel>기술 구현:</StDetailLabel> {details.tech}
         </StDetailRow>
       </StDetailsBox>
+
+      {/* ✅ 로직 흐름도 (데이터가 있을 때만 렌더링) */}
+      {logicSteps && <LogicFlowChart />}
+
+      {/* ✅ 업데이트 히스토리 (데이터가 있을 때만 렌더링) */}
+      {historyLogs && <DevLog logs={historyLogs} />}
     </StCardContainer>
   );
 }
@@ -124,15 +132,6 @@ const StTitleRow = styled.div`
   margin-bottom: 0.25rem;
 `;
 
-const StCategoryBadge = styled.span`
-  background-color: ${({ theme }) => theme.colors.green100};
-  color: ${({ theme }) => theme.colors.green600};
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-`;
-
 const StServiceLink = styled(Link)`
   padding: 0.5rem 1.25rem;
   background-color: ${({ theme }) => theme.colors.gray900};
@@ -173,25 +172,33 @@ const StTechTag = styled.span`
   font-weight: 500;
   border-radius: 0.5rem;
 `;
-
 const StDetailsBox = styled.div`
-  background-color: ${({ theme }) => theme.colors.blue50};
+  background-color: ${({ theme }) => theme.colors.gray50 || "#F8F9FA"};
+
+  border: 1px solid ${({ theme }) => theme.colors.gray200 || "#E9ECEF"};
+
   padding: 1.25rem;
   border-radius: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.blue100};
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.gray700};
+
+  color: ${({ theme }) => theme.colors.gray600 || "#495057"};
+
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 `;
 
 const StDetailRow = styled.p`
-  line-height: 1.5;
+  line-height: 1.6;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
 `;
 
 const StDetailLabel = styled.b`
-  color: ${({ theme }) => theme.colors.blue600};
+  color: ${({ theme }) => theme.colors.gray800 || "#343A40"};
   font-weight: 700;
-  margin-right: 0.25rem;
+  min-width: 50px;
+  flex-shrink: 0;
 `;
