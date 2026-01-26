@@ -105,7 +105,6 @@ export default function Home() {
 // ✨ 스타일 정의
 
 const StMainContainer = styled.main`
-  min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.gray50};
   display: flex;
   flex-direction: column;
