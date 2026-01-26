@@ -71,3 +71,13 @@ export const StFlexBox = styled.div`
     }
   }
 `;
+
+export const StLoadingWrapper = styled.div`
+  min-height: 50vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #9ca3af;
+  font-weight: 600;
+`;

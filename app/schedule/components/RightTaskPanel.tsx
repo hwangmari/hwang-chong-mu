@@ -144,6 +144,7 @@ export default function RightTaskPanel({
       console.error(e);
     }
   };
+
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
     const updatedSchedules = localSchedules.map((svc) => {
       if (svc.id !== svcId) return svc;
@@ -157,13 +158,11 @@ export default function RightTaskPanel({
     setLocalSchedules(updatedSchedules);
     if (onUpdateAll) onUpdateAll(updatedSchedules);
     try {
-      // API에도 memo가 저장되도록 services/schedule.ts가 업데이트 되어 있어야 함
       await API.updateTask(updatedTask.id, {
         title: updatedTask.title,
         startDate: updatedTask.startDate,
         endDate: updatedTask.endDate,
-        // @ts-expect-error: API 타입 업데이트 필요 시 무시
-        memo: updatedTask.memo,
+        memo: updatedTask.memo, // 👈 ✨ 이 부분이 꼭 있어야 함!
       });
     } catch (e) {
       console.error(e);

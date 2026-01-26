@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 // ✨ [수정] fetchBoards import
 import { fetchBoards } from "@/services/schedule";
+import { StLoadingWrapper } from "@/components/styled/layout.styled";
 
 // 보드 타입 정의 (간단하게)
 type ScheduleBoard = {
@@ -199,13 +200,4 @@ const StEmptyCard = styled.div`
     font-weight: 600;
     text-decoration: underline;
   }
-`;
-const StLoadingWrapper = styled.div`
-  min-height: 50vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  color: #9ca3af;
-  font-weight: 600;
 `;

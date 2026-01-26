@@ -9,6 +9,7 @@ const mapTaskFromDB = (task: any): TaskPhase => ({
   title: task.title,
   startDate: new Date(task.start_date),
   endDate: new Date(task.end_date),
+  memo: task.memo || "",
 });
 
 const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
@@ -127,18 +128,15 @@ export const deleteService = async (id: string) => {
   if (error) throw error;
 };
 // 업무 생성
-export const createTask = async (
-  serviceId: string,
-  task: { title: string; startDate: Date; endDate: Date },
-) => {
+export const createTask = async (serviceId: string, task: any) => {
   const { data, error } = await supabase
     .from("schedule_tasks")
     .insert({
       service_id: serviceId,
       title: task.title,
-      // ✨ [수정 2] toISOString() 대신 format() 사용하여 날짜 문자열로 변환
-      start_date: format(task.startDate, "yyyy-MM-dd"),
-      end_date: format(task.endDate, "yyyy-MM-dd"),
+      start_date: task.startDate.toISOString(),
+      end_date: task.endDate.toISOString(),
+      memo: task.memo || "", // ✨ 추가
     })
     .select()
     .single();
@@ -148,20 +146,16 @@ export const createTask = async (
 };
 
 // 업무 수정
-export const updateTask = async (
-  taskId: string,
-  updates: { title?: string; startDate?: Date; endDate?: Date },
-) => {
-  // DB 컬럼명에 맞게 변환
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const updateTask = async (taskId: string, updates: any) => {
   const dbUpdates: any = {};
   if (updates.title) dbUpdates.title = updates.title;
-
-  // ✨ [수정 3] 여기도 format()으로 변경
   if (updates.startDate)
     dbUpdates.start_date = format(updates.startDate, "yyyy-MM-dd");
   if (updates.endDate)
     dbUpdates.end_date = format(updates.endDate, "yyyy-MM-dd");
+
+  // ✨ [중요] 메모 업데이트 로직 추가
+  if (updates.memo !== undefined) dbUpdates.memo = updates.memo;
 
   const { data, error } = await supabase
     .from("schedule_tasks")

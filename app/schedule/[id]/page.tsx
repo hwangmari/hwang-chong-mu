@@ -9,6 +9,10 @@ import LeftCalendar from "../components/LeftCalendar";
 import RightTaskPanel from "../components/RightTaskPanel";
 import * as API from "@/services/schedule";
 import { ServiceSchedule } from "@/types/work-schedule";
+import {
+  StContainer,
+  StLoadingWrapper,
+} from "@/components/styled/layout.styled";
 
 export default function ScheduleDetailPage() {
   const params = useParams();
@@ -73,20 +77,37 @@ export default function ScheduleDetailPage() {
       loadData();
     }
   };
-
-  if (loading) return <div>로딩 중...</div>;
-
+  if (loading) {
+    return (
+      <StContainer>
+        <StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>
+      </StContainer>
+    );
+  }
   return (
     <StFixedContainer>
       <StTopBar>
         <div className="left-group">
-          <Link href="/schedule" className="back-btn">
-            ← 목록
+          <Link href="/schedule" className="back-link">
+            <svg
+              width="24"
+              height="2240"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 19L8 12L15 5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </Link>
           {/* 보드 제목 표시 */}
           <h1 className="page-title">{boardInfo?.title || "로딩 중..."}</h1>
         </div>
-        {/* ... (컨트롤 바 동일) ... */}
       </StTopBar>
 
       <StContentWrapper>
@@ -139,16 +160,26 @@ const StTopBar = styled.header`
     display: flex;
     align-items: center;
     gap: 1rem;
-    .back-btn {
-      font-size: 0.9rem;
+    .back-link {
+      /* ✨ [수정] 아이콘 + 텍스트 정렬 */
+      display: inline-flex;
+      align-items: center;
+      gap: 4px; /* 아이콘과 텍스트 사이 간격 */
+
+      font-size: 1.1rem;
       color: #6b7280;
       text-decoration: none;
       font-weight: 500;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      transition: color 0.2s;
+
       &:hover {
-        background-color: #f3f4f6;
-        color: #111827;
+        color: #111827; /* 호버 시 진한 검정색 */
+        text-decoration: none; /* 밑줄 제거 (깔끔하게) */
+      }
+
+      svg {
+        display: block;
+        margin-top: -1px; /* 시각적 중앙 보정 */
       }
     }
     .page-title {
@@ -184,7 +215,6 @@ const StContentWrapper = styled.div`
 `;
 const StLeftSection = styled.div`
   flex: 3;
-  padding: 1.5rem;
   overflow-y: hidden;
   display: flex;
   flex-direction: column;

@@ -150,8 +150,7 @@ const StCalendarHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-
+  padding: 1.5rem 1.5rem 0;
   .nav-group {
     display: flex;
     align-items: center;
@@ -214,7 +213,7 @@ const StViewToggle = styled.div`
 const StScrollArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 0 1.5rem 1.5rem;
 
   /* 스크롤바 커스텀 */
   &::-webkit-scrollbar {
