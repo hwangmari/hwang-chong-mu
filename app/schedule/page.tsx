@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-// ✨ [수정] fetchBoards import
-import { fetchBoards } from "@/services/schedule";
+import { fetchBoards, updateBoard, deleteBoard } from "@/services/schedule";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
+import ServiceCard from "./components/ServiceCard";
+// ✨ 분리된 컴포넌트 import
 
-// 보드 타입 정의 (간단하게)
 type ScheduleBoard = {
   id: string;
   title: string;
@@ -21,19 +21,57 @@ export default function ScheduleListPage() {
   const [boards, setBoards] = useState<ScheduleBoard[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 현재 편집 중인 카드 ID (하나만 편집 가능하도록)
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      // ✨ [수정] 보드 목록 가져오기
       const data = await fetchBoards();
       setBoards(data);
     } catch (e) {
       console.error("Failed to load boards", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- 핸들러 (상태 관리 & API 호출) ---
+
+  const handleUpdate = async (
+    boardId: string,
+    title: string,
+    description: string,
+  ) => {
+    try {
+      await updateBoard(boardId, { title, description });
+
+      setBoards((prev) =>
+        prev.map((b) => (b.id === boardId ? { ...b, title, description } : b)),
+      );
+      setEditingId(null); // 편집 종료
+    } catch (error) {
+      console.error(error);
+      alert("수정 실패");
+    }
+  };
+
+  const handleDelete = async (boardId: string) => {
+    if (
+      !confirm(
+        "정말 이 보드를 삭제하시겠습니까?\n포함된 모든 일정이 삭제됩니다.",
+      )
+    )
+      return;
+    try {
+      await deleteBoard(boardId);
+      setBoards((prev) => prev.filter((b) => b.id !== boardId));
+    } catch (error) {
+      console.error(error);
+      alert("삭제 실패");
     }
   };
 
@@ -59,20 +97,16 @@ export default function ScheduleListPage() {
 
       <StGrid>
         {boards.map((board) => (
-          <StServiceCard
+          <ServiceCard
             key={board.id}
-            $color="#111827" // 보드는 기본 검정색 테마
-            onClick={() => router.push(`/schedule/${board.id}`)}
-          >
-            <div className="card-header">
-              <StColorDot $color="#3b82f6" />
-              <h3>{board.title}</h3>
-            </div>
-            <p className="desc">{board.description || "설명 없음"}</p>
-            <div className="footer">
-              <span>입장하기 →</span>
-            </div>
-          </StServiceCard>
+            board={board}
+            isEditing={editingId === board.id}
+            onEnter={() => router.push(`/schedule/${board.id}`)}
+            onStartEdit={() => setEditingId(board.id)}
+            onCancelEdit={() => setEditingId(null)}
+            onSave={handleUpdate}
+            onDelete={handleDelete}
+          />
         ))}
 
         {boards.length === 0 && (
@@ -86,7 +120,8 @@ export default function ScheduleListPage() {
   );
 }
 
-// ... 스타일 코드는 그대로 두셔도 됩니다 ...
+// --- 스타일 (StServiceCard 등은 삭제됨) ---
+
 const StContainer = styled.div`
   max-width: 1000px;
   margin: 0 auto;
@@ -130,60 +165,6 @@ const StGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
-`;
-const StServiceCard = styled.div<{ $color: string }>`
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  &:hover {
-    border-color: ${({ $color }) => $color};
-    transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    h3 {
-      color: ${({ $color }) => $color};
-    }
-  }
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0.75rem;
-    h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #1f2937;
-      transition: color 0.2s;
-    }
-  }
-  .desc {
-    color: #4b5563;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 2rem;
-    min-height: 2.7rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .footer {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 0.75rem;
-    color: #9ca3af;
-  }
-`;
-const StColorDot = styled.div<{ $color: string }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: ${({ $color }) => $color};
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 `;
 const StEmptyCard = styled.div`
   display: flex;

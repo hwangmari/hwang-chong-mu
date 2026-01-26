@@ -185,3 +185,29 @@ export const fetchBoards = async () => {
   if (error) throw error;
   return data; // { id, title, description, ... } []
 };
+
+// [NEW] 보드 수정 (제목, 설명)
+export const updateBoard = async (
+  boardId: string,
+  updates: { title?: string; description?: string },
+) => {
+  const { data, error } = await supabase
+    .from("schedule_boards")
+    .update(updates)
+    .eq("id", boardId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// [NEW] 보드 삭제 (선택 사항)
+export const deleteBoard = async (boardId: string) => {
+  const { error } = await supabase
+    .from("schedule_boards")
+    .delete()
+    .eq("id", boardId);
+
+  if (error) throw error;
+};

@@ -372,6 +372,7 @@ const StCardHeader = styled.div<{ $color: string }>`
   justify-content: space-between;
   align-items: center;
   min-height: 52px;
+  border-radius: 0 12px 0 0;
   .header-left {
     flex: 1;
     margin-right: 10px;
