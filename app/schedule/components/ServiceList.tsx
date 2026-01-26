@@ -1,17 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import styled, { css } from "styled-components";
 import { isBefore } from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import TaskRow from "./TaskRow";
 
+// ✨ [NEW] 추천 컬러 팔레트 정의
+const PRESET_COLORS = [
+  "#FF6B6B", // Red
+  "#FFA94D", // Orange
+  "#FFD43B", // Yellow
+  "#20C997", // Teal
+  "#339AF0", // Blue
+  "#5C7CFA", // Indigo
+  "#845EF7", // Violet
+  "#868E96", // Gray
+];
+
 interface ServiceListProps {
   schedules: ServiceSchedule[];
-
-  // ✨ [핵심 수정] 복잡한 Ref 타입 에러 방지를 위해 any 허용
-  // (React.RefObject<HTMLDivElement> 등과 null 체크 충돌 해결)
-  scrollAreaRef: any;
-
+  scrollAreaRef: any; // Ref 타입 호환성 문제 방지
   collapsedIds: Set<string>;
   highlightId: string | null;
   isEditing: boolean;
@@ -46,10 +54,30 @@ export default function ServiceList({
   onAddTask,
   onAddService,
 }: ServiceListProps) {
+  // ✨ [NEW] 컬러 피커가 열린 서비스 ID 관리
+  const [activeColorPickerId, setActiveColorPickerId] = useState<string | null>(
+    null,
+  );
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 컬러 피커 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
+        setActiveColorPickerId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <StScrollArea ref={scrollAreaRef}>
       {schedules.map((service) => {
-        // 날짜 순 정렬 로직
+        // 날짜 순 정렬
         const activeTasks = service.tasks
           .filter((t) => !isBefore(t.endDate, today))
           .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
@@ -59,6 +87,7 @@ export default function ServiceList({
           .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
         const isCollapsed = collapsedIds.has(service.id);
+        const isPickerOpen = activeColorPickerId === service.id;
 
         return (
           <StCard
@@ -98,16 +127,49 @@ export default function ServiceList({
                   </h3>
                 )}
               </div>
+
               <div className="header-right">
                 {isEditing ? (
                   <>
-                    <input
-                      type="color"
-                      value={service.color}
-                      onChange={(e) =>
-                        onColorChange(service.id, e.target.value)
-                      }
-                    />
+                    {/* ✨ [NEW] 커스텀 컬러 피커 */}
+                    <div style={{ position: "relative" }}>
+                      <StColorTrigger
+                        $color={service.color}
+                        onClick={() =>
+                          setActiveColorPickerId(
+                            isPickerOpen ? null : service.id,
+                          )
+                        }
+                      />
+                      {isPickerOpen && (
+                        <StColorPopover ref={pickerRef}>
+                          <div className="preset-grid">
+                            {PRESET_COLORS.map((color) => (
+                              <StColorChip
+                                key={color}
+                                $color={color}
+                                $isSelected={service.color === color}
+                                onClick={() => {
+                                  onColorChange(service.id, color);
+                                  setActiveColorPickerId(null); // 선택 후 닫기
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <div className="custom-picker-row">
+                            <span>직접 선택:</span>
+                            <input
+                              type="color"
+                              value={service.color}
+                              onChange={(e) =>
+                                onColorChange(service.id, e.target.value)
+                              }
+                            />
+                          </div>
+                        </StColorPopover>
+                      )}
+                    </div>
+
                     <button
                       className="delete-service-btn"
                       onClick={() => onDeleteService(service.id)}
@@ -201,7 +263,6 @@ const StScrollArea = styled.div`
   flex-direction: column;
   gap: 1.5rem;
   padding: 1rem 1rem 2rem;
-
   padding-right: 8px;
   &::-webkit-scrollbar {
     width: 6px;
@@ -223,13 +284,11 @@ const StCard = styled.div<{ $isCollapsed?: boolean; $isHighlighted?: boolean }>`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   scroll-margin-top: 20px;
-
   ${({ $isCollapsed }) =>
     $isCollapsed &&
     css`
       background-color: #fcfcfc;
     `}
-
   ${({ $isHighlighted }) => $isHighlighted && highlightAnimation}
 `;
 
@@ -296,20 +355,15 @@ const StCardHeader = styled.div<{ $color: string }>`
     display: flex;
     align-items: center;
     gap: 8px;
-    input[type="color"] {
-      border: none;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      background: none;
-    }
     .delete-service-btn {
       border: none;
       background: none;
       cursor: pointer;
       opacity: 0.5;
+      font-size: 1.1rem;
       &:hover {
         opacity: 1;
+        transform: scale(1.1);
       }
     }
     .color-indicator {
@@ -318,6 +372,89 @@ const StCardHeader = styled.div<{ $color: string }>`
       border-radius: 50%;
     }
   }
+`;
+
+// ✨ [NEW] 컬러 선택 버튼 (트리거)
+const StColorTrigger = styled.div<{ $color: string }>`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color};
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #d1d5db;
+  transition: transform 0.2s;
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+// ✨ [NEW] 컬러 팝업 (Popover)
+const StColorPopover = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .custom-picker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7280;
+    padding-top: 8px;
+    border-top: 1px dashed #e5e7eb;
+
+    input[type="color"] {
+      border: none;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: none;
+      cursor: pointer;
+    }
+  }
+`;
+
+// ✨ [NEW] 컬러 칩 (동그라미)
+const StColorChip = styled.div<{ $color: string; $isSelected: boolean }>`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color};
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  /* 선택된 색상은 테두리로 표시 */
+  ${({ $isSelected }) =>
+    $isSelected &&
+    css`
+      box-shadow:
+        0 0 0 2px white,
+        0 0 0 4px #3b82f6;
+      z-index: 1;
+    `}
 `;
 
 const StCardBody = styled.div`
@@ -337,7 +474,6 @@ const StCardBody = styled.div`
     }
   }
 `;
-
 const StPastSection = styled.details`
   margin-top: 8px;
   border-top: 1px solid #e5e7eb;
