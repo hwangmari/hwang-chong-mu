@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled, { css } from "styled-components";
 import { isBefore, startOfDay, format } from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
@@ -24,6 +24,8 @@ export default function RightTaskPanel({
     useState<ServiceSchedule[]>(schedules);
   const [isEditing, setIsEditing] = useState(false);
 
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
   // 접힌 카드 ID 저장
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
@@ -38,20 +40,32 @@ export default function RightTaskPanel({
   }, [schedules]);
 
   // 캘린더 클릭 이벤트 수신
-
-  // 캘린더 클릭 이벤트 수신
   useEffect(() => {
     const handleScrollRequest = (e: CustomEvent<string>) => {
       const svcId = e.detail;
       setHighlightId(svcId);
 
-      const element = document.getElementById(`service-card-${svcId}`);
-      if (element) {
-        // ✨ [수정] 이제 독립 스크롤 영역이므로 "center"를 써도 화면 전체가 흔들리지 않습니다!
-        element.scrollIntoView({
+      const targetElement = document.getElementById(`service-card-${svcId}`);
+      const containerElement = scrollAreaRef.current;
+
+      if (targetElement && containerElement) {
+        // 1. 현재 컨테이너의 스크롤 위치와 요소들의 위치 계산
+        const containerRect = containerElement.getBoundingClientRect();
+        const targetRect = targetElement.getBoundingClientRect();
+
+        // 2. 현재 스크롤 위치(scrollTop) + (타겟의 화면상 위치 - 컨테이너의 화면상 위치)
+        //    -> 이러면 타겟이 컨테이너의 맨 꼭대기에 오게 됨
+        // 3. 중앙 정렬을 위해: - (컨테이너 높이 / 2) + (타겟 높이 / 2)
+        const scrollTo =
+          containerElement.scrollTop +
+          (targetRect.top - containerRect.top) -
+          containerElement.clientHeight / 2 +
+          targetRect.height / 2;
+
+        // 4. 계산된 위치로 부드럽게 이동 (컨테이너만 움직임!)
+        containerElement.scrollTo({
+          top: scrollTo,
           behavior: "smooth",
-          block: "center", // 다시 중앙 정렬로 변경 (확실한 이동)
-          inline: "nearest",
         });
 
         // 접혀있으면 펼치기
@@ -259,7 +273,7 @@ export default function RightTaskPanel({
       </StControlBar>
 
       {/* 2. 하단 스크롤 영역 (새로운 컴포넌트) */}
-      <StScrollArea>
+      <StScrollArea ref={scrollAreaRef}>
         {localSchedules.map((service) => {
           const activeTasks = service.tasks.filter(
             (t) => !isBefore(t.endDate, today),
