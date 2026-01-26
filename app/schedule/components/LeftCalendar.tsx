@@ -423,6 +423,7 @@ const StTaskContent = styled.div<{
   height: 100%;
   display: flex;
   align-items: center;
+
   .label {
     position: relative;
     z-index: 2;
@@ -433,19 +434,24 @@ const StTaskContent = styled.div<{
     text-overflow: ellipsis;
     padding: 0 6px;
     max-width: 100%;
+
     color: ${({ $isSingleDay, $color }) => ($isSingleDay ? "white" : $color)};
     background-color: ${({ $isSingleDay }) =>
       $isSingleDay ? "transparent" : "rgba(255,255,255,0.85)"};
     border-radius: 4px;
     margin-left: ${({ $isSingleDay }) => ($isSingleDay ? "0" : "12px")};
+
     display: flex;
     align-items: center;
     gap: 4px;
+
     .svc-name {
       opacity: 0.85;
       font-weight: 800;
     }
   }
+
+  /* ✨ [수정] 줄바꿈으로 블록 분리 */
   ${({ $isSingleDay, $color }) =>
     $isSingleDay &&
     css`
@@ -455,11 +461,15 @@ const StTaskContent = styled.div<{
       width: calc(100% - 8px);
       justify-content: center;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
       .label .svc-name {
         opacity: 0.9;
         color: rgba(255, 255, 255, 0.9);
       }
-    `} ${({ $isSingleDay, $color }) =>
+    `}
+
+  /* ✨ [수정] 줄바꿈으로 블록 분리 */
+  ${({ $isSingleDay, $color }) =>
     !$isSingleDay &&
     css`
       .dash-line {
@@ -478,6 +488,7 @@ const StTaskContent = styled.div<{
         transform: translateY(-50%);
         z-index: 1;
       }
+
       .marker {
         position: absolute;
         top: 50%;
