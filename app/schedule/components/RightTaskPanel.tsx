@@ -3,15 +3,17 @@ import { useState, useEffect, useRef } from "react";
 import styled, { css } from "styled-components";
 import { format, isBefore, startOfDay, parse, isValid } from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-import * as API from "../../../services/schedule"; // 👈 API 함수 불러오기
+import * as API from "@/services/schedule";
 
 interface Props {
+  boardId: string; // 👈 [NEW] 보드 ID 필수 추가
   schedules: ServiceSchedule[];
-  onSave?: (service: ServiceSchedule) => void; // 이제 자동 저장이므로 선택 사항
+  onSave?: (service: ServiceSchedule) => void;
   onUpdateAll?: (services: ServiceSchedule[]) => void;
 }
 
 export default function RightTaskPanel({
+  boardId, // 👈 Props에서 받기
   schedules,
   onSave,
   onUpdateAll,
@@ -28,16 +30,13 @@ export default function RightTaskPanel({
   // 1. 서비스(큰 카드) 관련 핸들러
   // =========================================================
 
-  // [색상] 변경 즉시 DB 저장
   const handleColorChange = async (svcId: string, color: string) => {
-    // 1. 로컬 상태 선반영 (UI 반응성)
     const updated = localSchedules.map((s) =>
       s.id === svcId ? { ...s, color } : s,
     );
     setLocalSchedules(updated);
     if (onUpdateAll) onUpdateAll(updated);
 
-    // 2. DB 업데이트
     try {
       await API.updateService(svcId, { color });
     } catch (e) {
@@ -45,7 +44,6 @@ export default function RightTaskPanel({
     }
   };
 
-  // [이름] 입력 중에는 로컬만 변경 (onBlur에서 DB 저장)
   const handleServiceNameChange = (svcId: string, newName: string) => {
     const updated = localSchedules.map((s) =>
       s.id === svcId ? { ...s, serviceName: newName } : s,
@@ -53,7 +51,6 @@ export default function RightTaskPanel({
     setLocalSchedules(updated);
   };
 
-  // [이름] 포커스 나갈 때 DB 저장
   const handleServiceNameBlur = async (svcId: string, name: string) => {
     try {
       await API.updateService(svcId, { name });
@@ -62,11 +59,16 @@ export default function RightTaskPanel({
     }
   };
 
-  // [추가] 새 서비스 생성
+  // ✨ [수정] 새 서비스 생성 (보드 ID 포함)
   const handleAddService = async () => {
     try {
-      // DB 생성 요청
-      const newService = await API.createService("새 프로젝트", "", "#10b981");
+      // API 호출: boardId를 첫 번째 인자로 전달해야 함!
+      const newService = await API.createService(
+        boardId, // 👈 여기서 보드 ID 전달
+        "새 프로젝트",
+        "",
+        "#10b981",
+      );
 
       const updated = [...localSchedules, newService];
       setLocalSchedules(updated);
@@ -77,7 +79,6 @@ export default function RightTaskPanel({
     }
   };
 
-  // [삭제] 서비스 삭제
   const handleDeleteService = async (svcId: string) => {
     if (
       !confirm(
@@ -98,13 +99,11 @@ export default function RightTaskPanel({
   };
 
   // =========================================================
-  // 2. 업무(Task) 관련 핸들러
+  // 2. 업무(Task) 관련 핸들러 (기존 동일)
   // =========================================================
 
-  // [추가] 업무 생성
   const handleAddTask = async (svcId: string) => {
     try {
-      // DB 생성 요청
       const newTask = await API.createTask(svcId, {
         title: "새 업무",
         startDate: new Date(),
@@ -122,9 +121,7 @@ export default function RightTaskPanel({
     }
   };
 
-  // [수정] 업무 업데이트 (TaskRow에서 호출)
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    // 1. 로컬 선반영
     const updatedSchedules = localSchedules.map((svc) => {
       if (svc.id !== svcId) return svc;
       return {
@@ -137,7 +134,6 @@ export default function RightTaskPanel({
     setLocalSchedules(updatedSchedules);
     if (onUpdateAll) onUpdateAll(updatedSchedules);
 
-    // 2. DB 업데이트
     try {
       await API.updateTask(updatedTask.id, {
         title: updatedTask.title,
@@ -149,7 +145,6 @@ export default function RightTaskPanel({
     }
   };
 
-  // [삭제] 업무 삭제
   const deleteTask = async (svcId: string, taskId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
@@ -167,6 +162,7 @@ export default function RightTaskPanel({
     }
   };
 
+  // ... 렌더링 부분은 기존과 동일하므로 생략하지 않고 전체 구조 유지 ...
   return (
     <StContainer>
       {localSchedules.map((service) => {
@@ -187,7 +183,6 @@ export default function RightTaskPanel({
                   onChange={(e) =>
                     handleServiceNameChange(service.id, e.target.value)
                   }
-                  // ✨ 포커스가 나갈 때 저장 (API 호출)
                   onBlur={(e) =>
                     handleServiceNameBlur(service.id, e.target.value)
                   }
@@ -213,7 +208,6 @@ export default function RightTaskPanel({
             </StCardHeader>
 
             <StCardBody>
-              {/* 진행 중인 업무 */}
               {activeTasks.map((task) => (
                 <TaskRow
                   key={task.id}
@@ -224,7 +218,6 @@ export default function RightTaskPanel({
                 />
               ))}
 
-              {/* 지난 업무 */}
               {pastTasks.length > 0 && (
                 <StPastSection>
                   <summary>지난 일정 보기 ({pastTasks.length})</summary>
@@ -247,7 +240,6 @@ export default function RightTaskPanel({
                 <StAddButton onClick={() => handleAddTask(service.id)}>
                   + 업무 추가
                 </StAddButton>
-                {/* 자동 저장이 되므로 저장 버튼은 '완료' 의미로 두거나 숨겨도 됩니다. */}
                 <StSaveButton onClick={() => onSave && onSave(service)}>
                   저장됨
                 </StSaveButton>

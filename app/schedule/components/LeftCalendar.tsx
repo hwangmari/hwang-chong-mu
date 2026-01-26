@@ -13,6 +13,7 @@ import {
   isSameDay,
   isBefore,
   startOfDay,
+  endOfDay, // 👈 추가
 } from "date-fns";
 import styled, { css } from "styled-components";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
@@ -32,7 +33,6 @@ export default function LeftCalendar({
   onMonthChange,
   onTaskMove,
 }: Props) {
-  // 오늘 날짜 (00:00 기준)
   const today = startOfDay(new Date());
 
   const monthStart = startOfMonth(currentDate);
@@ -119,32 +119,30 @@ export default function LeftCalendar({
               <StTaskContainer>
                 {schedules.map((service) =>
                   service.tasks.map((task) => {
-                    if (
-                      isWithinInterval(day, {
-                        start: task.startDate,
-                        end: task.endDate,
-                      })
-                    ) {
+                    // ✨ [수정] 시간 무시하고 날짜 범위로만 비교하도록 변경
+                    const isTaskVisibleOnDay = isWithinInterval(day, {
+                      start: startOfDay(task.startDate),
+                      end: endOfDay(task.endDate),
+                    });
+
+                    if (isTaskVisibleOnDay) {
                       const isStart = isSameDay(day, task.startDate);
                       const isEnd = isSameDay(day, task.endDate);
                       const isSingleDay = isSameDay(
                         task.startDate,
                         task.endDate,
                       );
-
-                      // ✨ [지난 일정 체크] 종료일이 오늘보다 이전이면 Past
                       const isPast = isBefore(task.endDate, today);
 
                       return (
                         <StTaskBarWrapper
                           key={`${service.id}-${task.id}`}
-                          // ✨ 지난 일정은 드래그 불가
                           draggable={!isPast}
                           onDragStart={(e) =>
                             !isPast && handleDragStart(e, service.id, task)
                           }
                           title={`${service.serviceName} - ${task.title}`}
-                          $isPast={isPast} // 스타일용 prop 전달
+                          $isPast={isPast}
                         >
                           <StTaskContent
                             $color={service.color}
@@ -152,6 +150,7 @@ export default function LeftCalendar({
                             $isEnd={isEnd}
                             $isSingleDay={isSingleDay}
                           >
+                            {/* 라벨 표시 */}
                             {isStart && (
                               <span className="label">
                                 <span className="svc-name">

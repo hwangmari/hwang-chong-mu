@@ -4,26 +4,33 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { ServiceSchedule } from "@/types/work-schedule";
-import { fetchServices } from "../../services/schedule";
+// ✨ [수정] fetchBoards import
+import { fetchBoards } from "@/services/schedule";
+
+// 보드 타입 정의 (간단하게)
+type ScheduleBoard = {
+  id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+};
 
 export default function ScheduleListPage() {
   const router = useRouter();
-  const [services, setServices] = useState<ServiceSchedule[]>([]);
+  const [boards, setBoards] = useState<ScheduleBoard[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 데이터 불러오기
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      const data = await fetchServices();
-      setServices(data);
+      // ✨ [수정] 보드 목록 가져오기
+      const data = await fetchBoards();
+      setBoards(data);
     } catch (e) {
-      console.error("Failed to load services", e);
+      console.error("Failed to load boards", e);
     } finally {
       setLoading(false);
     }
@@ -41,36 +48,36 @@ export default function ScheduleListPage() {
     <StContainer>
       <StHeader>
         <div className="text-group">
-          <h1>📅 일정 관리 </h1>
-          <p>관리할 프로젝트를 선택하거나 새로 만들어보세요.</p>
+          <h1>📅 내 일정관리 보드</h1>
+          <p>관리할 대시보드를 선택하거나 새로 만들어보세요.</p>
         </div>
         <Link href="/schedule/create">
-          <StCreateButton>+ 새 일정 관리 만들기</StCreateButton>
+          <StCreateButton>+ 새 일정관리 만들기</StCreateButton>
         </Link>
       </StHeader>
 
       <StGrid>
-        {services.map((svc) => (
+        {boards.map((board) => (
           <StServiceCard
-            key={svc.id}
-            $color={svc.color}
-            onClick={() => router.push(`/schedule/${svc.id}`)}
+            key={board.id}
+            $color="#111827" // 보드는 기본 검정색 테마
+            onClick={() => router.push(`/schedule/${board.id}`)}
           >
             <div className="card-header">
-              <StColorDot $color={svc.color} />
-              <h3>{svc.serviceName}</h3>
+              <StColorDot $color="#3b82f6" />
+              <h3>{board.title}</h3>
             </div>
-            <p className="desc">프로젝트 일정 관리</p>
+            <p className="desc">{board.description || "설명 없음"}</p>
             <div className="footer">
-              <span>바로가기 →</span>
+              <span>입장하기 →</span>
             </div>
           </StServiceCard>
         ))}
 
-        {services.length === 0 && (
+        {boards.length === 0 && (
           <StEmptyCard>
-            <p>아직 등록된 일정이 없습니다.</p>
-            <Link href="/schedule/create">시작하기</Link>
+            <p>아직 생성된 일정관리 보드가 없습니다.</p>
+            <Link href="/schedule/create">새로 만들기</Link>
           </StEmptyCard>
         )}
       </StGrid>
@@ -78,7 +85,7 @@ export default function ScheduleListPage() {
   );
 }
 
-// ... 스타일 코드는 기존과 동일 ...
+// ... 스타일 코드는 그대로 두셔도 됩니다 ...
 const StContainer = styled.div`
   max-width: 1000px;
   margin: 0 auto;
