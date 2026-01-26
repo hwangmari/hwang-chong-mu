@@ -224,7 +224,6 @@ const StRightSection = styled.div`
   flex: 1;
   min-width: 380px;
   max-width: 500px;
-  padding: 1.5rem;
   background-color: white;
   overflow-y: auto;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.02);

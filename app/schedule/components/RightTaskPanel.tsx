@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { isBefore, startOfDay, format } from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
-// ✨ 분리된 컴포넌트 import
 import TaskRow from "./TaskRow";
 
 interface Props {
@@ -23,6 +23,13 @@ export default function RightTaskPanel({
   const [localSchedules, setLocalSchedules] =
     useState<ServiceSchedule[]>(schedules);
   const [isEditing, setIsEditing] = useState(false);
+
+  // 접힌 카드 ID 저장
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+
+  // 하이라이트된 카드 ID
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
 
@@ -30,7 +37,58 @@ export default function RightTaskPanel({
     setLocalSchedules(schedules);
   }, [schedules]);
 
-  // --- 텍스트 복사 (메모 내용도 포함하고 싶다면 수정 가능) ---
+  // 캘린더 클릭 이벤트 수신
+
+  // 캘린더 클릭 이벤트 수신
+  useEffect(() => {
+    const handleScrollRequest = (e: CustomEvent<string>) => {
+      const svcId = e.detail;
+      setHighlightId(svcId);
+
+      const element = document.getElementById(`service-card-${svcId}`);
+      if (element) {
+        // ✨ [수정] 이제 독립 스크롤 영역이므로 "center"를 써도 화면 전체가 흔들리지 않습니다!
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center", // 다시 중앙 정렬로 변경 (확실한 이동)
+          inline: "nearest",
+        });
+
+        // 접혀있으면 펼치기
+        setCollapsedIds((prev) => {
+          const newSet = new Set(prev);
+          if (newSet.has(svcId)) {
+            newSet.delete(svcId);
+            return newSet;
+          }
+          return prev;
+        });
+
+        // 애니메이션 후 하이라이트 해제
+        setTimeout(() => setHighlightId(null), 1500);
+      }
+    };
+
+    window.addEventListener("scroll-to-service" as any, handleScrollRequest);
+    return () =>
+      window.removeEventListener(
+        "scroll-to-service" as any,
+        handleScrollRequest,
+      );
+  }, []);
+
+  // 아코디언 토글 핸들러
+  const toggleCollapse = (svcId: string) => {
+    const newSet = new Set(collapsedIds);
+    if (newSet.has(svcId)) {
+      newSet.delete(svcId);
+    } else {
+      newSet.add(svcId);
+    }
+    setCollapsedIds(newSet);
+  };
+
+  // --- 핸들러 ---
   const handleCopyText = () => {
     let text = "";
     localSchedules.forEach((svc) => {
@@ -38,7 +96,6 @@ export default function RightTaskPanel({
       svc.tasks.forEach((t) => {
         const sYear = t.startDate.getFullYear();
         const eYear = t.endDate.getFullYear();
-
         const startStr =
           sYear === currentYear
             ? format(t.startDate, "MM.dd")
@@ -58,20 +115,20 @@ export default function RightTaskPanel({
           }
           dateStr = `${startStr} ~ ${endStr}`;
         }
-
-        // 메모가 있으면 텍스트에도 포함할지 여부 (현재는 포함 안 함)
-        // const memoStr = t.memo ? ` (Note: ${t.memo})` : "";
-        text += `- ${t.title}: ${dateStr}\n`;
+        // ✨ 메모가 있으면 같이 출력
+        text += `- ${t.title}: ${dateStr}`;
+        if (t.memo && t.memo.trim() !== "") {
+          text += ` (💬 ${t.memo})`;
+        }
+        text += "\n";
       });
       text += "\n";
     });
-
-    navigator.clipboard.writeText(text).then(() => {
-      alert("일정이 복사되었습니다!");
-    });
+    navigator.clipboard
+      .writeText(text)
+      .then(() => alert("일정이 복사되었습니다! (메모 포함)"));
   };
 
-  // --- 서비스 관련 핸들러들 (기존 동일) ---
   const handleColorChange = async (svcId: string, color: string) => {
     const updated = localSchedules.map((s) =>
       s.id === svcId ? { ...s, color } : s,
@@ -125,8 +182,6 @@ export default function RightTaskPanel({
       console.error(e);
     }
   };
-
-  // --- 업무 관련 핸들러들 (하위로 전달됨) ---
   const handleAddTask = async (svcId: string) => {
     try {
       const newTask = await API.createTask(svcId, {
@@ -144,7 +199,6 @@ export default function RightTaskPanel({
       console.error(e);
     }
   };
-
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
     const updatedSchedules = localSchedules.map((svc) => {
       if (svc.id !== svcId) return svc;
@@ -162,7 +216,7 @@ export default function RightTaskPanel({
         title: updatedTask.title,
         startDate: updatedTask.startDate,
         endDate: updatedTask.endDate,
-        memo: updatedTask.memo, // 👈 ✨ 이 부분이 꼭 있어야 함!
+        memo: updatedTask.memo,
       });
     } catch (e) {
       console.error(e);
@@ -185,6 +239,7 @@ export default function RightTaskPanel({
 
   return (
     <StContainer>
+      {/* 1. 상단 고정 영역 */}
       <StControlBar>
         <div className="left">
           {!isEditing && (
@@ -203,124 +258,173 @@ export default function RightTaskPanel({
         </div>
       </StControlBar>
 
-      {localSchedules.map((service) => {
-        const activeTasks = service.tasks.filter(
-          (t) => !isBefore(t.endDate, today),
-        );
-        const pastTasks = service.tasks.filter((t) =>
-          isBefore(t.endDate, today),
-        );
+      {/* 2. 하단 스크롤 영역 (새로운 컴포넌트) */}
+      <StScrollArea>
+        {localSchedules.map((service) => {
+          const activeTasks = service.tasks.filter(
+            (t) => !isBefore(t.endDate, today),
+          );
+          const pastTasks = service.tasks.filter((t) =>
+            isBefore(t.endDate, today),
+          );
+          const isCollapsed = collapsedIds.has(service.id);
 
-        return (
-          <StCard key={service.id}>
-            <StCardHeader $color={service.color}>
-              <div className="header-left">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={service.serviceName}
-                    onChange={(e) =>
-                      handleServiceNameChange(service.id, e.target.value)
-                    }
-                    onBlur={(e) =>
-                      handleServiceNameBlur(service.id, e.target.value)
-                    }
-                    className="service-title-input"
-                    placeholder="프로젝트명"
-                  />
-                ) : (
-                  <h3 className="service-title-text">{service.serviceName}</h3>
-                )}
-              </div>
-              <div className="header-right">
-                {isEditing ? (
-                  <>
+          return (
+            <StCard
+              key={service.id}
+              id={`service-card-${service.id}`}
+              $isCollapsed={isCollapsed}
+              $isHighlighted={highlightId === service.id}
+            >
+              <StCardHeader $color={service.color}>
+                <div className="header-left">
+                  <button
+                    className={`accordion-btn ${isCollapsed ? "collapsed" : ""}`}
+                    onClick={() => toggleCollapse(service.id)}
+                  >
+                    ▼
+                  </button>
+
+                  {isEditing ? (
                     <input
-                      type="color"
-                      value={service.color}
+                      type="text"
+                      value={service.serviceName}
                       onChange={(e) =>
-                        handleColorChange(service.id, e.target.value)
+                        handleServiceNameChange(service.id, e.target.value)
                       }
+                      onBlur={(e) =>
+                        handleServiceNameBlur(service.id, e.target.value)
+                      }
+                      className="service-title-input"
+                      placeholder="프로젝트명"
                     />
-                    <button
-                      className="delete-service-btn"
-                      onClick={() => handleDeleteService(service.id)}
+                  ) : (
+                    <h3
+                      className="service-title-text"
+                      onClick={() => toggleCollapse(service.id)}
                     >
-                      🗑️
-                    </button>
-                  </>
-                ) : (
-                  <div
-                    className="color-indicator"
-                    style={{ backgroundColor: service.color }}
-                  />
-                )}
-              </div>
-            </StCardHeader>
-
-            <StCardBody>
-              {/* ✨ 분리된 TaskRow 사용 */}
-              {activeTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  serviceId={service.id}
-                  onUpdate={updateTask}
-                  onDelete={deleteTask}
-                  isReadOnly={!isEditing}
-                />
-              ))}
-              {pastTasks.length > 0 && (
-                <StPastSection>
-                  <summary>지난 일정 보기 ({pastTasks.length})</summary>
-                  <div className="past-list">
-                    {pastTasks.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        serviceId={service.id}
-                        onUpdate={updateTask}
-                        onDelete={deleteTask}
-                        isReadOnly={true}
+                      {service.serviceName}
+                    </h3>
+                  )}
+                </div>
+                <div className="header-right">
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="color"
+                        value={service.color}
+                        onChange={(e) =>
+                          handleColorChange(service.id, e.target.value)
+                        }
                       />
-                    ))}
-                  </div>
-                </StPastSection>
-              )}
-              {isEditing && (
-                <StFooter>
-                  <StAddButton onClick={() => handleAddTask(service.id)}>
-                    + 업무 추가
-                  </StAddButton>
-                </StFooter>
-              )}
-            </StCardBody>
-          </StCard>
-        );
-      })}
+                      <button
+                        className="delete-service-btn"
+                        onClick={() => handleDeleteService(service.id)}
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  ) : (
+                    <div
+                      className="color-indicator"
+                      style={{ backgroundColor: service.color }}
+                    />
+                  )}
+                </div>
+              </StCardHeader>
 
-      {isEditing && (
-        <StAddServiceBlock onClick={handleAddService}>
-          <span className="plus-icon">+</span>
-          <span>새 프로젝트 카드 추가하기</span>
-        </StAddServiceBlock>
-      )}
+              {!isCollapsed && (
+                <StCardBody>
+                  {activeTasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      serviceId={service.id}
+                      onUpdate={updateTask}
+                      onDelete={deleteTask}
+                      isReadOnly={!isEditing}
+                    />
+                  ))}
+
+                  {pastTasks.length > 0 && (
+                    <StPastSection>
+                      <summary>지난 일정 보기 ({pastTasks.length})</summary>
+                      <div className="past-list">
+                        {pastTasks.map((task) => (
+                          <TaskRow
+                            key={task.id}
+                            task={task}
+                            serviceId={service.id}
+                            onUpdate={updateTask}
+                            onDelete={deleteTask}
+                            isReadOnly={true}
+                          />
+                        ))}
+                      </div>
+                    </StPastSection>
+                  )}
+                  {isEditing && (
+                    <StFooter>
+                      <StAddButton onClick={() => handleAddTask(service.id)}>
+                        + 업무 추가
+                      </StAddButton>
+                    </StFooter>
+                  )}
+                </StCardBody>
+              )}
+            </StCard>
+          );
+        })}
+
+        {isEditing && (
+          <StAddServiceBlock onClick={handleAddService}>
+            <span className="plus-icon">+</span>
+            <span>새 프로젝트 카드 추가하기</span>
+          </StAddServiceBlock>
+        )}
+      </StScrollArea>
     </StContainer>
   );
 }
 
-// ... 스타일 정의는 기존과 동일 ...
+// --- 스타일 정의 ---
+
+// 하이라이트 애니메이션
+const highlightAnimation = css`
+  animation: flash 1.5s ease-out;
+  @keyframes flash {
+    0% {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+      background-color: white;
+    }
+  }
+`;
+// 1. 전체 컨테이너: Flex 컬럼 레이아웃 + 높이 고정
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding-bottom: 2rem;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  position: relative;
 `;
+
+// 2. 상단 컨트롤 바: 고정 영역 (sticky 제거)
 const StControlBar = styled.div`
+  padding: 0 1rem;
+  border-bottom: 1px solid #ebebec;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  background-color: white;
+  z-index: 10;
+  height: 60px;
+
+  /* 버튼 스타일 유지 */
   .mode-btn {
     padding: 6px 16px;
     border-radius: 20px;
@@ -356,13 +460,50 @@ const StControlBar = styled.div`
     }
   }
 `;
-const StCard = styled.div`
+
+// 3. 하단 스크롤 영역: 남은 공간 모두 차지 (flex: 1)
+const StScrollArea = styled.div`
+  flex: 1; /* 남은 세로 공간을 꽉 채움 */
+  overflow-y: auto; /* 내용이 넘치면 여기서 스크롤 발생 */
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 1rem 2rem; /* 내부 여백 */
+
+  /* 스크롤바 디자인 */
+  padding-right: 8px;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+`;
+
+const StCard = styled.div<{ $isCollapsed?: boolean; $isHighlighted?: boolean }>`
+  flex-shrink: 0;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  overflow: visible;
+  overflow: hidden;
   background-color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  scroll-margin-top: 20px;
+
+  ${({ $isCollapsed }) =>
+    $isCollapsed &&
+    css`
+      background-color: #fcfcfc;
+    `}
+
+  ${({ $isHighlighted }) => $isHighlighted && highlightAnimation}
 `;
+
 const StCardHeader = styled.div<{ $color: string }>`
   padding: 10px 16px;
   background-color: #f8f9fa;
@@ -372,10 +513,34 @@ const StCardHeader = styled.div<{ $color: string }>`
   justify-content: space-between;
   align-items: center;
   min-height: 52px;
-  border-radius: 0 12px 0 0;
+
   .header-left {
     flex: 1;
     margin-right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    .accordion-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #6b7280;
+      transition: transform 0.2s;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      &:hover {
+        background-color: #e5e7eb;
+        color: #374151;
+      }
+      &.collapsed {
+        transform: rotate(-90deg);
+      }
+    }
     .service-title-input {
       width: 100%;
       font-weight: 700;
@@ -392,6 +557,10 @@ const StCardHeader = styled.div<{ $color: string }>`
       font-weight: 700;
       color: #111827;
       margin: 0;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.8;
+      }
     }
   }
   .header-right {
@@ -421,12 +590,25 @@ const StCardHeader = styled.div<{ $color: string }>`
     }
   }
 `;
+
 const StCardBody = styled.div`
-  padding: 16px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  animation: slideDown 0.2s ease-out;
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
+
 const StPastSection = styled.details`
   margin-top: 8px;
   border-top: 1px solid #e5e7eb;

@@ -123,6 +123,12 @@ export default function MonthGrid({
     return { slotMap: map, maxSlotsPerDay: maxSlots };
   }, [schedules, daysToShow, cols]);
 
+  const handleTaskClick = (e: React.MouseEvent, svcId: string) => {
+    e.stopPropagation();
+    const event = new CustomEvent("scroll-to-service", { detail: svcId });
+    window.dispatchEvent(event);
+  };
+
   return (
     <StGridContainer>
       <StGridHeader $cols={cols}>
@@ -166,6 +172,7 @@ export default function MonthGrid({
                   onDragStart={(e) =>
                     !isPast && onDragStart(e, taskInSlot.svcId, taskInSlot)
                   }
+                  onClick={(e) => handleTaskClick(e, taskInSlot.svcId)}
                   title={`${taskInSlot.svcName} - ${taskInSlot.title}`}
                   $isPast={isPast}
                 >
@@ -277,7 +284,6 @@ const StTaskContainer = styled.div`
   flex: 1;
   padding-bottom: 4px;
 `;
-
 // TaskBarWrapper
 const StTaskBarWrapper = styled.div<{ $isPast?: boolean }>`
   height: 26px;
@@ -286,9 +292,22 @@ const StTaskBarWrapper = styled.div<{ $isPast?: boolean }>`
   width: 100%;
   position: relative;
   z-index: 10;
-  cursor: ${({ $isPast }) => ($isPast ? "default" : "grab")};
+
+  /* 1. 커서 설정 */
+  cursor: ${({ $isPast }) => ($isPast ? "pointer" : "grab")};
+
+  /* 2. 투명도 및 흑백 처리 */
   opacity: ${({ $isPast }) => ($isPast ? 0.6 : 1)};
   filter: ${({ $isPast }) => ($isPast ? "grayscale(100%)" : "none")};
+
+  /* 3. 호버 효과 (✨ 수정된 부분) */
+  /* 흑백인 상태(isPast)에서는 흑백을 유지하면서 어두워져야 함 */
+  &:hover {
+    filter: ${({ $isPast }) =>
+      $isPast ? "grayscale(100%) brightness(0.95)" : "brightness(0.95)"};
+  }
+
+  /* 4. 드래그 중(클릭 중)일 때 */
   &:active {
     cursor: ${({ $isPast }) => ($isPast ? "default" : "grabbing")};
   }
@@ -320,7 +339,7 @@ const StTaskContent = styled.div<{
     max-width: 100%;
     color: ${({ $isSingleDay, $color }) => ($isSingleDay ? "white" : $color)};
     background-color: ${({ $isSingleDay }) =>
-      $isSingleDay ? "transparent" : "rgba(255,255,255,0.9)"};
+      $isSingleDay ? "transparent" : "#fff"};
     border-radius: 4px;
     margin-left: ${({ $isSingleDay }) => ($isSingleDay ? "0" : "12px")};
     display: flex;
@@ -375,12 +394,12 @@ const StTaskContent = styled.div<{
         z-index: 1;
       }
       .marker.start {
-        left: 0px;
+        left: 0;
         width: 0;
         height: 0;
         border-top: 8px solid transparent;
         border-bottom: 8px solid transparent;
-        border-left: 11px solid ${$color};
+        border-left: 10px solid ${$color};
       }
       .marker.end {
         right: 0;
