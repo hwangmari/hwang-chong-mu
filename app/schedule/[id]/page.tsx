@@ -77,7 +77,7 @@ export default function ScheduleDetailPage() {
   if (loading) return <div>로딩 중...</div>;
 
   return (
-    <StContainer>
+    <StFixedContainer>
       <StTopBar>
         <div className="left-group">
           <Link href="/schedule" className="back-btn">
@@ -109,11 +109,17 @@ export default function ScheduleDetailPage() {
           />
         </StRightSection>
       </StContentWrapper>
-    </StContainer>
+    </StFixedContainer>
   );
 }
 // ... (스타일 동일)
-const StContainer = styled.div`
+const StFixedContainer = styled.div`
+  position: fixed;
+  top: 0;
+  right: 0;
+  border: 0;
+  left: 0;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   height: 100vh;
