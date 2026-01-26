@@ -17,16 +17,17 @@ export type DbTask = {
   created_at: string;
 };
 
-export type TaskPhase = {
-  id: string;
-  title: string;
-  startDate: Date; // DB의 start_date를 Date 객체로 변환
-  endDate: Date; // DB의 end_date를 Date 객체로 변환
-};
-
 export type ServiceSchedule = {
   id: string;
   serviceName: string; // DB의 name
   color: string;
   tasks: TaskPhase[];
+};
+
+export type TaskPhase = {
+  id: string;
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  memo?: string; // ✨ 메모 필드 추가 (선택사항)
 };
