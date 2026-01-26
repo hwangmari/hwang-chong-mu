@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+// ✨ [수정] API 함수 import (경로 주의: @/services/schedule)
+import { createService } from "@/services/schedule";
 
 export default function CreateSchedulePage() {
   const router = useRouter();
@@ -12,17 +14,30 @@ export default function CreateSchedulePage() {
     description: "",
     color: "#3b82f6", // 기본값: 파랑
   });
+  // ✨ [추가] 중복 제출 방지용 로딩 상태
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return alert("서비스 이름을 입력해주세요!");
 
-    // TODO: Supabase에 새 서비스 저장 로직 추가
-    // const newId = await createService(formData);
-    const mockNewId = `svc_${Date.now()}`; // 임시 ID 생성
+    setIsSubmitting(true);
+    try {
+      // ✨ [수정] 실제 Supabase API 호출
+      const newService = await createService(
+        formData.name,
+        formData.description,
+        formData.color,
+      );
 
-    // 생성 후 상세 페이지로 이동
-    router.push(`/schedule/${mockNewId}`);
+      // 생성된 서비스 ID로 상세 페이지 이동
+      router.push(`/schedule/${newService.id}`);
+    } catch (error) {
+      console.error("서비스 생성 실패:", error);
+      alert("서비스를 생성하는 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -49,6 +64,7 @@ export default function CreateSchedulePage() {
                 setFormData({ ...formData, name: e.target.value })
               }
               autoFocus
+              disabled={isSubmitting} // 로딩 중 비활성화
             />
           </StFormGroup>
 
@@ -60,6 +76,7 @@ export default function CreateSchedulePage() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              disabled={isSubmitting}
             />
           </StFormGroup>
 
@@ -72,6 +89,7 @@ export default function CreateSchedulePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, color: e.target.value })
                 }
+                disabled={isSubmitting}
               />
               <span className="color-code">{formData.color}</span>
             </div>
@@ -81,7 +99,9 @@ export default function CreateSchedulePage() {
           </StFormGroup>
 
           <StButtonDetails>
-            <StSubmitButton type="submit">생성하기</StSubmitButton>
+            <StSubmitButton type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "생성 중..." : "생성하기"}
+            </StSubmitButton>
           </StButtonDetails>
         </StForm>
       </StFormContainer>
@@ -234,5 +254,10 @@ const StSubmitButton = styled.button`
 
   &:active {
     transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;

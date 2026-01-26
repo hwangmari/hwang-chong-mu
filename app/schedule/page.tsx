@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ServiceSchedule } from "@/types/work-schedule";
-import { fetchServices } from "./schedule";
+import { fetchServices } from "../../services/schedule";
 
 export default function ScheduleListPage() {
   const router = useRouter();
@@ -29,17 +29,23 @@ export default function ScheduleListPage() {
     }
   };
 
-  if (loading) return <div style={{ padding: "2rem" }}>로딩 중...</div>;
+  if (loading) {
+    return (
+      <StContainer>
+        <StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>
+      </StContainer>
+    );
+  }
 
   return (
     <StContainer>
       <StHeader>
         <div className="text-group">
-          <h1>📅 일정 관리 서비스</h1>
-          <p>관리할 프로젝트(서비스)를 선택하거나 새로 만들어보세요.</p>
+          <h1>📅 일정 관리 </h1>
+          <p>관리할 프로젝트를 선택하거나 새로 만들어보세요.</p>
         </div>
         <Link href="/schedule/create">
-          <StCreateButton>+ 새 서비스 만들기</StCreateButton>
+          <StCreateButton>+ 새 일정 관리 만들기</StCreateButton>
         </Link>
       </StHeader>
 
@@ -54,7 +60,6 @@ export default function ScheduleListPage() {
               <StColorDot $color={svc.color} />
               <h3>{svc.serviceName}</h3>
             </div>
-            {/* description은 타입에 없으면 생략하거나 DB에서 추가 */}
             <p className="desc">프로젝트 일정 관리</p>
             <div className="footer">
               <span>바로가기 →</span>
@@ -187,4 +192,13 @@ const StEmptyCard = styled.div`
     font-weight: 600;
     text-decoration: underline;
   }
+`;
+const StLoadingWrapper = styled.div`
+  min-height: 50vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #9ca3af;
+  font-weight: 600;
 `;

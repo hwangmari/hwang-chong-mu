@@ -7,7 +7,6 @@ import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
   title: task.title,
-  // DB 컬럼(start_date)이 제대로 매핑되었는지 확인!
   startDate: new Date(task.start_date),
   endDate: new Date(task.end_date),
 });

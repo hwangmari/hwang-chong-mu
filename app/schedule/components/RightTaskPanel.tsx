@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import styled, { css } from "styled-components";
 import { format, isBefore, startOfDay, parse, isValid } from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-import * as API from "./../schedule"; // 👈 API 함수 불러오기
+import * as API from "../../../services/schedule"; // 👈 API 함수 불러오기
 
 interface Props {
   schedules: ServiceSchedule[];
