@@ -2,8 +2,7 @@
 // services/schedule.ts
 import { supabase } from "@/lib/supabase";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-
-// ... mapTaskFromDB, mapServiceFromDB 헬퍼 함수는 기존 유지 ...
+import { format } from "date-fns";
 
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
@@ -127,33 +126,50 @@ export const deleteService = async (id: string) => {
     .eq("id", id);
   if (error) throw error;
 };
-
-export const createTask = async (serviceId: string, task: any) => {
+// 업무 생성
+export const createTask = async (
+  serviceId: string,
+  task: { title: string; startDate: Date; endDate: Date },
+) => {
   const { data, error } = await supabase
     .from("schedule_tasks")
     .insert({
       service_id: serviceId,
       title: task.title,
-      start_date: task.startDate.toISOString(),
-      end_date: task.endDate.toISOString(),
+      // ✨ [수정 2] toISOString() 대신 format() 사용하여 날짜 문자열로 변환
+      start_date: format(task.startDate, "yyyy-MM-dd"),
+      end_date: format(task.endDate, "yyyy-MM-dd"),
     })
     .select()
     .single();
+
   if (error) throw error;
   return mapTaskFromDB(data);
 };
 
-export const updateTask = async (taskId: string, updates: any) => {
+// 업무 수정
+export const updateTask = async (
+  taskId: string,
+  updates: { title?: string; startDate?: Date; endDate?: Date },
+) => {
+  // DB 컬럼명에 맞게 변환
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbUpdates: any = {};
   if (updates.title) dbUpdates.title = updates.title;
-  if (updates.startDate) dbUpdates.start_date = updates.startDate.toISOString();
-  if (updates.endDate) dbUpdates.end_date = updates.endDate.toISOString();
+
+  // ✨ [수정 3] 여기도 format()으로 변경
+  if (updates.startDate)
+    dbUpdates.start_date = format(updates.startDate, "yyyy-MM-dd");
+  if (updates.endDate)
+    dbUpdates.end_date = format(updates.endDate, "yyyy-MM-dd");
+
   const { data, error } = await supabase
     .from("schedule_tasks")
     .update(dbUpdates)
     .eq("id", taskId)
     .select()
     .single();
+
   if (error) throw error;
   return mapTaskFromDB(data);
 };

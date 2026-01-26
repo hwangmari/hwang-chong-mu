@@ -103,7 +103,7 @@ export default function ScheduleDetailPage() {
         <StRightSection>
           {/* ✨ RightTaskPanel에 boardId를 전달해야 함 */}
           <RightTaskPanel
-            boardId={boardId} // 👈 중요!
+            boardId={boardId}
             schedules={schedules}
             onUpdateAll={setSchedules}
           />

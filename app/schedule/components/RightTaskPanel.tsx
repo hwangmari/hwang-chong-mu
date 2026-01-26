@@ -1,107 +1,142 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useRef } from "react";
 import styled, { css } from "styled-components";
-import { format, isBefore, startOfDay, parse, isValid } from "date-fns";
+import {
+  format,
+  isBefore,
+  startOfDay,
+  parse,
+  isValid,
+  isSameYear,
+} from "date-fns";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
 
 interface Props {
-  boardId: string; // 👈 [NEW] 보드 ID 필수 추가
+  boardId: string;
   schedules: ServiceSchedule[];
   onSave?: (service: ServiceSchedule) => void;
   onUpdateAll?: (services: ServiceSchedule[]) => void;
 }
 
 export default function RightTaskPanel({
-  boardId, // 👈 Props에서 받기
+  boardId,
   schedules,
   onSave,
   onUpdateAll,
 }: Props) {
   const [localSchedules, setLocalSchedules] =
     useState<ServiceSchedule[]>(schedules);
+  const [isEditing, setIsEditing] = useState(false);
   const today = startOfDay(new Date());
+
+  // ✨ 현재 연도 가져오기 (예: 2026)
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     setLocalSchedules(schedules);
   }, [schedules]);
 
-  // =========================================================
-  // 1. 서비스(큰 카드) 관련 핸들러
-  // =========================================================
+  // ✨ [수정] 텍스트 복사 로직 (스마트 연도 생략)
+  const handleCopyText = () => {
+    let text = "";
+    localSchedules.forEach((svc) => {
+      text += `[${svc.serviceName}]\n`;
+      svc.tasks.forEach((t) => {
+        const sYear = t.startDate.getFullYear();
+        const eYear = t.endDate.getFullYear();
 
+        // 1. 시작일 포맷팅 (현재 연도면 연도 생략)
+        const startStr =
+          sYear === currentYear
+            ? format(t.startDate, "MM.dd")
+            : format(t.startDate, "yyyy.MM.dd");
+
+        let dateStr = "";
+
+        // 2. 같은 날짜인 경우
+        if (format(t.startDate, "yyyyMMdd") === format(t.endDate, "yyyyMMdd")) {
+          dateStr = startStr;
+        } else {
+          // 3. 기간인 경우 종료일 포맷팅
+          let endStr = "";
+          if (sYear === eYear) {
+            // 시작일과 같은 연도면 무조건 연도 생략 (중복 방지)
+            endStr = format(t.endDate, "MM.dd");
+          } else {
+            // 다른 연도면, 현재 연도인지 체크
+            endStr =
+              eYear === currentYear
+                ? format(t.endDate, "MM.dd")
+                : format(t.endDate, "yyyy.MM.dd");
+          }
+          dateStr = `${startStr} ~ ${endStr}`;
+        }
+
+        text += `- ${t.title}: ${dateStr}\n`;
+      });
+      text += "\n";
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert("일정이 복사되었습니다! (현재 연도는 생략됨)");
+    });
+  };
+
+  // ... (기존 핸들러들: handleColorChange ~ deleteTask 등 코드는 동일하므로 유지) ...
   const handleColorChange = async (svcId: string, color: string) => {
     const updated = localSchedules.map((s) =>
       s.id === svcId ? { ...s, color } : s,
     );
     setLocalSchedules(updated);
     if (onUpdateAll) onUpdateAll(updated);
-
     try {
       await API.updateService(svcId, { color });
     } catch (e) {
-      console.error("색상 변경 실패", e);
+      console.error(e);
     }
   };
-
   const handleServiceNameChange = (svcId: string, newName: string) => {
     const updated = localSchedules.map((s) =>
       s.id === svcId ? { ...s, serviceName: newName } : s,
     );
     setLocalSchedules(updated);
   };
-
   const handleServiceNameBlur = async (svcId: string, name: string) => {
     try {
       await API.updateService(svcId, { name });
     } catch (e) {
-      console.error("서비스명 수정 실패", e);
+      console.error(e);
     }
   };
-
-  // ✨ [수정] 새 서비스 생성 (보드 ID 포함)
   const handleAddService = async () => {
     try {
-      // API 호출: boardId를 첫 번째 인자로 전달해야 함!
       const newService = await API.createService(
-        boardId, // 👈 여기서 보드 ID 전달
+        boardId,
         "새 프로젝트",
         "",
         "#10b981",
       );
-
       const updated = [...localSchedules, newService];
       setLocalSchedules(updated);
       if (onUpdateAll) onUpdateAll(updated);
+      setIsEditing(true);
     } catch (e) {
-      console.error("서비스 생성 실패", e);
-      alert("프로젝트 생성 중 오류가 발생했습니다.");
+      console.error(e);
+      alert("실패");
     }
   };
-
   const handleDeleteService = async (svcId: string) => {
-    if (
-      !confirm(
-        "프로젝트 전체를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
-      )
-    )
-      return;
-
+    if (!confirm("삭제하시겠습니까?")) return;
     try {
       await API.deleteService(svcId);
-
       const updated = localSchedules.filter((s) => s.id !== svcId);
       setLocalSchedules(updated);
       if (onUpdateAll) onUpdateAll(updated);
     } catch (e) {
-      console.error("서비스 삭제 실패", e);
+      console.error(e);
     }
   };
-
-  // =========================================================
-  // 2. 업무(Task) 관련 핸들러 (기존 동일)
-  // =========================================================
-
   const handleAddTask = async (svcId: string) => {
     try {
       const newTask = await API.createTask(svcId, {
@@ -109,7 +144,6 @@ export default function RightTaskPanel({
         startDate: new Date(),
         endDate: new Date(),
       });
-
       const updated = localSchedules.map((svc) => {
         if (svc.id !== svcId) return svc;
         return { ...svc, tasks: [...svc.tasks, newTask] };
@@ -117,10 +151,9 @@ export default function RightTaskPanel({
       setLocalSchedules(updated);
       if (onUpdateAll) onUpdateAll(updated);
     } catch (e) {
-      console.error("업무 추가 실패", e);
+      console.error(e);
     }
   };
-
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
     const updatedSchedules = localSchedules.map((svc) => {
       if (svc.id !== svcId) return svc;
@@ -133,7 +166,6 @@ export default function RightTaskPanel({
     });
     setLocalSchedules(updatedSchedules);
     if (onUpdateAll) onUpdateAll(updatedSchedules);
-
     try {
       await API.updateTask(updatedTask.id, {
         title: updatedTask.title,
@@ -141,16 +173,13 @@ export default function RightTaskPanel({
         endDate: updatedTask.endDate,
       });
     } catch (e) {
-      console.error("업무 수정 실패", e);
+      console.error(e);
     }
   };
-
   const deleteTask = async (svcId: string, taskId: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-
+    if (!confirm("삭제하시겠습니까?")) return;
     try {
       await API.deleteTask(taskId);
-
       const updated = localSchedules.map((svc) => {
         if (svc.id !== svcId) return svc;
         return { ...svc, tasks: svc.tasks.filter((t) => t.id !== taskId) };
@@ -158,13 +187,30 @@ export default function RightTaskPanel({
       setLocalSchedules(updated);
       if (onUpdateAll) onUpdateAll(updated);
     } catch (e) {
-      console.error("업무 삭제 실패", e);
+      console.error(e);
     }
   };
 
-  // ... 렌더링 부분은 기존과 동일하므로 생략하지 않고 전체 구조 유지 ...
   return (
     <StContainer>
+      <StControlBar>
+        <div className="left">
+          {!isEditing && (
+            <button className="copy-btn" onClick={handleCopyText}>
+              📋 텍스트 복사
+            </button>
+          )}
+        </div>
+        <div className="right">
+          <button
+            className={`mode-btn ${isEditing ? "active" : ""}`}
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? "완료" : "수정"}
+          </button>
+        </div>
+      </StControlBar>
+
       {localSchedules.map((service) => {
         const activeTasks = service.tasks.filter(
           (t) => !isBefore(t.endDate, today),
@@ -177,33 +223,46 @@ export default function RightTaskPanel({
           <StCard key={service.id}>
             <StCardHeader $color={service.color}>
               <div className="header-left">
-                <input
-                  type="text"
-                  value={service.serviceName}
-                  onChange={(e) =>
-                    handleServiceNameChange(service.id, e.target.value)
-                  }
-                  onBlur={(e) =>
-                    handleServiceNameBlur(service.id, e.target.value)
-                  }
-                  className="service-title-input"
-                  placeholder="프로젝트명"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={service.serviceName}
+                    onChange={(e) =>
+                      handleServiceNameChange(service.id, e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handleServiceNameBlur(service.id, e.target.value)
+                    }
+                    className="service-title-input"
+                    placeholder="프로젝트명"
+                  />
+                ) : (
+                  <h3 className="service-title-text">{service.serviceName}</h3>
+                )}
               </div>
               <div className="header-right">
-                <input
-                  type="color"
-                  value={service.color}
-                  onChange={(e) =>
-                    handleColorChange(service.id, e.target.value)
-                  }
-                />
-                <button
-                  className="delete-service-btn"
-                  onClick={() => handleDeleteService(service.id)}
-                >
-                  🗑️
-                </button>
+                {isEditing ? (
+                  <>
+                    <input
+                      type="color"
+                      value={service.color}
+                      onChange={(e) =>
+                        handleColorChange(service.id, e.target.value)
+                      }
+                    />
+                    <button
+                      className="delete-service-btn"
+                      onClick={() => handleDeleteService(service.id)}
+                    >
+                      🗑️
+                    </button>
+                  </>
+                ) : (
+                  <div
+                    className="color-indicator"
+                    style={{ backgroundColor: service.color }}
+                  />
+                )}
               </div>
             </StCardHeader>
 
@@ -215,9 +274,9 @@ export default function RightTaskPanel({
                   serviceId={service.id}
                   onUpdate={updateTask}
                   onDelete={deleteTask}
+                  isReadOnly={!isEditing}
                 />
               ))}
-
               {pastTasks.length > 0 && (
                 <StPastSection>
                   <summary>지난 일정 보기 ({pastTasks.length})</summary>
@@ -229,30 +288,30 @@ export default function RightTaskPanel({
                         serviceId={service.id}
                         onUpdate={updateTask}
                         onDelete={deleteTask}
-                        isReadOnly
+                        isReadOnly={true}
                       />
                     ))}
                   </div>
                 </StPastSection>
               )}
-
-              <StFooter>
-                <StAddButton onClick={() => handleAddTask(service.id)}>
-                  + 업무 추가
-                </StAddButton>
-                <StSaveButton onClick={() => onSave && onSave(service)}>
-                  저장됨
-                </StSaveButton>
-              </StFooter>
+              {isEditing && (
+                <StFooter>
+                  <StAddButton onClick={() => handleAddTask(service.id)}>
+                    + 업무 추가
+                  </StAddButton>
+                </StFooter>
+              )}
             </StCardBody>
           </StCard>
         );
       })}
 
-      <StAddServiceBlock onClick={handleAddService}>
-        <span className="plus-icon">+</span>
-        <span>새 프로젝트 카드 추가하기</span>
-      </StAddServiceBlock>
+      {isEditing && (
+        <StAddServiceBlock onClick={handleAddService}>
+          <span className="plus-icon">+</span>
+          <span>새 프로젝트 카드 추가하기</span>
+        </StAddServiceBlock>
+      )}
     </StContainer>
   );
 }
@@ -273,54 +332,52 @@ function TaskRow({
   onDelete: (svcId: string, tId: string) => void;
   isReadOnly?: boolean;
 }) {
-  // 텍스트 날짜 입력값 ("20260101-20260105")
   const [textValue, setTextValue] = useState("");
-  // ✨ 타이틀 입력값 (API 과호출 방지용 로컬 state)
   const [titleValue, setTitleValue] = useState(task.title);
-
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // 상위 task 변경 시 로컬 state 동기화
+  // ✨ 현재 연도
+  const currentYear = new Date().getFullYear();
+
   useEffect(() => {
-    const startStr = format(task.startDate, "yyyyMMdd");
-    const endStr = format(task.endDate, "yyyyMMdd");
-    setTextValue(`${startStr}-${endStr}`);
+    // 편집 모드일 땐 항상 YYYY.MM.DD 형태로 풀로 보여줌 (편집 정확성 위해)
+    const startFmt = format(task.startDate, "yyyy.MM.dd");
+    const endFmt = format(task.endDate, "yyyy.MM.dd");
+
+    if (startFmt === endFmt) {
+      setTextValue(startFmt);
+    } else {
+      setTextValue(`${startFmt}-${endFmt}`);
+    }
     setTitleValue(task.title);
   }, [task.startDate, task.endDate, task.title]);
 
-  // 날짜 텍스트 변경
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTextValue(val);
-
-    const regex = /^(\d{8})-(\d{8})$/;
-    const match = val.match(regex);
-
-    if (match) {
-      const start = parse(match[1], "yyyyMMdd", new Date());
-      const end = parse(match[2], "yyyyMMdd", new Date());
-
-      if (isValid(start) && isValid(end)) {
+    const numbersOnly = val.replace(/[^0-9]/g, "");
+    if (numbersOnly.length === 8) {
+      const date = parse(numbersOnly, "yyyyMMdd", new Date());
+      if (isValid(date))
+        onUpdate(serviceId, { ...task, startDate: date, endDate: date });
+    } else if (numbersOnly.length === 16) {
+      const start = parse(numbersOnly.substring(0, 8), "yyyyMMdd", new Date());
+      const end = parse(numbersOnly.substring(8, 16), "yyyyMMdd", new Date());
+      if (isValid(start) && isValid(end))
         onUpdate(serviceId, { ...task, startDate: start, endDate: end });
-      }
     }
   };
 
-  // 날짜 캘린더 변경
   const handleDateInput = (field: "startDate" | "endDate", val: string) => {
     if (!val) return;
     const newDate = new Date(val);
     onUpdate(serviceId, { ...task, [field]: newDate });
   };
-
-  // ✨ 타이틀 변경 (포커스 나갈 때만 업데이트 호출)
   const handleTitleBlur = () => {
-    if (titleValue !== task.title) {
+    if (titleValue !== task.title)
       onUpdate(serviceId, { ...task, title: titleValue });
-    }
   };
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -334,86 +391,159 @@ function TaskRow({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ✨ [수정] 보기 모드에서 스마트 날짜 표시 (화면 표시용)
+  const getDisplayDateText = () => {
+    const s = task.startDate;
+    const e = task.endDate;
+    const sYear = s.getFullYear();
+    const eYear = e.getFullYear();
+
+    // 1. 시작일
+    const startStr =
+      sYear === currentYear ? format(s, "MM.dd") : format(s, "yyyy.MM.dd");
+
+    // 2. 같은 날이면 끝
+    if (format(s, "yyyyMMdd") === format(e, "yyyyMMdd")) {
+      return startStr;
+    }
+
+    // 3. 종료일
+    let endStr = "";
+    if (sYear === eYear) {
+      endStr = format(e, "MM.dd");
+    } else {
+      endStr =
+        eYear === currentYear ? format(e, "MM.dd") : format(e, "yyyy.MM.dd");
+    }
+
+    return `${startStr} ~ ${endStr}`;
+  };
+
   return (
     <StTaskItem $isPast={isReadOnly}>
-      {/* 1. 업무명 & 삭제 버튼 */}
       <div className="task-header">
-        <input
-          type="text"
-          className="task-title-input"
-          value={titleValue}
-          onChange={(e) => setTitleValue(e.target.value)}
-          onBlur={handleTitleBlur} // ✨ 여기서 API 호출 트리거
-          placeholder="업무명"
-          disabled={isReadOnly}
-        />
-        {!isReadOnly && (
-          <button
-            className="delete-task-btn"
-            onClick={() => onDelete(serviceId, task.id)}
-          >
-            ×
-          </button>
+        {isReadOnly ? (
+          <span className="task-title-text">{task.title}</span>
+        ) : (
+          <>
+            <input
+              type="text"
+              className="task-title-input"
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+              onBlur={handleTitleBlur}
+              placeholder="업무명"
+            />
+            <button
+              className="delete-task-btn"
+              onClick={() => onDelete(serviceId, task.id)}
+            >
+              ×
+            </button>
+          </>
         )}
       </div>
 
-      {/* 2. 날짜 입력 영역 */}
       <StDateInputWrapper>
-        <input
-          type="text"
-          className="date-text-input"
-          value={textValue}
-          onChange={handleTextChange}
-          placeholder="YYYYMMDD-YYYYMMDD"
-          maxLength={17}
-          disabled={isReadOnly}
-        />
-
-        {!isReadOnly && (
-          <div className="calendar-popover-container" ref={calendarRef}>
-            <button
-              className="calendar-toggle-btn"
-              onClick={() => setShowCalendar(!showCalendar)}
-              title="날짜 선택"
-            >
-              📅
-            </button>
-
-            {showCalendar && (
-              <StCalendarPopover>
-                <div className="popover-row">
-                  <label>Start</label>
-                  <input
-                    type="date"
-                    value={format(task.startDate, "yyyy-MM-dd")}
-                    onChange={(e) =>
-                      handleDateInput("startDate", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="popover-row">
-                  <label>End</label>
-                  <input
-                    type="date"
-                    value={format(task.endDate, "yyyy-MM-dd")}
-                    onChange={(e) => handleDateInput("endDate", e.target.value)}
-                  />
-                </div>
-              </StCalendarPopover>
-            )}
-          </div>
+        {isReadOnly ? (
+          // ✨ 스마트 포맷팅된 텍스트 노출
+          <span className="date-text-display">{getDisplayDateText()}</span>
+        ) : (
+          <>
+            <input
+              type="text"
+              className="date-text-input"
+              value={textValue}
+              onChange={handleTextChange}
+              placeholder="YYYY.MM.DD"
+              maxLength={21}
+            />
+            <div className="calendar-popover-container" ref={calendarRef}>
+              <button
+                className="calendar-toggle-btn"
+                onClick={() => setShowCalendar(!showCalendar)}
+                title="날짜 선택"
+              >
+                📅
+              </button>
+              {showCalendar && (
+                <StCalendarPopover>
+                  <div className="popover-row">
+                    <label>Start</label>
+                    <input
+                      type="date"
+                      value={format(task.startDate, "yyyy-MM-dd")}
+                      onChange={(e) =>
+                        handleDateInput("startDate", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="popover-row">
+                    <label>End</label>
+                    <input
+                      type="date"
+                      value={format(task.endDate, "yyyy-MM-dd")}
+                      onChange={(e) =>
+                        handleDateInput("endDate", e.target.value)
+                      }
+                    />
+                  </div>
+                </StCalendarPopover>
+              )}
+            </div>
+          </>
         )}
       </StDateInputWrapper>
     </StTaskItem>
   );
 }
 
-// ... 스타일 정의는 기존과 동일 ...
+// ... 스타일 정의는 동일 (생략) ...
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   padding-bottom: 2rem;
+`;
+const StControlBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  .mode-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #374151;
+    transition: all 0.2s;
+    &.active {
+      background-color: #111827;
+      color: white;
+      border-color: #111827;
+    }
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+  .copy-btn {
+    font-size: 0.85rem;
+    color: #4b5563;
+    background: none;
+    border: 1px solid #e5e7eb;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover {
+      background-color: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+  }
 `;
 const StCard = styled.div`
   border: 1px solid #e5e7eb;
@@ -430,6 +560,7 @@ const StCardHeader = styled.div<{ $color: string }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 52px;
   .header-left {
     flex: 1;
     margin-right: 10px;
@@ -443,6 +574,12 @@ const StCardHeader = styled.div<{ $color: string }>`
         outline: none;
         background: white;
       }
+    }
+    .service-title-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
     }
   }
   .header-right {
@@ -464,6 +601,11 @@ const StCardHeader = styled.div<{ $color: string }>`
       &:hover {
         opacity: 1;
       }
+    }
+    .color-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
     }
   }
 `;
@@ -493,6 +635,7 @@ const StTaskItem = styled.div<{ $isPast?: boolean }>`
     display: flex;
     align-items: center;
     gap: 8px;
+    min-height: 28px;
     .task-title-input {
       flex: 1;
       font-size: 0.9rem;
@@ -503,6 +646,12 @@ const StTaskItem = styled.div<{ $isPast?: boolean }>`
         border-bottom: 1px solid #3b82f6;
         outline: none;
       }
+    }
+    .task-title-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #374151;
+      padding: 2px 0;
     }
     .delete-task-btn {
       color: #9ca3af;
@@ -521,6 +670,7 @@ const StDateInputWrapper = styled.div`
   align-items: center;
   gap: 8px;
   position: relative;
+  min-height: 30px;
   .date-text-input {
     flex: 1;
     border: 1px solid #d1d5db;
@@ -538,6 +688,12 @@ const StDateInputWrapper = styled.div`
       background-color: #f3f4f6;
       color: #9ca3af;
     }
+  }
+  .date-text-display {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-family: monospace;
+    letter-spacing: 0.5px;
   }
   .calendar-popover-container {
     position: relative;
