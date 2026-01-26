@@ -62,8 +62,6 @@ export default function ServiceCard({
       onClick={() => !isEditing && onEnter()}
     >
       <div className="card-header">
-        <StColorDot $color="#3b82f6" />
-
         {isEditing ? (
           <input
             className="edit-input-title"

@@ -11,7 +11,6 @@ export default function Home() {
         <StAvatar>🐰</StAvatar>
         <StTitle>황총무의 실험실</StTitle>
         <StDescription>복잡한 건 제가 할게요, 총총총... 🐾</StDescription>
-        {/* ✅ 추가된 멘트 */}
         <StSubDescription>
           일상의 번거로움을 덜어주는 <b>다정한 도구들</b>을 연구합니다.
         </StSubDescription>
@@ -25,67 +24,76 @@ export default function Home() {
             <StIconBox>📅</StIconBox>
             <StCardContent>
               <StCardTitle>약속 잡기</StCardTitle>
-              <StCardDesc>친구들과 일정을 가장 쉽게 잡는 법</StCardDesc>
+              <StCardDesc>친구들과 일정을 잡는 법</StCardDesc>
             </StCardContent>
-            <StArrowIcon>➔</StArrowIcon>
           </StCard>
         </Link>
 
-        {/* ✅ 습관 관리 카드 */}
+        {/* 습관 관리 카드 */}
         <Link href="/habit" passHref>
           <StCard>
             <StIconBox>🥕</StIconBox>
             <StCardContent>
               <StCardTitle>습관 관리</StCardTitle>
-              <StCardDesc>매일매일 쌓이는 성실함의 농도</StCardDesc>
+              <StCardDesc>매일매일 쌓이는 성실함</StCardDesc>
             </StCardContent>
-            <StArrowIcon>➔</StArrowIcon>
           </StCard>
         </Link>
 
-        {/* ✅ 체중 관리 */}
+        {/* 체중 관리 */}
         <Link href="/diet" passHref>
           <StCard>
             <StIconBox>⚖️</StIconBox>
             <StCardContent>
-              <StCardTitle>체중 관리 </StCardTitle>
-              <StCardDesc>평생 숙제 다이어트 해보자고!</StCardDesc>
+              <StCardTitle>체중 관리</StCardTitle>
+              <StCardDesc>평생 숙제 다이어트!</StCardDesc>
             </StCardContent>
-            <StArrowIcon>➔</StArrowIcon>
           </StCard>
         </Link>
 
-        {/* 💸 N빵 계산기 카드*/}
+        {/* N빵 계산기 카드*/}
         <Link href="/calc" passHref>
           <StCard>
             <StIconBox>💸</StIconBox>
             <StCardContent>
               <StCardTitle>N빵 계산기</StCardTitle>
-              <StCardDesc>복잡한 셈은 덜어내고 추억만 남기는 법</StCardDesc>
+              <StCardDesc>복잡한 셈은 덜어내고</StCardDesc>
             </StCardContent>
-            <StArrowIcon>➔</StArrowIcon>
           </StCard>
         </Link>
 
-        {/* ✨ 황총무 게임방*/}
+        {/* 황총무 게임방*/}
         <Link href="/game" passHref>
           <StCard>
             <StIconBox>🎮</StIconBox>
             <StCardContent>
-              <StCardTitle>황총무 게임방</StCardTitle>
-              <StCardDesc>랜덤 게임</StCardDesc>
+              <StCardTitle>게임방</StCardTitle>
+              <StCardDesc>심심할 땐 랜덤 게임</StCardDesc>
             </StCardContent>
-            <StArrowIcon>➔</StArrowIcon>
           </StCard>
         </Link>
 
-        {/* 포트폴리오 버튼 */}
-        <Link href="/portfolio" passHref>
+        {/* 업무 캘린더 */}
+        <Link href="/schedule" passHref>
+          <StCard>
+            <StIconBox>🗓️</StIconBox>
+            <StCardContent>
+              <StCardTitle>업무 캘린더</StCardTitle>
+              <StCardDesc>
+                프로젝트 일정 관리 <br />
+                관계자 외 출입금지
+              </StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
+        {/* 포트폴리오 버튼 (전체 너비 차지하도록 설정) */}
+        <StFullWidthLink href="/portfolio" passHref>
           <StPortfolioButton>
             <span>Developer Portfolio</span>
             <span>👩‍💻</span>
           </StPortfolioButton>
-        </Link>
+        </StFullWidthLink>
       </StGridContainer>
 
       {/* 하단 카피라이트 */}
@@ -94,7 +102,8 @@ export default function Home() {
   );
 }
 
-// ✨ 스타일 정의 (모두 St 접두사 적용)
+// ✨ 스타일 정의
+
 const StMainContainer = styled.main`
   min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.gray50};
@@ -102,7 +111,7 @@ const StMainContainer = styled.main`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
 `;
 
 const StProfileSection = styled.div`
@@ -134,6 +143,7 @@ const StTitle = styled.h1`
 const StDescription = styled.p`
   color: ${({ theme }) => theme.colors.gray500};
   font-weight: 500;
+  margin-bottom: 0.5rem;
 `;
 
 const StSubDescription = styled.p`
@@ -148,79 +158,90 @@ const StSubDescription = styled.p`
   }
 `;
 
+// ✨ [수정] 2열 그리드 레이아웃 적용
 const StGridContainer = styled.div`
   width: 100%;
-  max-width: 480px;
+  max-width: 600px; /* 카드가 2열이라 너비를 좀 더 넓힘 */
   display: grid;
+  grid-template-columns: 1fr; /* 모바일: 1열 */
   gap: 1rem;
+
+  /* 태블릿 이상: 2열 */
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
 const StIconBox = styled.div`
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3rem;
+  height: 3rem;
   background-color: ${({ theme }) => theme.colors.blue50};
   color: ${({ theme }) => theme.colors.blue600};
-  border-radius: 1rem;
+  border-radius: 0.8rem;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1.5rem;
   transition: transform 0.2s;
+  flex-shrink: 0;
 `;
 
 const StCardTitle = styled.h2`
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray900};
   transition: color 0.2s;
-`;
-
-const StArrowIcon = styled.div`
-  color: ${({ theme }) => theme.colors.gray300};
-  transition: transform 0.2s;
+  margin-bottom: 0.2rem;
 `;
 
 const StCard = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
-  border-radius: 2rem;
+  padding: 1.25rem;
+  border-radius: 1.5rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  text-decoration: none;
+  height: 100%; /* 높이 맞춤 */
 
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     border-color: ${({ theme }) => theme.colors.blue200};
+    transform: translateY(-2px);
 
     ${StIconBox} {
-      transform: scale(1.1);
+      transform: scale(1.1) rotate(5deg);
     }
     ${StCardTitle} {
       color: ${({ theme }) => theme.colors.blue600};
-    }
-    ${StArrowIcon} {
-      transform: translateX(0.25rem);
     }
   }
 `;
 
 const StCardContent = styled.div`
   flex: 1;
+  min-width: 0; /* 텍스트 말줄임 처리를 위해 필수 */
 `;
 
 const StCardDesc = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.gray400};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 내용 길면 ... 처리 */
+`;
+
+// ✨ [추가] 포트폴리오 버튼을 위한 전체 너비 링크 래퍼
+const StFullWidthLink = styled(Link)`
+  grid-column: 1 / -1; /* 그리드 전체 열 차지 */
+  text-decoration: none;
 `;
 
 const StPortfolioButton = styled.div`
   width: 100%;
-  margin-top: 1rem;
   padding: 1rem;
   border-radius: 1.5rem;
   border: 1px dashed ${({ theme }) => theme.colors.gray300};
@@ -233,6 +254,7 @@ const StPortfolioButton = styled.div`
   gap: 0.5rem;
   transition: all 0.2s;
   cursor: pointer;
+  background-color: transparent;
 
   &:hover {
     border-style: solid;
@@ -243,7 +265,7 @@ const StPortfolioButton = styled.div`
 `;
 
 const StFooter = styled.footer`
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   color: ${({ theme }) => theme.colors.gray300};
   font-size: 0.75rem;
   font-weight: 500;

@@ -123,7 +123,7 @@ export default function ScheduleListPage() {
 // --- 스타일 (StServiceCard 등은 삭제됨) ---
 
 const StContainer = styled.div`
-  max-width: 1000px;
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 3rem 1.5rem;
 `;
