@@ -48,12 +48,11 @@ export default function MonthGrid({
   const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
   const cols = showWeekend ? 7 : 5;
 
-  // ✨ [핵심 로직] 각 날짜별 업무의 "고정 줄 번호(Slot Index)" 계산
+  // ✨ 슬롯 계산 로직
   const { slotMap, maxSlotsPerDay } = useMemo(() => {
-    const map = new Map<string, number>(); // "YYYY-MM-DD_taskId" -> slotIndex
-    const maxSlots = new Map<string, number>(); // "YYYY-MM-DD" -> maxSlotIndex
+    const map = new Map<string, number>();
+    const maxSlots = new Map<string, number>();
 
-    // 1. 모든 업무 평탄화 (Flatten)
     const allTasks = schedules.flatMap((svc) =>
       svc.tasks.map((t) => ({
         ...t,
@@ -63,8 +62,6 @@ export default function MonthGrid({
       })),
     );
 
-    // 2. 주(Row) 단위로 처리
-    // (달력은 주 단위로 줄바꿈 되므로, 같은 주 안에서는 충돌 체크를 해야 함)
     for (let i = 0; i < daysToShow.length; i += cols) {
       const rowDays = daysToShow.slice(i, i + cols);
       if (rowDays.length === 0) continue;
@@ -72,7 +69,6 @@ export default function MonthGrid({
       const rowStart = startOfDay(rowDays[0]);
       const rowEnd = endOfDay(rowDays[rowDays.length - 1]);
 
-      // 이 주(Week)에 포함되는 업무들 필터링
       const tasksInRow = allTasks.filter((t) =>
         areIntervalsOverlapping(
           { start: startOfDay(t.startDate), end: endOfDay(t.endDate) },
@@ -80,19 +76,19 @@ export default function MonthGrid({
         ),
       );
 
-      // 정렬: (1) 시작일 빠른 순 (2) 기간 긴 순 (그래야 빈 공간을 효율적으로 채움)
+      // ✨ [핵심 수정] 정렬 순서 변경
+      // 1순위: 같은 프로젝트(svcId)끼리 뭉치게 함 -> 그래야 같은 줄에 배정됨
+      // 2순위: 시작일 순
       tasksInRow.sort((a, b) => {
-        const diffStart = a.startDate.getTime() - b.startDate.getTime();
-        if (diffStart !== 0) return diffStart;
-        return b.endDate.getTime() - a.endDate.getTime();
+        if (a.svcId !== b.svcId) {
+          return a.svcId.localeCompare(b.svcId);
+        }
+        return a.startDate.getTime() - b.startDate.getTime();
       });
 
-      // 슬롯 할당 (Greedy Algorithm)
-      // slots[slotIndex][dayIndex] = occupied? (boolean)
       const slots: boolean[][] = [];
 
       tasksInRow.forEach((task) => {
-        // 이 업무가 현재 주(Row)에서 차지하는 요일 인덱스들 찾기 (0~6 or 0~4)
         const activeIndices = rowDays
           .map((day, idx) =>
             isWithinInterval(day, {
@@ -106,33 +102,24 @@ export default function MonthGrid({
 
         if (activeIndices.length === 0) return;
 
-        // 빈 슬롯 찾기 (위에서부터 차례대로)
         let slotIndex = 0;
         while (true) {
           if (!slots[slotIndex]) slots[slotIndex] = [];
-
-          // 해당 슬롯의 필요한 요일들이 모두 비어있는지 확인
           const isClear = activeIndices.every((idx) => !slots[slotIndex][idx]);
-
           if (isClear) {
-            // 할당 성공!
             activeIndices.forEach((idx) => {
               slots[slotIndex][idx] = true;
               const dateKey = format(rowDays[idx], "yyyy-MM-dd");
-              // 맵에 저장: "날짜_taskId" = 슬롯번호
               map.set(`${dateKey}_${task.id}`, slotIndex);
-
-              // 해당 날짜의 최대 슬롯 높이 기록
               const currentMax = maxSlots.get(dateKey) || 0;
               maxSlots.set(dateKey, Math.max(currentMax, slotIndex));
             });
             break;
           }
-          slotIndex++; // 다음 줄로 이동
+          slotIndex++;
         }
       });
     }
-
     return { slotMap: map, maxSlotsPerDay: maxSlots };
   }, [schedules, daysToShow, cols]);
 
@@ -148,13 +135,10 @@ export default function MonthGrid({
       <StGridBody $cols={cols}>
         {daysToShow.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
-          // 이 날짜에 렌더링해야 할 총 슬롯 개수 (0부터 시작하므로 +1)
           const totalSlots = (maxSlotsPerDay.get(dateKey) ?? -1) + 1;
 
-          // 렌더링할 아이템 배열 만들기 (업무 + 빈칸Spacers)
           const renderItems = [];
           for (let i = 0; i < totalSlots; i++) {
-            // 현재 슬롯(i)에 해당하는 업무 찾기
             const taskInSlot = schedules
               .flatMap((s) =>
                 s.tasks.map((t) => ({
@@ -197,6 +181,8 @@ export default function MonthGrid({
                         <span className="task-name">{taskInSlot.title}</span>
                       </span>
                     )}
+
+                    {/* ✨ 디자인 복구: 단일 일정은 박스, 긴 일정은 점선 */}
                     {!isSingleDay && <div className="dash-line" />}
                     {!isSingleDay && isStart && (
                       <div className="marker start" />
@@ -206,7 +192,6 @@ export default function MonthGrid({
                 </StTaskBarWrapper>,
               );
             } else {
-              // ✨ [중요] 업무가 없는 슬롯은 투명한 Spacer로 채워서 높이를 유지!
               renderItems.push(
                 <div key={`spacer-${i}`} style={{ height: "26px" }} />,
               );
@@ -224,7 +209,6 @@ export default function MonthGrid({
               >
                 {format(day, "d")}
               </StDateNumber>
-
               <StTaskContainer>{renderItems}</StTaskContainer>
             </StDateCell>
           );
@@ -235,6 +219,7 @@ export default function MonthGrid({
 }
 
 // --- 스타일 정의 ---
+// Grid 관련 스타일은 기존과 동일
 
 const StGridContainer = styled.div`
   display: flex;
@@ -244,14 +229,12 @@ const StGridContainer = styled.div`
   overflow: hidden;
   background-color: white;
 `;
-
 const StGridHeader = styled.div<{ $cols: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
 `;
-
 const StDayHeader = styled.div`
   padding: 0.75rem;
   text-align: center;
@@ -259,11 +242,9 @@ const StDayHeader = styled.div`
   color: #6b7280;
   font-size: 0.875rem;
 `;
-
 const StGridBody = styled.div<{ $cols: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
-
   & > div {
     border-right: 1px solid #f3f4f6;
     border-bottom: 1px solid #f3f4f6;
@@ -272,7 +253,6 @@ const StGridBody = styled.div<{ $cols: number }>`
     border-right: none;
   }
 `;
-
 const StDateCell = styled.div`
   min-height: 120px;
   padding: 0;
@@ -285,14 +265,12 @@ const StDateCell = styled.div`
     background-color: #fcfcfc;
   }
 `;
-
 const StDateNumber = styled.div<{ $isCurrentMonth: boolean }>`
   padding: 6px 8px;
   font-size: 0.85rem;
   font-weight: 600;
   color: ${({ $isCurrentMonth }) => ($isCurrentMonth ? "#374151" : "#d1d5db")};
 `;
-
 const StTaskContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -300,20 +278,23 @@ const StTaskContainer = styled.div`
   padding-bottom: 4px;
 `;
 
+// TaskBarWrapper
 const StTaskBarWrapper = styled.div<{ $isPast?: boolean }>`
   height: 26px;
   display: flex;
   align-items: center;
   width: 100%;
+  position: relative;
+  z-index: 10;
   cursor: ${({ $isPast }) => ($isPast ? "default" : "grab")};
-  opacity: ${({ $isPast }) => ($isPast ? 0.5 : 1)};
+  opacity: ${({ $isPast }) => ($isPast ? 0.6 : 1)};
   filter: ${({ $isPast }) => ($isPast ? "grayscale(100%)" : "none")};
-
   &:active {
     cursor: ${({ $isPast }) => ($isPast ? "default" : "grabbing")};
   }
 `;
 
+// ✨ 디자인 복구: 점선 스타일 + 단일 박스
 const StTaskContent = styled.div<{
   $color: string;
   $isStart: boolean;
@@ -326,6 +307,7 @@ const StTaskContent = styled.div<{
   display: flex;
   align-items: center;
 
+  /* 라벨 (텍스트) */
   .label {
     position: relative;
     z-index: 2;
@@ -338,7 +320,7 @@ const StTaskContent = styled.div<{
     max-width: 100%;
     color: ${({ $isSingleDay, $color }) => ($isSingleDay ? "white" : $color)};
     background-color: ${({ $isSingleDay }) =>
-      $isSingleDay ? "transparent" : "rgba(255,255,255,0.85)"};
+      $isSingleDay ? "transparent" : "rgba(255,255,255,0.9)"};
     border-radius: 4px;
     margin-left: ${({ $isSingleDay }) => ($isSingleDay ? "0" : "12px")};
     display: flex;
@@ -350,13 +332,12 @@ const StTaskContent = styled.div<{
     }
   }
 
+  /* 1. 단일 일정 (박스 형태) */
   ${({ $isSingleDay, $color }) =>
     $isSingleDay &&
     css`
       background-color: ${$color};
       border-radius: 6px;
-      margin: 0 4px;
-      width: calc(100% - 8px);
       justify-content: center;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       .label .svc-name {
@@ -365,9 +346,11 @@ const StTaskContent = styled.div<{
       }
     `}
 
+  /* 2. 긴 일정 (점선 + 마커 형태) */
   ${({ $isSingleDay, $color }) =>
     !$isSingleDay &&
     css`
+      /* 점선 */
       .dash-line {
         position: absolute;
         top: 50%;
@@ -384,6 +367,7 @@ const StTaskContent = styled.div<{
         transform: translateY(-50%);
         z-index: 1;
       }
+      /* 시작/끝 마커 */
       .marker {
         position: absolute;
         top: 50%;
@@ -391,17 +375,17 @@ const StTaskContent = styled.div<{
         z-index: 1;
       }
       .marker.start {
-        left: 2px;
+        left: 0px;
         width: 0;
         height: 0;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-left: 8px solid ${$color};
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 11px solid ${$color};
       }
       .marker.end {
-        right: 2px;
+        right: 0;
         width: 3px;
-        height: 14px;
+        height: 16px;
         background-color: ${$color};
         border-radius: 1px;
       }
