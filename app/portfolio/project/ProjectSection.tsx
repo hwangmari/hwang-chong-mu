@@ -10,26 +10,39 @@ import {
   StCommonStackWrapper,
   StCoreBadge,
   StProjectList,
+  StPhilosophyBox,
 } from "./ProjectSection.styled";
 import { ProjectImage } from "@/components/common/ProjectImageViewer";
 
-// ✅ 공통 핵심 스택 정의
-const CORE_STACK = ["Next.js 14", "TypeScript", "Supabase", "Vercel"];
+// 상단에 정의된 스택 배열
+const CORE_STACK = [
+  "Gemini (Co-pilot)",
+  "Next.js 14",
+  "TypeScript",
+  "Supabase",
+  "Vercel",
+];
 
 export default function ProjectSection() {
-  // 1. 데이터를 페이지 레벨에서 정의 (혹은 API로 받아오기)
-  const calendarImages: ProjectImage[] = [
+  const scheduleImages: ProjectImage[] = [
     {
-      src: "/images/calendar-preview.png",
-      alt: "주간 뷰 화면",
+      src: "/images/toy_schedule.png",
+      alt: "업무 캘린더 예시 화면", // alt 태그는 접근성을 위해 채워두는 것이 좋습니다
     },
-    // {
-    //   src: "/images/calendar/detail-2.png",
-    //   alt: "모바일 화면",
-    //   className: "mobile-frame", // 모바일용 스타일 적용 가능
-    //   width: 320,
-    // },
   ];
+  const habitImages: ProjectImage[] = [
+    {
+      src: "/images/toy_habit.png",
+      alt: "습관 관리 예시 화면",
+    },
+  ];
+  const dietImages: ProjectImage[] = [
+    {
+      src: "/images/toy_diet.png",
+      alt: "체중 관리 예시 화면",
+    },
+  ];
+
   return (
     <StProjectSection>
       <StSectionInner>
@@ -41,21 +54,42 @@ export default function ProjectSection() {
             </Typography>
           </StSectionTitleWrapper>
 
-          {/* 🔹 공통 기술 스택 (상단 배치) */}
+          {/* 🔹 공통 기술 스택 */}
           <StCommonStackWrapper>
             <span className="label">Core Tech Stack :</span>
             <div className="badge-list">
               {CORE_STACK.map((tech) => (
-                <StCoreBadge key={tech}>{tech}</StCoreBadge>
+                <StCoreBadge key={tech} $isAi={tech.includes("Gemini")}>
+                  {tech}
+                </StCoreBadge>
               ))}
             </div>
           </StCommonStackWrapper>
+
+          {/* 🔹 [NEW] 개발 철학 및 시너지 강조 영역 */}
+          <StPhilosophyBox>
+            <p className="catchphrase">
+              &quot;Directed by Human, Crafted with AI.&quot;
+            </p>
+            <p className="description">
+              이 프로젝트들은 <b>Gemini</b>를 단순한 코드 생성기가 아닌,{" "}
+              <b>Pair Programmer</b>로 활용하여 개발 생산성을 극대화한
+              결과물입니다.
+              <br />
+              <br />
+              서비스의 <b>기획과 디자인, 컴포넌트 아키텍처 설계</b>는{" "}
+              <b>개발자의 명확한 의도</b>하에 구조화되었으며,
+              <br />
+              AI와의 협업을 통해 복잡한 로직 구현과 최적화 과정을 효율적으로
+              수행했습니다.
+            </p>
+          </StPhilosophyBox>
         </StHeaderGroup>
 
         <StProjectList>
           {/* 업무 캘린더 프로젝트*/}
           <ProjectCard
-            title="황총무의 업무 캘린더"
+            title="업무 캘린더"
             period="2026.01 - 진행 중 (1인 개발)"
             linkUrl="/schedule"
             description={
@@ -66,6 +100,8 @@ export default function ProjectSection() {
                 복잡한 배포 일정과 이슈를 <b>직관적인 타임라인</b>으로 관리하고,
                 <b>&quot;클릭 한 번으로&quot;</b> 보고용 텍스트를 생성해{" "}
                 <b>업무 효율</b>을 극대화했습니다.
+                <br />
+                실무 사용중으로 관계자 모드입니다.
               </>
             }
             details={{
@@ -75,12 +111,12 @@ export default function ProjectSection() {
                 "프로젝트별 세부 일정을 시각화하여 병목 구간을 사전에 발견하고, 캘린더 데이터를 '보고용 요약 텍스트'로 즉시 변환하는 기능을 구현해 커뮤니케이션 비용을 획기적으로 절감.",
               tech: "date-fns를 활용해 주/월 단위 캘린더 로직을 직접 구현하고, Drag & Drop 인터랙션으로 일정 수정의 사용성을 높임. Clipboard API를 활용해 데이터 포맷팅 최적화.",
             }}
-            projectImages={calendarImages}
+            projectImages={scheduleImages}
           />
 
           {/* 약속 잡기 */}
           <ProjectCard
-            title="황총무의 약속 잡기 "
+            title="약속 잡기 "
             period="2025.12.01 - 진행 중 (1인 개발)"
             linkUrl="/meeting"
             description={
@@ -100,30 +136,11 @@ export default function ProjectSection() {
               tech: "date-fns 기반의 배열 연산 최적화로 즉각적인 반응성을 확보하고, Next-SEO를 도입해 URL 공유 시점의 UX(미리보기)까지 세심하게 고려했습니다.",
             }}
             logicSteps={[]}
-            historyLogs={[
-              {
-                ver: "v1.2",
-                date: "26.01",
-                content: "Next-SEO 적용 및 카카오톡 공유 프리뷰(OG Tag) 최적화",
-              },
-              {
-                ver: "v1.1",
-                date: "25.12",
-                content:
-                  "date-fns 연산 로직 Memoization으로 렌더링 성능 30% 개선",
-              },
-              {
-                ver: "v1.0",
-                date: "25.12",
-                content:
-                  "서비스 런칭 및 소거법(Negative Selection) 알고리즘 구현",
-              },
-            ]}
           />
 
           {/* 습관 관리 프로젝트 */}
           <ProjectCard
-            title="황총무의 습관 관리 "
+            title="습관 관리 "
             period="2025.12.22 - 진행 중 (1인 개발)"
             linkUrl="/habit"
             description={
@@ -141,11 +158,36 @@ export default function ProjectSection() {
                 "활동 빈도를 색상 농도로 표현하는 히트맵(Heatmap) UI를 도입해 성취감을 시각화.",
               tech: "Context API로 전역 모달 시스템을 구축하고, 커스텀 훅으로 제어 로직을 추상화하여 재사용성 증대.",
             }}
+            projectImages={habitImages}
+          />
+
+          {/* 체중 관리 프로젝트 */}
+          <ProjectCard
+            title="체중 관리"
+            period="2026.01 - 진행 중 (1인 개발)"
+            linkUrl="/diet"
+            description={
+              <>
+                체중 감량의 핵심인 <b>&quot;밤사이 소화율&quot;</b>에 집중한
+                다이어트 트래커입니다. <br />
+                아침과 저녁의 체중 차이를 <b>시각적인 차트</b>로 분석해
+                제공하며, 단순한 기록을 넘어 <b>내 몸의 대사 효율</b>을
+                직관적으로 파악할 수 있습니다.
+              </>
+            }
+            details={{
+              problem:
+                "단순한 체중 기록만으로는 식단과 수면이 체중 변화에 미치는 인과관계를 파악하기 어렵고, 꾸준한 동기 부여가 힘듦.",
+              solution:
+                "저녁 식사 후 다음 날 아침까지의 '감량폭'을 핵심 지표로 시각화하여, 수면과 공복의 중요성을 인지시키는 피드백 루프 설계.",
+              tech: "Recharts 라이브러리를 커스터마이징하여 체중 변화 추이를 직관적인 그래프로 표현하고, 데이터 시각화의 반응성을 최적화.",
+            }}
+            projectImages={dietImages}
           />
 
           {/* N빵 계산기 프로젝트 */}
           <ProjectCard
-            title="황총무의 N빵 계산기 "
+            title="N빵 계산기 "
             period="2025.12.24 - 진행 중 (1인 개발)"
             linkUrl="/calc"
             description={
@@ -169,7 +211,7 @@ export default function ProjectSection() {
           />
           {/* 게임방 프로젝트 */}
           <ProjectCard
-            title="황총무 게임방"
+            title="게임방"
             period="2025.12 - 진행 중 (1인 개발)"
             linkUrl="/game"
             description={
