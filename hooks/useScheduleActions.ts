@@ -5,7 +5,7 @@ import * as API from "@/services/schedule";
 export function useScheduleActions(
   initialSchedules: ServiceSchedule[],
   boardId: string,
-  onUpdateAll?: (services: ServiceSchedule[]) => void,
+  onUpdateAll?: (services: ServiceSchedule[]) => void, // ✨ 부모 업데이트 함수
 ) {
   const [schedules, setSchedules] =
     useState<ServiceSchedule[]>(initialSchedules);
@@ -15,10 +15,10 @@ export function useScheduleActions(
     setSchedules(initialSchedules);
   }, [initialSchedules]);
 
-  // 공통 업데이트 헬퍼
+  // 공통 업데이트 헬퍼 (로컬 상태 + 부모 동기화)
   const updateLocalState = (newSchedules: ServiceSchedule[]) => {
     setSchedules(newSchedules);
-    if (onUpdateAll) onUpdateAll(newSchedules);
+    if (onUpdateAll) onUpdateAll(newSchedules); // ✨ 핵심: 부모에게 알림
   };
 
   const handleAddService = async () => {
@@ -107,14 +107,23 @@ export function useScheduleActions(
     }
   };
 
+  // 입력 중에는 로컬 상태만 변경 (타이핑 성능 위해)
   const handleServiceNameChange = (svcId: string, newName: string) => {
     const updated = schedules.map((s) =>
       s.id === svcId ? { ...s, serviceName: newName } : s,
     );
-    setSchedules(updated); // 로컬만 업데이트 (Debounce 효과)
+    setSchedules(updated);
+    // 💡 필요하다면 여기서도 updateLocalState(updated)를 호출해 즉시 반영할 수 있습니다.
   };
 
+  // 포커스 아웃 시: 서버 저장 + 부모 동기화(확정)
   const handleServiceNameBlur = async (svcId: string, name: string) => {
+    // ✨ [수정됨] 여기서 부모에게도 변경된 이름을 전파해야 함!
+    const updated = schedules.map((s) =>
+      s.id === svcId ? { ...s, serviceName: name } : s,
+    );
+    updateLocalState(updated); // 부모와 동기화
+
     try {
       await API.updateService(svcId, { name });
     } catch (e) {

@@ -117,17 +117,17 @@ const StInput = styled.input`
   width: 100%;
 
   &::placeholder {
-    color: #9ca3af; /* gray-400 */
+    color: rgb(73, 76, 83);
     font-weight: 400;
   }
 
   &:focus {
     outline: none;
-    border-bottom-color: #3b82f6; /* blue-500 */
+    border-bottom-color: #111827;
   }
 
   &:hover:not(:focus) {
-    border-bottom-color: #e5e7eb; /* gray-200 */
+    border-bottom-color: #e5e7eb;
   }
 `;
 

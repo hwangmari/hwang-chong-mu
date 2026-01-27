@@ -6,7 +6,7 @@ import { TaskPhase } from "@/types/work-schedule";
 // 분리된 컴포넌트들
 import DateInput from "./DateInput";
 import MemoArea from "./MemoArea";
-import TaskHeader from "./TaskHeader"; // ✨ [NEW] 추가됨
+import TaskHeader from "./TaskHeader";
 
 interface TaskRowProps {
   task: TaskPhase;
@@ -47,7 +47,6 @@ export default function TaskCardItemRow({
 
   return (
     <StTaskItem>
-      {/* ✨ 헤더 컴포넌트로 교체 */}
       <TaskHeader
         title={task.title}
         titleValue={titleValue}
