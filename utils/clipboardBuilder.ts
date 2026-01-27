@@ -40,7 +40,7 @@ export const buildScheduleText = (
 
       text += `- ${t.title}: ${dateStr}`;
       if (t.memo && t.memo.trim() !== "") {
-        text += ` (💬 ${t.memo})`;
+        text += ` (${t.memo})`;
       }
       text += "\n";
     });
