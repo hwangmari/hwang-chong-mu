@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchBoards, updateBoard, deleteBoard } from "@/services/schedule";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
-import ServiceCard from "./components/ServiceCard";
+import ServiceCard from "./components/ServiceCard/ServiceCard";
 // ✨ 분리된 컴포넌트 import
 
 type ScheduleBoard = {

@@ -1,249 +1,57 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from "react";
+import React from "react";
 import styled from "styled-components";
-import { startOfDay, format } from "date-fns";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-import * as API from "@/services/schedule";
-// ✨ ServiceList 컴포넌트 임포트
-import ServiceList from "./ServiceList";
+import { startOfDay } from "date-fns";
+import { ServiceSchedule } from "@/types/work-schedule";
+
+// Hooks & Utils
+import { useScheduleActions } from "@/hooks/useScheduleActions";
+import { useCardScroll } from "@/hooks/useCardScroll";
+import { buildScheduleText } from "@/utils/clipboardBuilder";
+import TaskList from "./Task/TaskList";
 
 interface Props {
   boardId: string;
   schedules: ServiceSchedule[];
+  hiddenIds: Set<string>;
+  onToggleHide: (id: string) => void;
   onSave?: (service: ServiceSchedule) => void;
   onUpdateAll?: (services: ServiceSchedule[]) => void;
 }
 
 export default function RightTaskPanel({
   boardId,
-  schedules,
-  onSave,
+  schedules: initialSchedules,
+  hiddenIds,
+  onToggleHide,
   onUpdateAll,
 }: Props) {
-  const [localSchedules, setLocalSchedules] =
-    useState<ServiceSchedule[]>(schedules);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
 
-  useEffect(() => {
-    setLocalSchedules(schedules);
-  }, [schedules]);
+  // 1. 데이터/API 로직 Hook
+  const {
+    schedules,
+    isEditing,
+    setIsEditing,
+    ...actions // ✨ 여기서 actions 객체에 함수들이 다 들어있어야 함
+  } = useScheduleActions(initialSchedules, boardId, onUpdateAll);
 
-  // 캘린더 클릭 이벤트 수신
-  useEffect(() => {
-    const handleScrollRequest = (e: CustomEvent<string>) => {
-      const svcId = e.detail;
-      setHighlightId(svcId);
+  // 2. UI/스크롤 로직 Hook
+  const { scrollAreaRef, collapsedIds, highlightId, toggleCollapse } =
+    useCardScroll();
 
-      const targetElement = document.getElementById(`service-card-${svcId}`);
-      const containerElement = scrollAreaRef.current;
-
-      if (targetElement && containerElement) {
-        const containerRect = containerElement.getBoundingClientRect();
-        const targetRect = targetElement.getBoundingClientRect();
-
-        const scrollTo =
-          containerElement.scrollTop +
-          (targetRect.top - containerRect.top) -
-          containerElement.clientHeight / 2 +
-          targetRect.height / 2;
-
-        containerElement.scrollTo({
-          top: scrollTo,
-          behavior: "smooth",
-        });
-
-        setCollapsedIds((prev) => {
-          const newSet = new Set(prev);
-          if (newSet.has(svcId)) {
-            newSet.delete(svcId);
-            return newSet;
-          }
-          return prev;
-        });
-
-        setTimeout(() => setHighlightId(null), 1500);
-      }
-    };
-
-    window.addEventListener("scroll-to-service" as any, handleScrollRequest);
-    return () =>
-      window.removeEventListener(
-        "scroll-to-service" as any,
-        handleScrollRequest,
-      );
-  }, []);
-
-  const toggleCollapse = (svcId: string) => {
-    const newSet = new Set(collapsedIds);
-    if (newSet.has(svcId)) {
-      newSet.delete(svcId);
-    } else {
-      newSet.add(svcId);
-    }
-    setCollapsedIds(newSet);
-  };
-
-  // --- 핸들러 ---
+  // 3. 텍스트 복사 핸들러
   const handleCopyText = () => {
-    let text = "";
-    localSchedules.forEach((svc) => {
-      text += `[${svc.serviceName}]\n`;
-      svc.tasks.forEach((t) => {
-        const sYear = t.startDate.getFullYear();
-        const eYear = t.endDate.getFullYear();
-        const startStr =
-          sYear === currentYear
-            ? format(t.startDate, "MM.dd")
-            : format(t.startDate, "yyyy.MM.dd");
-        let dateStr = "";
-        if (format(t.startDate, "yyyyMMdd") === format(t.endDate, "yyyyMMdd")) {
-          dateStr = startStr;
-        } else {
-          let endStr = "";
-          if (sYear === eYear) {
-            endStr = format(t.endDate, "MM.dd");
-          } else {
-            endStr =
-              eYear === currentYear
-                ? format(t.endDate, "MM.dd")
-                : format(t.endDate, "yyyy.MM.dd");
-          }
-          dateStr = `${startStr} ~ ${endStr}`;
-        }
-        text += `- ${t.title}: ${dateStr}`;
-        if (t.memo && t.memo.trim() !== "") {
-          text += ` (💬 ${t.memo})`;
-        }
-        text += "\n";
-      });
-      text += "\n";
-    });
+    const text = buildScheduleText(schedules, hiddenIds, currentYear);
     navigator.clipboard
       .writeText(text)
       .then(() => alert("일정이 복사되었습니다! (메모 포함)"));
   };
 
-  // API 핸들러들
-  const handleColorChange = async (svcId: string, color: string) => {
-    const updated = localSchedules.map((s) =>
-      s.id === svcId ? { ...s, color } : s,
-    );
-    setLocalSchedules(updated);
-    if (onUpdateAll) onUpdateAll(updated);
-    try {
-      await API.updateService(svcId, { color });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const handleServiceNameChange = (svcId: string, newName: string) => {
-    const updated = localSchedules.map((s) =>
-      s.id === svcId ? { ...s, serviceName: newName } : s,
-    );
-    setLocalSchedules(updated);
-  };
-  const handleServiceNameBlur = async (svcId: string, name: string) => {
-    try {
-      await API.updateService(svcId, { name });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const handleAddService = async () => {
-    try {
-      const newService = await API.createService(
-        boardId,
-        "새 프로젝트",
-        "",
-        "#10b981",
-      );
-      const updated = [...localSchedules, newService];
-      setLocalSchedules(updated);
-      if (onUpdateAll) onUpdateAll(updated);
-      setIsEditing(true);
-    } catch (e) {
-      console.error(e);
-      alert("실패");
-    }
-  };
-  const handleDeleteService = async (svcId: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    try {
-      await API.deleteService(svcId);
-      const updated = localSchedules.filter((s) => s.id !== svcId);
-      setLocalSchedules(updated);
-      if (onUpdateAll) onUpdateAll(updated);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const handleAddTask = async (svcId: string) => {
-    try {
-      const newTask = await API.createTask(svcId, {
-        title: "새 업무",
-        startDate: new Date(),
-        endDate: new Date(),
-      });
-      const updated = localSchedules.map((svc) => {
-        if (svc.id !== svcId) return svc;
-        return { ...svc, tasks: [...svc.tasks, newTask] };
-      });
-      setLocalSchedules(updated);
-      if (onUpdateAll) onUpdateAll(updated);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    const updatedSchedules = localSchedules.map((svc) => {
-      if (svc.id !== svcId) return svc;
-      return {
-        ...svc,
-        tasks: svc.tasks.map((t) =>
-          t.id === updatedTask.id ? updatedTask : t,
-        ),
-      };
-    });
-    setLocalSchedules(updatedSchedules);
-    if (onUpdateAll) onUpdateAll(updatedSchedules);
-    try {
-      await API.updateTask(updatedTask.id, {
-        title: updatedTask.title,
-        startDate: updatedTask.startDate,
-        endDate: updatedTask.endDate,
-        memo: updatedTask.memo,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const deleteTask = async (svcId: string, taskId: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    try {
-      await API.deleteTask(taskId);
-      const updated = localSchedules.map((svc) => {
-        if (svc.id !== svcId) return svc;
-        return { ...svc, tasks: svc.tasks.filter((t) => t.id !== taskId) };
-      });
-      setLocalSchedules(updated);
-      if (onUpdateAll) onUpdateAll(updated);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   return (
     <StContainer>
-      {/* 1. 상단 고정 영역 */}
+      {/* 상단 컨트롤 바 */}
       <StControlBar>
         <div className="left">
           {!isEditing && (
@@ -262,30 +70,34 @@ export default function RightTaskPanel({
         </div>
       </StControlBar>
 
-      {/* 2. 하단 스크롤 영역 (분리된 컴포넌트 사용) */}
-      <ServiceList
-        schedules={localSchedules}
-        scrollAreaRef={scrollAreaRef}
+      {/* 리스트 컴포넌트 */}
+      <TaskList
+        schedules={schedules}
+        scrollAreaRef={scrollAreaRef as any}
+        // 상태 전달
         collapsedIds={collapsedIds}
         highlightId={highlightId}
         isEditing={isEditing}
         today={today}
+        hiddenIds={hiddenIds}
+        // 핸들러 전달
+        onToggleHide={onToggleHide}
         onToggleCollapse={toggleCollapse}
-        onServiceNameChange={handleServiceNameChange}
-        onServiceNameBlur={handleServiceNameBlur}
-        onColorChange={handleColorChange}
-        onDeleteService={handleDeleteService}
-        onUpdateTask={updateTask}
-        onDeleteTask={deleteTask}
-        onAddTask={handleAddTask}
-        onAddService={handleAddService}
+        // ✨ Hook에서 가져온 액션들 연결
+        onServiceNameChange={actions.handleServiceNameChange}
+        onServiceNameBlur={actions.handleServiceNameBlur}
+        onColorChange={actions.handleColorChange}
+        onDeleteService={actions.handleDeleteService}
+        onUpdateTask={actions.updateTask}
+        onDeleteTask={actions.deleteTask}
+        onAddTask={actions.handleAddTask}
+        onAddService={actions.handleAddService}
       />
     </StContainer>
   );
 }
 
-// --- 스타일 정의 (상단 컨테이너 및 헤더만 유지) ---
-
+// --- Styles ---
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;

@@ -31,9 +31,6 @@ export default function CreateSchedulePage() {
     <StPageContainer>
       <StFormContainer>
         <StHeader>
-          <Link href="/schedule" className="back-link">
-            ← 목록
-          </Link>
           <h2>새 일정관리 만들기</h2>
           <p>여러 프로젝트 일정을 한눈에 관리할 수 있는 보드를 만듭니다.</p>
         </StHeader>
@@ -73,18 +70,17 @@ export default function CreateSchedulePage() {
 
 // ... 스타일은 기존과 동일 (생략) ...
 const StPageContainer = styled.div`
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #f9fafb;
-  padding: 1rem;
+  padding: 3rem 1rem;
 `;
 const StFormContainer = styled.div`
   width: 100%;
   max-width: 500px;
   background: white;
-  padding: 2.5rem;
+  padding: 1.5rem;
   border-radius: 24px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;

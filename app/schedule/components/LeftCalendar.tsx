@@ -7,8 +7,8 @@ import {
 import styled from "styled-components";
 import { useState } from "react";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-// ✨ 분리된 컴포넌트 import
-import MonthGrid from "./MonthGrid";
+import MonthGrid from "./Calendar/MonthGrid";
+import CalendarHeader from "./Calendar/CalendarHeader"; // ✨ 분리된 헤더 import
 
 interface Props {
   currentDate: Date;
@@ -31,7 +31,7 @@ export default function LeftCalendar({
   const handlePrevMonth = () => onMonthChange(subMonths(currentDate, 1));
   const handleNextMonth = () => onMonthChange(addMonths(currentDate, 1));
 
-  // --- 드래그 핸들러 (MonthGrid로 전달됨) ---
+  // --- 드래그 핸들러 ---
   const handleDragStart = (
     e: React.DragEvent,
     serviceId: string,
@@ -67,36 +67,14 @@ export default function LeftCalendar({
 
   return (
     <StContainer>
-      <StCalendarHeader>
-        <div className="nav-group">
-          <button className="nav-btn" onClick={handlePrevMonth}>
-            ◀
-          </button>
-          <span className="month-title">
-            {format(currentDate, "yyyy년 M월")}
-            {viewMode === "double" &&
-              ` - ${format(addMonths(currentDate, 1), "M월")}`}
-          </span>
-          <button className="nav-btn" onClick={handleNextMonth}>
-            ▶
-          </button>
-        </div>
-
-        <StViewToggle>
-          <button
-            className={viewMode === "single" ? "active" : ""}
-            onClick={() => setViewMode("single")}
-          >
-            1개월
-          </button>
-          <button
-            className={viewMode === "double" ? "active" : ""}
-            onClick={() => setViewMode("double")}
-          >
-            2개월
-          </button>
-        </StViewToggle>
-      </StCalendarHeader>
+      {/* ✨ 헤더 컴포넌트 사용 */}
+      <CalendarHeader
+        currentDate={currentDate}
+        viewMode={viewMode}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onChangeViewMode={setViewMode}
+      />
 
       <StScrollArea>
         {/* 첫 번째 달 */}
@@ -137,77 +115,13 @@ export default function LeftCalendar({
   );
 }
 
-// --- 스타일 정의 (레이아웃 관련) ---
+// --- 스타일 정의 ---
 
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
   gap: 1rem;
-`;
-
-const StCalendarHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0;
-  .nav-group {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    .month-title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #111827;
-      min-width: 140px;
-      text-align: center;
-    }
-    .nav-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1px solid #e5e7eb;
-      background: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #6b7280;
-      &:hover {
-        background-color: #f3f4f6;
-        color: #111827;
-      }
-    }
-  }
-`;
-
-const StViewToggle = styled.div`
-  display: flex;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-  gap: 4px;
-
-  button {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #6b7280;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
-
-    &.active {
-      background-color: white;
-      color: #111827;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    &:hover:not(.active) {
-      color: #374151;
-    }
-  }
 `;
 
 const StScrollArea = styled.div`
