@@ -9,7 +9,7 @@ const PRESET_COLORS = [
   "#339AF0",
   "#5C7CFA",
   "#845EF7",
-  "#868E96",
+  "#494f54",
 ];
 
 interface Props {

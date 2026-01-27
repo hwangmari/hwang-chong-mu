@@ -1,10 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useRef, useState, useEffect } from "react";
 import { format, parse, isValid } from "date-fns";
-import {
-  StCalendarPopover,
-  StDateInputWrapper,
-} from "./TaskCardItemRow.styles";
+import { StDateInputWrapper, StCalendarPopover } from "./TaskList.styles";
 
 interface DateInputProps {
   startDate: Date;

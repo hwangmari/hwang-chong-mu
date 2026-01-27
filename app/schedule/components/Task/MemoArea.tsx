@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StMemoContainer } from "./TaskCardItemRow.styles";
+import { StMemoContainer } from "./TaskList.styles";
 
 interface MemoAreaProps {
   initialMemo: string;
