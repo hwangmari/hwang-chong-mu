@@ -8,6 +8,7 @@ import Typography from "@/components/common/Typography";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ProjectItemList from "./ProjectItemList";
+import ProjectImageViewer from "@/components/common/ProjectImageViewer";
 
 export default function ProjectItem({
   project,
@@ -84,35 +85,10 @@ export default function ProjectItem({
       </StTechList>
 
       {/* 5. 이미지 더보기 영역 */}
-      {hasImages && (
-        <StImageSection>
-          <StToggleButton onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? "프로젝트 이미지 접기" : "프로젝트 이미지 보기"}
-            {isOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </StToggleButton>
-
-          {isOpen && (
-            <StImageGrid>
-              {project.images?.map((img: any, idx: number) => (
-                <StImageFrame key={idx} className={img.className}>
-                  <StNextImage
-                    src={img.src}
-                    alt={img.alt || `${project.title} screenshot ${idx + 1}`}
-                    width={img.width || 0}
-                    height={img.height || 0}
-                    sizes="100vw"
-                    priority={idx === 0}
-                    style={{
-                      width: img.width ? "auto" : "100%",
-                      height: "auto",
-                    }}
-                  />
-                </StImageFrame>
-              ))}
-            </StImageGrid>
-          )}
-        </StImageSection>
-      )}
+      <ProjectImageViewer
+        images={project.images}
+        projectTitle={project.title}
+      />
 
       {project.projectItemList && (
         <StToggleArea>

@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
-import { isBefore } from "date-fns";
+import React, { useState, useEffect } from "react";
+// import { isBefore } from "date-fns"; // ✨ 이제 날짜 비교로 나누지 않으므로 제거 가능 (정렬용으론 사용 안함)
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import EyeIcon from "./EyeIcon";
 import ColorPicker from "./ColorPicker";
@@ -13,7 +14,7 @@ import {
   StFooter,
   StAddButton,
   StHiddenMessage,
-} from "./TaskList.styles"; // 경로가 맞는지 확인해주세요 (보통 ../TaskList.styles.ts)
+} from "./TaskList.styles";
 import TaskCardItemRow from "./TaskCardItemRow";
 
 interface Props {
@@ -24,11 +25,8 @@ interface Props {
   isEditing: boolean;
   today: Date;
   isPickerOpen: boolean;
-
-  // ✨ [수정] 부모(TaskList)에서 useRef(null)로 시작하므로 null 허용 필요
   pickerRef: React.RefObject<HTMLDivElement | null>;
 
-  // Handlers
   onToggleCollapse: () => void;
   onToggleHide: () => void;
   onOpenPicker: () => void;
@@ -43,14 +41,13 @@ interface Props {
   onAddTask: () => void;
 }
 
-// ✨ 컴포넌트 이름: TaskCardItem
 export default function TaskCardItem({
   service,
   isCollapsed,
   isHighlighted,
   isHidden,
   isEditing,
-  today,
+  // today, // ✨ 오늘 날짜 기준 분리가 아니므로 사용 안 함
   isPickerOpen,
   pickerRef,
 
@@ -66,13 +63,45 @@ export default function TaskCardItem({
   onDeleteTask,
   onAddTask,
 }: Props) {
-  const activeTasks = service.tasks
-    .filter((t) => !isBefore(t.endDate, today))
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const [frozenTaskIds, setFrozenTaskIds] = useState<string[]>([]);
 
-  const pastTasks = service.tasks
-    .filter((t) => isBefore(t.endDate, today))
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  // 수정 모드 진입 시 순서 고정 로직 (기존 유지)
+  useEffect(() => {
+    if (isEditing) {
+      const currentIds = [...service.tasks]
+        .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+        .map((t) => t.id);
+      setFrozenTaskIds(currentIds);
+    } else {
+      setFrozenTaskIds([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
+
+  const getSortedTasks = (tasks: TaskPhase[]) => {
+    if (isEditing && frozenTaskIds.length > 0) {
+      return [...tasks].sort((a, b) => {
+        const indexA = frozenTaskIds.indexOf(a.id);
+        const indexB = frozenTaskIds.indexOf(b.id);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+    }
+    return [...tasks].sort(
+      (a, b) => a.startDate.getTime() - b.startDate.getTime(),
+    );
+  };
+
+  // ✨ [수정] 날짜(isBefore)가 아닌, 완료 여부(!isCompleted)로 활성 태스크 필터링
+  const activeTasks = getSortedTasks(
+    service.tasks.filter((t) => !t.isCompleted),
+  );
+
+  // ✨ [수정] 완료 여부(isCompleted)로 완료 태스크 필터링
+  const completedTasks = getSortedTasks(
+    service.tasks.filter((t) => t.isCompleted),
+  );
 
   return (
     <StCard
@@ -146,35 +175,37 @@ export default function TaskCardItem({
 
       {!isCollapsed && !isHidden && (
         <StCardBody>
+          {/* 진행 중인 일정 */}
           {activeTasks.map((task) => (
             <TaskCardItemRow
               key={task.id}
               task={task}
               serviceId={service.id}
-              // ✨ TaskCardItemRow는 (id, task)를 반환하므로 첫 번째 인자 무시(_)
               onUpdate={(_, updatedTask) => onUpdateTask(updatedTask)}
               onDelete={(_, taskId) => onDeleteTask(taskId)}
               isReadOnly={!isEditing}
             />
           ))}
 
-          {pastTasks.length > 0 && (
+          {/* ✨ 완료된 일정 (기존 PastSection 재활용) */}
+          {completedTasks.length > 0 && (
             <StPastSection>
-              <summary>지난 일정 보기 ({pastTasks.length})</summary>
+              <summary>완료된 일정 보기 ({completedTasks.length})</summary>
               <div className="past-list">
-                {pastTasks.map((task) => (
+                {completedTasks.map((task) => (
                   <TaskCardItemRow
                     key={task.id}
                     task={task}
                     serviceId={service.id}
                     onUpdate={(_, updatedTask) => onUpdateTask(updatedTask)}
                     onDelete={(_, taskId) => onDeleteTask(taskId)}
-                    isReadOnly={true}
+                    isReadOnly={true} // 완료된 항목은 읽기 전용처럼 보이거나, 수정 가능해도 됨
                   />
                 ))}
               </div>
             </StPastSection>
           )}
+
           {isEditing && (
             <StFooter>
               <StAddButton onClick={onAddTask}>+ 업무 추가</StAddButton>

@@ -87,7 +87,7 @@ export default function ScheduleListPage() {
     <StContainer>
       <StHeader>
         <div className="text-group">
-          <h1>📅 내 일정관리 보드</h1>
+          <h1>📅 서비스별 일정관리 보드</h1>
           <p>관리할 대시보드를 선택하거나 새로 만들어보세요.</p>
         </div>
         <Link href="/schedule/create">

@@ -11,11 +11,25 @@ import {
   StCoreBadge,
   StProjectList,
 } from "./ProjectSection.styled";
+import { ProjectImage } from "@/components/common/ProjectImageViewer";
 
 // ✅ 공통 핵심 스택 정의
 const CORE_STACK = ["Next.js 14", "TypeScript", "Supabase", "Vercel"];
 
 export default function ProjectSection() {
+  // 1. 데이터를 페이지 레벨에서 정의 (혹은 API로 받아오기)
+  const calendarImages: ProjectImage[] = [
+    {
+      src: "/images/calendar-preview.png",
+      alt: "주간 뷰 화면",
+    },
+    // {
+    //   src: "/images/calendar/detail-2.png",
+    //   alt: "모바일 화면",
+    //   className: "mobile-frame", // 모바일용 스타일 적용 가능
+    //   width: 320,
+    // },
+  ];
   return (
     <StProjectSection>
       <StSectionInner>
@@ -39,6 +53,32 @@ export default function ProjectSection() {
         </StHeaderGroup>
 
         <StProjectList>
+          {/* 업무 캘린더 프로젝트*/}
+          <ProjectCard
+            title="황총무의 업무 캘린더"
+            period="2026.01 - 진행 중 (1인 개발)"
+            linkUrl="/schedule"
+            description={
+              <>
+                중복되는 업무 일정과 <b>&quot;리소스 현황&quot;</b>을 한눈에
+                파악하는 <b>올인원 프로젝트 캘린더</b>입니다.
+                <br />
+                복잡한 배포 일정과 이슈를 <b>직관적인 타임라인</b>으로 관리하고,
+                <b>&quot;클릭 한 번으로&quot;</b> 보고용 텍스트를 생성해{" "}
+                <b>업무 효율</b>을 극대화했습니다.
+              </>
+            }
+            details={{
+              problem:
+                "다수의 프로젝트가 병렬로 진행될 때 발생하는 일정 충돌과 리소스 파악의 어려움, 그리고 캘린더 내용을 일일이 텍스트로 옮겨 적어야 하는 비효율적인 보고 체계.",
+              solution:
+                "프로젝트별 세부 일정을 시각화하여 병목 구간을 사전에 발견하고, 캘린더 데이터를 '보고용 요약 텍스트'로 즉시 변환하는 기능을 구현해 커뮤니케이션 비용을 획기적으로 절감.",
+              tech: "date-fns를 활용해 주/월 단위 캘린더 로직을 직접 구현하고, Drag & Drop 인터랙션으로 일정 수정의 사용성을 높임. Clipboard API를 활용해 데이터 포맷팅 최적화.",
+            }}
+            projectImages={calendarImages}
+          />
+
+          {/* 약속 잡기 */}
           <ProjectCard
             title="황총무의 약속 잡기 "
             period="2025.12.01 - 진행 중 (1인 개발)"
@@ -59,9 +99,7 @@ export default function ProjectSection() {
                 "모두가 되는 날을 취합하는 기존 방식 대신, '안 되는 날'을 우선 소거하는 역발상(Negative Selection) 로직을 설계하여 의사결정 시간을 획기적으로 단축했습니다.",
               tech: "date-fns 기반의 배열 연산 최적화로 즉각적인 반응성을 확보하고, Next-SEO를 도입해 URL 공유 시점의 UX(미리보기)까지 세심하게 고려했습니다.",
             }}
-            // ✅ 추가: 로직 흐름 시각화 데이터
             logicSteps={[]}
-            // ✅ 추가: 개발 히스토리 데이터
             historyLogs={[
               {
                 ver: "v1.2",
@@ -83,7 +121,7 @@ export default function ProjectSection() {
             ]}
           />
 
-          {/* 2. 습관 관리 프로젝트 */}
+          {/* 습관 관리 프로젝트 */}
           <ProjectCard
             title="황총무의 습관 관리 "
             period="2025.12.22 - 진행 중 (1인 개발)"
@@ -105,7 +143,7 @@ export default function ProjectSection() {
             }}
           />
 
-          {/* 3. N빵 계산기 프로젝트 */}
+          {/* N빵 계산기 프로젝트 */}
           <ProjectCard
             title="황총무의 N빵 계산기 "
             period="2025.12.24 - 진행 중 (1인 개발)"
@@ -129,7 +167,7 @@ export default function ProjectSection() {
               tech: "핵심 기능인 '정산 계산'과 '데이터 저장'을 커스텀 훅으로 모듈화하여 관심사를 명확히 분리(SoC).",
             }}
           />
-          {/* 4. 게임방 프로젝트 */}
+          {/* 게임방 프로젝트 */}
           <ProjectCard
             title="황총무 게임방"
             period="2025.12 - 진행 중 (1인 개발)"

@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Typography from "@/components/common/Typography";
 import PortfolioInfo from "./PortfolioInfo";
 import ResumeSection from "./ResumeSection";
-import ProjectSection from "./ProjectSection";
+import ProjectSection from "./project/ProjectSection";
 
 export default function PortfolioPage() {
   return (

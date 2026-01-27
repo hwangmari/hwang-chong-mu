@@ -23,11 +23,11 @@ export type ServiceSchedule = {
   color: string;
   tasks: TaskPhase[];
 };
-
-export type TaskPhase = {
+export interface TaskPhase {
   id: string;
   title: string;
   startDate: Date;
   endDate: Date;
-  memo?: string; // ✨ 메모 필드 추가 (선택사항)
-};
+  memo?: string;
+  isCompleted?: boolean;
+}

@@ -2,9 +2,13 @@
 
 import Typography from "@/components/common/Typography";
 import Link from "next/link";
+
 import { ReactNode } from "react";
 import styled from "styled-components";
 import LogicFlowChart, { DevLog } from "./ProjectVisuals";
+import ProjectImageViewer, {
+  ProjectImage,
+} from "@/components/common/ProjectImageViewer";
 
 interface ProjectCardProps {
   title: string;
@@ -20,6 +24,7 @@ interface ProjectCardProps {
   logicSteps?: string[];
   edgeCase?: { condition: string; result: string };
   historyLogs?: { ver: string; date: string; content: string }[];
+  projectImages?: ProjectImage[];
 }
 
 export default function ProjectCard({
@@ -31,6 +36,7 @@ export default function ProjectCard({
   details,
   logicSteps,
   historyLogs,
+  projectImages,
 }: ProjectCardProps) {
   return (
     <StCardContainer>
@@ -38,7 +44,6 @@ export default function ProjectCard({
       <StHeader>
         <StTitleGroup>
           <StTitleRow>
-            {/* Logic Component: Typography */}
             <Typography variant="h3" as="h3">
               {title}
             </Typography>
@@ -71,26 +76,31 @@ export default function ProjectCard({
       {/* 상세 내용 (Problem / Solution / Tech) */}
       <StDetailsBox>
         <StDetailRow>
-          <StDetailLabel>기획 배경:</StDetailLabel> {details.problem}
+          <StDetailLabel>기획 배경:</StDetailLabel>{" "}
+          <span>{details.problem}</span>
         </StDetailRow>
         <StDetailRow>
-          <StDetailLabel>해결 전략:</StDetailLabel> {details.solution}
+          <StDetailLabel>해결 전략:</StDetailLabel>{" "}
+          <span>{details.solution}</span>
         </StDetailRow>
         <StDetailRow>
-          <StDetailLabel>기술 구현:</StDetailLabel> {details.tech}
+          <StDetailLabel>기술 구현:</StDetailLabel> <span>{details.tech}</span>
         </StDetailRow>
       </StDetailsBox>
 
-      {/* ✅ 로직 흐름도 (데이터가 있을 때만 렌더링) */}
+      {/* 로직 흐름도 */}
       {logicSteps && <LogicFlowChart />}
 
-      {/* ✅ 업데이트 히스토리 (데이터가 있을 때만 렌더링) */}
+      {/* 업데이트 히스토리 */}
       {historyLogs && <DevLog logs={historyLogs} />}
+
+      {/* 5. 이미지 더보기 영역 */}
+      <ProjectImageViewer images={projectImages} projectTitle={title} />
     </StCardContainer>
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스 적용)
+// ✨ 스타일 정의
 
 const StCardContainer = styled.article`
   background-color: ${({ theme }) => theme.colors.white};
@@ -99,6 +109,7 @@ const StCardContainer = styled.article`
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   transition: box-shadow 0.3s;
+  overflow: hidden; /* 이미지가 둥근 모서리를 넘치지 않게 */
 
   &:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -143,6 +154,7 @@ const StServiceLink = styled(Link)`
   align-items: center;
   gap: 0.5rem;
   transition: background-color 0.2s;
+  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.black};
@@ -172,17 +184,14 @@ const StTechTag = styled.span`
   font-weight: 500;
   border-radius: 0.5rem;
 `;
+
 const StDetailsBox = styled.div`
   background-color: ${({ theme }) => theme.colors.gray50 || "#F8F9FA"};
-
   border: 1px solid ${({ theme }) => theme.colors.gray200 || "#E9ECEF"};
-
   padding: 1.25rem;
   border-radius: 1rem;
   font-size: 0.875rem;
-
   color: ${({ theme }) => theme.colors.gray600 || "#495057"};
-
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -192,13 +201,19 @@ const StDetailRow = styled.p`
   line-height: 1.6;
   margin: 0;
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  flex-direction: column; /* 모바일 대응을 위해 기본은 컬럼 */
+  gap: 0.25rem;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
 `;
 
 const StDetailLabel = styled.b`
   color: ${({ theme }) => theme.colors.gray800 || "#343A40"};
   font-weight: 700;
-  min-width: 50px;
+  min-width: 65px; /* 라벨 너비 고정 */
   flex-shrink: 0;
 `;
