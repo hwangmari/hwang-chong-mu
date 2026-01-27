@@ -44,7 +44,7 @@ const variants = {
   // 🐭 본문 (기본)
   body2: css`
     font-size: 1rem;
-    line-height: 1.5;
+    line-height: 1.6;
     font-weight: 400;
   `,
   // 🐣 작은 텍스트 (설명, 날짜)

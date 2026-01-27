@@ -2,7 +2,6 @@
 
 import Typography from "@/components/common/Typography";
 import Link from "next/link";
-
 import { ReactNode } from "react";
 import styled from "styled-components";
 import LogicFlowChart, { DevLog } from "./ProjectVisuals";
@@ -17,9 +16,9 @@ interface ProjectCardProps {
   description: ReactNode;
   techStack?: string[];
   details: {
-    problem: string;
-    solution: string;
-    tech: string;
+    problem: ReactNode;
+    solution: ReactNode;
+    tech: ReactNode;
   };
   logicSteps?: string[];
   edgeCase?: { condition: string; result: string };
@@ -40,180 +39,178 @@ export default function ProjectCard({
 }: ProjectCardProps) {
   return (
     <StCardContainer>
-      {/* 상단: 제목, 뱃지, 링크 */}
+      {/* 상단: 제목 및 링크 */}
       <StHeader>
-        <StTitleGroup>
-          <StTitleRow>
-            <Typography variant="h3" as="h3">
-              {title}
-            </Typography>
-          </StTitleRow>
-          <Typography variant="caption" color="gray500">
-            {period}
+        <div className="title-area">
+          <Typography variant="h3" as="h3">
+            {title}
           </Typography>
-        </StTitleGroup>
+          <span className="period">{period}</span>
+        </div>
 
         <StServiceLink href={linkUrl} target="_blank">
-          서비스 바로가기 🔗
+          서비스 바로가기 ↗
         </StServiceLink>
       </StHeader>
 
-      {/* 설명 및 기술 스택 */}
-      <StBody>
-        <StDescriptionWrapper>
-          <Typography variant="body2" color="gray700">
-            {description}
-          </Typography>
-        </StDescriptionWrapper>
+      {/* 메인 설명 */}
+      <StDescriptionBody>
+        <Typography variant="body2" color="gray700">
+          {description}
+        </Typography>
+      </StDescriptionBody>
 
-        <StTechStackList>
-          {techStack?.map((tech) => (
-            <StTechTag key={tech}>{tech}</StTechTag>
-          ))}
-        </StTechStackList>
-      </StBody>
-
-      {/* 상세 내용 (Problem / Solution / Tech) */}
+      {/* ✨ 상세 내용 (다시 리스트 형태로 복귀 + 가독성 개선) */}
       <StDetailsBox>
         <StDetailRow>
-          <StDetailLabel>기획 배경:</StDetailLabel>{" "}
-          <span>{details.problem}</span>
+          <StDetailLabel $type="problem">⚠️ 기획 배경</StDetailLabel>
+          <div className="content">{details.problem}</div>
         </StDetailRow>
+
         <StDetailRow>
-          <StDetailLabel>해결 전략:</StDetailLabel>{" "}
-          <span>{details.solution}</span>
+          <StDetailLabel $type="solution">💡 해결 전략</StDetailLabel>
+          <div className="content">{details.solution}</div>
         </StDetailRow>
+
         <StDetailRow>
-          <StDetailLabel>기술 구현:</StDetailLabel> <span>{details.tech}</span>
+          <StDetailLabel $type="tech">🛠 기술 구현</StDetailLabel>
+          <div className="content">{details.tech}</div>
         </StDetailRow>
       </StDetailsBox>
 
       {/* 로직 흐름도 */}
-      {logicSteps && <LogicFlowChart />}
+      {logicSteps && (
+        <StVisualSection>
+          <LogicFlowChart />
+        </StVisualSection>
+      )}
 
       {/* 업데이트 히스토리 */}
-      {historyLogs && <DevLog logs={historyLogs} />}
+      {historyLogs && (
+        <StVisualSection>
+          <DevLog logs={historyLogs} />
+        </StVisualSection>
+      )}
 
-      {/* 5. 이미지 더보기 영역 */}
+      {/* 이미지 뷰어 */}
       <ProjectImageViewer images={projectImages} projectTitle={title} />
     </StCardContainer>
   );
 }
 
 // ✨ 스타일 정의
-
 const StCardContainer = styled.article`
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 1.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  transition: box-shadow 0.3s;
-  overflow: hidden; /* 이미지가 둥근 모서리를 넘치지 않게 */
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
 
-  &:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  @media (max-width: 768px) {
+    padding: 1.5rem;
   }
 `;
 
 const StHeader = styled.div`
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
   margin-bottom: 1.5rem;
+  gap: 1rem;
 
-  @media ${({ theme }) => theme.media.desktop} {
-    flex-direction: row;
-    justify-content: space-between;
+  .title-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .period {
+      /* 🔹 13px 적용 */
+      font-size: 13px;
+      color: ${({ theme }) => theme.colors.gray500};
+      font-weight: 500;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
     align-items: flex-start;
   }
 `;
 
-const StTitleGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-`;
-
-const StTitleRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.25rem;
-`;
-
 const StServiceLink = styled(Link)`
-  padding: 0.5rem 1.25rem;
-  background-color: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background-color 0.2s;
-  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  padding: 0.5rem 1rem; /* 패딩도 폰트에 맞춰 살짝 줄임 */
+  background-color: ${({ theme }) => theme.colors.black};
+  color: #fff;
+
+  /* 🔹 13px 적용 */
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 2rem;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.black};
+    opacity: 0.8;
   }
 `;
 
-const StBody = styled.div`
-  margin-bottom: 1.5rem;
-`;
-
-const StDescriptionWrapper = styled.div`
+const StDescriptionBody = styled.div`
   margin-bottom: 1rem;
 `;
 
-const StTechStackList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-`;
-
-const StTechTag = styled.span`
-  padding: 0.25rem 0.75rem;
-  background-color: ${({ theme }) => theme.colors.gray100};
-  color: ${({ theme }) => theme.colors.gray600};
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
-`;
-
+/* ✨ Compact Details Box */
 const StDetailsBox = styled.div`
-  background-color: ${({ theme }) => theme.colors.gray50 || "#F8F9FA"};
-  border: 1px solid ${({ theme }) => theme.colors.gray200 || "#E9ECEF"};
-  padding: 1.25rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
   border-radius: 1rem;
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.gray600 || "#495057"};
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 `;
 
-const StDetailRow = styled.p`
-  line-height: 1.6;
-  margin: 0;
+const StDetailRow = styled.div`
   display: flex;
-  flex-direction: column; /* 모바일 대응을 위해 기본은 컬럼 */
-  gap: 0.25rem;
+  align-items: baseline;
+  line-height: 1.6;
 
-  @media ${({ theme }) => theme.media.desktop} {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0.5rem;
+  /* 🔹 핵심: 상세 내용 13px 적용 */
+  font-size: 13px;
+
+  .content {
+    flex: 1;
+    color: #495057;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.4rem;
   }
 `;
 
-const StDetailLabel = styled.b`
-  color: ${({ theme }) => theme.colors.gray800 || "#343A40"};
+/* ✨ Semantic Labels */
+const StDetailLabel = styled.div<{ $type: "problem" | "solution" | "tech" }>`
   font-weight: 700;
-  min-width: 65px; /* 라벨 너비 고정 */
+  min-width: 90px;
   flex-shrink: 0;
+
+  color: ${({ $type }) =>
+    $type === "problem"
+      ? "#E53E3E"
+      : $type === "solution"
+        ? "#3182CE"
+        : "#718096"};
+`;
+
+const StVisualSection = styled.div`
+  margin-top: 0.5rem;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
+  padding-top: 0.5rem;
 `;

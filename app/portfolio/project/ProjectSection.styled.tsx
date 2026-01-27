@@ -127,3 +127,15 @@ export const StPhilosophyBox = styled.div`
     }
   }
 `;
+
+export const StDetailList = styled.ul`
+  padding-left: 20px;
+  margin-top: 8px; /* margin: 8px 0 0 0 과 동일 */
+  list-style-type: disc;
+  color: #4b5563; /* 본문 텍스트 색상에 맞춤 (선택 사항) */
+
+  li {
+    margin-bottom: 4px; /* 항목 간 간격 추가 */
+    line-height: 1.6;
+  }
+`;
