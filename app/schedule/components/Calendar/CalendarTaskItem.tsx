@@ -1,13 +1,13 @@
 import React from "react";
 import styled, { css } from "styled-components";
-import { isSameDay, isBefore, startOfDay } from "date-fns";
+import { isSameDay, startOfDay } from "date-fns";
 import { TaskPhase } from "@/types/work-schedule";
 import { CalendarTask } from "@/hooks/useCalendarLayout";
 
 interface Props {
   task: CalendarTask;
   day: Date;
-  isRedDay: boolean; // 공휴일 여부 (점선 숨김용)
+  isRedDay: boolean;
   onDragStart: (e: React.DragEvent, serviceId: string, task: TaskPhase) => void;
 }
 
@@ -17,12 +17,9 @@ export default function CalendarTaskItem({
   isRedDay,
   onDragStart,
 }: Props) {
-  const today = startOfDay(new Date());
-
   const isStart = isSameDay(day, task.startDate);
   const isEnd = isSameDay(day, task.endDate);
   const isSingleDay = isSameDay(task.startDate, task.endDate);
-  const isPast = isBefore(task.endDate, today);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -30,24 +27,19 @@ export default function CalendarTaskItem({
     window.dispatchEvent(event);
   };
 
-  // DragStart에 넘겨줄 원래 TaskPhase 형태 복원
   const originalTaskPhase: TaskPhase = {
     id: task.id,
     title: task.title,
     startDate: task.startDate,
     endDate: task.endDate,
-    // memo 등은 필요하다면 CalendarTask 타입 확장 필요
   };
 
   return (
     <StTaskBarWrapper
-      draggable={!isPast}
-      onDragStart={(e) =>
-        !isPast && onDragStart(e, task.svcId, originalTaskPhase)
-      }
+      draggable={true} // 항상 드래그 가능
+      onDragStart={(e) => onDragStart(e, task.svcId, originalTaskPhase)} // 조건 없이 실행
       onClick={handleClick}
       title={`${task.svcName} - ${task.title}`}
-      $isPast={isPast}
     >
       <StTaskContent
         $color={task.color}
@@ -72,24 +64,24 @@ export default function CalendarTaskItem({
 }
 
 // --- Styles ---
-const StTaskBarWrapper = styled.div<{ $isPast?: boolean }>`
+
+const StTaskBarWrapper = styled.div`
   height: 26px;
   display: flex;
   align-items: center;
   width: 100%;
   position: relative;
   z-index: 10;
-  cursor: ${({ $isPast }) => ($isPast ? "pointer" : "grab")};
-  opacity: ${({ $isPast }) => ($isPast ? 0.6 : 1)};
-  filter: ${({ $isPast }) => ($isPast ? "grayscale(100%)" : "none")};
+  cursor: grab; /* 항상 grab 커서 */
+  opacity: 1; /* 항상 불투명 */
+  filter: none; /* 흑백 필터 제거 */
   max-width: 100%;
 
   &:hover {
-    filter: ${({ $isPast }) =>
-      $isPast ? "grayscale(100%) brightness(0.95)" : "brightness(0.95)"};
+    filter: brightness(0.95); /* hover 시 밝기 조절만 유지 */
   }
   &:active {
-    cursor: ${({ $isPast }) => ($isPast ? "default" : "grabbing")};
+    cursor: grabbing;
   }
 `;
 
@@ -162,7 +154,7 @@ const StTaskContent = styled.div<{
         background-repeat: repeat-x;
         transform: translateY(-50%);
         z-index: 1;
-        display: ${$isRedDay ? "none" : "block"}; /* 공휴일 라인 제거 */
+        display: ${$isRedDay ? "none" : "block"};
       }
       .marker {
         position: absolute;

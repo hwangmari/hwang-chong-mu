@@ -350,16 +350,12 @@ export const StAddServiceBlock = styled.button`
   }
 `;
 
-export const StTaskItem = styled.div<{ $isPast?: boolean }>`
+export const StTaskItem = styled.div`
   display: flex;
   flex-direction: column;
   padding-bottom: 8px;
   border-bottom: 1px dashed #e5e7eb;
-  ${({ $isPast }) =>
-    $isPast &&
-    css`
-      opacity: 0.7;
-    `}
+
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;

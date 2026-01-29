@@ -229,64 +229,27 @@ const StTechTag = styled.span<{ $customColor?: string }>`
 
 // === Image Section ===
 
-const StImageSection = styled.div`
-  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
-  padding-top: 1.5rem;
-  margin-top: 1.5rem;
-`;
-
-const StToggleButton = styled.button`
+export const StToggleButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-
-  font-size: 1rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray600};
-  background-color: ${({ theme }) => theme.colors.gray100};
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  border: 1px dashed ${({ theme }) => theme.colors.gray300};
   border-radius: 0.75rem;
+  color: ${({ theme }) => theme.colors.gray600};
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.gray900};
-    background-color: ${({ theme }) => theme.colors.gray200};
+    background-color: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray800};
+    border-color: ${({ theme }) => theme.colors.gray400};
   }
-
-  @media ${({ theme }) => theme.media.desktop} {
-    width: auto;
-    justify-content: flex-start;
-  }
-`;
-
-const StImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  margin-top: 1.5rem;
-  animation: ${fadeIn} 0.5s ease-out;
-
-  @media ${({ theme }) => theme.media.desktop} {
-    /* grid-template-columns: 1fr 1fr; 필요시 주석 해제 */
-  }
-`;
-
-const StImageFrame = styled.div`
-  position: relative;
-  overflow: hidden;
-`;
-
-const StNextImage = styled(Image)`
-  border-radius: 0.75rem;
-  overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  display: block;
 `;
 
 const StToggleArea = styled.div`
