@@ -72,6 +72,7 @@ export default function ProjectList() {
                   <b>&apos;보고용 요약 텍스트&apos;로 즉시 변환</b>하여 보고
                   시간 단축
                 </li>
+                <li>일정마다 메모를 입력하여 이슈 트레킹 가능</li>
               </StDetailList>
             </>
           ),

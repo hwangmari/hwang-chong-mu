@@ -10,7 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent | React.KeyboardEvent) => {
+    // 폼 제출(새로고침) 방지 & 엔터키 기본 동작 방지
     e.preventDefault();
 
     // 환경 변수에 설정한 비밀번호와 비교
@@ -18,13 +19,19 @@ export default function LoginPage() {
 
     if (password === correctPassword) {
       // ✅ 정답! 쿠키에 입장권 발급 (유효기간 1일)
-      // (보안을 위해 secure 옵션 등을 추가할 수 있습니다)
       document.cookie = `auth_token=true; path=/; max-age=${60 * 60 * 24}`;
 
       // 캘린더 페이지로 이동
       router.push("/schedule");
     } else {
       setError("비밀번호가 틀렸습니다. 다시 시도해주세요. 🐰");
+    }
+  };
+
+  // 엔터키 감지 핸들러
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleLogin(e);
     }
   };
 
@@ -48,6 +55,8 @@ export default function LoginPage() {
               setPassword(e.target.value);
               setError("");
             }}
+            // 👇 여기에 엔터키 감지 이벤트를 추가했습니다
+            onKeyDown={handleKeyDown}
             autoFocus
           />
           {error && <p className="error-msg">{error}</p>}
@@ -63,7 +72,7 @@ export default function LoginPage() {
   );
 }
 
-// --- 스타일 ---
+// --- 스타일 (기존과 동일) ---
 const StContainer = styled.div`
   min-height: 100vh;
   display: flex;
