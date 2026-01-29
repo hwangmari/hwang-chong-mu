@@ -56,6 +56,7 @@ export default function ProjectList() {
                   캘린더 내용을 일일이 텍스트로 옮겨 적어야 하는{" "}
                   <b>수기 보고 체계</b>
                 </li>
+                <li>일정마다 이슈가 발생했을때 트레킹 하기가 어려움</li>
               </StDetailList>
             </>
           ),
