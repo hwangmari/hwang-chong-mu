@@ -2,14 +2,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { addDays } from "date-fns";
 
 // 컴포넌트 임포트
 import LeftCalendar from "../components/LeftCalendar";
 import RightTaskPanel from "../components/RightTaskPanel";
-import ScheduleHeader from "../components/ScheduleHeader"; // ✨ [NEW] 추가됨
+import ScheduleHeader from "../components/ScheduleHeader";
 import * as API from "@/services/schedule";
 import { ServiceSchedule } from "@/types/work-schedule";
 import {
@@ -26,16 +26,11 @@ export default function ScheduleDetailPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showWeekend, setShowWeekend] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  // 숨김 상태 관리
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
-  // 데이터 로드
-  useEffect(() => {
-    if (boardId) loadData();
-  }, [boardId]);
-
-  const loadData = async () => {
+  // ✨ 데이터 로드 함수 (useCallback으로 감싸서 재사용 최적화)
+  const loadData = useCallback(async () => {
+    if (!boardId) return;
     try {
       const { board, services } = await API.fetchBoardWithData(boardId);
       setBoardInfo(board);
@@ -45,7 +40,28 @@ export default function ScheduleDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [boardId]);
+
+  // 1. 초기 로드
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // ✨ 2. [핵심] 화면이 다시 포커스될 때 데이터 갱신 (칸반 갔다가 돌아올 때 반영됨)
+  useEffect(() => {
+    const onFocus = () => {
+      // 아주 짧은 딜레이를 주어 DB 업데이트 직후 fetch가 꼬이지 않게 함
+      setTimeout(() => loadData(), 100);
+    };
+
+    window.addEventListener("focus", onFocus); // 탭 이동 후 복귀 시
+    window.addEventListener("visibilitychange", onFocus); // 브라우저 최소화 후 복귀 시
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [loadData]);
 
   const handleToggleHide = (id: string) => {
     setHiddenIds((prev) => {
@@ -61,9 +77,6 @@ export default function ScheduleDetailPage() {
     taskId: string,
     dayDiff: number,
   ) => {
-    // ... (드래그 로직 기존과 동일)
-    const newStart = addDays(new Date(), dayDiff); // (임시) 실제로는 기존 날짜 기반 계산 필요
-
     setSchedules((prev) =>
       prev.map((svc) => {
         if (svc.id !== serviceId) return svc;
@@ -79,7 +92,7 @@ export default function ScheduleDetailPage() {
               endDate: updatedEnd,
             }).catch((e) => {
               console.error(e);
-              loadData();
+              loadData(); // 에러 시 롤백용 재조회
             });
 
             return { ...t, startDate: updatedStart, endDate: updatedEnd };
@@ -89,10 +102,7 @@ export default function ScheduleDetailPage() {
     );
   };
 
-  // 캘린더 데이터 필터링 예시
-  const visibleSchedules = schedules.filter((s) => {
-    return !hiddenIds.has(s.id);
-  });
+  const visibleSchedules = schedules.filter((s) => !hiddenIds.has(s.id));
 
   if (loading) {
     return (
@@ -104,11 +114,11 @@ export default function ScheduleDetailPage() {
 
   return (
     <StFixedContainer>
-      {/* ✨ 헤더 컴포넌트로 교체 */}
       <ScheduleHeader
-        title={boardInfo?.title || "로딩 중..."}
+        title={boardInfo?.title || "프로젝트 일정"}
         showWeekend={showWeekend}
         onToggleWeekend={setShowWeekend}
+        boardId={boardId}
       />
 
       <StContentWrapper>
@@ -126,7 +136,7 @@ export default function ScheduleDetailPage() {
           <RightTaskPanel
             boardId={boardId}
             schedules={schedules}
-            onUpdateAll={setSchedules}
+            onUpdateAll={setSchedules} // ✨ 하위 컴포넌트 업데이트 시 상태 반영
             hiddenIds={hiddenIds}
             onToggleHide={handleToggleHide}
           />

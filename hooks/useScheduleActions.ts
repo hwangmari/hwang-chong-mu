@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
 
@@ -13,109 +13,125 @@ export function useScheduleActions(
     useState<ServiceSchedule[]>(initialSchedules);
   const [isEditing, setIsEditing] = useState(false);
 
-  // 초기 데이터 동기화
   useEffect(() => {
     setSchedules(initialSchedules);
   }, [initialSchedules]);
 
-  // 공통 업데이트 헬퍼 (로컬 상태 반영 + 부모 컴포넌트 알림)
-  const updateLocalState = (newSchedules: ServiceSchedule[]) => {
-    setSchedules(newSchedules);
-    if (onUpdateAll) onUpdateAll(newSchedules);
-  };
+  const updateLocalState = useCallback(
+    (newSchedules: ServiceSchedule[]) => {
+      setSchedules(newSchedules);
+      if (onUpdateAll) onUpdateAll(newSchedules);
+    },
+    [onUpdateAll],
+  );
 
-  // =========================================================
-  // 1.
-  // =========================================================
+  // ... (handleAddService, handleDeleteService, handleUpdateService 등은 기존 유지) ...
+  // (이전 답변의 handleUpdateService 로직을 그대로 사용하세요)
 
+  // 아래 함수들이 핵심입니다.
+
+  // 1. 서비스 생성
   const handleAddService = async () => {
     try {
       const newService = await API.createService(
         boardId,
         "새 프로젝트",
         "",
-        "#10b981",
+        "#3b82f6",
       );
-      updateLocalState([...schedules, newService]);
+      const nextSchedules = [...schedules, newService];
+      updateLocalState(nextSchedules);
       setIsEditing(true);
     } catch (e) {
-      console.error("프로젝트 생성 실패:", e);
+      console.error("서비스 생성 에러:", e);
+      alert("프로젝트 생성 실패");
     }
   };
 
-  const handleUpdateService = async (svcId: string, updates: any) => {
-    // ✨ 완료 체크 시 자동으로 눈감기 처리
-    if (updates.is_completed === true) {
-      onToggleHide(svcId);
-    }
-
-    const updatedSchedules = schedules.map((s) => {
-      if (s.id !== svcId) return s;
-      // DB의 is_completed와 UI의 isCompleted 매핑 처리
-      const nextIsCompleted =
-        updates.is_completed !== undefined
-          ? updates.is_completed
-          : s.isCompleted;
-      return { ...s, ...updates, isCompleted: nextIsCompleted };
-    });
-
-    updateLocalState(updatedSchedules);
-
-    try {
-      await API.updateService(svcId, updates);
-    } catch (e) {
-      console.error("프로젝트 업데이트 실패:", e);
-    }
-  };
+  // ... (handleDeleteService, handleUpdateService 등) ...
 
   const handleDeleteService = async (svcId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
       await API.deleteService(svcId);
-      updateLocalState(schedules.filter((s) => s.id !== svcId));
+      const nextSchedules = schedules.filter((s) => s.id !== svcId);
+      updateLocalState(nextSchedules);
     } catch (e) {
-      console.error("프로젝트 삭제 실패:", e);
+      console.error(e);
+      alert("삭제 실패");
+    }
+  };
+
+  const handleUpdateService = async (svcId: string, updates: any) => {
+    if (updates.isCompleted === true || updates.is_completed === true) {
+      onToggleHide(svcId);
+    }
+    const nextSchedules = schedules.map((s) => {
+      if (s.id !== svcId) return s;
+      const nextIsCompleted =
+        updates.isCompleted ?? updates.is_completed ?? s.isCompleted;
+      return { ...s, ...updates, isCompleted: nextIsCompleted };
+    });
+    updateLocalState(nextSchedules);
+
+    try {
+      await API.updateService(svcId, updates);
+    } catch (e) {
+      console.error("서비스 업데이트 에러:", e);
     }
   };
 
   const handleColorChange = async (svcId: string, color: string) => {
-    handleUpdateService(svcId, { color });
+    await handleUpdateService(svcId, { color });
   };
 
   const handleServiceNameChange = (svcId: string, newName: string) => {
-    setSchedules(
-      schedules.map((s) =>
-        s.id === svcId ? { ...s, serviceName: newName } : s,
-      ),
+    const nextSchedules = schedules.map((s) =>
+      s.id === svcId ? { ...s, serviceName: newName } : s,
     );
+    setSchedules(nextSchedules);
   };
 
   const handleServiceNameBlur = async (svcId: string, name: string) => {
-    handleUpdateService(svcId, { name });
+    const nextSchedules = schedules.map((s) =>
+      s.id === svcId ? { ...s, serviceName: name } : s,
+    );
+    updateLocalState(nextSchedules);
+
+    try {
+      await API.updateService(svcId, { serviceName: name });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // =========================================================
-  // 2. 업무(Task) 관련 액션
-  // =========================================================
+  // ------------------------------------
+  // ✅ 태스크(일정) 관련 함수들 (여기를 교체하세요!)
+  // ------------------------------------
 
   const handleAddTask = async (svcId: string) => {
     try {
-      const newTask = await API.createTask(svcId, {
+      // 임시 데이터 생성
+      const tempTask = {
         title: "새 업무",
         startDate: new Date(),
         endDate: new Date(),
+      };
+      const createdTask = await API.createTask(svcId, tempTask);
+
+      const nextSchedules = schedules.map((svc) => {
+        if (svc.id !== svcId) return svc;
+        return { ...svc, tasks: [...svc.tasks, createdTask] };
       });
-      const updated = schedules.map((svc) =>
-        svc.id === svcId ? { ...svc, tasks: [...svc.tasks, newTask] } : svc,
-      );
-      updateLocalState(updated);
+      updateLocalState(nextSchedules);
     } catch (e) {
-      console.error("업무 생성 실패:", e);
+      console.error("태스크 생성 에러:", e);
     }
   };
 
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    const updatedSchedules = schedules.map((svc) => {
+    // 1. 낙관적 업데이트
+    const nextSchedules = schedules.map((svc) => {
       if (svc.id !== svcId) return svc;
       return {
         ...svc,
@@ -124,25 +140,38 @@ export function useScheduleActions(
         ),
       };
     });
-    updateLocalState(updatedSchedules);
+    updateLocalState(nextSchedules);
+
+    // 2. API 호출
     try {
-      await API.updateTask(updatedTask.id, { ...updatedTask });
+      // ✨ 수정됨: 객체를 명시적으로 풀어서 전달 (안전성 확보)
+      await API.updateTask(updatedTask.id, {
+        title: updatedTask.title,
+        startDate: updatedTask.startDate,
+        endDate: updatedTask.endDate,
+        isCompleted: updatedTask.isCompleted,
+        memo: updatedTask.memo,
+      });
     } catch (e) {
-      console.error("업무 업데이트 실패:", e);
+      // ✨ 수정됨: oo_tx 에러 대신 실제 에러 로그 출력
+      console.error("태스크 업데이트 에러:", e);
+      // 필요 시 여기서 updateLocalState(schedules) 로 롤백 가능
     }
   };
 
   const deleteTask = async (svcId: string, taskId: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
+
+    const nextSchedules = schedules.map((svc) => {
+      if (svc.id !== svcId) return svc;
+      return { ...svc, tasks: svc.tasks.filter((t) => t.id !== taskId) };
+    });
+    updateLocalState(nextSchedules);
+
     try {
       await API.deleteTask(taskId);
-      const updated = schedules.map((svc) => {
-        if (svc.id !== svcId) return svc;
-        return { ...svc, tasks: svc.tasks.filter((t) => t.id !== taskId) };
-      });
-      updateLocalState(updated);
     } catch (e) {
-      console.error("업무 삭제 실패:", e);
+      console.error("태스크 삭제 에러:", e);
     }
   };
 
@@ -153,11 +182,11 @@ export function useScheduleActions(
     handleAddService,
     handleUpdateService,
     handleDeleteService,
-    handleColorChange,
-    handleServiceNameChange,
-    handleServiceNameBlur,
     handleAddTask,
     updateTask,
     deleteTask,
+    handleColorChange,
+    handleServiceNameChange,
+    handleServiceNameBlur,
   };
 }

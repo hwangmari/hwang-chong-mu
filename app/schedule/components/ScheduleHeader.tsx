@@ -7,12 +7,14 @@ interface ScheduleHeaderProps {
   title: string;
   showWeekend: boolean;
   onToggleWeekend: (checked: boolean) => void;
+  boardId: string; // ✨ 추가: 링크 이동을 위해 필요
 }
 
 export default function ScheduleHeader({
   title,
   showWeekend,
   onToggleWeekend,
+  boardId,
 }: ScheduleHeaderProps) {
   return (
     <StTopBar>
@@ -38,6 +40,13 @@ export default function ScheduleHeader({
       </div>
 
       <StControls>
+        {/* ✨ 칸반 이동 버튼 추가 */}
+        <Link href={`/schedule/${boardId}/kanban`} passHref>
+          <StKanbanLink>📊 칸반보드</StKanbanLink>
+        </Link>
+
+        <StDivider />
+
         <StSwitchLabel>
           <input
             type="checkbox"
@@ -51,7 +60,7 @@ export default function ScheduleHeader({
   );
 }
 
-// --- 스타일 정의 (페이지에서 가져옴) ---
+// --- 스타일 정의 ---
 
 const StTopBar = styled.header`
   height: 60px;
@@ -70,14 +79,9 @@ const StTopBar = styled.header`
     .back-link {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
       color: #6b7280;
-      transition: color 0.2s;
       &:hover {
         color: #111827;
-      }
-      svg {
-        display: block;
       }
     }
     .page-title {
@@ -90,7 +94,35 @@ const StTopBar = styled.header`
 
 const StControls = styled.div`
   display: flex;
+  align-items: center;
   gap: 1rem;
+`;
+
+// ✨ 칸반 버튼 스타일
+const StKanbanLink = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #dbeafe;
+    transform: translateY(-1px);
+  }
+`;
+
+const StDivider = styled.div`
+  width: 1px;
+  height: 24px;
+  background-color: #e5e7eb;
 `;
 
 const StSwitchLabel = styled.label`
