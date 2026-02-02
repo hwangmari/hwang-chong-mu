@@ -13,7 +13,10 @@ const inputStyles = css`
   }
 `;
 
-export const StCard = styled.div<{ $isEditing: boolean }>`
+export const StCard = styled.div<{
+  $isCompleted?: boolean;
+  $isEditing: boolean;
+}>`
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
@@ -36,6 +39,15 @@ export const StCard = styled.div<{ $isEditing: boolean }>`
         }
       }
     `}
+
+  // ✨ 완료된 프로젝트 카드 스타일
+  background-color: ${(props) => (props.$isCompleted ? "#f9fafb" : "#fff")};
+  opacity: ${(props) => (props.$isCompleted ? 0.7 : 1)};
+  transition: all 0.3s ease;
+
+  .service-title-text {
+    color: ${(props) => (props.$isCompleted ? "#9ca3af" : "inherit")};
+  }
 
   .card-header {
     margin-bottom: 0.75rem;

@@ -95,6 +95,14 @@ export default function ProjectList() {
             </>
           ),
         }}
+        historyLogs={[
+          {
+            ver: "1.0.1",
+            date: "2026.02.02",
+            content:
+              "완료 업무 가시성 개선: 체크 시 타임라인에서 즉시 숨김(눈감기) 처리 및 별도 완료 리스트를 통한 아카이브 조회(눈뜨기) 기능 구현",
+          },
+        ]}
         projectImages={scheduleImages}
       />
 

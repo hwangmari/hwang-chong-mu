@@ -89,7 +89,10 @@ export default function ScheduleDetailPage() {
     );
   };
 
-  const visibleSchedules = schedules.filter((s) => !hiddenIds.has(s.id));
+  // 캘린더 데이터 필터링 예시
+  const visibleSchedules = schedules.filter((s) => {
+    return !hiddenIds.has(s.id);
+  });
 
   if (loading) {
     return (

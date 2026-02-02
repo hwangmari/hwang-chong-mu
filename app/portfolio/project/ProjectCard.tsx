@@ -14,7 +14,6 @@ interface ProjectCardProps {
   period: string;
   linkUrl: string;
   description: ReactNode;
-  techStack?: string[];
   details: {
     problem: ReactNode;
     solution: ReactNode;
@@ -31,7 +30,6 @@ export default function ProjectCard({
   period,
   linkUrl,
   description,
-  techStack,
   details,
   logicSteps,
   historyLogs,
@@ -79,18 +77,10 @@ export default function ProjectCard({
       </StDetailsBox>
 
       {/* 로직 흐름도 */}
-      {logicSteps && (
-        <StVisualSection>
-          <LogicFlowChart />
-        </StVisualSection>
-      )}
+      {logicSteps && <LogicFlowChart />}
 
       {/* 업데이트 히스토리 */}
-      {historyLogs && (
-        <StVisualSection>
-          <DevLog logs={historyLogs} />
-        </StVisualSection>
-      )}
+      {historyLogs && <DevLog logs={historyLogs} />}
 
       {/* 이미지 뷰어 */}
       <ProjectImageViewer images={projectImages} projectTitle={title} />

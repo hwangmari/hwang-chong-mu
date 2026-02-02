@@ -4,40 +4,41 @@ import { supabase } from "@/lib/supabase";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import { format } from "date-fns";
 
+// 1. Task 매핑 함수: DB의 is_completed를 TaskPhase의 isCompleted로 연결
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
   title: task.title,
   startDate: new Date(task.start_date),
   endDate: new Date(task.end_date),
   memo: task.memo || "",
+  isCompleted: task.is_completed || false,
 });
 
+// 2. Service 매핑 함수: DB의 is_completed를 ServiceSchedule의 isCompleted로 연결
 const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   id: svc.id,
   serviceName: svc.name,
   color: svc.color,
+  isCompleted: svc.is_completed || false,
   tasks: tasks.map(mapTaskFromDB),
 });
 
 // =========================================================
-// 1. 보드 (Board) 관련 API - [NEW]
+// 보드 (Board) 관련 API
 // =========================================================
 
-// 보드 생성 (create/page.tsx 에서 사용)
 export const createBoard = async (title: string, description: string) => {
   const { data, error } = await supabase
     .from("schedule_boards")
-    .insert({ title, description }) // user_id는 DB default 사용
+    .insert({ title, description })
     .select()
     .single();
 
   if (error) throw error;
-  return data; // { id, title, ... }
+  return data;
 };
 
-// 보드 조회 + 하위 서비스 + 하위 태스크 모두 가져오기 ([id]/page.tsx 에서 사용)
 export const fetchBoardWithData = async (boardId: string) => {
-  // 1. 보드 정보
   const { data: board, error: boardError } = await supabase
     .from("schedule_boards")
     .select("*")
@@ -45,7 +46,6 @@ export const fetchBoardWithData = async (boardId: string) => {
     .single();
   if (boardError) throw boardError;
 
-  // 2. 이 보드에 속한 모든 서비스 조회
   const { data: services, error: svcError } = await supabase
     .from("schedule_services")
     .select("*")
@@ -53,8 +53,6 @@ export const fetchBoardWithData = async (boardId: string) => {
     .order("created_at", { ascending: true });
   if (svcError) throw svcError;
 
-  // 3. 이 보드에 속한 모든 태스크 조회 (한 번에 가져와서 JS로 분배)
-  // (서비스 ID 목록 추출)
   const serviceIds = services.map((s) => s.id);
   let allTasks: any[] = [];
 
@@ -68,37 +66,27 @@ export const fetchBoardWithData = async (boardId: string) => {
     allTasks = tasks;
   }
 
-  // 4. 데이터 조립
   const servicesWithTasks = services.map((svc) => {
     const myTasks = allTasks.filter((t) => t.service_id === svc.id);
     return mapServiceFromDB(svc, myTasks);
   });
 
-  return {
-    board, // { id, title, description }
-    services: servicesWithTasks, // ServiceSchedule[]
-  };
+  return { board, services: servicesWithTasks };
 };
 
 // =========================================================
-// 2. 서비스 (Project) 관련 API - [수정]
+// 서비스 (Project) 관련 API
 // =========================================================
 
-// 서비스 생성 시 boardId가 필수!
 export const createService = async (
-  boardId: string, // 👈 추가됨
+  boardId: string,
   name: string,
   description: string,
   color: string,
 ) => {
   const { data, error } = await supabase
     .from("schedule_services")
-    .insert({
-      board_id: boardId, // 👈 연결
-      name,
-      description,
-      color,
-    })
+    .insert({ board_id: boardId, name, description, color })
     .select()
     .single();
 
@@ -106,9 +94,7 @@ export const createService = async (
   return mapServiceFromDB(data);
 };
 
-// ... updateService, deleteService, Task 관련 API는 기존과 동일 ...
-// (복붙해서 사용하시면 됩니다)
-
+// 프로젝트 완료 체크 시 호출됨 (is_completed 데이터를 updates에 담아 보냄)
 export const updateService = async (id: string, updates: any) => {
   const { data, error } = await supabase
     .from("schedule_services")
@@ -127,7 +113,11 @@ export const deleteService = async (id: string) => {
     .eq("id", id);
   if (error) throw error;
 };
-// 업무 생성
+
+// =========================================================
+// 업무 (Task) 관련 API
+// =========================================================
+
 export const createTask = async (serviceId: string, task: any) => {
   const { data, error } = await supabase
     .from("schedule_tasks")
@@ -136,7 +126,7 @@ export const createTask = async (serviceId: string, task: any) => {
       title: task.title,
       start_date: task.startDate.toISOString(),
       end_date: task.endDate.toISOString(),
-      memo: task.memo || "", // ✨ 추가
+      memo: task.memo || "",
     })
     .select()
     .single();
@@ -145,7 +135,6 @@ export const createTask = async (serviceId: string, task: any) => {
   return mapTaskFromDB(data);
 };
 
-// 업무 수정
 export const updateTask = async (taskId: string, updates: any) => {
   const dbUpdates: any = {};
   if (updates.title) dbUpdates.title = updates.title;
@@ -153,9 +142,11 @@ export const updateTask = async (taskId: string, updates: any) => {
     dbUpdates.start_date = format(updates.startDate, "yyyy-MM-dd");
   if (updates.endDate)
     dbUpdates.end_date = format(updates.endDate, "yyyy-MM-dd");
-
-  // ✨ [중요] 메모 업데이트 로직 추가
   if (updates.memo !== undefined) dbUpdates.memo = updates.memo;
+
+  // ✨ 완료 여부 업데이트 로직 추가
+  if (updates.isCompleted !== undefined)
+    dbUpdates.is_completed = updates.isCompleted;
 
   const { data, error } = await supabase
     .from("schedule_tasks")
@@ -176,6 +167,10 @@ export const deleteTask = async (taskId: string) => {
   if (error) throw error;
 };
 
+// =========================================================
+// 보드 목록 관리
+// =========================================================
+
 export const fetchBoards = async () => {
   const { data, error } = await supabase
     .from("schedule_boards")
@@ -183,10 +178,9 @@ export const fetchBoards = async () => {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data; // { id, title, description, ... } []
+  return data;
 };
 
-// [NEW] 보드 수정 (제목, 설명)
 export const updateBoard = async (
   boardId: string,
   updates: { title?: string; description?: string },
@@ -202,12 +196,10 @@ export const updateBoard = async (
   return data;
 };
 
-// [NEW] 보드 삭제 (선택 사항)
 export const deleteBoard = async (boardId: string) => {
   const { error } = await supabase
     .from("schedule_boards")
     .delete()
     .eq("id", boardId);
-
   if (error) throw error;
 };

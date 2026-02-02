@@ -17,17 +17,19 @@ export type DbTask = {
   created_at: string;
 };
 
-export type ServiceSchedule = {
-  id: string;
-  serviceName: string; // DB의 name
-  color: string;
-  tasks: TaskPhase[];
-};
 export interface TaskPhase {
   id: string;
   title: string;
   startDate: Date;
   endDate: Date;
-  memo?: string;
-  isCompleted?: boolean;
+  memo: string;
+  isCompleted: boolean; // ✨ unknown에서 boolean으로 변경
 }
+
+export type ServiceSchedule = {
+  id: string;
+  serviceName: string;
+  color: string;
+  tasks: TaskPhase[];
+  isCompleted: boolean; // ✨ 프로젝트 완료 상태
+};

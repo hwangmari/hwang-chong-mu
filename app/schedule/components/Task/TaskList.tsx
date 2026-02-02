@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
-import { StScrollArea, StAddServiceBlock } from "./TaskList.styles";
+import {
+  StScrollArea,
+  StAddServiceBlock,
+  StCompletedSection,
+} from "./TaskList.styles";
 import TaskCardItem from "./TaskCardItem";
 
 interface TaskListProps {
@@ -24,6 +28,7 @@ interface TaskListProps {
   onDeleteTask: (svcId: string, taskId: string) => void | Promise<void>;
   onAddTask: (svcId: string) => void | Promise<void>;
   onAddService: () => void | Promise<void>;
+  onUpdateService: (id: string, updates: any) => void | Promise<void>;
 }
 
 export default function TaskList({
@@ -32,7 +37,6 @@ export default function TaskList({
   collapsedIds,
   highlightId,
   isEditing,
-  today,
   hiddenIds,
   onToggleHide,
   onToggleCollapse,
@@ -44,13 +48,21 @@ export default function TaskList({
   onDeleteTask,
   onAddTask,
   onAddService,
+  onUpdateService,
 }: TaskListProps) {
-  // 컬러피커 상태 관리
   const [activeColorPickerId, setActiveColorPickerId] = useState<string | null>(
     null,
   );
+  const [isCompletedOpen, setIsCompletedOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
+  // ✨ 1. 분류 로직 확립
+  // 진행 중인 프로젝트 (메인 리스트)
+  const mainSchedules = schedules.filter((s) => !s.isCompleted);
+  // 완료된 프로젝트 (하단 고정)
+  const allCompletedSchedules = schedules.filter((s) => s.isCompleted);
+
+  // 컬러피커 외부 클릭 시 닫기
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -64,36 +76,60 @@ export default function TaskList({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 카드 렌더링 헬퍼 (중복 방지)
+  const renderTaskCard = (service: ServiceSchedule) => (
+    <TaskCardItem
+      key={service.id}
+      service={service}
+      isCollapsed={collapsedIds.has(service.id)}
+      isHighlighted={highlightId === service.id}
+      isHidden={hiddenIds.has(service.id)} // ✨ 눈뜨기/감기 상태 전달
+      isEditing={isEditing}
+      isPickerOpen={activeColorPickerId === service.id}
+      pickerRef={pickerRef}
+      onOpenPicker={() =>
+        setActiveColorPickerId(
+          activeColorPickerId === service.id ? null : service.id,
+        )
+      }
+      onClosePicker={() => setActiveColorPickerId(null)}
+      onToggleCollapse={() => onToggleCollapse(service.id)}
+      onToggleHide={() => onToggleHide(service.id)}
+      onServiceNameChange={(name) => onServiceNameChange(service.id, name)}
+      onServiceNameBlur={(name) => onServiceNameBlur(service.id, name)}
+      onColorChange={(color) => onColorChange(service.id, color)}
+      onDeleteService={() => onDeleteService(service.id)}
+      onUpdateTask={(task) => onUpdateTask(service.id, task)}
+      onDeleteTask={(taskId) => onDeleteTask(service.id, taskId)}
+      onAddTask={() => onAddTask(service.id)}
+      onUpdateService={onUpdateService}
+    />
+  );
+
   return (
     <StScrollArea ref={scrollAreaRef}>
-      {schedules.map((service) => (
-        <TaskCardItem
-          key={service.id}
-          service={service}
-          isCollapsed={collapsedIds.has(service.id)}
-          isHighlighted={highlightId === service.id}
-          isHidden={hiddenIds.has(service.id)}
-          isEditing={isEditing}
-          today={today}
-          isPickerOpen={activeColorPickerId === service.id}
-          pickerRef={pickerRef}
-          onOpenPicker={() =>
-            setActiveColorPickerId(
-              activeColorPickerId === service.id ? null : service.id,
-            )
-          }
-          onClosePicker={() => setActiveColorPickerId(null)}
-          onToggleCollapse={() => onToggleCollapse(service.id)}
-          onToggleHide={() => onToggleHide(service.id)}
-          onServiceNameChange={(name) => onServiceNameChange(service.id, name)}
-          onServiceNameBlur={(name) => onServiceNameBlur(service.id, name)}
-          onColorChange={(color) => onColorChange(service.id, color)}
-          onDeleteService={() => onDeleteService(service.id)}
-          onUpdateTask={(task) => onUpdateTask(service.id, task)}
-          onDeleteTask={(taskId) => onDeleteTask(service.id, taskId)}
-          onAddTask={() => onAddTask(service.id)}
-        />
-      ))}
+      {/* 1. 메인 리스트 (진행 중) */}
+      {mainSchedules.map(renderTaskCard)}
+
+      {/* 2. 완료 프로젝트 (더 보기 섹션) */}
+      {allCompletedSchedules.length > 0 && (
+        <StCompletedSection>
+          <button
+            className="toggle-btn"
+            onClick={() => setIsCompletedOpen(!isCompletedOpen)}
+          >
+            {isCompletedOpen
+              ? "▲ 완료 프로젝트 접기"
+              : `▼ 완료 프로젝트 더 보기 (${allCompletedSchedules.length})`}
+          </button>
+
+          {isCompletedOpen && (
+            <div className="completed-list">
+              {allCompletedSchedules.map(renderTaskCard)}
+            </div>
+          )}
+        </StCompletedSection>
+      )}
 
       {isEditing && (
         <StAddServiceBlock onClick={onAddService}>

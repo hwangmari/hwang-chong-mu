@@ -8,17 +8,14 @@ export const buildScheduleText = (
 ): string => {
   let text = "";
 
-  // 1. 데이터 정렬 및 필터링 (원본 배열 보호를 위해 복사 후 처리)
   const sortedSchedules = schedules
-    .filter((svc) => !hiddenIds.has(svc.id)) // 숨김 처리
+    .filter((svc) => !hiddenIds.has(svc.id) && !svc.isCompleted)
     .map((svc) => ({
       ...svc,
-      // 서비스 내부의 Tasks를 시작 날짜 오름차순 정렬
       tasks: [...svc.tasks].sort(
         (a, b) => a.startDate.getTime() - b.startDate.getTime(),
       ),
     }))
-    // (선택 사항) 서비스 덩어리 자체도 '가장 빠른 일정'이 있는 순서대로 정렬
     .sort((a, b) => {
       const startA = a.tasks[0]?.startDate.getTime() || Infinity;
       const startB = b.tasks[0]?.startDate.getTime() || Infinity;

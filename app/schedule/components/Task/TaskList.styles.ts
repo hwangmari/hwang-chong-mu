@@ -39,6 +39,7 @@ export const StCard = styled.div<{
   $isCollapsed?: boolean;
   $isHighlighted?: boolean;
   $isHidden?: boolean;
+  $isCompleted?: boolean;
 }>`
   flex-shrink: 0;
   border: 1px solid #e5e7eb;
@@ -63,6 +64,15 @@ export const StCard = styled.div<{
       background-color: #fcfcfc;
     `}
   ${({ $isHighlighted }) => $isHighlighted && highlightAnimation}
+
+  opacity: ${(props) => (props.$isCompleted ? 0.7 : 1)};
+  background-color: ${(props) => (props.$isCompleted ? "#f9fafb" : "#ffffff")};
+  transition: all 0.3s ease; // 정렬 이동 시 부드러운 효과
+
+  // 완료 시 제목 색상 변경
+  .service-title-text {
+    color: ${(props) => (props.$isCompleted ? "#9ca3af" : "inherit")};
+  }
 `;
 
 export const StCardHeader = styled.div<{ $color: string }>`
@@ -554,5 +564,35 @@ export const StMemoContainer = styled.div`
     white-space: pre-wrap;
     margin: 0;
     line-height: 1.4;
+  }
+`;
+
+export const StCompletedSection = styled.div`
+  margin-top: 20px;
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+
+  .toggle-btn {
+    width: 100%;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    color: #6c757d;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-bottom: 10px;
+
+    &:hover {
+      background: #e9ecef;
+    }
+  }
+
+  .completed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* 완료된 리스트는 약간 투명하게 처리하여 구분 */
+    opacity: 0.8;
   }
 `;

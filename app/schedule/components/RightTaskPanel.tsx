@@ -15,7 +15,6 @@ interface Props {
   schedules: ServiceSchedule[];
   hiddenIds: Set<string>;
   onToggleHide: (id: string) => void;
-  onSave?: (service: ServiceSchedule) => void;
   onUpdateAll?: (services: ServiceSchedule[]) => void;
 }
 
@@ -29,19 +28,20 @@ export default function RightTaskPanel({
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
 
-  // 1. 데이터/API 로직 Hook
+  // 1. 데이터/API 로직 Hook - useScheduleActions에서 반환하는 함수들을 구조 분해 할당
   const {
     schedules,
     isEditing,
     setIsEditing,
-    ...actions // ✨ 여기서 actions 객체에 함수들이 다 들어있어야 함
-  } = useScheduleActions(initialSchedules, boardId, onUpdateAll);
+    handleUpdateService,
+    ...actions
+  } = useScheduleActions(initialSchedules, boardId, onToggleHide, onUpdateAll);
 
   // 2. UI/스크롤 로직 Hook
   const { scrollAreaRef, collapsedIds, highlightId, toggleCollapse } =
     useCardScroll();
 
-  // 3. 텍스트 복사 핸들러
+  // 3. 텍스트 복사 핸들러 - hiddenIds와 currentYear를 반영하여 텍스트 생성
   const handleCopyText = () => {
     const text = buildScheduleText(schedules, hiddenIds, currentYear);
     navigator.clipboard
@@ -74,16 +74,15 @@ export default function RightTaskPanel({
       <TaskList
         schedules={schedules}
         scrollAreaRef={scrollAreaRef as any}
-        // 상태 전달
         collapsedIds={collapsedIds}
         highlightId={highlightId}
         isEditing={isEditing}
         today={today}
         hiddenIds={hiddenIds}
-        // 핸들러 전달
+        // 핸들러 연결
         onToggleHide={onToggleHide}
         onToggleCollapse={toggleCollapse}
-        // ✨ Hook에서 가져온 액션들 연결
+        onUpdateService={handleUpdateService}
         onServiceNameChange={actions.handleServiceNameChange}
         onServiceNameBlur={actions.handleServiceNameBlur}
         onColorChange={actions.handleColorChange}
@@ -98,6 +97,7 @@ export default function RightTaskPanel({
 }
 
 // --- Styles ---
+
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -126,15 +126,18 @@ const StControlBar = styled.div`
     background-color: white;
     color: #374151;
     transition: all 0.2s;
+
     &.active {
       background-color: #111827;
       color: white;
       border-color: #111827;
     }
+
     &:hover {
       transform: translateY(-1px);
     }
   }
+
   .copy-btn {
     font-size: 0.85rem;
     color: #4b5563;
@@ -144,6 +147,7 @@ const StControlBar = styled.div`
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
+
     &:hover {
       background-color: #f3f4f6;
       color: #111827;
