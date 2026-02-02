@@ -203,3 +203,39 @@ export const deleteBoard = async (boardId: string) => {
     .eq("id", boardId);
   if (error) throw error;
 };
+
+/**
+ * 보드의 모든 데이터(서비스 + 태스크)를 한 번에 가져오는 함수
+ */
+export const getBoardData = async (boardId: string) => {
+  // 1. 테이블 이름을 기존 코드와 일치시킵니다 (schedule_...)
+  const { data, error } = await supabase
+    .from("schedule_boards")
+    .select(
+      `
+      *,
+      services:schedule_services(
+        *,
+        tasks:schedule_tasks(*)
+      )
+    `,
+    )
+    .eq("id", boardId)
+    .single();
+
+  if (error) {
+    console.error("보드 데이터 로드 에러:", error);
+    throw error;
+  }
+
+  // 2. 기존에 정의된 mapServiceFromDB 함수를 활용하여 데이터 구조를 통일합니다.
+  // 이렇게 하면 camelCase 매핑이나 날짜 변환 에러가 발생하지 않습니다.
+  const servicesWithTasks = data.services.map((svc: any) => {
+    return mapServiceFromDB(svc, svc.tasks || []);
+  });
+
+  return {
+    board: data,
+    services: servicesWithTasks,
+  };
+};

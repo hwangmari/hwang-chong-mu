@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import { startOfDay } from "date-fns";
 import { ServiceSchedule } from "@/types/work-schedule";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 // Hooks & Utils
 import { useScheduleActions } from "@/hooks/useScheduleActions";
@@ -25,6 +26,8 @@ export default function RightTaskPanel({
   onToggleHide,
   onUpdateAll,
 }: Props) {
+  const router = useRouter();
+  const params = useParams();
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
 
@@ -49,11 +52,44 @@ export default function RightTaskPanel({
       .then(() => alert("일정이 복사되었습니다! (메모 포함)"));
   };
 
+  const searchParams = useSearchParams();
+  const highlightIdFromQuery = searchParams.get("highlightId");
+
+  useEffect(() => {
+    if (highlightIdFromQuery) {
+      // 1. 해당 ID의 요소를 찾음
+      const element = document.getElementById(
+        `service-card-${highlightIdFromQuery}`,
+      );
+      if (element) {
+        // 2. 부드럽게 스크롤 이동
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // 3. 시각적 하이라이트 효과 (예: 테두리 깜빡임)
+        element.style.transition = "all 0.5s";
+        element.style.boxShadow = "0 0 0 4px #3b82f6";
+        setTimeout(() => {
+          element.style.boxShadow = "none";
+        }, 2000);
+      }
+    }
+  }, [highlightIdFromQuery]);
+
+  // ✨ 칸반 페이지로 이동하는 함수
+  const goToKanban = () => {
+    router.push(`/schedule/${params.id}/kanban`);
+  };
+
   return (
     <StContainer>
       {/* 상단 컨트롤 바 */}
       <StControlBar>
         <div className="left">
+          {/* ✨ 칸반 이동 버튼 추가 */}
+          <button className="nav-btn" onClick={goToKanban}>
+            📊 칸반보드로 보기
+          </button>
+
           {!isEditing && (
             <button className="copy-btn" onClick={handleCopyText}>
               📋 텍스트 복사
