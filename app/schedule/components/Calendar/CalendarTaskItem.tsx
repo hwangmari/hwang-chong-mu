@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import styled, { css } from "styled-components";
 import { isSameDay, startOfDay } from "date-fns";
@@ -32,12 +33,14 @@ export default function CalendarTaskItem({
     title: task.title,
     startDate: task.startDate,
     endDate: task.endDate,
+    memo: (task as any).memo || "",
+    isCompleted: (task as any).isCompleted || false,
   };
 
   return (
     <StTaskBarWrapper
-      draggable={true} // 항상 드래그 가능
-      onDragStart={(e) => onDragStart(e, task.svcId, originalTaskPhase)} // 조건 없이 실행
+      draggable={true}
+      onDragStart={(e) => onDragStart(e, task.svcId, originalTaskPhase)}
       onClick={handleClick}
       title={`${task.svcName} - ${task.title}`}
     >

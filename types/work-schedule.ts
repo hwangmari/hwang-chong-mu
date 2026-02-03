@@ -23,7 +23,7 @@ export interface TaskPhase {
   startDate: Date;
   endDate: Date;
   memo: string;
-  isCompleted: boolean; // ✨ unknown에서 boolean으로 변경
+  isCompleted: boolean;
 }
 
 export type ServiceSchedule = {

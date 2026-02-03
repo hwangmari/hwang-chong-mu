@@ -171,9 +171,9 @@ export const updateService = async (id: string, updates: any) => {
     // 이렇게 해야 프론트엔드에서 tasks가 빈 배열로 덮어씌워지는 것을 막을 수 있습니다.
     .select(
       `
-      *,
-      tasks:schedule_tasks(*)
-    `,
+        *,
+        tasks:schedule_tasks(*)
+      `,
     )
     .single();
 
