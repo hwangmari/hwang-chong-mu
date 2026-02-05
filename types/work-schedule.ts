@@ -16,7 +16,6 @@ export type DbTask = {
   end_date: string; // YYYY-MM-DD
   created_at: string;
 };
-
 export interface TaskPhase {
   id: string;
   title: string;
@@ -31,5 +30,6 @@ export type ServiceSchedule = {
   serviceName: string;
   color: string;
   tasks: TaskPhase[];
-  isCompleted: boolean; // ✨ 프로젝트 완료 상태
+  isCompleted: boolean;
+  isHidden: boolean;
 };

@@ -22,6 +22,7 @@ const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   serviceName: svc.name,
   color: svc.color,
   isCompleted: svc.is_completed ?? false,
+  isHidden: svc.is_hidden ?? false, // ✨ [추가] DB의 is_hidden 값을 매핑
   tasks: tasks.map(mapTaskFromDB),
 });
 
@@ -163,13 +164,18 @@ export const updateService = async (id: string, updates: any) => {
     if (updates.serviceName) dbUpdates.name = updates.serviceName;
     if (updates.color) dbUpdates.color = updates.color;
 
-    // ✨ [수정] 입력값이 camelCase(isCompleted)든 snake_case(is_completed)든 모두 받도록 처리
     const completedVal = updates.isCompleted ?? updates.is_completed;
     if (completedVal !== undefined) {
       dbUpdates.is_completed = completedVal;
     }
 
-    // 💡 [디버깅] 실제 DB로 전송되는 데이터 확인 (콘솔창 확인 필수)
+    // ✨ [추가] isHidden (또는 is_hidden) 값이 들어오면 DB에 저장
+    const hiddenVal = updates.isHidden ?? updates.is_hidden;
+    if (hiddenVal !== undefined) {
+      dbUpdates.is_hidden = hiddenVal;
+    }
+
+    // 💡 [디버깅] 로그 확인
     console.log("Service DB Update Payload:", dbUpdates);
 
     // 업데이트할 내용이 없는 경우 에러 방지 (선택 사항)

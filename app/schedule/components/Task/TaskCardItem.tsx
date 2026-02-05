@@ -62,7 +62,13 @@ export default function TaskCardItem(props: Props) {
   }, [isEditing]);
 
   const handleToggleComplete = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdateService(service.id, { is_completed: e.target.checked });
+    const isCompleted = e.target.checked;
+
+    onUpdateService(service.id, {
+      is_completed: isCompleted,
+
+      ...(isCompleted && { is_hidden: true }),
+    });
   };
 
   const getSortedTasks = (tasks: TaskPhase[]) => {
@@ -95,7 +101,7 @@ export default function TaskCardItem(props: Props) {
     >
       <TaskCardHeader {...props} onToggleComplete={handleToggleComplete} />
 
-      {!isCollapsed && !isHidden && (
+      {!isCollapsed && (
         <StCardBody>
           {activeTasks.map((task) => (
             <TaskCardItemRow
@@ -134,9 +140,9 @@ export default function TaskCardItem(props: Props) {
         </StCardBody>
       )}
 
-      {!isCollapsed && isHidden && (
+      {/* {!isCollapsed && isHidden && (
         <StHiddenMessage>🙈 캘린더에서 숨겨진 일정입니다.</StHiddenMessage>
-      )}
+      )} */}
     </StCard>
   );
 }
