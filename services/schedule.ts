@@ -11,17 +11,17 @@ import { format } from "date-fns";
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
   title: task.title,
-  startDate: task.start_date ? new Date(task.start_date) : new Date(),
-  endDate: task.end_date ? new Date(task.end_date) : new Date(),
+  startDate: new Date(task.start_date),
+  endDate: new Date(task.end_date),
   memo: task.memo || "",
-  isCompleted: task.is_completed || false,
+  isCompleted: task.is_completed ?? false,
 });
 
 const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   id: svc.id,
   serviceName: svc.name,
   color: svc.color,
-  isCompleted: svc.is_completed || false,
+  isCompleted: svc.is_completed ?? false,
   tasks: tasks.map(mapTaskFromDB),
 });
 
@@ -157,35 +157,45 @@ export const createService = async (
 
 // ✨ [핵심 수정] 프로젝트 업데이트 시 태스크 유실 방지
 export const updateService = async (id: string, updates: any) => {
-  const dbUpdates: any = {};
-  if (updates.serviceName) dbUpdates.name = updates.serviceName;
-  if (updates.color) dbUpdates.color = updates.color;
-  if (updates.isCompleted !== undefined)
-    dbUpdates.is_completed = updates.isCompleted;
+  try {
+    const dbUpdates: any = {};
 
-  const { data, error } = await supabase
-    .from("schedule_services")
-    .update(dbUpdates)
-    .eq("id", id)
-    // ⬇️ 중요: 업데이트된 서비스 정보를 가져올 때, 연관된 tasks도 함께 가져옵니다.
-    // 이렇게 해야 프론트엔드에서 tasks가 빈 배열로 덮어씌워지는 것을 막을 수 있습니다.
-    .select(
-      `
-        *,
-        tasks:schedule_tasks(*)
-      `,
-    )
-    .single();
+    if (updates.serviceName) dbUpdates.name = updates.serviceName;
+    if (updates.color) dbUpdates.color = updates.color;
 
-  if (error) {
-    console.error("업데이트 실패:", error);
-    throw error;
+    // ✨ [수정] 입력값이 camelCase(isCompleted)든 snake_case(is_completed)든 모두 받도록 처리
+    const completedVal = updates.isCompleted ?? updates.is_completed;
+    if (completedVal !== undefined) {
+      dbUpdates.is_completed = completedVal;
+    }
+
+    // 💡 [디버깅] 실제 DB로 전송되는 데이터 확인 (콘솔창 확인 필수)
+    console.log("Service DB Update Payload:", dbUpdates);
+
+    // 업데이트할 내용이 없는 경우 에러 방지 (선택 사항)
+    if (Object.keys(dbUpdates).length === 0) {
+      console.warn("업데이트할 데이터가 없습니다.");
+      return; // 혹은 현재 상태 리턴
+    }
+
+    const { data, error } = await supabase
+      .from("schedule_services")
+      .update(dbUpdates)
+      .eq("id", id)
+      .select(`*, tasks:schedule_tasks(*)`)
+      .single();
+
+    if (error) {
+      console.error("Supabase 상세 에러:", JSON.stringify(error, null, 2));
+      throw error;
+    }
+
+    return mapServiceFromDB(data, data.tasks || []);
+  } catch (err: any) {
+    console.error("updateService 내부 에러:", err.message);
+    throw err;
   }
-
-  // data.tasks가 존재하므로 함께 매핑하여 반환
-  return mapServiceFromDB(data, data.tasks || []);
 };
-
 export const deleteService = async (id: string) => {
   const { error } = await supabase
     .from("schedule_services")
@@ -222,7 +232,7 @@ export const updateTask = async (taskId: string, updates: any) => {
 
     if (updates.title) dbUpdates.title = updates.title;
 
-    // 1. 날짜 처리: 어떤 형식이 들어와도 안전하게 변환
+    // 날짜 처리 (기존 로직 유지)
     const ensureISOString = (dateInput: any) => {
       if (!dateInput) return null;
       const date = new Date(dateInput);
@@ -233,18 +243,27 @@ export const updateTask = async (taskId: string, updates: any) => {
       const iso = ensureISOString(updates.startDate);
       if (iso) dbUpdates.start_date = iso;
     }
-
     if (updates.endDate) {
       const iso = ensureISOString(updates.endDate);
       if (iso) dbUpdates.end_date = iso;
     }
-
     if (updates.memo !== undefined) dbUpdates.memo = updates.memo;
-    if (updates.isCompleted !== undefined)
-      dbUpdates.is_completed = updates.isCompleted;
 
-    // 💡 전송 직전의 깨끗한 데이터를 확인 (중요!)
-    console.log("Final DB Payload:", JSON.parse(JSON.stringify(dbUpdates)));
+    // ✨ [수정] 완료 상태 처리 강화 (입력 키 호환성 확보)
+    const completedVal = updates.isCompleted ?? updates.is_completed;
+    if (completedVal !== undefined) {
+      dbUpdates.is_completed = completedVal;
+    }
+
+    // 💡 [디버깅] Payload 확인
+    console.log("Task DB Payload:", dbUpdates);
+
+    // 업데이트 객체가 비어있으면 Supabase가 400 에러를 뱉을 수 있음
+    if (Object.keys(dbUpdates).length === 0) {
+      console.warn("Task 업데이트 데이터가 비어있습니다.");
+      // 에러를 던지지 않고 무시하거나, 현재 데이터를 다시 fetch해서 리턴
+      return;
+    }
 
     const { data, error } = await supabase
       .from("schedule_tasks")
@@ -254,14 +273,13 @@ export const updateTask = async (taskId: string, updates: any) => {
       .single();
 
     if (error) {
-      // Supabase 에러 객체를 문자열로 강제 변환하여 출력
       console.error("Supabase Error String:", JSON.stringify(error, null, 2));
       throw error;
     }
 
     return mapTaskFromDB(data);
   } catch (err: any) {
-    console.error("UpdateTask 전역 캐치 에러:", err.message);
+    console.error("UpdateTask 에러:", err.message);
     throw err;
   }
 };
