@@ -2,7 +2,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import { addDays } from "date-fns";
 
@@ -102,7 +102,9 @@ export default function ScheduleDetailPage() {
     );
   };
 
-  const visibleSchedules = schedules.filter((s) => !hiddenIds.has(s.id));
+  const visibleSchedules = useMemo(() => {
+    return schedules.filter((s) => !hiddenIds.has(s.id));
+  }, [schedules, hiddenIds]);
 
   if (loading) {
     return (

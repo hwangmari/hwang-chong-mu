@@ -62,12 +62,11 @@ export default function TaskCardItem(props: Props) {
   }, [isEditing]);
 
   const handleToggleComplete = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isCompleted = e.target.checked;
+    const isChecked = e.target.checked;
 
     onUpdateService(service.id, {
-      is_completed: isCompleted,
-
-      ...(isCompleted && { is_hidden: true }),
+      is_completed: isChecked,
+      is_hidden: isChecked,
     });
   };
 

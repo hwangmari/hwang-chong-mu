@@ -16,13 +16,12 @@ const mapTaskFromDB = (task: any): TaskPhase => ({
   memo: task.memo || "",
   isCompleted: task.is_completed ?? false,
 });
-
 const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   id: svc.id,
   serviceName: svc.name,
   color: svc.color,
   isCompleted: svc.is_completed ?? false,
-  isHidden: svc.is_hidden ?? false, // ✨ [추가] DB의 is_hidden 값을 매핑
+  isHidden: svc.is_hidden ?? false, // ✨ [필수] DB에서 눈꺼짐 상태 가져오기
   tasks: tasks.map(mapTaskFromDB),
 });
 
@@ -169,7 +168,6 @@ export const updateService = async (id: string, updates: any) => {
       dbUpdates.is_completed = completedVal;
     }
 
-    // ✨ [추가] isHidden (또는 is_hidden) 값이 들어오면 DB에 저장
     const hiddenVal = updates.isHidden ?? updates.is_hidden;
     if (hiddenVal !== undefined) {
       dbUpdates.is_hidden = hiddenVal;

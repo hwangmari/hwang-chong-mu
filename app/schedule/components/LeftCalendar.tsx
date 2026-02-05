@@ -8,7 +8,7 @@ import styled from "styled-components";
 import { useState } from "react";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import MonthGrid from "./Calendar/MonthGrid";
-import CalendarHeader from "./Calendar/CalendarHeader"; // ✨ 분리된 헤더 import
+import CalendarHeader from "./Calendar/CalendarHeader";
 
 interface Props {
   currentDate: Date;
@@ -25,8 +25,10 @@ export default function LeftCalendar({
   onMonthChange,
   onTaskMove,
 }: Props) {
-  // 뷰 모드 상태 (single: 1개월, double: 2개월)
   const [viewMode, setViewMode] = useState<"single" | "double">("single");
+
+  // ✨ [추가] 눈꺼짐(isHidden) 체크된 서비스는 캘린더에서 제외하기
+  const visibleSchedules = schedules.filter((s) => !s.isHidden);
 
   const handlePrevMonth = () => onMonthChange(subMonths(currentDate, 1));
   const handleNextMonth = () => onMonthChange(addMonths(currentDate, 1));
@@ -67,7 +69,6 @@ export default function LeftCalendar({
 
   return (
     <StContainer>
-      {/* ✨ 헤더 컴포넌트 사용 */}
       <CalendarHeader
         currentDate={currentDate}
         viewMode={viewMode}
@@ -77,17 +78,17 @@ export default function LeftCalendar({
       />
 
       <StScrollArea>
-        {/* 첫 번째 달 */}
+        {/* 첫 번째 달: visibleSchedules 전달 */}
         <MonthGrid
           targetDate={currentDate}
-          schedules={schedules}
+          schedules={visibleSchedules}
           showWeekend={showWeekend}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         />
 
-        {/* 두 번째 달 (double 모드일 때만) */}
+        {/* 두 번째 달: visibleSchedules 전달 */}
         {viewMode === "double" && (
           <div style={{ marginTop: "2rem" }}>
             <div
@@ -102,7 +103,7 @@ export default function LeftCalendar({
             </div>
             <MonthGrid
               targetDate={addMonths(currentDate, 1)}
-              schedules={schedules}
+              schedules={visibleSchedules} // ✨ [수정] 필터링된 스케줄만 전달
               showWeekend={showWeekend}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
@@ -115,8 +116,7 @@ export default function LeftCalendar({
   );
 }
 
-// --- 스타일 정의 ---
-
+// ... (스타일 코드는 기존과 동일)
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -129,7 +129,6 @@ const StScrollArea = styled.div`
   overflow-y: auto;
   padding: 0 1.5rem 1.5rem;
 
-  /* 스크롤바 커스텀 */
   &::-webkit-scrollbar {
     width: 6px;
   }

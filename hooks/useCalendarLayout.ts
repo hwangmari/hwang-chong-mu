@@ -17,8 +17,8 @@ export interface CalendarTask {
   svcId: string;
   svcName: string;
   color: string;
+  isCompleted: boolean;
 }
-
 export function useCalendarLayout(
   schedules: ServiceSchedule[],
   daysToShow: Date[],
@@ -28,7 +28,7 @@ export function useCalendarLayout(
     const map = new Map<string, number>();
     const maxSlots = new Map<string, number>();
 
-    // 1. 모든 스케줄을 하나의 배열로 평탄화(Flatten)
+    // 1. 모든 스케줄을 하나의 배열로 평탄화
     const allTasks: CalendarTask[] = schedules.flatMap((svc) =>
       svc.tasks.map((t) => ({
         id: t.id,
@@ -38,6 +38,7 @@ export function useCalendarLayout(
         svcId: svc.id,
         svcName: svc.serviceName,
         color: svc.color,
+        isCompleted: t.isCompleted || false,
       })),
     );
 
@@ -49,27 +50,24 @@ export function useCalendarLayout(
       const rowStart = startOfDay(rowDays[0]);
       const rowEnd = endOfDay(rowDays[rowDays.length - 1]);
 
-      // 해당 주(Row)에 걸치는 태스크 필터링
-      const tasksInRow = allTasks.filter((t) =>
-        areIntervalsOverlapping(
+      // ✨ 수정: 날짜가 겹치면서 "완료되지 않은" 태스크만 필터링
+      const tasksInRow = allTasks.filter((t) => {
+        const isOverlapping = areIntervalsOverlapping(
           { start: startOfDay(t.startDate), end: endOfDay(t.endDate) },
           { start: rowStart, end: rowEnd },
-        ),
-      );
+        );
+        return isOverlapping && !t.isCompleted; // 완료된 태스크는 레이아웃 계산에서 제외
+      });
 
-      // 정렬: 같은 프로젝트끼리 뭉치게(svcId) -> 시작일 순
+      // 3. 정렬 로직 (기존과 동일)
       tasksInRow.sort((a, b) => {
-        if (a.svcId !== b.svcId) {
-          return a.svcId.localeCompare(b.svcId);
-        }
+        if (a.svcId !== b.svcId) return a.svcId.localeCompare(b.svcId);
         return a.startDate.getTime() - b.startDate.getTime();
       });
 
-      // 슬롯 할당 알고리즘
+      // 4. 슬롯 할당 알고리즘 (기존과 동일)
       const slots: boolean[][] = [];
-
       tasksInRow.forEach((task) => {
-        // 이 태스크가 차지하는 요일 인덱스들 (0~6)
         const activeIndices = rowDays
           .map((day, idx) =>
             isWithinInterval(day, {
@@ -86,10 +84,8 @@ export function useCalendarLayout(
         let slotIndex = 0;
         while (true) {
           if (!slots[slotIndex]) slots[slotIndex] = [];
-          // 해당 슬롯(층)이 비어있는지 확인
           const isClear = activeIndices.every((idx) => !slots[slotIndex][idx]);
           if (isClear) {
-            // 할당
             activeIndices.forEach((idx) => {
               slots[slotIndex][idx] = true;
               const dateKey = format(rowDays[idx], "yyyy-MM-dd");

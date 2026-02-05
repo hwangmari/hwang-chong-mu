@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import styled, { css } from "styled-components";
-import { isSameDay, startOfDay } from "date-fns";
+import { isSameDay } from "date-fns";
 import { TaskPhase } from "@/types/work-schedule";
 import { CalendarTask } from "@/hooks/useCalendarLayout";
 
@@ -22,6 +22,14 @@ export default function CalendarTaskItem({
   const isEnd = isSameDay(day, task.endDate);
   const isSingleDay = isSameDay(task.startDate, task.endDate);
 
+  // 완료 여부 확인
+  const isCompleted = (task as any).isCompleted || false;
+
+  // ✨ 추가: 완료된 태스크라면 아예 렌더링하지 않음 (라인 제거)
+  if (isCompleted) {
+    return null;
+  }
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const event = new CustomEvent("scroll-to-service", { detail: task.svcId });
@@ -34,7 +42,7 @@ export default function CalendarTaskItem({
     startDate: task.startDate,
     endDate: task.endDate,
     memo: (task as any).memo || "",
-    isCompleted: (task as any).isCompleted || false,
+    isCompleted: isCompleted,
   };
 
   return (
@@ -75,13 +83,11 @@ const StTaskBarWrapper = styled.div`
   width: 100%;
   position: relative;
   z-index: 10;
-  cursor: grab; /* 항상 grab 커서 */
-  opacity: 1; /* 항상 불투명 */
-  filter: none; /* 흑백 필터 제거 */
+  cursor: grab;
   max-width: 100%;
 
   &:hover {
-    filter: brightness(0.95); /* hover 시 밝기 조절만 유지 */
+    filter: brightness(0.95);
   }
   &:active {
     cursor: grabbing;
@@ -120,6 +126,7 @@ const StTaskContent = styled.div<{
     display: flex;
     align-items: center;
     gap: 4px;
+
     .svc-name {
       opacity: 0.85;
       font-weight: 800;

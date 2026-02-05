@@ -83,7 +83,7 @@ export default function TaskList({
       service={service}
       isCollapsed={collapsedIds.has(service.id)}
       isHighlighted={highlightId === service.id}
-      isHidden={hiddenIds.has(service.id)} // ✨ 눈뜨기/감기 상태 전달
+      isHidden={service.isHidden}
       isEditing={isEditing}
       isPickerOpen={activeColorPickerId === service.id}
       pickerRef={pickerRef}
