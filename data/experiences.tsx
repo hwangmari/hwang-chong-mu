@@ -9,7 +9,7 @@ const HANWHA_EXPERIENCE: Experience = {
   id: "hanwha",
   company: "한화생명",
   role: "다이렉트 웹 개발 / 디지털프로덕트팀 - 세일즈파트 (대리)",
-  period: "2023.08 - 재직중",
+  period: "2023.08 - 재직 중",
   color: "bg-orange-500",
   summary: [
     "다이렉트 웹 서비스 및 백오피스 프론트엔드 전담 개발",
@@ -343,7 +343,7 @@ const MUSINSA_EXPERIENCE: Experience = {
       ],
       projectItemList: {
         title: "29CM PT Campaign History",
-        description: "2017 - 2020 29CM ",
+        description: "2017 - 2020 29CM Campaigns",
         items: CAMPAIGN_LIST,
       },
     },
@@ -396,8 +396,8 @@ const DOUZONE_EXPERIENCE: Experience = {
     "비즈니스 핵심 모듈의 UI 안정성 확보를 위한 코드 리팩토링 및 최적화 (Quality Assurance)",
   ],
   workSummary: [
-    "WEHAGO 플랫폼의 런칭 초기 멤버로서, 당시 생소했던 React 환경의 UI 개발 표준을 정립했습니다. \n",
-    "1인 개발자라는 환경 속에서도 외부 인력을 효율적으로 리딩하여 방대한 B2B 서비스의 UI 퀄리티를 상향 평준화시켰습니다.",
+    "WEHAGO 플랫폼 런칭 초기 멤버로서 React 환경의 UI 개발 표준을 정립했습니다.\n",
+    "1인 리드 개발자로 외부 인력을 효율적으로 리딩하며 B2B 서비스 UI 품질을 상향 평준화했습니다.",
   ],
   projects: [
     {
@@ -439,8 +439,8 @@ const HIVELAB_EXPERIENCE: Experience = {
   ],
 
   workSummary: [
-    "첫회사인 만큼  일하는 방법을 차근차근 배울수 있었던 하이브랩. \n",
-    "대형 회사와 협업 또는 파견으로 운영 방식과 업무롤에 대한 이해도를 높이며 경험을 쌓았습니다.",
+    "첫 회사로서 일하는 방법을 차근차근 배운 곳입니다.\n",
+    "대형 회사와의 협업 및 파견 경험을 통해 운영 방식과 역할 이해도를 높였습니다.",
   ],
   projects: [
     {

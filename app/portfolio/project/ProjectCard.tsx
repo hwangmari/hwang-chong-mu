@@ -20,7 +20,6 @@ interface ProjectCardProps {
     tech: ReactNode;
   };
   logicSteps?: string[];
-  edgeCase?: { condition: string; result: string };
   historyLogs?: { ver: string; date: string; content: string }[];
   projectImages?: ProjectImage[];
 }
@@ -35,6 +34,16 @@ export default function ProjectCard({
   historyLogs,
   projectImages,
 }: ProjectCardProps) {
+  const detailItems: {
+    label: string;
+    type: "problem" | "solution" | "tech";
+    content: ReactNode;
+  }[] = [
+    { label: "⚠️ 기획 배경", type: "problem", content: details.problem },
+    { label: "💡 해결 전략", type: "solution", content: details.solution },
+    { label: "🛠 기술 구현", type: "tech", content: details.tech },
+  ];
+
   return (
     <StCardContainer>
       {/* 상단: 제목 및 링크 */}
@@ -46,7 +55,7 @@ export default function ProjectCard({
           <span className="period">{period}</span>
         </div>
 
-        <StServiceLink href={linkUrl} target="_blank">
+        <StServiceLink href={linkUrl} target="_blank" rel="noopener noreferrer">
           서비스 바로가기 ↗
         </StServiceLink>
       </StHeader>
@@ -60,20 +69,12 @@ export default function ProjectCard({
 
       {/* ✨ 상세 내용 (다시 리스트 형태로 복귀 + 가독성 개선) */}
       <StDetailsBox>
-        <StDetailRow>
-          <StDetailLabel $type="problem">⚠️ 기획 배경</StDetailLabel>
-          <div className="content">{details.problem}</div>
-        </StDetailRow>
-
-        <StDetailRow>
-          <StDetailLabel $type="solution">💡 해결 전략</StDetailLabel>
-          <div className="content">{details.solution}</div>
-        </StDetailRow>
-
-        <StDetailRow>
-          <StDetailLabel $type="tech">🛠 기술 구현</StDetailLabel>
-          <div className="content">{details.tech}</div>
-        </StDetailRow>
+        {detailItems.map((item) => (
+          <StDetailRow key={item.type}>
+            <StDetailLabel $type={item.type}>{item.label}</StDetailLabel>
+            <div className="content">{item.content}</div>
+          </StDetailRow>
+        ))}
       </StDetailsBox>
 
       {/* 로직 흐름도 */}
@@ -196,11 +197,5 @@ const StDetailLabel = styled.div<{ $type: "problem" | "solution" | "tech" }>`
       ? "#E53E3E"
       : $type === "solution"
         ? "#3182CE"
-        : "#718096"};
-`;
-
-const StVisualSection = styled.div`
-  margin-top: 0.5rem;
-  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
-  padding-top: 0.5rem;
+      : "#718096"};
 `;

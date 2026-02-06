@@ -34,11 +34,11 @@ export default function ProjectList() {
         description={
           <>
             중복되는 업무 일정과 <b>&quot;리소스 현황&quot;</b>을 한눈에
-            관리하기 위해 <b>직접 기획·개발</b>한 올인원 업무 캘린더입니다.
+            관리하기 위해 <b>직접 기획·개발</b>한 내부용 캘린더입니다.
             <br />
-            다수의 프로젝트 배포 일정과 이슈를 <b>직관적인 타임라인</b>으로
-            시각화하고, <b>&quot;클릭 한 번&quot;</b>으로 보고용 텍스트를 생성해{" "}
-            <b>실무 보고 효율</b>을 극대화했습니다.
+            배포 일정과 이슈를 <b>타임라인</b>으로 시각화하고{" "}
+            <b>&quot;원클릭 보고용 텍스트&quot;</b>로 변환해 실무 효율을
+            높였습니다.
             <br />
             현재 <b>실무에서 직접 사용 중</b>인 관계자 전용 서비스입니다.
           </>
@@ -46,8 +46,8 @@ export default function ProjectList() {
         details={{
           problem: (
             <>
-              여러 프로젝트가 병렬로 진행되는 실무 환경에서 반복적인 비효율을
-              경험했습니다.
+              여러 프로젝트가 병렬로 진행되는 환경에서 반복되는 비효율이
+              있었습니다.
               <StDetailList>
                 <li>
                   다수 프로젝트의 <b>일정 충돌</b> 및 리소스 가시성 부족
@@ -56,24 +56,23 @@ export default function ProjectList() {
                   캘린더 내용을 일일이 텍스트로 옮겨 적어야 하는{" "}
                   <b>수기 보고 체계</b>
                 </li>
-                <li>일정마다 이슈가 발생했을때 트레킹 하기가 어려움</li>
+                <li>일정별 이슈가 분산되어 트래킹이 어려움</li>
               </StDetailList>
             </>
           ),
           solution: (
             <>
-              <b>시각화와 자동화</b>를 통해 관리 및 커뮤니케이션 비용을
-              획기적으로 줄였습니다.
+              <b>시각화와 자동화</b>로 관리 및 커뮤니케이션 비용을 줄였습니다.
               <StDetailList>
                 <li>
-                  프로젝트별 타임라인 시각화로 <b>병목 구간 사전 발견</b>
+                  프로젝트별 타임라인으로 <b>병목/충돌 구간 사전 발견</b>
                 </li>
                 <li>
                   캘린더 데이터를{" "}
                   <b>&apos;보고용 요약 텍스트&apos;로 즉시 변환</b>하여 보고
                   시간 단축
                 </li>
-                <li>일정마다 메모를 입력하여 이슈 트레킹 가능</li>
+                <li>일정별 메모/이슈 기록으로 흐름 추적</li>
               </StDetailList>
             </>
           ),
@@ -89,7 +88,7 @@ export default function ProjectList() {
                   개선
                 </li>
                 <li>
-                  <b>Clipboard API</b>를 활용해 보고용 텍스트 자동 포맷팅 최적화
+                  <b>Clipboard API</b>로 보고용 텍스트 자동 포맷팅
                 </li>
               </StDetailList>
             </>
@@ -113,22 +112,22 @@ export default function ProjectList() {
         linkUrl="/meeting"
         description={
           <>
-            단톡방의 비효율적인 일정 조율 문제를{" "}
-            <b>&quot;소거법(Negative Selection)&quot;</b>
-            으로 해결한 스케줄링 서비스입니다. <br />
-            기존의 &apos;모두 되는 날&apos;을 찾는 방식 대신,{" "}
-            <b>&quot;안 되는 날을 먼저 지우는&quot; 역발상 UX</b>를 통해 약속
-            확정 시간을 획기적으로 단축시켰습니다.
+            단톡방의 비효율적인 일정 조율을{" "}
+            <b>&quot;소거법(Negative Selection)&quot;</b>으로 해결한 스케줄링
+            서비스입니다.
+            <br />
+            &apos;모두 가능한 날&apos;을 찾기보다{" "}
+            <b>&quot;안 되는 날을 먼저 지우는&quot; UX</b>로 확정 시간을
+            단축했습니다.
           </>
         }
         details={{
           problem: (
             <>
-              N명의 일정이 파편화된 단체 채팅방에서는 이런 행동 패턴이
-              반복적으로 발생합니다.
+              N명의 일정이 파편화된 단체 채팅방에서는 다음 문제가 반복됩니다.
               <StDetailList>
                 <li>교집합을 찾기 위한 불필요한 메시지 왕복</li>
-                <li>일정 확인에 따른 인지적 피로</li>
+                <li>일정 확인 과정의 인지적 피로</li>
                 <li>결정 지연으로 인한 스트레스</li>
               </StDetailList>
             </>
@@ -142,10 +141,9 @@ export default function ProjectList() {
                 <li>
                   <b>최소한의 입력(터치)</b>만으로 참여 가능한 직관적 UX
                 </li>
-                <li>선택지가 줄어들수록 의사결정 속도가 빨라지는 흐름 유도</li>
+                <li>선택지 축소에 따라 의사결정 속도가 빨라지는 흐름 유도</li>
                 <li>
-                  결과적으로 <b>일정 확정 시간(Time-to-Decision)</b>을
-                  획기적으로 단축
+                  결과적으로 <b>일정 확정 시간(Time-to-Decision)</b>을 단축
                 </li>
               </StDetailList>
             </>
@@ -153,10 +151,7 @@ export default function ProjectList() {
           tech: (
             <>
               <StDetailList>
-                <li>
-                  date-fns 기반 배열 연산 최적화로 일정 처리 시 즉각적인 반응성
-                  확보
-                </li>
+                <li>date-fns 기반 연산 최적화로 일정 처리 반응성 확보</li>
                 <li>
                   Next-SEO 적용으로 링크 공유 시 미리보기(제목·설명)까지 고려한
                   UX 설계
@@ -185,13 +180,12 @@ export default function ProjectList() {
         details={{
           problem: (
             <>
-              기존의 텍스트 기반 체크리스트 방식에서는 지속적인 동기 부여가
-              어렵다는 점을 발견했습니다.
+              텍스트 기반 체크리스트만으로는 지속적인 동기 부여가 어렵습니다.
               <StDetailList>
                 <li>
                   체크 여부만으로는 부족한 <b>시각적 피드백</b>
                 </li>
-                <li>월간 달성 흐름과 성실도를 한눈에 파악하기 힘든 UI 구조</li>
+                <li>월간 흐름과 성실도를 한눈에 보기 어려운 UI 구조</li>
               </StDetailList>
             </>
           ),
@@ -245,8 +239,8 @@ export default function ProjectList() {
         details={{
           problem: (
             <>
-              단순히 체중 숫자만 기록하는 방식은 인과관계를 파악하기 어렵고 동기
-              부여가 약했습니다.
+              체중 숫자만 기록하는 방식은 인과관계 파악이 어렵고 동기 부여가
+              약했습니다.
               <StDetailList>
                 <li>식단/수면이 체중 변화에 미치는 영향 파악의 어려움</li>
                 <li>숫자 변화에 일희일비하게 되는 심리적 피로감</li>
@@ -277,8 +271,7 @@ export default function ProjectList() {
                   직관적 그래프로 표현
                 </li>
                 <li>
-                  데이터 시각화의 반응성을 최적화하여 모바일 환경에서도 쾌적한
-                  UX 제공
+                  시각화 반응성을 최적화해 모바일 환경에서도 쾌적한 UX 제공
                 </li>
               </StDetailList>
             </>
