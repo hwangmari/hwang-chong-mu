@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { ExpenseType } from "@/types";
+import { createShortCode, parseShortCode, toSlug, isUuid } from "@/lib/slug";
 
 interface Expense {
   id: number;
@@ -18,17 +19,31 @@ export const useCalcPersistence = () => {
   const createRoom = async (roomName: string) => {
     setLoading(true);
     try {
-      const { data: roomData, error: roomError } = await supabase
-        .from("calc_rooms")
-        .insert([{ room_name: roomName }]) // 여기가 핵심!
-        .select()
-        .single();
+      const slug = toSlug(roomName);
+      let created = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const shortCode = createShortCode(6);
+        const { data: roomData, error: roomError } = await supabase
+          .from("calc_rooms")
+          .insert([{ room_name: roomName, slug, short_code: shortCode }])
+          .select()
+          .single();
 
-      if (roomError) throw roomError;
+        if (roomError) {
+          if (roomError.code === "23505") {
+            continue;
+          }
+          throw roomError;
+        }
+        created = roomData;
+        break;
+      }
 
-      const newRoomId = roomData.id;
+      if (!created) {
+        throw new Error("방 코드 생성에 실패했습니다.");
+      }
 
-      router.push(`/calc/${newRoomId}`);
+      router.push(`/calc/${created.slug}-${created.short_code}`);
     } catch (error) {
       console.error("생성 실패:", error);
       alert("방 생성에 실패했습니다. 😭");
@@ -73,17 +88,32 @@ export const useCalcPersistence = () => {
   const fetchRoomData = async (roomId: string) => {
     setLoading(true);
     try {
+      let roomQuery = supabase.from("calc_rooms").select("*");
+      if (isUuid(roomId)) {
+        roomQuery = roomQuery.eq("id", roomId);
+      } else {
+        const parsed = parseShortCode(roomId);
+        if (!parsed) throw new Error("잘못된 방 주소입니다.");
+        roomQuery = roomQuery.eq("short_code", parsed.code);
+      }
+      const { data: roomData, error: roomError } = await roomQuery.single();
+      if (roomError) throw roomError;
+
+      const targetRoomId = roomData.id;
+
       const { data: memberData } = await supabase
         .from("calc_members")
         .select("name")
-        .eq("room_id", roomId);
+        .eq("room_id", targetRoomId);
       const { data: expenseData } = await supabase
         .from("calc_expenses")
         .select("*")
-        .eq("room_id", roomId)
+        .eq("room_id", targetRoomId)
         .order("id", { ascending: true });
 
       return {
+        room: roomData,
+        roomId: targetRoomId,
         members: memberData?.map((m) => m.name) || [],
         expenses:
           expenseData?.map((e) => ({

@@ -12,6 +12,9 @@ interface Props {
   participants: UserVote[];
   onReset: () => void;
   onRescueUser: (user: UserVote) => void;
+  onCreateSettlement: (memberNames: string[], finalDate: Date) => void;
+  isCreatingSettlement: boolean;
+  calcRoomId?: string | number | null;
 }
 
 export default function ConfirmedResultCard({
@@ -20,6 +23,9 @@ export default function ConfirmedResultCard({
   participants,
   onReset,
   onRescueUser,
+  onCreateSettlement,
+  isCreatingSettlement,
+  calcRoomId,
 }: Props) {
   const getUnavailablePeople = (d: Date) =>
     participants.filter(
@@ -38,6 +44,8 @@ export default function ConfirmedResultCard({
     ...getAbsentPeople(),
   ];
 
+  const availableNames = getAvailablePeople(finalDate).map((p) => p.name);
+
   return (
     <StResultCard>
       <StEmoji>🎉</StEmoji>
@@ -53,6 +61,16 @@ export default function ConfirmedResultCard({
         <StDateDisplay variant="h2">
           {format(finalDate, "M월 d일 (E)", { locale: ko })}
         </StDateDisplay>
+        <StSettleButton
+          onClick={() => onCreateSettlement(availableNames, finalDate)}
+          disabled={isCreatingSettlement || availableNames.length === 0}
+        >
+          {isCreatingSettlement
+            ? "정산 방 만드는 중..."
+            : calcRoomId
+              ? "정산 방으로 이동"
+              : "정산하기"}
+        </StSettleButton>
       </StDateBox>
 
       {/* 결과 명단 리스트 */}
@@ -147,6 +165,28 @@ const StRoomName = styled(Typography)`
 const StDateDisplay = styled(Typography)`
   font-weight: 900;
   text-align: center;
+`;
+
+const StSettleButton = styled.button`
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 800;
+  background-color: ${({ theme }) => theme.semantic.primary};
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const StResultGrid = styled.div`

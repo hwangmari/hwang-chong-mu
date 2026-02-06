@@ -12,12 +12,25 @@ import {
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { UserVote, ModalState } from "@/types";
+import { toSlug } from "@/lib/slug";
+
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
+const parseShortCode = (value: string) => {
+  const match = value.match(/^(.*)-([A-Za-z0-9]{6})$/);
+  if (!match) return null;
+  return { slug: match[1], code: match[2] };
+};
 
 export function useRoom(roomId: string) {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"VOTING" | "CONFIRM">("VOTING");
   const [room, setRoom] = useState<any>(null);
   const [includeWeekend, setIncludeWeekend] = useState(false);
+  const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
 
   const [participants, setParticipants] = useState<UserVote[]>([]);
 
@@ -35,14 +48,22 @@ export function useRoom(roomId: string) {
   const fetchData = useCallback(async () => {
     if (!roomId) return;
     try {
-      const { data: roomData } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("id", roomId)
-        .single();
+      let roomQuery = supabase.from("rooms").select("*");
+      if (isUuid(roomId)) {
+        roomQuery = roomQuery.eq("id", roomId);
+      } else {
+        const parsed = parseShortCode(roomId);
+        if (!parsed) throw new Error("잘못된 방 주소입니다.");
+        roomQuery = roomQuery.eq("short_code", parsed.code);
+      }
+      const { data: roomData } = await roomQuery.single();
 
       if (roomData) {
+        if (!roomData.slug) {
+          roomData.slug = toSlug(roomData.name);
+        }
         setRoom(roomData);
+        setResolvedRoomId(roomData.id);
         setIncludeWeekend(roomData.include_weekend);
         if (roomData.confirmed_date) {
           setFinalDate(parseISO(roomData.confirmed_date));
@@ -53,7 +74,7 @@ export function useRoom(roomId: string) {
       const { data: partData } = await supabase
         .from("participants")
         .select("*")
-        .eq("room_id", roomId);
+        .eq("room_id", roomData?.id ?? roomId);
 
       const formattedParticipants = (partData || []).map((p: any) => ({
         id: p.id,
@@ -120,17 +141,18 @@ export function useRoom(roomId: string) {
     isAbsent: boolean
   ) => {
     try {
+      const targetRoomId = resolvedRoomId ?? roomId;
       const dateStrings = dates.map((d) => format(d, "yyyy-MM-dd"));
 
       await supabase
         .from("participants")
         .delete()
-        .eq("room_id", roomId)
+        .eq("room_id", targetRoomId)
         .eq("name", name);
 
       const { error } = await supabase.from("participants").insert([
         {
-          room_id: roomId,
+          room_id: targetRoomId,
           name: name,
           unavailable_dates: dateStrings,
           is_absent: isAbsent, // DB 컬럼: is_absent
@@ -165,10 +187,11 @@ export function useRoom(roomId: string) {
       const dbDateStr = format(date, "yyyy-MM-dd");
 
       showConfirm(`${dateStr}로\n최종 확정하시겠습니까?`, async () => {
+        const targetRoomId = resolvedRoomId ?? roomId;
         const { error } = await supabase
           .from("rooms")
           .update({ confirmed_date: dbDateStr })
-          .eq("id", roomId);
+          .eq("id", targetRoomId);
         if (!error) {
           setFinalDate(date);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -217,10 +240,11 @@ export function useRoom(roomId: string) {
 
   const handleDeleteUser = (user: UserVote) => {
     showConfirm(`정말 ${user.name}님의 정보를\n삭제하시겠습니까?`, async () => {
+      const targetRoomId = resolvedRoomId ?? roomId;
       await supabase
         .from("participants")
         .delete()
-        .eq("room_id", roomId)
+        .eq("room_id", targetRoomId)
         .eq("name", user.name);
 
       if (currentName === user.name) setIsEditing(false);
@@ -236,10 +260,11 @@ export function useRoom(roomId: string) {
 
   const handleReset = () => {
     showConfirm("확정을 취소하고\n다시 투표화면으로 갈까요?", async () => {
+      const targetRoomId = resolvedRoomId ?? roomId;
       await supabase
         .from("rooms")
         .update({ confirmed_date: null })
-        .eq("id", roomId);
+        .eq("id", targetRoomId);
       setStep("VOTING");
       setFinalDate(null);
     });
@@ -249,10 +274,11 @@ export function useRoom(roomId: string) {
     showConfirm(
       `${user.name}님을 위해\n약속 확정을 취소하고 재조율할까요?`,
       async () => {
+        const targetRoomId = resolvedRoomId ?? roomId;
         await supabase
           .from("rooms")
           .update({ confirmed_date: null })
-          .eq("id", roomId);
+          .eq("id", targetRoomId);
         setStep("VOTING");
         setFinalDate(null);
         setCurrentName(user.name);

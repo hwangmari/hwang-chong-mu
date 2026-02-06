@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ExpenseType } from "@/types";
+import { isUuid, toSlug } from "@/lib/slug";
 
 import FooterGuide from "@/components/common/FooterGuide";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
@@ -20,16 +21,23 @@ interface Expense {
 
 export default function CalcDetailParamsPage() {
   const params = useParams();
+  const router = useRouter();
   const roomId = params.id as string;
   const { fetchRoomData, updateRoomData } = useCalcPersistence();
 
   const [members, setMembers] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     if (roomId) {
       fetchRoomData(roomId).then((data) => {
         if (data) {
+          if (isUuid(roomId) && data.room?.short_code) {
+            const slug = data.room.slug || toSlug(data.room.room_name || "calc");
+            router.replace(`/calc/${slug}-${data.room.short_code}`);
+          }
+          if (data.roomId) setResolvedRoomId(data.roomId);
           setMembers(data.members || []);
           setExpenses(data.expenses || []);
         }
@@ -41,8 +49,8 @@ export default function CalcDetailParamsPage() {
     setMembers(newMembers);
     setExpenses(newExpenses);
 
-    if (roomId) {
-      updateRoomData(roomId, newMembers, newExpenses);
+    if (resolvedRoomId) {
+      updateRoomData(resolvedRoomId, newMembers, newExpenses);
     }
   };
   const handleAddMember = (name: string) => {

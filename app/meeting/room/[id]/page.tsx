@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styled from "styled-components";
 import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/app/meeting/room/detail/RoomHeader";
@@ -22,12 +22,16 @@ import {
   StContainer,
   StFlexBox,
 } from "@/components/styled/layout.styled";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { toSlug } from "@/lib/slug";
 
 export default function RoomDetail() {
   const params = useParams();
+  const router = useRouter();
   const roomId = params.id as string;
   const [showGuide, setShowGuide] = useState(false);
+  const [isCreatingSettlement, setIsCreatingSettlement] = useState(false);
 
   const [hoveredUserId, setHoveredUserId] = useState<string | number | null>(
     null,
@@ -59,6 +63,78 @@ export default function RoomDetail() {
     cancelEdit,
     closeModal,
   } = useRoom(roomId);
+
+  useEffect(() => {
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (room && isUuid.test(roomId) && room.short_code) {
+      const slug = room.slug || toSlug(room.name);
+      router.replace(`/meeting/room/${slug}-${room.short_code}`);
+    }
+  }, [room, roomId, router]);
+
+  const handleCreateSettlement = async (
+    memberNames: string[],
+    date: Date,
+  ) => {
+    if (isCreatingSettlement) return;
+    if (!room) return;
+    if (room.calc_room_id) {
+      try {
+        const { error: rpcError } = await supabase.rpc(
+          "calc_replace_room_data",
+          {
+            p_room_id: String(room.calc_room_id),
+            p_members: Array.from(new Set(memberNames)),
+            p_expenses: [],
+          },
+        );
+        if (rpcError) throw rpcError;
+        router.push(`/calc/${room.calc_room_id}`);
+      } catch (error) {
+        console.error("정산 방 업데이트 실패:", error);
+        alert("정산 방 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+      return;
+    }
+    if (memberNames.length === 0) {
+      alert("정산할 참석자가 없습니다.");
+      return;
+    }
+    setIsCreatingSettlement(true);
+    try {
+      const roomName = `${room.name} ${format(date, "yyyy-MM-dd")}`;
+      const { data: newRoom, error: roomError } = await supabase
+        .from("calc_rooms")
+        .insert([{ room_name: roomName }])
+        .select()
+        .single();
+      if (roomError) throw roomError;
+
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ calc_room_id: newRoom.id })
+        .eq("id", room.id);
+      if (updateError) throw updateError;
+
+      const { error: rpcError } = await supabase.rpc(
+        "calc_replace_room_data",
+        {
+          p_room_id: String(newRoom.id),
+          p_members: Array.from(new Set(memberNames)),
+          p_expenses: [],
+        },
+      );
+      if (rpcError) throw rpcError;
+
+      router.push(`/calc/${newRoom.id}`);
+    } catch (error) {
+      console.error("정산 방 생성 실패:", error);
+      alert("정산 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsCreatingSettlement(false);
+    }
+  };
 
   if (loading) return <StLoadingContainer>로딩중...🐰</StLoadingContainer>;
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
@@ -169,6 +245,9 @@ export default function RoomDetail() {
             participants={participants}
             onReset={handleReset}
             onRescueUser={handleRescueUser}
+            onCreateSettlement={handleCreateSettlement}
+            isCreatingSettlement={isCreatingSettlement}
+            calcRoomId={room.calc_room_id}
           />
           <AddToCalendar
             title={room.name}

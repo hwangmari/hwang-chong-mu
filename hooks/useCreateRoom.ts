@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { createShortCode, toSlug } from "@/lib/slug";
 
 export default function useCreateRoom() {
   const router = useRouter();
@@ -60,22 +61,39 @@ export default function useCreateRoom() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("rooms")
-        .insert([
-          {
-            name: roomName,
-            start_date: startDate,
-            end_date: finalEndDateString,
-            include_weekend: includeWeekend, // 🔥 [수정 2] 주말 포함 여부 DB 전송 추가
-          },
-        ])
-        .select();
+      const slug = toSlug(roomName);
+      let created = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const shortCode = createShortCode(6);
+        const { data, error } = await supabase
+          .from("rooms")
+          .insert([
+            {
+              name: roomName,
+              start_date: startDate,
+              end_date: finalEndDateString,
+              include_weekend: includeWeekend,
+              slug,
+              short_code: shortCode,
+            },
+          ])
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) {
+          if (error.code === "23505") {
+            continue;
+          }
+          throw error;
+        }
+        created = data;
+        break;
+      }
 
-      if (data && data.length > 0) {
-        router.push(`/meeting/room/${data[0].id}`);
+      if (created) {
+        router.push(`/meeting/room/${created.slug}-${created.short_code}`);
+      } else {
+        throw new Error("방 코드 생성에 실패했습니다.");
       }
     } catch (error) {
       console.error("에러 발생:", error);
