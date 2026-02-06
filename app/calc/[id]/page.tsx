@@ -10,7 +10,7 @@ import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 // Hooks
 import { useCalculator } from "@/hooks/useCalculator";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
-import CalcMainContent from "../CalcMainContent";
+import CalcMainContent from "../components/CalcMainContent";
 
 // Types
 interface Expense {

@@ -2,8 +2,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import styled, { useTheme } from "styled-components";
-import Card from "./components/ui/Card";
-import SectionTitle from "./components/ui/SectionTitle";
+import Card from "./ui/Card";
+import SectionTitle from "./ui/SectionTitle";
 import { ExpenseType } from "@/types";
 
 interface Props {

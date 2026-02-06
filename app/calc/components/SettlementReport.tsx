@@ -1,7 +1,8 @@
 "use client";
 
 import styled from "styled-components";
-import Card from "./components/ui/Card";
+import Card from "./ui/Card";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Expense } from "@/types";
 
 interface SettlementReportProps {
@@ -50,7 +51,7 @@ export default function SettlementReport({
           <details>
             <summary>
               <span>📊 멤버별 상세 계산 방식</span>
-              <span className="arrow">▼</span>
+              <StSummaryArrow className="arrow" />
             </summary>
             <div className="accordion-content">
               {members.map((member) => {
@@ -152,9 +153,6 @@ const StDetailsSection = styled.div`
       &::-webkit-details-marker {
         display: none;
       }
-      .arrow {
-        transition: transform 0.2s;
-      }
     }
 
     &[open] summary .arrow {
@@ -189,4 +187,8 @@ const StMemberRow = styled.div`
     font-size: 0.75rem;
     color: ${({ theme }) => theme.colors.gray400};
   }
+`;
+
+const StSummaryArrow = styled(ExpandMoreIcon)`
+  transition: transform 0.2s;
 `;

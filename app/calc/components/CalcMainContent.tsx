@@ -8,7 +8,7 @@ import ExpenseInput from "./ExpenseInput";
 import ExpenseList from "./ExpenseList";
 import SettlementReport from "./SettlementReport";
 import SettlementList from "./SettlementList";
-import ShareButton from "./ShareButton";
+import ShareButton from "./ui/ShareButton";
 
 interface Expense {
   id: number;

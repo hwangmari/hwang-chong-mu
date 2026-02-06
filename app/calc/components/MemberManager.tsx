@@ -3,7 +3,7 @@ import ShareButton from "@/components/common/KakaoCalendarShare";
 import { StSection } from "@/components/styled/layout.styled";
 import React, { useState } from "react";
 import styled from "styled-components";
-import SectionTitle from "./components/ui/SectionTitle";
+import SectionTitle from "./ui/SectionTitle";
 
 interface Props {
   members: string[];

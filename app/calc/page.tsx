@@ -9,6 +9,7 @@ import {
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CreateButton from "@/components/common/CreateButton";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
 import { CALC_GUIDE_DATA } from "@/data/footerGuides";
 
@@ -61,7 +62,9 @@ export default function CreateRoomPage() {
             isLoading={loading}
             className="mt-4"
           >
-            정산 방 만들기 ➔
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+              정산 방 만들기 <ArrowForwardIcon fontSize="small" />
+            </span>
           </CreateButton>
         </StSection>
 

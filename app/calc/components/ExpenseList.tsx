@@ -3,7 +3,8 @@ import { StSection } from "@/components/styled/layout.styled";
 import { Expense } from "@/types";
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import SectionTitle from "./components/ui/SectionTitle";
+import SectionTitle from "./ui/SectionTitle";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface Props {
   expenses: Expense[];
@@ -60,7 +61,7 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
           <StTitleContent>
             🧾 지출 목록
             {/* 아이콘으로 상태 표시 */}
-            <span className="icon">{isExpanded ? "▼" : "▶"}</span>
+            <StChevronIcon $expanded={isExpanded} />
           </StTitleContent>
         </SectionTitle>
         <StTotalText>
@@ -170,12 +171,13 @@ const StTitleContent = styled.span`
   align-items: center;
   gap: 0.5rem;
   transition: color 0.2s;
+`;
 
-  .icon {
-    font-size: 0.7rem;
-    color: ${({ theme }) => theme.colors.gray400};
-    width: 12px;
-  }
+const StChevronIcon = styled(ExpandMoreIcon)<{ $expanded: boolean }>`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  transform: ${({ $expanded }) => ($expanded ? "rotate(0deg)" : "rotate(-90deg)")};
+  transition: transform 0.2s;
 `;
 
 const StTotalText = styled.span`

@@ -1,8 +1,9 @@
 "use client";
 
 import styled from "styled-components";
-import Card from "./components/ui/Card";
-import SectionTitle from "./components/ui/SectionTitle";
+import Card from "./ui/Card";
+import SectionTitle from "./ui/SectionTitle";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 interface Settlement {
   from: string;
@@ -35,7 +36,7 @@ export default function SettlementList({ settlements }: SettlementListProps) {
             <StSettlementCardContent>
               <div className="transfer-info">
                 <span className="from">{s.from}</span>
-                <span className="arrow">➔</span>
+                <StArrowIcon />
                 <span className="to">{s.to}</span>
               </div>
               <div className="amount-info">
@@ -77,10 +78,6 @@ const StSettlementCardContent = styled.div`
     .from {
       color: ${({ theme }) => theme.colors.gray700};
     }
-    .arrow {
-      color: ${({ theme }) => theme.colors.gray400};
-      font-size: 0.9rem;
-    }
     .to {
       color: #3b82f6; // 받는 사람은 강조!
     }
@@ -93,4 +90,9 @@ const StSettlementCardContent = styled.div`
       color: ${({ theme }) => theme.colors.gray900};
     }
   }
+`;
+
+const StArrowIcon = styled(ArrowForwardIcon)`
+  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 1rem;
 `;
