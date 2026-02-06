@@ -2,6 +2,7 @@ import styled, { keyframes } from "styled-components";
 import Switch from "../../../components/common/Switch";
 import CreateButton from "@/components/common/CreateButton";
 import Input from "@/components/common/Input";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 interface RoomFormProps {
   formData: {
@@ -93,7 +94,9 @@ export default function RoomForm({
 
       {/* 4. 버튼 */}
       <CreateButton onClick={onSubmit} isLoading={loading}>
-        방 만들기 ➔
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+          방 만들기 <ArrowForwardIcon fontSize="small" />
+        </span>
       </CreateButton>
     </StFormContainer>
   );

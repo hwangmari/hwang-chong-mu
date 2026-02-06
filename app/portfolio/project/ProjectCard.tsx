@@ -4,6 +4,7 @@ import Typography from "@/components/common/Typography";
 import Link from "next/link";
 import { ReactNode } from "react";
 import styled from "styled-components";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import LogicFlowChart, { DevLog } from "./ProjectVisuals";
 import ProjectImageViewer, {
   ProjectImage,
@@ -56,7 +57,9 @@ export default function ProjectCard({
         </div>
 
         <StServiceLink href={linkUrl} target="_blank" rel="noopener noreferrer">
-          서비스 바로가기 ↗
+            <span className="link-content">
+              서비스 바로가기 <OpenInNewIcon fontSize="inherit" />
+            </span>
         </StServiceLink>
       </StHeader>
 

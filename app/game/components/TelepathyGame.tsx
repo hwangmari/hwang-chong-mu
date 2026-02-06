@@ -5,6 +5,7 @@ import styled, { keyframes } from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 // 텔레파시 게임 질문 데이터
 const QUESTIONS = [
@@ -159,7 +160,15 @@ export default function TelepathyGame({
           <StControls>
             {roomData.is_result_open ? (
               <CreateButton onClick={handleNextQuestion}>
-                다음 문제 ➡️
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  다음 문제 <ArrowForwardIcon fontSize="small" />
+                </span>
               </CreateButton>
             ) : (
               <CreateButton onClick={handleShowResult} disabled={!question}>

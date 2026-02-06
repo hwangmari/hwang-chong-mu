@@ -1,6 +1,7 @@
 "use client";
 
 import styled, { keyframes } from "styled-components";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useMemo } from "react";
 import Image from "next/image";
 
@@ -64,7 +65,9 @@ export default function ProjectItemList({
         <StContent>
           <StTitle>{item.title}</StTitle>
         </StContent>
-        <StArrow>{item.url ? "↗" : "-"}</StArrow>
+        <StArrow>
+          {item.url ? <OpenInNewIcon fontSize="inherit" /> : "-"}
+        </StArrow>
       </StTitleDate>
 
       {/* 설명 목록 렌더링 */}

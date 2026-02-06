@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
 import FooterGuide from "@/components/common/FooterGuide";
 import {
@@ -226,7 +227,15 @@ export default function GameLobbyPage() {
 
             <StButtonWrapper>
               <CreateButton onClick={createRoom} isLoading={loading}>
-                방 만들고 입장하기 ➔
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
+                </span>
               </CreateButton>
             </StButtonWrapper>
           </StSection>

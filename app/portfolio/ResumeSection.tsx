@@ -21,6 +21,7 @@ import {
   StDetailBadge,
   StSummaryList,
 } from "./ResumeSection.styled";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 export default function ResumeSection() {
   return (
@@ -129,7 +130,9 @@ export default function ResumeSection() {
                 <StExperienceLink href={`/portfolio/experience/${exp.id}`}>
                   <StCompanyHeader>
                     {exp.company}
-                    <StDetailBadge>상세보기 ↗</StDetailBadge>
+                    <StDetailBadge>
+                      상세보기 <OpenInNewIcon fontSize="inherit" />
+                    </StDetailBadge>
                   </StCompanyHeader>
                   <Typography
                     variant="body2"

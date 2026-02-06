@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import Link from "next/link";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,7 +66,10 @@ export default function LoginPage() {
         </StForm>
 
         <Link href="/" className="back-home">
-          ← 메인으로 돌아가기
+          <span className="back-home-content">
+            <ArrowBackIcon fontSize="inherit" />
+            메인으로 돌아가기
+          </span>
         </Link>
       </StCard>
     </StContainer>
@@ -102,6 +106,12 @@ const StCard = styled.div`
       text-decoration: underline;
       color: #6b7280;
     }
+  }
+
+  .back-home-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 `;
 

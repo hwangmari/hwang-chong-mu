@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import {
   StScrollArea,
@@ -118,9 +120,17 @@ export default function TaskList({
             className="toggle-btn"
             onClick={() => setIsCompletedOpen(!isCompletedOpen)}
           >
-            {isCompletedOpen
-              ? "▲ 완료 프로젝트 접기"
-              : `▼ 완료 프로젝트 더 보기 (${allCompletedSchedules.length})`}
+            {isCompletedOpen ? (
+              <span className="toggle-label">
+                <ExpandLessIcon fontSize="inherit" />
+                완료 프로젝트 접기
+              </span>
+            ) : (
+              <span className="toggle-label">
+                <ExpandMoreIcon fontSize="inherit" />
+                완료 프로젝트 더 보기 ({allCompletedSchedules.length})
+              </span>
+            )}
           </button>
 
           {isCompletedOpen && (

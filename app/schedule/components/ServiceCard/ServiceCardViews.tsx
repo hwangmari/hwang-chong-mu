@@ -1,4 +1,5 @@
 import React from "react";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import {
   StInput,
   StTextarea,
@@ -75,7 +76,9 @@ export const ReadView = ({
     <p className="desc">{desc || "설명 없음"}</p>
     <div className="footer">
       <div className="view-actions">
-        <span className="arrow">입장하기 →</span>
+        <span className="arrow">
+          입장하기 <ArrowForwardIcon fontSize="inherit" />
+        </span>
         <div className="btn-group">
           <StIconButton onClick={onStartEdit}>수정</StIconButton>
           <StIconButton $isDelete onClick={onDelete}>

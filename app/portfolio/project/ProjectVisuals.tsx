@@ -1,6 +1,8 @@
 // components/project/ProjectVisuals.tsx
 "use client";
 import styled from "styled-components";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function LogicFlowChart() {
   return (
@@ -15,12 +17,12 @@ export default function LogicFlowChart() {
               <Icon>🚀</Icon>
               <Label>서비스 접속</Label>
             </NodeCircle>
-            <Arrow>➔</Arrow>
+            <Arrow />
             <NodeRect>
               <Icon>📅</Icon>
               <Label>3주 캘린더 생성</Label>
             </NodeRect>
-            <Arrow>➔</Arrow>
+            <Arrow />
           </NodeGroup>
 
           {/* 2. 입력 및 로직 (Loop의 타겟 지점) */}
@@ -32,13 +34,13 @@ export default function LogicFlowChart() {
               <Icon>🚫</Icon>
               <Label>불가능 날짜 선택</Label>
             </NodeRect>
-            <Arrow>➔</Arrow>
+            <Arrow />
             <NodeRect $dashed>
               <Icon>⚙️</Icon>
               <Label>소거 연산 수행</Label>
               <SubLabel>Negative Selection</SubLabel>
             </NodeRect>
-            <Arrow>➔</Arrow>
+            <Arrow />
           </NodeGroup>
 
           {/* 3. 조건 분기 (Decision) */}
@@ -57,12 +59,12 @@ export default function LogicFlowChart() {
               {/* YES 경로 (성공) */}
               <PathRow>
                 <PathLabel $type="success">Yes</PathLabel>
-                <Arrow>➔</Arrow>
+                <Arrow />
                 <NodeRect $success>
                   <Icon>✅</Icon>
                   <Label>최적일 도출</Label>
                 </NodeRect>
-                <Arrow>➔</Arrow>
+                <Arrow />
                 <NodeCircle $end>
                   <Icon>💌</Icon>
                   <Label>초대장 공유</Label>
@@ -72,13 +74,16 @@ export default function LogicFlowChart() {
               {/* NO 경로 (실패/루프) */}
               <PathRow>
                 <PathLabel $type="fail">No</PathLabel>
-                <Arrow className="down-arrow">↴</Arrow>
+                <Arrow className="down-arrow" />
                 <NodeRect $fail>
                   <Icon>🔄</Icon>
                   <Label>조건 완화 UI</Label>
                 </NodeRect>
                 <LoopLine>
-                  <span>⇠ Retry (Back to Input)</span>
+                  <StRetryLabel>
+                    <ArrowBackIcon fontSize="inherit" />
+                    Retry (Back to Input)
+                  </StRetryLabel>
                 </LoopLine>
               </PathRow>
             </Paths>
@@ -180,10 +185,9 @@ const NodeGroup = styled.div`
   }
 `;
 
-const Arrow = styled.div`
+const Arrow = styled(ArrowForwardIcon)`
   color: ${({ theme }) => theme.colors?.gray400 || "#ADB5BD"};
   font-size: 1.2rem;
-  font-weight: 300;
 
   &.down-arrow {
     transform: rotate(90deg);
@@ -262,6 +266,12 @@ const NodeRect = styled(NodeBase)<NodeProps>`
     background-color: #FFF5F5;
     color: #C92A2A;
   `}
+`;
+
+const StRetryLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 `;
 
 const Icon = styled.div`

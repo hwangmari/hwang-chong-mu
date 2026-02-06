@@ -24,6 +24,8 @@ import DietMealInput from "./DietMealInput";
 import { StFlexBox } from "@/components/styled/layout.styled";
 import { useModal } from "@/components/common/ModalProvider"; // ✅ 공통 모달 훅
 import AnalysisCard from "./AnalysisCard";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 interface LogData {
   id?: number;
@@ -161,15 +163,15 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
           ? subMonths(currentDate, 1)
           : subDays(currentDate, 1)
         : viewMode === "monthly"
-        ? addMonths(currentDate, 1)
-        : addDays(currentDate, 1);
+          ? addMonths(currentDate, 1)
+          : addDays(currentDate, 1);
 
     if (isDirty) {
       // ✅ 공통 모달(Confirm) 호출
       // "확인"을 누르면 true 반환 -> 이동 실행
       // "취소"를 누르면 false 반환 -> 이동 안 함
       const confirmed = await openConfirm(
-        "작성 중인 내용이 저장되지 않았습니다.\n저장하지 않고 이동하시겠습니까?"
+        "작성 중인 내용이 저장되지 않았습니다.\n저장하지 않고 이동하시겠습니까?",
       );
       if (confirmed) {
         setCurrentDate(targetDate);
@@ -245,13 +247,17 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
   return (
     <>
       <DateNav>
-        <NavBtn onClick={() => handleDateMove("prev")}>◀</NavBtn>
+        <NavBtn onClick={() => handleDateMove("prev")}>
+          <ChevronLeftIcon fontSize="small" />
+        </NavBtn>
         <CurrentDate>
           {viewMode === "monthly"
             ? format(currentDate, "yyyy년 M월")
             : format(currentDate, "M월 d일 (EEE)", { locale: ko })}
         </CurrentDate>
-        <NavBtn onClick={() => handleDateMove("next")}>▶</NavBtn>
+        <NavBtn onClick={() => handleDateMove("next")}>
+          <ChevronRightIcon fontSize="small" />
+        </NavBtn>
       </DateNav>
 
       <StFlexBox>

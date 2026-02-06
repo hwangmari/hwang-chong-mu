@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styled from "styled-components";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import {
   format,
   startOfWeek,
@@ -96,21 +97,21 @@ export default function WeightChart({ logs, currentDate, viewMode }: Props) {
           $isActive={visibleLines.morning}
           onClick={() => toggleVisibility("morning")}
         >
-          <span className="dot">●</span> 아침
+          <StDotIcon /> 아침
         </LegendItem>
         <LegendItem
           $color={COLORS.lunch}
           $isActive={visibleLines.lunch}
           onClick={() => toggleVisibility("lunch")}
         >
-          <span className="dot">●</span> 점심
+          <StDotIcon /> 점심
         </LegendItem>
         <LegendItem
           $color={COLORS.dinner}
           $isActive={visibleLines.dinner}
           onClick={() => toggleVisibility("dinner")}
         >
-          <span className="dot">●</span> 저녁
+          <StDotIcon /> 저녁
         </LegendItem>
       </Legend>
 
@@ -275,13 +276,16 @@ const LegendItem = styled.button<{ $color: string; $isActive: boolean }>`
   color: #334155;
   font-size: 0.75rem;
   font-weight: 600;
-  .dot {
+  svg {
     color: ${({ $color }) => $color};
-    font-size: 0.9rem;
   }
   &:hover {
     background: #f1f5f9;
   }
+`;
+
+const StDotIcon = styled(FiberManualRecordIcon)`
+  font-size: 0.7rem;
 `;
 const GraphArea = styled.div`
   position: relative;

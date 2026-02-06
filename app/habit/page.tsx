@@ -12,6 +12,7 @@ import {
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
 import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
 
@@ -111,7 +112,9 @@ export default function CreateHabitPage() {
             isLoading={loading}
             className="mt-4"
           >
-            습관 방 만들기 ➔
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+              습관 방 만들기 <ArrowForwardIcon fontSize="small" />
+            </span>
           </CreateButton>
         </StSection>
 

@@ -586,6 +586,12 @@ export const StCompletedSection = styled.div`
     &:hover {
       background: #e9ecef;
     }
+
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
   }
 
   .completed-list {

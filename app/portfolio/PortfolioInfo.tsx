@@ -4,6 +4,7 @@ import Link from "next/link";
 import styled, { keyframes } from "styled-components";
 import Introduction from "./Introduction";
 import ProfileCard from "./ProfileCard";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 export default function PortfolioInfo() {
   return (
@@ -21,13 +22,17 @@ export default function PortfolioInfo() {
               href="https://github.com/hwangmari/"
               target="_blank"
             >
-              GitHub ↗
+              <StLinkContent>
+                GitHub <OpenInNewIcon fontSize="inherit" />
+              </StLinkContent>
             </StExternalLink>
             <StExternalLink
               href="https://blog.naver.com/hwangmari"
               target="_blank"
             >
-              Blog ↗
+              <StLinkContent>
+                Blog <OpenInNewIcon fontSize="inherit" />
+              </StLinkContent>
             </StExternalLink>
             <StSeparator>|</StSeparator>
             <StExternalLink href="mailto:hwangmari@naver.com">
@@ -112,6 +117,12 @@ const StLinkGroup = styled.div`
   font-weight: 600;
   font-size: 0.95rem;
   color: ${({ theme }) => theme.colors.gray500};
+`;
+
+const StLinkContent = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 `;
 
 const StExternalLink = styled(Link)`

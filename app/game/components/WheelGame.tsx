@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
@@ -179,7 +180,9 @@ export default function WheelGame({
             height={320}
             $rotation={rotation}
           />
-          <StPointer>▼</StPointer>
+          <StPointer>
+            <ArrowDropDownIcon />
+          </StPointer>
         </StWheelWrapper>
 
         <StResultArea>
@@ -252,10 +255,12 @@ const StPointer = styled.div`
   top: -25px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 3rem;
   color: #333;
   z-index: 10;
   text-shadow: 0px 2px 5px rgba(255, 255, 255, 0.8);
+  svg {
+    font-size: 3rem;
+  }
 `;
 
 const StResultArea = styled.div`

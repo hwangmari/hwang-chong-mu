@@ -11,7 +11,9 @@ import {
 } from "@/components/styled/layout.styled";
 import PageIntro from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
+import FooterGuide from "@/components/common/FooterGuide";
 
 export default function CreateDietPage() {
   const router = useRouter();
@@ -46,7 +48,7 @@ export default function CreateDietPage() {
       <StWrapper>
         <PageIntro
           icon={<span>🥗</span>}
-          title="황총무의 건강한 다이어트"
+          title="건강한 다이어트"
           description={
             <>
               굶기만 하는 다이어트는 그만! 🙅‍♀️
@@ -79,7 +81,15 @@ export default function CreateDietPage() {
             isLoading={loading}
             className="mt-6"
           >
-            다이어트 시작하기 ➔
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+              }}
+            >
+              다이어트 시작하기 <ArrowForwardIcon fontSize="small" />
+            </span>
           </CreateButton>
         </StSection>
       </StWrapper>

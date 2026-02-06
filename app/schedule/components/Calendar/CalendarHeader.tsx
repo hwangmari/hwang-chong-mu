@@ -1,5 +1,7 @@
 import { format, addMonths } from "date-fns";
 import styled from "styled-components";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -20,7 +22,7 @@ export default function CalendarHeader({
     <StHeaderContainer>
       <div className="nav-group">
         <button className="nav-btn" onClick={onPrevMonth}>
-          ◀
+          <ChevronLeftIcon fontSize="small" />
         </button>
         <span className="month-title">
           {format(currentDate, "yyyy년 M월")}
@@ -28,7 +30,7 @@ export default function CalendarHeader({
             ` - ${format(addMonths(currentDate, 1), "M월")}`}
         </span>
         <button className="nav-btn" onClick={onNextMonth}>
-          ▶
+          <ChevronRightIcon fontSize="small" />
         </button>
       </div>
 
