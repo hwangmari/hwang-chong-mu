@@ -10,12 +10,11 @@ import {
 } from "@/components/styled/layout.styled";
 import Input from "@/components/common/Input";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-// ✨ 게임 컴포넌트 import (경로 확인 필요)
 import LadderGame from "../../components/LadderGame";
 import WheelGame from "../../components/WheelGame";
 import FooterGuide from "@/components/common/FooterGuide";
-// import ClickerGame from "../../components/ClickerGame";
-// import TelepathyGame from "../../components/TelepathyGame";
+/** import ClickerGame from "../../components/ClickerGame"; */
+/** import TelepathyGame from "../../components/TelepathyGame"; */
 
 const GAME_INFO: Record<string, string> = {
   ladder: "사다리 타기",
@@ -30,16 +29,14 @@ export default function QuickGamePage() {
   const gameId = params?.id as string;
   const gameName = GAME_INFO[gameId] || "게임";
 
-  // ✨ 상태: status("SETUP") 제거됨.
-  // 항상 게임 화면과 멤버 관리 화면이 공존합니다.
+  /** 항상 게임 화면과 멤버 관리 화면이 공존합니다. */
 
-  // 참가자 상태 관리
+  /** 참가자 상태 관리 */
   const [participants, setParticipants] = useState<
     { id: string; nickname: string; is_host: boolean }[]
   >([]);
   const [nameInput, setNameInput] = useState("");
 
-  // 참가자 추가
   const addParticipant = () => {
     if (!nameInput.trim()) return;
 
@@ -53,7 +50,7 @@ export default function QuickGamePage() {
     setNameInput("");
   };
 
-  // 엔터키 처리
+  /** 엔터키 처리 */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") {
@@ -62,7 +59,7 @@ export default function QuickGamePage() {
     }
   };
 
-  // 참가자 삭제
+  /** 참가자 삭제 */
   const removeParticipant = (id: string) => {
     setParticipants(participants.filter((p) => p.id !== id));
   };
@@ -155,7 +152,7 @@ export default function QuickGamePage() {
               description:
                 "오타가 났나요? 이름표 옆의 (×) 버튼을 누르면 즉시 목록에서 제외됩니다.",
             },
-            // 👇 사다리 게임일 때만 노출되는 항목
+            /** 👇 사다리 게임일 때만 노출되는 항목 */
             ...(gameId === "ladder"
               ? [
                   {
@@ -173,7 +170,6 @@ export default function QuickGamePage() {
   );
 }
 
-// --- ✨ 스타일 컴포넌트 ---
 
 const StHeader = styled.div`
   position: relative;
@@ -216,7 +212,6 @@ const StTitle = styled.h1`
   color: #333;
 `;
 
-// 새로 추가된 컨트롤 패널 (입력창 + 리스트)
 const StControlPanel = styled.div`
   background: #fff;
   padding: 20px;

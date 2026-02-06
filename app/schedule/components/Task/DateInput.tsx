@@ -21,7 +21,6 @@ export default function DateInput({
   const calendarRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
 
-  // 날짜 변경 시 텍스트 업데이트
   useEffect(() => {
     const startFmt = format(startDate, "yyyy.MM.dd");
     const endFmt = format(endDate, "yyyy.MM.dd");
@@ -32,7 +31,7 @@ export default function DateInput({
     }
   }, [startDate, endDate]);
 
-  // 외부 클릭 시 달력 닫기
+  /** 외부 클릭 시 달력 닫기 */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -46,7 +45,7 @@ export default function DateInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 텍스트 입력 핸들러 (8자리 or 16자리 숫자 입력 시 자동 변환)
+  /** 텍스트 입력 핸들러 (8자리 or 16자리 숫자 입력 시 자동 변환) */
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTextValue(val);
@@ -62,7 +61,6 @@ export default function DateInput({
     }
   };
 
-  // 달력 날짜 변경 핸들러
   const handleDatePick = (field: "start" | "end", val: string) => {
     if (!val) return;
     const newDate = new Date(val);
@@ -70,7 +68,7 @@ export default function DateInput({
     else onUpdate(startDate, newDate);
   };
 
-  // 읽기 전용 모드 디스플레이 텍스트
+  /** 읽기 전용 모드 디스플레이 텍스트 */
   const getDisplayDateText = () => {
     const sYear = startDate.getFullYear();
     const eYear = endDate.getFullYear();

@@ -9,7 +9,6 @@ import TodoList from "./TodoList";
 import HabitRanking from "./HabitRanking";
 import CommentSection from "./CommentSection"; // (이전 단계에서 추가한 댓글 컴포넌트)
 
-// 아이콘 추가
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
@@ -162,9 +161,8 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
   );
 }
 
-// ✨ 스타일 정의
 
-// 토글 버튼 영역
+/** 토글 버튼 영역 */
 const StToggleHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -195,7 +193,6 @@ const StToggleIconWrapper = styled.div`
   align-items: center;
 `;
 
-// 달력 전체 영역 (애니메이션을 원하면 max-height transition 추가 가능)
 const StCalendarArea = styled.div`
   margin-bottom: 1.5rem;
   animation: slideDown 0.3s ease-out;
@@ -212,7 +209,6 @@ const StCalendarArea = styled.div`
   }
 `;
 
-// ... (기존 스타일 유지)
 const StHeaderWrapper = styled.div`
   display: flex;
   justify-content: space-between;

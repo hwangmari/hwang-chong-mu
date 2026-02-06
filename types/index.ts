@@ -25,7 +25,7 @@ export interface HabitLog {
 
 export type ExpenseType = "COMMON" | "PERSONAL";
 
-// 지출 내역 인터페이스
+/** 지출 내역 인터페이스 */
 export interface Expense {
   id: number;
   payer: string;

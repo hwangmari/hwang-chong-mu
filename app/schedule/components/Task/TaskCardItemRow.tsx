@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { TaskPhase } from "@/types/work-schedule";
 
-// 분리된 컴포넌트들
+/** 분리된 컴포넌트들 */
 import DateInput from "./DateInput";
 import MemoArea from "./MemoArea";
 import TaskHeader from "./TaskHeader";
@@ -77,7 +77,6 @@ export default function TaskCardItemRow({
   );
 }
 
-// --- Styles ---
 
 const StTaskItem = styled.div`
   display: flex;

@@ -69,7 +69,6 @@ export const StCard = styled.div<{
   background-color: ${(props) => (props.$isCompleted ? "#f9fafb" : "#ffffff")};
   transition: all 0.3s ease; // 정렬 이동 시 부드러운 효과
 
-  // 완료 시 제목 색상 변경
   .service-title-text {
     color: ${(props) => (props.$isCompleted ? "#9ca3af" : "inherit")};
   }

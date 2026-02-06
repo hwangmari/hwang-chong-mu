@@ -27,13 +27,11 @@ export default function LeftCalendar({
 }: Props) {
   const [viewMode, setViewMode] = useState<"single" | "double">("single");
 
-  // ✨ [추가] 눈꺼짐(isHidden) 체크된 서비스는 캘린더에서 제외하기
   const visibleSchedules = schedules.filter((s) => !s.isHidden);
 
   const handlePrevMonth = () => onMonthChange(subMonths(currentDate, 1));
   const handleNextMonth = () => onMonthChange(addMonths(currentDate, 1));
 
-  // --- 드래그 핸들러 ---
   const handleDragStart = (
     e: React.DragEvent,
     serviceId: string,
@@ -116,7 +114,6 @@ export default function LeftCalendar({
   );
 }
 
-// ... (스타일 코드는 기존과 동일)
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;

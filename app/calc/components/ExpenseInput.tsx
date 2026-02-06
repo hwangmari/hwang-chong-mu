@@ -56,7 +56,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
           <SectionTitle>📝 지출 내역 입력</SectionTitle>
         </StSectionTitle>
 
-        {/* 1. 결제자 선택 칩 */}
         <StPayerScroll>
           {members.map((m) => (
             <StPayerChip
@@ -69,7 +68,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
           ))}
         </StPayerScroll>
 
-        {/* ✨ 2. 선택된 이름 강조 가이드 */}
         <StSelectedGuide>
           {payer ? (
             <p>
@@ -80,7 +78,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
           )}
         </StSelectedGuide>
 
-        {/* 3. 입력 필드 그룹 */}
         <StInputRow>
           <StInput
             placeholder="사용 내역"
@@ -123,7 +120,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   );
 }
 
-// 스타일 가이드 추가
 const StInputWrapper = styled.div`
   margin-bottom: 0.75rem;
 `;

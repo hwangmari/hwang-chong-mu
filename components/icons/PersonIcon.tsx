@@ -1,4 +1,3 @@
-// components/icons/PersonIcon.tsx
 export default function PersonIcon({ className = "w-6 h-6 text-gray-500" }) {
   return (
     <svg

@@ -29,7 +29,7 @@ export default function MonthGrid({
   onDragOver,
   onDrop,
 }: MonthGridProps) {
-  // 날짜 계산
+  /** 날짜 계산 */
   const monthStart = startOfMonth(targetDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart);
@@ -43,7 +43,7 @@ export default function MonthGrid({
   const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
   const cols = showWeekend ? 7 : 5;
 
-  // 커스텀 훅으로 로직 위임
+  /** 커스텀 훅으로 로직 위임 */
   const { slotMap, maxSlotsPerDay, allTasks } = useCalendarLayout(
     schedules,
     daysToShow,
@@ -80,7 +80,6 @@ export default function MonthGrid({
   );
 }
 
-// --- Layout Styles (그리드 틀만 남김) ---
 const StGridContainer = styled.div`
   display: flex;
   flex-direction: column;

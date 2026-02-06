@@ -4,7 +4,7 @@ import RoomForm from "@/app/meeting/create-room/RoomForm";
 import useCreateRoom from "@/hooks/useCreateRoom";
 import FooterGuide from "@/components/common/FooterGuide"; // ✅ 공통 컴포넌트
 
-// 아이콘 불러오기
+/** 아이콘 불러오기 */
 import {
   StWrapper,
   StContainer,

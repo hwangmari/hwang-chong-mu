@@ -8,7 +8,7 @@ import {
 } from "date-fns";
 import { ServiceSchedule } from "@/types/work-schedule";
 
-// 훅에서 사용할 평탄화된 태스크 타입
+/** 훅에서 사용할 평탄화된 태스크 타입 */
 export interface CalendarTask {
   id: string;
   title: string;
@@ -28,7 +28,7 @@ export function useCalendarLayout(
     const map = new Map<string, number>();
     const maxSlots = new Map<string, number>();
 
-    // 1. 모든 스케줄을 하나의 배열로 평탄화
+    /** 1. 모든 스케줄을 하나의 배열로 평탄화 */
     const allTasks: CalendarTask[] = schedules.flatMap((svc) =>
       svc.tasks.map((t) => ({
         id: t.id,
@@ -42,7 +42,7 @@ export function useCalendarLayout(
       })),
     );
 
-    // 2. 주 단위(Row)로 끊어서 슬롯 계산
+    /** 2. 주 단위(Row)로 끊어서 슬롯 계산 */
     for (let i = 0; i < daysToShow.length; i += cols) {
       const rowDays = daysToShow.slice(i, i + cols);
       if (rowDays.length === 0) continue;
@@ -50,7 +50,6 @@ export function useCalendarLayout(
       const rowStart = startOfDay(rowDays[0]);
       const rowEnd = endOfDay(rowDays[rowDays.length - 1]);
 
-      // ✨ 수정: 날짜가 겹치면서 "완료되지 않은" 태스크만 필터링
       const tasksInRow = allTasks.filter((t) => {
         const isOverlapping = areIntervalsOverlapping(
           { start: startOfDay(t.startDate), end: endOfDay(t.endDate) },
@@ -59,13 +58,11 @@ export function useCalendarLayout(
         return isOverlapping && !t.isCompleted; // 완료된 태스크는 레이아웃 계산에서 제외
       });
 
-      // 3. 정렬 로직 (기존과 동일)
       tasksInRow.sort((a, b) => {
         if (a.svcId !== b.svcId) return a.svcId.localeCompare(b.svcId);
         return a.startDate.getTime() - b.startDate.getTime();
       });
 
-      // 4. 슬롯 할당 알고리즘 (기존과 동일)
       const slots: boolean[][] = [];
       tasksInRow.forEach((task) => {
         const activeIndices = rowDays

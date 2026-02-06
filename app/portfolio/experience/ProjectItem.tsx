@@ -114,7 +114,6 @@ export default function ProjectItem({
   );
 }
 
-// ✨ 스타일 정의
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -227,7 +226,6 @@ const StTechTag = styled.span<{ $customColor?: string }>`
   border-radius: 0.5rem;
 `;
 
-// === Image Section ===
 
 export const StToggleButton = styled.button`
   display: flex;

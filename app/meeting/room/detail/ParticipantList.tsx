@@ -21,7 +21,7 @@ export default function ParticipantList({
   setHoveredUserId,
 }: Props) {
   const handleInteraction = (id: string | number) => {
-    // 이미 선택된 상태에서 클릭하면 해제 (모바일 UX)
+    /** 이미 선택된 상태에서 클릭하면 해제 (모바일 UX) */
     if (hoveredUserId === id) {
       setHoveredUserId(null);
     } else {
@@ -44,7 +44,6 @@ export default function ParticipantList({
             $isAbsent={user.isAbsent}
             $isActive={hoveredUserId === user.id} // ✨ 활성 상태 전달
             className="group"
-            // ✨ 이벤트 바인딩
             onClick={() => handleInteraction(user.id)}
             onMouseEnter={() => setHoveredUserId(user.id)}
             onMouseLeave={() => setHoveredUserId(null)}

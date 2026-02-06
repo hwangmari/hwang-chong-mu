@@ -30,7 +30,7 @@ export default function CalendarDayCell({
   const dateKey = format(day, "yyyy-MM-dd");
   const totalSlots = (maxSlots.get(dateKey) ?? -1) + 1;
 
-  // 공휴일 및 일요일 체크
+  /** 공휴일 및 일요일 체크 */
   const holidayName = HOLIDAYS[dateKey];
   const isSunday = day.getDay() === 0;
   const isRedDay = isSunday || !!holidayName;
@@ -38,7 +38,7 @@ export default function CalendarDayCell({
 
   const renderItems = [];
   for (let i = 0; i < totalSlots; i++) {
-    // 해당 날짜, 해당 슬롯(i)에 있는 태스크 찾기
+    /** 해당 날짜, 해당 슬롯(i)에 있는 태스크 찾기 */
     const taskInSlot = allTasks.find(
       (t) => slotMap.get(`${dateKey}_${t.id}`) === i,
     );
@@ -54,7 +54,7 @@ export default function CalendarDayCell({
         />,
       );
     } else {
-      // 빈 공간 (Spacer)
+      /** 빈 공간 (Spacer) */
       renderItems.push(<div key={`spacer-${i}`} style={{ height: "26px" }} />);
     }
   }
@@ -77,7 +77,6 @@ export default function CalendarDayCell({
   );
 }
 
-// --- Styles ---
 const StDateCell = styled.div<{ $isRedDay?: boolean }>`
   min-height: 120px;
   padding: 0;

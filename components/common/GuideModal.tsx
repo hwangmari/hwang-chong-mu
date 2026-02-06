@@ -83,7 +83,6 @@ export const GuideModal = ({
   );
 };
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -155,7 +154,6 @@ const StTitle = styled.h3`
   margin-bottom: 0.5rem;
 `;
 
-// === Scroll Content ===
 
 const StScrollContent = styled.div`
   flex: 1;
@@ -231,7 +229,6 @@ const StSmallBadge = styled.span`
   font-size: 0.625rem; /* 10px */
 `;
 
-// === Q&A Section ===
 
 const StQnASection = styled.div`
   border-top: 1px solid ${({ theme }) => theme.colors.gray200};
@@ -284,7 +281,6 @@ const StQnACard = styled.div`
   }
 `;
 
-// === Button ===
 
 const StConfirmButton = styled.button`
   width: 100%;

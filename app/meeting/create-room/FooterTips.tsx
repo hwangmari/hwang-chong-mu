@@ -64,14 +64,12 @@ export default function FooterTips() {
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StFooterContainer = styled.div`
   margin-top: 2rem; /* mt-8 */
   width: 100%;
 `;
 
-// === 브랜드 스토리 (Story) ===
 
 const StStoryCard = styled.div`
   background-color: ${({ theme }) => theme.colors.gray100}; /* slate-100 대응 */
@@ -118,7 +116,6 @@ const StRedHighlight = styled.span`
   text-decoration: underline;
 `;
 
-// === 꿀팁 (Tips) ===
 
 const StTipsCard = styled.div`
   background-color: #fefce8; /* yellow-50 (테마에 없으면 hex 사용) */

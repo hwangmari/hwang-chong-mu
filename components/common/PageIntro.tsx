@@ -27,7 +27,6 @@ export default function PageIntro({
   );
 }
 
-// ✨ 스타일 정의
 const StHeaderContainer = styled.div`
   text-align: center;
   margin-bottom: 2rem;
@@ -56,7 +55,6 @@ const StDescription = styled.div`
   white-space: pre-wrap; /* 줄바꿈(\n)도 자연스럽게 먹히도록 설정 */
 `;
 
-// 🖍️ 강조 텍스트용 컴포넌트 (부모에서 import해서 사용 가능)
 export const StHighlight = styled.strong<{ $color?: "red" | "blue" }>`
   display: inline-block;
   font-weight: 700;

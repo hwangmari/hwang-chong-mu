@@ -52,7 +52,6 @@ export default function CalendarHeader({
   );
 }
 
-// --- 스타일 정의 (헤더 관련 스타일 이동) ---
 
 const StHeaderContainer = styled.div`
   display: flex;

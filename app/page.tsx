@@ -102,7 +102,6 @@ export default function Home() {
   );
 }
 
-// ✨ 스타일 정의
 
 const StMainContainer = styled.main`
   background-color: ${({ theme }) => theme.colors.gray50};
@@ -157,7 +156,6 @@ const StSubDescription = styled.p`
   }
 `;
 
-// ✨ [수정] 2열 그리드 레이아웃 적용
 const StGridContainer = styled.div`
   width: 100%;
   max-width: 600px; /* 카드가 2열이라 너비를 좀 더 넓힘 */
@@ -233,7 +231,6 @@ const StCardDesc = styled.p`
   text-overflow: ellipsis; /* 내용 길면 ... 처리 */
 `;
 
-// ✨ [추가] 포트폴리오 버튼을 위한 전체 너비 링크 래퍼
 const StFullWidthLink = styled(Link)`
   grid-column: 1 / -1; /* 그리드 전체 열 차지 */
   text-decoration: none;

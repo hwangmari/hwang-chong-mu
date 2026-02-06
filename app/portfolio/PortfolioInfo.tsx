@@ -50,7 +50,6 @@ export default function PortfolioInfo() {
   );
 }
 
-// ✨ 스타일 정의
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }

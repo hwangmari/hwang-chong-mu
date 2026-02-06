@@ -1,6 +1,5 @@
 import React from "react";
 
-// ✅ 테마 타입 정의
 type ThemeType = "blue" | "orange" | "lab";
 
 interface OgTemplateProps {
@@ -10,7 +9,6 @@ interface OgTemplateProps {
   theme: ThemeType;
 }
 
-// ✅ 컬러 팔레트 타입 정의
 interface ColorPalette {
   bg: string;
   textMain: string;
@@ -25,7 +23,7 @@ export const OgTemplate = ({
   emoji,
   theme,
 }: OgTemplateProps) => {
-  // 🎨 테마별 색상 정의
+  /** 🎨 테마별 색상 정의 */
   const themeColors: Record<ThemeType, ColorPalette> = {
     blue: {
       bg: "#EFF6FF",
@@ -41,7 +39,7 @@ export const OgTemplate = ({
       badgeBg: "#FFEDD5",
       badgeText: "#C2410C",
     },
-    // 🐰 메인 화면용 'Lab' 테마
+    /** 🐰 메인 화면용 'Lab' 테마 */
     lab: {
       bg: "#F9FAFB",
       textMain: "#111827",
@@ -120,7 +118,7 @@ export const OgTemplate = ({
             display: "flex", // 뱃지 내부 정렬
             alignItems: "center",
             justifyContent: "center",
-            // lab 테마일 때만 그림자 효과
+            /** lab 테마일 때만 그림자 효과 */
             boxShadow:
               theme === "lab" ? "0 4px 6px -1px rgba(0, 0, 0, 0.05)" : "none",
           }}

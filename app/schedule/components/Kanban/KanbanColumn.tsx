@@ -56,7 +56,6 @@ export default function KanbanColumn({
   );
 }
 
-// --- Styles ---
 const StColumn = styled.div`
   background-color: #f3f4f6;
   border-radius: 12px;

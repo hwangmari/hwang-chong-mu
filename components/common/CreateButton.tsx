@@ -25,7 +25,6 @@ export default function CreateButton({
   );
 }
 
-// ✨ 스타일 정의
 const StButton = styled.button<{ $bgColor?: string }>`
   width: 100%;
   display: flex;

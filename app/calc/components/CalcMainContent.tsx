@@ -2,7 +2,6 @@
 "use client";
 import { ExpenseType } from "@/types";
 
-// Components
 import MemberManager from "./MemberManager";
 import ExpenseInput from "./ExpenseInput";
 import ExpenseList from "./ExpenseList";
@@ -29,7 +28,7 @@ interface CalcMainContentProps {
     remainderReceiver: string | null;
   };
 
-  // Handlers
+  /** Handlers */
   onAddMember: (name: string) => void;
   onDeleteMember: (name: string) => void;
   onAddExpense: (
@@ -52,7 +51,6 @@ export default function CalcMainContent({
   onDeleteExpense,
   onUpdateExpense,
 }: CalcMainContentProps) {
-  // settlementResult에서 필요한 값들을 미리 뽑아둡니다.
   const {
     totalCommonSpend,
     perPersonShare,
@@ -77,7 +75,6 @@ export default function CalcMainContent({
         onUpdate={onUpdateExpense}
       />
 
-      {/* 전체 요약 + 상세 리포트 (합쳐진 버전) */}
       <SettlementReport
         members={members}
         expenses={expenses}
@@ -88,10 +85,8 @@ export default function CalcMainContent({
         remainderReceiver={remainderReceiver}
       />
 
-      {/* 송금 목록 (직관적으로 누가 누구에게 줄지 먼저 보여줌) */}
       <SettlementList settlements={settlements} />
 
-      {/* 분리된 카톡 공유 버튼 */}
       <ShareButton
         totalAmount={totalCommonSpend}
         perPersonShare={perPersonShare}

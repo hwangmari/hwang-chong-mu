@@ -1,4 +1,3 @@
-// components/habit/TodoList.tsx
 import { useState } from "react";
 import styled from "styled-components";
 import { format } from "date-fns";
@@ -10,7 +9,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import AddIcon from "@mui/icons-material/Add";
 
-// 🎨 농도 조절 헬퍼
+/** 🎨 농도 조절 헬퍼 */
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -71,9 +70,7 @@ export default function TodoList({
         {items.map((item) => (
           <StTodoItem
             key={item.id}
-            // ❌ 기존: onClick={() => onToggle(item.id)} 삭제! (전체 클릭 시 토글 방지)
 
-            // ✅ 달력 하이라이트 기능은 유지 (PC: 호버, 모바일: 텍스트 터치 시 동작)
             onMouseEnter={() => onHoverItem(item.id)}
             onMouseLeave={() => onHoverItem(null)}
             $done={completedIds.includes(item.id)}
@@ -134,7 +131,6 @@ export default function TodoList({
   );
 }
 
-// ✨ 스타일 정의
 const StDailySection = styled.div`
   border-top: 1px solid #f3f4f6;
   padding-top: 1.5rem;
@@ -253,7 +249,7 @@ const StRateText = styled.span<{ $color: string }>`
   font-weight: 800;
 `;
 
-// 🌑 게이지 배경 (회색 트랙)
+/** 🌑 게이지 배경 (회색 트랙) */
 const StProgressBarBg = styled.div`
   width: 100%;
   height: 6px;
@@ -263,7 +259,7 @@ const StProgressBarBg = styled.div`
   overflow: hidden; /* 넘치는 부분 자르기 */
 `;
 
-// 🌕 게이지 채움 (실제 퍼센트)
+/** 🌕 게이지 채움 (실제 퍼센트) */
 const StProgressBarFill = styled.div<{ $width: number; $color: string }>`
   height: 100%;
   width: ${({ $width }) => $width}%;

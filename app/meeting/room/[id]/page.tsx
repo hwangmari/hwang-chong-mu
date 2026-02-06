@@ -29,7 +29,6 @@ export default function RoomDetail() {
   const roomId = params.id as string;
   const [showGuide, setShowGuide] = useState(false);
 
-  // ✨ 수정됨: Hook은 반드시 조건부 return 이전에 선언되어야 합니다.
   const [hoveredUserId, setHoveredUserId] = useState<string | number | null>(
     null,
   );
@@ -61,7 +60,6 @@ export default function RoomDetail() {
     closeModal,
   } = useRoom(roomId);
 
-  // ⚠️ Early Return (로딩 및 에러 처리)은 Hook 선언 이후에 위치해야 합니다.
   if (loading) return <StLoadingContainer>로딩중...🐰</StLoadingContainer>;
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
@@ -192,7 +190,6 @@ export default function RoomDetail() {
   );
 }
 
-// ✨ 페이지 전용 스타일
 const StLoadingContainer = styled.div`
   min-height: 100vh;
   display: flex;

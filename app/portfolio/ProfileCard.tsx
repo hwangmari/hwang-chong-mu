@@ -28,7 +28,6 @@ export default function ProfileCard() {
   );
 }
 
-// 🔹 개별 정보 아이템 (내부 컴포넌트)
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <StInfoItem>
@@ -42,7 +41,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ✨ 스타일 정의
 
 const StCardContainer = styled.div`
   width: 100%;

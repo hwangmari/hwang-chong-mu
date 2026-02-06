@@ -9,10 +9,9 @@ type Props = {
 };
 
 const AddToCalendar = ({ title, finalDate }: Props) => {
-  // 날짜 문자열에서 하이픈 제거 (YYYYMMDD)
   const cleanDate = finalDate.replace(/-/g, "");
 
-  // 1. 구글 캘린더 링크 생성
+  /** 1. 구글 캘린더 링크 생성 */
   const handleGoogleCalendar = () => {
     const dateObj = new Date(finalDate);
     dateObj.setDate(dateObj.getDate() + 1); // 하루 더하기
@@ -27,7 +26,7 @@ const AddToCalendar = ({ title, finalDate }: Props) => {
     window.open(url, "_blank");
   };
 
-  // 2. .ics 파일 생성 (카카오/애플 호환)
+  /** 2. .ics 파일 생성 (카카오/애플 호환) */
   const handleICalendar = () => {
     const dateObj = new Date(finalDate);
     dateObj.setDate(dateObj.getDate() + 1);
@@ -73,7 +72,6 @@ END:VCALENDAR`.trim();
 
 export default AddToCalendar;
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StContainer = styled.div`
   display: flex;

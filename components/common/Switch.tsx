@@ -30,7 +30,6 @@ export default function Switch({
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StSwitchButton = styled.button<{ $checked: boolean }>`
   position: relative;

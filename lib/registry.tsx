@@ -15,7 +15,6 @@ export default function StyledComponentsRegistry({
 }: {
   children: React.ReactNode;
 }) {
-  // 스타일 시트 저장소 생성
   const [styledComponentsStyleSheet] = useState(() => new ServerStyleSheet());
 
   useServerInsertedHTML(() => {
@@ -25,7 +24,7 @@ export default function StyledComponentsRegistry({
   });
 
   if (typeof window !== "undefined") {
-    // 클라이언트 환경에서는 바로 렌더링
+    /** 클라이언트 환경에서는 바로 렌더링 */
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle />
@@ -34,7 +33,7 @@ export default function StyledComponentsRegistry({
     );
   }
 
-  // 서버 환경에서는 스타일 매니저로 감싸기
+  /** 서버 환경에서는 스타일 매니저로 감싸기 */
   return (
     <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>
       <ThemeProvider theme={theme}>

@@ -1,18 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ExpenseType } from "@/types";
 
-// Components
 import FooterGuide from "@/components/common/FooterGuide";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
-// Hooks
 import { useCalculator } from "@/hooks/useCalculator";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CalcMainContent from "../components/CalcMainContent";
 
-// Types
 interface Expense {
   id: number;
   payer: string;
@@ -38,16 +36,12 @@ export default function CalcDetailParamsPage() {
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   const updateAndSave = (newMembers: string[], newExpenses: Expense[]) => {
-    // 화면(State) 업데이트
     setMembers(newMembers);
     setExpenses(newExpenses);
 
-    // ★ 중요: 기존 saveRoomData 대신 updateRoomData 사용
-    // DB 업데이트 (자동 저장)
     if (roomId) {
       updateRoomData(roomId, newMembers, newExpenses);
     }
@@ -87,7 +81,7 @@ export default function CalcDetailParamsPage() {
     updateAndSave(members, newExpenses);
   };
 
-  // 정산 계산
+  /** 정산 계산 */
   const settlementResult = useCalculator(members, expenses);
 
   return (

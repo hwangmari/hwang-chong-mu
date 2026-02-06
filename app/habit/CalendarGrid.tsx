@@ -68,11 +68,11 @@ export default function CalendarGrid({
     : weekDays.filter((_, i) => i !== 0 && i !== 6);
   const today = new Date();
 
-  // 배경색 및 텍스트 색상 결정 로직
+  /** 배경색 및 텍스트 색상 결정 로직 */
   const getCellStyles = (
     dateStr: string
   ): { bg: string; isDarkBg: boolean; isHoverTarget?: boolean } => {
-    // [1] 일단 원래의 농도(Heatmap) 색상을 먼저 계산해둡니다.
+    /** [1] 일단 원래의 농도(Heatmap) 색상을 먼저 계산해둡니다. */
     const log = monthlyLogs?.find((l) => l.date === dateStr);
     const count = log ? log.count : 0;
     const total = totalItemsCount || 1;
@@ -92,20 +92,18 @@ export default function CalendarGrid({
       }
     }
 
-    // [2] 호버 상태 체크
+    /** [2] 호버 상태 체크 */
     if (hoveredItemId !== null) {
       const isDone = rawLogs?.some(
         (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
       );
 
       if (isDone) {
-        // ✅ 수행한 날: 원래 농도 색상 유지 + 강조 효과(isHoverTarget: true)
         return {
           ...originalStyle,
           isHoverTarget: true,
         };
       } else {
-        // ✂️ 수행 안 한 날: 색상을 날려버림 (기본 회색으로 리셋)
         return {
           bg: "#f3f4f6",
           isDarkBg: false,
@@ -114,7 +112,7 @@ export default function CalendarGrid({
       }
     }
 
-    // [3] 호버 안 했을 때는 원래 계산한 스타일 반환
+    /** [3] 호버 안 했을 때는 원래 계산한 스타일 반환 */
     return originalStyle;
   };
 
@@ -160,7 +158,6 @@ export default function CalendarGrid({
   );
 }
 
-// ✨ 스타일 정의
 const StCalendarGrid = styled.div<{ $columns: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $columns }) => $columns}, 1fr);
@@ -177,7 +174,6 @@ const StWeekDay = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-// 👈 4. $isHoverTarget 타입 추가 (옵셔널 ? 로 처리)
 const StDateCell = styled.div<{
   $bgColor: string;
   $opacity: number;

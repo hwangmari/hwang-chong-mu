@@ -24,7 +24,6 @@ export default function RoomHeader({ title }: RoomHeaderProps) {
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StHeaderContainer = styled.header`
   width: 100%;

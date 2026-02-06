@@ -92,7 +92,6 @@ export default function ProjectCard({
   );
 }
 
-// ✨ 스타일 정의
 const StCardContainer = styled.article`
   background-color: ${({ theme }) => theme.colors.white};
   padding: 2.5rem;

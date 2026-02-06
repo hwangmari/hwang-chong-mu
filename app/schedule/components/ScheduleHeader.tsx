@@ -60,7 +60,6 @@ export default function ScheduleHeader({
   );
 }
 
-// --- 스타일 정의 ---
 
 const StTopBar = styled.header`
   height: 60px;
@@ -98,7 +97,6 @@ const StControls = styled.div`
   gap: 1rem;
 `;
 
-// ✨ 칸반 버튼 스타일
 const StKanbanLink = styled.div`
   display: inline-flex;
   align-items: center;

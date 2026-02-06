@@ -11,7 +11,6 @@ import {
   StImageFrame,
 } from "./ProjectImageViewer.styled";
 
-// ✨ 타입을 export 하여 부모 페이지에서도 가져다 쓸 수 있게 함
 export interface ProjectImage {
   src: string;
   alt?: string;
@@ -33,7 +32,7 @@ export default function ProjectImageViewer({
 }: ProjectImageViewerProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  // 이미지가 없으면 아예 렌더링 안 함
+  /** 이미지가 없으면 아예 렌더링 안 함 */
   if (!images || images.length === 0) return null;
 
   return (

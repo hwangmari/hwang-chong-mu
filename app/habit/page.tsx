@@ -16,7 +16,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
 import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
 
-// 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러
+/** 🎨 중복 없이 딱 떨어지는 8가지 핵심 컬러 */
 const COLORS = [
   { name: "Slate", value: "#5e606d", label: "슬레이트" },
   { name: "Red", value: "#ed3654", label: "로즈" },
@@ -128,7 +128,6 @@ export default function CreateHabitPage() {
   );
 }
 
-// ✨ 스타일 정의
 
 const IconWrapper = styled.div`
   cursor: pointer;

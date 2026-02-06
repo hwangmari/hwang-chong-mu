@@ -31,7 +31,6 @@ export default function SettlementReport({
         shadow="0 2px 4px rgba(0, 0, 0, 0.02)"
         overflowHidden
       >
-        {/* 1. 상단 요약 영역 (기존 SettlementSummary 역할) */}
         <StSummarySection>
           <div className="row">
             <span className="label">총 지출 금액</span>
@@ -46,7 +45,6 @@ export default function SettlementReport({
           </div>
         </StSummarySection>
 
-        {/* 2. 상세 내역 아코디언 영역 */}
         <StDetailsSection>
           <details>
             <summary>
@@ -89,7 +87,6 @@ export default function SettlementReport({
   );
 }
 
-// ✨ 스타일 정의
 const StTotalCard = styled.div`
   margin-bottom: 1.5rem;
 `;

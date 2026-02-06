@@ -132,7 +132,7 @@ export const DIRECT_HISTORY_DATA: ProjectItemList[] = [
 
 /** 29CM PT Campaign History */
 export const CAMPAIGN_LIST: ProjectItemList[] = [
-  // 2020
+  /** 2020 */
   {
     id: "2020-03",
     date: "2020.02.28",
@@ -152,7 +152,7 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/gillettelabs/",
   },
 
-  // 2019
+  /** 2019 */
   {
     id: "2019-10",
     date: "2019.09.23",
@@ -214,7 +214,7 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/eastpak19ss/",
   },
 
-  // 2018
+  /** 2018 */
   {
     id: "2018-16",
     date: "2018.12.06",
@@ -312,7 +312,7 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/freitag/episode1.html",
   },
 
-  // 2017
+  /** 2017 */
   {
     id: "2017-13",
     date: "2017.12.26",

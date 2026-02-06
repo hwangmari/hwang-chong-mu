@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { fetchBoards, updateBoard, deleteBoard } from "@/services/schedule";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
 import ServiceCard from "./components/ServiceCard/ServiceCard";
-// ✨ 분리된 컴포넌트 import
 
 type ScheduleBoard = {
   id: string;
@@ -21,7 +20,7 @@ export default function ScheduleListPage() {
   const [boards, setBoards] = useState<ScheduleBoard[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 현재 편집 중인 카드 ID (하나만 편집 가능하도록)
+  /** 현재 편집 중인 카드 ID (하나만 편집 가능하도록) */
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,7 +38,6 @@ export default function ScheduleListPage() {
     }
   };
 
-  // --- 핸들러 (상태 관리 & API 호출) ---
 
   const handleUpdate = async (
     boardId: string,
@@ -120,7 +118,6 @@ export default function ScheduleListPage() {
   );
 }
 
-// --- 스타일 (StServiceCard 등은 삭제됨) ---
 
 const StContainer = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};

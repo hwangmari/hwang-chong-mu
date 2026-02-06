@@ -15,10 +15,10 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
   const handleShare = async () => {
     const url = window.location.href;
 
-    // 1. 모바일 디바이스 체크 (User Agent)
+    /** 1. 모바일 디바이스 체크 (User Agent) */
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // 2. 모바일 + 공유 기능 지원 시 -> 네이티브 공유
+    /** 2. 모바일 + 공유 기능 지원 시 -> 네이티브 공유 */
     if (isMobile && navigator.share) {
       try {
         await navigator.share({
@@ -30,7 +30,7 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
         console.log("공유 취소됨");
       }
     } else {
-      // PC: URL 복사
+      /** PC: URL 복사 */
       try {
         await navigator.clipboard.writeText(url);
         setIsCopied(true);
@@ -59,7 +59,6 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
 
 export default ShareButton;
 
-// ✨ 스타일 정의 (St 프리픽스 적용)
 
 const StContainer = styled.div`
   position: relative; /* 툴팁 위치 기준점 */

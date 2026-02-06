@@ -12,7 +12,6 @@ export default function HabitRoomPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  // ✅ color 타입 추가
   const [goal, setGoal] = useState<{
     title: string;
     emoji: string;
@@ -21,7 +20,6 @@ export default function HabitRoomPage({
 
   useEffect(() => {
     const fetchGoal = async () => {
-      // ✅ color 컬럼도 같이 가져오기
       const { data } = await supabase
         .from("goals")
         .select("*")
@@ -51,7 +49,7 @@ export default function HabitRoomPage({
   );
 }
 
-// ... (나머지 스타일들)
+/** ... (나머지 스타일들) */
 const Header = styled.div`
   text-align: center;
   margin-bottom: 2rem;

@@ -8,7 +8,6 @@ import * as API from "@/services/schedule";
 import { ServiceSchedule } from "@/types/work-schedule";
 import KanbanColumn from "../../components/Kanban/KanbanColumn";
 
-// ✨ 분리된 컴포넌트들
 
 export default function KanbanPage() {
   const router = useRouter();
@@ -18,7 +17,6 @@ export default function KanbanPage() {
   const [schedules, setSchedules] = useState<ServiceSchedule[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 프로젝트 추가 관련 상태
   const [isAdding, setIsAdding] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
 
@@ -96,7 +94,6 @@ export default function KanbanPage() {
           boardId={boardId}
           refresh={initData}
           color="#9ca3af"
-          // ✨ 우측 상단 + 버튼
           actionButton={
             <StAddButton
               onClick={() => setIsAdding(true)}
@@ -148,7 +145,6 @@ export default function KanbanPage() {
   );
 }
 
-// --- Page Styles ---
 
 const StKanbanWrapper = styled.div`
   position: fixed;

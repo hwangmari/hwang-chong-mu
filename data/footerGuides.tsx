@@ -1,13 +1,12 @@
 import { ReactNode } from "react";
 
-// 팁 아이템 타입 (FooterGuide.tsx와 동일한 구조)
+/** 팁 아이템 타입 (FooterGuide.tsx와 동일한 구조) */
 interface TipItem {
   icon: ReactNode;
   title: string;
   description: ReactNode;
 }
 
-// 가이드 데이터 전체 타입
 interface GuideData {
   title: string;
   story?: {
@@ -21,7 +20,6 @@ interface GuideData {
   tips: TipItem[];
 }
 
-// 🎮 게임방 가이드 데이터
 export const GAME_GUIDE_DATA: GuideData = {
   title: "🎲 상황별 게임 즐기기 꿀팁",
   story: {
@@ -34,21 +32,18 @@ export const GAME_GUIDE_DATA: GuideData = {
     },
   },
   tips: [
-    // ✨ [수정됨] 빠른 시작: 한 기기에서 멤버 추가 (로컬 모드)
     {
       icon: "🚀",
       title: "초간편 '빠른 시작'",
       description:
         "방 만들기도 귀찮을 때! 멤버 이름만 쏙쏙 넣고 바로 돌려보세요. 사다리나 룰렛처럼 한 화면에서 결과를 볼 때 딱이에요.",
     },
-    // ✨ [수정됨] 방 만들기: 멀티 플레이 강조
     {
       icon: "🏰",
       title: "다함께 '방 만들기'",
       description:
         "각자 참여해야 제맛! 텔레파시나 광클 대전처럼 여럿이 동시에 대결할 땐 방을 만들어 초대하세요.",
     },
-    // --- 게임 소개 ---
     {
       icon: "🪜",
       title: "운명의 '사다리 타기'",
@@ -76,7 +71,6 @@ export const GAME_GUIDE_DATA: GuideData = {
   ],
 };
 
-// 💸 2. 정산방(계산기) 가이드 데이터
 export const CALC_GUIDE_DATA: GuideData = {
   title: "💡 정산 꿀팁, 이렇게 써보세요!",
   tips: [
@@ -107,7 +101,6 @@ export const CALC_GUIDE_DATA: GuideData = {
   ],
 };
 
-// 🗓️ 3. 약속(모임) 잡기 가이드 데이터
 export const MEETING_GUIDE_DATA: GuideData = {
   title: "🍯 약속 잡기 꿀팁",
   story: {
@@ -158,7 +151,6 @@ export const MEETING_GUIDE_DATA: GuideData = {
   ],
 };
 
-// 🌱 4. 습관 만들기 방 가이드 데이터
 export const HABIT_GUIDE_DATA: GuideData = {
   title: "💡 습관 방, 이렇게 써보세요!",
   tips: [
@@ -195,7 +187,6 @@ export const HABIT_GUIDE_DATA: GuideData = {
   ],
 };
 
-// ⚖️ 5. 다이어트(체중 관리) 가이드 데이터
 export const DIET_GUIDE_DATA: GuideData = {
   title: "⚖️ 체중 관리 필승 전략 (100g의 법칙)",
   tips: [

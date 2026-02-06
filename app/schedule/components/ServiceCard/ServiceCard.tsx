@@ -2,11 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// 분리된 파일 임포트
+/** 분리된 파일 임포트 */
 import { StCard } from "./ServiceCard.styles";
 import { EditView, ReadView } from "./ServiceCardViews";
 
-// --- Types ---
 type BoardData = {
   id: string;
   title: string;
@@ -23,7 +22,6 @@ interface ServiceCardProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-// --- Custom Hook ---
 const useCardForm = (
   initialTitle: string,
   initialDesc: string | null,
@@ -42,7 +40,6 @@ const useCardForm = (
   return { title, setTitle, desc, setDesc };
 };
 
-// --- Main Component ---
 export default function ServiceCard({
   board,
   isEditing,

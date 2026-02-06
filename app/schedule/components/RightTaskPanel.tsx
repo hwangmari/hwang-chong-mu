@@ -5,7 +5,6 @@ import { startOfDay } from "date-fns";
 import { ServiceSchedule } from "@/types/work-schedule";
 import { useSearchParams } from "next/navigation"; // useRouter, useParams 제거 가능
 
-// Hooks & Utils
 import { useScheduleActions } from "@/hooks/useScheduleActions";
 import { useCardScroll } from "@/hooks/useCardScroll";
 import { buildScheduleText } from "@/utils/clipboardBuilder";
@@ -110,7 +109,6 @@ export default function RightTaskPanel({
   );
 }
 
-// --- Styles ---
 const StContainer = styled.div`
   display: flex;
   flex-direction: column;

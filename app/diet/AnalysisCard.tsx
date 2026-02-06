@@ -15,9 +15,8 @@ export default function AnalysisCard({
 }: AnalysisCardProps) {
   if (overnightDiff === null) return null;
 
-  // ✅ [Helper] kg을 g으로 변환하고, 천 단위 콤마(,)를 찍어주는 함수
   const toGram = (kg: number) => {
-    // 소수점 연산 오차 방지를 위해 반올림 처리
+    /** 소수점 연산 오차 방지를 위해 반올림 처리 */
     const grams = Math.round(kg * 1000);
     return grams.toLocaleString(); // 예: 1200
   };
@@ -90,7 +89,6 @@ export default function AnalysisCard({
   );
 }
 
-// ✨ 스타일 정의
 const popIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

@@ -7,7 +7,6 @@ import {
   StIconButton,
 } from "./ServiceCard.styles";
 
-// --- 수정 모드 UI ---
 interface EditViewProps {
   title: string;
   desc: string;
@@ -55,7 +54,6 @@ export const EditView = ({
   </>
 );
 
-// --- 조회 모드 UI ---
 interface ReadViewProps {
   title: string;
   desc: string | null;

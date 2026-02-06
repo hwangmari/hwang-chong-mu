@@ -6,7 +6,6 @@ export default function useGameRoom(roomId: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // --- 상태 관리 ---
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [roomData, setRoomData] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,23 +14,22 @@ export default function useGameRoom(roomId: string) {
   const [isJoined, setIsJoined] = useState(false);
   const [isHost, setIsHost] = useState(false);
 
-  // 폼 상태
+  /** 폼 상태 */
   const [joinName, setJoinName] = useState("");
   const [joinPw, setJoinPw] = useState("");
   const [joinMsg, setJoinMsg] = useState("");
   const [guestName, setGuestName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 게임 상태
+  /** 게임 상태 */
   const [status, setStatus] = useState<"waiting" | "countdown" | "playing">(
     "waiting"
   );
   const [count, setCount] = useState(3);
   const [selectedGame, setSelectedGame] = useState("telepathy");
 
-  // --- Effects ---
 
-  // 1. 뒤로가기 감지 (게임 중 뒤로가기 시 대기실로)
+  /** 1. 뒤로가기 감지 (게임 중 뒤로가기 시 대기실로) */
   useEffect(() => {
     const isGameOn = searchParams.get("game") === "on";
     if (!isGameOn && status === "playing") {
@@ -40,7 +38,7 @@ export default function useGameRoom(roomId: string) {
     }
   }, [searchParams, status, isHost]);
 
-  // 2. 초기 데이터 로드
+  /** 2. 초기 데이터 로드 */
   useEffect(() => {
     if (!roomId) return;
     const storedId = localStorage.getItem("my_id");
@@ -51,7 +49,7 @@ export default function useGameRoom(roomId: string) {
     subscribeRealtime();
   }, [roomId]);
 
-  // 3. 타이머
+  /** 3. 타이머 */
   useEffect(() => {
     if (status === "countdown") {
       if (count > 0) setTimeout(() => setCount((c) => c - 1), 1000);
@@ -59,7 +57,6 @@ export default function useGameRoom(roomId: string) {
     }
   }, [status, count]);
 
-  // --- 내부 함수 ---
 
   const fetchRoomData = async () => {
     const { data: room } = await supabase
@@ -129,7 +126,6 @@ export default function useGameRoom(roomId: string) {
     return () => supabase.removeChannel(channel);
   };
 
-  // --- 핸들러 ---
 
   const handleJoin = async () => {
     if (!joinName || !joinPw) return alert("필수 입력값을 확인해주세요.");
@@ -235,9 +231,8 @@ export default function useGameRoom(roomId: string) {
     if (searchParams.get("game") === "on") router.back();
   };
 
-  // 훅에서 필요한 모든 데이터와 함수를 반환
   return {
-    // Data
+    /** Data */
     roomData,
     participants,
     myId,
@@ -247,7 +242,7 @@ export default function useGameRoom(roomId: string) {
     count,
     selectedGame,
     loading,
-    // Form State
+    /** Form State */
     joinName,
     setJoinName,
     joinPw,
@@ -256,7 +251,7 @@ export default function useGameRoom(roomId: string) {
     setJoinMsg,
     guestName,
     setGuestName,
-    // Handlers
+    /** Handlers */
     handleJoin,
     handleAddGuest,
     handleKickParticipant,

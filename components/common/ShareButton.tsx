@@ -16,11 +16,11 @@ export default function ShareButton({
 
   const handleShare = async () => {
     try {
-      // 1. 현재 주소 복사 (PC/Mobile 공통 지원)
+      /** 1. 현재 주소 복사 (PC/Mobile 공통 지원) */
       const currentUrl = window.location.href;
       await navigator.clipboard.writeText(currentUrl);
 
-      // 2. 툴팁 보여주기 (2초 뒤 사라짐)
+      /** 2. 툴팁 보여주기 (2초 뒤 사라짐) */
       setShowTooltip(true);
       setTimeout(() => {
         setShowTooltip(false);
@@ -60,7 +60,6 @@ export default function ShareButton({
   );
 }
 
-// --- Styled Components ---
 
 const StShareButton = styled.button`
   background: none;
@@ -84,7 +83,7 @@ const StShareButton = styled.button`
   }
 `;
 
-// 말풍선 스타일
+/** 말풍선 스타일 */
 const StTooltip = styled.span<{ $show: boolean }>`
   position: absolute;
   bottom: -40px; /* 버튼 아래쪽에 위치 */

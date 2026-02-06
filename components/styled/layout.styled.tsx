@@ -1,5 +1,5 @@
 import styled from "styled-components";
-// 공통 레이아웃
+/** 공통 레이아웃 */
 export const StContainer = styled.div`
   padding: 2rem 1rem;
   max-width: 1024px;

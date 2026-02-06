@@ -16,7 +16,6 @@ import {
 import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
 
-// ✨ 게임 목록 데이터
 const GAME_OPTIONS = [
   { id: "ladder", name: "사다리 타기", icon: "🪜", desc: "운명의 짝대기 긋기" },
   { id: "wheel", name: "돌림판", icon: "🎡", desc: "빙글빙글 복불복" },
@@ -25,7 +24,6 @@ const GAME_OPTIONS = [
 export default function GameLobbyPage() {
   const router = useRouter();
 
-  // ✨ 화면 모드 상태: 'SELECT'(메인) | 'CREATE'(방만들기) | 'QUICK_LIST'(게임고르기)
   const [viewMode, setViewMode] = useState("SELECT");
 
   const [roomTitle, setRoomTitle] = useState("");
@@ -39,7 +37,7 @@ export default function GameLobbyPage() {
     if (savedName) setNickname(savedName);
   }, []);
 
-  // 1. 방 만들기 로직
+  /** 1. 방 만들기 로직 */
   const createRoom = async () => {
     if (!roomTitle) return alert("방 제목을 입력해주세요!");
     if (!nickname) return alert("닉네임을 입력해주세요!");
@@ -52,7 +50,7 @@ export default function GameLobbyPage() {
         100000 + Math.random() * 900000
       ).toString();
 
-      // 방 생성
+      /** 방 생성 */
       const { data: room, error: roomError } = await supabase
         .from("game_rooms")
         .insert([
@@ -63,7 +61,7 @@ export default function GameLobbyPage() {
 
       if (roomError) throw roomError;
 
-      // 방장 참가
+      /** 방장 참가 */
       const { data: participant, error: pError } = await supabase
         .from("game_participants")
         .insert([
@@ -92,12 +90,12 @@ export default function GameLobbyPage() {
     }
   };
 
-  // 2. 빠른 게임 선택 시 처리
+  /** 2. 빠른 게임 선택 시 처리 */
   const handleSelectQuickGame = (gameId: string) => {
     router.push(`/game/quick/${gameId}`);
   };
 
-  // 3. 공통 뒤로가기 버튼 컴포넌트
+  /** 3. 공통 뒤로가기 버튼 컴포넌트 */
   const BackButton = () => (
     <StBackButton onClick={() => setViewMode("SELECT")}>
       <svg
@@ -251,7 +249,6 @@ export default function GameLobbyPage() {
   );
 }
 
-// --- ✨ 스타일 컴포넌트 모음 (모두 합침) ---
 
 const StSectionTitle = styled.h3`
   font-size: 1.1rem;

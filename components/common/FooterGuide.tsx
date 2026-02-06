@@ -3,18 +3,16 @@
 import styled from "styled-components";
 import { ReactNode } from "react";
 
-// 📝 팁 아이템 타입 정의
 interface TipItem {
   icon: ReactNode; // 이모지 or MUI 아이콘
   title: string;
   description: ReactNode; // 줄바꿈 등을 위해 ReactNode로
 }
 
-// 🎛️ 컴포넌트 Props 정의
 interface FooterGuideProps {
   title: string; // 전체 제목 (예: 약속 잡기 꿀팁)
   story?: {
-    // 브랜드 스토리 (선택 사항)
+    /** 브랜드 스토리 (선택 사항) */
     title: string;
     content: ReactNode;
     solution?: {
@@ -63,7 +61,6 @@ export default function FooterGuide({ title, story, tips }: FooterGuideProps) {
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StFooterContainer = styled.div`
   display: flex;

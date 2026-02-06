@@ -1,13 +1,11 @@
 import styled, { css, keyframes } from "styled-components";
 import Link from "next/link";
 
-// === Animations ===
 export const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-// === Layout Styles ===
 export const StSectionContainer = styled.section`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
@@ -42,7 +40,6 @@ export const StSectionTitle = styled.div`
   gap: 0.5rem;
 `;
 
-// === Skills Styles ===
 export const StSkillGroupWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -93,7 +90,6 @@ export const StSkillTag = styled.span<{ $variant: "black" | "gray" | "blue" }>`
   }}
 `;
 
-// === Timeline Styles ===
 export const StTimelineList = styled.div`
   border-left: 2px solid ${({ theme }) => theme.colors.gray100};
   margin-left: 0.75rem;

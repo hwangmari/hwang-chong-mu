@@ -126,7 +126,6 @@ export default function TaskCardHeader({
   );
 }
 
-// --- Styled Components (깔쌈한 스타일링) ---
 
 const HeaderContent = styled.div`
   display: flex;

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import {
   StContainer,
@@ -13,7 +12,6 @@ import PageIntro from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
-import FooterGuide from "@/components/common/FooterGuide";
 
 export default function CreateDietPage() {
   const router = useRouter();

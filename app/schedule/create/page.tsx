@@ -16,7 +16,6 @@ export default function CreateSchedulePage() {
 
     setIsSubmitting(true);
     try {
-      // ✨ 보드 생성
       const newBoard = await createBoard(formData.title, formData.description);
       router.push(`/schedule/${newBoard.id}`);
     } catch (error) {
@@ -68,7 +67,6 @@ export default function CreateSchedulePage() {
   );
 }
 
-// ... 스타일은 기존과 동일 (생략) ...
 const StPageContainer = styled.div`
   display: flex;
   justify-content: center;

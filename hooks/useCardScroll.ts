@@ -26,7 +26,7 @@ export function useCardScroll() {
 
         containerElement.scrollTo({ top: scrollTo, behavior: "smooth" });
 
-        // 강제로 펼치기
+        /** 강제로 펼치기 */
         setCollapsedIds((prev) => {
           const newSet = new Set(prev);
           if (newSet.has(svcId)) {

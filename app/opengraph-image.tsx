@@ -1,4 +1,4 @@
-// app/opengraph-image.tsx
+/** app/opengraph-image.tsx */
 import { OgTemplate } from "@/components/common/OgTemplate";
 import { ImageResponse } from "next/og";
 

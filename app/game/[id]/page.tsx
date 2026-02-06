@@ -24,10 +24,9 @@ export default function GameRoomPage() {
   const params = useParams();
   const roomId = params?.id as string;
 
-  // ✨ 로직 훅 사용 (한 줄로 모든 기능 가져옴)
   const logic = useGameRoom(roomId);
 
-  // 1. 게임 진행 중 화면
+  /** 1. 게임 진행 중 화면 */
   if (logic.status === "playing") {
     return (
       <StContainer>
@@ -55,7 +54,7 @@ export default function GameRoomPage() {
     );
   }
 
-  // 2. 대기실 화면
+  /** 2. 대기실 화면 */
   return (
     <StContainer>
       <StWrapper>
@@ -106,7 +105,7 @@ export default function GameRoomPage() {
   );
 }
 
-// 스타일링
+/** 스타일링 */
 const StDimOverlay = styled.div`
   position: absolute;
   top: 0;

@@ -9,9 +9,6 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 
-// ==========================================
-// 1. ✨ 여기만 수정하면 메뉴와 타이틀이 동시에 반영됩니다!
-// ==========================================
 const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
   { path: "/schedule", label: "업무 캘린더" },
@@ -21,12 +18,9 @@ const ROUTE_CONFIG = [
   { path: "/calc", label: "N빵 계산기" },
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
-  // 여기에 추가하면 끝! 예: { path: "/new", label: "새 메뉴" }
 ];
 
-// ==========================================
-// 2. 하위 상세 페이지용 매핑 데이터 (유지)
-// ==========================================
+/** 2. 하위 상세 페이지용 매핑 데이터 (유지) */
 const GAME_NAMES: Record<string, string> = {
   ladder: "사다리 타기",
   wheel: "돌림판",
@@ -52,26 +46,23 @@ export default function GlobalHeader() {
     setIsMenuOpen(false);
     window.scrollTo(0, 0);
 
-    // ----------------------------------------------------
-    // ✨ 타이틀 자동 결정 로직 (우선순위: 상세페이지 > 기본설정)
-    // ----------------------------------------------------
 
-    // 1. [특수 케이스] 게임 상세 페이지 처리
+    /** 1. [특수 케이스] 게임 상세 페이지 처리 */
     if (pathname.startsWith("/game/")) {
       const parts = pathname.split("/");
-      // /game/quick/ladder 같은 케이스
+      /** /game/quick/ladder 같은 케이스 */
       if (parts[2] === "quick" && parts[3]) {
         const gameName = GAME_NAMES[parts[3]];
         setCurrentTitle(gameName || "빠른 게임");
         return;
       }
-      // /game/123 (방 번호) 케이스
+      /** /game/123 (방 번호) 케이스 */
       const isRoomId = !isNaN(Number(parts[2]));
       setCurrentTitle(isRoomId ? "게임 대기실" : "황총무 게임방");
       return;
     }
 
-    // 2. [특수 케이스] 포트폴리오 상세 페이지 처리
+    /** 2. [특수 케이스] 포트폴리오 상세 페이지 처리 */
     if (pathname.startsWith("/portfolio/")) {
       if (pathname.startsWith("/portfolio/experience")) {
         const parts = pathname.split("/");
@@ -90,8 +81,7 @@ export default function GlobalHeader() {
       }
     }
 
-    // 3. [일반 케이스] ROUTE_CONFIG에서 자동 매칭 ✨
-    // 배열을 순회하며 현재 경로와 매칭되는 설정을 찾습니다.
+    /** 배열을 순회하며 현재 경로와 매칭되는 설정을 찾습니다. */
     const matchedRoute = ROUTE_CONFIG.find((route) =>
       route.exact ? pathname === route.path : pathname.startsWith(route.path),
     );
@@ -106,7 +96,6 @@ export default function GlobalHeader() {
   const showBack = pathname !== "/";
 
   const handleBack = () => {
-    // 1. 게임 관련 특수 로직 (기존 유지)
     if (pathname.startsWith("/game/") && pathname.split("/").length > 2) {
       if (pathname.includes("/quick")) {
         router.back();
@@ -114,13 +103,12 @@ export default function GlobalHeader() {
       }
     }
 
-    // ✨ [수정] 일정 관리 페이지(/schedule)에서는 무조건 홈으로 이동
     if (pathname === "/schedule") {
       router.push("/");
       return;
     }
 
-    // 2. 나머지: 히스토리가 있으면 뒤로, 없으면 홈으로
+    /** 2. 나머지: 히스토리가 있으면 뒤로, 없으면 홈으로 */
     if (window.history.length > 1) {
       router.back();
     } else {
@@ -157,7 +145,7 @@ export default function GlobalHeader() {
             {ROUTE_CONFIG.map((item) => (
               <Link key={item.path} href={item.path} passHref>
                 <StMenuItem
-                  // 현재 경로가 해당 메뉴의 path로 시작하면 활성화 (단, 홈은 정확히 일치)
+                  /** 현재 경로가 해당 메뉴의 path로 시작하면 활성화 (단, 홈은 정확히 일치) */
                   $isActive={
                     item.exact
                       ? pathname === item.path
@@ -177,8 +165,6 @@ export default function GlobalHeader() {
   );
 }
 
-// ... (스타일 코드는 기존과 동일하므로 생략)
-// 아래 스타일 코드는 그대로 두시면 됩니다.
 const StHeaderWrapper = styled.header`
   position: sticky;
   top: 0;

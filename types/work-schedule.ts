@@ -1,4 +1,3 @@
-// types/database.ts (DB 스키마와 1:1 매칭)
 export type DbService = {
   id: string;
   user_id: string;

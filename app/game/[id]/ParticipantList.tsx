@@ -37,7 +37,6 @@ export default function ParticipantList({
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             onKeyDown={(e) => {
-              // ✨ [수정] 한글 조합 중(isComposing)일 때는 이벤트 막기
               if (e.nativeEvent.isComposing) return;
               if (e.key === "Enter") onAddGuest();
             }}
@@ -69,7 +68,6 @@ export default function ParticipantList({
   );
 }
 
-// 스타일
 const StParticipantBoard = styled.div`
   flex: 1;
   overflow-y: auto;

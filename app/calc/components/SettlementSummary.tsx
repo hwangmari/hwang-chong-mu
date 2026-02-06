@@ -32,7 +32,6 @@ export default function SettlementSummary({
   );
 }
 
-// ✨ 스타일 정의
 const StSummaryCard = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
 

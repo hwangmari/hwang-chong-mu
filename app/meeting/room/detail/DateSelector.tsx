@@ -5,7 +5,7 @@ import styled, { css } from "styled-components";
 import { eachDayOfInterval, addWeeks, isSameDay } from "date-fns";
 
 const DateSelector = () => {
-  // 1. 3주치 날짜 생성
+  /** 1. 3주치 날짜 생성 */
   const today = new Date();
   const threeWeeksLater = addWeeks(today, 3);
   const allDates = useMemo(
@@ -13,14 +13,13 @@ const DateSelector = () => {
     [today, threeWeeksLater]
   );
 
-  // 2. 선택된 날짜들을 담는 배열
+  /** 2. 선택된 날짜들을 담는 배열 */
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
-  // ✅ 핵심 기능: 모두 선택 / 모두 해제
   const handleSelectAll = () => setSelectedDates(allDates);
   const handleDeselectAll = () => setSelectedDates([]);
 
-  // 날짜 토글 함수
+  /** 날짜 토글 함수 */
   const toggleDate = (date: Date) => {
     const isSelected = selectedDates.some((d) => isSameDay(d, date));
     if (isSelected) {
@@ -63,7 +62,6 @@ const DateSelector = () => {
 
 export default DateSelector;
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const StContainer = styled.div`
   width: 100%;

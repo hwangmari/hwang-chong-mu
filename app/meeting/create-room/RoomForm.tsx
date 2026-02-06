@@ -102,7 +102,6 @@ export default function RoomForm({
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(-5px); }

@@ -40,7 +40,6 @@ export default function WheelGame({
   const [winner, setWinner] = useState<string | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  // 1. 돌림판 그리기 (참가자 변경 시 리렌더링)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || participants.length === 0) return;
@@ -71,7 +70,7 @@ export default function WheelGame({
       ctx.fill();
       ctx.stroke();
 
-      // 텍스트 그리기
+      /** 텍스트 그리기 */
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(i * arc + arc / 2 + startAngleOffset);
@@ -83,9 +82,8 @@ export default function WheelGame({
     });
   }, [participants]);
 
-  // ✨ 2. [온라인 모드 전용] Supabase 데이터 감지
   useEffect(() => {
-    // 로컬 모드면 이 useEffect는 무시합니다.
+    /** 로컬 모드면 이 useEffect는 무시합니다. */
     if (roomId === "local") return;
 
     if (roomData?.current_question) {
@@ -94,7 +92,7 @@ export default function WheelGame({
         spinWheel(targetRotation);
       }
     } else {
-      // 리셋 신호 감지
+      /** 리셋 신호 감지 */
       setRotation(0);
       setWinner(null);
       setIsSpinning(false);
@@ -102,26 +100,25 @@ export default function WheelGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomData, roomId]); // roomId 추가
 
-  // ✨ 3. 공통 회전 로직 (실제 애니메이션 트리거)
   const spinWheel = (deg: number) => {
     setWinner(null);
     setIsSpinning(true);
     setRotation(deg); // 여기서 회전 각도 상태 변경 -> CSS transition 작동
 
-    // 4초 후 결과 계산
+    /** 4초 후 결과 계산 */
     setTimeout(() => {
       setIsSpinning(false);
       calculateWinner(deg);
     }, 4000);
   };
 
-  // 4. 우승자 계산
+  /** 4. 우승자 계산 */
   const calculateWinner = (finalDegree: number) => {
     const count = participants.length;
     if (count === 0) return;
 
     const degreePerSlice = 360 / count;
-    // 12시 핀 기준 계산
+    /** 12시 핀 기준 계산 */
     const winningIndex = Math.floor(
       ((360 - (finalDegree % 360)) % 360) / degreePerSlice
     );
@@ -131,16 +128,15 @@ export default function WheelGame({
     }
   };
 
-  // ✨ 5. 버튼 핸들러 (로컬 vs 온라인 분기 처리)
   const handleSpin = async () => {
     if (isSpinning) return;
     const randomDeg = 1800 + Math.random() * 1800; // 5~10바퀴 랜덤
 
     if (roomId === "local") {
-      // [로컬 모드] DB 안 거치고 바로 실행
+      /** [로컬 모드] DB 안 거치고 바로 실행 */
       spinWheel(randomDeg);
     } else {
-      // [온라인 모드] DB 업데이트 -> useEffect가 감지해서 spinWheel 실행
+      /** [온라인 모드] DB 업데이트 -> useEffect가 감지해서 spinWheel 실행 */
       await supabase
         .from("game_rooms")
         .update({
@@ -152,12 +148,12 @@ export default function WheelGame({
 
   const handleReset = async () => {
     if (roomId === "local") {
-      // [로컬 모드] 바로 리셋
+      /** [로컬 모드] 바로 리셋 */
       setRotation(0);
       setWinner(null);
       setIsSpinning(false);
     } else {
-      // [온라인 모드] DB 리셋
+      /** [온라인 모드] DB 리셋 */
       await supabase
         .from("game_rooms")
         .update({ current_question: null })
@@ -218,7 +214,6 @@ export default function WheelGame({
   );
 }
 
-// ✨ 스타일 (기존과 동일)
 const StHeader = styled.div`
   text-align: center;
   margin-bottom: 1rem;

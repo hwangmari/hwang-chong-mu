@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import { addDays } from "date-fns";
 
-// 컴포넌트 임포트
+/** 컴포넌트 임포트 */
 import LeftCalendar from "../components/LeftCalendar";
 import RightTaskPanel from "../components/RightTaskPanel";
 import ScheduleHeader from "../components/ScheduleHeader";
@@ -28,7 +28,6 @@ export default function ScheduleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
-  // ✨ 데이터 로드 함수 (useCallback으로 감싸서 재사용 최적화)
   const loadData = useCallback(async () => {
     if (!boardId) return;
     try {
@@ -42,15 +41,14 @@ export default function ScheduleDetailPage() {
     }
   }, [boardId]);
 
-  // 1. 초기 로드
+  /** 1. 초기 로드 */
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // ✨ 2. [핵심] 화면이 다시 포커스될 때 데이터 갱신 (칸반 갔다가 돌아올 때 반영됨)
   useEffect(() => {
     const onFocus = () => {
-      // 아주 짧은 딜레이를 주어 DB 업데이트 직후 fetch가 꼬이지 않게 함
+      /** 아주 짧은 딜레이를 주어 DB 업데이트 직후 fetch가 꼬이지 않게 함 */
       setTimeout(() => loadData(), 100);
     };
 
@@ -148,7 +146,6 @@ export default function ScheduleDetailPage() {
   );
 }
 
-// --- 스타일 정의 ---
 const StFixedContainer = styled.div`
   position: fixed;
   top: 0;
@@ -167,6 +164,11 @@ const StContentWrapper = styled.div`
   display: flex;
   flex: 1;
   overflow: hidden;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex-direction: column;
+    overflow: auto;
+  }
 `;
 
 const StLeftSection = styled.div`
@@ -175,6 +177,12 @@ const StLeftSection = styled.div`
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e5e7eb;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
 `;
 
 const StRightSection = styled.div`
@@ -184,4 +192,11 @@ const StRightSection = styled.div`
   background-color: white;
   overflow-y: auto;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.02);
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex: none;
+    min-width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+  }
 `;

@@ -15,7 +15,6 @@ interface Props {
 export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAmount, setEditAmount] = useState("");
-  // ✅ 아코디언 상태 추가 (기본값 true)
   const [isExpanded, setIsExpanded] = useState(true);
 
   const groupedExpenses = useMemo(() => {
@@ -52,7 +51,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
 
   return (
     <StSection>
-      {/* 클릭 시 접고 펼칠 수 있도록 onClick 추가 */}
       <StHeaderRow
         onClick={() => setIsExpanded(!isExpanded)}
         style={{ cursor: "pointer" }}
@@ -60,7 +58,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
         <SectionTitle>
           <StTitleContent>
             🧾 지출 목록
-            {/* 아이콘으로 상태 표시 */}
             <StChevronIcon $expanded={isExpanded} />
           </StTitleContent>
         </SectionTitle>
@@ -69,7 +66,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
         </StTotalText>
       </StHeaderRow>
 
-      {/* ✅ isExpanded가 true일 때만 목록 노출 */}
       {isExpanded && (
         <StGroupContainer>
           {Object.entries(groupedExpenses).map(([payer, items]) => (
@@ -150,8 +146,6 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
   );
 }
 
-// --- Styles (수정된 부분) ---
-
 const StHeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -176,7 +170,8 @@ const StTitleContent = styled.span`
 const StChevronIcon = styled(ExpandMoreIcon)<{ $expanded: boolean }>`
   font-size: 1rem;
   color: ${({ theme }) => theme.colors.gray400};
-  transform: ${({ $expanded }) => ($expanded ? "rotate(0deg)" : "rotate(-90deg)")};
+  transform: ${({ $expanded }) =>
+    $expanded ? "rotate(0deg)" : "rotate(-90deg)"};
   transition: transform 0.2s;
 `;
 
@@ -269,7 +264,6 @@ const StListItem = styled.li<{ $isPersonal: boolean }>`
   }
 `;
 
-// ✅ [NEW] 통합된 오른쪽 영역 스타일 (수정/조회 모드 공용)
 const StRightSection = styled.div`
   display: flex;
   align-items: center;
@@ -329,7 +323,7 @@ const StGrayBadge = styled.span`
   flex-shrink: 0;
 `;
 
-// 버튼 그룹
+/** 버튼 그룹 */
 const StFixedBtnGroup = styled.div`
   display: flex;
   align-items: center;

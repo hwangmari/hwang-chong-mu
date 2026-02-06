@@ -20,7 +20,7 @@ export default function BottomSheet({
 }: Props) {
   if (!date) return null;
 
-  // 헬퍼 함수
+  /** 헬퍼 함수 */
   const getUnavailablePeople = (d: Date) =>
     participants.filter((p) =>
       p.unavailableDates.some((ud) => isSameDay(ud, d))
@@ -66,7 +66,6 @@ export default function BottomSheet({
   );
 }
 
-// ✨ 스타일 정의 (St 프리픽스)
 
 const fadeIn = keyframes`
   from { opacity: 0; }

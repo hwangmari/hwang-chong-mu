@@ -101,13 +101,11 @@ export default function ConfirmedResultCard({
   );
 }
 
-// --- Animation ---
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-// --- Components ---
 const StResultCard = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.colors.white};
@@ -141,13 +139,13 @@ const StDateBox = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
-// "fw-700 mb-1" 대체
+/** "fw-700 mb-1" 대체 */
 const StRoomName = styled(Typography)`
   font-weight: 700;
   margin-bottom: 0.25rem;
 `;
 
-// "fw-900 text-center" 대체
+/** "fw-900 text-center" 대체 */
 const StDateDisplay = styled(Typography)`
   font-weight: 900;
   text-align: center;

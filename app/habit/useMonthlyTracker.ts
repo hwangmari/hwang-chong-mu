@@ -1,4 +1,3 @@
-// components/habit/useMonthlyTracker.ts
 import { useState, useEffect, useCallback } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { supabase } from "@/lib/supabase";
@@ -17,7 +16,6 @@ export function useMonthlyTracker(goalId: number) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showWeekends, setShowWeekends] = useState(true);
 
-  // ✅ [추가 1] 호버된 아이템 ID와 원본 로그 상태
   const [hoveredItemId, setHoveredItemId] = useState<number | null>(null);
   const [rawLogs, setRawLogs] = useState<
     { item_id: number; completed_at: string }[]
@@ -29,7 +27,7 @@ export function useMonthlyTracker(goalId: number) {
   >([]);
   const [dailyCompletedIds, setDailyCompletedIds] = useState<number[]>([]);
 
-  // 1. 초기 설정 로드
+  /** 1. 초기 설정 로드 */
   useEffect(() => {
     if (!goalId || isNaN(goalId)) return;
     const savedSetting = localStorage.getItem(`showWeekends_${goalId}`);
@@ -71,7 +69,6 @@ export function useMonthlyTracker(goalId: number) {
       }
 
       const itemIds = currentItems.map((i) => i.id);
-      // ✅ [수정] item_id도 같이 가져오기
       const { data: logs } = await supabase
         .from("goal_logs")
         .select("item_id, completed_at")
@@ -168,7 +165,6 @@ export function useMonthlyTracker(goalId: number) {
   };
 
   return {
-    // ✅ [추가 2] state와 actions에 호버 관련 항목 내보내기
     state: {
       currentDate,
       selectedDate,

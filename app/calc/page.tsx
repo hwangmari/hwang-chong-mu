@@ -14,10 +14,8 @@ import Input from "@/components/common/Input";
 import { CALC_GUIDE_DATA } from "@/data/footerGuides";
 
 export default function CreateRoomPage() {
-  // const router = useRouter(); // 훅 내부에서 처리함
   const [roomName, setRoomName] = useState("");
 
-  // ★ 훅 연결하기
   const { createRoom, loading } = useCalcPersistence();
 
   const handleCreate = () => {
@@ -26,14 +24,12 @@ export default function CreateRoomPage() {
       return;
     }
 
-    // ★ DB에 저장 요청 (이동은 훅이 알아서 해줌)
     createRoom(roomName);
   };
 
   return (
     <StContainer>
       <StWrapper>
-        {/* 1. 메인 카드 영역 */}
         <PageIntro
           icon="💸"
           title="황총무의 똑똑한 엔빵"
@@ -62,13 +58,18 @@ export default function CreateRoomPage() {
             isLoading={loading}
             className="mt-4"
           >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+              }}
+            >
               정산 방 만들기 <ArrowForwardIcon fontSize="small" />
             </span>
           </CreateButton>
         </StSection>
 
-        {/* 2. 하단 가이드 (작성해주신 내용 그대로 적용) */}
         <FooterGuide
           title={CALC_GUIDE_DATA.title}
           tips={CALC_GUIDE_DATA.tips}

@@ -28,7 +28,6 @@ export default function CalendarGrid({
   onToggleDate,
   hoveredUserId,
 }: Props) {
-  // [상태 추가] 모바일 대응: 현재 툴팁이 열려있는 날짜의 Key 저장
   const [openTooltipDate, setOpenTooltipDate] = useState<string | null>(null);
 
   const getUnavailableUsers = (date: Date) =>
@@ -44,13 +43,11 @@ export default function CalendarGrid({
 
   const hoveredUser = participants.find((p) => p.id === hoveredUserId);
 
-  // [핸들러 추가] 배지 클릭 시 툴팁 토글 (날짜 선택 방지)
   const handleBadgeClick = (e: React.MouseEvent, dateKey: string) => {
     e.stopPropagation(); // 부모 버튼의 클릭 이벤트 전파 중단
     setOpenTooltipDate((prev) => (prev === dateKey ? null : dateKey));
   };
 
-  // [핸들러 추가] 배경 클릭 시 툴팁 닫기
   const closeAllTooltips = () => setOpenTooltipDate(null);
 
   return (
@@ -92,7 +89,6 @@ export default function CalendarGrid({
           const dayString = format(date, "d");
           const showMonth = dayString === "1" || index === firstDateIndex;
 
-          // 현재 날짜의 툴팁이 열려있는지 확인
           const isTooltipOpen = openTooltipDate === dateKey;
 
           return (
@@ -144,7 +140,6 @@ export default function CalendarGrid({
   );
 }
 
-// --- 스타일 정의 ---
 
 const StGridContainer = styled.div<{ $step: "VOTING" | "CONFIRM" }>`
   width: 100%;
@@ -303,7 +298,7 @@ const StMonthLabel = styled.span`
   }
 `;
 
-// [NEW] 뱃지와 툴팁을 감싸는 컨테이너
+/** [NEW] 뱃지와 툴팁을 감싸는 컨테이너 */
 const StBadgeGroup = styled.div`
   position: absolute;
   top: -0.25rem;
@@ -337,7 +332,7 @@ const StCountBadge = styled.div<{ $isTypingMode: boolean }>`
   }
 `;
 
-// [NEW] 툴팁 스타일 (상태에 따른 제어 포함)
+/** [NEW] 툴팁 스타일 (상태에 따른 제어 포함) */
 const StTooltip = styled.div<{ $isOpen: boolean }>`
   /* 기본 숨김, 하지만 $isOpen이 true면 표시 */
   display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};

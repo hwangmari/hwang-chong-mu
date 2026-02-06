@@ -1,4 +1,3 @@
-// types/experiences.ts
 
 /** [Depth 3] 확장 히스토리 아이템 (상세 설명/이미지 포함형) */
 export interface ProjectItemList {

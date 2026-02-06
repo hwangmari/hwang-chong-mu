@@ -22,9 +22,7 @@ export const buildScheduleText = (
       return startA - startB;
     });
 
-  // 2. 텍스트 생성 (기존 포맷 유지)
   sortedSchedules.forEach((svc) => {
-    // 태스크가 하나도 없으면 굳이 출력 안 함 (필요시 제거 가능)
     if (svc.tasks.length === 0) return;
 
     text += `[${svc.serviceName}]\n`;
@@ -39,7 +37,7 @@ export const buildScheduleText = (
           : format(t.startDate, "yyyy.MM.dd");
 
       let dateStr = "";
-      // 시작일과 종료일이 같으면 하루만 표시
+      /** 시작일과 종료일이 같으면 하루만 표시 */
       if (format(t.startDate, "yyyyMMdd") === format(t.endDate, "yyyyMMdd")) {
         dateStr = startStr;
       } else {

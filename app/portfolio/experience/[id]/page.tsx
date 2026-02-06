@@ -68,7 +68,6 @@ export default function ExperienceDetail() {
   );
 }
 
-// ✨ 스타일 정의
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -88,7 +87,6 @@ const NotFoundContainer = styled.div`
   text-align: center;
 `;
 
-// === Header Styles ===
 const HeaderWrapper = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
@@ -107,7 +105,6 @@ const TitleRow = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-// 🔥 색상 매핑 로직 (ResumeSection과 동일)
 const CompanyDot = styled.span<{ $colorClass: string }>`
   width: 12px;
   height: 26px;
@@ -124,7 +121,6 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
   }};
 `;
 
-// === Body Styles ===
 const BodyContent = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
@@ -143,7 +139,6 @@ const ProjectList = styled.div`
   gap: 3rem;
 `;
 
-// ✨ [추가됨] 설명 영역 스타일
 const DescriptionWrapper = styled.div`
   margin-top: 2rem; /* 프로젝트 리스트와의 간격 */
   padding-top: 1rem;

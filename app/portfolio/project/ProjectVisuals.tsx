@@ -1,4 +1,3 @@
-// components/project/ProjectVisuals.tsx
 "use client";
 import styled from "styled-components";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -94,7 +93,6 @@ export default function LogicFlowChart() {
   );
 }
 
-// --- 2. 업데이트 히스토리 (타임라인) ---
 export const DevLog = ({
   logs,
 }: {
@@ -116,7 +114,6 @@ export const DevLog = ({
   );
 };
 
-// --- Interfaces for Styled Components ---
 interface NodeProps {
   $active?: boolean;
   $dashed?: boolean;
@@ -129,7 +126,6 @@ interface PathLabelProps {
   $type: "success" | "fail";
 }
 
-// --- Styled Components ---
 
 const Container = styled.div`
   width: 100%;
@@ -195,7 +191,6 @@ const Arrow = styled(ArrowForwardIcon)`
   }
 `;
 
-// --- Nodes Shapes ---
 
 const NodeBase = styled.div`
   display: flex;
@@ -291,7 +286,6 @@ const SubLabel = styled.span`
   font-weight: 400;
 `;
 
-// --- Diamond (Decision) ---
 
 const BranchContainer = styled.div`
   display: flex;
@@ -330,7 +324,6 @@ const DiamondLabel = styled.span`
   color: ${({ theme }) => theme.colors?.gray700 || "#495057"};
 `;
 
-// --- Branch Paths ---
 
 const Paths = styled.div`
   display: flex;
@@ -369,7 +362,6 @@ const PathLabel = styled.span<PathLabelProps>`
   `}
 `;
 
-// --- Loop Visuals ---
 const LoopLine = styled.div`
   display: flex;
   align-items: center;

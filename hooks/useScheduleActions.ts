@@ -25,12 +25,10 @@ export function useScheduleActions(
     [onUpdateAll],
   );
 
-  // ... (handleAddService, handleDeleteService, handleUpdateService 등은 기존 유지) ...
-  // (이전 답변의 handleUpdateService 로직을 그대로 사용하세요)
+  /** (이전 답변의 handleUpdateService 로직을 그대로 사용하세요) */
 
-  // 아래 함수들이 핵심입니다.
 
-  // 1. 서비스 생성
+  /** 1. 서비스 생성 */
   const handleAddService = async () => {
     try {
       const newService = await API.createService(
@@ -48,7 +46,7 @@ export function useScheduleActions(
     }
   };
 
-  // ... (handleDeleteService, handleUpdateService 등) ...
+  /** ... (handleDeleteService, handleUpdateService 등) ... */
 
   const handleDeleteService = async (svcId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
@@ -105,13 +103,9 @@ export function useScheduleActions(
     }
   };
 
-  // ------------------------------------
-  // ✅ 태스크(일정) 관련 함수들 (여기를 교체하세요!)
-  // ------------------------------------
 
   const handleAddTask = async (svcId: string) => {
     try {
-      // 임시 데이터 생성
       const tempTask = {
         title: "새 업무",
         startDate: new Date(),
@@ -130,7 +124,7 @@ export function useScheduleActions(
   };
 
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    // 1. 낙관적 업데이트
+    /** 1. 낙관적 업데이트 */
     const nextSchedules = schedules.map((svc) => {
       if (svc.id !== svcId) return svc;
       return {
@@ -142,9 +136,8 @@ export function useScheduleActions(
     });
     updateLocalState(nextSchedules);
 
-    // 2. API 호출
+    /** 2. API 호출 */
     try {
-      // ✨ 수정됨: 객체를 명시적으로 풀어서 전달 (안전성 확보)
       await API.updateTask(updatedTask.id, {
         title: updatedTask.title,
         startDate: updatedTask.startDate,
@@ -153,9 +146,7 @@ export function useScheduleActions(
         memo: updatedTask.memo,
       });
     } catch (e) {
-      // ✨ 수정됨: oo_tx 에러 대신 실제 에러 로그 출력
       console.error("태스크 업데이트 에러:", e);
-      // 필요 시 여기서 updateLocalState(schedules) 로 롤백 가능
     }
   };
 

@@ -19,7 +19,7 @@ interface TaskListProps {
   today: Date;
   hiddenIds: Set<string>;
 
-  // Handlers
+  /** Handlers */
   onToggleHide: (id: string) => void;
   onToggleCollapse: (id: string) => void;
   onServiceNameChange: (id: string, name: string) => void;
@@ -58,13 +58,12 @@ export default function TaskList({
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // ✨ 1. 분류 로직 확립
-  // 진행 중인 프로젝트 (메인 리스트)
+  /** 진행 중인 프로젝트 (메인 리스트) */
   const mainSchedules = schedules.filter((s) => !s.isCompleted);
-  // 완료된 프로젝트 (하단 고정)
+  /** 완료된 프로젝트 (하단 고정) */
   const allCompletedSchedules = schedules.filter((s) => s.isCompleted);
 
-  // 컬러피커 외부 클릭 시 닫기
+  /** 컬러피커 외부 클릭 시 닫기 */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -78,7 +77,7 @@ export default function TaskList({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 카드 렌더링 헬퍼 (중복 방지)
+  /** 카드 렌더링 헬퍼 (중복 방지) */
   const renderTaskCard = (service: ServiceSchedule) => (
     <TaskCardItem
       key={service.id}

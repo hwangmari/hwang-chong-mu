@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// services/schedule.ts
+/** services/schedule.ts */
 
 import { supabase } from "@/lib/supabase";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import { format } from "date-fns";
 
-// =========================================================
-// 🛠️ 데이터 매핑 헬퍼 함수
-// =========================================================
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
   title: task.title,
@@ -25,9 +22,6 @@ const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   tasks: tasks.map(mapTaskFromDB),
 });
 
-// =========================================================
-// 📋 보드 (Board) 관련 API
-// =========================================================
 
 export const createBoard = async (title: string, description: string) => {
   const { data, error } = await supabase
@@ -93,7 +87,7 @@ export const getBoardData = async (boardId: string) => {
   if (error) throw error;
   if (!data) throw new Error("데이터를 찾을 수 없습니다.");
 
-  // services가 없을 경우를 대비해 빈 배열([]) 처리
+  /** services가 없을 경우를 대비해 빈 배열([]) 처리 */
   const servicesWithTasks = (data.services || []).map((svc: any) => {
     return mapServiceFromDB(svc, svc.tasks || []);
   });
@@ -104,7 +98,6 @@ export const getBoardData = async (boardId: string) => {
   };
 };
 
-// ... fetchBoards, updateBoard, deleteBoard 등은 기존과 동일 ...
 export const fetchBoards = async () => {
   const { data, error } = await supabase
     .from("schedule_boards")
@@ -135,9 +128,7 @@ export const deleteBoard = async (boardId: string) => {
   if (error) throw error;
 };
 
-// =========================================================
-// 🚀 서비스 (Project) 관련 API
-// =========================================================
+/** 🚀 서비스 (Project) 관련 API */
 
 export const createService = async (
   boardId: string,
@@ -155,7 +146,6 @@ export const createService = async (
   return mapServiceFromDB(data);
 };
 
-// ✨ [핵심 수정] 프로젝트 업데이트 시 태스크 유실 방지
 export const updateService = async (id: string, updates: any) => {
   try {
     const dbUpdates: any = {};
@@ -173,10 +163,9 @@ export const updateService = async (id: string, updates: any) => {
       dbUpdates.is_hidden = hiddenVal;
     }
 
-    // 💡 [디버깅] 로그 확인
     console.log("Service DB Update Payload:", dbUpdates);
 
-    // 업데이트할 내용이 없는 경우 에러 방지 (선택 사항)
+    /** 업데이트할 내용이 없는 경우 에러 방지 (선택 사항) */
     if (Object.keys(dbUpdates).length === 0) {
       console.warn("업데이트할 데이터가 없습니다.");
       return; // 혹은 현재 상태 리턴
@@ -208,9 +197,6 @@ export const deleteService = async (id: string) => {
   if (error) throw error;
 };
 
-// =========================================================
-// ✅ 업무 (Task) 관련 API
-// =========================================================
 
 export const createTask = async (serviceId: string, task: any) => {
   const { data, error } = await supabase
@@ -229,14 +215,12 @@ export const createTask = async (serviceId: string, task: any) => {
   return mapTaskFromDB(data);
 };
 
-// ✨ [핵심 수정] 날짜 변환 로직 안전성 강화
 export const updateTask = async (taskId: string, updates: any) => {
   try {
     const dbUpdates: any = {};
 
     if (updates.title) dbUpdates.title = updates.title;
 
-    // 날짜 처리 (기존 로직 유지)
     const ensureISOString = (dateInput: any) => {
       if (!dateInput) return null;
       const date = new Date(dateInput);
@@ -253,19 +237,17 @@ export const updateTask = async (taskId: string, updates: any) => {
     }
     if (updates.memo !== undefined) dbUpdates.memo = updates.memo;
 
-    // ✨ [수정] 완료 상태 처리 강화 (입력 키 호환성 확보)
     const completedVal = updates.isCompleted ?? updates.is_completed;
     if (completedVal !== undefined) {
       dbUpdates.is_completed = completedVal;
     }
 
-    // 💡 [디버깅] Payload 확인
     console.log("Task DB Payload:", dbUpdates);
 
-    // 업데이트 객체가 비어있으면 Supabase가 400 에러를 뱉을 수 있음
+    /** 업데이트 객체가 비어있으면 Supabase가 400 에러를 뱉을 수 있음 */
     if (Object.keys(dbUpdates).length === 0) {
       console.warn("Task 업데이트 데이터가 비어있습니다.");
-      // 에러를 던지지 않고 무시하거나, 현재 데이터를 다시 fetch해서 리턴
+      /** 에러를 던지지 않고 무시하거나, 현재 데이터를 다시 fetch해서 리턴 */
       return;
     }
 

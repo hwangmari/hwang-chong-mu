@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import * as API from "@/services/schedule";
 import { ServiceSchedule } from "@/types/work-schedule";
 
-// ✨ 분리한 컴포넌트 임포트
 import TaskItem from "./card/TaskItem";
 import ColorPicker from "./card/ColorPicker";
 import QuickAddForm from "./card/QuickAddForm";
@@ -21,13 +20,13 @@ interface KanbanCardProps {
 export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   const router = useRouter();
 
-  // 상태 관리
+  /** 상태 관리 */
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(svc.serviceName);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // 날짜순 정렬
+  /** 날짜순 정렬 */
   const sortedTasks = useMemo(() => {
     if (!svc.tasks) return [];
     return [...svc.tasks].sort(
@@ -36,7 +35,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
     );
   }, [svc.tasks]);
 
-  // 핸들러
+  /** 핸들러 */
   const handleNameUpdate = async () => {
     if (!editName.trim() || editName === svc.serviceName) {
       setIsEditingName(false);
@@ -142,7 +141,6 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   );
 }
 
-// --- Styles ---
 const StKanbanCard = styled.div<{ $color: string }>`
   background: white;
   padding: 1rem;

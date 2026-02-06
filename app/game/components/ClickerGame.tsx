@@ -27,28 +27,28 @@ export default function ClickerGame({
   const [myScore, setMyScore] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
 
-  // 내 점수 가져오기
+  /** 내 점수 가져오기 */
   useEffect(() => {
     const me = participants.find((p) => p.id === myId);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (me) setMyScore(me.score || 0);
   }, [participants, myId]);
 
-  // 승자 체크
+  /** 승자 체크 */
   useEffect(() => {
     const topScorer = participants.find((p) => (p.score || 0) >= GOAL_SCORE);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (topScorer) setWinner(topScorer.nickname);
   }, [participants]);
 
-  // 클릭 핸들러
+  /** 클릭 핸들러 */
   const handleClick = async () => {
     if (winner) return; // 게임 끝났으면 클릭 불가
 
     const newScore = myScore + 1;
     setMyScore(newScore); // UI 즉시 반영
 
-    // DB 업데이트 (100ms 디바운스 없이 실시간 전송 - 토이 프로젝트라 괜찮음)
+    /** DB 업데이트 (100ms 디바운스 없이 실시간 전송 - 토이 프로젝트라 괜찮음) */
     await supabase
       .from("game_participants")
       .update({ score: newScore })
@@ -103,7 +103,6 @@ export default function ClickerGame({
   );
 }
 
-// 스타일
 const StHeader = styled.div`
   text-align: center;
 `;

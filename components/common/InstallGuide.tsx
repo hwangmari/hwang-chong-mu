@@ -24,7 +24,6 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
 
   if (!isOpen) return null;
 
-  // Next.js에서 Portal 사용 (body 태그 아래에 렌더링)
   return createPortal(
     <Overlay onClick={onClose}>
       <BottomSheet onClick={(e) => e.stopPropagation()}>
@@ -35,7 +34,6 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
 
         <Content>
           {os === "ios" ? (
-            // 🍎 iOS 가이드
             <GuideStep>
               <StepIcon>1️⃣</StepIcon>
               <StepText>
@@ -49,7 +47,6 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
               </StepText>
             </GuideStep>
           ) : os === "android" ? (
-            // 🤖 안드로이드 가이드
             <GuideStep>
               <StepIcon>1️⃣</StepIcon>
               <StepText>
@@ -62,7 +59,7 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
               </StepText>
             </GuideStep>
           ) : (
-            // 💻 PC/기타
+            /** 💻 PC/기타 */
             <GuideStep>
               <StepText>
                 브라우저의 <strong>북마크(Ctrl+D)</strong> 기능을 이용해
@@ -77,7 +74,6 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
   );
 }
 
-// ✨ 스타일
 const slideUp = keyframes`
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

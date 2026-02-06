@@ -11,7 +11,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "황총무의 실험실",
   description: "복잡한 건 제가 할게요, 총총총... 🐾",
-  // 👇 [수정] meta 태그는 여기서 관리하는 게 Next.js 정석입니다!
   other: {
     "google-adsense-account": "ca-pub-9383832812082051",
   },

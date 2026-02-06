@@ -22,10 +22,8 @@ export default function CalendarTaskItem({
   const isEnd = isSameDay(day, task.endDate);
   const isSingleDay = isSameDay(task.startDate, task.endDate);
 
-  // 완료 여부 확인
   const isCompleted = (task as any).isCompleted || false;
 
-  // ✨ 추가: 완료된 태스크라면 아예 렌더링하지 않음 (라인 제거)
   if (isCompleted) {
     return null;
   }
@@ -74,7 +72,6 @@ export default function CalendarTaskItem({
   );
 }
 
-// --- Styles ---
 
 const StTaskBarWrapper = styled.div`
   height: 26px;

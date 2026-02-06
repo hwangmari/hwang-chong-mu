@@ -1,7 +1,6 @@
 "use client";
 import styled from "styled-components";
 
-// 게임 데이터는 여기서 관리하거나 상위에서 props로 받아도 되지만, 상수라 여기서 정의해도 무방
 const GAME_TYPES = [
   {
     id: "telepathy",
@@ -80,7 +79,6 @@ export default function GameSelector({
   );
 }
 
-// 스타일 (Main에서 가져옴)
 const StGameSection = styled.div`
   padding: 1rem 1.5rem;
   background: white;

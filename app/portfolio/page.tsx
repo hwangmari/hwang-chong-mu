@@ -30,7 +30,6 @@ export default function PortfolioPage() {
   );
 }
 
-// ✨ 스타일 정의
 
 const StContainer = styled.div`
   min-height: 100vh;

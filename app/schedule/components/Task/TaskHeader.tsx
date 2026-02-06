@@ -33,7 +33,6 @@ export default function TaskHeader({
   return (
     <StHeaderContainer>
       {isReadOnly ? (
-        // --- [읽기 모드] ---
         <>
           <StTitleText title={title}>{title}</StTitleText>
           {hasMemo && (
@@ -48,7 +47,6 @@ export default function TaskHeader({
           )}
         </>
       ) : (
-        // --- [수정 모드] ---
         <>
           <StInput
             type="text"
@@ -80,7 +78,6 @@ export default function TaskHeader({
   );
 }
 
-// --- Styles ---
 
 const StHeaderContainer = styled.div`
   display: flex;
@@ -137,7 +134,7 @@ const StButtonGroup = styled.div`
   gap: 4px;
 `;
 
-// 버튼 스타일 통합 (variant로 구분)
+/** 버튼 스타일 통합 (variant로 구분) */
 const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
   display: flex;
   align-items: center;

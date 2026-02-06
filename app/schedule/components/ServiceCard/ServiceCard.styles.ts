@@ -1,6 +1,6 @@
 import styled, { css } from "styled-components";
 
-// 공통 Input 스타일 (Mixin)
+/** 공통 Input 스타일 (Mixin) */
 const inputStyles = css`
   width: 100%;
   border: 1px solid #d1d5db;
@@ -40,7 +40,6 @@ export const StCard = styled.div<{
       }
     `}
 
-  // ✨ 완료된 프로젝트 카드 스타일
   background-color: ${(props) => (props.$isCompleted ? "#f9fafb" : "#fff")};
   opacity: ${(props) => (props.$isCompleted ? 0.7 : 1)};
   transition: all 0.3s ease;

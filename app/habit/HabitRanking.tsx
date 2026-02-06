@@ -1,4 +1,4 @@
-// app/habit/HabitRanking.tsx
+/** app/habit/HabitRanking.tsx */
 import styled from "styled-components";
 import { GoalItem } from "./useMonthlyTracker"; // GoalItem 타입 가져오기
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"; // 1등 왕관 아이콘 (없으면 생략 가능)
@@ -10,22 +10,21 @@ interface Props {
 }
 
 export default function HabitRanking({ items, rawLogs, themeColor }: Props) {
-  // 1. 항목별 횟수 계산 및 정렬 (내림차순)
+  /** 1. 항목별 횟수 계산 및 정렬 (내림차순) */
   const ranking = items
     .map((item) => {
       const count = rawLogs.filter((log) => log.item_id === item.id).length;
       return { ...item, count };
     })
     .sort((a, b) => b.count - a.count);
-  // 횟수가 0인 항목은 제외하고 싶다면 아래 주석 해제
-  // .filter((item) => item.count > 0);
+  /** .filter((item) => item.count > 0); */
 
-  // 기록이 없을 때 표시
+  /** 기록이 없을 때 표시 */
   if (ranking.length === 0 || ranking.every((r) => r.count === 0)) {
     return null;
   }
 
-  // 가장 높은 횟수 (그래프 비율 계산용)
+  /** 가장 높은 횟수 (그래프 비율 계산용) */
   const maxCount = ranking[0]?.count || 1;
 
   return (
@@ -56,7 +55,6 @@ export default function HabitRanking({ items, rawLogs, themeColor }: Props) {
   );
 }
 
-// ✨ 스타일 정의
 const StContainer = styled.div`
   margin-top: 1rem;
   padding: 1.5rem;

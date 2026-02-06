@@ -5,7 +5,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useMemo } from "react";
 import Image from "next/image";
 
-// 1. 이미지 데이터 타입 정의
+/** 1. 이미지 데이터 타입 정의 */
 export interface HistoryImage {
   src: string;
   alt: string;
@@ -14,7 +14,6 @@ export interface HistoryImage {
   className?: string;
 }
 
-// 2. 기존 인터페이스에 images 배열 추가
 export interface HistoryItem {
   id: number | string;
   date: string;
@@ -57,7 +56,7 @@ export default function ProjectItemList({
     return { years, groups };
   }, [items]);
 
-  // 렌더링 헬퍼 함수
+  /** 렌더링 헬퍼 함수 */
   const renderContent = (item: HistoryItem) => (
     <>
       <StTitleDate>
@@ -89,7 +88,7 @@ export default function ProjectItemList({
                 alt={img.alt}
                 width={img.width || 500} // 기본값 설정
                 height={img.height || 600}
-                // width/height를 모를 경우 fill={true} 사용 고려
+                /** width/height를 모를 경우 fill={true} 사용 고려 */
                 style={{
                   height: "auto",
                 }}
@@ -142,9 +141,8 @@ export default function ProjectItemList({
   );
 }
 
-// --- 스타일 컴포넌트 ---
 
-// 4. 애니메이션 정의 (누락되었던 부분)
+/** 4. 애니메이션 정의 (누락되었던 부분) */
 const fadeIn = keyframes`
   from {
     opacity: 0;

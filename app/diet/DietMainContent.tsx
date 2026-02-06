@@ -40,7 +40,6 @@ interface LogData {
 }
 
 export default function DietMainContent({ goalId }: { goalId: number }) {
-  // ✅ openModal 대신 openConfirm, openAlert 사용
   const { openConfirm, openAlert } = useModal();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -57,15 +56,12 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     memo: "",
   });
 
-  // ✅ 변경 감지용 기준 데이터
   const [initialLog, setInitialLog] = useState<LogData | null>(null);
 
   const [yesterdayLog, setYesterdayLog] = useState<LogData | null>(null);
   const [chartLogs, setChartLogs] = useState<LogData[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Dirty Check (현재 데이터와 기준 데이터 비교)
-  // 초기 로드 전(initialLog가 null)일 때는 변경 없는 것으로 간주
   const isDirty =
     initialLog && JSON.stringify(log) !== JSON.stringify(initialLog);
 
@@ -74,12 +70,11 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     fetchChartLogs(currentDate, viewMode);
   }, [currentDate, viewMode]);
 
-  // ✅ 브라우저 이탈 방지 (새로고침/닫기/외부 링크 이동 시 경고)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
         e.preventDefault();
-        // 크롬 등 대부분의 브라우저는 보안상의 이유로 커스텀 메시지를 지원하지 않고 기본 경고창을 띄웁니다.
+        /** 크롬 등 대부분의 브라우저는 보안상의 이유로 커스텀 메시지를 지원하지 않고 기본 경고창을 띄웁니다. */
         e.returnValue = "";
       }
     };
@@ -155,7 +150,6 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     if (data) setChartLogs(data);
   };
 
-  // ✅ 날짜 이동 핸들러 (openConfirm 적용)
   const handleDateMove = async (direction: "prev" | "next") => {
     const targetDate =
       direction === "prev"
@@ -167,9 +161,7 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
           : addDays(currentDate, 1);
 
     if (isDirty) {
-      // ✅ 공통 모달(Confirm) 호출
-      // "확인"을 누르면 true 반환 -> 이동 실행
-      // "취소"를 누르면 false 반환 -> 이동 안 함
+      /** "취소"를 누르면 false 반환 -> 이동 안 함 */
       const confirmed = await openConfirm(
         "작성 중인 내용이 저장되지 않았습니다.\n저장하지 않고 이동하시겠습니까?",
       );
@@ -200,12 +192,11 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
       .upsert(payload, { onConflict: "goal_id, date" });
 
     if (error) {
-      // ✅ 공통 모달(Alert) 호출
       await openAlert("저장에 실패했습니다 ㅠㅠ 잠시 후 다시 시도해주세요.");
     } else {
       await openAlert("오늘의 기록이 성공적으로 저장되었습니다! 💪");
 
-      // 저장 성공 시 로직
+      /** 저장 성공 시 로직 */
       fetchChartLogs(currentDate, viewMode);
       fetchLogAndYesterday(currentDate); // initialLog도 함께 업데이트됨
     }
@@ -220,25 +211,24 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     return isNaN(val) ? null : val;
   };
 
-  // 1. 필요한 몸무게 데이터 추출
   const w_prev_dinner = parseWeight(yesterdayLog?.weight_dinner); // 전날 저녁
   const w_curr_morning = parseWeight(log.weight_morning); // 오늘 아침
   const w_curr_dinner = parseWeight(log.weight_dinner); // 오늘 저녁
 
-  // 2. 변화량 계산
-  // A. 밤사이 변화 (보통 마이너스여야 좋음)
+  /** 2. 변화량 계산 */
+  /** A. 밤사이 변화 (보통 마이너스여야 좋음) */
   const overnightDiff =
     w_curr_morning !== null && w_prev_dinner !== null
       ? w_curr_morning - w_prev_dinner
       : null;
 
-  // B. 낮 동안 변화 (보통 플러스가 됨)
+  /** B. 낮 동안 변화 (보통 플러스가 됨) */
   const daytimeDiff =
     w_curr_dinner !== null && w_curr_morning !== null
       ? w_curr_dinner - w_curr_morning
       : null;
 
-  // C. 최종 비교 (오늘 저녁 - 어제 저녁) = A + B
+  /** C. 최종 비교 (오늘 저녁 - 어제 저녁) = A + B */
   const totalDiff =
     w_curr_dinner !== null && w_prev_dinner !== null
       ? w_curr_dinner - w_prev_dinner
@@ -372,7 +362,6 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
   );
 }
 
-// ✨ 스타일 정의
 const DateNav = styled.div`
   display: flex;
   justify-content: center;

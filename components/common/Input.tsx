@@ -30,7 +30,6 @@ export default function Input({
   );
 }
 
-// ✨ 스타일 정의
 
 const StContainer = styled.div`
   width: 100%;

@@ -250,7 +250,6 @@ export default function WeightChart({ logs, currentDate, viewMode }: Props) {
   );
 }
 
-// ✨ 스타일
 const ChartContainer = styled.div`
   width: 100%;
   padding: 0.5rem 0.5rem 0;
