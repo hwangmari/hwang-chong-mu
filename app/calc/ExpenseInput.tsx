@@ -1,8 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { ExpenseType } from "@/types";
-import { StSection } from "@/components/styled/layout.styled";
 
 interface Props {
   members: string[];
@@ -10,7 +10,7 @@ interface Props {
     payer: string,
     desc: string,
     amount: number,
-    type: ExpenseType
+    type: ExpenseType,
   ) => void;
 }
 
@@ -20,10 +20,8 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<ExpenseType>("COMMON");
 
-  // 멤버가 변경되면 payer 유효성 체크 및 자동 선택
   useEffect(() => {
     if (members.length > 0 && (!payer || !members.includes(payer))) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPayer(members[0]);
     }
   }, [members, payer]);
@@ -31,47 +29,57 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   const handleSubmit = () => {
     if (!payer) return alert("결제한 사람을 선택해주세요.");
     if (!desc || !amount) return alert("내용과 금액을 입력해주세요.");
-
     onAddExpense(payer, desc, parseInt(amount, 10), type);
     setDesc("");
     setAmount("");
   };
 
   return (
-    <StSection>
+    <StInputWrapper>
       <StSectionTitle>📝 지출 내역 입력</StSectionTitle>
-      <StInputGrid>
-        <StPayerSelection>
-          <div className="label">결제한 사람</div>
-          <StPayerList>
-            {members.length > 0 ? (
-              members.map((m) => (
-                <StPayerChip
-                  key={m}
-                  $active={payer === m}
-                  onClick={() => setPayer(m)}
-                >
-                  {m}
-                </StPayerChip>
-              ))
-            ) : (
-              <span className="no-member">멤버를 먼저 추가해주세요</span>
-            )}
-          </StPayerList>
-        </StPayerSelection>
 
+      {/* 1. 결제자 선택 칩 */}
+      <StPayerScroll>
+        {members.map((m) => (
+          <StPayerChip
+            key={m}
+            $active={payer === m}
+            onClick={() => setPayer(m)}
+          >
+            {m}
+          </StPayerChip>
+        ))}
+      </StPayerScroll>
+
+      {/* ✨ 2. 선택된 이름 강조 가이드 */}
+      <StSelectedGuide>
+        {payer ? (
+          <p>
+            <span>{payer}</span>님이 결제한 내역을 입력하고 있어요
+          </p>
+        ) : (
+          <p>누가 결제했나요?</p>
+        )}
+      </StSelectedGuide>
+
+      {/* 3. 입력 필드 그룹 */}
+      <StInputRow>
         <StInput
-          placeholder="사용 내역 (예: 흑돼지 삼겹살)"
+          placeholder="사용 내역"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
         />
         <StInput
           type="number"
-          placeholder="금액 (원)"
+          className="amount-input"
+          placeholder="금액"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
+      </StInputRow>
+
+      <StBottomRow>
         <StToggleGroup>
           <StRadioLabel $active={type === "COMMON"}>
             <input
@@ -79,7 +87,7 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
               checked={type === "COMMON"}
               onChange={() => setType("COMMON")}
             />
-            공동 경비 (N빵)
+            N빵
           </StRadioLabel>
           <StRadioLabel $active={type === "PERSONAL"}>
             <input
@@ -87,14 +95,38 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
               checked={type === "PERSONAL"}
               onChange={() => setType("PERSONAL")}
             />
-            개인 지출
+            개인
           </StRadioLabel>
         </StToggleGroup>
-        <StAddButton onClick={handleSubmit}>등록하기</StAddButton>
-      </StInputGrid>
-    </StSection>
+        <StMiniAddButton onClick={handleSubmit}>등록</StMiniAddButton>
+      </StBottomRow>
+    </StInputWrapper>
   );
 }
+
+// 스타일 가이드 추가
+const StInputWrapper = styled.div`
+  margin-bottom: 0.75rem;
+  background-color: white;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+const StSelectedGuide = styled.div`
+  margin-bottom: 0.75rem;
+  padding-left: 0.2rem;
+  p {
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.colors.gray500};
+  }
+  span {
+    color: ${({ theme }) => theme.semantic.primary};
+    font-weight: 700;
+    margin-right: 0.2rem;
+  }
+`;
 
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;
@@ -102,33 +134,23 @@ const StSectionTitle = styled.h2`
   color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 1.25rem;
 `;
-const StInputGrid = styled.div`
+
+const StPayerScroll = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-const StPayerSelection = styled.div`
-  .label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.gray500};
-    margin-bottom: 0.5rem;
-  }
-  .no-member {
-    font-size: 0.875rem;
-    color: ${({ theme }) => theme.colors.gray400};
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  &::-webkit-scrollbar {
+    display: none;
   }
 `;
-const StPayerList = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-`;
+
 const StPayerChip = styled.button<{ $active: boolean }>`
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  font-size: 0.95rem;
-  font-weight: ${({ $active }) => ($active ? "700" : "500")};
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   border: 1px solid
     ${({ theme, $active }) =>
       $active ? theme.semantic.primary : theme.semantic.border};
@@ -136,51 +158,60 @@ const StPayerChip = styled.button<{ $active: boolean }>`
     $active ? theme.semantic.primaryLight : theme.colors.white};
   color: ${({ theme, $active }) =>
     $active ? theme.semantic.primary : theme.colors.gray600};
-  transition: all 0.2s;
-  &:hover {
-    border-color: ${({ theme }) => theme.semantic.primary};
+`;
+
+const StInputRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  .amount-input {
+    width: 40%;
   }
 `;
+
 const StInput = styled.input`
-  padding: 0.875rem;
+  flex: 1;
+  padding: 0.75rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
-  border-radius: 0.75rem;
-  outline: none;
-  font-size: 0.95rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
   background-color: ${({ theme }) => theme.colors.gray50};
   &:focus {
+    background-color: white;
     border-color: ${({ theme }) => theme.semantic.primary};
-    background-color: ${({ theme }) => theme.colors.white};
   }
 `;
+
+const StBottomRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
 const StToggleGroup = styled.div`
   display: flex;
-  gap: 1.5rem;
-  padding: 0.5rem 0;
+  gap: 1rem;
 `;
+
 const StRadioLabel = styled.label<{ $active: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.95rem;
   color: ${({ theme, $active }) =>
     $active ? theme.semantic.primary : theme.colors.gray500};
-  font-weight: ${({ $active }) => ($active ? "700" : "500")};
+  font-weight: 600;
   input {
     accent-color: ${({ theme }) => theme.semantic.primary};
   }
 `;
-const StAddButton = styled.button`
+
+const StMiniAddButton = styled.button`
   background-color: ${({ theme }) => theme.semantic.primary};
   color: white;
-  padding: 1rem;
-  margin-top: 0.5rem;
-  font-size: 1rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  width: 100%;
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.blue700};
-  }
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.6rem;
+  font-weight: 700;
+  font-size: 0.9rem;
 `;

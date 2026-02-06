@@ -26,14 +26,32 @@ export default function MemberManager({
 
   return (
     <StSection>
-      <StSectionTitle>👥 참여 멤버 ({members.length}명)</StSectionTitle>
-      <StFixedButton>
+      <StHeaderRow>
+        <StSectionTitle>
+          👥 참여 멤버 <span>{members.length}</span>
+        </StSectionTitle>
         <ShareButton />
-      </StFixedButton>
+      </StHeaderRow>
+
       <StFlexRow>
+        {/* 입력 그룹을 상단으로 배치 */}
+        <StInputGroup>
+          <StInput
+            placeholder="이름 추가 (예: 황총무)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.nativeEvent.isComposing) return;
+              if (e.key === "Enter") handleAdd();
+            }}
+          />
+          <StAddButton onClick={handleAdd}>추가</StAddButton>
+        </StInputGroup>
+
+        {/* 멤버 태그 리스트 */}
         <StTags>
           {members.length === 0 ? (
-            <StEmptyMsg>정산할 멤버를 추가해주세요.</StEmptyMsg>
+            <StEmptyMsg>함께 정산할 멤버를 추가해 보세요!</StEmptyMsg>
           ) : (
             members.map((m) => (
               <StTag key={m}>
@@ -45,100 +63,89 @@ export default function MemberManager({
             ))
           )}
         </StTags>
-        <StInputGroup>
-          <StInput
-            placeholder="이름 (예: 황총무)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              // ✨ [수정] 한글 조합 중(isComposing)이면 함수 실행을 막습니다.
-              if (e.nativeEvent.isComposing) return;
-              if (e.key === "Enter") handleAdd();
-            }}
-          />
-          <StButton onClick={handleAdd}>추가</StButton>
-        </StInputGroup>
       </StFlexRow>
     </StSection>
   );
 }
 
-// ... (스타일 컴포넌트들은 기존과 동일합니다)
-const StFixedButton = styled.div`
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
+const StHeaderRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 `;
+
 const StSectionTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray800};
+  span {
+    color: ${({ theme }) => theme.semantic.primary};
+    margin-left: 0.25rem;
+  }
 `;
+
 const StFlexRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: 1rem;
 `;
-const StTags = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  min-height: 2rem;
-  align-items: center;
-`;
-const StEmptyMsg = styled.span`
-  color: ${({ theme }) => theme.colors.gray400};
-  font-size: 0.9rem;
-`;
-const StTag = styled.span`
-  background-color: ${({ theme }) => theme.semantic.primaryLight};
-  color: ${({ theme }) => theme.semantic.primary};
-  padding: 0.35rem 0.6rem 0.35rem 0.85rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-`;
-const StDeleteMemberBtn = styled.button`
-  color: ${({ theme }) => theme.semantic.primary};
-  font-size: 1.1rem;
-  line-height: 1;
-  opacity: 0.6;
-  padding: 0 0.1rem;
-  &:hover {
-    opacity: 1;
-    color: ${({ theme }) => theme.semantic.danger};
-  }
-`;
+
 const StInputGroup = styled.div`
   display: flex;
   gap: 0.5rem;
 `;
+
 const StInput = styled.input`
-  padding: 0.875rem;
+  flex: 1;
+  padding: 0.75rem 1rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
   border-radius: 0.75rem;
-  flex: 1;
-  outline: none;
   font-size: 0.95rem;
-  transition: border-color 0.2s;
   background-color: ${({ theme }) => theme.colors.gray50};
   &:focus {
+    background-color: white;
     border-color: ${({ theme }) => theme.semantic.primary};
-    background-color: ${({ theme }) => theme.colors.white};
   }
 `;
-const StButton = styled.button`
+
+const StAddButton = styled.button`
   background-color: ${({ theme }) => theme.colors.gray800};
   color: white;
-  padding: 0.5rem 1.25rem;
+  padding: 0 1.25rem;
   border-radius: 0.75rem;
   font-weight: 600;
-  transition: background-color 0.2s;
+`;
+
+const StTags = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const StTag = styled.span`
+  background-color: white;
+  color: ${({ theme }) => theme.colors.gray700};
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
+const StDeleteMemberBtn = styled.button`
+  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 1rem;
   &:hover {
-    background-color: ${({ theme }) => theme.colors.gray900};
+    color: ${({ theme }) => theme.semantic.danger};
   }
+`;
+
+const StEmptyMsg = styled.div`
+  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
 `;
