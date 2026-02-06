@@ -29,6 +29,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* N빵 계산기 카드*/}
+        <Link href="/calc" passHref>
+          <StCard>
+            <StIconBox>💸</StIconBox>
+            <StCardContent>
+              <StCardTitle>N빵 계산기</StCardTitle>
+              <StCardDesc>복잡한 셈은 덜어내고</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 습관 관리 카드 */}
         <Link href="/habit" passHref>
           <StCard>
@@ -47,17 +58,6 @@ export default function Home() {
             <StCardContent>
               <StCardTitle>체중 관리</StCardTitle>
               <StCardDesc>평생 숙제 다이어트!</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* N빵 계산기 카드*/}
-        <Link href="/calc" passHref>
-          <StCard>
-            <StIconBox>💸</StIconBox>
-            <StCardContent>
-              <StCardTitle>N빵 계산기</StCardTitle>
-              <StCardDesc>복잡한 셈은 덜어내고</StCardDesc>
             </StCardContent>
           </StCard>
         </Link>
@@ -101,7 +101,6 @@ export default function Home() {
     </StMainContainer>
   );
 }
-
 
 const StMainContainer = styled.main`
   background-color: ${({ theme }) => theme.colors.gray50};

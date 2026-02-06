@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,9 +13,9 @@ const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
   { path: "/schedule", label: "업무 캘린더" },
   { path: "/meeting", label: "약속 잡기" },
+  { path: "/calc", label: "N빵 계산기" },
   { path: "/habit", label: "습관 관리" },
   { path: "/diet", label: "체중 관리" },
-  { path: "/calc", label: "N빵 계산기" },
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
 ];
@@ -43,7 +44,6 @@ export default function GlobalHeader() {
   useEffect(() => {
     setIsMenuOpen(false);
     window.scrollTo(0, 0);
-
 
     if (pathname.startsWith("/game/")) {
       const parts = pathname.split("/");
