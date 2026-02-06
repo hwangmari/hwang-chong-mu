@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React from "react";
 import { ExpenseType } from "@/types";
 
 // Components
@@ -7,8 +7,9 @@ import MemberManager from "./MemberManager";
 import ExpenseInput from "./ExpenseInput";
 import ExpenseList from "./ExpenseList";
 import SettlementReport from "./SettlementReport";
+import SettlementList from "./SettlementList";
+import ShareButton from "./ShareButton";
 
-// Types
 interface Expense {
   id: number;
   payer: string;
@@ -20,7 +21,6 @@ interface Expense {
 interface CalcMainContentProps {
   members: string[];
   expenses: Expense[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settlementResult: any;
 
   // Handlers
@@ -30,7 +30,7 @@ interface CalcMainContentProps {
     payer: string,
     desc: string,
     amount: number,
-    type: ExpenseType
+    type: ExpenseType,
   ) => void;
   onDeleteExpense: (id: number) => void;
   onUpdateExpense: (id: number, amount: number) => void;
@@ -46,6 +46,9 @@ export default function CalcMainContent({
   onDeleteExpense,
   onUpdateExpense,
 }: CalcMainContentProps) {
+  // settlementResult에서 필요한 값들을 미리 뽑아둡니다.
+  const { totalCommonSpend, perPersonShare, settlements } = settlementResult;
+
   return (
     <>
       <MemberManager
@@ -62,9 +65,24 @@ export default function CalcMainContent({
         onUpdate={onUpdateExpense}
       />
 
+      {/* 전체 요약 + 상세 리포트 (합쳐진 버전) */}
       <SettlementReport
-        result={settlementResult}
-        hasData={expenses.length > 0 || members.length > 0}
+        members={members}
+        expenses={expenses}
+        perPersonShare={perPersonShare}
+        totalAmount={totalCommonSpend}
+        settlements={settlements}
+      />
+
+      {/* 송금 목록 (직관적으로 누가 누구에게 줄지 먼저 보여줌) */}
+      <SettlementList settlements={settlements} />
+
+      {/* 분리된 카톡 공유 버튼 */}
+      <ShareButton
+        totalAmount={totalCommonSpend}
+        perPersonShare={perPersonShare}
+        membersCount={members.length}
+        settlements={settlements}
       />
     </>
   );

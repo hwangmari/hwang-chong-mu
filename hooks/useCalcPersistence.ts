@@ -46,7 +46,7 @@ export const useCalcPersistence = () => {
   const updateRoomData = async (
     roomId: string,
     members: string[],
-    expenses: Expense[]
+    expenses: Expense[],
   ) => {
     try {
       console.log("자동 저장 시작...", roomId); // 디버깅용 로그
@@ -66,7 +66,7 @@ export const useCalcPersistence = () => {
   const saveDetailsToSupabase = async (
     roomId: string,
     members: string[],
-    expenses: Expense[]
+    expenses: Expense[],
   ) => {
     if (members.length > 0) {
       const memberInserts = members.map((name) => ({ room_id: roomId, name }));

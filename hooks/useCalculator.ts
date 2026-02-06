@@ -1,65 +1,93 @@
 import { useMemo } from "react";
-import { Expense } from "@/types"; // 타입은 별도 파일이나 page.tsx 상단에 정의
+import { Expense } from "@/types";
 
-export const useCalculator = (members: string[], expenses: Expense[]) => {
+export const useCalculator = (
+  members: string[],
+  expenses: Expense[],
+  unit: number = 10, // 정산 단위 (기본 10원 단위)
+) => {
   return useMemo(() => {
-    if (members.length === 0)
+    // 1. 초기 예외 처리
+    if (members.length === 0) {
       return { totalCommonSpend: 0, perPersonShare: 0, settlements: [] };
+    }
 
+    // 2. 공동 지출 필터링 및 총액 계산
     const commonExpenses = expenses.filter((e) => e.type === "COMMON");
     const totalCommonSpend = commonExpenses.reduce(
       (acc, cur) => acc + cur.amount,
-      0
+      0,
     );
-    const perPersonShare = totalCommonSpend / members.length;
 
+    // 3. 1인당 부담금 계산 (정해진 단위로 절사: 예 36,375원 -> 36,370원)
+    // 나머지 잔차는 지출이 가장 많았던 '황총무'가 감수하거나 별도 처리하는 것이 일반적입니다.
+    const perPersonShare =
+      Math.floor(totalCommonSpend / members.length / unit) * unit;
+
+    // 4. 멤버별 차액(Balance) 계산
     const balances: { [key: string]: number } = {};
-
-    // 초기화
-    members.forEach((m) => (balances[m] = 0));
-
     members.forEach((member) => {
       const paid = commonExpenses
         .filter((e) => e.payer === member)
         .reduce((acc, cur) => acc + cur.amount, 0);
+
+      // (내가 낸 돈) - (내가 내야 할 돈)
+      // 결과값이 (+)면 받아야 할 사람, (-)면 보내야 할 사람
       balances[member] = paid - perPersonShare;
     });
 
+    // 5. 정산 대상자 분류 (받을 사람 / 보낼 사람)
     const receivers: { name: string; amount: number }[] = [];
     const senders: { name: string; amount: number }[] = [];
 
     Object.entries(balances).forEach(([name, bal]) => {
-      if (bal > 0) receivers.push({ name, amount: bal });
-      else if (bal < -0.01) senders.push({ name, amount: -bal }); // 부동소수점 오차 보정
+      // 1원 미만의 미세 오차는 무시
+      if (bal >= 1) {
+        receivers.push({ name, amount: Math.floor(bal) });
+      } else if (bal <= -1) {
+        senders.push({ name, amount: Math.abs(Math.floor(bal)) });
+      }
     });
 
+    // 큰 금액부터 정렬하여 송금 횟수 최소화 (Greedy Algorithm)
     receivers.sort((a, b) => b.amount - a.amount);
     senders.sort((a, b) => b.amount - a.amount);
 
-    const settlements = [];
-    let i = 0;
-    let j = 0;
+    // 6. 매칭 로직 (Settlements)
+    const settlements: { from: string; to: string; amount: number }[] = [];
+    let i = 0; // receivers index
+    let j = 0; // senders index
 
-    while (i < receivers.length && j < senders.length) {
-      const receiver = receivers[i];
-      const sender = senders[j];
+    // 복사본을 만들어 루프 돌리기
+    const localReceivers = receivers.map((r) => ({ ...r }));
+    const localSenders = senders.map((s) => ({ ...s }));
+
+    while (i < localReceivers.length && j < localSenders.length) {
+      const receiver = localReceivers[i];
+      const sender = localSenders[j];
+
+      // 둘 중 작은 금액만큼 이동
       const amountToTransfer = Math.min(receiver.amount, sender.amount);
 
       if (amountToTransfer > 0) {
         settlements.push({
           from: sender.name,
           to: receiver.name,
-          amount: Math.round(amountToTransfer),
+          amount: amountToTransfer,
         });
       }
 
       receiver.amount -= amountToTransfer;
       sender.amount -= amountToTransfer;
 
-      if (receiver.amount < 1) i++;
-      if (sender.amount < 1) j++;
+      if (receiver.amount <= 0) i++;
+      if (sender.amount <= 0) j++;
     }
 
-    return { totalCommonSpend, perPersonShare, settlements };
-  }, [expenses, members]);
+    return {
+      totalCommonSpend,
+      perPersonShare,
+      settlements,
+    };
+  }, [expenses, members, unit]);
 };

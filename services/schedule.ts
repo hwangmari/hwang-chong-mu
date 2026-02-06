@@ -21,7 +21,7 @@ const mapServiceFromDB = (svc: any, tasks: any[] = []): ServiceSchedule => ({
   serviceName: svc.name,
   color: svc.color,
   isCompleted: svc.is_completed ?? false,
-  isHidden: svc.is_hidden ?? false, // ✨ [필수] DB에서 눈꺼짐 상태 가져오기
+  isHidden: svc.is_hidden ?? false,
   tasks: tasks.map(mapTaskFromDB),
 });
 
