@@ -21,7 +21,13 @@ interface Expense {
 interface CalcMainContentProps {
   members: string[];
   expenses: Expense[];
-  settlementResult: any;
+  settlementResult: {
+    totalCommonSpend: number;
+    perPersonShare: number;
+    settlements: { from: string; to: string; amount: number }[];
+    remainder: number;
+    remainderReceiver: string | null;
+  };
 
   // Handlers
   onAddMember: (name: string) => void;
@@ -47,7 +53,13 @@ export default function CalcMainContent({
   onUpdateExpense,
 }: CalcMainContentProps) {
   // settlementResult에서 필요한 값들을 미리 뽑아둡니다.
-  const { totalCommonSpend, perPersonShare, settlements } = settlementResult;
+  const {
+    totalCommonSpend,
+    perPersonShare,
+    settlements,
+    remainder,
+    remainderReceiver,
+  } = settlementResult;
 
   return (
     <>
@@ -72,6 +84,8 @@ export default function CalcMainContent({
         perPersonShare={perPersonShare}
         totalAmount={totalCommonSpend}
         settlements={settlements}
+        remainder={remainder}
+        remainderReceiver={remainderReceiver}
       />
 
       {/* 송금 목록 (직관적으로 누가 누구에게 줄지 먼저 보여줌) */}
@@ -83,6 +97,8 @@ export default function CalcMainContent({
         perPersonShare={perPersonShare}
         membersCount={members.length}
         settlements={settlements}
+        remainder={remainder}
+        remainderReceiver={remainderReceiver}
       />
     </>
   );

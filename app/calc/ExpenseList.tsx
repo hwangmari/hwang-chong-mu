@@ -3,6 +3,7 @@ import { StSection } from "@/components/styled/layout.styled";
 import { Expense } from "@/types";
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
+import SectionTitle from "./components/ui/SectionTitle";
 
 interface Props {
   expenses: Expense[];
@@ -13,6 +14,8 @@ interface Props {
 export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  // ✅ 아코디언 상태 추가 (기본값 true)
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const groupedExpenses = useMemo(() => {
     const groups: { [key: string]: Expense[] } = {};
@@ -33,10 +36,14 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
   };
 
   const saveEditing = (id: number) => {
-    if (!editAmount || isNaN(Number(editAmount))) {
-      return alert("유효한 금액을 입력해주세요.");
+    const parsedAmount = Number(editAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return alert("금액은 0보다 큰 숫자여야 합니다.");
     }
-    onUpdate(id, parseInt(editAmount, 10));
+    if (!Number.isInteger(parsedAmount)) {
+      return alert("금액은 정수로 입력해주세요.");
+    }
+    onUpdate(id, parsedAmount);
     setEditingId(null);
   };
 
@@ -44,88 +51,105 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
 
   return (
     <StSection>
-      <StHeaderRow>
-        <StSectionTitle>🧾 지출 목록</StSectionTitle>
+      {/* 클릭 시 접고 펼칠 수 있도록 onClick 추가 */}
+      <StHeaderRow
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{ cursor: "pointer" }}
+      >
+        <SectionTitle>
+          <StTitleContent>
+            🧾 지출 목록
+            {/* 아이콘으로 상태 표시 */}
+            <span className="icon">{isExpanded ? "▼" : "▶"}</span>
+          </StTitleContent>
+        </SectionTitle>
         <StTotalText>
           Total <strong>{currentTotal.toLocaleString()}</strong>원
         </StTotalText>
       </StHeaderRow>
 
-      <StGroupContainer>
-        {Object.entries(groupedExpenses).map(([payer, items]) => (
-          <div key={payer}>
-            <StPayerHeader>
-              <span className="name">{payer}</span>
-              <span className="subtotal">
-                {items
-                  .reduce((acc, cur) => acc + cur.amount, 0)
-                  .toLocaleString()}
-                원
-              </span>
-            </StPayerHeader>
+      {/* ✅ isExpanded가 true일 때만 목록 노출 */}
+      {isExpanded && (
+        <StGroupContainer>
+          {Object.entries(groupedExpenses).map(([payer, items]) => (
+            <div key={payer}>
+              <StPayerHeader>
+                <span className="name">{payer}</span>
+                <span className="subtotal">
+                  {items
+                    .reduce((acc, cur) => acc + cur.amount, 0)
+                    .toLocaleString()}
+                  원
+                </span>
+              </StPayerHeader>
 
-            <StList>
-              {items.map((e) => (
-                <StListItem key={e.id} $isPersonal={e.type === "PERSONAL"}>
-                  <div className="row-main">
-                    <div className="content">
-                      <span className="desc">{e.description}</span>
-                      {e.type === "PERSONAL" && <StGrayBadge>개인</StGrayBadge>}
+              <StList>
+                {items.map((e) => (
+                  <StListItem key={e.id} $isPersonal={e.type === "PERSONAL"}>
+                    <div className="row-main">
+                      <div className="content">
+                        <span className="desc">{e.description}</span>
+                        {e.type === "PERSONAL" && (
+                          <StGrayBadge>개인</StGrayBadge>
+                        )}
+                      </div>
+
+                      <StRightSection>
+                        {editingId === e.id ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editAmount}
+                              autoFocus
+                              onChange={(ev) => setEditAmount(ev.target.value)}
+                              onKeyDown={(ev) => {
+                                if (ev.key === "Enter") saveEditing(e.id);
+                                if (ev.key === "Escape") setEditingId(null);
+                              }}
+                            />
+                            <span className="unit">원</span>
+                            <StFixedBtnGroup>
+                              <button onClick={() => saveEditing(e.id)}>
+                                완료
+                              </button>
+                              <span className="divider">|</span>
+                              <button onClick={() => setEditingId(null)}>
+                                취소
+                              </button>
+                            </StFixedBtnGroup>
+                          </>
+                        ) : (
+                          <>
+                            <span className="amount">
+                              {e.amount.toLocaleString()}원
+                            </span>
+                            <StFixedBtnGroup>
+                              <button
+                                onClick={() => startEditing(e.id, e.amount)}
+                              >
+                                수정
+                              </button>
+                              <span className="divider">|</span>
+                              <button onClick={() => onDelete(e.id)}>
+                                삭제
+                              </button>
+                            </StFixedBtnGroup>
+                          </>
+                        )}
+                      </StRightSection>
                     </div>
-
-                    <StRightSection>
-                      {editingId === e.id ? (
-                        <>
-                          <input
-                            type="text"
-                            value={editAmount}
-                            autoFocus
-                            onChange={(ev) => setEditAmount(ev.target.value)}
-                            onKeyDown={(ev) => {
-                              if (ev.key === "Enter") saveEditing(e.id);
-                              if (ev.key === "Escape") setEditingId(null);
-                            }}
-                          />
-                          <span className="unit">원</span>
-                          <StFixedBtnGroup>
-                            <button onClick={() => saveEditing(e.id)}>
-                              완료
-                            </button>
-                            <span className="divider">|</span>
-                            <button onClick={() => setEditingId(null)}>
-                              취소
-                            </button>
-                          </StFixedBtnGroup>
-                        </>
-                      ) : (
-                        <>
-                          <span className="amount">
-                            {e.amount.toLocaleString()}원
-                          </span>
-                          <StFixedBtnGroup>
-                            <button
-                              onClick={() => startEditing(e.id, e.amount)}
-                            >
-                              수정
-                            </button>
-                            <span className="divider">|</span>
-                            <button onClick={() => onDelete(e.id)}>삭제</button>
-                          </StFixedBtnGroup>
-                        </>
-                      )}
-                    </StRightSection>
-                  </div>
-                </StListItem>
-              ))}
-            </StList>
-          </div>
-        ))}
-      </StGroupContainer>
+                  </StListItem>
+                ))}
+              </StList>
+            </div>
+          ))}
+        </StGroupContainer>
+      )}
     </StSection>
   );
 }
 
-// --- Styles ---
+// --- Styles (수정된 부분) ---
 
 const StHeaderRow = styled.div`
   display: flex;
@@ -134,13 +158,24 @@ const StHeaderRow = styled.div`
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+
+  /* 호버 시 시각적 피드백 */
+  &:hover h2 {
+    color: ${({ theme }) => theme.colors.gray900};
+  }
 `;
 
-const StSectionTitle = styled.h2`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray800};
-  margin: 0;
+const StTitleContent = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s;
+
+  .icon {
+    font-size: 0.7rem;
+    color: ${({ theme }) => theme.colors.gray400};
+    width: 12px;
+  }
 `;
 
 const StTotalText = styled.span`

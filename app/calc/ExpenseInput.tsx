@@ -1,7 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
+import Card from "./components/ui/Card";
+import SectionTitle from "./components/ui/SectionTitle";
 import { ExpenseType } from "@/types";
 
 interface Props {
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export default function ExpenseInput({ members, onAddExpense }: Props) {
+  const theme = useTheme();
   const [payer, setPayer] = useState("");
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
@@ -29,77 +32,93 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
   const handleSubmit = () => {
     if (!payer) return alert("결제한 사람을 선택해주세요.");
     if (!desc || !amount) return alert("내용과 금액을 입력해주세요.");
-    onAddExpense(payer, desc, parseInt(amount, 10), type);
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return alert("금액은 0보다 큰 숫자여야 합니다.");
+    }
+    if (!Number.isInteger(parsedAmount)) {
+      return alert("금액은 정수로 입력해주세요.");
+    }
+    onAddExpense(payer, desc, parsedAmount, type);
     setDesc("");
     setAmount("");
   };
 
   return (
     <StInputWrapper>
-      <StSectionTitle>📝 지출 내역 입력</StSectionTitle>
+      <Card
+        padding="1.25rem"
+        radius="1rem"
+        shadow="0 2px 4px rgba(0, 0, 0, 0.02)"
+        borderColor={theme.semantic.border}
+      >
+        <StSectionTitle>
+          <SectionTitle>📝 지출 내역 입력</SectionTitle>
+        </StSectionTitle>
 
-      {/* 1. 결제자 선택 칩 */}
-      <StPayerScroll>
-        {members.map((m) => (
-          <StPayerChip
-            key={m}
-            $active={payer === m}
-            onClick={() => setPayer(m)}
-          >
-            {m}
-          </StPayerChip>
-        ))}
-      </StPayerScroll>
+        {/* 1. 결제자 선택 칩 */}
+        <StPayerScroll>
+          {members.map((m) => (
+            <StPayerChip
+              key={m}
+              $active={payer === m}
+              onClick={() => setPayer(m)}
+            >
+              {m}
+            </StPayerChip>
+          ))}
+        </StPayerScroll>
 
-      {/* ✨ 2. 선택된 이름 강조 가이드 */}
-      <StSelectedGuide>
-        {payer ? (
-          <p>
-            <span>{payer}</span>님이 결제한 내역을 입력하고 있어요
-          </p>
-        ) : (
-          <p>누가 결제했나요?</p>
-        )}
-      </StSelectedGuide>
+        {/* ✨ 2. 선택된 이름 강조 가이드 */}
+        <StSelectedGuide>
+          {payer ? (
+            <p>
+              <span>{payer}</span>님이 결제한 내역을 입력하고 있어요
+            </p>
+          ) : (
+            <p>누가 결제했나요?</p>
+          )}
+        </StSelectedGuide>
 
-      {/* 3. 입력 필드 그룹 */}
-      <StInputRow>
-        <StInput
-          placeholder="사용 내역"
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-        />
-        <StInput
-          type="number"
-          className="amount-input"
-          placeholder="금액"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        />
-      </StInputRow>
+        {/* 3. 입력 필드 그룹 */}
+        <StInputRow>
+          <StInput
+            placeholder="사용 내역"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+          />
+          <StInput
+            type="number"
+            className="amount-input"
+            placeholder="금액"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
+        </StInputRow>
 
-      <StBottomRow>
-        <StToggleGroup>
-          <StRadioLabel $active={type === "COMMON"}>
-            <input
-              type="radio"
-              checked={type === "COMMON"}
-              onChange={() => setType("COMMON")}
-            />
-            N빵
-          </StRadioLabel>
-          <StRadioLabel $active={type === "PERSONAL"}>
-            <input
-              type="radio"
-              checked={type === "PERSONAL"}
-              onChange={() => setType("PERSONAL")}
-            />
-            개인
-          </StRadioLabel>
-        </StToggleGroup>
-        <StMiniAddButton onClick={handleSubmit}>등록</StMiniAddButton>
-      </StBottomRow>
+        <StBottomRow>
+          <StToggleGroup>
+            <StRadioLabel $active={type === "COMMON"}>
+              <input
+                type="radio"
+                checked={type === "COMMON"}
+                onChange={() => setType("COMMON")}
+              />
+              N빵
+            </StRadioLabel>
+            <StRadioLabel $active={type === "PERSONAL"}>
+              <input
+                type="radio"
+                checked={type === "PERSONAL"}
+                onChange={() => setType("PERSONAL")}
+              />
+              개인
+            </StRadioLabel>
+          </StToggleGroup>
+          <StMiniAddButton onClick={handleSubmit}>등록</StMiniAddButton>
+        </StBottomRow>
+      </Card>
     </StInputWrapper>
   );
 }
@@ -107,11 +126,6 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
 // 스타일 가이드 추가
 const StInputWrapper = styled.div`
   margin-bottom: 0.75rem;
-  background-color: white;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  border-radius: 1rem;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
 const StSelectedGuide = styled.div`
@@ -128,10 +142,7 @@ const StSelectedGuide = styled.div`
   }
 `;
 
-const StSectionTitle = styled.h2`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray800};
+const StSectionTitle = styled.div`
   margin-bottom: 1.25rem;
 `;
 

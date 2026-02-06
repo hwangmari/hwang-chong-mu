@@ -1,12 +1,15 @@
 "use client";
 
 import styled from "styled-components";
+import { useState } from "react";
 
 interface ShareButtonProps {
   totalAmount: number;
   perPersonShare: number;
   membersCount: number;
   settlements: { from: string; to: string; amount: number }[];
+  remainder: number;
+  remainderReceiver: string | null;
 }
 
 export default function ShareButton({
@@ -14,26 +17,45 @@ export default function ShareButton({
   perPersonShare,
   membersCount,
   settlements,
+  remainder,
+  remainderReceiver,
 }: ShareButtonProps) {
-  const handleShare = () => {
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
     const settlementText = settlements
       .map((s) => `💸 ${s.from} ➔ ${s.to}: ${s.amount.toLocaleString()}원`)
       .join("\n");
 
-    const text = `[황총무 정산 리포트] 🐥\n\n💰 총 지출: ${totalAmount.toLocaleString()}원\n👥 인원: ${membersCount}명\n📢 1인당: ${perPersonShare.toLocaleString()}원\n\n--------------------------\n${settlementText}\n--------------------------\n황총무와 함께 즐거운 정산 완료! ✨`;
+    const remainderText =
+      remainder > 0 && remainderReceiver
+        ? `\n🧮 절사 잔액: ${remainder.toLocaleString()}원 (${remainderReceiver}에게 반영)`
+        : "";
 
-    if (navigator.share) {
-      navigator.share({ title: "황총무 정산", text });
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
+    const text = `[황총무 정산 리포트] 🐥\n\n💰 총 지출: ${totalAmount.toLocaleString()}원\n👥 인원: ${membersCount}명\n📢 1인당: ${perPersonShare.toLocaleString()}원${remainderText}\n\n--------------------------\n${settlementText}\n--------------------------\n황총무와 함께 즐거운 정산 완료! ✨`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "황총무 정산", text });
+      } else {
+        await navigator.clipboard.writeText(text);
         alert("정산 내역이 복사되었습니다! 카톡에 붙여넣어주세요. 💌");
-      });
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      console.error("공유 실패:", error);
+    } finally {
+      setIsSharing(false);
     }
   };
 
   return (
-    <StShareButton onClick={handleShare}>
-      💬 카톡 공유용 내역 복사하기
+    <StShareButton onClick={handleShare} disabled={isSharing}>
+      {isSharing ? "공유 준비 중..." : "💬 카톡 공유용 내역 복사하기"}
     </StShareButton>
   );
 }
@@ -55,5 +77,10 @@ const StShareButton = styled.button`
 
   &:hover {
     opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;

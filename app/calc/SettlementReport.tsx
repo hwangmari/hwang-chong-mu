@@ -1,6 +1,7 @@
 "use client";
 
 import styled from "styled-components";
+import Card from "./components/ui/Card";
 import { Expense } from "@/types";
 
 interface SettlementReportProps {
@@ -9,6 +10,8 @@ interface SettlementReportProps {
   perPersonShare: number;
   totalAmount: number;
   settlements: { from: string; to: string; amount: number }[];
+  remainder: number;
+  remainderReceiver: string | null;
 }
 
 export default function SettlementReport({
@@ -16,70 +19,77 @@ export default function SettlementReport({
   expenses,
   perPersonShare,
   totalAmount,
+  remainder,
+  remainderReceiver,
 }: SettlementReportProps) {
   return (
     <StTotalCard>
-      {/* 1. 상단 요약 영역 (기존 SettlementSummary 역할) */}
-      <StSummarySection>
-        <div className="row">
-          <span className="label">총 지출 금액</span>
-          <span className="value">{totalAmount.toLocaleString()}원</span>
-        </div>
-        <div className="divider" />
-        <div className="row highlight">
-          <span className="label">1인당 부담금</span>
-          <span className="value">
-            {Math.round(perPersonShare).toLocaleString()}원
-          </span>
-        </div>
-      </StSummarySection>
-
-      {/* 2. 상세 내역 아코디언 영역 */}
-      <StDetailsSection>
-        <details>
-          <summary>
-            <span>📊 멤버별 상세 계산 방식</span>
-            <span className="arrow">▼</span>
-          </summary>
-          <div className="accordion-content">
-            {members.map((member) => {
-              const paidAmount = expenses
-                .filter((e) => e.payer === member && e.type === "COMMON")
-                .reduce((acc, cur) => acc + cur.amount, 0);
-              const diff = paidAmount - perPersonShare;
-
-              return (
-                <StMemberRow key={member}>
-                  <div className="member-main">
-                    <span className="name">{member}</span>
-                    <span className={`diff ${diff >= 0 ? "plus" : "minus"}`}>
-                      {diff >= 0
-                        ? `+${diff.toLocaleString()}`
-                        : diff.toLocaleString()}
-                      원
-                    </span>
-                  </div>
-                  <div className="member-sub">
-                    {paidAmount.toLocaleString()}원(지출) -{" "}
-                    {perPersonShare.toLocaleString()}원(몫)
-                  </div>
-                </StMemberRow>
-              );
-            })}
+      <Card
+        padding="0"
+        radius="1rem"
+        shadow="0 2px 4px rgba(0, 0, 0, 0.02)"
+        overflowHidden
+      >
+        {/* 1. 상단 요약 영역 (기존 SettlementSummary 역할) */}
+        <StSummarySection>
+          <div className="row">
+            <span className="label">총 지출 금액</span>
+            <span className="value">{totalAmount.toLocaleString()}원</span>
           </div>
-        </details>
-      </StDetailsSection>
+          <div className="divider" />
+          <div className="row highlight">
+            <span className="label">1인당 부담금</span>
+            <span className="value">
+              {Math.round(perPersonShare).toLocaleString()}원
+            </span>
+          </div>
+        </StSummarySection>
+
+        {/* 2. 상세 내역 아코디언 영역 */}
+        <StDetailsSection>
+          <details>
+            <summary>
+              <span>📊 멤버별 상세 계산 방식</span>
+              <span className="arrow">▼</span>
+            </summary>
+            <div className="accordion-content">
+              {members.map((member) => {
+                const paidAmount = expenses
+                  .filter((e) => e.payer === member && e.type === "COMMON")
+                  .reduce((acc, cur) => acc + cur.amount, 0);
+                const adjustedShare =
+                  perPersonShare +
+                  (remainderReceiver === member ? remainder : 0);
+                const diff = paidAmount - adjustedShare;
+
+                return (
+                  <StMemberRow key={member}>
+                    <div className="member-main">
+                      <span className="name">{member}</span>
+                      <span className={`diff ${diff >= 0 ? "plus" : "minus"}`}>
+                        {diff >= 0
+                          ? `+${diff.toLocaleString()}`
+                          : diff.toLocaleString()}
+                        원
+                      </span>
+                    </div>
+                    <div className="member-sub">
+                      {paidAmount.toLocaleString()}원(지출) -{" "}
+                      {adjustedShare.toLocaleString()}원(몫)
+                    </div>
+                  </StMemberRow>
+                );
+              })}
+            </div>
+          </details>
+        </StDetailsSection>
+      </Card>
     </StTotalCard>
   );
 }
 
 // ✨ 스타일 정의
 const StTotalCard = styled.div`
-  background-color: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
   margin-bottom: 1.5rem;
 `;
 

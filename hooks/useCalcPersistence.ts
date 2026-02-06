@@ -50,45 +50,33 @@ export const useCalcPersistence = () => {
   ) => {
     try {
       console.log("자동 저장 시작...", roomId); // 디버깅용 로그
-      // 1. 기존 데이터 삭제 (덮어쓰기 위해)
-      await supabase.from("calc_members").delete().eq("room_id", roomId);
-      await supabase.from("calc_expenses").delete().eq("room_id", roomId);
-
-      // 2. 새로운 데이터 저장
-      await saveDetailsToSupabase(roomId, members, expenses);
+      // RPC로 원자적 교체 (트랜잭션)
+      const { error } = await supabase.rpc("calc_replace_room_data", {
+        p_room_id: roomId,
+        p_members: members,
+        p_expenses: expenses.map((e) => ({
+          payer: e.payer,
+          description: e.description,
+          amount: e.amount,
+          type: e.type,
+        })),
+      });
+      if (error) {
+        console.error("RPC 오류 상세:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        throw error;
+      }
       console.log("자동 저장 완료 ✅");
     } catch (error) {
       console.error("업데이트 실패:", error);
     }
   };
 
-  // [HELPER] 공통 저장 로직
-  const saveDetailsToSupabase = async (
-    roomId: string,
-    members: string[],
-    expenses: Expense[],
-  ) => {
-    if (members.length > 0) {
-      const memberInserts = members.map((name) => ({ room_id: roomId, name }));
-      const { error } = await supabase
-        .from("calc_members")
-        .insert(memberInserts);
-      if (error) throw error;
-    }
-    if (expenses.length > 0) {
-      const expenseInserts = expenses.map((e) => ({
-        room_id: roomId,
-        payer: e.payer,
-        description: e.description,
-        amount: e.amount,
-        type: e.type,
-      }));
-      const { error } = await supabase
-        .from("calc_expenses")
-        .insert(expenseInserts);
-      if (error) throw error;
-    }
-  };
+  // [HELPER] 공통 저장 로직 (deprecated: RPC로 대체)
 
   // [READ] 불러오기
   const fetchRoomData = async (roomId: string) => {

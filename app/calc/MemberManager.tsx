@@ -3,6 +3,7 @@ import ShareButton from "@/components/common/KakaoCalendarShare";
 import { StSection } from "@/components/styled/layout.styled";
 import React, { useState } from "react";
 import styled from "styled-components";
+import SectionTitle from "./components/ui/SectionTitle";
 
 interface Props {
   members: string[];
@@ -27,9 +28,9 @@ export default function MemberManager({
   return (
     <StSection>
       <StHeaderRow>
-        <StSectionTitle>
-          👥 참여 멤버 <span>{members.length}</span>
-        </StSectionTitle>
+        <SectionTitle>
+          👥 참여 멤버 <StMemberCount>{members.length}</StMemberCount>
+        </SectionTitle>
         <ShareButton />
       </StHeaderRow>
 
@@ -75,14 +76,9 @@ const StHeaderRow = styled.div`
   margin-bottom: 1rem;
 `;
 
-const StSectionTitle = styled.h2`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray800};
-  span {
-    color: ${({ theme }) => theme.semantic.primary};
-    margin-left: 0.25rem;
-  }
+const StMemberCount = styled.span`
+  color: ${({ theme }) => theme.semantic.primary};
+  margin-left: 0.25rem;
 `;
 
 const StFlexRow = styled.div`

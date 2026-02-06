@@ -9,7 +9,13 @@ export const useCalculator = (
   return useMemo(() => {
     // 1. 초기 예외 처리
     if (members.length === 0) {
-      return { totalCommonSpend: 0, perPersonShare: 0, settlements: [] };
+      return {
+        totalCommonSpend: 0,
+        perPersonShare: 0,
+        settlements: [],
+        remainder: 0,
+        remainderReceiver: null,
+      };
     }
 
     // 2. 공동 지출 필터링 및 총액 계산
@@ -19,22 +25,42 @@ export const useCalculator = (
       0,
     );
 
+    // 멤버별 지출 합계 (공통 지출만)
+    const paidByMember: Record<string, number> = {};
+    members.forEach((member) => {
+      paidByMember[member] = 0;
+    });
+    commonExpenses.forEach((e) => {
+      paidByMember[e.payer] = (paidByMember[e.payer] || 0) + e.amount;
+    });
+
     // 3. 1인당 부담금 계산 (정해진 단위로 절사: 예 36,375원 -> 36,370원)
     // 나머지 잔차는 지출이 가장 많았던 '황총무'가 감수하거나 별도 처리하는 것이 일반적입니다.
     const perPersonShare =
       Math.floor(totalCommonSpend / members.length / unit) * unit;
+    const remainder = totalCommonSpend - perPersonShare * members.length;
+
+    let remainderReceiver: string | null = null;
+    if (remainder !== 0) {
+      remainderReceiver = members.reduce((current, candidate) => {
+        return paidByMember[candidate] > paidByMember[current]
+          ? candidate
+          : current;
+      }, members[0]);
+    }
 
     // 4. 멤버별 차액(Balance) 계산
     const balances: { [key: string]: number } = {};
     members.forEach((member) => {
-      const paid = commonExpenses
-        .filter((e) => e.payer === member)
-        .reduce((acc, cur) => acc + cur.amount, 0);
+      const paid = paidByMember[member] || 0;
 
       // (내가 낸 돈) - (내가 내야 할 돈)
       // 결과값이 (+)면 받아야 할 사람, (-)면 보내야 할 사람
       balances[member] = paid - perPersonShare;
     });
+    if (remainderReceiver) {
+      balances[remainderReceiver] += remainder;
+    }
 
     // 5. 정산 대상자 분류 (받을 사람 / 보낼 사람)
     const receivers: { name: string; amount: number }[] = [];
@@ -88,6 +114,8 @@ export const useCalculator = (
       totalCommonSpend,
       perPersonShare,
       settlements,
+      remainder,
+      remainderReceiver,
     };
   }, [expenses, members, unit]);
 };
