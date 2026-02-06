@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { ExpenseType } from "@/types";
 
@@ -28,7 +27,6 @@ interface CalcMainContentProps {
     remainderReceiver: string | null;
   };
 
-  /** Handlers */
   onAddMember: (name: string) => void;
   onDeleteMember: (name: string) => void;
   onAddExpense: (

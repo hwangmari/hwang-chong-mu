@@ -3,7 +3,7 @@ import { ServiceSchedule } from "@/types/work-schedule";
 
 export const buildScheduleText = (
   schedules: ServiceSchedule[],
-  hiddenIds: Set<string>, // 숨겨진 일정 제외하고 복사
+  hiddenIds: Set<string>,
   currentYear: number,
 ): string => {
   let text = "";
@@ -37,7 +37,6 @@ export const buildScheduleText = (
           : format(t.startDate, "yyyy.MM.dd");
 
       let dateStr = "";
-      /** 시작일과 종료일이 같으면 하루만 표시 */
       if (format(t.startDate, "yyyyMMdd") === format(t.endDate, "yyyyMMdd")) {
         dateStr = startStr;
       } else {
@@ -59,7 +58,7 @@ export const buildScheduleText = (
       }
       text += "\n";
     });
-    text += "\n"; // 서비스 그룹 간 줄바꿈
+    text += "\n";
   });
 
   return text;

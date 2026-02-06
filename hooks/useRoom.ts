@@ -19,7 +19,6 @@ export function useRoom(roomId: string) {
   const [room, setRoom] = useState<any>(null);
   const [includeWeekend, setIncludeWeekend] = useState(false);
 
-  /** UserVote 타입에 isAbsent가 포함되어 있어야 합니다. */
   const [participants, setParticipants] = useState<UserVote[]>([]);
 
   const [currentName, setCurrentName] = useState("");
@@ -36,7 +35,6 @@ export function useRoom(roomId: string) {
   const fetchData = useCallback(async () => {
     if (!roomId) return;
     try {
-      /** 1. 방 정보 가져오기 */
       const { data: roomData } = await supabase
         .from("rooms")
         .select("*")
@@ -52,7 +50,6 @@ export function useRoom(roomId: string) {
         }
       }
 
-      /** 2. 참여자 정보 가져오기 */
       const { data: partData } = await supabase
         .from("participants")
         .select("*")
@@ -61,7 +58,6 @@ export function useRoom(roomId: string) {
       const formattedParticipants = (partData || []).map((p: any) => ({
         id: p.id,
         name: p.name,
-        /** DB의 is_absent 컬럼을 가져옴 (없으면 false) */
         isAbsent: p.is_absent || false,
         unavailableDates: (p.unavailable_dates || []).map((d: string) =>
           startOfDay(parseISO(d))
@@ -77,7 +73,6 @@ export function useRoom(roomId: string) {
 
   useEffect(() => {
     fetchData();
-    /** 실시간성을 위해 폴링 (3초) */
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -133,7 +128,6 @@ export function useRoom(roomId: string) {
         .eq("room_id", roomId)
         .eq("name", name);
 
-      /** 데이터 삽입 */
       const { error } = await supabase.from("participants").insert([
         {
           room_id: roomId,
@@ -147,7 +141,6 @@ export function useRoom(roomId: string) {
 
       showAlert(`${name}님 ${isAbsent ? "불참 알림" : "일정 저장"} 완료!`);
 
-      /** 상태 초기화 */
       setCurrentName("");
       setCurrentUnavailable([]);
       setIsEditing(false);
@@ -159,7 +152,6 @@ export function useRoom(roomId: string) {
   };
 
 
-  /** 1. 날짜 토글 */
   const handleToggleDate = (date: Date) => {
     if (step === "VOTING") {
       if (!currentName) return showAlert("이름을 먼저 입력해주세요! 🐰");
@@ -169,7 +161,6 @@ export function useRoom(roomId: string) {
           : [...prev, date]
       );
     } else {
-      /** 확정 모드일 때 */
       const dateStr = format(date, "M월 d일 (E)", { locale: ko });
       const dbDateStr = format(date, "yyyy-MM-dd");
 
@@ -186,11 +177,9 @@ export function useRoom(roomId: string) {
     }
   };
 
-  /** 2. [저장] 일정 저장 버튼 클릭 */
   const handleSubmitVote = () => {
     if (!currentName.trim()) return showAlert("이름을 입력해주세요!");
 
-    /** 안 되는 날이 하나도 없으면 물어봄 */
     if (currentUnavailable.length === 0) {
       showConfirm(
         "선택한 '안되는 날'이 없어요.\n모두 가능하신가요?",
@@ -201,7 +190,6 @@ export function useRoom(roomId: string) {
     }
   };
 
-  /** 3. [저장] 불참 버튼 클릭 */
   const handleSubmitAbsent = () => {
     if (!currentName.trim()) return showAlert("이름을 입력해주세요!");
 
@@ -211,10 +199,8 @@ export function useRoom(roomId: string) {
     );
   };
 
-  /** 4. [기능] 다 돼요 (초기화) */
   const handleResetDates = () => setCurrentUnavailable([]);
 
-  /** 5. [기능] 다 안 돼요 (전체 선택) */
   const handleSelectAllDates = () => {
     const allDates = calendarGrid.filter((d): d is Date => d !== null);
     setCurrentUnavailable(allDates);
@@ -229,7 +215,6 @@ export function useRoom(roomId: string) {
     });
   };
 
-  /** 7. [기능] 삭제 */
   const handleDeleteUser = (user: UserVote) => {
     showConfirm(`정말 ${user.name}님의 정보를\n삭제하시겠습니까?`, async () => {
       await supabase
@@ -249,7 +234,6 @@ export function useRoom(roomId: string) {
     setIsEditing(false);
   };
 
-  /** 9. [기능] 확정 취소 (재조율) */
   const handleReset = () => {
     showConfirm("확정을 취소하고\n다시 투표화면으로 갈까요?", async () => {
       await supabase
@@ -261,7 +245,6 @@ export function useRoom(roomId: string) {
     });
   };
 
-  /** 10. [기능] 구조 요청 (불참자/불가능자 살리기) */
   const handleRescueUser = (user: UserVote) => {
     showConfirm(
       `${user.name}님을 위해\n약속 확정을 취소하고 재조율할까요?`,

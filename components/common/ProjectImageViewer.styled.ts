@@ -55,12 +55,10 @@ export const StImageFrame = styled.div`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   background-color: ${({ theme }) => theme.colors.gray50};
 
-  /* 이미지 비율 유지를 위한 스타일 */
   display: flex;
   justify-content: center;
   align-items: center;
 
-  /* 특정 클래스가 들어오면 스타일 변경 (예: 모바일 스크린샷) */
   &.mobile-frame {
     max-width: 320px;
     margin: 0 auto;

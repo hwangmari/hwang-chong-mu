@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -20,13 +19,11 @@ interface KanbanCardProps {
 export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   const router = useRouter();
 
-  /** 상태 관리 */
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(svc.serviceName);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  /** 날짜순 정렬 */
   const sortedTasks = useMemo(() => {
     if (!svc.tasks) return [];
     return [...svc.tasks].sort(
@@ -35,7 +32,6 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
     );
   }, [svc.tasks]);
 
-  /** 핸들러 */
   const handleNameUpdate = async () => {
     if (!editName.trim() || editName === svc.serviceName) {
       setIsEditingName(false);

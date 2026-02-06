@@ -26,7 +26,6 @@ export default function GameRoomPage() {
 
   const logic = useGameRoom(roomId);
 
-  /** 1. 게임 진행 중 화면 */
   if (logic.status === "playing") {
     return (
       <StContainer>
@@ -54,7 +53,6 @@ export default function GameRoomPage() {
     );
   }
 
-  /** 2. 대기실 화면 */
   return (
     <StContainer>
       <StWrapper>
@@ -105,7 +103,6 @@ export default function GameRoomPage() {
   );
 }
 
-/** 스타일링 */
 const StDimOverlay = styled.div`
   position: absolute;
   top: 0;

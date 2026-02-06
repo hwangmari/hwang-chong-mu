@@ -20,7 +20,6 @@ export default function BottomSheet({
 }: Props) {
   if (!date) return null;
 
-  /** 헬퍼 함수 */
   const getUnavailablePeople = (d: Date) =>
     participants.filter((p) =>
       p.unavailableDates.some((ud) => isSameDay(ud, d))

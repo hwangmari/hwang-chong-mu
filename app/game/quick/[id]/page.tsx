@@ -13,8 +13,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LadderGame from "../../components/LadderGame";
 import WheelGame from "../../components/WheelGame";
 import FooterGuide from "@/components/common/FooterGuide";
-/** import ClickerGame from "../../components/ClickerGame"; */
-/** import TelepathyGame from "../../components/TelepathyGame"; */
 
 const GAME_INFO: Record<string, string> = {
   ladder: "사다리 타기",
@@ -29,9 +27,7 @@ export default function QuickGamePage() {
   const gameId = params?.id as string;
   const gameName = GAME_INFO[gameId] || "게임";
 
-  /** 항상 게임 화면과 멤버 관리 화면이 공존합니다. */
 
-  /** 참가자 상태 관리 */
   const [participants, setParticipants] = useState<
     { id: string; nickname: string; is_host: boolean }[]
   >([]);
@@ -50,7 +46,6 @@ export default function QuickGamePage() {
     setNameInput("");
   };
 
-  /** 엔터키 처리 */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") {
@@ -59,7 +54,6 @@ export default function QuickGamePage() {
     }
   };
 
-  /** 참가자 삭제 */
   const removeParticipant = (id: string) => {
     setParticipants(participants.filter((p) => p.id !== id));
   };
@@ -152,7 +146,6 @@ export default function QuickGamePage() {
               description:
                 "오타가 났나요? 이름표 옆의 (×) 버튼을 누르면 즉시 목록에서 제외됩니다.",
             },
-            /** 👇 사다리 게임일 때만 노출되는 항목 */
             ...(gameId === "ladder"
               ? [
                   {

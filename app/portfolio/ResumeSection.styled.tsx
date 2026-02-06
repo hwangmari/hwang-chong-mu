@@ -103,7 +103,6 @@ export const StTimelineList = styled.div`
 export const StTimelineItem = styled.div`
   position: relative;
 
-  /* Hover 시 상세보기 버튼 효과 */
   &:hover {
     .detail-badge {
       background-color: ${({ theme }) => theme.colors.gray100};

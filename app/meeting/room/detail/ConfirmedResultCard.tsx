@@ -139,13 +139,11 @@ const StDateBox = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
-/** "fw-700 mb-1" 대체 */
 const StRoomName = styled(Typography)`
   font-weight: 700;
   margin-bottom: 0.25rem;
 `;
 
-/** "fw-900 text-center" 대체 */
 const StDateDisplay = styled(Typography)`
   font-weight: 900;
   text-align: center;

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -81,7 +80,6 @@ export default function CalcDetailParamsPage() {
     updateAndSave(members, newExpenses);
   };
 
-  /** 정산 계산 */
   const settlementResult = useCalculator(members, expenses);
 
   return (

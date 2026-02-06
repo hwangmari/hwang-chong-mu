@@ -27,7 +27,6 @@ export function useMonthlyTracker(goalId: number) {
   >([]);
   const [dailyCompletedIds, setDailyCompletedIds] = useState<number[]>([]);
 
-  /** 1. 초기 설정 로드 */
   useEffect(() => {
     if (!goalId || isNaN(goalId)) return;
     const savedSetting = localStorage.getItem(`showWeekends_${goalId}`);

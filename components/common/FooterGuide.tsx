@@ -12,7 +12,6 @@ interface TipItem {
 interface FooterGuideProps {
   title: string; // 전체 제목 (예: 약속 잡기 꿀팁)
   story?: {
-    /** 브랜드 스토리 (선택 사항) */
     title: string;
     content: ReactNode;
     solution?: {

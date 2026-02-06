@@ -134,7 +134,6 @@ const StButtonGroup = styled.div`
   gap: 4px;
 `;
 
-/** 버튼 스타일 통합 (variant로 구분) */
 const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
   display: flex;
   align-items: center;
@@ -147,14 +146,12 @@ const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
   cursor: pointer;
   transition: all 0.2s ease;
 
-  /* 기본 색상 */
   color: #9ca3af; /* gray-400 */
 
   &:hover {
     transform: scale(1.1);
   }
 
-  /* --- 메모 버튼 스타일 --- */
   ${({ $variant }) =>
     $variant === "memo" &&
     css`
@@ -168,7 +165,6 @@ const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
       }
     `}
 
-  /* --- 삭제 버튼 스타일 --- */
   ${({ $variant }) =>
     $variant === "delete" &&
     css`

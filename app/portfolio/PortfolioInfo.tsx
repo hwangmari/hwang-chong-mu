@@ -68,7 +68,6 @@ const StProfileWrapper = styled.div`
   flex-direction: column;
   gap: 3rem;
 
-  /* PC 화면 설정 */
   @media ${({ theme }) => theme.media.desktop} {
     flex-direction: row;
     align-items: flex-start;

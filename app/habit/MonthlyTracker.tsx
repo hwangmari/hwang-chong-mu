@@ -162,7 +162,6 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
 }
 
 
-/** 토글 버튼 영역 */
 const StToggleHeader = styled.div`
   display: flex;
   justify-content: space-between;

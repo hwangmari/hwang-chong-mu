@@ -59,7 +59,6 @@ export default function InstallGuide({ isOpen, onClose }: InstallGuideProps) {
               </StepText>
             </GuideStep>
           ) : (
-            /** 💻 PC/기타 */
             <GuideStep>
               <StepText>
                 브라우저의 <strong>북마크(Ctrl+D)</strong> 기능을 이용해

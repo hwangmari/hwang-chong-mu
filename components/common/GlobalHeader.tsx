@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,7 +19,6 @@ const ROUTE_CONFIG = [
   { path: "/portfolio", label: "포트폴리오" },
 ];
 
-/** 2. 하위 상세 페이지용 매핑 데이터 (유지) */
 const GAME_NAMES: Record<string, string> = {
   ladder: "사다리 타기",
   wheel: "돌림판",
@@ -47,22 +45,18 @@ export default function GlobalHeader() {
     window.scrollTo(0, 0);
 
 
-    /** 1. [특수 케이스] 게임 상세 페이지 처리 */
     if (pathname.startsWith("/game/")) {
       const parts = pathname.split("/");
-      /** /game/quick/ladder 같은 케이스 */
       if (parts[2] === "quick" && parts[3]) {
         const gameName = GAME_NAMES[parts[3]];
         setCurrentTitle(gameName || "빠른 게임");
         return;
       }
-      /** /game/123 (방 번호) 케이스 */
       const isRoomId = !isNaN(Number(parts[2]));
       setCurrentTitle(isRoomId ? "게임 대기실" : "황총무 게임방");
       return;
     }
 
-    /** 2. [특수 케이스] 포트폴리오 상세 페이지 처리 */
     if (pathname.startsWith("/portfolio/")) {
       if (pathname.startsWith("/portfolio/experience")) {
         const parts = pathname.split("/");
@@ -81,7 +75,6 @@ export default function GlobalHeader() {
       }
     }
 
-    /** 배열을 순회하며 현재 경로와 매칭되는 설정을 찾습니다. */
     const matchedRoute = ROUTE_CONFIG.find((route) =>
       route.exact ? pathname === route.path : pathname.startsWith(route.path),
     );
@@ -108,7 +101,6 @@ export default function GlobalHeader() {
       return;
     }
 
-    /** 2. 나머지: 히스토리가 있으면 뒤로, 없으면 홈으로 */
     if (window.history.length > 1) {
       router.back();
     } else {
@@ -145,7 +137,6 @@ export default function GlobalHeader() {
             {ROUTE_CONFIG.map((item) => (
               <Link key={item.path} href={item.path} passHref>
                 <StMenuItem
-                  /** 현재 경로가 해당 메뉴의 path로 시작하면 활성화 (단, 홈은 정확히 일치) */
                   $isActive={
                     item.exact
                       ? pathname === item.path

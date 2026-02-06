@@ -2,7 +2,6 @@ const colors = {
   white: "#ffffff",
   black: "#000000",
 
-  /** 1. Neutral (Pure Gray) - 제공해주신 값 적용 */
   gray50: "oklch(0.985 0 0)",
   gray100: "oklch(0.97 0 0)",
   gray200: "oklch(0.922 0 0)",
@@ -15,7 +14,6 @@ const colors = {
   gray900: "oklch(0.205 0 0)",
   gray950: "oklch(0.145 0 0)", // 950 추가됨 (아주 깊은 검은색에 가까운 회색)
 
-  /** 2. Primary (Blue & Indigo) */
   blue50: "oklch(0.97 0.014 254.604)",
   blue100: "oklch(0.932 0.032 255.585)",
   blue200: "oklch(0.882 0.059 254.128)",
@@ -28,7 +26,6 @@ const colors = {
   indigo500: "oklch(0.585 0.233 277.117)",
   indigo600: "oklch(0.511 0.262 276.966)",
 
-  /** 3. Functional Colors */
   yellow50: "oklch(0.987 0.026 102.212)",
   yellow100: "oklch(0.973 0.071 103.193)",
   yellow200: "oklch(0.945 0.129 101.54)",
@@ -36,35 +33,30 @@ const colors = {
   yellow500: "oklch(0.795 0.184 86.047)",
   yellow600: "oklch(0.681 0.162 75.834)",
 
-  /** Green (성공/완료) */
   green50: "oklch(0.982 0.018 155.826)",
   green100: "oklch(0.962 0.044 156.743)",
   green200: "oklch(0.925 0.084 155.995)",
   green500: "oklch(0.723 0.219 149.579)",
   green600: "oklch(0.627 0.194 149.214)",
 
-  /** Teal (Positive) */
   teal50: "oklch(0.984 0.014 180.72)",
   teal100: "oklch(0.953 0.051 180.801)",
   teal200: "oklch(0.91 0.096 180.426)",
   teal500: "oklch(0.704 0.14 182.503)",
   teal600: "oklch(0.6 0.118 184.704)",
 
-  /** Rose (Negative) */
   rose50: "oklch(0.969 0.015 12.422)",
   rose100: "oklch(0.941 0.03 12.58)",
   rose200: "oklch(0.892 0.058 10.001)",
   rose500: "oklch(0.645 0.246 16.439)",
   rose600: "oklch(0.586 0.253 17.585)",
 
-  /** Amber (Warning) */
   amber50: "oklch(0.987 0.022 95.277)",
   amber100: "oklch(0.962 0.059 95.617)",
   amber200: "oklch(0.924 0.12 95.746)",
   amber500: "oklch(0.769 0.188 70.08)",
   amber600: "oklch(0.666 0.179 58.318)",
 
-  /** Orange (Sender) */
   orange50: "oklch(0.98 0.016 73.684)",
   orange100: "oklch(0.954 0.038 75.164)",
   orange200: "oklch(0.901 0.076 70.697)",
@@ -78,7 +70,6 @@ export const theme = {
     maxWidth: "1025px",
     narrowWidth: "540px",
   },
-  /** 의미론적 별칭 (Semantic Aliases) */
   semantic: {
     primary: colors.blue600,
     primaryLight: colors.blue50,

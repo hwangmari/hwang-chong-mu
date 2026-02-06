@@ -9,7 +9,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 import AddIcon from "@mui/icons-material/Add";
 
-/** 🎨 농도 조절 헬퍼 */
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -165,7 +164,6 @@ const StTodoItem = styled.div<{ $done: boolean; $activeColor: string }>`
   background: ${({ $done, $activeColor }) =>
     $done ? $activeColor : "#f9fafb"};
   border-radius: 12px;
-  /* cursor: pointer; -> 기존 포인터는 유지해도 좋지만, 텍스트 클릭 시 아무 일도 안 일어난다는 걸 알리기 위해 default로 바꿔도 됨 */
   transition: all 0.2s;
   &:hover {
     filter: brightness(0.95);
@@ -193,7 +191,6 @@ const StTodoText = styled.span<{ $done: boolean; $color: string }>`
   color: ${({ $done, $color }) => ($done ? $color : "#4b5563")};
   text-decoration: ${({ $done }) => ($done ? "line-through" : "none")};
   flex: 1;
-  /* cursor: help; // 원한다면 텍스트에 마우스 올리면 '확인용'이라는 의미로 커서 변경 가능 */
 `;
 
 const StDeleteButton = styled.button`
@@ -249,7 +246,6 @@ const StRateText = styled.span<{ $color: string }>`
   font-weight: 800;
 `;
 
-/** 🌑 게이지 배경 (회색 트랙) */
 const StProgressBarBg = styled.div`
   width: 100%;
   height: 6px;
@@ -259,7 +255,6 @@ const StProgressBarBg = styled.div`
   overflow: hidden; /* 넘치는 부분 자르기 */
 `;
 
-/** 🌕 게이지 채움 (실제 퍼센트) */
 const StProgressBarFill = styled.div<{ $width: number; $color: string }>`
   height: 100%;
   width: ${({ $width }) => $width}%;

@@ -21,7 +21,6 @@ export default function ParticipantList({
   setHoveredUserId,
 }: Props) {
   const handleInteraction = (id: string | number) => {
-    /** 이미 선택된 상태에서 클릭하면 해제 (모바일 UX) */
     if (hoveredUserId === id) {
       setHoveredUserId(null);
     } else {
@@ -131,7 +130,6 @@ const StUserCard = styled.div<{ $isAbsent: boolean; $isActive?: boolean }>`
   transition: all 0.2s;
   cursor: pointer; /* 커서 포인터 추가 */
 
-  /* ✨ 활성화 상태($isActive)일 때 스타일 추가 */
   ${({ $isActive, theme }) =>
     $isActive &&
     css`

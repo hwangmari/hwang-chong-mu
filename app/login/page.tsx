@@ -14,20 +14,17 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
 
-    /** 환경 변수에 설정한 비밀번호와 비교 */
     const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
     if (password === correctPassword) {
       document.cookie = `auth_token=true; path=/; max-age=${60 * 60 * 24}`;
 
-      /** 캘린더 페이지로 이동 */
       router.push("/schedule");
     } else {
       setError("비밀번호가 틀렸습니다. 다시 시도해주세요. 🐰");
     }
   };
 
-  /** 엔터키 감지 핸들러 */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleLogin(e);

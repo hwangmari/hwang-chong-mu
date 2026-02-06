@@ -41,7 +41,6 @@ const StButton = styled.button<{ $bgColor?: string }>`
   ${({ $bgColor, theme }) =>
     $bgColor
       ? css`
-          /* 🎨 컬러 모드 (습관 관리 등) */
           background: ${$bgColor};
 
           box-shadow: 0 4px 12px ${$bgColor}40;
@@ -59,7 +58,6 @@ const StButton = styled.button<{ $bgColor?: string }>`
           }
         `
       : css`
-          /* ⚫️ 기본 모드 (방 만들기 등) */
           background-color: ${theme.colors.gray500};
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 

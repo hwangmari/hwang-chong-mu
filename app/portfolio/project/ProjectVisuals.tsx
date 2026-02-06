@@ -151,7 +151,6 @@ const ScrollWrapper = styled.div`
   overflow-x: auto;
   padding-bottom: 1rem;
 
-  /* 스크롤바 커스텀 */
   &::-webkit-scrollbar {
     height: 6px;
   }
@@ -177,7 +176,6 @@ const NodeGroup = styled.div`
   height: 80px; /* 높이 통일 */
 
   &.relative-group {
-    /* Loop Target 위치 잡기 위함 */
   }
 `;
 
@@ -226,7 +224,6 @@ const NodeRect = styled(NodeBase)<NodeProps>`
   border-radius: 8px;
   min-width: 120px;
 
-  /* 활성화 된 입력창 스타일 */
   ${(props) =>
     props.$active &&
     `
@@ -235,7 +232,6 @@ const NodeRect = styled(NodeBase)<NodeProps>`
     color: #364FC7;
   `}
 
-  /* 점선 스타일 (소거 연산) */
   ${(props) =>
     props.$dashed &&
     `
@@ -244,7 +240,6 @@ const NodeRect = styled(NodeBase)<NodeProps>`
     background-color: #F8F9FA;
   `}
 
-  /* 성공 스타일 */
   ${(props) =>
     props.$success &&
     `
@@ -253,7 +248,6 @@ const NodeRect = styled(NodeBase)<NodeProps>`
     color: #2B8A3E;
   `}
 
-  /* 실패 스타일 */
   ${(props) =>
     props.$fail &&
     `
@@ -345,7 +339,6 @@ const PathLabel = styled.span<PathLabelProps>`
   border-radius: 4px;
   text-transform: uppercase;
 
-  /* Yes 스타일 */
   ${(props) =>
     props.$type === "success" &&
     `
@@ -353,7 +346,6 @@ const PathLabel = styled.span<PathLabelProps>`
     background: #D3F9D8;
   `}
 
-  /* No 스타일 */
   ${(props) =>
     props.$type === "fail" &&
     `

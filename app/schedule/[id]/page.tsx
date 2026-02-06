@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useParams } from "next/navigation";
@@ -6,7 +5,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import { addDays } from "date-fns";
 
-/** 컴포넌트 임포트 */
 import LeftCalendar from "../components/LeftCalendar";
 import RightTaskPanel from "../components/RightTaskPanel";
 import ScheduleHeader from "../components/ScheduleHeader";
@@ -41,14 +39,12 @@ export default function ScheduleDetailPage() {
     }
   }, [boardId]);
 
-  /** 1. 초기 로드 */
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   useEffect(() => {
     const onFocus = () => {
-      /** 아주 짧은 딜레이를 주어 DB 업데이트 직후 fetch가 꼬이지 않게 함 */
       setTimeout(() => loadData(), 100);
     };
 

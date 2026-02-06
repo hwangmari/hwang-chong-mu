@@ -167,7 +167,6 @@ const StScrollContent = styled.div`
   line-height: 1.625;
   margin-bottom: 1rem;
 
-  /* 스크롤바 숨기기 */
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
   &::-webkit-scrollbar {

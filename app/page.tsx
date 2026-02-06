@@ -163,7 +163,6 @@ const StGridContainer = styled.div`
   grid-template-columns: 1fr; /* 모바일: 1열 */
   gap: 1rem;
 
-  /* 태블릿 이상: 2열 */
   @media (min-width: 640px) {
     grid-template-columns: repeat(2, 1fr);
   }

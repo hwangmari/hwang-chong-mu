@@ -18,7 +18,6 @@ export const useCalcPersistence = () => {
   const createRoom = async (roomName: string) => {
     setLoading(true);
     try {
-      /** 1. 방 생성 (입력받은 이름으로 저장) */
       const { data: roomData, error: roomError } = await supabase
         .from("calc_rooms")
         .insert([{ room_name: roomName }]) // 여기가 핵심!
@@ -29,7 +28,6 @@ export const useCalcPersistence = () => {
 
       const newRoomId = roomData.id;
 
-      /** 2. 페이지 이동 (경로를 /calc/ 로 통일!) */
       router.push(`/calc/${newRoomId}`);
     } catch (error) {
       console.error("생성 실패:", error);
@@ -46,7 +44,6 @@ export const useCalcPersistence = () => {
   ) => {
     try {
       console.log("자동 저장 시작...", roomId); // 디버깅용 로그
-      /** RPC로 원자적 교체 (트랜잭션) */
       const { error } = await supabase.rpc("calc_replace_room_data", {
         p_room_id: roomId,
         p_members: members,
@@ -73,7 +70,6 @@ export const useCalcPersistence = () => {
   };
 
 
-  /** [READ] 불러오기 */
   const fetchRoomData = async (roomId: string) => {
     setLoading(true);
     try {

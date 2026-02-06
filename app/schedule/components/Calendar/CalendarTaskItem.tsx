@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import styled, { css } from "styled-components";
 import { isSameDay } from "date-fns";

@@ -154,7 +154,6 @@ const StHeaderRow = styled.div`
   padding-bottom: 1rem;
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
 
-  /* 호버 시 시각적 피드백 */
   &:hover h2 {
     color: ${({ theme }) => theme.colors.gray900};
   }
@@ -271,7 +270,6 @@ const StRightSection = styled.div`
   min-width: 170px; /* 고정 너비로 덜컥거림 방지 */
   height: 1.5rem;
 
-  /* 공통 텍스트 스타일 (금액, 단위) */
   .amount,
   .unit {
     font-weight: 600;
@@ -292,7 +290,6 @@ const StRightSection = styled.div`
     margin-right: 0.8rem; /* 버튼과 간격 */
   }
 
-  /* 입력 폼 스타일 */
   input {
     width: 70px;
     height: 1.5rem;
@@ -323,7 +320,6 @@ const StGrayBadge = styled.span`
   flex-shrink: 0;
 `;
 
-/** 버튼 그룹 */
 const StFixedBtnGroup = styled.div`
   display: flex;
   align-items: center;

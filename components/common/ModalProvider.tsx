@@ -10,7 +10,6 @@ import {
 import Modal from "./Modal"; // ✅ 기존에 만드신 Modal 컴포넌트 재사용
 import { ModalState } from "@/types"; // ✅ types/index.ts에 정의된 타입 활용
 
-/** 1. Context에서 사용할 함수 타입 정의 */
 interface ModalContextType {
   openAlert: (message: string) => Promise<void>;
   openConfirm: (message: string) => Promise<boolean>;
@@ -18,7 +17,6 @@ interface ModalContextType {
 
 const ModalContext = createContext<ModalContextType | null>(null);
 
-/** 2. Provider 컴포넌트 */
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -30,7 +28,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     resolve: (value: boolean) => void;
   } | null>(null);
 
-  /** 닫기/취소 버튼 핸들러 */
   const handleClose = useCallback(() => {
     setModalState((prev) => ({ ...prev, isOpen: false }));
     if (resolver) resolver.resolve(false); // 취소 시 false 반환
@@ -46,7 +43,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const openAlert = useCallback((message: string): Promise<void> => {
     return new Promise((resolve) => {
       setModalState({ isOpen: true, type: "alert", message });
-      /** Alert은 true/false 결과가 중요하지 않으므로 닫히면 무조건 resolve */
       setResolver({ resolve: () => resolve() });
     });
   }, []);
@@ -71,7 +67,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** 3. 커스텀 훅 (편의성) */
 export function useModal() {
   const context = useContext(ModalContext);
   if (!context) {

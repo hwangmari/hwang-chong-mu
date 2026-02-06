@@ -110,7 +110,6 @@ const CompanyDot = styled.span<{ $colorClass: string }>`
   height: 26px;
   border-radius: 7px;
 
-  /* 데이터 문자열에 따라 테마 색상 적용 */
   background-color: ${({ theme, $colorClass }) => {
     if ($colorClass.includes("orange-500")) return theme.colors.orange500;
     if ($colorClass.includes("yellow-400")) return theme.colors.yellow400;

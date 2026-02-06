@@ -3,9 +3,7 @@
 import styled, { css } from "styled-components";
 import { theme } from "@/styles/theme";
 
-/** 1. 사용할 폰트 스타일 레벨 정의 */
 const variants = {
-  /** 🦁 헤드라인 (Hero Title) */
   h1: css`
     font-size: 2.25rem;
     font-weight: 800;
@@ -16,7 +14,6 @@ const variants = {
       font-size: 3rem;
     }
   `,
-  /** 🐯 섹션 타이틀 */
   h2: css`
     font-size: 1.5rem;
     font-weight: 700;
@@ -25,7 +22,6 @@ const variants = {
       font-size: 2.25rem;
     }
   `,
-  /** 🦊 카드 타이틀 */
   h3: css`
     font-size: 1.25rem;
     font-weight: 700;
@@ -34,19 +30,16 @@ const variants = {
     font-size: 1.1rem;
     font-weight: 700;
   `,
-  /** 🐰 본문 (큰 글씨) */
   body1: css`
     font-size: 1.125rem;
     line-height: 1.625;
     font-weight: 400;
   `,
-  /** 🐭 본문 (기본) */
   body2: css`
     font-size: 1rem;
     line-height: 1.6;
     font-weight: 400;
   `,
-  /** 🐣 작은 텍스트 (설명, 날짜) */
   caption: css`
     font-size: 0.875rem;
     font-weight: 500;
@@ -57,7 +50,6 @@ const variants = {
   `,
 };
 
-/** 타입 정의 (자동완성을 위해!) */
 type VariantType = keyof typeof variants;
 type ColorType = keyof typeof theme.colors;
 
@@ -77,17 +69,13 @@ const Txt = styled.p<{
   margin: 0;
   padding: 0;
 
-  /** 1. Variant 스타일 적용 */
   ${({ $variant }) => variants[$variant]}
 
-  /** 2. Color 적용 (theme에서 가져옴) */
   color: ${({ theme, $color }) => theme.colors[$color]};
 
-  /** 3. 정렬 */
   text-align: ${({ $align }) => $align || ""};
 `;
 
-/** 🎁 컴포넌트 내보내기 */
 export default function Typography({
   variant = "body2",
   color = "gray900",

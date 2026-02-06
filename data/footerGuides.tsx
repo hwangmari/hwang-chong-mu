@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 
-/** 팁 아이템 타입 (FooterGuide.tsx와 동일한 구조) */
 interface TipItem {
   icon: ReactNode;
   title: string;

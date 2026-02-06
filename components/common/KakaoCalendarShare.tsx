@@ -15,10 +15,8 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
   const handleShare = async () => {
     const url = window.location.href;
 
-    /** 1. 모바일 디바이스 체크 (User Agent) */
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    /** 2. 모바일 + 공유 기능 지원 시 -> 네이티브 공유 */
     if (isMobile && navigator.share) {
       try {
         await navigator.share({
@@ -30,7 +28,6 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
         console.log("공유 취소됨");
       }
     } else {
-      /** PC: URL 복사 */
       try {
         await navigator.clipboard.writeText(url);
         setIsCopied(true);
@@ -118,7 +115,6 @@ const StTooltip = styled.div<{ $show: boolean }>`
   pointer-events: none; /* 툴팁이 클릭 방해하지 않도록 */
   transition: all 0.2s ease-in-out;
 
-  /* 말풍선 꼬리 (선택 사항) */
   &::after {
     content: "";
     position: absolute;
@@ -131,7 +127,6 @@ const StTooltip = styled.div<{ $show: boolean }>`
       ${({ theme }) => theme.colors.gray800};
   }
 
-  /* 애니메이션: 투명도 + 위치 이동 */
   ${({ $show }) =>
     $show
       ? css`

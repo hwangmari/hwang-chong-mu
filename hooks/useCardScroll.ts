@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 
 export function useCardScroll() {
@@ -26,7 +25,6 @@ export function useCardScroll() {
 
         containerElement.scrollTo({ top: scrollTo, behavior: "smooth" });
 
-        /** 강제로 펼치기 */
         setCollapsedIds((prev) => {
           const newSet = new Set(prev);
           if (newSet.has(svcId)) {

@@ -1,6 +1,5 @@
 import { ProjectItemList } from "@/types/experiences";
 
-/** HSP상담 운영 및 고도화 히스토리  */
 export const HSP_HISTORY_DATA: ProjectItemList[] = [
   {
     id: "2025-10-11",
@@ -84,7 +83,6 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
 ];
 
-/** 다이렉트 웹 운영 및 신규 서비스 상세 */
 export const DIRECT_HISTORY_DATA: ProjectItemList[] = [
   {
     id: "2024-10-07",
@@ -130,9 +128,7 @@ export const DIRECT_HISTORY_DATA: ProjectItemList[] = [
   },
 ];
 
-/** 29CM PT Campaign History */
 export const CAMPAIGN_LIST: ProjectItemList[] = [
-  /** 2020 */
   {
     id: "2020-03",
     date: "2020.02.28",
@@ -152,7 +148,6 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/gillettelabs/",
   },
 
-  /** 2019 */
   {
     id: "2019-10",
     date: "2019.09.23",
@@ -214,7 +209,6 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/eastpak19ss/",
   },
 
-  /** 2018 */
   {
     id: "2018-16",
     date: "2018.12.06",
@@ -312,7 +306,6 @@ export const CAMPAIGN_LIST: ProjectItemList[] = [
     url: "https://media.29cm.co.kr/campaign/freitag/episode1.html",
   },
 
-  /** 2017 */
   {
     id: "2017-13",
     date: "2017.12.26",

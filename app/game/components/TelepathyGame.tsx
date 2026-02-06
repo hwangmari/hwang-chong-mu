@@ -7,7 +7,6 @@ import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
-/** 텔레파시 게임 질문 데이터 */
 const QUESTIONS = [
   { q: "평생 하나만 먹어야 한다면?", a: "물냉면", b: "비빔냉면" },
   { q: "더 참기 힘든 상황은?", a: "한여름에 히터", b: "한겨울에 에어컨" },
@@ -56,7 +55,6 @@ export default function TelepathyGame({
     if (me?.selected_answer) setMyChoice(me.selected_answer as "A" | "B");
   }, [roomData, participants, myId]);
 
-  /** 핸들러: 다음 문제 (방장) */
   const handleNextQuestion = async () => {
     const randomIdx = Math.floor(Math.random() * QUESTIONS.length);
     const qData = QUESTIONS[randomIdx];
@@ -72,7 +70,6 @@ export default function TelepathyGame({
       .eq("id", roomId);
   };
 
-  /** 핸들러: 결과 공개 (방장) */
   const handleShowResult = async () => {
     await supabase
       .from("game_rooms")
@@ -80,7 +77,6 @@ export default function TelepathyGame({
       .eq("id", roomId);
   };
 
-  /** 핸들러: 선택 (참가자) */
   const handleSelect = async (choice: "A" | "B") => {
     if (roomData.is_result_open) return;
     setMyChoice(choice);

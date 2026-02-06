@@ -42,7 +42,6 @@ const StSwitchButton = styled.button<{ $checked: boolean }>`
   outline: none;
   cursor: pointer;
 
-  /* 색상 로직: indigo-500 대신 테마의 blue600 사용 (일관성 유지) */
   background-color: ${({ theme, $checked }) =>
     $checked ? theme.colors.blue600 : theme.colors.gray300};
 `;
@@ -56,7 +55,6 @@ const StSwitchKnob = styled.span<{ $checked: boolean }>`
   transition: transform 0.2s ease-in-out;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-  /* 위치 이동 로직 */
   transform: ${({ $checked }) =>
     $checked ? "translateX(1.5rem)" : "translateX(0.25rem)"};
 `;

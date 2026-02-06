@@ -16,7 +16,6 @@ export default function AnalysisCard({
   if (overnightDiff === null) return null;
 
   const toGram = (kg: number) => {
-    /** 소수점 연산 오차 방지를 위해 반올림 처리 */
     const grams = Math.round(kg * 1000);
     return grams.toLocaleString(); // 예: 1200
   };

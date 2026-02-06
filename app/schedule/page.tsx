@@ -19,8 +19,6 @@ export default function ScheduleListPage() {
   const router = useRouter();
   const [boards, setBoards] = useState<ScheduleBoard[]>([]);
   const [loading, setLoading] = useState(true);
-
-  /** 현재 편집 중인 카드 ID (하나만 편집 가능하도록) */
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,7 +36,6 @@ export default function ScheduleListPage() {
     }
   };
 
-
   const handleUpdate = async (
     boardId: string,
     title: string,
@@ -50,7 +47,7 @@ export default function ScheduleListPage() {
       setBoards((prev) =>
         prev.map((b) => (b.id === boardId ? { ...b, title, description } : b)),
       );
-      setEditingId(null); // 편집 종료
+      setEditingId(null);
     } catch (error) {
       console.error(error);
       alert("수정 실패");
@@ -117,7 +114,6 @@ export default function ScheduleListPage() {
     </StContainer>
   );
 }
-
 
 const StContainer = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};

@@ -8,7 +8,6 @@ import {
 } from "date-fns";
 import { ServiceSchedule } from "@/types/work-schedule";
 
-/** 훅에서 사용할 평탄화된 태스크 타입 */
 export interface CalendarTask {
   id: string;
   title: string;
@@ -28,7 +27,6 @@ export function useCalendarLayout(
     const map = new Map<string, number>();
     const maxSlots = new Map<string, number>();
 
-    /** 1. 모든 스케줄을 하나의 배열로 평탄화 */
     const allTasks: CalendarTask[] = schedules.flatMap((svc) =>
       svc.tasks.map((t) => ({
         id: t.id,
@@ -42,7 +40,6 @@ export function useCalendarLayout(
       })),
     );
 
-    /** 2. 주 단위(Row)로 끊어서 슬롯 계산 */
     for (let i = 0; i < daysToShow.length; i += cols) {
       const rowDays = daysToShow.slice(i, i + cols);
       if (rowDays.length === 0) continue;

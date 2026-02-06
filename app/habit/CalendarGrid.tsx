@@ -68,11 +68,9 @@ export default function CalendarGrid({
     : weekDays.filter((_, i) => i !== 0 && i !== 6);
   const today = new Date();
 
-  /** 배경색 및 텍스트 색상 결정 로직 */
   const getCellStyles = (
     dateStr: string
   ): { bg: string; isDarkBg: boolean; isHoverTarget?: boolean } => {
-    /** [1] 일단 원래의 농도(Heatmap) 색상을 먼저 계산해둡니다. */
     const log = monthlyLogs?.find((l) => l.date === dateStr);
     const count = log ? log.count : 0;
     const total = totalItemsCount || 1;
@@ -92,7 +90,6 @@ export default function CalendarGrid({
       }
     }
 
-    /** [2] 호버 상태 체크 */
     if (hoveredItemId !== null) {
       const isDone = rawLogs?.some(
         (log) => log.item_id === hoveredItemId && log.completed_at === dateStr
@@ -112,7 +109,6 @@ export default function CalendarGrid({
       }
     }
 
-    /** [3] 호버 안 했을 때는 원래 계산한 스타일 반환 */
     return originalStyle;
   };
 
@@ -193,7 +189,6 @@ const StDateCell = styled.div<{
   cursor: pointer;
   opacity: ${({ $opacity }) => $opacity};
 
-  /* 선택된 날짜 테두리 */
   border: 2px solid
     ${({ $isSelected, $borderColor }) =>
       $isSelected ? $borderColor : "transparent"};
@@ -206,7 +201,6 @@ const StDateCell = styled.div<{
     z-index: 10;
   }
 
-  /* 조건부 css 적용 */
   ${(props) =>
     props.$isHoverTarget &&
     css`

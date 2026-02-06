@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -176,12 +175,10 @@ const StPeriodBadge = styled.span`
   white-space: nowrap; /* 줄바꿈 방지 */
 `;
 
-/* 설명 및 리스트를 감싸는 섹션 (className="mb-6" 대체) */
 const StSection = styled.div`
   margin-bottom: 1.5rem;
 `;
 
-/* 수행 업무 타이틀 래퍼 (className="block mb-1" 대체) */
 const StTaskTitleWrapper = styled.div`
   display: block;
   margin-bottom: 0.25rem;

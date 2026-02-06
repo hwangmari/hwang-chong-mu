@@ -298,7 +298,6 @@ const StMonthLabel = styled.span`
   }
 `;
 
-/** [NEW] 뱃지와 툴팁을 감싸는 컨테이너 */
 const StBadgeGroup = styled.div`
   position: absolute;
   top: -0.25rem;
@@ -306,7 +305,6 @@ const StBadgeGroup = styled.div`
   z-index: 25;
   cursor: pointer; /* 클릭 가능 표시 */
 
-  /* PC Hover 대응: 마우스 올리면 하위 툴팁 표시 */
   &:hover > div:last-child {
     display: block;
     opacity: 1;
@@ -332,9 +330,7 @@ const StCountBadge = styled.div<{ $isTypingMode: boolean }>`
   }
 `;
 
-/** [NEW] 툴팁 스타일 (상태에 따른 제어 포함) */
 const StTooltip = styled.div<{ $isOpen: boolean }>`
-  /* 기본 숨김, 하지만 $isOpen이 true면 표시 */
   display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
 
@@ -352,7 +348,6 @@ const StTooltip = styled.div<{ $isOpen: boolean }>`
   pointer-events: none; /* 툴팁 자체는 클릭 방해 X */
   transition: opacity 0.2s;
 
-  /* 툴팁 꼬리 */
   &::after {
     content: "";
     position: absolute;

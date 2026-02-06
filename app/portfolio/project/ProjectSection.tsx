@@ -12,7 +12,6 @@ import {
 } from "./ProjectSection.styled";
 import ProjectList from "./ProjectList";
 
-/** 상단에 정의된 스택 배열 */
 const CORE_STACK = [
   "Gemini",
   "OpenAI Codex",

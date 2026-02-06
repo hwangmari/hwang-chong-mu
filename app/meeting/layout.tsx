@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-/** ★ [덮어쓰기] 약속 잡기 서비스 전용 메타데이터 */
 export const metadata: Metadata = {
   metadataBase: new URL("https://hwang-lab.kr"),
   title: "황총무의 약속 잡기",

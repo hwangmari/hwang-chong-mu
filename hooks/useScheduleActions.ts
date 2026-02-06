@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
@@ -25,10 +24,8 @@ export function useScheduleActions(
     [onUpdateAll],
   );
 
-  /** (이전 답변의 handleUpdateService 로직을 그대로 사용하세요) */
 
 
-  /** 1. 서비스 생성 */
   const handleAddService = async () => {
     try {
       const newService = await API.createService(
@@ -46,7 +43,6 @@ export function useScheduleActions(
     }
   };
 
-  /** ... (handleDeleteService, handleUpdateService 등) ... */
 
   const handleDeleteService = async (svcId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
@@ -124,7 +120,6 @@ export function useScheduleActions(
   };
 
   const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    /** 1. 낙관적 업데이트 */
     const nextSchedules = schedules.map((svc) => {
       if (svc.id !== svcId) return svc;
       return {
@@ -136,7 +131,6 @@ export function useScheduleActions(
     });
     updateLocalState(nextSchedules);
 
-    /** 2. API 호출 */
     try {
       await API.updateTask(updatedTask.id, {
         title: updatedTask.title,

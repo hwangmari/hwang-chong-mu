@@ -5,7 +5,6 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useMemo } from "react";
 import Image from "next/image";
 
-/** 1. 이미지 데이터 타입 정의 */
 export interface HistoryImage {
   src: string;
   alt: string;
@@ -56,7 +55,6 @@ export default function ProjectItemList({
     return { years, groups };
   }, [items]);
 
-  /** 렌더링 헬퍼 함수 */
   const renderContent = (item: HistoryItem) => (
     <>
       <StTitleDate>
@@ -88,7 +86,6 @@ export default function ProjectItemList({
                 alt={img.alt}
                 width={img.width || 500} // 기본값 설정
                 height={img.height || 600}
-                /** width/height를 모를 경우 fill={true} 사용 고려 */
                 style={{
                   height: "auto",
                 }}
@@ -142,7 +139,6 @@ export default function ProjectItemList({
 }
 
 
-/** 4. 애니메이션 정의 (누락되었던 부분) */
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -340,7 +336,6 @@ const StImageGrid = styled.div`
   margin-top: 0.5rem;
   animation: ${fadeIn} 0.5s ease-out;
 
-  /* 테마가 있다면 아래 주석 해제 후 사용하세요 */
   /*
   @media ${({ theme }) => theme?.media?.desktop || "min-width: 1024px"} {
     grid-template-columns: 1fr 1fr;

@@ -1,6 +1,5 @@
 import styled, { css } from "styled-components";
 
-/** 공통 Input 스타일 (Mixin) */
 const inputStyles = css`
   width: 100%;
   border: 1px solid #d1d5db;

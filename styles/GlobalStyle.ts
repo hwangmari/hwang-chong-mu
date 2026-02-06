@@ -2,7 +2,6 @@
 import { createGlobalStyle, css } from "styled-components";
 
 const utilities = css`
-  /* === Display === */
   .block {
     display: block;
   }
@@ -16,7 +15,6 @@ const utilities = css`
     display: none;
   }
 
-  /* === Font Weight === */
   .fw-400 {
     font-weight: 400;
   }
@@ -33,8 +31,6 @@ const utilities = css`
     font-weight: 900;
   }
 
-  /* === Text Colors (👇 여기 추가되었습니다!) === */
-  /* Grays */
   .text-white {
     color: #ffffff;
   }
@@ -57,7 +53,6 @@ const utilities = css`
     color: #111827;
   }
 
-  /* Brand Colors */
   .text-blue-600 {
     color: #2563eb;
   } /* 포인트 컬러 */
@@ -65,7 +60,6 @@ const utilities = css`
     color: #1d4ed8;
   }
 
-  /* Status Colors */
   .text-green-700 {
     color: #15803d;
   }
@@ -73,7 +67,6 @@ const utilities = css`
     color: #f97316;
   }
 
-  /* === Margin Bottom (mb) === */
   .mb-0 {
     margin-bottom: 0;
   }
@@ -99,7 +92,6 @@ const utilities = css`
     margin-bottom: 2.5rem;
   }
 
-  /* === Margin Top (mt) === */
   .mt-1 {
     margin-top: 0.25rem;
   }
@@ -113,7 +105,6 @@ const utilities = css`
     margin-top: 1.5rem;
   }
 
-  /* === Padding (p, py, px) === */
   .p-4 {
     padding: 1rem;
   }
@@ -153,7 +144,6 @@ const GlobalStyle = createGlobalStyle`
   a { color: inherit; text-decoration: none; }
   button { background: none; border: none; cursor: pointer; font-family: inherit; }
 
-  /* 👇 유틸리티 클래스 주입! */
   ${utilities}
 `;
 

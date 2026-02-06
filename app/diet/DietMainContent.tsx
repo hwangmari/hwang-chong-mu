@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/immutability */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -74,7 +73,6 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
         e.preventDefault();
-        /** 크롬 등 대부분의 브라우저는 보안상의 이유로 커스텀 메시지를 지원하지 않고 기본 경고창을 띄웁니다. */
         e.returnValue = "";
       }
     };
@@ -161,7 +159,6 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
           : addDays(currentDate, 1);
 
     if (isDirty) {
-      /** "취소"를 누르면 false 반환 -> 이동 안 함 */
       const confirmed = await openConfirm(
         "작성 중인 내용이 저장되지 않았습니다.\n저장하지 않고 이동하시겠습니까?",
       );
@@ -196,7 +193,6 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
     } else {
       await openAlert("오늘의 기록이 성공적으로 저장되었습니다! 💪");
 
-      /** 저장 성공 시 로직 */
       fetchChartLogs(currentDate, viewMode);
       fetchLogAndYesterday(currentDate); // initialLog도 함께 업데이트됨
     }
@@ -215,20 +211,16 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
   const w_curr_morning = parseWeight(log.weight_morning); // 오늘 아침
   const w_curr_dinner = parseWeight(log.weight_dinner); // 오늘 저녁
 
-  /** 2. 변화량 계산 */
-  /** A. 밤사이 변화 (보통 마이너스여야 좋음) */
   const overnightDiff =
     w_curr_morning !== null && w_prev_dinner !== null
       ? w_curr_morning - w_prev_dinner
       : null;
 
-  /** B. 낮 동안 변화 (보통 플러스가 됨) */
   const daytimeDiff =
     w_curr_dinner !== null && w_curr_morning !== null
       ? w_curr_dinner - w_curr_morning
       : null;
 
-  /** C. 최종 비교 (오늘 저녁 - 어제 저녁) = A + B */
   const totalDiff =
     w_curr_dinner !== null && w_prev_dinner !== null
       ? w_curr_dinner - w_prev_dinner

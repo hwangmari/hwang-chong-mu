@@ -49,7 +49,6 @@ export const StCard = styled.div<{
   transition: all 0.2s ease;
   scroll-margin-top: 20px;
 
-  /* 숨겨졌을 때 흐리게 처리 */
   ${({ $isHidden }) =>
     $isHidden &&
     css`
@@ -415,7 +414,6 @@ export const StTaskItem = styled.div`
       }
     }
 
-    /* 메모 버튼 스타일 */
     .memo-toggle-btn,
     .memo-icon-read {
       background: none;
@@ -426,7 +424,7 @@ export const StTaskItem = styled.div`
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      color: #d1d5db; /* 기본 회색 */
+      color: #d1d5db;
 
       &:hover {
         color: #9ca3af;
@@ -434,7 +432,7 @@ export const StTaskItem = styled.div`
       }
 
       &.active {
-        color: #f59e0b; /* 활성화 시 주황색 */
+        color: #f59e0b;
         filter: drop-shadow(0 1px 2px rgba(245, 158, 11, 0.3));
         opacity: 1;
       }
@@ -597,7 +595,6 @@ export const StCompletedSection = styled.div`
     display: flex;
     flex-direction: column;
     gap: 12px;
-    /* 완료된 리스트는 약간 투명하게 처리하여 구분 */
     opacity: 0.8;
   }
 `;

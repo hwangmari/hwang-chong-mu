@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useRef, useState, useEffect } from "react";
 import { format, parse, isValid } from "date-fns";
 import { StDateInputWrapper, StCalendarPopover } from "./TaskList.styles";
@@ -31,7 +30,6 @@ export default function DateInput({
     }
   }, [startDate, endDate]);
 
-  /** 외부 클릭 시 달력 닫기 */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -45,7 +43,6 @@ export default function DateInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /** 텍스트 입력 핸들러 (8자리 or 16자리 숫자 입력 시 자동 변환) */
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTextValue(val);
@@ -68,7 +65,6 @@ export default function DateInput({
     else onUpdate(startDate, newDate);
   };
 
-  /** 읽기 전용 모드 디스플레이 텍스트 */
   const getDisplayDateText = () => {
     const sYear = startDate.getFullYear();
     const eYear = endDate.getFullYear();

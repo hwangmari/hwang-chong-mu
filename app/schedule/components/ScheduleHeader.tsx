@@ -7,7 +7,7 @@ interface ScheduleHeaderProps {
   title: string;
   showWeekend: boolean;
   onToggleWeekend: (checked: boolean) => void;
-  boardId: string; // ✨ 추가: 링크 이동을 위해 필요
+  boardId: string;
 }
 
 export default function ScheduleHeader({
@@ -40,7 +40,6 @@ export default function ScheduleHeader({
       </div>
 
       <StControls>
-        {/* ✨ 칸반 이동 버튼 추가 */}
         <Link href={`/schedule/${boardId}/kanban`} passHref>
           <StKanbanLink>📊 칸반보드</StKanbanLink>
         </Link>
@@ -59,7 +58,6 @@ export default function ScheduleHeader({
     </StTopBar>
   );
 }
-
 
 const StTopBar = styled.header`
   height: 60px;

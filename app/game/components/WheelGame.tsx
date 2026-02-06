@@ -70,7 +70,6 @@ export default function WheelGame({
       ctx.fill();
       ctx.stroke();
 
-      /** 텍스트 그리기 */
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(i * arc + arc / 2 + startAngleOffset);
@@ -83,7 +82,6 @@ export default function WheelGame({
   }, [participants]);
 
   useEffect(() => {
-    /** 로컬 모드면 이 useEffect는 무시합니다. */
     if (roomId === "local") return;
 
     if (roomData?.current_question) {
@@ -92,7 +90,6 @@ export default function WheelGame({
         spinWheel(targetRotation);
       }
     } else {
-      /** 리셋 신호 감지 */
       setRotation(0);
       setWinner(null);
       setIsSpinning(false);
@@ -105,20 +102,17 @@ export default function WheelGame({
     setIsSpinning(true);
     setRotation(deg); // 여기서 회전 각도 상태 변경 -> CSS transition 작동
 
-    /** 4초 후 결과 계산 */
     setTimeout(() => {
       setIsSpinning(false);
       calculateWinner(deg);
     }, 4000);
   };
 
-  /** 4. 우승자 계산 */
   const calculateWinner = (finalDegree: number) => {
     const count = participants.length;
     if (count === 0) return;
 
     const degreePerSlice = 360 / count;
-    /** 12시 핀 기준 계산 */
     const winningIndex = Math.floor(
       ((360 - (finalDegree % 360)) % 360) / degreePerSlice
     );
@@ -133,10 +127,8 @@ export default function WheelGame({
     const randomDeg = 1800 + Math.random() * 1800; // 5~10바퀴 랜덤
 
     if (roomId === "local") {
-      /** [로컬 모드] DB 안 거치고 바로 실행 */
       spinWheel(randomDeg);
     } else {
-      /** [온라인 모드] DB 업데이트 -> useEffect가 감지해서 spinWheel 실행 */
       await supabase
         .from("game_rooms")
         .update({
@@ -148,12 +140,10 @@ export default function WheelGame({
 
   const handleReset = async () => {
     if (roomId === "local") {
-      /** [로컬 모드] 바로 리셋 */
       setRotation(0);
       setWinner(null);
       setIsSpinning(false);
     } else {
-      /** [온라인 모드] DB 리셋 */
       await supabase
         .from("game_rooms")
         .update({ current_question: null })

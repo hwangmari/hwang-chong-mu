@@ -121,7 +121,6 @@ const StHeader = styled.div`
     gap: 0.5rem;
 
     .period {
-      /* 🔹 13px 적용 */
       font-size: 13px;
       color: ${({ theme }) => theme.colors.gray500};
       font-weight: 500;
@@ -142,7 +141,6 @@ const StServiceLink = styled(Link)`
   background-color: ${({ theme }) => theme.colors.black};
   color: #fff;
 
-  /* 🔹 13px 적용 */
   font-size: 13px;
   font-weight: 600;
   border-radius: 2rem;
@@ -158,7 +156,6 @@ const StDescriptionBody = styled.div`
   margin-bottom: 1rem;
 `;
 
-/* ✨ Compact Details Box */
 const StDetailsBox = styled.div`
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
@@ -174,7 +171,6 @@ const StDetailRow = styled.div`
   align-items: baseline;
   line-height: 1.6;
 
-  /* 🔹 핵심: 상세 내용 13px 적용 */
   font-size: 13px;
 
   .content {
@@ -188,7 +184,6 @@ const StDetailRow = styled.div`
   }
 `;
 
-/* ✨ Semantic Labels */
 const StDetailLabel = styled.div<{ $type: "problem" | "solution" | "tech" }>`
   font-weight: 700;
   min-width: 90px;

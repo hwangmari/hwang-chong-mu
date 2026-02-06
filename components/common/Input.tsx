@@ -87,7 +87,6 @@ const StInput = styled.input<{ $isError: boolean }>`
     cursor: not-allowed;
   }
 
-  /* 날짜 입력(date)일 때 텍스트 높이 보정 */
   &[type="date"] {
     width: 220px;
     text-align: left;

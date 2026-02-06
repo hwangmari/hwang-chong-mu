@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/** services/schedule.ts */
 
 import { supabase } from "@/lib/supabase";
 import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
@@ -87,7 +85,6 @@ export const getBoardData = async (boardId: string) => {
   if (error) throw error;
   if (!data) throw new Error("데이터를 찾을 수 없습니다.");
 
-  /** services가 없을 경우를 대비해 빈 배열([]) 처리 */
   const servicesWithTasks = (data.services || []).map((svc: any) => {
     return mapServiceFromDB(svc, svc.tasks || []);
   });
@@ -128,7 +125,6 @@ export const deleteBoard = async (boardId: string) => {
   if (error) throw error;
 };
 
-/** 🚀 서비스 (Project) 관련 API */
 
 export const createService = async (
   boardId: string,
@@ -165,7 +161,6 @@ export const updateService = async (id: string, updates: any) => {
 
     console.log("Service DB Update Payload:", dbUpdates);
 
-    /** 업데이트할 내용이 없는 경우 에러 방지 (선택 사항) */
     if (Object.keys(dbUpdates).length === 0) {
       console.warn("업데이트할 데이터가 없습니다.");
       return; // 혹은 현재 상태 리턴
@@ -244,10 +239,8 @@ export const updateTask = async (taskId: string, updates: any) => {
 
     console.log("Task DB Payload:", dbUpdates);
 
-    /** 업데이트 객체가 비어있으면 Supabase가 400 에러를 뱉을 수 있음 */
     if (Object.keys(dbUpdates).length === 0) {
       console.warn("Task 업데이트 데이터가 비어있습니다.");
-      /** 에러를 던지지 않고 무시하거나, 현재 데이터를 다시 fetch해서 리턴 */
       return;
     }
 

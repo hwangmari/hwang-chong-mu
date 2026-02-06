@@ -49,7 +49,6 @@ export default function HabitRoomPage({
   );
 }
 
-/** ... (나머지 스타일들) */
 const Header = styled.div`
   text-align: center;
   margin-bottom: 2rem;

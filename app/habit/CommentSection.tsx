@@ -26,7 +26,6 @@ export default function CommentSection({
   const [loading, setLoading] = useState(false);
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
-  /** 댓글 목록 불러오기 */
   const fetchComments = useCallback(async () => {
     const { data } = await supabase
       .from("goal_comments")
@@ -43,7 +42,6 @@ export default function CommentSection({
     fetchComments();
   }, [fetchComments]);
 
-  /** 댓글 등록 */
   const handleSubmit = async () => {
     if (!nickname.trim() || !content.trim()) {
       return alert("닉네임과 내용을 모두 입력해주세요!");
@@ -66,7 +64,6 @@ export default function CommentSection({
     setLoading(false);
   };
 
-  /** 댓글 삭제 */
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 

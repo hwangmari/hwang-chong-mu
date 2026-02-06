@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import styled from "styled-components"; // 스타일 보강을 위해 추가
 import { ServiceSchedule } from "@/types/work-schedule";

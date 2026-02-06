@@ -1,8 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
-/** 분리된 파일 임포트 */
 import { StCard } from "./ServiceCard.styles";
 import { EditView, ReadView } from "./ServiceCardViews";
 

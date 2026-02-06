@@ -119,7 +119,6 @@ export const StPhilosophyBox = styled.div`
     }
   }
 
-  /* 모바일 대응 */
   @media (max-width: 768px) {
     padding: 16px;
     .description {

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
-import Link from "next/link";
 import { createBoard } from "@/services/schedule"; // 👈 변경
 
 export default function CreateSchedulePage() {

@@ -37,7 +37,6 @@ export default function GameLobbyPage() {
     if (savedName) setNickname(savedName);
   }, []);
 
-  /** 1. 방 만들기 로직 */
   const createRoom = async () => {
     if (!roomTitle) return alert("방 제목을 입력해주세요!");
     if (!nickname) return alert("닉네임을 입력해주세요!");
@@ -50,7 +49,6 @@ export default function GameLobbyPage() {
         100000 + Math.random() * 900000
       ).toString();
 
-      /** 방 생성 */
       const { data: room, error: roomError } = await supabase
         .from("game_rooms")
         .insert([
@@ -61,7 +59,6 @@ export default function GameLobbyPage() {
 
       if (roomError) throw roomError;
 
-      /** 방장 참가 */
       const { data: participant, error: pError } = await supabase
         .from("game_participants")
         .insert([
@@ -90,12 +87,10 @@ export default function GameLobbyPage() {
     }
   };
 
-  /** 2. 빠른 게임 선택 시 처리 */
   const handleSelectQuickGame = (gameId: string) => {
     router.push(`/game/quick/${gameId}`);
   };
 
-  /** 3. 공통 뒤로가기 버튼 컴포넌트 */
   const BackButton = () => (
     <StBackButton onClick={() => setViewMode("SELECT")}>
       <svg

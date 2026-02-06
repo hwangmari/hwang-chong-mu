@@ -32,7 +32,6 @@ export default function ProjectImageViewer({
 }: ProjectImageViewerProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  /** 이미지가 없으면 아예 렌더링 안 함 */
   if (!images || images.length === 0) return null;
 
   return (
