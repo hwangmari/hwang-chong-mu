@@ -1,5 +1,6 @@
 import { Experience } from "@/types/experiences";
 import {
+  ANALYSIS_HISTORY_DATA,
   CAMPAIGN_LIST,
   DIRECT_HISTORY_DATA,
   HSP_HISTORY_DATA,
@@ -21,15 +22,14 @@ const HANWHA_EXPERIENCE: Experience = {
   ],
   projects: [
     {
-      title: "D2F(Direct to FP) 연계 서비스 도입",
-      period: "2025.08 - 2025.10",
+      title: "보장분석 운영 전담(PM · 프론트개발)",
+      period: "2026.01 ~ 상시 운영",
       description:
-        "디지털 채널(Web/App)과 오프라인 영업(FP)을 유기적으로 연결하여 상담 기회를 확대하고, 멀티 채널 환경에서 일관된 사용자 경험을 제공하는 O2O 연계 서비스 구축",
+        "운영 업무를 전담하며 PM 역할과 프론트엔드 개발을 함께 맡아 일정, 품질, 커뮤니케이션을 단일 창구로 관리",
       tasks: [
-        "OSMU(One Source Multi Use) 설계: Next.js 기반으로 PC, Mobile Web, App(Webview) 등 파편화된 멀티 채널 규격을 단일 소스로 통합 대응",
-        "동적 라우팅(Dynamic Routing): 고객 데이터(수금 FP 유무)에 따라 '담당 설계사 매칭' 또는 'HSP 상담원 연결'로 분기되는 비즈니스 로직 구현",
-        "상담 예약 플랫폼 구축: 영업시간 외 이탈 방지를 위한 담당 설계사 상담 예약 프로세스 신규 개발",
-        "비즈니스 파이프라인 확장: 주요 서비스(계약조회, 사고보험금 등) 내 D2F 진입점을 심리스(Seamless)하게 통합하여 영업 기회 창출",
+        "운영 이슈의 우선순위 정의 및 로드맵/스프린트 단위 실행 계획 수립",
+        "요구사항 정리부터 개발/배포까지의 전 과정 리딩",
+        "프론트 개발 전담으로 서비스 안정성 및 배포 속도 개선",
       ],
       techStack: [
         "Next.js",
@@ -39,12 +39,11 @@ const HANWHA_EXPERIENCE: Experience = {
         "SCSS",
         "Figma",
       ],
-      images: [
-        {
-          src: "/images/hanwha_2025_d2f.png",
-          alt: "한화생명 D2F 서비스 화면",
-        },
-      ],
+      projectItemList: {
+        title: "보장분석 운영 및 고도화 히스토리",
+        description: "Development History",
+        items: ANALYSIS_HISTORY_DATA,
+      },
     },
     {
       title: "HSP 상담 플랫폼 운영 및 비즈니스 고도화",

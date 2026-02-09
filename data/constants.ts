@@ -1,9 +1,32 @@
 import { ProjectItemList } from "@/types/experiences";
+export const ANALYSIS_HISTORY_DATA: ProjectItemList[] = [
+  {
+    id: "2026-02-01",
+    date: "2026.01.20 ~ 02.12",
+    title: "보장분석 신정원 대응",
+    description: ["보장분석 준비 가이드", "보장분석 신정원 대응"],
+  },
+  {
+    id: "2026-01-01",
+    date: "2026.01.02 ~ 02.02",
+    title: "보장분석 CMS 수정건",
+  },
+];
 
 export const HSP_HISTORY_DATA: ProjectItemList[] = [
   {
+    id: "2026-02-01",
+    date: "2026.02.20 ~ 03.06",
+    title: "HSP 상담 목적 추가",
+  },
+  {
+    id: "2026-01-01",
+    date: "2026.01.20 ~ 02.12",
+    title: "HSP 마케팅 약관",
+  },
+  {
     id: "2025-10-11",
-    date: "2025.10.11 ~ ",
+    date: "2025.10.11 ~ 10:30",
     title: "상품찾기 메인 탭 HSP 상담 연결창구 연동",
     description: [
       "APP(In-webview)과 Mobile Web 간의 인터랙션 차이를 극복하고, 단일 소스로 멀티 채널을 대응할 수 있는 확장성 있는 구조 설계",
@@ -12,7 +35,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
   {
     id: "2025-10-01",
-    date: "2025.10.01 ~ 10.01 배포",
+    date: "2025.10.01 ~ 10.15 ",
     title: "FP 정보 고도화: 전자명함 서비스 도입",
     description: [
       "FP(재무설계사)의 상세 프로필 및 전문 분야를 제공하는 전자명함 서비스 신규 구축",
@@ -33,7 +56,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
   {
     id: "2025-07-02",
-    date: "2025.07.01 ~",
+    date: "2025.07.01 ~ 07.30",
     title: "HSP 이벤트 프로세스 및 보안 고도화",
     description: [
       "이벤트 참여 프로세스 내 본인인증 절차 추가로 부정 참여 방지",
@@ -42,7 +65,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
   {
     id: "2025-06-11",
-    date: "2025.06.11 ~ 07.16 배포",
+    date: "2025.06.11 ~ 07.16",
     title: "고객 행동 기반(Behavioral) HSP 상담 연계",
     description: [
       "다이렉트 상품 탐색 과정의 고객 행동 데이터를 실시간 분석하여 적시에 상담 팝업을 노출하는 타겟팅 로직 구현",
@@ -58,7 +81,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
   {
     id: "2025-05-01",
-    date: "2025.05.01 ~ ",
+    date: "2025.05.01 ~ 05.30",
     title: "HSP 상담하기 비즈니스 연계 영역 확대",
     description: [
       "청약/뇌·심혈관 상품 등 주요 보험 상품 페이지와 상담 플랫폼 데이터 연동",
@@ -67,7 +90,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   },
   {
     id: "2025-04-04",
-    date: "2025.04.04 ~ 04.22 배포",
+    date: "2025.04.04 ~ 04.22",
     title: "만족도 조사 서비스 마이그레이션",
     description: [
       "기존 레거시 시스템의 상담 만족도 조사를 Next.js 환경으로 마이그레이션하여 성능 개선",
@@ -107,12 +130,39 @@ export const DIRECT_HISTORY_DATA: ProjectItemList[] = [
     description: ["AI 상담하기 챗봇형 인터페이스 마크업 및 인터랙션 구현"],
   },
   {
+    id: "2024-07-01",
+    date: "2024.07.01 ~ 07.30",
+    title: "통합 BO 배너 관리 목록 페이지 개발",
+    description: [
+      "통합 BO 백오피스 배너 목록 페이지 프론트 개발",
+      "데이터 API 연동까지 수행하여 운영 효율 개선",
+    ],
+  },
+  {
+    id: "2024-05-01",
+    date: "2024.05.01 ~ 06.30",
+    title: "다이렉트, 온슈어 운영 웹접근성 대응",
+    description: [
+      "온슈어 운영 개발 마크업 전담 및 웹접근성 대응 개발",
+      "웹접근성 심사 대응 및 접근성 마크 획득",
+    ],
+  },
+  {
     id: "2024-04-01",
     date: "2024.04.01 ~ 07.02",
     title: "보장분석 신규 서비스 UI 개발",
     description: [
       "보장분석 결과 리포트 및 상세 화면 마크업 개발",
       "복잡한 데이터 시각화(차트, 그래프)를 위한 UI 구조 설계",
+    ],
+  },
+  {
+    id: "2024-02-01",
+    date: "2024.02.01 ~ 03.30",
+    title: "다이렉트웹 이벤트 상세 페이지 개발",
+    description: [
+      "이벤트 상세 페이지 마크업 전담",
+      "백오피스 연동 및 UI 컴포넌트 개발",
     ],
   },
   {

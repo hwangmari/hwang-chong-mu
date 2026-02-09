@@ -73,13 +73,15 @@ export default function TaskList({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const renderTaskCard = (service: ServiceSchedule) => (
+  const renderTaskCard = (service: ServiceSchedule) => {
+    const isHidden = hiddenIds.has(service.id) || !!service.isHidden;
+    return (
     <TaskCardItem
       key={service.id}
       service={service}
       isCollapsed={collapsedIds.has(service.id)}
       isHighlighted={highlightId === service.id}
-      isHidden={service.isHidden}
+      isHidden={isHidden}
       isEditing={isEditing}
       isPickerOpen={activeColorPickerId === service.id}
       pickerRef={pickerRef}
@@ -100,7 +102,8 @@ export default function TaskList({
       onAddTask={() => onAddTask(service.id)}
       onUpdateService={onUpdateService}
     />
-  );
+    );
+  };
 
   return (
     <StScrollArea ref={scrollAreaRef}>

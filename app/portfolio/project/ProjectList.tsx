@@ -10,6 +10,10 @@ export default function ProjectList() {
       src: "/images/toy_schedule.png",
       alt: "업무 캘린더 예시 화면",
     },
+    {
+      src: "/images/toy_schedule2.png",
+      alt: "업무 캘린더 칸반보드 예시 화면",
+    },
   ];
   const habitImages: ProjectImage[] = [
     {
@@ -95,6 +99,12 @@ export default function ProjectList() {
           ),
         }}
         historyLogs={[
+          {
+            ver: "1.0.2",
+            date: "2026.02.09",
+            content:
+              "업무 캘린더에 칸반보드 기능 추가로 일정 기반 업무 상태를 한눈에 관리",
+          },
           {
             ver: "1.0.1",
             date: "2026.02.02",
