@@ -22,7 +22,7 @@ import {
   StContainer,
   StFlexBox,
 } from "@/components/styled/layout.styled";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toSlug } from "@/lib/slug";
 
@@ -73,10 +73,7 @@ export default function RoomDetail() {
     }
   }, [room, roomId, router]);
 
-  const handleCreateSettlement = async (
-    memberNames: string[],
-    date: Date,
-  ) => {
+  const handleCreateSettlement = async (memberNames: string[], date: Date) => {
     if (isCreatingSettlement) return;
     if (!room) return;
     if (room.calc_room_id) {
@@ -117,14 +114,11 @@ export default function RoomDetail() {
         .eq("id", room.id);
       if (updateError) throw updateError;
 
-      const { error: rpcError } = await supabase.rpc(
-        "calc_replace_room_data",
-        {
-          p_room_id: String(newRoom.id),
-          p_members: Array.from(new Set(memberNames)),
-          p_expenses: [],
-        },
-      );
+      const { error: rpcError } = await supabase.rpc("calc_replace_room_data", {
+        p_room_id: String(newRoom.id),
+        p_members: Array.from(new Set(memberNames)),
+        p_expenses: [],
+      });
       if (rpcError) throw rpcError;
 
       router.push(`/calc/${newRoom.id}`);
@@ -136,6 +130,31 @@ export default function RoomDetail() {
     }
   };
 
+  const possibleDates = useMemo(() => {
+    const dates = calendarGrid.filter((d): d is Date => d !== null);
+    const activeParticipants = participants.filter((p) => !p.isAbsent);
+    const totalActive = activeParticipants.length;
+
+    const items = dates.map((date) => {
+      const unavailableCount = activeParticipants.filter((p) =>
+        p.unavailableDates.some(
+          (ud) => format(ud, "yyyy-MM-dd") === format(date, "yyyy-MM-dd"),
+        ),
+      ).length;
+      const availableCount = Math.max(totalActive - unavailableCount, 0);
+      return { date, availableCount, totalActive };
+    });
+
+    const sorted = items.sort((a, b) => {
+      if (b.availableCount !== a.availableCount) {
+        return b.availableCount - a.availableCount;
+      }
+      return a.date.getTime() - b.date.getTime();
+    });
+    const maxAvailable = sorted.length > 0 ? sorted[0].availableCount : 0;
+    return sorted.filter((item) => item.availableCount === maxAvailable);
+  }, [calendarGrid, participants]);
+
   if (loading) return <StLoadingContainer>로딩중...🐰</StLoadingContainer>;
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
@@ -143,12 +162,7 @@ export default function RoomDetail() {
     <StContainer>
       <StWrapper>
         {/* 헤더 및 가이드 버튼 */}
-        <StHeaderWrapper>
-          <RoomHeader title={room.name} />
-          <StGuideButton onClick={() => setShowGuide(true)} aria-label="가이드">
-            ?
-          </StGuideButton>
-        </StHeaderWrapper>
+        <RoomHeader title={room.name} />
       </StWrapper>
 
       {/* 1️⃣ 투표 화면 (VOTING) */}
@@ -156,35 +170,44 @@ export default function RoomDetail() {
         <>
           <StWrapper>
             <StGuideTextWrapper>
-              <Typography
-                variant={step === "VOTING" ? "body2" : "h2"}
-                color={step === "VOTING" ? "gray500" : "gray900"}
-                className={step === "VOTING" ? "fw-700" : "fw-900"}
-              >
-                {step === "VOTING" ? (
-                  isEditing ? (
-                    `${currentName}님의 일정을 수정 중입니다 ✏️`
-                  ) : currentName ? (
-                    <>
-                      {currentName}님,{" "}
-                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                      선택해주세요!
-                    </>
+              <StGuideRow>
+                <Typography
+                  variant={step === "VOTING" ? "body2" : "h2"}
+                  color={step === "VOTING" ? "gray500" : "gray900"}
+                  className={step === "VOTING" ? "fw-700" : "fw-900"}
+                >
+                  {step === "VOTING" ? (
+                    isEditing ? (
+                      `${currentName}님의 일정을 수정 중입니다 ✏️`
+                    ) : currentName ? (
+                      <>
+                        {currentName}님,{" "}
+                        <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                        선택해주세요!
+                      </>
+                    ) : (
+                      <>
+                        👇 이름을 입력하고{" "}
+                        <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                        선택하세요!
+                      </>
+                    )
                   ) : (
-                    <>
-                      👇 이름을 입력하고{" "}
-                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                      선택하세요!
-                    </>
-                  )
-                ) : (
-                  "👑 최종 약속 날짜를 선택해주세요!"
+                    "👑 최종 약속 날짜를 선택해주세요!"
+                  )}
+                </Typography>
+                {step === "VOTING" && (
+                  <StGuideButton
+                    onClick={() => setShowGuide(true)}
+                    aria-label="가이드"
+                  >
+                    ?
+                  </StGuideButton>
                 )}
-              </Typography>
+              </StGuideRow>
             </StGuideTextWrapper>
-
             {step === "VOTING" && (
-              <>
+              <StInputRow>
                 <NameInput
                   currentName={currentName}
                   isEditing={isEditing}
@@ -195,7 +218,7 @@ export default function RoomDetail() {
                   onReset={handleResetDates}
                   onSelectAll={handleSelectAllDates}
                 />
-              </>
+              </StInputRow>
             )}
           </StWrapper>
           <StFlexBox>
@@ -228,6 +251,7 @@ export default function RoomDetail() {
                 hoveredUserId={hoveredUserId}
                 setHoveredUserId={setHoveredUserId}
               />
+
               {step === "VOTING" && (
                 <FloatingFinishButton onFinish={handleGoToConfirm} />
               )}
@@ -279,42 +303,8 @@ const StLoadingContainer = styled.div`
   font-weight: 700;
 `;
 
-const StHeaderWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  margin-bottom: 0.5rem;
-`;
-
-const StGuideButton = styled.button`
-  position: absolute;
-  top: 0;
-  right: 0.5rem;
-  width: 2rem;
-  height: 2rem;
-  background-color: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 9999px;
-  color: ${({ theme }) => theme.colors.gray400};
-  font-weight: 700;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  z-index: 10;
-  transition: all 0.2s;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.blue600};
-    border-color: ${({ theme }) => theme.colors.blue200};
-    transform: scale(1.1);
-  }
-`;
-
 const StGuideTextWrapper = styled.div`
   margin-bottom: 0.5rem;
-  text-align: center;
-  padding: 0 1rem;
   word-break: keep-all;
 `;
 
@@ -323,4 +313,98 @@ const StHighlightText = styled.b`
   text-decoration: underline;
   text-decoration-color: #fecaca;
   text-decoration-thickness: 4px;
+`;
+
+const StGuideRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+`;
+
+const StGuideButton = styled.button`
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background-color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray500};
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const StInputRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+  }
+`;
+
+const StPossibleDates = styled.div`
+  margin-bottom: 1.25rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 6px 10px -6px rgba(0, 0, 0, 0.12);
+`;
+
+const StPossibleHeader = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray800};
+  margin-bottom: 0.75rem;
+
+  span {
+    font-size: 0.8rem;
+    color: ${({ theme }) => theme.colors.gray500};
+    font-weight: 600;
+  }
+`;
+
+const StPossibleList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+`;
+
+const StPossibleItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+
+  .date {
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.gray800};
+  }
+
+  .count {
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.colors.gray600};
+    font-weight: 600;
+  }
+`;
+
+const StEmptyPossible = styled.div`
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.colors.gray500};
 `;

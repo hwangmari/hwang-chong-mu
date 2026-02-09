@@ -140,13 +140,11 @@ export default function CalendarGrid({
   );
 }
 
-
 const StGridContainer = styled.div<{ $step: "VOTING" | "CONFIRM" }>`
   width: 100%;
   background-color: ${({ theme }) => theme.colors.white};
   padding: 1rem;
-  border-radius: 2rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
   border: 2px solid;
   margin-bottom: 1.5rem;
   transition:

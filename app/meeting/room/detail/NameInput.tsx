@@ -44,24 +44,25 @@ const fadeIn = keyframes`
 `;
 
 const StInputWrapper = styled.div`
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 240px;
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   position: relative;
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
 const StNameInputBox = styled.div<{ $isEditing: boolean }>`
   flex: 1;
-  padding: 0.5rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  height: 44px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
   border: 1px solid;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  transition: background-color 0.2s;
+  gap: 0.5rem;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
 
   ${({ $isEditing, theme }) =>
     $isEditing
@@ -72,11 +73,16 @@ const StNameInputBox = styled.div<{ $isEditing: boolean }>`
       : css`
           background-color: ${theme.colors.white};
           border-color: ${theme.colors.gray200};
+          &:focus-within {
+            border-color: ${theme.colors.gray400};
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+          }
         `}
 `;
 
 const StIconBadge = styled.span`
-  padding: 0.5rem;
+  width: 30px;
+  height: 30px;
   background-color: ${({ theme }) => theme.colors.gray100};
   color: ${({ theme }) => theme.colors.gray600};
   border-radius: 9999px;
@@ -93,7 +99,7 @@ const StNameInput = styled.input`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray900};
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.gray300};
@@ -108,11 +114,16 @@ const StNameInput = styled.input`
 `;
 
 const StResetButton = styled.button`
-  margin-right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
   color: ${({ theme }) => theme.colors.gray400};
   font-weight: 700;
-  padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   &:hover {
     color: ${({ theme }) => theme.colors.gray600};
+    background-color: ${({ theme }) => theme.colors.gray100};
   }
 `;

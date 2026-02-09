@@ -43,7 +43,7 @@ export const StSection = styled.div`
 
 export const StFlexBox = styled.div`
   max-width: 540px;
-  margin: 0 auto;
+  margin: 20px auto 0;
 
   .flex-rgt-box {
     margin-top: 20px;
@@ -60,9 +60,6 @@ export const StFlexBox = styled.div`
       position: sticky;
       top: 80px;
       flex: 1;
-    }
-    .flex-rgt-box {
-      margin-top: 0;
     }
   }
 `;

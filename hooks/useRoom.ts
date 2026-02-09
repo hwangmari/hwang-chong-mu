@@ -291,7 +291,7 @@ export function useRoom(roomId: string) {
   const handleGoToConfirm = () => {
     if (participants.length < 2)
       return showAlert("최소 2명 이상 참여해야 합니다.");
-    showConfirm("투표를 마감하고\n최종 날짜를 정하시겠습니까?", () =>
+    showConfirm("투표를 마감하고\n추천 날짜를 선택하시겠습니까?", () =>
       setStep("CONFIRM")
     );
   };
