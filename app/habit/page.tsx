@@ -15,22 +15,15 @@ import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Input from "@/components/common/Input";
 import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
+import ColorPickerPanel from "@/components/common/ColorPickerPanel";
 
-const COLORS = [
-  { name: "Slate", value: "#5e606d", label: "슬레이트" },
-  { name: "Red", value: "#ed3654", label: "로즈" },
-  { name: "Orange", value: "#FB923C", label: "오렌지" },
-  { name: "Yellow", value: "#efb520", label: "엠버" },
-  { name: "Green", value: "#14b8a6", label: "에메랄드" },
-  { name: "Blue", value: "#3378e7", label: "스카이" },
-  { name: "Indigo", value: "#6366F1", label: "인디고" },
-];
+const COLORS = ["#5e606d", "#ed3654", "#FB923C", "#efb520", "#14b8a6", "#3378e7", "#6366F1"];
 
 export default function CreateHabitPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [emoji, setEmoji] = useState("🥕");
-  const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
+  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [loading, setLoading] = useState(false);
 
   const createGoal = async () => {
@@ -92,17 +85,11 @@ export default function CreateHabitPage() {
 
           <ColorSection>
             <Label>테마 컬러</Label>
-            <ColorGrid>
-              {COLORS.map((color) => (
-                <ColorItem key={color.name}>
-                  <ColorCircle
-                    $color={color.value}
-                    $isSelected={selectedColor === color.value}
-                    onClick={() => setSelectedColor(color.value)}
-                  />
-                </ColorItem>
-              ))}
-            </ColorGrid>
+            <ColorPickerPanel
+              selectedColor={selectedColor}
+              onSelect={setSelectedColor}
+              colors={COLORS}
+            />
           </ColorSection>
 
           <CreateButton
@@ -148,48 +135,4 @@ const Label = styled.p`
   color: #94a3b8;
   margin-bottom: 1rem;
   margin-left: 0.5rem;
-`;
-
-const ColorGrid = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  padding: 0 0.5rem;
-`;
-
-const ColorItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const ColorCircle = styled.button<{ $color: string; $isSelected: boolean }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: ${({ $color }) => $color};
-  border: 3px solid white;
-  box-shadow: ${({ $isSelected, $color }) =>
-    $isSelected
-      ? `0 0 0 3px ${$color}, 0 4px 10px rgba(0,0,0,0.1)`
-      : "0 2px 5px rgba(0,0,0,0.05)"};
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    transform: scale(1.15);
-  }
-`;
-
-const TipIcon = styled.span`
-  font-size: 1.2rem;
-  background: white;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0; /* 아이콘 크기 고정 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;

@@ -32,6 +32,7 @@ export default function ProjectList() {
     <StProjectList>
       {/* 업무 캘린더 프로젝트 */}
       <ProjectCard
+        anchorId="toy-schedule"
         title="업무 캘린더"
         period="2026.01 - 진행 중 (1인 개발)"
         linkUrl="/schedule"
@@ -117,6 +118,7 @@ export default function ProjectList() {
 
       {/* 약속 잡기 */}
       <ProjectCard
+        anchorId="toy-meeting"
         title="약속 잡기"
         period="2025.12.01 - 진행 중 (1인 개발)"
         linkUrl="/meeting"
@@ -184,6 +186,7 @@ export default function ProjectList() {
 
       {/* N빵 계산기 프로젝트 */}
       <ProjectCard
+        anchorId="toy-calc"
         title="N빵 계산기"
         period="2025.12.24 - 진행 중 (1인 개발)"
         linkUrl="/calc"
@@ -250,6 +253,7 @@ export default function ProjectList() {
 
       {/* 습관 관리 프로젝트 */}
       <ProjectCard
+        anchorId="toy-habit"
         title="습관 관리"
         period="2025.12.22 - 진행 중 (1인 개발)"
         linkUrl="/habit"
@@ -306,8 +310,67 @@ export default function ProjectList() {
         projectImages={habitImages}
       />
 
+      {/* 일일 기록 프로젝트 */}
+      <ProjectCard
+        anchorId="toy-daily"
+        title="일일 기록"
+        period="2026.02 - 진행 중 (1인 개발)"
+        linkUrl="/daily"
+        description={
+          <>
+            하루 일기와 체크리스트를 함께 관리할 수 있는{" "}
+            <b>개인 루틴 기록 서비스</b>입니다.
+            <br />
+            월별로 체크 항목을 다르게 운영하고, 달성률을 <b>날짜 흐름 그래프</b>
+            로 확인해 루틴 변화를 직관적으로 파악할 수 있습니다.
+          </>
+        }
+        details={{
+          problem: (
+            <>
+              기존 체크리스트는 하루 단위 확인에만 머물러 월간 흐름과 개인화가
+              부족했습니다.
+              <StDetailList>
+                <li>월별 목표가 바뀌어도 같은 항목 구조를 강제로 사용</li>
+                <li>달성률을 숫자나 막대로만 볼 때 추세 파악이 어려움</li>
+                <li>개인 기록장 접근 제어 부재로 프라이버시 취약</li>
+              </StDetailList>
+            </>
+          ),
+          solution: (
+            <>
+              <b>월 단위 설정 + 추이 시각화 + 접근 보호</b>를 하나의 흐름으로
+              통합했습니다.
+              <StDetailList>
+                <li>월 이동과 월별 체크리스트 분리 저장으로 유연한 루틴 운영</li>
+                <li>날짜별 점/선 그래프로 달성률 추이를 직관적으로 표현</li>
+                <li>기록장별 비밀번호 설정/변경/해제로 개인화된 접근 관리</li>
+              </StDetailList>
+            </>
+          ),
+          tech: (
+            <>
+              <StDetailList>
+                <li>
+                  날짜/월 생성 로직과 엔트리 정규화를 유틸로 분리해 상태 일관성
+                  확보
+                </li>
+                <li>
+                  SVG 기반 세로형 추이 그래프를 커스텀 구현해 표 내부 시각화
+                  구성
+                </li>
+                <li>
+                  설정 모달 단일 진입점으로 비밀번호/월별 체크리스트 관리 UX 통합
+                </li>
+              </StDetailList>
+            </>
+          ),
+        }}
+      />
+
       {/* 체중 관리 프로젝트 */}
       <ProjectCard
+        anchorId="toy-diet"
         title="체중 관리"
         period="2026.01 - 진행 중 (1인 개발)"
         linkUrl="/diet"
@@ -366,6 +429,7 @@ export default function ProjectList() {
 
       {/* 게임방 프로젝트 */}
       <ProjectCard
+        anchorId="toy-game"
         title="게임방"
         period="2025.12 - 진행 중 (1인 개발)"
         linkUrl="/game"

@@ -2,9 +2,13 @@ import { ProjectItemList } from "@/types/experiences";
 export const ANALYSIS_HISTORY_DATA: ProjectItemList[] = [
   {
     id: "2026-02-01",
-    date: "2026.01.20 ~ 02.12",
-    title: "보장분석 신정원 대응",
-    description: ["보장분석 준비 가이드", "보장분석 신정원 대응"],
+    date: "2026.01.20 ~ 02.19",
+    title: "보장분석서비스 중단 안내(신정원시스템 점검)",
+    description: [
+      "보장분석 가이드페이지 전환",
+      "보장분석서비스 중단 안내(신정원시스템 점검)",
+      "신정원시스템 중단 보장분석 원복",
+    ],
   },
   {
     id: "2026-01-01",
@@ -16,7 +20,7 @@ export const ANALYSIS_HISTORY_DATA: ProjectItemList[] = [
 export const HSP_HISTORY_DATA: ProjectItemList[] = [
   {
     id: "2026-02-01",
-    date: "2026.02.20 ~ 03.06",
+    date: "2026.02.13 ~ 03.19",
     title: "HSP 상담 목적 추가",
   },
   {
@@ -57,10 +61,9 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
   {
     id: "2025-07-02",
     date: "2025.07.01 ~ 07.30",
-    title: "HSP 이벤트 프로세스 및 보안 고도화",
+    title: "HSP 이벤트 참여 프로세스 고도화",
     description: [
       "이벤트 참여 프로세스 내 본인인증 절차 추가로 부정 참여 방지",
-      "고객 민감 정보 처리를 위한 보안 프로세스 강화 및 암호화 로직 적용",
     ],
   },
   {

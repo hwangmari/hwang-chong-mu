@@ -29,7 +29,6 @@ const HANWHA_EXPERIENCE: Experience = {
       tasks: [
         "운영 이슈의 우선순위 정의 및 로드맵/스프린트 단위 실행 계획 수립",
         "요구사항 정리부터 개발/배포까지의 전 과정 리딩",
-        "프론트 개발 전담으로 서비스 안정성 및 배포 속도 개선",
       ],
       techStack: [
         "Next.js",

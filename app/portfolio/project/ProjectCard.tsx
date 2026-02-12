@@ -11,6 +11,7 @@ import ProjectImageViewer, {
 } from "@/components/common/ProjectImageViewer";
 
 interface ProjectCardProps {
+  anchorId?: string;
   title: string;
   period: string;
   linkUrl: string;
@@ -26,6 +27,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({
+  anchorId,
   title,
   period,
   linkUrl,
@@ -46,7 +48,7 @@ export default function ProjectCard({
   ];
 
   return (
-    <StCardContainer>
+    <StCardContainer id={anchorId}>
       {/* 상단: 제목 및 링크 */}
       <StHeader>
         <div className="title-area">
@@ -102,6 +104,7 @@ const StCardContainer = styled.article`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   transition: all 0.3s ease-in-out;
   overflow: hidden;
+  scroll-margin-top: 9rem;
 
   @media (max-width: 768px) {
     padding: 1.5rem;

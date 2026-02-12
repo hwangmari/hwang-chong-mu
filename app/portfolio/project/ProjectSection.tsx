@@ -6,6 +6,8 @@ import {
   StSectionInner,
   StHeaderGroup,
   StSectionTitleWrapper,
+  StStickyProjectLink,
+  StStickyProjectNav,
   StCommonStackWrapper,
   StCoreBadge,
   StPhilosophyBox,
@@ -19,6 +21,16 @@ const CORE_STACK = [
   "TypeScript",
   "Supabase",
   "Vercel",
+];
+
+const TOY_PROJECT_MENU = [
+  { id: "toy-schedule", label: "업무 캘린더" },
+  { id: "toy-meeting", label: "약속 잡기" },
+  { id: "toy-calc", label: "N빵 계산기" },
+  { id: "toy-habit", label: "습관 관리" },
+  { id: "toy-daily", label: "일일 기록" },
+  { id: "toy-diet", label: "체중 관리" },
+  { id: "toy-game", label: "게임방" },
 ];
 
 export default function ProjectSection() {
@@ -73,7 +85,16 @@ export default function ProjectSection() {
               <b>기획부터 코드 관리까지</b> 이어지는 개발 경험을 쌓아왔습니다.
             </p>
           </StPhilosophyBox>
+
         </StHeaderGroup>
+
+        <StStickyProjectNav aria-label="Toy Projects 빠른 이동">
+          {TOY_PROJECT_MENU.map((item) => (
+            <StStickyProjectLink key={item.id} href={`#${item.id}`}>
+              {item.label}
+            </StStickyProjectLink>
+          ))}
+        </StStickyProjectNav>
 
         <ProjectList />
       </StSectionInner>

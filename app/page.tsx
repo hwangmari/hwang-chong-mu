@@ -51,6 +51,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* 일일 기록 카드 */}
+        <Link href="/daily" passHref>
+          <StCard>
+            <StIconBox>📓</StIconBox>
+            <StCardContent>
+              <StCardTitle>일일 기록</StCardTitle>
+              <StCardDesc>한 줄 일기 + 체크리스트 그래프</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 체중 관리 */}
         <Link href="/diet" passHref>
           <StCard>

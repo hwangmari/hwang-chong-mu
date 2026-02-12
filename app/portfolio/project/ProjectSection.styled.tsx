@@ -28,6 +28,44 @@ export const StSectionTitleWrapper = styled.div`
   gap: 0.5rem;
 `;
 
+export const StStickyProjectNav = styled.nav`
+  position: sticky;
+  top: 3.5rem;
+  z-index: 20;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.55rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.9rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+`;
+
+export const StStickyProjectLink = styled.a`
+  flex: 0 0 auto;
+  padding: 0.45rem 0.7rem;
+  border-radius: 9999px;
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #8bb2eb;
+    color: #1d4ed8;
+    background: #eff6ff;
+  }
+`;
+
 export const StCommonStackWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
