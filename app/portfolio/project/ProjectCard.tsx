@@ -72,15 +72,16 @@ export default function ProjectCard({
         </Typography>
       </StDescriptionBody>
 
-      {/* ✨ 상세 내용 (다시 리스트 형태로 복귀 + 가독성 개선) */}
-      <StDetailsBox>
+      <StDetailGrid>
         {detailItems.map((item) => (
-          <StDetailRow key={item.type}>
-            <StDetailLabel $type={item.type}>{item.label}</StDetailLabel>
-            <div className="content">{item.content}</div>
-          </StDetailRow>
+          <StDetailsBox key={item.type}>
+            <StDetailRow>
+              <StDetailLabel $type={item.type}>{item.label}</StDetailLabel>
+              <div className="content">{item.content}</div>
+            </StDetailRow>
+          </StDetailsBox>
         ))}
-      </StDetailsBox>
+      </StDetailGrid>
 
       {/* 로직 흐름도 */}
       {logicSteps && <LogicFlowChart />}
@@ -157,6 +158,14 @@ const StServiceLink = styled(Link)`
 
 const StDescriptionBody = styled.div`
   margin-bottom: 1rem;
+  max-width: 72ch;
+  line-height: 1.75;
+`;
+
+const StDetailGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 `;
 
 const StDetailsBox = styled.div`
@@ -179,6 +188,8 @@ const StDetailRow = styled.div`
   .content {
     flex: 1;
     color: #495057;
+    max-width: 72ch;
+    line-height: 1.75;
   }
 
   @media (max-width: 768px) {
