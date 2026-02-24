@@ -40,6 +40,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* 가계부 카드 */}
+        <Link href="/account-book" passHref>
+          <StCard>
+            <StIconBox>🧾</StIconBox>
+            <StCardContent>
+              <StCardTitle>가계부</StCardTitle>
+              <StCardDesc>수입/지출을 한눈에 관리</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 습관 관리 카드 */}
         <Link href="/habit" passHref>
           <StCard>
