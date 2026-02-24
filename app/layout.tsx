@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
 import { ModalProvider } from "@/components/common/ModalProvider";
 import GlobalHeader from "@/components/common/GlobalHeader";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "황총무의 실험실",
@@ -30,7 +27,7 @@ export default function RootLayout({
         crossOrigin="anonymous"
         strategy="lazyOnload"
       />
-      <body className={inter.className}>
+      <body>
         <StyledComponentsRegistry>
           <ModalProvider>
             {/* 공통 헤더 적용 */}

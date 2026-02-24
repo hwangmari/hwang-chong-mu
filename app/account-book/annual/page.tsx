@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { AccountEntry } from "../types";
@@ -75,7 +75,7 @@ function getSavedEntries() {
   }
 }
 
-export default function AccountBookAnnualPage() {
+function AccountBookAnnualContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [entries] = useState<AccountEntry[]>(() => getSavedEntries());
@@ -434,6 +434,14 @@ export default function AccountBookAnnualPage() {
         </StCard>
       </StSplit>
     </StPage>
+  );
+}
+
+export default function AccountBookAnnualPage() {
+  return (
+    <Suspense fallback={<StPage />}>
+      <AccountBookAnnualContent />
+    </Suspense>
   );
 }
 
