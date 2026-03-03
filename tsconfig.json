@@ -20,7 +20,9 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@hwangchongmu/ui": ["./packages/ui/src/index.ts"],
+      "@hwangchongmu/ui/*": ["./packages/ui/src/*"]
     }
   },
   "include": [

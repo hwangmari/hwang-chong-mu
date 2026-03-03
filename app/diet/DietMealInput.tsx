@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "styled-components";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import TagInput from "@/components/common/TagInput";
 
 interface Props {

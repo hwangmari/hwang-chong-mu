@@ -1,7 +1,7 @@
 import styled, { keyframes } from "styled-components";
 import Switch from "../../../components/common/Switch";
 import CreateButton from "@/components/common/CreateButton";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 interface RoomFormProps {

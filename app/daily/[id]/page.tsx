@@ -3,7 +3,7 @@
 import { Fragment, useMemo, useState, useSyncExternalStore } from "react";
 import styled from "styled-components";
 import { useParams, useRouter } from "next/navigation";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import ColorPickerPanel from "@/components/common/ColorPickerPanel";
 import {
   DailyNotebookConfig,

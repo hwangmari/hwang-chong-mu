@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useSyncExternalStore } from "react";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import CreateButton from "@/components/common/CreateButton";
 import ColorPickerPanel from "@/components/common/ColorPickerPanel";
 import {

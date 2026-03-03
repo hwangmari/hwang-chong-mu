@@ -1,7 +1,7 @@
 "use client";
 import styled from "styled-components";
 import CreateButton from "@/components/common/CreateButton";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 
 interface Props {
   isJoined: boolean;

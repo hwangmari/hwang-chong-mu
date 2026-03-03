@@ -2,13 +2,8 @@
 
 import React, { useState } from "react";
 import { useServerInsertedHTML } from "next/navigation";
-import {
-  ServerStyleSheet,
-  StyleSheetManager,
-  ThemeProvider,
-} from "styled-components";
-import { theme } from "@/styles/theme"; // 테마 가져오기
-import GlobalStyle from "@/styles/GlobalStyle"; // 글로벌 스타일 가져오기
+import { ServerStyleSheet, StyleSheetManager } from "styled-components";
+import { UiProvider } from "@hwangchongmu/ui";
 
 export default function StyledComponentsRegistry({
   children,
@@ -24,20 +19,12 @@ export default function StyledComponentsRegistry({
   });
 
   if (typeof window !== "undefined") {
-    return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        {children}
-      </ThemeProvider>
-    );
+    return <UiProvider>{children}</UiProvider>;
   }
 
   return (
     <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        {children}
-      </ThemeProvider>
+      <UiProvider>{children}</UiProvider>
     </StyleSheetManager>
   );
 }

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import styled from "styled-components";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 
 export default function ProfileCard() {
   return (

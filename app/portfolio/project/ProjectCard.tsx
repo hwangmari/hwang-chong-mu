@@ -1,6 +1,6 @@
 "use client";
 
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import Link from "next/link";
 import { ReactNode } from "react";
 import styled from "styled-components";

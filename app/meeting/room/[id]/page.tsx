@@ -9,7 +9,7 @@ import Modal from "@/components/common/Modal";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ShareButton from "@/components/common/KakaoCalendarShare";
 import { GuideModal } from "@/components/common/GuideModal";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import { format } from "date-fns";
 import ConfirmedResultCard from "../detail/ConfirmedResultCard";
 import DateControlButtons from "../detail/DateControlButtons";

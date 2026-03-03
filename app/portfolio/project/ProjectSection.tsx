@@ -1,6 +1,7 @@
 "use client";
 
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
+import Link from "next/link";
 import {
   StProjectSection,
   StSectionInner,
@@ -11,6 +12,7 @@ import {
   StCommonStackWrapper,
   StCoreBadge,
   StPhilosophyBox,
+  StUiKitBanner,
 } from "./ProjectSection.styled";
 import ProjectList from "./ProjectList";
 
@@ -85,8 +87,19 @@ export default function ProjectSection() {
               <b>기획부터 코드 관리까지</b> 이어지는 개발 경험을 쌓아왔습니다.
             </p>
           </StPhilosophyBox>
-
         </StHeaderGroup>
+
+        <StUiKitBanner as={Link} href="/ui-kit">
+          <div className="text-group">
+            <span className="eyebrow">Shared UI</span>
+            <strong>UI Kit 모음집 보러가기</strong>
+            <p>
+              황총무에서 분리한 공용 컴포넌트와 스타일 토큰 문서를 한 화면에서
+              확인할 수 있습니다.
+            </p>
+          </div>
+          <span className="cta">/ui-kit</span>
+        </StUiKitBanner>
 
         <StStickyProjectNav aria-label="Toy Projects 빠른 이동">
           {TOY_PROJECT_MENU.map((item) => (

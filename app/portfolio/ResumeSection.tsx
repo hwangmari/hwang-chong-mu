@@ -1,7 +1,7 @@
 "use client";
 
 import { experiences } from "@/data/experiences";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import {
   StSectionContainer,
   StGridWrapper,

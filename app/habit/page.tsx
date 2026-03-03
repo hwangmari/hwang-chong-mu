@@ -13,7 +13,7 @@ import {
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
 import ColorPickerPanel from "@/components/common/ColorPickerPanel";
 

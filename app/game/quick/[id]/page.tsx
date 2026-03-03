@@ -8,7 +8,7 @@ import {
   StWaitingBox,
   StWrapper,
 } from "@/components/styled/layout.styled";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LadderGame from "../../components/LadderGame";
 import WheelGame from "../../components/WheelGame";

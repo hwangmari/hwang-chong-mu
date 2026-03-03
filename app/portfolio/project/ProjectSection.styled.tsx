@@ -3,6 +3,89 @@ interface BadgeProps {
   $isAi?: boolean;
 }
 
+export const StUiKitBanner = styled.a`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
+  margin: 0 auto 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.35rem;
+  border-radius: 1.25rem;
+  border: 1px solid ${({ theme }) => theme.colors.blue100};
+  background:
+    radial-gradient(
+      circle at left top,
+      rgba(59, 130, 246, 0.16),
+      transparent 36%
+    ),
+    linear-gradient(
+      135deg,
+      ${({ theme }) => theme.colors.white},
+      ${({ theme }) => theme.colors.blue50}
+    );
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+
+  .text-group {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .eyebrow {
+    width: fit-content;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.colors.blue100};
+    color: ${({ theme }) => theme.colors.blue700};
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: 1.02rem;
+    color: ${({ theme }) => theme.colors.gray900};
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+
+  .cta {
+    flex-shrink: 0;
+    padding: 0.7rem 0.95rem;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.colors.gray900};
+    color: ${({ theme }) => theme.colors.white};
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: ${({ theme }) => theme.colors.blue200};
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+`;
+
 export const StProjectSection = styled.section`
   background-color: ${({ theme }) => theme.colors.gray50};
   padding: 5rem 0;

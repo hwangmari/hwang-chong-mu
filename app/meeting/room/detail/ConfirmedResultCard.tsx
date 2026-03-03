@@ -3,7 +3,7 @@
 import styled, { css, keyframes } from "styled-components";
 import { format, isSameDay } from "date-fns";
 import { ko } from "date-fns/locale";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import { UserVote } from "@/types";
 
 interface Props {

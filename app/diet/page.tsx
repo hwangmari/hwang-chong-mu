@@ -11,7 +11,7 @@ import {
 import PageIntro from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 
 export default function CreateDietPage() {
   const router = useRouter();

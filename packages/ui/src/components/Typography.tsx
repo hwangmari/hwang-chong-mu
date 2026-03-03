@@ -1,7 +1,19 @@
 "use client";
 
+import React from "react";
 import styled, { css } from "styled-components";
-import { theme } from "@/styles/theme";
+import { uiTheme } from "../theme";
+
+export const TYPOGRAPHY_VARIANTS = [
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "body1",
+  "body2",
+  "caption",
+  "label"
+] as const;
 
 const variants = {
   h1: css`
@@ -47,53 +59,50 @@ const variants = {
   label: css`
     font-size: 0.75rem;
     font-weight: 700;
-  `,
-};
+  `
+} as const;
 
-type VariantType = keyof typeof variants;
-type ColorType = keyof typeof theme.colors;
+type VariantType = (typeof TYPOGRAPHY_VARIANTS)[number];
+type ColorType = keyof typeof uiTheme.colors;
 
-interface TypographyProps {
+export interface TypographyProps {
   variant?: VariantType;
   color?: ColorType;
   align?: "left" | "center" | "right";
   children: React.ReactNode;
   className?: string;
+  as?: React.ElementType;
 }
 
-const Txt = styled.p<{
+const Text = styled.p<{
   $variant: VariantType;
   $color: ColorType;
-  $align?: string;
+  $align?: "left" | "center" | "right";
 }>`
   margin: 0;
   padding: 0;
-
   ${({ $variant }) => variants[$variant]}
-
   color: ${({ theme, $color }) => theme.colors[$color]};
-
-  text-align: ${({ $align }) => $align || ""};
+  text-align: ${({ $align }) => $align ?? "left"};
 `;
 
-export default function Typography({
+export function Typography({
   variant = "body2",
   color = "gray900",
   align,
   children,
   className,
-  ...props // as prop 등을 받기 위함
-}: TypographyProps & { as?: React.ElementType }) {
+  as = "p"
+}: TypographyProps) {
   return (
-    <Txt
-      as="p" // 기본 태그
+    <Text
+      as={as}
       $variant={variant}
       $color={color}
       $align={align}
       className={className}
-      {...props} // 여기서 as="h1" 같은게 들어오면 덮어씌워짐
     >
       {children}
-    </Txt>
+    </Text>
   );
 }

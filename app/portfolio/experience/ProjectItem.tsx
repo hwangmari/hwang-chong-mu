@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import styled, { keyframes } from "styled-components";
-import Typography from "@/components/common/Typography";
+import { Typography } from "@hwangchongmu/ui";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ProjectItemList from "./ProjectItemList";

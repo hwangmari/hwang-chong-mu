@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import FooterGuide from "@/components/common/FooterGuide";
 import {
   StContainer,

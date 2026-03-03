@@ -20,6 +20,7 @@ const ROUTE_CONFIG = [
   { path: "/diet", label: "체중 관리" },
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
+  { path: "/ui-kit", label: "UI Kit 모음집" },
 ];
 
 const GAME_NAMES: Record<string, string> = {

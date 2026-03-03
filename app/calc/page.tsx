@@ -10,7 +10,7 @@ import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import Input from "@/components/common/Input";
+import { Input } from "@hwangchongmu/ui";
 import { CALC_GUIDE_DATA } from "@/data/footerGuides";
 
 export default function CreateRoomPage() {
