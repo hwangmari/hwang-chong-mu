@@ -3,6 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
+import AccountBookLockGate from "../components/AccountBookLockGate";
 import { AccountEntry } from "../types";
 
 const STORAGE_KEY = "hwang-account-book-v2";
@@ -439,9 +440,11 @@ function AccountBookAnnualContent() {
 
 export default function AccountBookAnnualPage() {
   return (
-    <Suspense fallback={<StPage />}>
-      <AccountBookAnnualContent />
-    </Suspense>
+    <AccountBookLockGate>
+      <Suspense fallback={<StPage />}>
+        <AccountBookAnnualContent />
+      </Suspense>
+    </AccountBookLockGate>
   );
 }
 

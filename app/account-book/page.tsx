@@ -13,19 +13,18 @@ import {
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
+import AccountBookLockGate from "./components/AccountBookLockGate";
 import CalendarPanel from "./components/CalendarPanel";
 import DetailEntriesPanel from "./components/DetailEntriesPanel";
 import EntryFormModal from "./components/EntryFormModal";
-import StatsPanel from "./components/StatsPanel";
+import MonthlyBoardPanel from "./components/MonthlyBoardPanel";
 import TopSummaryControls from "./components/TopSummaryControls";
 import WorkspaceHeader from "./components/WorkspaceHeader";
 import {
   AccountEntry,
   CategoryOption,
-  CategoryStat,
   EntryType,
   PaymentType,
-  StatsScope,
   ViewMode,
 } from "./types";
 
@@ -41,19 +40,6 @@ const ASSET_SUBCATEGORY_OPTIONS = [
   "연금",
   "코인",
 ] as const;
-const CATEGORY_COLORS = [
-  "#bf8a79",
-  "#75b489",
-  "#decf68",
-  "#3c3d41",
-  "#8f94df",
-  "#89d0db",
-  "#8fd3aa",
-  "#c5d77f",
-  "#f29db3",
-  "#9e9e9e",
-];
-
 function mapLegacyCategory(category?: string) {
   if (!category) return "기타";
   if (category === "실적 인정") return "결제/플랫폼";
@@ -747,10 +733,6 @@ function getSavedEntries(): AccountEntry[] {
   }
 }
 
-function getCategoryColor(index: number) {
-  return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-}
-
 export default function AccountBookPage() {
   const [entries, setEntries] = useState<AccountEntry[]>(() =>
     getSavedEntries(),
@@ -762,11 +744,8 @@ export default function AccountBookPage() {
   const [selectedDate, setSelectedDate] = useState(BASE_DATE);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [viewMode] = useState<ViewMode>("calendar");
-  const [statsType, setStatsType] = useState<EntryType>("expense");
-  const [statsScope, setStatsScope] = useState<StatsScope>("monthly");
-  const [selectedStatsCategory, setSelectedStatsCategory] =
-    useState<string>("");
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  const [selectedBoardColumnId, setSelectedBoardColumnId] = useState("living");
   const router = useRouter();
 
   const [type, setType] = useState<EntryType>("expense");
@@ -802,15 +781,6 @@ export default function AccountBookPage() {
   }, [currentMonth, entries]);
 
   const selectedYear = format(currentMonth, "yyyy");
-  const yearEntries = useMemo(() => {
-    const yearPrefix = `${selectedYear}-`;
-    return entries.filter((entry) => entry.date.startsWith(yearPrefix));
-  }, [entries, selectedYear]);
-
-  const statsBaseEntries = useMemo(
-    () => (statsScope === "yearly" ? yearEntries : monthEntries),
-    [monthEntries, statsScope, yearEntries],
-  );
 
   const monthTotals = useMemo(() => {
     return monthEntries.reduce(
@@ -917,96 +887,186 @@ export default function AccountBookPage() {
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
-  const categoryStats = useMemo<CategoryStat[]>(() => {
-    const filtered = statsBaseEntries.filter(
-      (entry) => entry.type === statsType,
-    );
-    const total = filtered.reduce((sum, entry) => sum + entry.amount, 0);
-    if (total === 0) return [];
+  const monthlyBoardColumns = useMemo(() => {
+    const columnDefs = [
+      {
+        id: "living",
+        title: "생활비",
+        description: "식비, 의료, 약국, 구독/플랫폼",
+        matches: (entry: AccountEntry) =>
+          entry.type === "expense" &&
+          [
+            "식비/외식",
+            "병원/의료",
+            "약국",
+            "문화/구독",
+            "결제/플랫폼",
+          ].includes(entry.category),
+      },
+      {
+        id: "move",
+        title: "이동/차량",
+        description: "택시, 주차, 통행료, 교통카드",
+        matches: (entry: AccountEntry) =>
+          entry.type === "expense" &&
+          ["교통/택시", "주차/교통", "통행료", "교통카드/충전"].includes(
+            entry.category,
+          ),
+      },
+      {
+        id: "shopping",
+        title: "쇼핑/여가",
+        description: "쇼핑, 여행, 취향 소비",
+        matches: (entry: AccountEntry) =>
+          entry.type === "expense" &&
+          ["쇼핑/패션", "쇼핑/기타", "여행/관광"].includes(entry.category),
+      },
+      {
+        id: "special",
+        title: "특별/기타",
+        description: "선물, 이벤트, 기타 지출",
+        matches: (entry: AccountEntry) =>
+          entry.type === "expense" &&
+          ["선물/기타"].includes(entry.category),
+      },
+      {
+        id: "asset",
+        title: "자산/저축",
+        description: "예금, 적금, 투자",
+        matches: (entry: AccountEntry) =>
+          entry.type === "expense" && entry.category.trim() === "저축",
+      },
+      {
+        id: "income",
+        title: "수입",
+        description: "입금, 월급, 환급",
+        matches: (entry: AccountEntry) => entry.type === "income",
+      },
+    ];
 
-    const grouped = filtered.reduce<Record<string, number>>((acc, entry) => {
-      acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
-      return acc;
-    }, {});
+    const columns: Array<{
+      id: string;
+      title: string;
+      description: string;
+      totalAmount: number;
+      cards: Array<{
+        id: string;
+        date: string;
+        member: string;
+        category: string;
+        subCategory: string;
+        item: string;
+        amount: number;
+        paymentLabel: string;
+        tone: "income" | "expense" | "asset";
+      }>;
+    }> = [];
 
-    return Object.entries(grouped)
-      .map(([name, value], index) => ({
-        category: name,
-        amount: value,
-        ratio: (value / total) * 100,
-        color: getCategoryColor(index),
-      }))
-      .sort((a, b) => b.amount - a.amount);
-  }, [statsBaseEntries, statsType]);
+    columnDefs.forEach((columnDef) => {
+      const columnEntries = monthEntries
+        .filter((entry) => columnDef.matches(entry))
+        .sort((a, b) =>
+          `${b.date}-${b.amount}`.localeCompare(`${a.date}-${a.amount}`),
+        );
 
-  const donutStyle = useMemo(() => {
-    if (categoryStats.length === 0) {
-      return { background: "#e5e7eb" };
+      columns.push({
+        id: columnDef.id,
+        title: columnDef.title,
+        description: columnDef.description,
+        totalAmount: columnEntries.reduce((sum, entry) => sum + entry.amount, 0),
+        cards: columnEntries.map((entry) => ({
+          id: entry.id,
+          date: entry.date,
+          member: entry.member || "나",
+          category: entry.category,
+          subCategory: entry.subCategory || "",
+          item: entry.item,
+          amount: entry.amount,
+          paymentLabel: paymentLabel(entry.payment),
+          tone:
+            entry.type === "income"
+              ? "income"
+              : entry.category.trim() === "저축"
+                ? "asset"
+                : "expense",
+        })),
+      });
+    });
+
+    return columns;
+  }, [monthEntries]);
+
+  const monthlyBoardDetailEntries = useMemo(() => {
+    const groups: Record<string, AccountEntry[]> = {
+      living: [],
+      move: [],
+      shopping: [],
+      special: [],
+      asset: [],
+      income: [],
+    };
+
+    monthEntries.forEach((entry) => {
+      if (entry.type === "income") {
+        groups.income.push(entry);
+        return;
+      }
+
+      if (entry.category.trim() === "저축") {
+        groups.asset.push(entry);
+        return;
+      }
+
+      if (
+        ["식비/외식", "병원/의료", "약국", "문화/구독", "결제/플랫폼"].includes(
+          entry.category,
+        )
+      ) {
+        groups.living.push(entry);
+        return;
+      }
+
+      if (
+        ["교통/택시", "주차/교통", "통행료", "교통카드/충전"].includes(
+          entry.category,
+        )
+      ) {
+        groups.move.push(entry);
+        return;
+      }
+
+      if (["쇼핑/패션", "쇼핑/기타", "여행/관광"].includes(entry.category)) {
+        groups.shopping.push(entry);
+        return;
+      }
+
+      groups.special.push(entry);
+    });
+
+    return Object.fromEntries(
+      Object.entries(groups).map(([key, value]) => [
+        key,
+        value
+          .slice()
+          .sort((a, b) => `${b.date}-${b.amount}`.localeCompare(`${a.date}-${a.amount}`)),
+      ]),
+    ) as Record<string, AccountEntry[]>;
+  }, [monthEntries]);
+
+  const effectiveBoardColumnId = useMemo(() => {
+    if (selectedBoardColumnId in monthlyBoardDetailEntries) {
+      return selectedBoardColumnId;
     }
+    return monthlyBoardColumns[0]?.id || "living";
+  }, [monthlyBoardColumns, monthlyBoardDetailEntries, selectedBoardColumnId]);
 
-    let cursor = 0;
-    const pieces = categoryStats.map((entry) => {
-      const start = cursor;
-      const end = cursor + entry.ratio;
-      cursor = end;
-      return `${entry.color} ${start}% ${end}%`;
-    });
-
-    return { background: `conic-gradient(${pieces.join(", ")})` };
-  }, [categoryStats]);
-
-  const effectiveStatsCategory = useMemo(() => {
-    if (categoryStats.length === 0) return "";
-    const hasCurrent = categoryStats.some(
-      (entry) => entry.category === selectedStatsCategory,
+  const selectedBoardColumn = useMemo(() => {
+    return (
+      monthlyBoardColumns.find((column) => column.id === effectiveBoardColumnId) ||
+      monthlyBoardColumns[0] ||
+      null
     );
-    return hasCurrent ? selectedStatsCategory : categoryStats[0].category;
-  }, [categoryStats, selectedStatsCategory]);
-
-  const statsDetailEntries = useMemo(() => {
-    return statsBaseEntries
-      .filter((entry) => entry.type === statsType)
-      .filter((entry) =>
-        effectiveStatsCategory
-          ? entry.category === effectiveStatsCategory
-          : true,
-      )
-      .sort((a, b) =>
-        `${b.date}-${b.amount}`.localeCompare(`${a.date}-${a.amount}`),
-      );
-  }, [effectiveStatsCategory, statsBaseEntries, statsType]);
-
-  const yearlyCategoryMonthlyTracking = useMemo(() => {
-    if (statsScope !== "yearly") return [];
-
-    const base = yearEntries
-      .filter((entry) => entry.type === statsType)
-      .filter((entry) =>
-        effectiveStatsCategory
-          ? entry.category === effectiveStatsCategory
-          : true,
-      );
-
-    const grouped = base.reduce<
-      Record<string, { amount: number; count: number }>
-    >((acc, entry) => {
-      const monthKey = entry.date.slice(5, 7);
-      if (!acc[monthKey]) acc[monthKey] = { amount: 0, count: 0 };
-      acc[monthKey].amount += entry.amount;
-      acc[monthKey].count += 1;
-      return acc;
-    }, {});
-
-    return Array.from({ length: 12 }, (_, index) => {
-      const month = String(index + 1).padStart(2, "0");
-      const current = grouped[month] || { amount: 0, count: 0 };
-      return {
-        month: `${index + 1}월`,
-        amount: current.amount,
-        count: current.count,
-      };
-    });
-  }, [effectiveStatsCategory, statsScope, statsType, yearEntries]);
+  }, [effectiveBoardColumnId, monthlyBoardColumns]);
 
   const closeFormModal = () => {
     setIsFormModalOpen(false);
@@ -1346,142 +1406,159 @@ export default function AccountBookPage() {
   }
 
   return (
-    <StPage>
-      <WorkspaceHeader
-        title={`${format(currentMonth, "yyyy년 M월", { locale: ko })} 가계부`}
-        monthLabel={monthLabel}
-        monthRangeLabel={monthRangeLabel}
-        onMonthMove={onMonthMove}
-        onLoadSeed={onLoadSeed}
-      />
-      <StContentWrap>
-        <StCalendarSplit>
-          <StLeftSplitCard>
-            <TopSummaryControls
-              monthTotals={monthTotals}
-              monthPaymentTotals={monthPaymentTotals}
-              cashBalance={cashBalance}
-              assetTotal={monthAssetTotal}
-              memberExpenseTotals={memberExpenseTotals}
-              onOpenIncomeYearly={() =>
-                router.push(`/account-book/annual?kind=income&year=${selectedYear}`)
-              }
-              onOpenExpenseYearly={() =>
-                router.push(`/account-book/annual?kind=expense&year=${selectedYear}`)
-              }
-              onOpenAssetYearly={() =>
-                router.push(`/account-book/annual?kind=asset&year=${selectedYear}`)
-              }
-              formatAmount={formatAmount}
-            />
+    <AccountBookLockGate>
+      <StPage>
+        <WorkspaceHeader
+          title={`${format(currentMonth, "yyyy년 M월", { locale: ko })} 가계부`}
+          monthLabel={monthLabel}
+          monthRangeLabel={monthRangeLabel}
+          onMonthMove={onMonthMove}
+          onLoadSeed={onLoadSeed}
+        />
+        <StContentWrap>
+          <StViewModeSwitch aria-label="가계부 화면 전환">
+            <StViewModeButton
+              type="button"
+              $active={viewMode === "calendar"}
+              onClick={() => setViewMode("calendar")}
+            >
+              캘린더
+            </StViewModeButton>
+            <StViewModeButton
+              type="button"
+              $active={viewMode === "board"}
+              onClick={() => setViewMode("board")}
+            >
+              보드
+            </StViewModeButton>
+          </StViewModeSwitch>
 
-            <StLeftBody>
-              {viewMode === "calendar" ? (
-                <CalendarPanel
-                  currentMonth={currentMonth}
-                  calendarDays={calendarDays}
-                  daySummary={daySummary}
-                  selectedDate={selectedDate}
-                  toIsoDate={toIsoDate}
-                  onSelectDate={setSelectedDate}
+          <StCalendarSplit>
+            <StLeftSplitCard>
+              <TopSummaryControls
+                monthTotals={monthTotals}
+                monthPaymentTotals={monthPaymentTotals}
+                cashBalance={cashBalance}
+                assetTotal={monthAssetTotal}
+                memberExpenseTotals={memberExpenseTotals}
+                onOpenIncomeYearly={() =>
+                  router.push(
+                    `/account-book/annual?kind=income&year=${selectedYear}`,
+                  )
+                }
+                onOpenExpenseYearly={() =>
+                  router.push(
+                    `/account-book/annual?kind=expense&year=${selectedYear}`,
+                  )
+                }
+                onOpenAssetYearly={() =>
+                  router.push(
+                    `/account-book/annual?kind=asset&year=${selectedYear}`,
+                  )
+                }
+                formatAmount={formatAmount}
+              />
+
+              <StLeftBody>
+                {viewMode === "board" ? (
+                  <MonthlyBoardPanel
+                    monthLabel={format(currentMonth, "yyyy년 M월", {
+                      locale: ko,
+                    })}
+                    columns={monthlyBoardColumns}
+                    selectedColumnId={effectiveBoardColumnId}
+                    formatAmount={formatAmount}
+                    onSelectColumn={setSelectedBoardColumnId}
+                  />
+                ) : (
+                  <CalendarPanel
+                    currentMonth={currentMonth}
+                    calendarDays={calendarDays}
+                    daySummary={daySummary}
+                    selectedDate={selectedDate}
+                    toIsoDate={toIsoDate}
+                    onSelectDate={setSelectedDate}
+                  />
+                )}
+              </StLeftBody>
+            </StLeftSplitCard>
+
+            <StRightSplitCard>
+              {viewMode === "board" ? (
+                <DetailEntriesPanel
+                  title={
+                    selectedBoardColumn
+                      ? `${format(currentMonth, "M월", { locale: ko })} ${selectedBoardColumn.title} 상세`
+                      : "보드 상세"
+                  }
+                  entries={monthlyBoardDetailEntries[effectiveBoardColumnId] || []}
+                  onOpenAdd={() => openFormModal({ date: selectedDate })}
+                  onEdit={openEditModal}
+                  onDelete={onDeleteEntry}
+                  formatAmount={formatAmount}
+                  paymentLabel={paymentLabel}
+                  showDateMeta
                 />
               ) : (
-                <StatsPanel
-                  statsType={statsType}
-                  statsScope={statsScope}
-                  statsPeriodLabel={
-                    statsScope === "yearly"
-                      ? `${selectedYear}년`
-                      : format(currentMonth, "M월", { locale: ko })
-                  }
-                  categoryStats={categoryStats}
-                  effectiveStatsCategory={effectiveStatsCategory}
-                  donutStyle={donutStyle}
-                  onChangeStatsType={setStatsType}
-                  onChangeStatsScope={setStatsScope}
-                  onSelectCategory={setSelectedStatsCategory}
+                <DetailEntriesPanel
+                  title={formatSelectedDateTitle(selectedDate)}
+                  entries={selectedDateEntries}
+                  assetEntries={selectedDateAssetEntries}
+                  onOpenAdd={() => openFormModal({ date: selectedDate })}
+                  onEdit={openEditModal}
+                  onDelete={onDeleteEntry}
                   formatAmount={formatAmount}
+                  paymentLabel={paymentLabel}
                 />
               )}
-            </StLeftBody>
-          </StLeftSplitCard>
+            </StRightSplitCard>
+          </StCalendarSplit>
+        </StContentWrap>
 
-          <StRightSplitCard>
-            {viewMode === "calendar" ? (
-              <DetailEntriesPanel
-                title={formatSelectedDateTitle(selectedDate)}
-                entries={selectedDateEntries}
-                assetEntries={selectedDateAssetEntries}
-                onOpenAdd={() => openFormModal({ date: selectedDate })}
-                onEdit={openEditModal}
-                onDelete={onDeleteEntry}
-                formatAmount={formatAmount}
-                paymentLabel={paymentLabel}
-              />
-            ) : (
-              <DetailEntriesPanel
-                title={`${statsScope === "yearly" ? `${selectedYear}년` : format(currentMonth, "M월", { locale: ko })} ${effectiveStatsCategory || (statsType === "expense" ? "지출" : "수입")} 통계 상세`}
-                entries={statsDetailEntries}
-                monthlyTracking={
-                  statsScope === "yearly"
-                    ? yearlyCategoryMonthlyTracking
-                    : undefined
-                }
-                onOpenAdd={() => openFormModal({ nextType: statsType })}
-                onEdit={openEditModal}
-                onDelete={onDeleteEntry}
-                formatAmount={formatAmount}
-                paymentLabel={paymentLabel}
-                showDateMeta
-              />
-            )}
-          </StRightSplitCard>
-        </StCalendarSplit>
-      </StContentWrap>
-
-      <EntryFormModal
-        isOpen={isFormModalOpen}
-        isEditing={Boolean(editingEntryId)}
-        selectedDate={selectedDate}
-        member={member}
-        memberOptions={MEMBER_OPTIONS as unknown as string[]}
-        type={type}
-        category={category}
-        subCategory={subCategory}
-        item={item}
-        amount={amount}
-        payment={payment}
-        memo={memo}
-        quickInput={quickInput}
-        categoryOptions={CATEGORY_OPTIONS}
-        onClose={closeFormModal}
-        onSetDate={setSelectedDate}
-        onSetType={(nextType) => {
-          setType(nextType);
-          if (nextType === "income" && category === "식비/외식")
-            setCategory("월급");
-          if (nextType === "expense" && category === "월급")
-            setCategory("식비/외식");
-          if (nextType !== "expense") setSubCategory("");
-          if (nextType === "income") setPayment("cash");
-        }}
-        onSetMember={(nextMember) =>
-          setMember(nextMember as (typeof MEMBER_OPTIONS)[number])
-        }
-        onSetCategory={(nextCategory) => {
-          setCategory(nextCategory);
-          if (nextCategory !== "저축") setSubCategory("");
-        }}
-        onSetSubCategory={setSubCategory}
-        onSetItem={setItem}
-        onSetAmount={setAmount}
-        onSetPayment={setPayment}
-        onSetMemo={setMemo}
-        onSetQuickInput={setQuickInput}
-        onApplyQuickInput={applyQuickInput}
-        onSubmit={onSubmitEntry}
-      />
-    </StPage>
+        <EntryFormModal
+          isOpen={isFormModalOpen}
+          isEditing={Boolean(editingEntryId)}
+          selectedDate={selectedDate}
+          member={member}
+          memberOptions={MEMBER_OPTIONS as unknown as string[]}
+          type={type}
+          category={category}
+          subCategory={subCategory}
+          item={item}
+          amount={amount}
+          payment={payment}
+          memo={memo}
+          quickInput={quickInput}
+          categoryOptions={CATEGORY_OPTIONS}
+          onClose={closeFormModal}
+          onSetDate={setSelectedDate}
+          onSetType={(nextType) => {
+            setType(nextType);
+            if (nextType === "income" && category === "식비/외식")
+              setCategory("월급");
+            if (nextType === "expense" && category === "월급")
+              setCategory("식비/외식");
+            if (nextType !== "expense") setSubCategory("");
+            if (nextType === "income") setPayment("cash");
+          }}
+          onSetMember={(nextMember) =>
+            setMember(nextMember as (typeof MEMBER_OPTIONS)[number])
+          }
+          onSetCategory={(nextCategory) => {
+            setCategory(nextCategory);
+            if (nextCategory !== "저축") setSubCategory("");
+          }}
+          onSetSubCategory={setSubCategory}
+          onSetItem={setItem}
+          onSetAmount={setAmount}
+          onSetPayment={setPayment}
+          onSetMemo={setMemo}
+          onSetQuickInput={setQuickInput}
+          onApplyQuickInput={applyQuickInput}
+          onSubmit={onSubmitEntry}
+        />
+      </StPage>
+    </AccountBookLockGate>
   );
 }
 
@@ -1510,6 +1587,31 @@ const StContentWrap = styled.div`
     height: auto;
     padding: 0.55rem;
   }
+`;
+
+const StViewModeSwitch = styled.div`
+  width: fit-content;
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.25rem;
+  margin-bottom: 0.8rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #d8e2ec;
+  box-shadow: 0 6px 18px rgba(31, 41, 55, 0.06);
+`;
+
+const StViewModeButton = styled.button<{ $active: boolean }>`
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: ${({ $active }) => ($active ? "#ffffff" : "#637083")};
+  background: ${({ $active }) =>
+    $active ? "linear-gradient(135deg, #6d87ef, #4f69d2)" : "transparent"};
+  box-shadow: ${({ $active }) =>
+    $active ? "0 8px 18px rgba(79, 105, 210, 0.24)" : "none"};
 `;
 
 const StLoadingCard = styled.section`

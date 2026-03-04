@@ -1,6 +1,6 @@
 export type EntryType = "income" | "expense";
 export type PaymentType = "cash" | "card" | "check_card";
-export type ViewMode = "calendar" | "stats";
+export type ViewMode = "calendar" | "board";
 export type StatsScope = "monthly" | "yearly";
 
 export type AccountEntry = {
