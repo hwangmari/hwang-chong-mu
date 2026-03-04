@@ -1,6 +1,19 @@
 export { Button } from "./components/Button";
 export type { ButtonProps } from "./components/Button";
-export { BUTTON_SIZES, BUTTON_VARIANTS } from "./components/Button";
+export type {
+  ButtonAs,
+  ButtonColor,
+  ButtonDisplay,
+  ButtonSize,
+  ButtonVariant,
+} from "./components/Button";
+export {
+  BUTTON_AS,
+  BUTTON_COLORS,
+  BUTTON_DISPLAYS,
+  BUTTON_SIZES,
+  BUTTON_VARIANTS,
+} from "./components/Button";
 
 export { Input } from "./components/Input";
 export type { InputProps } from "./components/Input";
