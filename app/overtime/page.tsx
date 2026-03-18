@@ -56,8 +56,8 @@ const QUARTER_DAY_REWARD_SECONDS = DAY_REWARD_SECONDS / 4;
 const BEFORE10_REWARD_SECONDS_PER_MINUTE = 90;
 const AFTER10_REWARD_SECONDS_PER_MINUTE = 120;
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const TARGET_DAY_OPTIONS = [1, 2, 3, 4, 5];
-const BEFORE10_DAY_GUIDE = Array.from({ length: 5 }, (_, index) => {
+const TARGET_DAY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
+const BEFORE10_DAY_GUIDE = Array.from({ length: 10 }, (_, index) => {
   const days = index + 1;
   const requiredMinutes = THRESHOLD_MINUTES + days * (8 * 60) / 1.5;
 
@@ -108,6 +108,16 @@ function formatCompactDuration(totalMinutes: number) {
   }
 
   return `${hours}시간 ${minutes}분`;
+}
+
+function splitMinutesToFields(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return {
+    hours: hours === 0 ? "" : String(hours),
+    minutes: String(minutes),
+  };
 }
 
 function formatRewardDuration(totalSeconds: number) {
@@ -271,6 +281,39 @@ function getAdditionalMinutesForTargetDays(
   );
 }
 
+function mergeRecordsByDate(records: OvertimeRecord[]) {
+  const grouped = new Map<string, OvertimeRecord>();
+
+  records.forEach((record) => {
+    const existing = grouped.get(record.date);
+
+    if (!existing) {
+      grouped.set(record.date, { ...record });
+      return;
+    }
+
+    grouped.set(record.date, {
+      id: existing.id,
+      date: existing.date,
+      before10Minutes: existing.before10Minutes + record.before10Minutes,
+      after10Minutes: existing.after10Minutes + record.after10Minutes,
+      createdAt:
+        existing.createdAt <= record.createdAt
+          ? existing.createdAt
+          : record.createdAt,
+    });
+  });
+
+  return [...grouped.values()].sort((left, right) => {
+    const byDate = left.date.localeCompare(right.date);
+    if (byDate !== 0) {
+      return byDate;
+    }
+
+    return left.createdAt.localeCompare(right.createdAt);
+  });
+}
+
 function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
   let remainingThresholdMinutes = THRESHOLD_MINUTES;
   let before10RawMinutes = 0;
@@ -429,8 +472,9 @@ function parseStoredRecords(storedValue: string | null) {
       }
     >;
 
-    return parsed
-      .map((item) => {
+    return mergeRecordsByDate(
+      parsed
+        .map((item) => {
         const legacyMinutes =
           Number.isFinite(item.hours) && Number.isFinite(item.minutes)
             ? Number(item.hours) * 60 + Number(item.minutes)
@@ -461,7 +505,8 @@ function parseStoredRecords(storedValue: string | null) {
               : new Date().toISOString(),
         };
       })
-      .filter((item): item is OvertimeRecord => item !== null);
+        .filter((item): item is OvertimeRecord => item !== null),
+    );
   } catch (error) {
     console.error("야근 기록을 불러오지 못했습니다.", error);
     return [];
@@ -476,21 +521,18 @@ export default function OvertimePage() {
   const [calcAfter10Hours, setCalcAfter10Hours] = useState("");
   const [calcAfter10Minutes, setCalcAfter10Minutes] = useState("");
   const [calcResult, setCalcResult] = useState("");
-  const [recordDate, setRecordDate] = useState(todayKey);
-  const [recordBefore10Hours, setRecordBefore10Hours] = useState("");
-  const [recordBefore10Minutes, setRecordBefore10Minutes] = useState("");
-  const [recordAfter10Hours, setRecordAfter10Hours] = useState("");
-  const [recordAfter10Minutes, setRecordAfter10Minutes] = useState("");
+  const [calcSummary, setCalcSummary] = useState<OvertimeSummary | null>(null);
+  const [calcTargetDays, setCalcTargetDays] = useState(1);
   const [currentMonth, setCurrentMonth] = useState(() => parseDateKey(todayKey));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showWeekends, setShowWeekends] = useState(false);
   const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
   const [targetUsableDays, setTargetUsableDays] = useState(1);
-  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
   const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
   const [quickAfter10Hours, setQuickAfter10Hours] = useState("");
   const [quickAfter10Minutes, setQuickAfter10Minutes] = useState("");
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [records, setRecords] = useState<OvertimeRecord[]>(() => {
     if (typeof window === "undefined") {
       return [];
@@ -519,6 +561,26 @@ export default function OvertimePage() {
       isReached: recordSummary.rewardSeconds >= targetUsableDays * DAY_REWARD_SECONDS,
     }),
     [recordSummary, targetUsableDays],
+  );
+  const calcTargetGuide = useMemo(
+    () =>
+      calcSummary
+        ? {
+            before10Minutes: getAdditionalMinutesForTargetDays(
+              calcSummary,
+              calcTargetDays,
+              BEFORE10_REWARD_SECONDS_PER_MINUTE,
+            ),
+            after10Minutes: getAdditionalMinutesForTargetDays(
+              calcSummary,
+              calcTargetDays,
+              AFTER10_REWARD_SECONDS_PER_MINUTE,
+            ),
+            isReached:
+              calcSummary.rewardSeconds >= calcTargetDays * DAY_REWARD_SECONDS,
+          }
+        : null,
+    [calcSummary, calcTargetDays],
   );
 
   const displayedRecords = useMemo(
@@ -578,8 +640,9 @@ export default function OvertimePage() {
   };
 
   const persistRecords = (nextRecords: OvertimeRecord[]) => {
-    setRecords(nextRecords);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRecords));
+    const mergedRecords = mergeRecordsByDate(nextRecords);
+    setRecords(mergedRecords);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
   };
 
   const resetQuickAddForm = () => {
@@ -587,6 +650,7 @@ export default function OvertimePage() {
     setQuickBefore10Minutes("");
     setQuickAfter10Hours("");
     setQuickAfter10Minutes("");
+    setEditingRecordId(null);
   };
 
   const saveRecordEntry = ({
@@ -597,6 +661,7 @@ export default function OvertimePage() {
     afterMinutes,
     applyNormalized,
     onSaved,
+    editingRecordId,
   }: {
     targetDate: string;
     beforeHours: string;
@@ -610,6 +675,7 @@ export default function OvertimePage() {
       afterMinutes: string;
     }) => void;
     onSaved?: () => void;
+    editingRecordId?: string | null;
   }) => {
     const normalizedBefore10 = normalizeDurationFields(beforeHours, beforeMinutes);
     const normalizedAfter10 = normalizeDurationFields(afterHours, afterMinutes);
@@ -648,15 +714,20 @@ export default function OvertimePage() {
       return false;
     }
 
+    const existingRecord = editingRecordId
+      ? records.find((record) => record.id === editingRecordId)
+      : null;
+    const nextRecord: OvertimeRecord = {
+      id: existingRecord?.id || createRecordId(),
+      date: targetDate,
+      before10Minutes: before10Duration.totalMinutes,
+      after10Minutes: after10Duration.totalMinutes,
+      createdAt: existingRecord?.createdAt || new Date().toISOString(),
+    };
+
     persistRecords([
-      ...records,
-      {
-        id: createRecordId(),
-        date: targetDate,
-        before10Minutes: before10Duration.totalMinutes,
-        after10Minutes: after10Duration.totalMinutes,
-        createdAt: new Date().toISOString(),
-      },
+      ...records.filter((record) => record.id !== editingRecordId),
+      nextRecord,
     ]);
 
     const recordMonth = parseDateKey(targetDate);
@@ -714,38 +785,18 @@ export default function OvertimePage() {
       },
     ]);
 
+    setCalcSummary(summary);
     setCalcResult(buildSummaryMessage("계산 결과", summary));
   };
 
-  const handleAddRecord = () => {
-    saveRecordEntry({
-      targetDate: recordDate,
-      beforeHours: recordBefore10Hours,
-      beforeMinutes: recordBefore10Minutes,
-      afterHours: recordAfter10Hours,
-      afterMinutes: recordAfter10Minutes,
-      applyNormalized: (values) => {
-        setRecordBefore10Hours(values.beforeHours);
-        setRecordBefore10Minutes(values.beforeMinutes);
-        setRecordAfter10Hours(values.afterHours);
-        setRecordAfter10Minutes(values.afterMinutes);
-      },
-      onSaved: () => {
-        setRecordBefore10Hours("");
-        setRecordBefore10Minutes("");
-        setRecordAfter10Hours("");
-        setRecordAfter10Minutes("");
-      },
-    });
-  };
-
   const handleQuickAddRecord = () => {
-    const didSave = saveRecordEntry({
+    saveRecordEntry({
       targetDate: selectedDate,
       beforeHours: quickBefore10Hours,
       beforeMinutes: quickBefore10Minutes,
       afterHours: quickAfter10Hours,
       afterMinutes: quickAfter10Minutes,
+      editingRecordId,
       applyNormalized: (values) => {
         setQuickBefore10Hours(values.beforeHours);
         setQuickBefore10Minutes(values.beforeMinutes);
@@ -754,13 +805,22 @@ export default function OvertimePage() {
       },
       onSaved: () => {
         resetQuickAddForm();
-        setIsQuickAddOpen(false);
       },
     });
+  };
 
-    if (didSave) {
-      setRecordDate(selectedDate);
-    }
+  const handleEditRecord = (record: OvertimeRecord) => {
+    const before10 = splitMinutesToFields(record.before10Minutes);
+    const after10 = splitMinutesToFields(record.after10Minutes);
+    const recordDate = parseDateKey(record.date);
+
+    setSelectedDate(record.date);
+    setCurrentMonth(new Date(recordDate.getFullYear(), recordDate.getMonth(), 1));
+    setQuickBefore10Hours(before10.hours);
+    setQuickBefore10Minutes(before10.minutes);
+    setQuickAfter10Hours(after10.hours);
+    setQuickAfter10Minutes(after10.minutes);
+    setEditingRecordId(record.id);
   };
 
   const handleDeleteRecord = (id: string) => {
@@ -784,7 +844,6 @@ export default function OvertimePage() {
     const nextMonth = shiftMonth(currentMonth, amount);
     setCurrentMonth(nextMonth);
     setSelectedDate(formatDateKey(nextMonth));
-    setIsQuickAddOpen(false);
     resetQuickAddForm();
   };
 
@@ -907,6 +966,44 @@ export default function OvertimePage() {
               <ResultBox>
                 {calcResult || "10시 전/이후 야근 시간을 입력하고 계산해보세요."}
               </ResultBox>
+
+              {calcSummary && calcSummary.totalRawMinutes > 0 && calcTargetGuide && (
+                <NoticeCard>
+                  <NoticeHeader>
+                    <strong>
+                      {calcTargetDays.toFixed(2)}일 사용 가능까지 더 필요해요
+                    </strong>
+                    <TargetDayTabs>
+                      {TARGET_DAY_OPTIONS.map((option) => (
+                        <TargetDayButton
+                          key={`calc-${option}`}
+                          type="button"
+                          $isActive={calcTargetDays === option}
+                          onClick={() => setCalcTargetDays(option)}
+                        >
+                          {option}일
+                        </TargetDayButton>
+                      ))}
+                    </TargetDayTabs>
+                  </NoticeHeader>
+                  {calcTargetGuide.isReached ? (
+                    <span>
+                      이미 {calcTargetDays.toFixed(2)}일 이상 사용 가능한 상태예요.
+                    </span>
+                  ) : (
+                    <>
+                      <span>
+                        10시 전만 추가하면{" "}
+                        {formatRawDuration(calcTargetGuide.before10Minutes)}
+                      </span>
+                      <span>
+                        10시 이후만 추가하면{" "}
+                        {formatRawDuration(calcTargetGuide.after10Minutes)}
+                      </span>
+                    </>
+                  )}
+                </NoticeCard>
+              )}
             </TabPanel>
           ) : (
             <TabPanel>
@@ -961,90 +1058,6 @@ export default function OvertimePage() {
                 </NoticeCard>
               )}
 
-              <FieldGroup>
-                <FieldLabel htmlFor="record-date">날짜</FieldLabel>
-                <DateInput
-                  id="record-date"
-                  type="date"
-                  value={recordDate}
-                  onChange={(event) => setRecordDate(event.target.value)}
-                />
-              </FieldGroup>
-
-              <SplitGrid>
-                <DurationCard>
-                  <FieldLabel>10시 전 야근</FieldLabel>
-                  <DurationInputs>
-                    <CompactInput
-                      type="number"
-                      min="0"
-                      placeholder="시간"
-                      value={recordBefore10Hours}
-                      onChange={(event) =>
-                        setRecordBefore10Hours(event.target.value)
-                      }
-                    />
-                    <UnitText>시간</UnitText>
-                    <CompactInput
-                      type="number"
-                      min="0"
-                      placeholder="분"
-                      value={recordBefore10Minutes}
-                      onChange={(event) =>
-                        setRecordBefore10Minutes(event.target.value)
-                      }
-                      onBlur={() =>
-                        applyDurationNormalization(
-                          recordBefore10Hours,
-                          recordBefore10Minutes,
-                          setRecordBefore10Hours,
-                          setRecordBefore10Minutes,
-                        )
-                      }
-                    />
-                    <UnitText>분</UnitText>
-                  </DurationInputs>
-                </DurationCard>
-
-                <DurationCard>
-                  <FieldLabel>10시 이후 야근</FieldLabel>
-                  <DurationInputs>
-                    <CompactInput
-                      type="number"
-                      min="0"
-                      placeholder="시간"
-                      value={recordAfter10Hours}
-                      onChange={(event) =>
-                        setRecordAfter10Hours(event.target.value)
-                      }
-                    />
-                    <UnitText>시간</UnitText>
-                    <CompactInput
-                      type="number"
-                      min="0"
-                      placeholder="분"
-                      value={recordAfter10Minutes}
-                      onChange={(event) =>
-                        setRecordAfter10Minutes(event.target.value)
-                      }
-                      onBlur={() =>
-                        applyDurationNormalization(
-                          recordAfter10Hours,
-                          recordAfter10Minutes,
-                          setRecordAfter10Hours,
-                          setRecordAfter10Minutes,
-                        )
-                      }
-                    />
-                    <UnitText>분</UnitText>
-                  </DurationInputs>
-                </DurationCard>
-              </SplitGrid>
-
-              <PrimaryButton type="button" onClick={handleAddRecord}>
-                기록 저장하기
-              </PrimaryButton>
-
               <ResultBox>{recordResult}</ResultBox>
 
               <SectionDivider />
@@ -1073,7 +1086,6 @@ export default function OvertimePage() {
                       const todayDate = parseDateKey(todayKey);
                       setCurrentMonth(todayDate);
                       setSelectedDate(todayKey);
-                      setIsQuickAddOpen(false);
                       resetQuickAddForm();
                     }}
                   >
@@ -1121,7 +1133,6 @@ export default function OvertimePage() {
                           $isToday={day.isToday}
                           onClick={() => {
                             setSelectedDate(day.dateKey);
-                            setIsQuickAddOpen(false);
                             resetQuickAddForm();
                           }}
                         >
@@ -1130,12 +1141,14 @@ export default function OvertimePage() {
                             <CalendarDaySummary>
                               {bucket.before10Minutes > 0 && (
                                 <span>
-                                  10시 전 {formatCompactDuration(bucket.before10Minutes)}
+                                  <MutedPrefix>10시 전</MutedPrefix>{" "}
+                                  {formatCompactDuration(bucket.before10Minutes)}
                                 </span>
                               )}
                               {bucket.after10Minutes > 0 && (
                                 <span>
-                                  10시 이후 {formatCompactDuration(bucket.after10Minutes)}
+                                  <MutedPrefix>10시 이후</MutedPrefix>{" "}
+                                  {formatCompactDuration(bucket.after10Minutes)}
                                 </span>
                               )}
                             </CalendarDaySummary>
@@ -1147,102 +1160,103 @@ export default function OvertimePage() {
               </CalendarGrid>
 
               <SelectedDatePanel>
-                <SelectedDateHeader>
-                  <SectionTitle>{formatDisplayDate(selectedDate)} 기록</SectionTitle>
-                  <AddRecordButton
-                    type="button"
-                    onClick={() => {
-                      setIsQuickAddOpen((prev) => !prev);
-                      setRecordDate(selectedDate);
-                    }}
-                  >
-                    {isQuickAddOpen ? "닫기" : "+ 추가"}
-                  </AddRecordButton>
-                </SelectedDateHeader>
-                {isQuickAddOpen && (
-                  <QuickAddCard>
-                    <SplitGrid>
-                      <DurationCard>
-                        <FieldLabel>10시 전 야근</FieldLabel>
-                        <DurationInputs>
-                          <CompactInput
-                            type="number"
-                            min="0"
-                            placeholder="시간"
-                            value={quickBefore10Hours}
-                            onChange={(event) =>
-                              setQuickBefore10Hours(event.target.value)
-                            }
-                          />
-                          <UnitText>시간</UnitText>
-                          <CompactInput
-                            type="number"
-                            min="0"
-                            placeholder="분"
-                            value={quickBefore10Minutes}
-                            onChange={(event) =>
-                              setQuickBefore10Minutes(event.target.value)
-                            }
-                            onBlur={() =>
-                              applyDurationNormalization(
-                                quickBefore10Hours,
-                                quickBefore10Minutes,
-                                setQuickBefore10Hours,
-                                setQuickBefore10Minutes,
-                              )
-                            }
-                          />
-                          <UnitText>분</UnitText>
-                        </DurationInputs>
-                      </DurationCard>
+                <SectionTitle>{formatDisplayDate(selectedDate)} 기록</SectionTitle>
+                <QuickAddCard>
+                  <QuickAddHeader>
+                    <QuickAddTitle>
+                      {editingRecordId ? "기록 수정 중" : "새 기록 추가"}
+                    </QuickAddTitle>
+                    {editingRecordId && (
+                      <EditCancelButton type="button" onClick={resetQuickAddForm}>
+                        수정 취소
+                      </EditCancelButton>
+                    )}
+                  </QuickAddHeader>
+                  <SplitGrid>
+                    <DurationCard>
+                      <FieldLabel>10시 전 야근</FieldLabel>
+                      <DurationInputs>
+                        <CompactInput
+                          type="number"
+                          min="0"
+                          placeholder="시간"
+                          value={quickBefore10Hours}
+                          onChange={(event) =>
+                            setQuickBefore10Hours(event.target.value)
+                          }
+                        />
+                        <UnitText>시간</UnitText>
+                        <CompactInput
+                          type="number"
+                          min="0"
+                          placeholder="분"
+                          value={quickBefore10Minutes}
+                          onChange={(event) =>
+                            setQuickBefore10Minutes(event.target.value)
+                          }
+                          onBlur={() =>
+                            applyDurationNormalization(
+                              quickBefore10Hours,
+                              quickBefore10Minutes,
+                              setQuickBefore10Hours,
+                              setQuickBefore10Minutes,
+                            )
+                          }
+                        />
+                        <UnitText>분</UnitText>
+                      </DurationInputs>
+                    </DurationCard>
 
-                      <DurationCard>
-                        <FieldLabel>10시 이후 야근</FieldLabel>
-                        <DurationInputs>
-                          <CompactInput
-                            type="number"
-                            min="0"
-                            placeholder="시간"
-                            value={quickAfter10Hours}
-                            onChange={(event) =>
-                              setQuickAfter10Hours(event.target.value)
-                            }
-                          />
-                          <UnitText>시간</UnitText>
-                          <CompactInput
-                            type="number"
-                            min="0"
-                            placeholder="분"
-                            value={quickAfter10Minutes}
-                            onChange={(event) =>
-                              setQuickAfter10Minutes(event.target.value)
-                            }
-                            onBlur={() =>
-                              applyDurationNormalization(
-                                quickAfter10Hours,
-                                quickAfter10Minutes,
-                                setQuickAfter10Hours,
-                                setQuickAfter10Minutes,
-                              )
-                            }
-                          />
-                          <UnitText>분</UnitText>
-                        </DurationInputs>
-                      </DurationCard>
-                    </SplitGrid>
-                    <PrimaryButton type="button" onClick={handleQuickAddRecord}>
-                      {formatDisplayDate(selectedDate)}에 추가하기
-                    </PrimaryButton>
-                  </QuickAddCard>
-                )}
+                    <DurationCard>
+                      <FieldLabel>10시 이후 야근</FieldLabel>
+                      <DurationInputs>
+                        <CompactInput
+                          type="number"
+                          min="0"
+                          placeholder="시간"
+                          value={quickAfter10Hours}
+                          onChange={(event) =>
+                            setQuickAfter10Hours(event.target.value)
+                          }
+                        />
+                        <UnitText>시간</UnitText>
+                        <CompactInput
+                          type="number"
+                          min="0"
+                          placeholder="분"
+                          value={quickAfter10Minutes}
+                          onChange={(event) =>
+                            setQuickAfter10Minutes(event.target.value)
+                          }
+                          onBlur={() =>
+                            applyDurationNormalization(
+                              quickAfter10Hours,
+                              quickAfter10Minutes,
+                              setQuickAfter10Hours,
+                              setQuickAfter10Minutes,
+                            )
+                          }
+                        />
+                        <UnitText>분</UnitText>
+                      </DurationInputs>
+                    </DurationCard>
+                  </SplitGrid>
+                  <PrimaryButton type="button" onClick={handleQuickAddRecord}>
+                    {editingRecordId
+                      ? `${formatDisplayDate(selectedDate)} 수정 저장하기`
+                      : `${formatDisplayDate(selectedDate)}에 추가하기`}
+                  </PrimaryButton>
+                </QuickAddCard>
                 {selectedDateBucket ? (
                   <>
                     <SelectedSummaryRow>
                       <SelectedSummaryChip>
-                        10시 전 {formatRawDuration(selectedDateBucket.before10Minutes)}
+                        <MutedPrefix>10시 전</MutedPrefix>{" "}
+                        {formatRawDuration(selectedDateBucket.before10Minutes)}
                       </SelectedSummaryChip>
                       <SelectedSummaryChip>
-                        10시 이후 {formatRawDuration(selectedDateBucket.after10Minutes)}
+                        <MutedPrefix>10시 이후</MutedPrefix>{" "}
+                        {formatRawDuration(selectedDateBucket.after10Minutes)}
                       </SelectedSummaryChip>
                     </SelectedSummaryRow>
                     <RecordList>
@@ -1251,18 +1265,28 @@ export default function OvertimePage() {
                           <RecordInfo>
                             <strong>{record.date}</strong>
                             <span>
-                              10시 전 {formatRawDuration(record.before10Minutes)}
+                              <MutedPrefix>10시 전</MutedPrefix>{" "}
+                              {formatRawDuration(record.before10Minutes)}
                             </span>
                             <span>
-                              10시 이후 {formatRawDuration(record.after10Minutes)}
+                              <MutedPrefix>10시 이후</MutedPrefix>{" "}
+                              {formatRawDuration(record.after10Minutes)}
                             </span>
                           </RecordInfo>
-                          <DeleteButton
-                            type="button"
-                            onClick={() => handleDeleteRecord(record.id)}
-                          >
-                            삭제
-                          </DeleteButton>
+                          <RecordActions>
+                            <EditButton
+                              type="button"
+                              onClick={() => handleEditRecord(record)}
+                            >
+                              수정
+                            </EditButton>
+                            <DeleteButton
+                              type="button"
+                              onClick={() => handleDeleteRecord(record.id)}
+                            >
+                              삭제
+                            </DeleteButton>
+                          </RecordActions>
                         </RecordItem>
                       ))}
                     </RecordList>
@@ -1294,18 +1318,28 @@ export default function OvertimePage() {
                           <RecordInfo>
                             <strong>{record.date}</strong>
                             <span>
-                              10시 전 {formatRawDuration(record.before10Minutes)}
+                              <MutedPrefix>10시 전</MutedPrefix>{" "}
+                              {formatRawDuration(record.before10Minutes)}
                             </span>
                             <span>
-                              10시 이후 {formatRawDuration(record.after10Minutes)}
+                              <MutedPrefix>10시 이후</MutedPrefix>{" "}
+                              {formatRawDuration(record.after10Minutes)}
                             </span>
                           </RecordInfo>
-                          <DeleteButton
-                            type="button"
-                            onClick={() => handleDeleteRecord(record.id)}
-                          >
-                            삭제
-                          </DeleteButton>
+                          <RecordActions>
+                            <EditButton
+                              type="button"
+                              onClick={() => handleEditRecord(record)}
+                            >
+                              수정
+                            </EditButton>
+                            <DeleteButton
+                              type="button"
+                              onClick={() => handleDeleteRecord(record.id)}
+                            >
+                              삭제
+                            </DeleteButton>
+                          </RecordActions>
                         </RecordItem>
                       ))
                     )}
@@ -1453,12 +1487,6 @@ const DurationInputs = styled.div`
   margin-top: 0.6rem;
 `;
 
-const FieldGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-`;
-
 const FieldLabel = styled.label`
   font-size: 0.92rem;
   font-weight: 700;
@@ -1469,22 +1497,6 @@ const CompactInput = styled.input`
   width: 88px;
   min-height: 48px;
   padding: 0.8rem 0.85rem;
-  border: 1px solid #d3deed;
-  border-radius: 14px;
-  background: #ffffff;
-  font-size: 1rem;
-  outline: none;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-  }
-`;
-
-const DateInput = styled.input`
-  width: 100%;
-  min-height: 52px;
-  padding: 0.85rem 0.9rem;
   border: 1px solid #d3deed;
   border-radius: 14px;
   background: #ffffff;
@@ -1768,6 +1780,12 @@ const CalendarDaySummary = styled.div`
   }
 `;
 
+const MutedPrefix = styled.span`
+  color: #8a99b2;
+  font-weight: 600;
+  margin-right: 0.3rem;
+`;
+
 const SelectedDatePanel = styled.div`
   display: flex;
   flex-direction: column;
@@ -1778,24 +1796,6 @@ const SelectedDatePanel = styled.div`
   padding: 1rem;
 `;
 
-const SelectedDateHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const AddRecordButton = styled.button`
-  border: 1px solid #cfe0fb;
-  background: #ffffff;
-  color: #234f8d;
-  border-radius: 12px;
-  padding: 0.55rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-`;
-
 const QuickAddCard = styled.div`
   display: flex;
   flex-direction: column;
@@ -1804,6 +1804,33 @@ const QuickAddCard = styled.div`
   border-radius: 18px;
   border: 1px solid #dbe7f4;
   background: #ffffff;
+`;
+
+const QuickAddHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const QuickAddTitle = styled.strong`
+  color: #123865;
+  font-size: 0.96rem;
+`;
+
+const EditCancelButton = styled.button`
+  border: 1px solid #d2dceb;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const AccordionSection = styled.div`
@@ -1888,6 +1915,23 @@ const RecordItem = styled.li`
     align-items: flex-start;
     flex-direction: column;
   }
+`;
+
+const RecordActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+`;
+
+const EditButton = styled.button`
+  border: none;
+  border-radius: 12px;
+  background: #e0ecff;
+  color: #1d4f91;
+  padding: 0.65rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const EmptyItem = styled.li`
