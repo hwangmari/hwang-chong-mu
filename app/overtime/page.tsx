@@ -85,7 +85,8 @@ const OVERTIME_RULES: Record<OvertimeRuleId, OvertimeRule> = {
     label: "15시간 이후, 10시 이후 2배",
     shortLabel: "15시간 이후",
     description: "누적 15시간 초과분부터 10시 전 1.5배, 10시 이후 2배예요.",
-    introDescription: "15시간 초과분부터 계산하고\n10시 전은 1.5배, 10시 이후는 2배로 반영해요.",
+    introDescription:
+      "15시간 초과분부터 계산하고\n10시 전은 1.5배, 10시 이후는 2배로 반영해요.",
     thresholdMinutes: 15 * 60,
     before10RewardSecondsPerMinute: 90,
     after10RewardSecondsPerMinute: 120,
@@ -106,7 +107,7 @@ const OVERTIME_RULES: Record<OvertimeRuleId, OvertimeRule> = {
   from_1830: {
     id: "from_1830",
     label: "18:30부터 10분 단위 1.5배",
-    shortLabel: "18:30부터",
+    shortLabel: "18:30 부터",
     description: "6시 30분부터 10분 단위로 1.5배 보상휴가가 적립돼요.",
     introDescription:
       "6시 30분부터 바로 계산하고\n10분 단위마다 1.5배 보상휴가로 반영해요.",
@@ -454,7 +455,6 @@ function buildOvertimeSummary(
       record.before10Minutes,
     );
     remainingThresholdMinutes -= beforeConsumed;
-    eligibleBefore10Minutes += record.before10Minutes - beforeConsumed;
 
     const afterConsumed = Math.min(
       remainingThresholdMinutes,
@@ -470,7 +470,10 @@ function buildOvertimeSummary(
       const roundedEligibleTotal =
         Math.floor(eligibleTotalForRecord / rule.roundingUnitMinutes) *
         rule.roundingUnitMinutes;
-      const roundedBefore = Math.min(eligibleBeforeForRecord, roundedEligibleTotal);
+      const roundedBefore = Math.min(
+        eligibleBeforeForRecord,
+        roundedEligibleTotal,
+      );
       const roundedAfter = Math.max(roundedEligibleTotal - roundedBefore, 0);
 
       eligibleBefore10Minutes += roundedBefore;
@@ -519,13 +522,25 @@ function buildOvertimeSummary(
     ...baseSummary,
     nextQuarterBefore10Minutes: getAdditionalMinutesForRewardSeconds(
       rule,
-      { ...baseSummary, nextQuarterBefore10Minutes: 0, nextQuarterAfter10Minutes: 0, toOneDayBefore10Minutes: 0, toOneDayAfter10Minutes: 0 },
+      {
+        ...baseSummary,
+        nextQuarterBefore10Minutes: 0,
+        nextQuarterAfter10Minutes: 0,
+        toOneDayBefore10Minutes: 0,
+        toOneDayAfter10Minutes: 0,
+      },
       remainingRewardSecondsToNextQuarter,
       rule.before10RewardSecondsPerMinute,
     ),
     nextQuarterAfter10Minutes: getAdditionalMinutesForRewardSeconds(
       rule,
-      { ...baseSummary, nextQuarterBefore10Minutes: 0, nextQuarterAfter10Minutes: 0, toOneDayBefore10Minutes: 0, toOneDayAfter10Minutes: 0 },
+      {
+        ...baseSummary,
+        nextQuarterBefore10Minutes: 0,
+        nextQuarterAfter10Minutes: 0,
+        toOneDayBefore10Minutes: 0,
+        toOneDayAfter10Minutes: 0,
+      },
       remainingRewardSecondsToNextQuarter,
       rule.after10RewardSecondsPerMinute,
     ),
@@ -534,7 +549,13 @@ function buildOvertimeSummary(
         ? 0
         : getAdditionalMinutesForRewardSeconds(
             rule,
-            { ...baseSummary, nextQuarterBefore10Minutes: 0, nextQuarterAfter10Minutes: 0, toOneDayBefore10Minutes: 0, toOneDayAfter10Minutes: 0 },
+            {
+              ...baseSummary,
+              nextQuarterBefore10Minutes: 0,
+              nextQuarterAfter10Minutes: 0,
+              toOneDayBefore10Minutes: 0,
+              toOneDayAfter10Minutes: 0,
+            },
             remainingRewardSecondsToOneDay,
             rule.before10RewardSecondsPerMinute,
           ),
@@ -543,7 +564,13 @@ function buildOvertimeSummary(
         ? 0
         : getAdditionalMinutesForRewardSeconds(
             rule,
-            { ...baseSummary, nextQuarterBefore10Minutes: 0, nextQuarterAfter10Minutes: 0, toOneDayBefore10Minutes: 0, toOneDayAfter10Minutes: 0 },
+            {
+              ...baseSummary,
+              nextQuarterBefore10Minutes: 0,
+              nextQuarterAfter10Minutes: 0,
+              toOneDayBefore10Minutes: 0,
+              toOneDayAfter10Minutes: 0,
+            },
             remainingRewardSecondsToOneDay,
             rule.after10RewardSecondsPerMinute,
           ),
@@ -718,7 +745,10 @@ export default function OvertimePage() {
   const [serverRecords, setServerRecords] = useState<OvertimeRecord[]>([]);
   const records = storageMode === "server" ? serverRecords : localRecords;
   const activeRule = OVERTIME_RULES[ruleId];
-  const activeRuleGuide = useMemo(() => getRuleGuideItems(activeRule), [activeRule]);
+  const activeRuleGuide = useMemo(
+    () => getRuleGuideItems(activeRule),
+    [activeRule],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1076,15 +1106,18 @@ export default function OvertimePage() {
       return;
     }
 
-    const summary = buildOvertimeSummary([
-      {
-        id: "preview",
-        date: todayKey,
-        before10Minutes: before10Duration.totalMinutes,
-        after10Minutes: after10Duration.totalMinutes,
-        createdAt: new Date().toISOString(),
-      },
-    ], activeRule);
+    const summary = buildOvertimeSummary(
+      [
+        {
+          id: "preview",
+          date: todayKey,
+          before10Minutes: before10Duration.totalMinutes,
+          after10Minutes: after10Duration.totalMinutes,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      activeRule,
+    );
 
     setCalcSummary(summary);
     setCalcResult(buildSummaryMessage("계산 결과", summary, activeRule));
@@ -1944,7 +1977,6 @@ export default function OvertimePage() {
               <AccordionHint>{activeRule.collapsedHint}</AccordionHint>
             )}
           </AccordionSection>
-
         </SurfaceCard>
       </StWrapper>
     </StContainer>
