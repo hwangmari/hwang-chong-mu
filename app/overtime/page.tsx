@@ -13,14 +13,47 @@ type TabKey = "calculator" | "records";
 interface OvertimeRecord {
   id: string;
   date: string;
-  hours: number;
-  minutes: number;
+  before10Minutes: number;
+  after10Minutes: number;
   createdAt: string;
+}
+
+interface OvertimeSummary {
+  totalRawMinutes: number;
+  before10RawMinutes: number;
+  after10RawMinutes: number;
+  remainingThresholdMinutes: number;
+  eligibleBefore10Minutes: number;
+  eligibleAfter10Minutes: number;
+  rewardSeconds: number;
+  accruedDays: number;
+  usableDays: number;
+  carryDays: number;
+  carryRewardSeconds: number;
+  nextQuarterBefore10Minutes: number;
+  nextQuarterAfter10Minutes: number;
+}
+
+interface DayBucket {
+  records: OvertimeRecord[];
+  before10Minutes: number;
+  after10Minutes: number;
+}
+
+interface CalendarDay {
+  dateKey: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
 }
 
 const STORAGE_KEY = "nightOvertimeRecords";
 const THRESHOLD_MINUTES = 15 * 60;
-const QUARTER_DAY_MINUTES = 120;
+const DAY_REWARD_SECONDS = 8 * 60 * 60;
+const QUARTER_DAY_REWARD_SECONDS = DAY_REWARD_SECONDS / 4;
+const BEFORE10_REWARD_SECONDS_PER_MINUTE = 90;
+const AFTER10_REWARD_SECONDS_PER_MINUTE = 120;
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function createRecordId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -36,7 +69,7 @@ function getTodayDateInputValue() {
   return localTime.toISOString().slice(0, 10);
 }
 
-function parseNumberInput(value: string) {
+function parseMinuteInput(value: string) {
   if (!value.trim()) {
     return NaN;
   }
@@ -44,44 +77,284 @@ function parseNumberInput(value: string) {
   return Number.parseInt(value, 10);
 }
 
-function normalizeDuration(totalMinutes: number) {
-  const roundedMinutes = Math.round(totalMinutes);
-  const hours = Math.floor(roundedMinutes / 60);
-  const minutes = roundedMinutes % 60;
-
-  return { hours, minutes, totalMinutes: roundedMinutes };
-}
-
-function formatDuration(totalMinutes: number) {
-  const { hours, minutes } = normalizeDuration(totalMinutes);
+function formatRawDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   return `${hours}시간 ${minutes}분`;
 }
 
-function buildRewardMessage(totalWorkedMinutes: number, title: string) {
-  if (totalWorkedMinutes <= THRESHOLD_MINUTES) {
-    return "💤 아직 보상휴가가 발생하지 않습니다.\n(15시간 초과분부터 적용됩니다.)";
+function formatCompactDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}분`;
   }
 
-  const rewardMinutes = (totalWorkedMinutes - THRESHOLD_MINUTES) * 1.5;
-  const rewardDuration = normalizeDuration(rewardMinutes);
-  const rewardDays =
-    Math.floor(rewardMinutes / QUARTER_DAY_MINUTES) * 0.25;
-
-  let message = `✅ ${title}:\n📌 총 보상시간: ${rewardDuration.hours}시간 ${rewardDuration.minutes}분\n📌 총 일수 기준: ${rewardDays.toFixed(
-    2,
-  )}일`;
-
-  const remain = rewardMinutes % QUARTER_DAY_MINUTES;
-  if (remain > 0) {
-    const needRewardMinutes = QUARTER_DAY_MINUTES - remain;
-    const needWorkedMinutes = needRewardMinutes / 1.5;
-    const nextDuration = normalizeDuration(needWorkedMinutes);
-    message += `\n🕐 다음 ${(rewardDays + 0.25).toFixed(
-      2,
-    )}일을 채우려면 야근 ${nextDuration.hours}시간 ${nextDuration.minutes}분이 추가로 필요합니다.`;
+  if (minutes === 0) {
+    return `${hours}시간`;
   }
 
-  return message;
+  return `${hours}시간 ${minutes}분`;
+}
+
+function formatRewardDuration(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (seconds > 0) {
+    return `${hours}시간 ${minutes}분 ${seconds}초`;
+  }
+
+  return `${hours}시간 ${minutes}분`;
+}
+
+function formatDayValue(days: number) {
+  return `${days.toFixed(2)}일`;
+}
+
+function parseDateKey(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(dateKey: string) {
+  const date = parseDateKey(dateKey);
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+function formatMonthLabel(date: Date) {
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+}
+
+function shiftMonth(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function buildMonthCalendarWeeks(currentMonth: Date) {
+  const firstDay = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth(),
+    1,
+  );
+  const lastDate = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1,
+    0,
+  ).getDate();
+  const weeks: Array<Array<CalendarDay | null>> = [];
+  let currentWeek: Array<CalendarDay | null> = Array.from(
+    { length: firstDay.getDay() },
+    () => null,
+  );
+
+  for (let day = 1; day <= lastDate; day += 1) {
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day,
+    );
+    currentWeek.push({
+      dateKey: formatDateKey(date),
+      dayNumber: day,
+      isCurrentMonth: true,
+      isToday: formatDateKey(date) === getTodayDateInputValue(),
+    });
+
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  }
+
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      currentWeek.push(null);
+    }
+    weeks.push(currentWeek);
+  }
+
+  return weeks;
+}
+
+function normalizeDurationFields(hoursValue: string, minutesValue: string) {
+  const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
+  const parsedMinutes = minutesValue.trim() ? parseMinuteInput(minutesValue) : 0;
+
+  if (
+    Number.isNaN(parsedHours) ||
+    Number.isNaN(parsedMinutes) ||
+    parsedHours < 0 ||
+    parsedMinutes < 0
+  ) {
+    return {
+      hours: hoursValue,
+      minutes: minutesValue,
+    };
+  }
+
+  const totalMinutes = parsedHours * 60 + parsedMinutes;
+  const nextHours = Math.floor(totalMinutes / 60);
+  const nextMinutes = totalMinutes % 60;
+
+  if (!hoursValue.trim() && !minutesValue.trim()) {
+    return {
+      hours: "",
+      minutes: "",
+    };
+  }
+
+  return {
+    hours: nextHours === 0 ? "" : String(nextHours),
+    minutes: String(nextMinutes),
+  };
+}
+
+function getDurationMinutes(hoursValue: string, minutesValue: string) {
+  const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
+  const parsedMinutes = minutesValue.trim() ? parseMinuteInput(minutesValue) : 0;
+
+  if (
+    Number.isNaN(parsedHours) ||
+    Number.isNaN(parsedMinutes) ||
+    parsedHours < 0 ||
+    parsedMinutes < 0
+  ) {
+    return {
+      isValid: false,
+      totalMinutes: 0,
+    };
+  }
+
+  return {
+    isValid: true,
+    totalMinutes: parsedHours * 60 + parsedMinutes,
+  };
+}
+
+function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
+  let remainingThresholdMinutes = THRESHOLD_MINUTES;
+  let before10RawMinutes = 0;
+  let after10RawMinutes = 0;
+  let eligibleBefore10Minutes = 0;
+  let eligibleAfter10Minutes = 0;
+
+  const orderedRecords = [...records].sort((left, right) => {
+    const byDate = left.date.localeCompare(right.date);
+    if (byDate !== 0) {
+      return byDate;
+    }
+
+    return left.createdAt.localeCompare(right.createdAt);
+  });
+
+  orderedRecords.forEach((record) => {
+    before10RawMinutes += record.before10Minutes;
+    after10RawMinutes += record.after10Minutes;
+
+    const beforeConsumed = Math.min(
+      remainingThresholdMinutes,
+      record.before10Minutes,
+    );
+    remainingThresholdMinutes -= beforeConsumed;
+    eligibleBefore10Minutes += record.before10Minutes - beforeConsumed;
+
+    const afterConsumed = Math.min(
+      remainingThresholdMinutes,
+      record.after10Minutes,
+    );
+    remainingThresholdMinutes -= afterConsumed;
+    eligibleAfter10Minutes += record.after10Minutes - afterConsumed;
+  });
+
+  const rewardSeconds =
+    eligibleBefore10Minutes * BEFORE10_REWARD_SECONDS_PER_MINUTE +
+    eligibleAfter10Minutes * AFTER10_REWARD_SECONDS_PER_MINUTE;
+  const accruedDays = rewardSeconds / DAY_REWARD_SECONDS;
+  const usableQuarterCount = Math.floor(
+    rewardSeconds / QUARTER_DAY_REWARD_SECONDS,
+  );
+  const usableDays = usableQuarterCount * 0.25;
+  const carryRewardSeconds =
+    rewardSeconds - usableQuarterCount * QUARTER_DAY_REWARD_SECONDS;
+  const carryDays = carryRewardSeconds / DAY_REWARD_SECONDS;
+  const remainingRewardSecondsToNextQuarter =
+    carryRewardSeconds === 0
+      ? QUARTER_DAY_REWARD_SECONDS
+      : QUARTER_DAY_REWARD_SECONDS - carryRewardSeconds;
+
+  return {
+    totalRawMinutes: before10RawMinutes + after10RawMinutes,
+    before10RawMinutes,
+    after10RawMinutes,
+    remainingThresholdMinutes,
+    eligibleBefore10Minutes,
+    eligibleAfter10Minutes,
+    rewardSeconds,
+    accruedDays,
+    usableDays,
+    carryDays,
+    carryRewardSeconds,
+    nextQuarterBefore10Minutes:
+      remainingThresholdMinutes +
+      Math.ceil(
+        remainingRewardSecondsToNextQuarter /
+          BEFORE10_REWARD_SECONDS_PER_MINUTE,
+      ),
+    nextQuarterAfter10Minutes:
+      remainingThresholdMinutes +
+      Math.ceil(
+        remainingRewardSecondsToNextQuarter /
+          AFTER10_REWARD_SECONDS_PER_MINUTE,
+      ),
+  };
+}
+
+function buildSummaryMessage(title: string, summary: OvertimeSummary) {
+  if (summary.totalRawMinutes === 0) {
+    return "아직 입력된 야근 시간이 없습니다.";
+  }
+
+  const lines = [
+    `✅ ${title}`,
+    `📌 총 야근시간: ${formatRawDuration(summary.totalRawMinutes)}`,
+    `📌 입력 분리: 10시 전 ${formatRawDuration(summary.before10RawMinutes)} / 10시 이후 ${formatRawDuration(summary.after10RawMinutes)}`,
+  ];
+
+  if (summary.rewardSeconds === 0) {
+    lines.push(
+      summary.remainingThresholdMinutes > 0
+        ? "📌 아직 보상휴가는 발생하지 않았습니다."
+        : "📌 15시간 기준은 채웠고, 초과분부터 적립이 시작됩니다.",
+      `📌 15시간 초과까지 남은 시간: ${formatRawDuration(summary.remainingThresholdMinutes)}`,
+      "🕐 첫 0.25일 사용 가능까지 추가 필요",
+      `- 10시 전만 더 하면 ${formatRawDuration(summary.nextQuarterBefore10Minutes)}`,
+      `- 10시 이후만 더 하면 ${formatRawDuration(summary.nextQuarterAfter10Minutes)}`,
+    );
+
+    return lines.join("\n");
+  }
+
+  lines.push(
+    `📌 보상 산정 대상: 10시 전 ${formatRawDuration(summary.eligibleBefore10Minutes)} / 10시 이후 ${formatRawDuration(summary.eligibleAfter10Minutes)}`,
+    `📌 총 발생 보상시간: ${formatRewardDuration(summary.rewardSeconds)}`,
+    `📌 총 발생 일수: ${formatDayValue(summary.accruedDays)}`,
+    `📌 현재 사용 가능 일수: ${formatDayValue(summary.usableDays)}`,
+    `📌 아직 못 쓰는 잔여: ${formatDayValue(summary.carryDays)} (${formatRewardDuration(summary.carryRewardSeconds)})`,
+    "🕐 다음 사용 가능 0.25일까지 추가 필요",
+    `- 10시 전 기준 ${formatRawDuration(summary.nextQuarterBefore10Minutes)}`,
+    `- 10시 이후 기준 ${formatRawDuration(summary.nextQuarterAfter10Minutes)}`,
+  );
+
+  return lines.join("\n");
 }
 
 function parseStoredRecords(storedValue: string | null) {
@@ -92,54 +365,72 @@ function parseStoredRecords(storedValue: string | null) {
   try {
     const parsed = JSON.parse(storedValue) as Array<
       Partial<OvertimeRecord> & {
-        date?: string;
         hours?: number;
         minutes?: number;
       }
     >;
 
     return parsed
-      .filter(
-        (item) =>
-          typeof item?.date === "string" &&
-          Number.isFinite(item?.hours) &&
-          Number.isFinite(item?.minutes),
-      )
-      .map((item) => ({
-        id: item.id || createRecordId(),
-        date: item.date!,
-        hours: Number(item.hours),
-        minutes: Number(item.minutes),
-        createdAt:
-          typeof item.createdAt === "string"
-            ? item.createdAt
-            : new Date().toISOString(),
-      }));
+      .map((item) => {
+        const legacyMinutes =
+          Number.isFinite(item.hours) && Number.isFinite(item.minutes)
+            ? Number(item.hours) * 60 + Number(item.minutes)
+            : 0;
+        const before10Minutes = Number.isFinite(item.before10Minutes)
+          ? Number(item.before10Minutes)
+          : legacyMinutes;
+        const after10Minutes = Number.isFinite(item.after10Minutes)
+          ? Number(item.after10Minutes)
+          : 0;
+
+        if (
+          typeof item.date !== "string" ||
+          before10Minutes < 0 ||
+          after10Minutes < 0
+        ) {
+          return null;
+        }
+
+        return {
+          id: item.id || createRecordId(),
+          date: item.date,
+          before10Minutes,
+          after10Minutes,
+          createdAt:
+            typeof item.createdAt === "string"
+              ? item.createdAt
+              : new Date().toISOString(),
+        };
+      })
+      .filter((item): item is OvertimeRecord => item !== null);
   } catch (error) {
     console.error("야근 기록을 불러오지 못했습니다.", error);
     return [];
   }
 }
 
-const LEAVE_REQUIREMENTS = Array.from({ length: 6 }, (_, index) => {
-  const days = index + 1;
-  const totalWorkedMinutes = THRESHOLD_MINUTES + (days * 8 * 60) / 1.5;
-
-  return {
-    days,
-    text: formatDuration(totalWorkedMinutes),
-  };
-});
-
 export default function OvertimePage() {
+  const todayKey = getTodayDateInputValue();
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
-  const [calcHours, setCalcHours] = useState("");
-  const [calcMinutes, setCalcMinutes] = useState("0");
-  const [calcTotalMinutes, setCalcTotalMinutes] = useState("");
+  const [calcBefore10Hours, setCalcBefore10Hours] = useState("");
+  const [calcBefore10Minutes, setCalcBefore10Minutes] = useState("");
+  const [calcAfter10Hours, setCalcAfter10Hours] = useState("");
+  const [calcAfter10Minutes, setCalcAfter10Minutes] = useState("");
   const [calcResult, setCalcResult] = useState("");
-  const [recordDate, setRecordDate] = useState(getTodayDateInputValue);
-  const [recordHours, setRecordHours] = useState("");
-  const [recordMinutes, setRecordMinutes] = useState("0");
+  const [recordDate, setRecordDate] = useState(todayKey);
+  const [recordBefore10Hours, setRecordBefore10Hours] = useState("");
+  const [recordBefore10Minutes, setRecordBefore10Minutes] = useState("");
+  const [recordAfter10Hours, setRecordAfter10Hours] = useState("");
+  const [recordAfter10Minutes, setRecordAfter10Minutes] = useState("");
+  const [currentMonth, setCurrentMonth] = useState(() => parseDateKey(todayKey));
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [showWeekends, setShowWeekends] = useState(false);
+  const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
+  const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
+  const [quickAfter10Hours, setQuickAfter10Hours] = useState("");
+  const [quickAfter10Minutes, setQuickAfter10Minutes] = useState("");
   const [records, setRecords] = useState<OvertimeRecord[]>(() => {
     if (typeof window === "undefined") {
       return [];
@@ -148,86 +439,252 @@ export default function OvertimePage() {
     return parseStoredRecords(localStorage.getItem(STORAGE_KEY));
   });
 
-  const totalRecordedMinutes = useMemo(
+  const recordSummary = useMemo(() => buildOvertimeSummary(records), [records]);
+  const recordResult = useMemo(
+    () => buildSummaryMessage("누적 야근 현황", recordSummary),
+    [recordSummary],
+  );
+
+  const displayedRecords = useMemo(
     () =>
-      records.reduce((sum, record) => sum + record.hours * 60 + record.minutes, 0),
+      [...records].sort((left, right) => {
+        const byDate = right.date.localeCompare(left.date);
+        if (byDate !== 0) {
+          return byDate;
+        }
+
+        return right.createdAt.localeCompare(left.createdAt);
+      }),
     [records],
   );
 
-  const recordResult = useMemo(() => {
-    if (records.length === 0) {
-      return "저장된 야근 기록이 없습니다.";
-    }
+  const recordsByDate = useMemo(() => {
+    const map = new Map<string, DayBucket>();
 
-    return buildRewardMessage(totalRecordedMinutes, "누적 보상휴가");
-  }, [records.length, totalRecordedMinutes]);
+    displayedRecords.forEach((record) => {
+      const bucket = map.get(record.date) || {
+        records: [],
+        before10Minutes: 0,
+        after10Minutes: 0,
+      };
 
-  const totalRecordedDuration = useMemo(
-    () => formatDuration(totalRecordedMinutes),
-    [totalRecordedMinutes],
+      bucket.records.push(record);
+      bucket.before10Minutes += record.before10Minutes;
+      bucket.after10Minutes += record.after10Minutes;
+      map.set(record.date, bucket);
+    });
+
+    return map;
+  }, [displayedRecords]);
+
+  const selectedDateBucket = recordsByDate.get(selectedDate);
+  const calendarWeeks = useMemo(
+    () => buildMonthCalendarWeeks(currentMonth),
+    [currentMonth],
   );
+  const visibleWeekdays = useMemo(
+    () =>
+      showWeekends
+        ? WEEKDAYS
+        : WEEKDAYS.filter((_, weekdayIndex) => weekdayIndex !== 0 && weekdayIndex !== 6),
+    [showWeekends],
+  );
+
+  const applyDurationNormalization = (
+    hoursValue: string,
+    minutesValue: string,
+    setHours: (value: string) => void,
+    setMinutes: (value: string) => void,
+  ) => {
+    const normalized = normalizeDurationFields(hoursValue, minutesValue);
+    setHours(normalized.hours);
+    setMinutes(normalized.minutes);
+  };
 
   const persistRecords = (nextRecords: OvertimeRecord[]) => {
     setRecords(nextRecords);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRecords));
   };
 
-  const handleCalculate = () => {
-    const directMinutes = parseNumberInput(calcTotalMinutes);
-    const hours = parseNumberInput(calcHours);
-    const minutes = parseNumberInput(calcMinutes);
-
-    const totalMinutes = Number.isNaN(directMinutes)
-      ? (Number.isNaN(hours) ? 0 : hours) * 60 + (Number.isNaN(minutes) ? 0 : minutes)
-      : directMinutes;
-
-    if (totalMinutes < 0 || (!Number.isNaN(minutes) && (minutes < 0 || minutes > 59))) {
-      alert("유효한 시간을 입력해주세요.");
-      return;
-    }
-
-    setCalcResult(buildRewardMessage(totalMinutes, "보상휴가"));
+  const resetQuickAddForm = () => {
+    setQuickBefore10Hours("");
+    setQuickBefore10Minutes("");
+    setQuickAfter10Hours("");
+    setQuickAfter10Minutes("");
   };
 
-  const handleAddRecord = () => {
-    const hours = parseNumberInput(recordHours);
-    const minutes = parseNumberInput(recordMinutes);
+  const saveRecordEntry = ({
+    targetDate,
+    beforeHours,
+    beforeMinutes,
+    afterHours,
+    afterMinutes,
+    applyNormalized,
+    onSaved,
+  }: {
+    targetDate: string;
+    beforeHours: string;
+    beforeMinutes: string;
+    afterHours: string;
+    afterMinutes: string;
+    applyNormalized?: (values: {
+      beforeHours: string;
+      beforeMinutes: string;
+      afterHours: string;
+      afterMinutes: string;
+    }) => void;
+    onSaved?: () => void;
+  }) => {
+    const normalizedBefore10 = normalizeDurationFields(beforeHours, beforeMinutes);
+    const normalizedAfter10 = normalizeDurationFields(afterHours, afterMinutes);
 
-    if (!recordDate) {
+    applyNormalized?.({
+      beforeHours: normalizedBefore10.hours,
+      beforeMinutes: normalizedBefore10.minutes,
+      afterHours: normalizedAfter10.hours,
+      afterMinutes: normalizedAfter10.minutes,
+    });
+
+    const before10Duration = getDurationMinutes(
+      normalizedBefore10.hours,
+      normalizedBefore10.minutes,
+    );
+    const after10Duration = getDurationMinutes(
+      normalizedAfter10.hours,
+      normalizedAfter10.minutes,
+    );
+
+    if (!targetDate) {
       alert("날짜를 입력해주세요.");
+      return false;
+    }
+
+    if (!before10Duration.isValid || !after10Duration.isValid) {
+      alert("시간과 분은 0 이상의 숫자로 입력해주세요.");
+      return false;
+    }
+
+    if (
+      before10Duration.totalMinutes === 0 &&
+      after10Duration.totalMinutes === 0
+    ) {
+      alert("야근 시간은 0보다 커야 합니다.");
+      return false;
+    }
+
+    persistRecords([
+      ...records,
+      {
+        id: createRecordId(),
+        date: targetDate,
+        before10Minutes: before10Duration.totalMinutes,
+        after10Minutes: after10Duration.totalMinutes,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    const recordMonth = parseDateKey(targetDate);
+    setCurrentMonth(new Date(recordMonth.getFullYear(), recordMonth.getMonth(), 1));
+    setSelectedDate(targetDate);
+    onSaved?.();
+
+    return true;
+  };
+
+  const handleCalculate = () => {
+    const normalizedBefore10 = normalizeDurationFields(
+      calcBefore10Hours,
+      calcBefore10Minutes,
+    );
+    const normalizedAfter10 = normalizeDurationFields(
+      calcAfter10Hours,
+      calcAfter10Minutes,
+    );
+
+    setCalcBefore10Hours(normalizedBefore10.hours);
+    setCalcBefore10Minutes(normalizedBefore10.minutes);
+    setCalcAfter10Hours(normalizedAfter10.hours);
+    setCalcAfter10Minutes(normalizedAfter10.minutes);
+
+    const before10Duration = getDurationMinutes(
+      normalizedBefore10.hours,
+      normalizedBefore10.minutes,
+    );
+    const after10Duration = getDurationMinutes(
+      normalizedAfter10.hours,
+      normalizedAfter10.minutes,
+    );
+
+    if (!before10Duration.isValid || !after10Duration.isValid) {
+      alert("시간과 분은 0 이상의 숫자로 입력해주세요.");
       return;
     }
 
     if (
-      Number.isNaN(hours) ||
-      hours < 0 ||
-      Number.isNaN(minutes) ||
-      minutes < 0 ||
-      minutes > 59
+      before10Duration.totalMinutes === 0 &&
+      after10Duration.totalMinutes === 0
     ) {
-      alert("유효한 시간을 입력해주세요.");
-      return;
-    }
-
-    if (hours === 0 && minutes === 0) {
       alert("야근 시간은 0보다 커야 합니다.");
       return;
     }
 
-    const nextRecords = [
-      ...records,
+    const summary = buildOvertimeSummary([
       {
-        id: createRecordId(),
-        date: recordDate,
-        hours,
-        minutes,
+        id: "preview",
+        date: todayKey,
+        before10Minutes: before10Duration.totalMinutes,
+        after10Minutes: after10Duration.totalMinutes,
         createdAt: new Date().toISOString(),
       },
-    ].sort((a, b) => b.date.localeCompare(a.date));
+    ]);
 
-    persistRecords(nextRecords);
-    setRecordHours("");
-    setRecordMinutes("0");
+    setCalcResult(buildSummaryMessage("계산 결과", summary));
+  };
+
+  const handleAddRecord = () => {
+    saveRecordEntry({
+      targetDate: recordDate,
+      beforeHours: recordBefore10Hours,
+      beforeMinutes: recordBefore10Minutes,
+      afterHours: recordAfter10Hours,
+      afterMinutes: recordAfter10Minutes,
+      applyNormalized: (values) => {
+        setRecordBefore10Hours(values.beforeHours);
+        setRecordBefore10Minutes(values.beforeMinutes);
+        setRecordAfter10Hours(values.afterHours);
+        setRecordAfter10Minutes(values.afterMinutes);
+      },
+      onSaved: () => {
+        setRecordBefore10Hours("");
+        setRecordBefore10Minutes("");
+        setRecordAfter10Hours("");
+        setRecordAfter10Minutes("");
+      },
+    });
+  };
+
+  const handleQuickAddRecord = () => {
+    const didSave = saveRecordEntry({
+      targetDate: selectedDate,
+      beforeHours: quickBefore10Hours,
+      beforeMinutes: quickBefore10Minutes,
+      afterHours: quickAfter10Hours,
+      afterMinutes: quickAfter10Minutes,
+      applyNormalized: (values) => {
+        setQuickBefore10Hours(values.beforeHours);
+        setQuickBefore10Minutes(values.beforeMinutes);
+        setQuickAfter10Hours(values.afterHours);
+        setQuickAfter10Minutes(values.afterMinutes);
+      },
+      onSaved: () => {
+        resetQuickAddForm();
+        setIsQuickAddOpen(false);
+      },
+    });
+
+    if (didSave) {
+      setRecordDate(selectedDate);
+    }
   };
 
   const handleDeleteRecord = (id: string) => {
@@ -247,6 +704,14 @@ export default function OvertimePage() {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const moveMonth = (amount: number) => {
+    const nextMonth = shiftMonth(currentMonth, amount);
+    setCurrentMonth(nextMonth);
+    setSelectedDate(formatDateKey(nextMonth));
+    setIsQuickAddOpen(false);
+    resetQuickAddForm();
+  };
+
   return (
     <StContainer>
       <StWrapper>
@@ -255,9 +720,9 @@ export default function OvertimePage() {
           title="야근 계산기"
           description={
             <>
-              15시간 초과분부터 1.5배로 환산해서
+              15시간 초과분부터 계산하고
               <br />
-              보상휴가 기준을 빠르게 확인할 수 있어요.
+              10시 전은 1.5배, 10시 이후는 2배로 반영해요.
             </>
           }
         />
@@ -283,50 +748,89 @@ export default function OvertimePage() {
           {activeTab === "calculator" ? (
             <TabPanel>
               <GuideText>
-                🕒 15시간 초과분부터 1.5배 환산
+                시간/분으로 입력할 수 있어요.
                 <br />
-                8시간 = 1일 기준으로 보상휴가가 부여됩니다.
+                분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로 `4시간 0분`
+                으로 바뀝니다.
               </GuideText>
 
-              <FieldGroup>
-                <FieldLabel>시간 / 분 입력</FieldLabel>
-                <InlineFields>
-                  <NumberInput
-                    type="number"
-                    min="0"
-                    placeholder="시간"
-                    value={calcHours}
-                    onChange={(event) => setCalcHours(event.target.value)}
-                  />
-                  <UnitText>시간</UnitText>
-                  <NumberInput
-                    type="number"
-                    min="0"
-                    max="59"
-                    placeholder="분"
-                    value={calcMinutes}
-                    onChange={(event) => setCalcMinutes(event.target.value)}
-                  />
-                  <UnitText>분</UnitText>
-                </InlineFields>
-              </FieldGroup>
+              <SplitGrid>
+                <DurationCard>
+                  <FieldLabel>10시 전 야근</FieldLabel>
+                  <DurationInputs>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="시간"
+                      value={calcBefore10Hours}
+                      onChange={(event) =>
+                        setCalcBefore10Hours(event.target.value)
+                      }
+                    />
+                    <UnitText>시간</UnitText>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="분"
+                      value={calcBefore10Minutes}
+                      onChange={(event) =>
+                        setCalcBefore10Minutes(event.target.value)
+                      }
+                      onBlur={() =>
+                        applyDurationNormalization(
+                          calcBefore10Hours,
+                          calcBefore10Minutes,
+                          setCalcBefore10Hours,
+                          setCalcBefore10Minutes,
+                        )
+                      }
+                    />
+                    <UnitText>분</UnitText>
+                  </DurationInputs>
+                </DurationCard>
 
-              <FieldGroup>
-                <FieldLabel>또는 총 분 입력</FieldLabel>
-                <WideInput
-                  type="number"
-                  min="0"
-                  placeholder="총 분"
-                  value={calcTotalMinutes}
-                  onChange={(event) => setCalcTotalMinutes(event.target.value)}
-                />
-              </FieldGroup>
+                <DurationCard>
+                  <FieldLabel>10시 이후 야근</FieldLabel>
+                  <DurationInputs>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="시간"
+                      value={calcAfter10Hours}
+                      onChange={(event) =>
+                        setCalcAfter10Hours(event.target.value)
+                      }
+                    />
+                    <UnitText>시간</UnitText>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="분"
+                      value={calcAfter10Minutes}
+                      onChange={(event) =>
+                        setCalcAfter10Minutes(event.target.value)
+                      }
+                      onBlur={() =>
+                        applyDurationNormalization(
+                          calcAfter10Hours,
+                          calcAfter10Minutes,
+                          setCalcAfter10Hours,
+                          setCalcAfter10Minutes,
+                        )
+                      }
+                    />
+                    <UnitText>분</UnitText>
+                  </DurationInputs>
+                </DurationCard>
+              </SplitGrid>
 
               <PrimaryButton type="button" onClick={handleCalculate}>
                 계산하기
               </PrimaryButton>
 
-              <ResultBox>{calcResult || "입력 후 계산하기를 눌러주세요."}</ResultBox>
+              <ResultBox>
+                {calcResult || "10시 전/이후 야근 시간을 입력하고 계산해보세요."}
+              </ResultBox>
             </TabPanel>
           ) : (
             <TabPanel>
@@ -337,41 +841,93 @@ export default function OvertimePage() {
                 </StatCard>
                 <StatCard>
                   <span>누적 야근시간</span>
-                  <strong>{totalRecordedDuration}</strong>
+                  <strong>{formatRawDuration(recordSummary.totalRawMinutes)}</strong>
+                </StatCard>
+                <StatCard>
+                  <span>사용 가능 일수</span>
+                  <strong>{formatDayValue(recordSummary.usableDays)}</strong>
                 </StatCard>
               </StatsRow>
 
               <FieldGroup>
-                <FieldLabel>날짜</FieldLabel>
+                <FieldLabel htmlFor="record-date">날짜</FieldLabel>
                 <DateInput
+                  id="record-date"
                   type="date"
                   value={recordDate}
                   onChange={(event) => setRecordDate(event.target.value)}
                 />
               </FieldGroup>
 
-              <FieldGroup>
-                <FieldLabel>야근 시간</FieldLabel>
-                <InlineFields>
-                  <NumberInput
-                    type="number"
-                    min="0"
-                    placeholder="시간"
-                    value={recordHours}
-                    onChange={(event) => setRecordHours(event.target.value)}
-                  />
-                  <UnitText>시간</UnitText>
-                  <NumberInput
-                    type="number"
-                    min="0"
-                    max="59"
-                    placeholder="분"
-                    value={recordMinutes}
-                    onChange={(event) => setRecordMinutes(event.target.value)}
-                  />
-                  <UnitText>분</UnitText>
-                </InlineFields>
-              </FieldGroup>
+              <SplitGrid>
+                <DurationCard>
+                  <FieldLabel>10시 전 야근</FieldLabel>
+                  <DurationInputs>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="시간"
+                      value={recordBefore10Hours}
+                      onChange={(event) =>
+                        setRecordBefore10Hours(event.target.value)
+                      }
+                    />
+                    <UnitText>시간</UnitText>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="분"
+                      value={recordBefore10Minutes}
+                      onChange={(event) =>
+                        setRecordBefore10Minutes(event.target.value)
+                      }
+                      onBlur={() =>
+                        applyDurationNormalization(
+                          recordBefore10Hours,
+                          recordBefore10Minutes,
+                          setRecordBefore10Hours,
+                          setRecordBefore10Minutes,
+                        )
+                      }
+                    />
+                    <UnitText>분</UnitText>
+                  </DurationInputs>
+                </DurationCard>
+
+                <DurationCard>
+                  <FieldLabel>10시 이후 야근</FieldLabel>
+                  <DurationInputs>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="시간"
+                      value={recordAfter10Hours}
+                      onChange={(event) =>
+                        setRecordAfter10Hours(event.target.value)
+                      }
+                    />
+                    <UnitText>시간</UnitText>
+                    <CompactInput
+                      type="number"
+                      min="0"
+                      placeholder="분"
+                      value={recordAfter10Minutes}
+                      onChange={(event) =>
+                        setRecordAfter10Minutes(event.target.value)
+                      }
+                      onBlur={() =>
+                        applyDurationNormalization(
+                          recordAfter10Hours,
+                          recordAfter10Minutes,
+                          setRecordAfter10Hours,
+                          setRecordAfter10Minutes,
+                        )
+                      }
+                    />
+                    <UnitText>분</UnitText>
+                  </DurationInputs>
+                </DurationCard>
+              </SplitGrid>
 
               <PrimaryButton type="button" onClick={handleAddRecord}>
                 기록 저장하기
@@ -381,29 +937,273 @@ export default function OvertimePage() {
 
               <SectionDivider />
 
-              <SectionTitle>저장된 야근 기록</SectionTitle>
-              <RecordList>
-                {records.length === 0 ? (
-                  <EmptyItem>저장된 야근 기록이 없습니다.</EmptyItem>
-                ) : (
-                  records.map((record) => (
-                    <RecordItem key={record.id}>
-                      <RecordInfo>
-                        <strong>{record.date}</strong>
-                        <span>
-                          {record.hours}시간 {record.minutes}분
-                        </span>
-                      </RecordInfo>
-                      <DeleteButton
-                        type="button"
-                        onClick={() => handleDeleteRecord(record.id)}
-                      >
-                        삭제
-                      </DeleteButton>
-                    </RecordItem>
-                  ))
+              <SectionHeader>
+                <SectionTitle>야근 기록 캘린더</SectionTitle>
+                <CalendarToolbar>
+                  <CalendarNavButton
+                    type="button"
+                    onClick={() => moveMonth(-1)}
+                  >
+                    이전
+                  </CalendarNavButton>
+                  <CalendarMonthLabel>
+                    {formatMonthLabel(currentMonth)}
+                  </CalendarMonthLabel>
+                  <CalendarNavButton
+                    type="button"
+                    onClick={() => moveMonth(1)}
+                  >
+                    다음
+                  </CalendarNavButton>
+                  <TodayButton
+                    type="button"
+                    onClick={() => {
+                      const todayDate = parseDateKey(todayKey);
+                      setCurrentMonth(todayDate);
+                      setSelectedDate(todayKey);
+                      setIsQuickAddOpen(false);
+                      resetQuickAddForm();
+                    }}
+                  >
+                    오늘
+                  </TodayButton>
+                  <WeekendToggleButton
+                    type="button"
+                    $isActive={showWeekends}
+                    onClick={() => setShowWeekends((prev) => !prev)}
+                  >
+                    주말 {showWeekends ? "ON" : "OFF"}
+                  </WeekendToggleButton>
+                </CalendarToolbar>
+              </SectionHeader>
+
+              <WeekdayRow $columns={visibleWeekdays.length}>
+                {WEEKDAYS.map((weekday) => (
+                  visibleWeekdays.includes(weekday) ? (
+                    <WeekdayCell key={weekday}>{weekday}</WeekdayCell>
+                  ) : null
+                ))}
+              </WeekdayRow>
+
+              <CalendarGrid $columns={visibleWeekdays.length}>
+                {calendarWeeks.flatMap((week, weekIndex) =>
+                  week
+                    .filter((_, weekdayIndex) => showWeekends || (weekdayIndex !== 0 && weekdayIndex !== 6))
+                    .map((day, dayIndex) => {
+                      if (!day) {
+                        return (
+                          <CalendarPlaceholder
+                            key={`empty-${weekIndex}-${dayIndex}`}
+                          />
+                        );
+                      }
+
+                      const bucket = recordsByDate.get(day.dateKey);
+
+                      return (
+                        <CalendarCellButton
+                          key={day.dateKey}
+                          type="button"
+                          $isCurrentMonth={true}
+                          $isSelected={selectedDate === day.dateKey}
+                          $isToday={day.isToday}
+                          onClick={() => {
+                            setSelectedDate(day.dateKey);
+                            setIsQuickAddOpen(false);
+                            resetQuickAddForm();
+                          }}
+                        >
+                          <CalendarDayNumber>{day.dayNumber}</CalendarDayNumber>
+                          {bucket && (
+                            <CalendarDaySummary>
+                              {bucket.before10Minutes > 0 && (
+                                <span>
+                                  10시 전 {formatCompactDuration(bucket.before10Minutes)}
+                                </span>
+                              )}
+                              {bucket.after10Minutes > 0 && (
+                                <span>
+                                  10시 이후 {formatCompactDuration(bucket.after10Minutes)}
+                                </span>
+                              )}
+                            </CalendarDaySummary>
+                          )}
+                        </CalendarCellButton>
+                      );
+                    }),
                 )}
-              </RecordList>
+              </CalendarGrid>
+
+              <SelectedDatePanel>
+                <SelectedDateHeader>
+                  <SectionTitle>{formatDisplayDate(selectedDate)} 기록</SectionTitle>
+                  <AddRecordButton
+                    type="button"
+                    onClick={() => {
+                      setIsQuickAddOpen((prev) => !prev);
+                      setRecordDate(selectedDate);
+                    }}
+                  >
+                    {isQuickAddOpen ? "닫기" : "+ 추가"}
+                  </AddRecordButton>
+                </SelectedDateHeader>
+                {isQuickAddOpen && (
+                  <QuickAddCard>
+                    <SplitGrid>
+                      <DurationCard>
+                        <FieldLabel>10시 전 야근</FieldLabel>
+                        <DurationInputs>
+                          <CompactInput
+                            type="number"
+                            min="0"
+                            placeholder="시간"
+                            value={quickBefore10Hours}
+                            onChange={(event) =>
+                              setQuickBefore10Hours(event.target.value)
+                            }
+                          />
+                          <UnitText>시간</UnitText>
+                          <CompactInput
+                            type="number"
+                            min="0"
+                            placeholder="분"
+                            value={quickBefore10Minutes}
+                            onChange={(event) =>
+                              setQuickBefore10Minutes(event.target.value)
+                            }
+                            onBlur={() =>
+                              applyDurationNormalization(
+                                quickBefore10Hours,
+                                quickBefore10Minutes,
+                                setQuickBefore10Hours,
+                                setQuickBefore10Minutes,
+                              )
+                            }
+                          />
+                          <UnitText>분</UnitText>
+                        </DurationInputs>
+                      </DurationCard>
+
+                      <DurationCard>
+                        <FieldLabel>10시 이후 야근</FieldLabel>
+                        <DurationInputs>
+                          <CompactInput
+                            type="number"
+                            min="0"
+                            placeholder="시간"
+                            value={quickAfter10Hours}
+                            onChange={(event) =>
+                              setQuickAfter10Hours(event.target.value)
+                            }
+                          />
+                          <UnitText>시간</UnitText>
+                          <CompactInput
+                            type="number"
+                            min="0"
+                            placeholder="분"
+                            value={quickAfter10Minutes}
+                            onChange={(event) =>
+                              setQuickAfter10Minutes(event.target.value)
+                            }
+                            onBlur={() =>
+                              applyDurationNormalization(
+                                quickAfter10Hours,
+                                quickAfter10Minutes,
+                                setQuickAfter10Hours,
+                                setQuickAfter10Minutes,
+                              )
+                            }
+                          />
+                          <UnitText>분</UnitText>
+                        </DurationInputs>
+                      </DurationCard>
+                    </SplitGrid>
+                    <PrimaryButton type="button" onClick={handleQuickAddRecord}>
+                      {formatDisplayDate(selectedDate)}에 추가하기
+                    </PrimaryButton>
+                  </QuickAddCard>
+                )}
+                {selectedDateBucket ? (
+                  <>
+                    <SelectedSummaryRow>
+                      <SelectedSummaryChip>
+                        10시 전 {formatRawDuration(selectedDateBucket.before10Minutes)}
+                      </SelectedSummaryChip>
+                      <SelectedSummaryChip>
+                        10시 이후 {formatRawDuration(selectedDateBucket.after10Minutes)}
+                      </SelectedSummaryChip>
+                    </SelectedSummaryRow>
+                    <RecordList>
+                      {selectedDateBucket.records.map((record) => (
+                        <RecordItem key={record.id}>
+                          <RecordInfo>
+                            <strong>{record.date}</strong>
+                            <span>
+                              10시 전 {formatRawDuration(record.before10Minutes)}
+                            </span>
+                            <span>
+                              10시 이후 {formatRawDuration(record.after10Minutes)}
+                            </span>
+                          </RecordInfo>
+                          <DeleteButton
+                            type="button"
+                            onClick={() => handleDeleteRecord(record.id)}
+                          >
+                            삭제
+                          </DeleteButton>
+                        </RecordItem>
+                      ))}
+                    </RecordList>
+                  </>
+                ) : (
+                  <EmptyItem>선택한 날짜에 저장된 야근 기록이 없습니다.</EmptyItem>
+                )}
+              </SelectedDatePanel>
+
+              <SectionDivider />
+
+              <AccordionSection>
+                <AccordionHeader>
+                  <SectionTitle>저장된 야근 기록</SectionTitle>
+                  <AccordionToggleButton
+                    type="button"
+                    onClick={() => setIsRecordsExpanded((prev) => !prev)}
+                  >
+                    {isRecordsExpanded ? "접기" : "더보기"}
+                  </AccordionToggleButton>
+                </AccordionHeader>
+                {isRecordsExpanded ? (
+                  <RecordList>
+                    {displayedRecords.length === 0 ? (
+                      <EmptyItem>저장된 야근 기록이 없습니다.</EmptyItem>
+                    ) : (
+                      displayedRecords.map((record) => (
+                        <RecordItem key={record.id}>
+                          <RecordInfo>
+                            <strong>{record.date}</strong>
+                            <span>
+                              10시 전 {formatRawDuration(record.before10Minutes)}
+                            </span>
+                            <span>
+                              10시 이후 {formatRawDuration(record.after10Minutes)}
+                            </span>
+                          </RecordInfo>
+                          <DeleteButton
+                            type="button"
+                            onClick={() => handleDeleteRecord(record.id)}
+                          >
+                            삭제
+                          </DeleteButton>
+                        </RecordItem>
+                      ))
+                    )}
+                  </RecordList>
+                ) : (
+                  <AccordionHint>
+                    저장된 전체 기록은 더보기로 펼쳐서 확인할 수 있어요.
+                  </AccordionHint>
+                )}
+              </AccordionSection>
 
               <DangerButton
                 type="button"
@@ -417,16 +1217,33 @@ export default function OvertimePage() {
 
           <SectionDivider />
 
-          <SectionTitle>보상휴가 일수별 필요 야근시간</SectionTitle>
-          <SubText>※ 아래 시간은 15시간 초과 이후 누적 야근 기준입니다.</SubText>
-          <RequirementList>
-            {LEAVE_REQUIREMENTS.map((item) => (
-              <RequirementItem key={item.days}>
-                <span>{item.days}일 휴가</span>
-                <strong>{item.text} 야근 필요</strong>
-              </RequirementItem>
-            ))}
-          </RequirementList>
+          <SectionTitle>보상 규칙 요약</SectionTitle>
+          <RuleList>
+            <RuleItem>
+              <span>적립 시작 기준</span>
+              <strong>누적 야근 15시간 초과분부터</strong>
+            </RuleItem>
+            <RuleItem>
+              <span>10시 전 적립률</span>
+              <strong>1분당 보상 1.5분</strong>
+            </RuleItem>
+            <RuleItem>
+              <span>10시 이후 적립률</span>
+              <strong>1분당 보상 2분</strong>
+            </RuleItem>
+            <RuleItem>
+              <span>0.25일 사용 가능 기준</span>
+              <strong>보상시간 120분</strong>
+            </RuleItem>
+            <RuleItem>
+              <span>발생 일수 표기</span>
+              <strong>분 단위로 계속 누적</strong>
+            </RuleItem>
+          </RuleList>
+          <SubText>
+            예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이
+            쌓이면 사용 가능 0.25일이 됩니다.
+          </SubText>
         </SurfaceCard>
       </StWrapper>
     </StContainer>
@@ -455,8 +1272,7 @@ const TabList = styled.div`
 
 const TabButton = styled.button<{ $isActive: boolean }>`
   border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) =>
-    $isActive ? "#234f8d" : "#f8fbff"};
+  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#f8fbff")};
   color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#4a5d78")};
   border-radius: 16px;
   padding: 0.85rem 1rem;
@@ -489,6 +1305,31 @@ const GuideText = styled.p`
   font-size: 0.95rem;
 `;
 
+const SplitGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const DurationCard = styled.div`
+  border: 1px solid #dbe7f4;
+  background: #f8fbff;
+  border-radius: 18px;
+  padding: 1rem;
+`;
+
+const DurationInputs = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+`;
+
 const FieldGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -501,16 +1342,10 @@ const FieldLabel = styled.label`
   color: #2d3b4f;
 `;
 
-const InlineFields = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-`;
-
-const NumberInput = styled.input`
-  width: 96px;
-  padding: 0.85rem 0.9rem;
+const CompactInput = styled.input`
+  width: 88px;
+  min-height: 48px;
+  padding: 0.8rem 0.85rem;
   border: 1px solid #d3deed;
   border-radius: 14px;
   background: #ffffff;
@@ -523,12 +1358,20 @@ const NumberInput = styled.input`
   }
 `;
 
-const WideInput = styled(NumberInput)`
+const DateInput = styled.input`
   width: 100%;
-`;
-
-const DateInput = styled(WideInput)`
   min-height: 52px;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #d3deed;
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 1rem;
+  outline: none;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  }
 `;
 
 const UnitText = styled.span`
@@ -589,7 +1432,7 @@ const ResultBox = styled.pre`
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 
   @media (max-width: 640px) {
@@ -613,7 +1456,7 @@ const StatCard = styled.div`
 
   strong {
     color: #0f172a;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 `;
 
@@ -623,17 +1466,231 @@ const SectionDivider = styled.hr`
   border-top: 1px solid #e2e8f0;
 `;
 
+const SectionHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+`;
+
 const SectionTitle = styled.h2`
-  margin: 0 0 0.35rem;
+  margin: 0;
   color: #0f172a;
   font-size: 1.08rem;
   font-weight: 800;
 `;
 
+const CalendarToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+`;
+
+const CalendarNavButton = styled.button`
+  border: 1px solid #d2dceb;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const TodayButton = styled(CalendarNavButton)`
+  background: #eef5ff;
+  color: #234f8d;
+  border-color: #cfe0fb;
+`;
+
+const CalendarMonthLabel = styled.strong`
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 800;
+  margin-right: 0.2rem;
+`;
+
+const WeekendToggleButton = styled.button<{ $isActive: boolean }>`
+  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
+  background: ${({ $isActive }) => ($isActive ? "#eef5ff" : "#ffffff")};
+  color: ${({ $isActive }) => ($isActive ? "#234f8d" : "#475569")};
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const WeekdayRow = styled.div<{ $columns: number }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
+  gap: 0.5rem;
+`;
+
+const WeekdayCell = styled.div`
+  text-align: center;
+  color: #64748b;
+  font-size: 0.84rem;
+  font-weight: 700;
+`;
+
+const CalendarGrid = styled.div<{ $columns: number }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
+  gap: 0.5rem;
+
+  @media (max-width: 720px) {
+    gap: 0.35rem;
+  }
+`;
+
+const CalendarCellButton = styled.button<{
+  $isCurrentMonth: boolean;
+  $isSelected: boolean;
+  $isToday: boolean;
+}>`
+  min-height: 118px;
+  border-radius: 16px;
+  padding: 0.7rem;
+  border: 1px solid
+    ${({ $isSelected, $isToday }) =>
+      $isSelected ? "#234f8d" : $isToday ? "#60a5fa" : "#dbe7f4"};
+  background: ${({ $isSelected }) => ($isSelected ? "#eef5ff" : "#ffffff")};
+  color: ${({ $isCurrentMonth }) => ($isCurrentMonth ? "#0f172a" : "#94a3b8")};
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  cursor: pointer;
+
+  @media (max-width: 720px) {
+    min-height: 96px;
+    padding: 0.55rem;
+  }
+`;
+
+const CalendarPlaceholder = styled.div`
+  min-height: 118px;
+
+  @media (max-width: 720px) {
+    min-height: 96px;
+  }
+`;
+
+const CalendarDayNumber = styled.span`
+  font-size: 0.95rem;
+  font-weight: 800;
+`;
+
+const CalendarDaySummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.73rem;
+  line-height: 1.35;
+  color: #334155;
+
+  span {
+    display: block;
+    background: #f8fbff;
+    border-radius: 10px;
+    padding: 0.2rem 0.35rem;
+  }
+`;
+
+const SelectedDatePanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  border: 1px solid #dbe7f4;
+  background: #f8fbff;
+  border-radius: 20px;
+  padding: 1rem;
+`;
+
+const SelectedDateHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const AddRecordButton = styled.button`
+  border: 1px solid #cfe0fb;
+  background: #ffffff;
+  color: #234f8d;
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+`;
+
+const QuickAddCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.95rem;
+  border-radius: 18px;
+  border: 1px solid #dbe7f4;
+  background: #ffffff;
+`;
+
+const AccordionSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border: 1px solid #dbe7f4;
+  background: #f8fbff;
+  border-radius: 20px;
+  padding: 1rem;
+`;
+
+const AccordionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const AccordionToggleButton = styled.button`
+  border: 1px solid #d2dceb;
+  background: #ffffff;
+  color: #234f8d;
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const AccordionHint = styled.p`
+  margin: 0;
+  color: #64748b;
+  font-size: 0.92rem;
+  line-height: 1.6;
+`;
+
+const SelectedSummaryRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+`;
+
+const SelectedSummaryChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #dbe7f4;
+  color: #234f8d;
+  font-weight: 700;
+  font-size: 0.9rem;
+`;
+
 const SubText = styled.p`
-  margin: 0 0 0.85rem;
+  margin: 0.85rem 0 0;
   color: #64748b;
   font-size: 0.9rem;
+  line-height: 1.6;
 `;
 
 const RecordList = styled.ul`
@@ -693,7 +1750,7 @@ const DeleteButton = styled.button`
   cursor: pointer;
 `;
 
-const RequirementList = styled.ul`
+const RuleList = styled.ul`
   list-style: none;
   margin: 0;
   padding: 0;
@@ -702,7 +1759,7 @@ const RequirementList = styled.ul`
   gap: 0.65rem;
 `;
 
-const RequirementItem = styled.li`
+const RuleItem = styled.li`
   display: flex;
   justify-content: space-between;
   gap: 1rem;
