@@ -1,11 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import {
+  useOvertimePersistence,
+  type OvertimeRoomInfo,
+} from "@/hooks/useOvertimePersistence";
 
 type TabKey = "calculator" | "records";
+type StorageMode = "local" | "server";
 
 interface OvertimeRecord {
   id: string;
@@ -47,6 +52,8 @@ interface CalendarDay {
 }
 
 const STORAGE_KEY = "nightOvertimeRecords";
+const STORAGE_MODE_KEY = "nightOvertimeStorageMode";
+const STORAGE_ROOM_KEY = "nightOvertimeRoomRef";
 const THRESHOLD_MINUTES = 15 * 60;
 const DAY_REWARD_SECONDS = 8 * 60 * 60;
 const QUARTER_DAY_REWARD_SECONDS = DAY_REWARD_SECONDS / 4;
@@ -519,6 +526,12 @@ function parseStoredRecords(storedValue: string | null) {
 
 export default function OvertimePage() {
   const todayKey = getTodayDateInputValue();
+  const {
+    createRoom,
+    fetchRoomData,
+    replaceRoomRecords,
+    loading: isServerLoading,
+  } = useOvertimePersistence();
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
   const [calcBefore10Hours, setCalcBefore10Hours] = useState("");
   const [calcBefore10Minutes, setCalcBefore10Minutes] = useState("");
@@ -540,13 +553,74 @@ export default function OvertimePage() {
   const [quickAfter10Hours, setQuickAfter10Hours] = useState("");
   const [quickAfter10Minutes, setQuickAfter10Minutes] = useState("");
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
-  const [records, setRecords] = useState<OvertimeRecord[]>(() => {
+  const [storageMode, setStorageMode] = useState<StorageMode>(() => {
+    if (typeof window === "undefined") {
+      return "local";
+    }
+
+    return localStorage.getItem(STORAGE_MODE_KEY) === "server"
+      ? "server"
+      : "local";
+  });
+  const [roomNameInput, setRoomNameInput] = useState("");
+  const [roomCodeInput, setRoomCodeInput] = useState("");
+  const [serverRoom, setServerRoom] = useState<OvertimeRoomInfo | null>(null);
+  const [localRecords, setLocalRecords] = useState<OvertimeRecord[]>(() => {
     if (typeof window === "undefined") {
       return [];
     }
 
     return parseStoredRecords(localStorage.getItem(STORAGE_KEY));
   });
+  const [serverRecords, setServerRecords] = useState<OvertimeRecord[]>([]);
+  const records = storageMode === "server" ? serverRecords : localRecords;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedRoomRef = localStorage.getItem(STORAGE_ROOM_KEY);
+
+    if (!savedRoomRef) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const restoreRoom = async () => {
+      try {
+        const loaded = await fetchRoomData(savedRoomRef);
+        if (cancelled) {
+          return;
+        }
+
+        setServerRoom(loaded.room);
+        setServerRecords(mergeRecordsByDate(loaded.records));
+        setRoomCodeInput(loaded.room.roomRef);
+      } catch (error) {
+        console.error("저장된 서버 방을 불러오지 못했습니다.", error);
+        if (!cancelled) {
+          localStorage.removeItem(STORAGE_ROOM_KEY);
+          setStorageMode("local");
+        }
+      }
+    };
+
+    void restoreRoom();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchRoomData]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    localStorage.setItem(STORAGE_MODE_KEY, storageMode);
+  }, [storageMode]);
 
   const currentMonthKey = useMemo(
     () => formatMonthKey(currentMonth),
@@ -664,10 +738,45 @@ export default function OvertimePage() {
     setMinutes(normalized.minutes);
   };
 
-  const persistRecords = (nextRecords: OvertimeRecord[]) => {
+  const persistLocalRecords = (nextRecords: OvertimeRecord[]) => {
     const mergedRecords = mergeRecordsByDate(nextRecords);
-    setRecords(mergedRecords);
+    setLocalRecords(mergedRecords);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
+  };
+
+  const persistServerRecords = async (nextRecords: OvertimeRecord[]) => {
+    if (!serverRoom) {
+      alert("먼저 서버 저장 방을 연결해주세요.");
+      return false;
+    }
+
+    const mergedRecords = mergeRecordsByDate(nextRecords);
+    await replaceRoomRecords(serverRoom.id, mergedRecords);
+    setServerRecords(mergedRecords);
+    return true;
+  };
+
+  const persistRecords = async (nextRecords: OvertimeRecord[]) => {
+    if (storageMode === "server") {
+      return persistServerRecords(nextRecords);
+    }
+
+    persistLocalRecords(nextRecords);
+    return true;
+  };
+
+  const connectServerRoom = async (roomRef: string) => {
+    const loaded = await fetchRoomData(roomRef);
+    const mergedRecords = mergeRecordsByDate(loaded.records);
+
+    setServerRoom(loaded.room);
+    setServerRecords(mergedRecords);
+    setRoomCodeInput(loaded.room.roomRef);
+    setStorageMode("server");
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_ROOM_KEY, loaded.room.roomRef);
+    }
   };
 
   const resetQuickAddForm = () => {
@@ -678,7 +787,7 @@ export default function OvertimePage() {
     setEditingRecordId(null);
   };
 
-  const saveRecordEntry = ({
+  const saveRecordEntry = async ({
     targetDate,
     beforeHours,
     beforeMinutes,
@@ -753,10 +862,14 @@ export default function OvertimePage() {
       createdAt: existingRecord?.createdAt || new Date().toISOString(),
     };
 
-    persistRecords([
+    const didPersist = await persistRecords([
       ...records.filter((record) => record.id !== editingRecordId),
       nextRecord,
     ]);
+
+    if (!didPersist) {
+      return false;
+    }
 
     const recordMonth = parseDateKey(targetDate);
     setCurrentMonth(
@@ -819,8 +932,8 @@ export default function OvertimePage() {
     setCalcResult(buildSummaryMessage("계산 결과", summary));
   };
 
-  const handleQuickAddRecord = () => {
-    saveRecordEntry({
+  const handleQuickAddRecord = async () => {
+    await saveRecordEntry({
       targetDate: selectedDate,
       beforeHours: quickBefore10Hours,
       beforeMinutes: quickBefore10Minutes,
@@ -855,21 +968,89 @@ export default function OvertimePage() {
     setEditingRecordId(record.id);
   };
 
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
     if (!window.confirm("이 기록을 삭제하시겠습니까?")) {
       return;
     }
 
-    persistRecords(records.filter((record) => record.id !== id));
+    await persistRecords(records.filter((record) => record.id !== id));
   };
 
-  const handleClearRecords = () => {
+  const handleClearRecords = async () => {
     if (!window.confirm("모든 기록을 삭제하시겠습니까?")) {
       return;
     }
 
-    setRecords([]);
+    if (storageMode === "server") {
+      const didPersist = await persistServerRecords([]);
+      if (didPersist) {
+        setServerRecords([]);
+      }
+      return;
+    }
+
+    setLocalRecords([]);
     localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const handleSwitchStorageMode = (nextMode: StorageMode) => {
+    setStorageMode(nextMode);
+    resetQuickAddForm();
+  };
+
+  const handleCreateServerRoom = async () => {
+    if (!roomNameInput.trim()) {
+      alert("방 이름을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const room = await createRoom(roomNameInput.trim());
+      setRoomNameInput("");
+      await connectServerRoom(room.roomRef);
+    } catch (error) {
+      console.error("야근 방 생성에 실패했습니다.", error);
+      alert("방 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  const handleConnectServerRoom = async () => {
+    if (!roomCodeInput.trim()) {
+      alert("방 코드를 입력해주세요.");
+      return;
+    }
+
+    try {
+      await connectServerRoom(roomCodeInput.trim());
+    } catch (error) {
+      console.error("야근 방 연결에 실패했습니다.", error);
+      alert("방을 불러오지 못했어요. 방 코드를 다시 확인해주세요.");
+    }
+  };
+
+  const handleDisconnectServerRoom = () => {
+    setServerRoom(null);
+    setServerRecords([]);
+    setRoomCodeInput("");
+    setStorageMode("local");
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STORAGE_ROOM_KEY);
+    }
+  };
+
+  const handleCopyRoomCode = async () => {
+    if (!serverRoom) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(serverRoom.roomRef);
+      alert("방 코드를 복사했어요.");
+    } catch (error) {
+      console.error("방 코드 복사에 실패했습니다.", error);
+      alert("방 코드 복사에 실패했어요.");
+    }
   };
 
   const moveMonth = (amount: number) => {
@@ -1237,12 +1418,14 @@ export default function OvertimePage() {
                               <EditButton
                                 type="button"
                                 onClick={() => handleEditRecord(record)}
+                                disabled={isServerLoading}
                               >
                                 수정
                               </EditButton>
                               <DeleteButton
                                 type="button"
                                 onClick={() => handleDeleteRecord(record.id)}
+                                disabled={isServerLoading}
                               >
                                 삭제
                               </DeleteButton>
@@ -1253,7 +1436,9 @@ export default function OvertimePage() {
                     </>
                   ) : (
                     <EmptyItem>
-                      선택한 날짜에 저장된 야근 기록이 없습니다.
+                      {storageMode === "server" && !serverRoom
+                        ? "먼저 서버 저장 방을 연결해주세요."
+                        : "선택한 날짜에 저장된 야근 기록이 없습니다."}
                     </EmptyItem>
                   )}
                   <SplitGrid>
@@ -1325,7 +1510,14 @@ export default function OvertimePage() {
                       </DurationInputs>
                     </DurationCard>
                   </SplitGrid>
-                  <PrimaryButton type="button" onClick={handleQuickAddRecord}>
+                  <PrimaryButton
+                    type="button"
+                    onClick={handleQuickAddRecord}
+                    disabled={
+                      isServerLoading ||
+                      (storageMode === "server" && !serverRoom)
+                    }
+                  >
                     {editingRecordId
                       ? `${formatDisplayDate(selectedDate)} 수정 저장하기`
                       : `${formatDisplayDate(selectedDate)}에 추가하기`}
@@ -1350,7 +1542,11 @@ export default function OvertimePage() {
                 {isRecordsExpanded ? (
                   <RecordList>
                     {displayedRecords.length === 0 ? (
-                      <EmptyItem>저장된 야근 기록이 없습니다.</EmptyItem>
+                      <EmptyItem>
+                        {storageMode === "server" && !serverRoom
+                          ? "먼저 서버 저장 방을 연결해주세요."
+                          : "저장된 야근 기록이 없습니다."}
+                      </EmptyItem>
                     ) : (
                       displayedRecords.map((record) => (
                         <RecordItem key={record.id}>
@@ -1369,12 +1565,14 @@ export default function OvertimePage() {
                             <EditButton
                               type="button"
                               onClick={() => handleEditRecord(record)}
+                              disabled={isServerLoading}
                             >
                               수정
                             </EditButton>
                             <DeleteButton
                               type="button"
                               onClick={() => handleDeleteRecord(record.id)}
+                              disabled={isServerLoading}
                             >
                               삭제
                             </DeleteButton>
@@ -1393,10 +1591,125 @@ export default function OvertimePage() {
               <DangerButton
                 type="button"
                 onClick={handleClearRecords}
-                disabled={records.length === 0}
+                disabled={records.length === 0 || isServerLoading}
               >
                 전체 기록 초기화
               </DangerButton>
+
+              <StorageCard>
+                <StorageHeader>
+                  <div>
+                    <StorageTitle>기록 저장 방식</StorageTitle>
+                    <StorageDescription>
+                      {storageMode === "local"
+                        ? "바로 기록하고 이 브라우저에만 저장할 수 있어요."
+                        : serverRoom
+                          ? "서버 저장 방에 연결되어 있어서 다른 브라우저에서도 같은 기록을 불러올 수 있어요."
+                          : "서버 저장 방을 만들거나 방 코드로 연결하면 기록을 서버에 저장할 수 있어요."}
+                    </StorageDescription>
+                  </div>
+                  <StorageModeTabs>
+                    <StorageModeButton
+                      type="button"
+                      $isActive={storageMode === "local"}
+                      onClick={() => handleSwitchStorageMode("local")}
+                    >
+                      로컬 저장
+                    </StorageModeButton>
+                    <StorageModeButton
+                      type="button"
+                      $isActive={storageMode === "server"}
+                      onClick={() => handleSwitchStorageMode("server")}
+                    >
+                      서버 저장
+                    </StorageModeButton>
+                  </StorageModeTabs>
+                </StorageHeader>
+
+                {storageMode === "server" ? (
+                  serverRoom ? (
+                    <ConnectedRoomCard>
+                      <ConnectedRoomInfo>
+                        <span>연결된 방</span>
+                        <strong>{serverRoom.roomName}</strong>
+                        <small>{serverRoom.roomRef}</small>
+                      </ConnectedRoomInfo>
+                      <StorageActions>
+                        <SecondaryButton
+                          type="button"
+                          onClick={handleCopyRoomCode}
+                          disabled={isServerLoading}
+                        >
+                          코드 복사
+                        </SecondaryButton>
+                        <SecondaryButton
+                          type="button"
+                          onClick={handleConnectServerRoom}
+                          disabled={isServerLoading}
+                        >
+                          다시 불러오기
+                        </SecondaryButton>
+                        <DangerGhostButton
+                          type="button"
+                          onClick={handleDisconnectServerRoom}
+                          disabled={isServerLoading}
+                        >
+                          연결 해제
+                        </DangerGhostButton>
+                      </StorageActions>
+                    </ConnectedRoomCard>
+                  ) : (
+                    <StorageSetupGrid>
+                      <StorageSetupCard>
+                        <StorageLabel>새 서버 방 만들기</StorageLabel>
+                        <StorageInlineField>
+                          <StorageInput
+                            placeholder="예: 2026년 야근 기록"
+                            value={roomNameInput}
+                            onChange={(event) =>
+                              setRoomNameInput(event.target.value)
+                            }
+                            disabled={isServerLoading}
+                          />
+                          <SecondaryButton
+                            type="button"
+                            onClick={handleCreateServerRoom}
+                            disabled={isServerLoading}
+                          >
+                            방 만들기
+                          </SecondaryButton>
+                        </StorageInlineField>
+                      </StorageSetupCard>
+
+                      <StorageSetupCard>
+                        <StorageLabel>기존 서버 방 불러오기</StorageLabel>
+                        <StorageInlineField>
+                          <StorageInput
+                            placeholder="방 코드 입력"
+                            value={roomCodeInput}
+                            onChange={(event) =>
+                              setRoomCodeInput(event.target.value)
+                            }
+                            disabled={isServerLoading}
+                          />
+                          <SecondaryButton
+                            type="button"
+                            onClick={handleConnectServerRoom}
+                            disabled={isServerLoading}
+                          >
+                            불러오기
+                          </SecondaryButton>
+                        </StorageInlineField>
+                      </StorageSetupCard>
+                    </StorageSetupGrid>
+                  )
+                ) : (
+                  <StorageHint>
+                    로컬 저장은 지금 쓰고 있는 브라우저에서만 유지돼요. 다른
+                    기기에서도 이어서 보고 싶다면 서버 저장 방을 연결해보세요.
+                  </StorageHint>
+                )}
+              </StorageCard>
             </TabPanel>
           )}
 
@@ -1461,6 +1774,7 @@ export default function OvertimePage() {
               </AccordionHint>
             )}
           </AccordionSection>
+
         </SurfaceCard>
       </StWrapper>
     </StContainer>
@@ -1595,6 +1909,13 @@ const PrimaryButton = styled.button`
     transform: translateY(-1px);
     box-shadow: 0 10px 20px rgba(35, 79, 141, 0.18);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+  }
 `;
 
 const DangerButton = styled(PrimaryButton)`
@@ -1611,6 +1932,29 @@ const DangerButton = styled(PrimaryButton)`
     cursor: not-allowed;
     opacity: 0.45;
   }
+`;
+
+const SecondaryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cfe0fb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #234f8d;
+  padding: 0.72rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+`;
+
+const DangerGhostButton = styled(SecondaryButton)`
+  border-color: #fecaca;
+  color: #b91c1c;
 `;
 
 const ResultBox = styled.pre`
@@ -1653,6 +1997,163 @@ const StatCard = styled.div`
     color: #0f172a;
     font-size: 1.05rem;
   }
+`;
+
+const StorageCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f4;
+`;
+
+const StorageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
+`;
+
+const StorageTitle = styled.strong`
+  display: block;
+  color: #123865;
+  font-size: 0.98rem;
+`;
+
+const StorageDescription = styled.p`
+  margin: 0.35rem 0 0;
+  color: #5a718d;
+  font-size: 0.9rem;
+  line-height: 1.55;
+`;
+
+const StorageModeTabs = styled.div`
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
+
+const StorageModeButton = styled.button<{ $isActive: boolean }>`
+  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
+  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
+  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const StorageSetupGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StorageSetupCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border-radius: 16px;
+  border: 1px solid #dbe7f4;
+  background: #ffffff;
+`;
+
+const StorageLabel = styled.label`
+  color: #2d3b4f;
+  font-size: 0.88rem;
+  font-weight: 700;
+`;
+
+const StorageInlineField = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+
+  ${SecondaryButton} {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const StorageInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #d3deed;
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  }
+`;
+
+const StorageHint = styled.p`
+  margin: 0;
+  color: #5a718d;
+  font-size: 0.9rem;
+  line-height: 1.6;
+`;
+
+const ConnectedRoomCard = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid #dbe7f4;
+  background: #ffffff;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const ConnectedRoomInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  span {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 1rem;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 0.82rem;
+  }
+`;
+
+const StorageActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 `;
 
 const NoticeCard = styled.div`
@@ -1971,6 +2472,11 @@ const EditButton = styled.button`
   padding: 0.65rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 `;
 
 const EmptyItem = styled.div`
@@ -2008,6 +2514,11 @@ const DeleteButton = styled.button`
   padding: 0.65rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 `;
 
 const RuleList = styled.ul`
