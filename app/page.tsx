@@ -40,6 +40,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* 야근 계산기 카드 */}
+        <Link href="/overtime" passHref>
+          <StCard>
+            <StIconBox>🌙</StIconBox>
+            <StCardContent>
+              <StCardTitle>야근 계산기</StCardTitle>
+              <StCardDesc>보상휴가 기준을 빠르게 계산</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 가계부 카드 */}
         <Link href="/account-book" passHref>
           <StCard>
