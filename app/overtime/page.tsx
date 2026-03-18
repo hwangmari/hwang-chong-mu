@@ -527,6 +527,7 @@ export default function OvertimePage() {
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showWeekends, setShowWeekends] = useState(false);
   const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
+  const [isRuleGuideExpanded, setIsRuleGuideExpanded] = useState(false);
   const [targetUsableDays, setTargetUsableDays] = useState(1);
   const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
   const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
@@ -1363,44 +1364,62 @@ export default function OvertimePage() {
 
           <SectionDivider />
 
-          <SectionTitle>보상 규칙 요약</SectionTitle>
-          <RuleList>
-            <RuleItem>
-              <span>적립 시작 기준</span>
-              <strong>누적 야근 15시간 초과분부터</strong>
-            </RuleItem>
-            <RuleItem>
-              <span>10시 전 적립률</span>
-              <strong>1분당 보상 1.5분</strong>
-            </RuleItem>
-            <RuleItem>
-              <span>10시 이후 적립률</span>
-              <strong>1분당 보상 2분</strong>
-            </RuleItem>
-            <RuleItem>
-              <span>0.25일 사용 가능 기준</span>
-              <strong>보상시간 120분</strong>
-            </RuleItem>
-            <RuleItem>
-              <span>발생 일수 표기</span>
-              <strong>분 단위로 계속 누적</strong>
-            </RuleItem>
-          </RuleList>
-          <GuidePanel>
-            <GuideTitle>10시 전 1.5배 기준 휴가 가이드</GuideTitle>
-            <GuideList>
-              {BEFORE10_DAY_GUIDE.map((item) => (
-                <GuideItem key={item.days}>
-                  <span>{item.days}일 휴가</span>
-                  <strong>{formatRawDuration(item.totalMinutes)} 야근 필요</strong>
-                </GuideItem>
-              ))}
-            </GuideList>
-          </GuidePanel>
-          <SubText>
-            예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이
-            쌓이면 사용 가능 0.25일이 됩니다.
-          </SubText>
+          <AccordionSection>
+            <AccordionHeader>
+              <SectionTitle>보상 규칙 요약</SectionTitle>
+              <AccordionToggleButton
+                type="button"
+                onClick={() => setIsRuleGuideExpanded((prev) => !prev)}
+              >
+                {isRuleGuideExpanded ? "접기" : "더보기"}
+              </AccordionToggleButton>
+            </AccordionHeader>
+            {isRuleGuideExpanded ? (
+              <>
+                <RuleList>
+                  <RuleItem>
+                    <span>적립 시작 기준</span>
+                    <strong>누적 야근 15시간 초과분부터</strong>
+                  </RuleItem>
+                  <RuleItem>
+                    <span>10시 전 적립률</span>
+                    <strong>1분당 보상 1.5분</strong>
+                  </RuleItem>
+                  <RuleItem>
+                    <span>10시 이후 적립률</span>
+                    <strong>1분당 보상 2분</strong>
+                  </RuleItem>
+                  <RuleItem>
+                    <span>0.25일 사용 가능 기준</span>
+                    <strong>보상시간 120분</strong>
+                  </RuleItem>
+                  <RuleItem>
+                    <span>발생 일수 표기</span>
+                    <strong>분 단위로 계속 누적</strong>
+                  </RuleItem>
+                </RuleList>
+                <GuidePanel>
+                  <GuideTitle>10시 전 1.5배 기준 휴가 가이드</GuideTitle>
+                  <GuideList>
+                    {BEFORE10_DAY_GUIDE.map((item) => (
+                      <GuideItem key={item.days}>
+                        <span>{item.days}일 휴가</span>
+                        <strong>{formatRawDuration(item.totalMinutes)} 야근 필요</strong>
+                      </GuideItem>
+                    ))}
+                  </GuideList>
+                </GuidePanel>
+                <SubText>
+                  예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이
+                  쌓이면 사용 가능 0.25일이 됩니다.
+                </SubText>
+              </>
+            ) : (
+              <AccordionHint>
+                보상 규칙 요약과 10시 전 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.
+              </AccordionHint>
+            )}
+          </AccordionSection>
         </SurfaceCard>
       </StWrapper>
     </StContainer>
