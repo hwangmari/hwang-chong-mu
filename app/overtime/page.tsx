@@ -32,6 +32,8 @@ interface OvertimeSummary {
   carryRewardSeconds: number;
   nextQuarterBefore10Minutes: number;
   nextQuarterAfter10Minutes: number;
+  toOneDayBefore10Minutes: number;
+  toOneDayAfter10Minutes: number;
 }
 
 interface DayBucket {
@@ -54,6 +56,16 @@ const QUARTER_DAY_REWARD_SECONDS = DAY_REWARD_SECONDS / 4;
 const BEFORE10_REWARD_SECONDS_PER_MINUTE = 90;
 const AFTER10_REWARD_SECONDS_PER_MINUTE = 120;
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const TARGET_DAY_OPTIONS = [1, 2, 3, 4, 5];
+const BEFORE10_DAY_GUIDE = Array.from({ length: 5 }, (_, index) => {
+  const days = index + 1;
+  const requiredMinutes = THRESHOLD_MINUTES + days * (8 * 60) / 1.5;
+
+  return {
+    days,
+    totalMinutes: Math.round(requiredMinutes),
+  };
+});
 
 function createRecordId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -240,6 +252,25 @@ function getDurationMinutes(hoursValue: string, minutesValue: string) {
   };
 }
 
+function getAdditionalMinutesForTargetDays(
+  summary: OvertimeSummary,
+  targetDays: number,
+  rewardSecondsPerMinute: number,
+) {
+  const targetRewardSeconds = targetDays * DAY_REWARD_SECONDS;
+
+  if (summary.rewardSeconds >= targetRewardSeconds) {
+    return 0;
+  }
+
+  const remainingRewardSeconds = targetRewardSeconds - summary.rewardSeconds;
+
+  return (
+    summary.remainingThresholdMinutes +
+    Math.ceil(remainingRewardSeconds / rewardSecondsPerMinute)
+  );
+}
+
 function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
   let remainingThresholdMinutes = THRESHOLD_MINUTES;
   let before10RawMinutes = 0;
@@ -290,6 +321,10 @@ function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
     carryRewardSeconds === 0
       ? QUARTER_DAY_REWARD_SECONDS
       : QUARTER_DAY_REWARD_SECONDS - carryRewardSeconds;
+  const remainingRewardSecondsToOneDay = Math.max(
+    0,
+    DAY_REWARD_SECONDS - rewardSeconds,
+  );
 
   return {
     totalRawMinutes: before10RawMinutes + after10RawMinutes,
@@ -315,6 +350,22 @@ function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
         remainingRewardSecondsToNextQuarter /
           AFTER10_REWARD_SECONDS_PER_MINUTE,
       ),
+    toOneDayBefore10Minutes:
+      rewardSeconds >= DAY_REWARD_SECONDS
+        ? 0
+        : remainingThresholdMinutes +
+          Math.ceil(
+            remainingRewardSecondsToOneDay /
+              BEFORE10_REWARD_SECONDS_PER_MINUTE,
+          ),
+    toOneDayAfter10Minutes:
+      rewardSeconds >= DAY_REWARD_SECONDS
+        ? 0
+        : remainingThresholdMinutes +
+          Math.ceil(
+            remainingRewardSecondsToOneDay /
+              AFTER10_REWARD_SECONDS_PER_MINUTE,
+          ),
   };
 }
 
@@ -353,6 +404,14 @@ function buildSummaryMessage(title: string, summary: OvertimeSummary) {
     `- 10시 전 기준 ${formatRawDuration(summary.nextQuarterBefore10Minutes)}`,
     `- 10시 이후 기준 ${formatRawDuration(summary.nextQuarterAfter10Minutes)}`,
   );
+
+  if (summary.usableDays < 1) {
+    lines.push(
+      "🕐 1.00일 사용 가능까지 추가 필요",
+      `- 10시 전 기준 ${formatRawDuration(summary.toOneDayBefore10Minutes)}`,
+      `- 10시 이후 기준 ${formatRawDuration(summary.toOneDayAfter10Minutes)}`,
+    );
+  }
 
   return lines.join("\n");
 }
@@ -426,6 +485,7 @@ export default function OvertimePage() {
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showWeekends, setShowWeekends] = useState(false);
   const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
+  const [targetUsableDays, setTargetUsableDays] = useState(1);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
   const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
@@ -443,6 +503,22 @@ export default function OvertimePage() {
   const recordResult = useMemo(
     () => buildSummaryMessage("누적 야근 현황", recordSummary),
     [recordSummary],
+  );
+  const targetDayGuide = useMemo(
+    () => ({
+      before10Minutes: getAdditionalMinutesForTargetDays(
+        recordSummary,
+        targetUsableDays,
+        BEFORE10_REWARD_SECONDS_PER_MINUTE,
+      ),
+      after10Minutes: getAdditionalMinutesForTargetDays(
+        recordSummary,
+        targetUsableDays,
+        AFTER10_REWARD_SECONDS_PER_MINUTE,
+      ),
+      isReached: recordSummary.rewardSeconds >= targetUsableDays * DAY_REWARD_SECONDS,
+    }),
+    [recordSummary, targetUsableDays],
   );
 
   const displayedRecords = useMemo(
@@ -849,6 +925,42 @@ export default function OvertimePage() {
                 </StatCard>
               </StatsRow>
 
+              {recordSummary.totalRawMinutes > 0 && (
+                <NoticeCard>
+                  <NoticeHeader>
+                    <strong>{targetUsableDays.toFixed(2)}일 사용 가능까지 더 필요해요</strong>
+                    <TargetDayTabs>
+                      {TARGET_DAY_OPTIONS.map((option) => (
+                        <TargetDayButton
+                          key={option}
+                          type="button"
+                          $isActive={targetUsableDays === option}
+                          onClick={() => setTargetUsableDays(option)}
+                        >
+                          {option}일
+                        </TargetDayButton>
+                      ))}
+                    </TargetDayTabs>
+                  </NoticeHeader>
+                  {targetDayGuide.isReached ? (
+                    <span>
+                      이미 {targetUsableDays.toFixed(2)}일 이상 사용 가능한 상태예요.
+                    </span>
+                  ) : (
+                    <>
+                      <span>
+                        10시 전만 추가하면{" "}
+                        {formatRawDuration(targetDayGuide.before10Minutes)}
+                      </span>
+                      <span>
+                        10시 이후만 추가하면{" "}
+                        {formatRawDuration(targetDayGuide.after10Minutes)}
+                      </span>
+                    </>
+                  )}
+                </NoticeCard>
+              )}
+
               <FieldGroup>
                 <FieldLabel htmlFor="record-date">날짜</FieldLabel>
                 <DateInput
@@ -1240,6 +1352,17 @@ export default function OvertimePage() {
               <strong>분 단위로 계속 누적</strong>
             </RuleItem>
           </RuleList>
+          <GuidePanel>
+            <GuideTitle>10시 전 1.5배 기준 휴가 가이드</GuideTitle>
+            <GuideList>
+              {BEFORE10_DAY_GUIDE.map((item) => (
+                <GuideItem key={item.days}>
+                  <span>{item.days}일 휴가</span>
+                  <strong>{formatRawDuration(item.totalMinutes)} 야근 필요</strong>
+                </GuideItem>
+              ))}
+            </GuideList>
+          </GuidePanel>
           <SubText>
             예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이
             쌓이면 사용 가능 0.25일이 됩니다.
@@ -1458,6 +1581,55 @@ const StatCard = styled.div`
     color: #0f172a;
     font-size: 1.05rem;
   }
+`;
+
+const NoticeCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  background: #eef5ff;
+  border: 1px solid #cfe0fb;
+  color: #234f8d;
+
+  strong {
+    font-size: 0.96rem;
+    color: #123865;
+  }
+
+  span {
+    font-size: 0.9rem;
+    color: #31567d;
+  }
+`;
+
+const NoticeHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+  }
+`;
+
+const TargetDayTabs = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+`;
+
+const TargetDayButton = styled.button<{ $isActive: boolean }>`
+  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#cfe0fb")};
+  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
+  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#234f8d")};
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const SectionDivider = styled.hr`
@@ -1757,6 +1929,53 @@ const RuleList = styled.ul`
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+`;
+
+const GuidePanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f4;
+`;
+
+const GuideTitle = styled.h3`
+  margin: 0;
+  color: #123865;
+  font-size: 1rem;
+  font-weight: 800;
+`;
+
+const GuideList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+`;
+
+const GuideItem = styled.li`
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #dbe7f4;
+  color: #334155;
+
+  strong {
+    color: #0f172a;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
 `;
 
 const RuleItem = styled.li`
