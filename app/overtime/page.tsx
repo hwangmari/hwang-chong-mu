@@ -3,10 +3,7 @@
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
-import {
-  StContainer,
-  StWrapper,
-} from "@/components/styled/layout.styled";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 
 type TabKey = "calculator" | "records";
 
@@ -59,7 +56,7 @@ const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const TARGET_DAY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 const BEFORE10_DAY_GUIDE = Array.from({ length: 10 }, (_, index) => {
   const days = index + 1;
-  const requiredMinutes = THRESHOLD_MINUTES + days * (8 * 60) / 1.5;
+  const requiredMinutes = THRESHOLD_MINUTES + (days * (8 * 60)) / 1.5;
 
   return {
     days,
@@ -157,6 +154,12 @@ function formatMonthLabel(date: Date) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 }
 
+function formatMonthKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
 function shiftMonth(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
@@ -209,7 +212,9 @@ function buildMonthCalendarWeeks(currentMonth: Date) {
 
 function normalizeDurationFields(hoursValue: string, minutesValue: string) {
   const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
-  const parsedMinutes = minutesValue.trim() ? parseMinuteInput(minutesValue) : 0;
+  const parsedMinutes = minutesValue.trim()
+    ? parseMinuteInput(minutesValue)
+    : 0;
 
   if (
     Number.isNaN(parsedHours) ||
@@ -242,7 +247,9 @@ function normalizeDurationFields(hoursValue: string, minutesValue: string) {
 
 function getDurationMinutes(hoursValue: string, minutesValue: string) {
   const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
-  const parsedMinutes = minutesValue.trim() ? parseMinuteInput(minutesValue) : 0;
+  const parsedMinutes = minutesValue.trim()
+    ? parseMinuteInput(minutesValue)
+    : 0;
 
   if (
     Number.isNaN(parsedHours) ||
@@ -390,24 +397,21 @@ function buildOvertimeSummary(records: OvertimeRecord[]): OvertimeSummary {
     nextQuarterAfter10Minutes:
       remainingThresholdMinutes +
       Math.ceil(
-        remainingRewardSecondsToNextQuarter /
-          AFTER10_REWARD_SECONDS_PER_MINUTE,
+        remainingRewardSecondsToNextQuarter / AFTER10_REWARD_SECONDS_PER_MINUTE,
       ),
     toOneDayBefore10Minutes:
       rewardSeconds >= DAY_REWARD_SECONDS
         ? 0
         : remainingThresholdMinutes +
           Math.ceil(
-            remainingRewardSecondsToOneDay /
-              BEFORE10_REWARD_SECONDS_PER_MINUTE,
+            remainingRewardSecondsToOneDay / BEFORE10_REWARD_SECONDS_PER_MINUTE,
           ),
     toOneDayAfter10Minutes:
       rewardSeconds >= DAY_REWARD_SECONDS
         ? 0
         : remainingThresholdMinutes +
           Math.ceil(
-            remainingRewardSecondsToOneDay /
-              AFTER10_REWARD_SECONDS_PER_MINUTE,
+            remainingRewardSecondsToOneDay / AFTER10_REWARD_SECONDS_PER_MINUTE,
           ),
   };
 }
@@ -475,36 +479,36 @@ function parseStoredRecords(storedValue: string | null) {
     return mergeRecordsByDate(
       parsed
         .map((item) => {
-        const legacyMinutes =
-          Number.isFinite(item.hours) && Number.isFinite(item.minutes)
-            ? Number(item.hours) * 60 + Number(item.minutes)
+          const legacyMinutes =
+            Number.isFinite(item.hours) && Number.isFinite(item.minutes)
+              ? Number(item.hours) * 60 + Number(item.minutes)
+              : 0;
+          const before10Minutes = Number.isFinite(item.before10Minutes)
+            ? Number(item.before10Minutes)
+            : legacyMinutes;
+          const after10Minutes = Number.isFinite(item.after10Minutes)
+            ? Number(item.after10Minutes)
             : 0;
-        const before10Minutes = Number.isFinite(item.before10Minutes)
-          ? Number(item.before10Minutes)
-          : legacyMinutes;
-        const after10Minutes = Number.isFinite(item.after10Minutes)
-          ? Number(item.after10Minutes)
-          : 0;
 
-        if (
-          typeof item.date !== "string" ||
-          before10Minutes < 0 ||
-          after10Minutes < 0
-        ) {
-          return null;
-        }
+          if (
+            typeof item.date !== "string" ||
+            before10Minutes < 0 ||
+            after10Minutes < 0
+          ) {
+            return null;
+          }
 
-        return {
-          id: item.id || createRecordId(),
-          date: item.date,
-          before10Minutes,
-          after10Minutes,
-          createdAt:
-            typeof item.createdAt === "string"
-              ? item.createdAt
-              : new Date().toISOString(),
-        };
-      })
+          return {
+            id: item.id || createRecordId(),
+            date: item.date,
+            before10Minutes,
+            after10Minutes,
+            createdAt:
+              typeof item.createdAt === "string"
+                ? item.createdAt
+                : new Date().toISOString(),
+          };
+        })
         .filter((item): item is OvertimeRecord => item !== null),
     );
   } catch (error) {
@@ -523,7 +527,9 @@ export default function OvertimePage() {
   const [calcResult, setCalcResult] = useState("");
   const [calcSummary, setCalcSummary] = useState<OvertimeSummary | null>(null);
   const [calcTargetDays, setCalcTargetDays] = useState(1);
-  const [currentMonth, setCurrentMonth] = useState(() => parseDateKey(todayKey));
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    parseDateKey(todayKey),
+  );
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showWeekends, setShowWeekends] = useState(false);
   const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
@@ -542,10 +548,25 @@ export default function OvertimePage() {
     return parseStoredRecords(localStorage.getItem(STORAGE_KEY));
   });
 
-  const recordSummary = useMemo(() => buildOvertimeSummary(records), [records]);
+  const currentMonthKey = useMemo(
+    () => formatMonthKey(currentMonth),
+    [currentMonth],
+  );
+  const monthlyRecords = useMemo(
+    () => records.filter((record) => record.date.startsWith(currentMonthKey)),
+    [currentMonthKey, records],
+  );
+  const recordSummary = useMemo(
+    () => buildOvertimeSummary(monthlyRecords),
+    [monthlyRecords],
+  );
   const recordResult = useMemo(
-    () => buildSummaryMessage("누적 야근 현황", recordSummary),
-    [recordSummary],
+    () =>
+      buildSummaryMessage(
+        `${formatMonthLabel(currentMonth)} 누적 야근 현황`,
+        recordSummary,
+      ),
+    [currentMonth, recordSummary],
   );
   const targetDayGuide = useMemo(
     () => ({
@@ -559,7 +580,8 @@ export default function OvertimePage() {
         targetUsableDays,
         AFTER10_REWARD_SECONDS_PER_MINUTE,
       ),
-      isReached: recordSummary.rewardSeconds >= targetUsableDays * DAY_REWARD_SECONDS,
+      isReached:
+        recordSummary.rewardSeconds >= targetUsableDays * DAY_REWARD_SECONDS,
     }),
     [recordSummary, targetUsableDays],
   );
@@ -586,7 +608,7 @@ export default function OvertimePage() {
 
   const displayedRecords = useMemo(
     () =>
-      [...records].sort((left, right) => {
+      [...monthlyRecords].sort((left, right) => {
         const byDate = right.date.localeCompare(left.date);
         if (byDate !== 0) {
           return byDate;
@@ -594,7 +616,7 @@ export default function OvertimePage() {
 
         return right.createdAt.localeCompare(left.createdAt);
       }),
-    [records],
+    [monthlyRecords],
   );
 
   const recordsByDate = useMemo(() => {
@@ -625,7 +647,9 @@ export default function OvertimePage() {
     () =>
       showWeekends
         ? WEEKDAYS
-        : WEEKDAYS.filter((_, weekdayIndex) => weekdayIndex !== 0 && weekdayIndex !== 6),
+        : WEEKDAYS.filter(
+            (_, weekdayIndex) => weekdayIndex !== 0 && weekdayIndex !== 6,
+          ),
     [showWeekends],
   );
 
@@ -678,7 +702,10 @@ export default function OvertimePage() {
     onSaved?: () => void;
     editingRecordId?: string | null;
   }) => {
-    const normalizedBefore10 = normalizeDurationFields(beforeHours, beforeMinutes);
+    const normalizedBefore10 = normalizeDurationFields(
+      beforeHours,
+      beforeMinutes,
+    );
     const normalizedAfter10 = normalizeDurationFields(afterHours, afterMinutes);
 
     applyNormalized?.({
@@ -732,7 +759,9 @@ export default function OvertimePage() {
     ]);
 
     const recordMonth = parseDateKey(targetDate);
-    setCurrentMonth(new Date(recordMonth.getFullYear(), recordMonth.getMonth(), 1));
+    setCurrentMonth(
+      new Date(recordMonth.getFullYear(), recordMonth.getMonth(), 1),
+    );
     setSelectedDate(targetDate);
     onSaved?.();
 
@@ -816,7 +845,9 @@ export default function OvertimePage() {
     const recordDate = parseDateKey(record.date);
 
     setSelectedDate(record.date);
-    setCurrentMonth(new Date(recordDate.getFullYear(), recordDate.getMonth(), 1));
+    setCurrentMonth(
+      new Date(recordDate.getFullYear(), recordDate.getMonth(), 1),
+    );
     setQuickBefore10Hours(before10.hours);
     setQuickBefore10Minutes(before10.minutes);
     setQuickAfter10Hours(after10.hours);
@@ -885,9 +916,8 @@ export default function OvertimePage() {
             <TabPanel>
               <GuideText>
                 시간/분으로 입력할 수 있어요.
-                <br />
-                분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로 `4시간 0분`
-                으로 바뀝니다.
+                <br />분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로
+                `4시간 0분` 으로 바뀝니다.
               </GuideText>
 
               <SplitGrid>
@@ -895,7 +925,7 @@ export default function OvertimePage() {
                   <FieldLabel>10시 전 야근</FieldLabel>
                   <DurationInputs>
                     <CompactInput
-                      type="number"
+                      type="text"
                       min="0"
                       placeholder="시간"
                       value={calcBefore10Hours}
@@ -905,7 +935,7 @@ export default function OvertimePage() {
                     />
                     <UnitText>시간</UnitText>
                     <CompactInput
-                      type="number"
+                      type="text"
                       min="0"
                       placeholder="분"
                       value={calcBefore10Minutes}
@@ -929,7 +959,7 @@ export default function OvertimePage() {
                   <FieldLabel>10시 이후 야근</FieldLabel>
                   <DurationInputs>
                     <CompactInput
-                      type="number"
+                      type="text"
                       min="0"
                       placeholder="시간"
                       value={calcAfter10Hours}
@@ -939,7 +969,7 @@ export default function OvertimePage() {
                     />
                     <UnitText>시간</UnitText>
                     <CompactInput
-                      type="number"
+                      type="text"
                       min="0"
                       placeholder="분"
                       value={calcAfter10Minutes}
@@ -965,15 +995,14 @@ export default function OvertimePage() {
               </PrimaryButton>
 
               <ResultBox>
-                {calcResult || "10시 전/이후 야근 시간을 입력하고 계산해보세요."}
+                {calcResult ||
+                  "10시 전/이후 야근 시간을 입력하고 계산해보세요."}
               </ResultBox>
 
-              {calcSummary && calcSummary.totalRawMinutes > 0 && calcTargetGuide && (
-                <NoticeCard>
-                  <NoticeHeader>
-                    <strong>
-                      {calcTargetDays.toFixed(2)}일 사용 가능까지 더 필요해요
-                    </strong>
+              {calcSummary &&
+                calcSummary.totalRawMinutes > 0 &&
+                calcTargetGuide && (
+                  <NoticeCard>
                     <TargetDayTabs>
                       {TARGET_DAY_OPTIONS.map((option) => (
                         <TargetDayButton
@@ -986,36 +1015,43 @@ export default function OvertimePage() {
                         </TargetDayButton>
                       ))}
                     </TargetDayTabs>
-                  </NoticeHeader>
-                  {calcTargetGuide.isReached ? (
-                    <span>
-                      이미 {calcTargetDays.toFixed(2)}일 이상 사용 가능한 상태예요.
-                    </span>
-                  ) : (
-                    <>
-                      <span>
-                        10시 전만 추가하면{" "}
-                        {formatRawDuration(calcTargetGuide.before10Minutes)}
-                      </span>
-                      <span>
-                        10시 이후만 추가하면{" "}
-                        {formatRawDuration(calcTargetGuide.after10Minutes)}
-                      </span>
-                    </>
-                  )}
-                </NoticeCard>
-              )}
+                    <NoticeContent>
+                      <strong>
+                        사용 가능 {calcTargetDays.toFixed(2)}까지 더 필요해요
+                      </strong>
+                      {calcTargetGuide.isReached ? (
+                        <span>
+                          이미 {calcTargetDays.toFixed(2)} 이상 사용 가능한
+                          상태예요.
+                        </span>
+                      ) : (
+                        <>
+                          <span>
+                            10시 전만 추가하면{" "}
+                            {formatRawDuration(calcTargetGuide.before10Minutes)}
+                          </span>
+                          <span>
+                            10시 이후만 추가하면{" "}
+                            {formatRawDuration(calcTargetGuide.after10Minutes)}
+                          </span>
+                        </>
+                      )}
+                    </NoticeContent>
+                  </NoticeCard>
+                )}
             </TabPanel>
           ) : (
             <TabPanel>
               <StatsRow>
                 <StatCard>
-                  <span>저장된 기록</span>
-                  <strong>{records.length}건</strong>
+                  <span>{formatMonthLabel(currentMonth)} 기록</span>
+                  <strong>{monthlyRecords.length}건</strong>
                 </StatCard>
                 <StatCard>
                   <span>누적 야근시간</span>
-                  <strong>{formatRawDuration(recordSummary.totalRawMinutes)}</strong>
+                  <strong>
+                    {formatRawDuration(recordSummary.totalRawMinutes)}
+                  </strong>
                 </StatCard>
                 <StatCard>
                   <span>사용 가능 일수</span>
@@ -1025,37 +1061,40 @@ export default function OvertimePage() {
 
               {recordSummary.totalRawMinutes > 0 && (
                 <NoticeCard>
-                  <NoticeHeader>
-                    <strong>{targetUsableDays.toFixed(2)}일 사용 가능까지 더 필요해요</strong>
-                    <TargetDayTabs>
-                      {TARGET_DAY_OPTIONS.map((option) => (
-                        <TargetDayButton
-                          key={option}
-                          type="button"
-                          $isActive={targetUsableDays === option}
-                          onClick={() => setTargetUsableDays(option)}
-                        >
-                          {option}일
-                        </TargetDayButton>
-                      ))}
-                    </TargetDayTabs>
-                  </NoticeHeader>
-                  {targetDayGuide.isReached ? (
-                    <span>
-                      이미 {targetUsableDays.toFixed(2)}일 이상 사용 가능한 상태예요.
-                    </span>
-                  ) : (
-                    <>
+                  <TargetDayTabs>
+                    {TARGET_DAY_OPTIONS.map((option) => (
+                      <TargetDayButton
+                        key={option}
+                        type="button"
+                        $isActive={targetUsableDays === option}
+                        onClick={() => setTargetUsableDays(option)}
+                      >
+                        {option}일
+                      </TargetDayButton>
+                    ))}
+                  </TargetDayTabs>
+                  <NoticeContent>
+                    <strong>
+                      사용 가능 {targetUsableDays.toFixed(2)}까지 더 필요해요
+                    </strong>
+                    {targetDayGuide.isReached ? (
                       <span>
-                        10시 전만 추가하면{" "}
-                        {formatRawDuration(targetDayGuide.before10Minutes)}
+                        이미 {targetUsableDays.toFixed(2)} 이상 사용 가능한
+                        상태예요.
                       </span>
-                      <span>
-                        10시 이후만 추가하면{" "}
-                        {formatRawDuration(targetDayGuide.after10Minutes)}
-                      </span>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <span>
+                          10시 전만 추가하면{" "}
+                          {formatRawDuration(targetDayGuide.before10Minutes)}
+                        </span>
+                        <span>
+                          10시 이후만 추가하면{" "}
+                          {formatRawDuration(targetDayGuide.after10Minutes)}
+                        </span>
+                      </>
+                    )}
+                  </NoticeContent>
                 </NoticeCard>
               )}
 
@@ -1066,32 +1105,34 @@ export default function OvertimePage() {
               <SectionHeader>
                 <SectionTitle>야근 기록 캘린더</SectionTitle>
                 <CalendarToolbar>
-                  <CalendarNavButton
-                    type="button"
-                    onClick={() => moveMonth(-1)}
-                  >
-                    이전
-                  </CalendarNavButton>
-                  <CalendarMonthLabel>
-                    {formatMonthLabel(currentMonth)}
-                  </CalendarMonthLabel>
-                  <CalendarNavButton
-                    type="button"
-                    onClick={() => moveMonth(1)}
-                  >
-                    다음
-                  </CalendarNavButton>
-                  <TodayButton
-                    type="button"
-                    onClick={() => {
-                      const todayDate = parseDateKey(todayKey);
-                      setCurrentMonth(todayDate);
-                      setSelectedDate(todayKey);
-                      resetQuickAddForm();
-                    }}
-                  >
-                    오늘
-                  </TodayButton>
+                  <CalendarToolbarMain>
+                    <CalendarNavButton
+                      type="button"
+                      onClick={() => moveMonth(-1)}
+                    >
+                      이전
+                    </CalendarNavButton>
+                    <CalendarMonthLabel>
+                      {formatMonthLabel(currentMonth)}
+                    </CalendarMonthLabel>
+                    <CalendarNavButton
+                      type="button"
+                      onClick={() => moveMonth(1)}
+                    >
+                      다음
+                    </CalendarNavButton>
+                    <TodayButton
+                      type="button"
+                      onClick={() => {
+                        const todayDate = parseDateKey(todayKey);
+                        setCurrentMonth(todayDate);
+                        setSelectedDate(todayKey);
+                        resetQuickAddForm();
+                      }}
+                    >
+                      오늘
+                    </TodayButton>
+                  </CalendarToolbarMain>
                   <WeekendToggleButton
                     type="button"
                     $isActive={showWeekends}
@@ -1103,17 +1144,21 @@ export default function OvertimePage() {
               </SectionHeader>
 
               <WeekdayRow $columns={visibleWeekdays.length}>
-                {WEEKDAYS.map((weekday) => (
+                {WEEKDAYS.map((weekday) =>
                   visibleWeekdays.includes(weekday) ? (
                     <WeekdayCell key={weekday}>{weekday}</WeekdayCell>
-                  ) : null
-                ))}
+                  ) : null,
+                )}
               </WeekdayRow>
 
               <CalendarGrid $columns={visibleWeekdays.length}>
                 {calendarWeeks.flatMap((week, weekIndex) =>
                   week
-                    .filter((_, weekdayIndex) => showWeekends || (weekdayIndex !== 0 && weekdayIndex !== 6))
+                    .filter(
+                      (_, weekdayIndex) =>
+                        showWeekends ||
+                        (weekdayIndex !== 0 && weekdayIndex !== 6),
+                    )
                     .map((day, dayIndex) => {
                       if (!day) {
                         return (
@@ -1142,13 +1187,13 @@ export default function OvertimePage() {
                             <CalendarDaySummary>
                               {bucket.before10Minutes > 0 && (
                                 <span>
-                                  <MutedPrefix>10시 전</MutedPrefix>{" "}
-                                  {formatCompactDuration(bucket.before10Minutes)}
+                                  {formatCompactDuration(
+                                    bucket.before10Minutes,
+                                  )}
                                 </span>
                               )}
                               {bucket.after10Minutes > 0 && (
                                 <span>
-                                  <MutedPrefix>10시 이후</MutedPrefix>{" "}
                                   {formatCompactDuration(bucket.after10Minutes)}
                                 </span>
                               )}
@@ -1161,24 +1206,62 @@ export default function OvertimePage() {
               </CalendarGrid>
 
               <SelectedDatePanel>
-                <SectionTitle>{formatDisplayDate(selectedDate)} 기록</SectionTitle>
+                <QuickAddHeader>
+                  <QuickAddTitle>
+                    {formatDisplayDate(selectedDate)} -{" "}
+                    {editingRecordId ? "수정 중" : "새 기록 추가"}
+                  </QuickAddTitle>
+                  {editingRecordId && (
+                    <EditCancelButton type="button" onClick={resetQuickAddForm}>
+                      수정 취소
+                    </EditCancelButton>
+                  )}
+                </QuickAddHeader>
                 <QuickAddCard>
-                  <QuickAddHeader>
-                    <QuickAddTitle>
-                      {editingRecordId ? "기록 수정 중" : "새 기록 추가"}
-                    </QuickAddTitle>
-                    {editingRecordId && (
-                      <EditCancelButton type="button" onClick={resetQuickAddForm}>
-                        수정 취소
-                      </EditCancelButton>
-                    )}
-                  </QuickAddHeader>
+                  {selectedDateBucket ? (
+                    <>
+                      <RecordList>
+                        {selectedDateBucket.records.map((record) => (
+                          <RecordItem key={record.id}>
+                            <RecordInfo>
+                              <span>
+                                <MutedPrefix>10시 전</MutedPrefix>{" "}
+                                {formatRawDuration(record.before10Minutes)}
+                              </span>
+                              <span>
+                                <MutedPrefix>10시 이후</MutedPrefix>{" "}
+                                {formatRawDuration(record.after10Minutes)}
+                              </span>
+                            </RecordInfo>
+                            <RecordActions>
+                              <EditButton
+                                type="button"
+                                onClick={() => handleEditRecord(record)}
+                              >
+                                수정
+                              </EditButton>
+                              <DeleteButton
+                                type="button"
+                                onClick={() => handleDeleteRecord(record.id)}
+                              >
+                                삭제
+                              </DeleteButton>
+                            </RecordActions>
+                          </RecordItem>
+                        ))}
+                      </RecordList>
+                    </>
+                  ) : (
+                    <EmptyItem>
+                      선택한 날짜에 저장된 야근 기록이 없습니다.
+                    </EmptyItem>
+                  )}
                   <SplitGrid>
                     <DurationCard>
                       <FieldLabel>10시 전 야근</FieldLabel>
                       <DurationInputs>
                         <CompactInput
-                          type="number"
+                          type="text"
                           min="0"
                           placeholder="시간"
                           value={quickBefore10Hours}
@@ -1188,7 +1271,7 @@ export default function OvertimePage() {
                         />
                         <UnitText>시간</UnitText>
                         <CompactInput
-                          type="number"
+                          type="text"
                           min="0"
                           placeholder="분"
                           value={quickBefore10Minutes}
@@ -1212,7 +1295,7 @@ export default function OvertimePage() {
                       <FieldLabel>10시 이후 야근</FieldLabel>
                       <DurationInputs>
                         <CompactInput
-                          type="number"
+                          type="text"
                           min="0"
                           placeholder="시간"
                           value={quickAfter10Hours}
@@ -1222,7 +1305,7 @@ export default function OvertimePage() {
                         />
                         <UnitText>시간</UnitText>
                         <CompactInput
-                          type="number"
+                          type="text"
                           min="0"
                           placeholder="분"
                           value={quickAfter10Minutes}
@@ -1248,60 +1331,15 @@ export default function OvertimePage() {
                       : `${formatDisplayDate(selectedDate)}에 추가하기`}
                   </PrimaryButton>
                 </QuickAddCard>
-                {selectedDateBucket ? (
-                  <>
-                    <SelectedSummaryRow>
-                      <SelectedSummaryChip>
-                        <MutedPrefix>10시 전</MutedPrefix>{" "}
-                        {formatRawDuration(selectedDateBucket.before10Minutes)}
-                      </SelectedSummaryChip>
-                      <SelectedSummaryChip>
-                        <MutedPrefix>10시 이후</MutedPrefix>{" "}
-                        {formatRawDuration(selectedDateBucket.after10Minutes)}
-                      </SelectedSummaryChip>
-                    </SelectedSummaryRow>
-                    <RecordList>
-                      {selectedDateBucket.records.map((record) => (
-                        <RecordItem key={record.id}>
-                          <RecordInfo>
-                            <strong>{record.date}</strong>
-                            <span>
-                              <MutedPrefix>10시 전</MutedPrefix>{" "}
-                              {formatRawDuration(record.before10Minutes)}
-                            </span>
-                            <span>
-                              <MutedPrefix>10시 이후</MutedPrefix>{" "}
-                              {formatRawDuration(record.after10Minutes)}
-                            </span>
-                          </RecordInfo>
-                          <RecordActions>
-                            <EditButton
-                              type="button"
-                              onClick={() => handleEditRecord(record)}
-                            >
-                              수정
-                            </EditButton>
-                            <DeleteButton
-                              type="button"
-                              onClick={() => handleDeleteRecord(record.id)}
-                            >
-                              삭제
-                            </DeleteButton>
-                          </RecordActions>
-                        </RecordItem>
-                      ))}
-                    </RecordList>
-                  </>
-                ) : (
-                  <EmptyItem>선택한 날짜에 저장된 야근 기록이 없습니다.</EmptyItem>
-                )}
               </SelectedDatePanel>
 
               <SectionDivider />
 
               <AccordionSection>
                 <AccordionHeader>
-                  <SectionTitle>저장된 야근 기록</SectionTitle>
+                  <SectionTitle>
+                    {formatMonthLabel(currentMonth)} 저장된 야근 기록
+                  </SectionTitle>
                   <AccordionToggleButton
                     type="button"
                     onClick={() => setIsRecordsExpanded((prev) => !prev)}
@@ -1347,7 +1385,7 @@ export default function OvertimePage() {
                   </RecordList>
                 ) : (
                   <AccordionHint>
-                    저장된 전체 기록은 더보기로 펼쳐서 확인할 수 있어요.
+                    현재 월 기록은 더보기로 펼쳐서 확인할 수 있어요.
                   </AccordionHint>
                 )}
               </AccordionSection>
@@ -1404,7 +1442,9 @@ export default function OvertimePage() {
                     {BEFORE10_DAY_GUIDE.map((item) => (
                       <GuideItem key={item.days}>
                         <span>{item.days}일 휴가</span>
-                        <strong>{formatRawDuration(item.totalMinutes)} 야근 필요</strong>
+                        <strong>
+                          {formatRawDuration(item.totalMinutes)} 야근 필요
+                        </strong>
                       </GuideItem>
                     ))}
                   </GuideList>
@@ -1416,7 +1456,8 @@ export default function OvertimePage() {
               </>
             ) : (
               <AccordionHint>
-                보상 규칙 요약과 10시 전 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.
+                보상 규칙 요약과 10시 전 1.5배 기준 휴가 가이드는 더보기로
+                펼쳐서 확인할 수 있어요.
               </AccordionHint>
             )}
           </AccordionSection>
@@ -1513,7 +1554,7 @@ const FieldLabel = styled.label`
 `;
 
 const CompactInput = styled.input`
-  width: 88px;
+  width: 64px;
   min-height: 48px;
   padding: 0.8rem 0.85rem;
   border: 1px solid #d3deed;
@@ -1635,21 +1676,17 @@ const NoticeCard = styled.div`
   }
 `;
 
-const NoticeHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-  }
-`;
-
 const TargetDayTabs = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+
+const NoticeContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 `;
 
 const TargetDayButton = styled.button<{ $isActive: boolean }>`
@@ -1657,7 +1694,7 @@ const TargetDayButton = styled.button<{ $isActive: boolean }>`
   background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
   color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#234f8d")};
   border-radius: 999px;
-  padding: 0.35rem 0.65rem;
+  padding: 0.35rem 0.45rem;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -1683,6 +1720,15 @@ const SectionTitle = styled.h2`
 `;
 
 const CalendarToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  width: 100%;
+`;
+
+const CalendarToolbarMain = styled.div`
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -1750,7 +1796,7 @@ const CalendarCellButton = styled.button<{
   $isSelected: boolean;
   $isToday: boolean;
 }>`
-  min-height: 118px;
+  height: 100px;
   border-radius: 16px;
   padding: 0.7rem;
   border: 1px solid
@@ -1765,16 +1811,16 @@ const CalendarCellButton = styled.button<{
   cursor: pointer;
 
   @media (max-width: 720px) {
-    min-height: 96px;
+    height: 100px;
     padding: 0.55rem;
   }
 `;
 
 const CalendarPlaceholder = styled.div`
-  min-height: 118px;
+  height: 100px;
 
   @media (max-width: 720px) {
-    min-height: 96px;
+    height: 100px;
   }
 `;
 
@@ -1809,20 +1855,12 @@ const SelectedDatePanel = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  border: 1px solid #dbe7f4;
-  background: #f8fbff;
-  border-radius: 20px;
-  padding: 1rem;
 `;
 
 const QuickAddCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  padding: 0.95rem;
-  border-radius: 18px;
-  border: 1px solid #dbe7f4;
-  background: #ffffff;
 `;
 
 const QuickAddHeader = styled.div`
@@ -1830,7 +1868,7 @@ const QuickAddHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-
+  min-height: 35px;
   @media (max-width: 640px) {
     flex-direction: column;
     align-items: flex-start;
@@ -1886,24 +1924,6 @@ const AccordionHint = styled.p`
   line-height: 1.6;
 `;
 
-const SelectedSummaryRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-`;
-
-const SelectedSummaryChip = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.55rem 0.75rem;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid #dbe7f4;
-  color: #234f8d;
-  font-weight: 700;
-  font-size: 0.9rem;
-`;
-
 const SubText = styled.p`
   margin: 0.85rem 0 0;
   color: #64748b;
@@ -1953,7 +1973,7 @@ const EditButton = styled.button`
   cursor: pointer;
 `;
 
-const EmptyItem = styled.li`
+const EmptyItem = styled.div`
   padding: 1rem;
   border-radius: 16px;
   background: #f8fafc;
@@ -1972,6 +1992,11 @@ const RecordInfo = styled.div`
 
   span {
     color: #64748b;
+
+    ${MutedPrefix} {
+      display: inline-block;
+      width: 70px;
+    }
   }
 `;
 
