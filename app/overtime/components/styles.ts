@@ -296,6 +296,11 @@ export const StorageHeader = styled.div`
   gap: 1rem;
   align-items: flex-start;
 
+  > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
   @media (max-width: 720px) {
     flex-direction: column;
   }
@@ -315,20 +320,28 @@ export const StorageDescription = styled.p`
 `;
 
 export const StorageModeTabs = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 164px;
+  flex-shrink: 0;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 export const StorageModeButton = styled.button<{ $isActive: boolean }>`
+  width: 100%;
   border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
   background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
   color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
   border-radius: 999px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.88rem;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  text-align: center;
 `;
 
 export const StorageSetupGrid = styled.div`
@@ -394,9 +407,8 @@ export const StorageHint = styled.p`
 `;
 
 export const ConnectedRoomCard = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   gap: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
@@ -404,8 +416,7 @@ export const ConnectedRoomCard = styled.div`
   background: #ffffff;
 
   @media (max-width: 720px) {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -428,13 +439,32 @@ export const ConnectedRoomInfo = styled.div`
   small {
     color: #64748b;
     font-size: 0.82rem;
+    word-break: break-word;
   }
 `;
 
 export const StorageActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+  align-self: start;
+
+  > button {
+    width: 100%;
+    min-height: 52px;
+  }
+
+  > button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+
+    > button:last-child {
+      grid-column: auto;
+    }
+  }
 `;
 
 export const NoticeCard = styled.div`
