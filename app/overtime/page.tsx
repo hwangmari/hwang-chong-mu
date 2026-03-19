@@ -1,690 +1,57 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import CalculatorTab from "@/app/overtime/components/CalculatorTab";
+import RecordsTab from "@/app/overtime/components/RecordsTab";
+import RuleGuideAccordion from "@/app/overtime/components/RuleGuideAccordion";
+import RuleSelector from "@/app/overtime/components/RuleSelector";
+import {
+  SectionDivider,
+  SurfaceCard,
+  TabButton,
+  TabList,
+} from "@/app/overtime/components/styles";
+import {
+  DAY_REWARD_SECONDS,
+  OVERTIME_RULES,
+  RULE_KEY,
+  STORAGE_KEY,
+  STORAGE_MODE_KEY,
+  STORAGE_ROOM_KEY,
+  WEEKDAYS,
+} from "@/app/overtime/constants";
+import {
+  buildMonthCalendarWeeks,
+  buildOvertimeSummary,
+  buildSummaryMessage,
+  createRecordId,
+  formatDateKey,
+  formatMonthKey,
+  getAdditionalMinutesForTargetDays,
+  getDurationMinutes,
+  getRuleGuideItems,
+  getTodayDateInputValue,
+  mergeRecordsByDate,
+  normalizeDurationFields,
+  parseDateKey,
+  parseStoredRecords,
+  shiftMonth,
+  splitMinutesToFields,
+} from "@/app/overtime/utils";
 import {
   useOvertimePersistence,
   type OvertimeRoomInfo,
 } from "@/hooks/useOvertimePersistence";
-
-type TabKey = "calculator" | "records";
-type StorageMode = "local" | "server";
-type OvertimeRuleId = "threshold_15h" | "from_1830";
-
-interface OvertimeRule {
-  id: OvertimeRuleId;
-  label: string;
-  shortLabel: string;
-  description: string;
-  introDescription: string;
-  thresholdMinutes: number;
-  before10RewardSecondsPerMinute: number;
-  after10RewardSecondsPerMinute: number;
-  roundingUnitMinutes: number;
-  guideTitle: string;
-  ruleSummaryItems: Array<{
-    label: string;
-    value: string;
-  }>;
-  collapsedHint: string;
-  exampleText: string;
-}
-
-interface OvertimeRecord {
-  id: string;
-  date: string;
-  before10Minutes: number;
-  after10Minutes: number;
-  createdAt: string;
-}
-
-interface OvertimeSummary {
-  totalRawMinutes: number;
-  before10RawMinutes: number;
-  after10RawMinutes: number;
-  remainingThresholdMinutes: number;
-  eligibleBefore10Minutes: number;
-  eligibleAfter10Minutes: number;
-  rewardSeconds: number;
-  accruedDays: number;
-  usableDays: number;
-  carryDays: number;
-  carryRewardSeconds: number;
-  nextQuarterBefore10Minutes: number;
-  nextQuarterAfter10Minutes: number;
-  toOneDayBefore10Minutes: number;
-  toOneDayAfter10Minutes: number;
-}
-
-interface DayBucket {
-  records: OvertimeRecord[];
-  before10Minutes: number;
-  after10Minutes: number;
-}
-
-interface CalendarDay {
-  dateKey: string;
-  dayNumber: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-}
-
-const STORAGE_KEY = "nightOvertimeRecords";
-const STORAGE_MODE_KEY = "nightOvertimeStorageMode";
-const STORAGE_ROOM_KEY = "nightOvertimeRoomRef";
-const RULE_KEY = "nightOvertimeRule";
-const DAY_REWARD_SECONDS = 8 * 60 * 60;
-const QUARTER_DAY_REWARD_SECONDS = DAY_REWARD_SECONDS / 4;
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const TARGET_DAY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
-const OVERTIME_RULES: Record<OvertimeRuleId, OvertimeRule> = {
-  threshold_15h: {
-    id: "threshold_15h",
-    label: "15시간 이후, 10시 이후 2배",
-    shortLabel: "15시간 이후",
-    description: "누적 15시간 초과분부터 10시 전 1.5배, 10시 이후 2배예요.",
-    introDescription:
-      "15시간 초과분부터 계산하고\n10시 전은 1.5배, 10시 이후는 2배로 반영해요.",
-    thresholdMinutes: 15 * 60,
-    before10RewardSecondsPerMinute: 90,
-    after10RewardSecondsPerMinute: 120,
-    roundingUnitMinutes: 1,
-    guideTitle: "10시 전 1.5배 기준 휴가 가이드",
-    ruleSummaryItems: [
-      { label: "적립 시작 기준", value: "누적 야근 15시간 초과분부터" },
-      { label: "10시 전 적립률", value: "1분당 보상 1.5분" },
-      { label: "10시 이후 적립률", value: "1분당 보상 2분" },
-      { label: "0.25일 사용 가능 기준", value: "보상시간 120분" },
-      { label: "발생 일수 표기", value: "분 단위로 계속 누적" },
-    ],
-    collapsedHint:
-      "보상 규칙 요약과 10시 전 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.",
-    exampleText:
-      "예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이 쌓이면 사용 가능 0.25일이 됩니다.",
-  },
-  from_1830: {
-    id: "from_1830",
-    label: "18:30부터 10분 단위 1.5배",
-    shortLabel: "18:30 부터",
-    description: "6시 30분부터 10분 단위로 1.5배 보상휴가가 적립돼요.",
-    introDescription:
-      "6시 30분부터 바로 계산하고\n10분 단위마다 1.5배 보상휴가로 반영해요.",
-    thresholdMinutes: 0,
-    before10RewardSecondsPerMinute: 90,
-    after10RewardSecondsPerMinute: 90,
-    roundingUnitMinutes: 10,
-    guideTitle: "18:30 이후 1.5배 기준 휴가 가이드",
-    ruleSummaryItems: [
-      { label: "적립 시작 기준", value: "오후 6시 30분부터 바로 적립" },
-      { label: "10시 전 적립률", value: "1분당 보상 1.5분" },
-      { label: "10시 이후 적립률", value: "1분당 보상 1.5분" },
-      { label: "반영 단위", value: "10분 단위로 계산" },
-      { label: "발생 일수 표기", value: "분 단위로 계속 누적" },
-    ],
-    collapsedHint:
-      "보상 규칙 요약과 18:30 이후 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.",
-    exampleText:
-      "예시: 18:30 이후 실제 야근 80분이 쌓이면 120분 보상으로 계산되어 사용 가능 0.25일이 됩니다.",
-  },
-};
-
-function createRecordId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function getTodayDateInputValue() {
-  const now = new Date();
-  const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localTime.toISOString().slice(0, 10);
-}
-
-function parseMinuteInput(value: string) {
-  if (!value.trim()) {
-    return NaN;
-  }
-
-  return Number.parseInt(value, 10);
-}
-
-function formatRawDuration(totalMinutes: number) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${hours}시간 ${minutes}분`;
-}
-
-function formatCompactDuration(totalMinutes: number) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours === 0) {
-    return `${minutes}분`;
-  }
-
-  if (minutes === 0) {
-    return `${hours}시간`;
-  }
-
-  return `${hours}시간 ${minutes}분`;
-}
-
-function splitMinutesToFields(totalMinutes: number) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  return {
-    hours: hours === 0 ? "" : String(hours),
-    minutes: String(minutes),
-  };
-}
-
-function formatRewardDuration(totalSeconds: number) {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (seconds > 0) {
-    return `${hours}시간 ${minutes}분 ${seconds}초`;
-  }
-
-  return `${hours}시간 ${minutes}분`;
-}
-
-function formatDayValue(days: number) {
-  return `${days.toFixed(2)}일`;
-}
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDisplayDate(dateKey: string) {
-  const date = parseDateKey(dateKey);
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-}
-
-function formatMonthLabel(date: Date) {
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
-}
-
-function formatMonthKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function shiftMonth(date: Date, amount: number) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-function buildMonthCalendarWeeks(currentMonth: Date) {
-  const firstDay = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth(),
-    1,
-  );
-  const lastDate = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth() + 1,
-    0,
-  ).getDate();
-  const weeks: Array<Array<CalendarDay | null>> = [];
-  let currentWeek: Array<CalendarDay | null> = Array.from(
-    { length: firstDay.getDay() },
-    () => null,
-  );
-
-  for (let day = 1; day <= lastDate; day += 1) {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    currentWeek.push({
-      dateKey: formatDateKey(date),
-      dayNumber: day,
-      isCurrentMonth: true,
-      isToday: formatDateKey(date) === getTodayDateInputValue(),
-    });
-
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  }
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) {
-      currentWeek.push(null);
-    }
-    weeks.push(currentWeek);
-  }
-
-  return weeks;
-}
-
-function normalizeDurationFields(hoursValue: string, minutesValue: string) {
-  const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
-  const parsedMinutes = minutesValue.trim()
-    ? parseMinuteInput(minutesValue)
-    : 0;
-
-  if (
-    Number.isNaN(parsedHours) ||
-    Number.isNaN(parsedMinutes) ||
-    parsedHours < 0 ||
-    parsedMinutes < 0
-  ) {
-    return {
-      hours: hoursValue,
-      minutes: minutesValue,
-    };
-  }
-
-  const totalMinutes = parsedHours * 60 + parsedMinutes;
-  const nextHours = Math.floor(totalMinutes / 60);
-  const nextMinutes = totalMinutes % 60;
-
-  if (!hoursValue.trim() && !minutesValue.trim()) {
-    return {
-      hours: "",
-      minutes: "",
-    };
-  }
-
-  return {
-    hours: nextHours === 0 ? "" : String(nextHours),
-    minutes: String(nextMinutes),
-  };
-}
-
-function getDurationMinutes(hoursValue: string, minutesValue: string) {
-  const parsedHours = hoursValue.trim() ? parseMinuteInput(hoursValue) : 0;
-  const parsedMinutes = minutesValue.trim()
-    ? parseMinuteInput(minutesValue)
-    : 0;
-
-  if (
-    Number.isNaN(parsedHours) ||
-    Number.isNaN(parsedMinutes) ||
-    parsedHours < 0 ||
-    parsedMinutes < 0
-  ) {
-    return {
-      isValid: false,
-      totalMinutes: 0,
-    };
-  }
-
-  return {
-    isValid: true,
-    totalMinutes: parsedHours * 60 + parsedMinutes,
-  };
-}
-
-function getRuleGuideItems(rule: OvertimeRule) {
-  return TARGET_DAY_OPTIONS.map((days) => {
-    const targetRewardMinutes = days * 8 * 60;
-    const actualMinutesWithoutThreshold = Math.ceil(
-      targetRewardMinutes / (rule.before10RewardSecondsPerMinute / 60),
-    );
-    const roundedMinutes =
-      rule.roundingUnitMinutes > 1
-        ? Math.ceil(actualMinutesWithoutThreshold / rule.roundingUnitMinutes) *
-          rule.roundingUnitMinutes
-        : actualMinutesWithoutThreshold;
-
-    return {
-      days,
-      totalMinutes: rule.thresholdMinutes + roundedMinutes,
-    };
-  });
-}
-
-function getAdditionalMinutesForRewardSeconds(
-  rule: OvertimeRule,
-  summary: OvertimeSummary,
-  rewardSeconds: number,
-  rewardSecondsPerMinute: number,
-) {
-  if (rewardSeconds <= 0) {
-    return 0;
-  }
-
-  const rawMinutesNeeded = Math.ceil(rewardSeconds / rewardSecondsPerMinute);
-  const roundedMinutesNeeded =
-    rule.roundingUnitMinutes > 1
-      ? Math.ceil(rawMinutesNeeded / rule.roundingUnitMinutes) *
-        rule.roundingUnitMinutes
-      : rawMinutesNeeded;
-
-  return summary.remainingThresholdMinutes + roundedMinutesNeeded;
-}
-
-function getAdditionalMinutesForTargetDays(
-  rule: OvertimeRule,
-  summary: OvertimeSummary,
-  targetDays: number,
-  rewardSecondsPerMinute: number,
-) {
-  const targetRewardSeconds = targetDays * DAY_REWARD_SECONDS;
-
-  if (summary.rewardSeconds >= targetRewardSeconds) {
-    return 0;
-  }
-
-  return getAdditionalMinutesForRewardSeconds(
-    rule,
-    summary,
-    targetRewardSeconds - summary.rewardSeconds,
-    rewardSecondsPerMinute,
-  );
-}
-
-function mergeRecordsByDate(records: OvertimeRecord[]) {
-  const grouped = new Map<string, OvertimeRecord>();
-
-  records.forEach((record) => {
-    const existing = grouped.get(record.date);
-
-    if (!existing) {
-      grouped.set(record.date, { ...record });
-      return;
-    }
-
-    grouped.set(record.date, {
-      id: existing.id,
-      date: existing.date,
-      before10Minutes: existing.before10Minutes + record.before10Minutes,
-      after10Minutes: existing.after10Minutes + record.after10Minutes,
-      createdAt:
-        existing.createdAt <= record.createdAt
-          ? existing.createdAt
-          : record.createdAt,
-    });
-  });
-
-  return [...grouped.values()].sort((left, right) => {
-    const byDate = left.date.localeCompare(right.date);
-    if (byDate !== 0) {
-      return byDate;
-    }
-
-    return left.createdAt.localeCompare(right.createdAt);
-  });
-}
-
-function buildOvertimeSummary(
-  records: OvertimeRecord[],
-  rule: OvertimeRule,
-): OvertimeSummary {
-  let remainingThresholdMinutes = rule.thresholdMinutes;
-  let before10RawMinutes = 0;
-  let after10RawMinutes = 0;
-  let eligibleBefore10Minutes = 0;
-  let eligibleAfter10Minutes = 0;
-
-  const orderedRecords = [...records].sort((left, right) => {
-    const byDate = left.date.localeCompare(right.date);
-    if (byDate !== 0) {
-      return byDate;
-    }
-
-    return left.createdAt.localeCompare(right.createdAt);
-  });
-
-  orderedRecords.forEach((record) => {
-    before10RawMinutes += record.before10Minutes;
-    after10RawMinutes += record.after10Minutes;
-
-    const beforeConsumed = Math.min(
-      remainingThresholdMinutes,
-      record.before10Minutes,
-    );
-    remainingThresholdMinutes -= beforeConsumed;
-
-    const afterConsumed = Math.min(
-      remainingThresholdMinutes,
-      record.after10Minutes,
-    );
-    remainingThresholdMinutes -= afterConsumed;
-    const eligibleBeforeForRecord = record.before10Minutes - beforeConsumed;
-    const eligibleAfterForRecord = record.after10Minutes - afterConsumed;
-    const eligibleTotalForRecord =
-      eligibleBeforeForRecord + eligibleAfterForRecord;
-
-    if (rule.roundingUnitMinutes > 1) {
-      const roundedEligibleTotal =
-        Math.floor(eligibleTotalForRecord / rule.roundingUnitMinutes) *
-        rule.roundingUnitMinutes;
-      const roundedBefore = Math.min(
-        eligibleBeforeForRecord,
-        roundedEligibleTotal,
-      );
-      const roundedAfter = Math.max(roundedEligibleTotal - roundedBefore, 0);
-
-      eligibleBefore10Minutes += roundedBefore;
-      eligibleAfter10Minutes += roundedAfter;
-      return;
-    }
-
-    eligibleBefore10Minutes += eligibleBeforeForRecord;
-    eligibleAfter10Minutes += eligibleAfterForRecord;
-  });
-
-  const rewardSeconds =
-    eligibleBefore10Minutes * rule.before10RewardSecondsPerMinute +
-    eligibleAfter10Minutes * rule.after10RewardSecondsPerMinute;
-  const accruedDays = rewardSeconds / DAY_REWARD_SECONDS;
-  const usableQuarterCount = Math.floor(
-    rewardSeconds / QUARTER_DAY_REWARD_SECONDS,
-  );
-  const usableDays = usableQuarterCount * 0.25;
-  const carryRewardSeconds =
-    rewardSeconds - usableQuarterCount * QUARTER_DAY_REWARD_SECONDS;
-  const carryDays = carryRewardSeconds / DAY_REWARD_SECONDS;
-  const remainingRewardSecondsToNextQuarter =
-    carryRewardSeconds === 0
-      ? QUARTER_DAY_REWARD_SECONDS
-      : QUARTER_DAY_REWARD_SECONDS - carryRewardSeconds;
-  const remainingRewardSecondsToOneDay = Math.max(
-    0,
-    DAY_REWARD_SECONDS - rewardSeconds,
-  );
-  const baseSummary = {
-    totalRawMinutes: before10RawMinutes + after10RawMinutes,
-    before10RawMinutes,
-    after10RawMinutes,
-    remainingThresholdMinutes,
-    eligibleBefore10Minutes,
-    eligibleAfter10Minutes,
-    rewardSeconds,
-    accruedDays,
-    usableDays,
-    carryDays,
-    carryRewardSeconds,
-  };
-
-  return {
-    ...baseSummary,
-    nextQuarterBefore10Minutes: getAdditionalMinutesForRewardSeconds(
-      rule,
-      {
-        ...baseSummary,
-        nextQuarterBefore10Minutes: 0,
-        nextQuarterAfter10Minutes: 0,
-        toOneDayBefore10Minutes: 0,
-        toOneDayAfter10Minutes: 0,
-      },
-      remainingRewardSecondsToNextQuarter,
-      rule.before10RewardSecondsPerMinute,
-    ),
-    nextQuarterAfter10Minutes: getAdditionalMinutesForRewardSeconds(
-      rule,
-      {
-        ...baseSummary,
-        nextQuarterBefore10Minutes: 0,
-        nextQuarterAfter10Minutes: 0,
-        toOneDayBefore10Minutes: 0,
-        toOneDayAfter10Minutes: 0,
-      },
-      remainingRewardSecondsToNextQuarter,
-      rule.after10RewardSecondsPerMinute,
-    ),
-    toOneDayBefore10Minutes:
-      rewardSeconds >= DAY_REWARD_SECONDS
-        ? 0
-        : getAdditionalMinutesForRewardSeconds(
-            rule,
-            {
-              ...baseSummary,
-              nextQuarterBefore10Minutes: 0,
-              nextQuarterAfter10Minutes: 0,
-              toOneDayBefore10Minutes: 0,
-              toOneDayAfter10Minutes: 0,
-            },
-            remainingRewardSecondsToOneDay,
-            rule.before10RewardSecondsPerMinute,
-          ),
-    toOneDayAfter10Minutes:
-      rewardSeconds >= DAY_REWARD_SECONDS
-        ? 0
-        : getAdditionalMinutesForRewardSeconds(
-            rule,
-            {
-              ...baseSummary,
-              nextQuarterBefore10Minutes: 0,
-              nextQuarterAfter10Minutes: 0,
-              toOneDayBefore10Minutes: 0,
-              toOneDayAfter10Minutes: 0,
-            },
-            remainingRewardSecondsToOneDay,
-            rule.after10RewardSecondsPerMinute,
-          ),
-  };
-}
-
-function buildSummaryMessage(
-  title: string,
-  summary: OvertimeSummary,
-  rule: OvertimeRule,
-) {
-  if (summary.totalRawMinutes === 0) {
-    return "아직 입력된 야근 시간이 없습니다.";
-  }
-
-  const lines = [
-    `✅ ${title}`,
-    `📌 총 야근시간: ${formatRawDuration(summary.totalRawMinutes)}`,
-    `📌 입력 분리: 10시 전 ${formatRawDuration(summary.before10RawMinutes)} / 10시 이후 ${formatRawDuration(summary.after10RawMinutes)}`,
-  ];
-
-  if (summary.rewardSeconds === 0) {
-    lines.push(
-      summary.remainingThresholdMinutes > 0
-        ? "📌 아직 보상휴가는 발생하지 않았습니다."
-        : rule.roundingUnitMinutes > 1
-          ? "📌 10분 단위가 채워지면 보상 적립이 시작됩니다."
-          : "📌 기준은 채웠고, 초과분부터 적립이 시작됩니다.",
-      summary.remainingThresholdMinutes > 0
-        ? `📌 적립 시작까지 남은 시간: ${formatRawDuration(summary.remainingThresholdMinutes)}`
-        : `📌 현재 규칙: ${rule.description}`,
-      "🕐 첫 0.25일 사용 가능까지 추가 필요",
-      `- 10시 전만 더 하면 ${formatRawDuration(summary.nextQuarterBefore10Minutes)}`,
-      `- 10시 이후만 더 하면 ${formatRawDuration(summary.nextQuarterAfter10Minutes)}`,
-    );
-
-    return lines.join("\n");
-  }
-
-  lines.push(
-    `📌 보상 산정 대상: 10시 전 ${formatRawDuration(summary.eligibleBefore10Minutes)} / 10시 이후 ${formatRawDuration(summary.eligibleAfter10Minutes)}`,
-    `📌 총 발생 보상시간: ${formatRewardDuration(summary.rewardSeconds)}`,
-    `📌 총 발생 일수: ${formatDayValue(summary.accruedDays)}`,
-    `📌 현재 사용 가능 일수: ${formatDayValue(summary.usableDays)}`,
-    `📌 아직 못 쓰는 잔여: ${formatDayValue(summary.carryDays)} (${formatRewardDuration(summary.carryRewardSeconds)})`,
-    "🕐 다음 사용 가능 0.25일까지 추가 필요",
-    `- 10시 전 기준 ${formatRawDuration(summary.nextQuarterBefore10Minutes)}`,
-    `- 10시 이후 기준 ${formatRawDuration(summary.nextQuarterAfter10Minutes)}`,
-  );
-
-  if (summary.usableDays < 1) {
-    lines.push(
-      "🕐 1.00일 사용 가능까지 추가 필요",
-      `- 10시 전 기준 ${formatRawDuration(summary.toOneDayBefore10Minutes)}`,
-      `- 10시 이후 기준 ${formatRawDuration(summary.toOneDayAfter10Minutes)}`,
-    );
-  }
-
-  return lines.join("\n");
-}
-
-function parseStoredRecords(storedValue: string | null) {
-  if (!storedValue) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(storedValue) as Array<
-      Partial<OvertimeRecord> & {
-        hours?: number;
-        minutes?: number;
-      }
-    >;
-
-    return mergeRecordsByDate(
-      parsed
-        .map((item) => {
-          const legacyMinutes =
-            Number.isFinite(item.hours) && Number.isFinite(item.minutes)
-              ? Number(item.hours) * 60 + Number(item.minutes)
-              : 0;
-          const before10Minutes = Number.isFinite(item.before10Minutes)
-            ? Number(item.before10Minutes)
-            : legacyMinutes;
-          const after10Minutes = Number.isFinite(item.after10Minutes)
-            ? Number(item.after10Minutes)
-            : 0;
-
-          if (
-            typeof item.date !== "string" ||
-            before10Minutes < 0 ||
-            after10Minutes < 0
-          ) {
-            return null;
-          }
-
-          return {
-            id: item.id || createRecordId(),
-            date: item.date,
-            before10Minutes,
-            after10Minutes,
-            createdAt:
-              typeof item.createdAt === "string"
-                ? item.createdAt
-                : new Date().toISOString(),
-          };
-        })
-        .filter((item): item is OvertimeRecord => item !== null),
-    );
-  } catch (error) {
-    console.error("야근 기록을 불러오지 못했습니다.", error);
-    return [];
-  }
-}
+import {
+  DayBucket,
+  OvertimeRecord,
+  OvertimeRuleId,
+  OvertimeSummary,
+  StorageMode,
+  TabKey,
+} from "@/app/overtime/types";
 
 export default function OvertimePage() {
   const todayKey = getTodayDateInputValue();
@@ -694,27 +61,8 @@ export default function OvertimePage() {
     replaceRoomRecords,
     loading: isServerLoading,
   } = useOvertimePersistence();
+
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
-  const [calcBefore10Hours, setCalcBefore10Hours] = useState("");
-  const [calcBefore10Minutes, setCalcBefore10Minutes] = useState("");
-  const [calcAfter10Hours, setCalcAfter10Hours] = useState("");
-  const [calcAfter10Minutes, setCalcAfter10Minutes] = useState("");
-  const [calcResult, setCalcResult] = useState("");
-  const [calcSummary, setCalcSummary] = useState<OvertimeSummary | null>(null);
-  const [calcTargetDays, setCalcTargetDays] = useState(1);
-  const [currentMonth, setCurrentMonth] = useState(() =>
-    parseDateKey(todayKey),
-  );
-  const [selectedDate, setSelectedDate] = useState(todayKey);
-  const [showWeekends, setShowWeekends] = useState(false);
-  const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
-  const [isRuleGuideExpanded, setIsRuleGuideExpanded] = useState(false);
-  const [targetUsableDays, setTargetUsableDays] = useState(1);
-  const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
-  const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
-  const [quickAfter10Hours, setQuickAfter10Hours] = useState("");
-  const [quickAfter10Minutes, setQuickAfter10Minutes] = useState("");
-  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [storageMode, setStorageMode] = useState<StorageMode>(() => {
     if (typeof window === "undefined") {
       return "local";
@@ -732,6 +80,26 @@ export default function OvertimePage() {
     const savedRule = localStorage.getItem(RULE_KEY);
     return savedRule === "from_1830" ? "from_1830" : "threshold_15h";
   });
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    parseDateKey(todayKey),
+  );
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [showWeekends, setShowWeekends] = useState(false);
+  const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
+  const [isRuleGuideExpanded, setIsRuleGuideExpanded] = useState(false);
+  const [targetUsableDays, setTargetUsableDays] = useState(1);
+  const [calcTargetDays, setCalcTargetDays] = useState(1);
+  const [calcBefore10Hours, setCalcBefore10Hours] = useState("");
+  const [calcBefore10Minutes, setCalcBefore10Minutes] = useState("");
+  const [calcAfter10Hours, setCalcAfter10Hours] = useState("");
+  const [calcAfter10Minutes, setCalcAfter10Minutes] = useState("");
+  const [calcResult, setCalcResult] = useState("");
+  const [calcSummary, setCalcSummary] = useState<OvertimeSummary | null>(null);
+  const [quickBefore10Hours, setQuickBefore10Hours] = useState("");
+  const [quickBefore10Minutes, setQuickBefore10Minutes] = useState("");
+  const [quickAfter10Hours, setQuickAfter10Hours] = useState("");
+  const [quickAfter10Minutes, setQuickAfter10Minutes] = useState("");
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [roomNameInput, setRoomNameInput] = useState("");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [serverRoom, setServerRoom] = useState<OvertimeRoomInfo | null>(null);
@@ -743,12 +111,10 @@ export default function OvertimePage() {
     return parseStoredRecords(localStorage.getItem(STORAGE_KEY));
   });
   const [serverRecords, setServerRecords] = useState<OvertimeRecord[]>([]);
-  const records = storageMode === "server" ? serverRecords : localRecords;
+
   const activeRule = OVERTIME_RULES[ruleId];
-  const activeRuleGuide = useMemo(
-    () => getRuleGuideItems(activeRule),
-    [activeRule],
-  );
+  const activeRuleGuide = useMemo(() => getRuleGuideItems(activeRule), [activeRule]);
+  const records = storageMode === "server" ? serverRecords : localRecords;
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -756,7 +122,6 @@ export default function OvertimePage() {
     }
 
     const savedRoomRef = localStorage.getItem(STORAGE_ROOM_KEY);
-
     if (!savedRoomRef) {
       return;
     }
@@ -790,19 +155,15 @@ export default function OvertimePage() {
   }, [fetchRoomData]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_MODE_KEY, storageMode);
     }
-
-    localStorage.setItem(STORAGE_MODE_KEY, storageMode);
   }, [storageMode]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(RULE_KEY, ruleId);
     }
-
-    localStorage.setItem(RULE_KEY, ruleId);
   }, [ruleId]);
 
   const currentMonthKey = useMemo(
@@ -820,7 +181,7 @@ export default function OvertimePage() {
   const recordResult = useMemo(
     () =>
       buildSummaryMessage(
-        `${formatMonthLabel(currentMonth)} 누적 야근 현황`,
+        `${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월 누적 야근 현황`,
         recordSummary,
         activeRule,
       ),
@@ -867,7 +228,6 @@ export default function OvertimePage() {
         : null,
     [activeRule, calcSummary, calcTargetDays],
   );
-
   const displayedRecords = useMemo(
     () =>
       [...monthlyRecords].sort((left, right) => {
@@ -880,7 +240,6 @@ export default function OvertimePage() {
       }),
     [monthlyRecords],
   );
-
   const recordsByDate = useMemo(() => {
     const map = new Map<string, DayBucket>();
 
@@ -899,7 +258,6 @@ export default function OvertimePage() {
 
     return map;
   }, [displayedRecords]);
-
   const selectedDateBucket = recordsByDate.get(selectedDate);
   const calendarWeeks = useMemo(
     () => buildMonthCalendarWeeks(currentMonth),
@@ -983,7 +341,7 @@ export default function OvertimePage() {
     afterMinutes,
     applyNormalized,
     onSaved,
-    editingRecordId,
+    targetEditingRecordId,
   }: {
     targetDate: string;
     beforeHours: string;
@@ -997,7 +355,7 @@ export default function OvertimePage() {
       afterMinutes: string;
     }) => void;
     onSaved?: () => void;
-    editingRecordId?: string | null;
+    targetEditingRecordId?: string | null;
   }) => {
     const normalizedBefore10 = normalizeDurationFields(
       beforeHours,
@@ -1039,8 +397,8 @@ export default function OvertimePage() {
       return false;
     }
 
-    const existingRecord = editingRecordId
-      ? records.find((record) => record.id === editingRecordId)
+    const existingRecord = targetEditingRecordId
+      ? records.find((record) => record.id === targetEditingRecordId)
       : null;
     const nextRecord: OvertimeRecord = {
       id: existingRecord?.id || createRecordId(),
@@ -1051,7 +409,7 @@ export default function OvertimePage() {
     };
 
     const didPersist = await persistRecords([
-      ...records.filter((record) => record.id !== editingRecordId),
+      ...records.filter((record) => record.id !== targetEditingRecordId),
       nextRecord,
     ]);
 
@@ -1130,16 +488,14 @@ export default function OvertimePage() {
       beforeMinutes: quickBefore10Minutes,
       afterHours: quickAfter10Hours,
       afterMinutes: quickAfter10Minutes,
-      editingRecordId,
+      targetEditingRecordId: editingRecordId,
       applyNormalized: (values) => {
         setQuickBefore10Hours(values.beforeHours);
         setQuickBefore10Minutes(values.beforeMinutes);
         setQuickAfter10Hours(values.afterHours);
         setQuickAfter10Minutes(values.afterMinutes);
       },
-      onSaved: () => {
-        resetQuickAddForm();
-      },
+      onSaved: resetQuickAddForm,
     });
   };
 
@@ -1276,28 +632,11 @@ export default function OvertimePage() {
         />
 
         <SurfaceCard>
-          <RuleSelectorCard>
-            <RuleSelectorHeader>
-              <div>
-                <RuleSelectorTitle>계산 요건</RuleSelectorTitle>
-                <RuleSelectorDescription>
-                  {activeRule.description}
-                </RuleSelectorDescription>
-              </div>
-              <RuleSelectorTabs>
-                {Object.values(OVERTIME_RULES).map((rule) => (
-                  <RuleSelectorButton
-                    key={rule.id}
-                    type="button"
-                    $isActive={ruleId === rule.id}
-                    onClick={() => handleChangeRule(rule.id)}
-                  >
-                    {rule.shortLabel}
-                  </RuleSelectorButton>
-                ))}
-              </RuleSelectorTabs>
-            </RuleSelectorHeader>
-          </RuleSelectorCard>
+          <RuleSelector
+            activeRuleId={ruleId}
+            activeRuleDescription={activeRule.description}
+            onChangeRule={handleChangeRule}
+          />
 
           <TabList>
             <TabButton
@@ -1317,1533 +656,123 @@ export default function OvertimePage() {
           </TabList>
 
           {activeTab === "calculator" ? (
-            <TabPanel>
-              <GuideText>
-                시간/분으로 입력할 수 있어요.
-                <br />분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로
-                `4시간 0분` 으로 바뀝니다.
-              </GuideText>
-
-              <SplitGrid>
-                <DurationCard>
-                  <FieldLabel>10시 전 야근</FieldLabel>
-                  <DurationInputs>
-                    <CompactInput
-                      type="text"
-                      min="0"
-                      placeholder="시간"
-                      value={calcBefore10Hours}
-                      onChange={(event) =>
-                        setCalcBefore10Hours(event.target.value)
-                      }
-                    />
-                    <UnitText>시간</UnitText>
-                    <CompactInput
-                      type="text"
-                      min="0"
-                      placeholder="분"
-                      value={calcBefore10Minutes}
-                      onChange={(event) =>
-                        setCalcBefore10Minutes(event.target.value)
-                      }
-                      onBlur={() =>
-                        applyDurationNormalization(
-                          calcBefore10Hours,
-                          calcBefore10Minutes,
-                          setCalcBefore10Hours,
-                          setCalcBefore10Minutes,
-                        )
-                      }
-                    />
-                    <UnitText>분</UnitText>
-                  </DurationInputs>
-                </DurationCard>
-
-                <DurationCard>
-                  <FieldLabel>10시 이후 야근</FieldLabel>
-                  <DurationInputs>
-                    <CompactInput
-                      type="text"
-                      min="0"
-                      placeholder="시간"
-                      value={calcAfter10Hours}
-                      onChange={(event) =>
-                        setCalcAfter10Hours(event.target.value)
-                      }
-                    />
-                    <UnitText>시간</UnitText>
-                    <CompactInput
-                      type="text"
-                      min="0"
-                      placeholder="분"
-                      value={calcAfter10Minutes}
-                      onChange={(event) =>
-                        setCalcAfter10Minutes(event.target.value)
-                      }
-                      onBlur={() =>
-                        applyDurationNormalization(
-                          calcAfter10Hours,
-                          calcAfter10Minutes,
-                          setCalcAfter10Hours,
-                          setCalcAfter10Minutes,
-                        )
-                      }
-                    />
-                    <UnitText>분</UnitText>
-                  </DurationInputs>
-                </DurationCard>
-              </SplitGrid>
-
-              <PrimaryButton type="button" onClick={handleCalculate}>
-                계산하기
-              </PrimaryButton>
-
-              <ResultBox>
-                {calcResult ||
-                  "10시 전/이후 야근 시간을 입력하고 계산해보세요."}
-              </ResultBox>
-
-              {calcSummary &&
-                calcSummary.totalRawMinutes > 0 &&
-                calcTargetGuide && (
-                  <NoticeCard>
-                    <TargetDayTabs>
-                      {TARGET_DAY_OPTIONS.map((option) => (
-                        <TargetDayButton
-                          key={`calc-${option}`}
-                          type="button"
-                          $isActive={calcTargetDays === option}
-                          onClick={() => setCalcTargetDays(option)}
-                        >
-                          {option}일
-                        </TargetDayButton>
-                      ))}
-                    </TargetDayTabs>
-                    <NoticeContent>
-                      <strong>
-                        사용 가능 {calcTargetDays.toFixed(2)}까지 더 필요해요
-                      </strong>
-                      {calcTargetGuide.isReached ? (
-                        <span>
-                          이미 {calcTargetDays.toFixed(2)} 이상 사용 가능한
-                          상태예요.
-                        </span>
-                      ) : (
-                        <>
-                          <span>
-                            10시 전만 추가하면{" "}
-                            {formatRawDuration(calcTargetGuide.before10Minutes)}
-                          </span>
-                          <span>
-                            10시 이후만 추가하면{" "}
-                            {formatRawDuration(calcTargetGuide.after10Minutes)}
-                          </span>
-                        </>
-                      )}
-                    </NoticeContent>
-                  </NoticeCard>
-                )}
-            </TabPanel>
+            <CalculatorTab
+              calcBefore10Hours={calcBefore10Hours}
+              calcBefore10Minutes={calcBefore10Minutes}
+              calcAfter10Hours={calcAfter10Hours}
+              calcAfter10Minutes={calcAfter10Minutes}
+              calcResult={calcResult}
+              calcSummary={calcSummary}
+              calcTargetDays={calcTargetDays}
+              calcTargetGuide={calcTargetGuide}
+              onChangeCalcBefore10Hours={setCalcBefore10Hours}
+              onChangeCalcBefore10Minutes={setCalcBefore10Minutes}
+              onChangeCalcAfter10Hours={setCalcAfter10Hours}
+              onChangeCalcAfter10Minutes={setCalcAfter10Minutes}
+              onNormalizeBefore10={() =>
+                applyDurationNormalization(
+                  calcBefore10Hours,
+                  calcBefore10Minutes,
+                  setCalcBefore10Hours,
+                  setCalcBefore10Minutes,
+                )
+              }
+              onNormalizeAfter10={() =>
+                applyDurationNormalization(
+                  calcAfter10Hours,
+                  calcAfter10Minutes,
+                  setCalcAfter10Hours,
+                  setCalcAfter10Minutes,
+                )
+              }
+              onCalculate={handleCalculate}
+              onChangeCalcTargetDays={setCalcTargetDays}
+            />
           ) : (
-            <TabPanel>
-              <StatsRow>
-                <StatCard>
-                  <span>{formatMonthLabel(currentMonth)} 기록</span>
-                  <strong>{monthlyRecords.length}건</strong>
-                </StatCard>
-                <StatCard>
-                  <span>누적 야근시간</span>
-                  <strong>
-                    {formatRawDuration(recordSummary.totalRawMinutes)}
-                  </strong>
-                </StatCard>
-                <StatCard>
-                  <span>사용 가능 일수</span>
-                  <strong>{formatDayValue(recordSummary.usableDays)}</strong>
-                </StatCard>
-              </StatsRow>
-
-              {recordSummary.totalRawMinutes > 0 && (
-                <NoticeCard>
-                  <TargetDayTabs>
-                    {TARGET_DAY_OPTIONS.map((option) => (
-                      <TargetDayButton
-                        key={option}
-                        type="button"
-                        $isActive={targetUsableDays === option}
-                        onClick={() => setTargetUsableDays(option)}
-                      >
-                        {option}일
-                      </TargetDayButton>
-                    ))}
-                  </TargetDayTabs>
-                  <NoticeContent>
-                    <strong>
-                      사용 가능 {targetUsableDays.toFixed(2)}까지 더 필요해요
-                    </strong>
-                    {targetDayGuide.isReached ? (
-                      <span>
-                        이미 {targetUsableDays.toFixed(2)} 이상 사용 가능한
-                        상태예요.
-                      </span>
-                    ) : (
-                      <>
-                        <span>
-                          10시 전만 추가하면{" "}
-                          {formatRawDuration(targetDayGuide.before10Minutes)}
-                        </span>
-                        <span>
-                          10시 이후만 추가하면{" "}
-                          {formatRawDuration(targetDayGuide.after10Minutes)}
-                        </span>
-                      </>
-                    )}
-                  </NoticeContent>
-                </NoticeCard>
-              )}
-
-              <ResultBox>{recordResult}</ResultBox>
-
-              <SectionDivider />
-
-              <SectionHeader>
-                <SectionTitle>야근 기록 캘린더</SectionTitle>
-                <CalendarToolbar>
-                  <CalendarToolbarMain>
-                    <CalendarNavButton
-                      type="button"
-                      onClick={() => moveMonth(-1)}
-                    >
-                      이전
-                    </CalendarNavButton>
-                    <CalendarMonthLabel>
-                      {formatMonthLabel(currentMonth)}
-                    </CalendarMonthLabel>
-                    <CalendarNavButton
-                      type="button"
-                      onClick={() => moveMonth(1)}
-                    >
-                      다음
-                    </CalendarNavButton>
-                    <TodayButton
-                      type="button"
-                      onClick={() => {
-                        const todayDate = parseDateKey(todayKey);
-                        setCurrentMonth(todayDate);
-                        setSelectedDate(todayKey);
-                        resetQuickAddForm();
-                      }}
-                    >
-                      오늘
-                    </TodayButton>
-                  </CalendarToolbarMain>
-                  <WeekendToggleButton
-                    type="button"
-                    $isActive={showWeekends}
-                    onClick={() => setShowWeekends((prev) => !prev)}
-                  >
-                    주말 {showWeekends ? "ON" : "OFF"}
-                  </WeekendToggleButton>
-                </CalendarToolbar>
-              </SectionHeader>
-
-              <WeekdayRow $columns={visibleWeekdays.length}>
-                {WEEKDAYS.map((weekday) =>
-                  visibleWeekdays.includes(weekday) ? (
-                    <WeekdayCell key={weekday}>{weekday}</WeekdayCell>
-                  ) : null,
-                )}
-              </WeekdayRow>
-
-              <CalendarGrid $columns={visibleWeekdays.length}>
-                {calendarWeeks.flatMap((week, weekIndex) =>
-                  week
-                    .filter(
-                      (_, weekdayIndex) =>
-                        showWeekends ||
-                        (weekdayIndex !== 0 && weekdayIndex !== 6),
-                    )
-                    .map((day, dayIndex) => {
-                      if (!day) {
-                        return (
-                          <CalendarPlaceholder
-                            key={`empty-${weekIndex}-${dayIndex}`}
-                          />
-                        );
-                      }
-
-                      const bucket = recordsByDate.get(day.dateKey);
-
-                      return (
-                        <CalendarCellButton
-                          key={day.dateKey}
-                          type="button"
-                          $isCurrentMonth={true}
-                          $isSelected={selectedDate === day.dateKey}
-                          $isToday={day.isToday}
-                          onClick={() => {
-                            setSelectedDate(day.dateKey);
-                            resetQuickAddForm();
-                          }}
-                        >
-                          <CalendarDayNumber>{day.dayNumber}</CalendarDayNumber>
-                          {bucket && (
-                            <CalendarDaySummary>
-                              {bucket.before10Minutes > 0 && (
-                                <span>
-                                  {formatCompactDuration(
-                                    bucket.before10Minutes,
-                                  )}
-                                </span>
-                              )}
-                              {bucket.after10Minutes > 0 && (
-                                <span>
-                                  {formatCompactDuration(bucket.after10Minutes)}
-                                </span>
-                              )}
-                            </CalendarDaySummary>
-                          )}
-                        </CalendarCellButton>
-                      );
-                    }),
-                )}
-              </CalendarGrid>
-
-              <SelectedDatePanel>
-                <QuickAddHeader>
-                  <QuickAddTitle>
-                    {formatDisplayDate(selectedDate)} -{" "}
-                    {editingRecordId ? "수정 중" : "새 기록 추가"}
-                  </QuickAddTitle>
-                  {editingRecordId && (
-                    <EditCancelButton type="button" onClick={resetQuickAddForm}>
-                      수정 취소
-                    </EditCancelButton>
-                  )}
-                </QuickAddHeader>
-                <QuickAddCard>
-                  {selectedDateBucket ? (
-                    <>
-                      <RecordList>
-                        {selectedDateBucket.records.map((record) => (
-                          <RecordItem key={record.id}>
-                            <RecordInfo>
-                              <span>
-                                <MutedPrefix>10시 전</MutedPrefix>{" "}
-                                {formatRawDuration(record.before10Minutes)}
-                              </span>
-                              <span>
-                                <MutedPrefix>10시 이후</MutedPrefix>{" "}
-                                {formatRawDuration(record.after10Minutes)}
-                              </span>
-                            </RecordInfo>
-                            <RecordActions>
-                              <EditButton
-                                type="button"
-                                onClick={() => handleEditRecord(record)}
-                                disabled={isServerLoading}
-                              >
-                                수정
-                              </EditButton>
-                              <DeleteButton
-                                type="button"
-                                onClick={() => handleDeleteRecord(record.id)}
-                                disabled={isServerLoading}
-                              >
-                                삭제
-                              </DeleteButton>
-                            </RecordActions>
-                          </RecordItem>
-                        ))}
-                      </RecordList>
-                    </>
-                  ) : (
-                    <EmptyItem>
-                      {storageMode === "server" && !serverRoom
-                        ? "먼저 서버 저장 방을 연결해주세요."
-                        : "선택한 날짜에 저장된 야근 기록이 없습니다."}
-                    </EmptyItem>
-                  )}
-                  <SplitGrid>
-                    <DurationCard>
-                      <FieldLabel>10시 전 야근</FieldLabel>
-                      <DurationInputs>
-                        <CompactInput
-                          type="text"
-                          min="0"
-                          placeholder="시간"
-                          value={quickBefore10Hours}
-                          onChange={(event) =>
-                            setQuickBefore10Hours(event.target.value)
-                          }
-                        />
-                        <UnitText>시간</UnitText>
-                        <CompactInput
-                          type="text"
-                          min="0"
-                          placeholder="분"
-                          value={quickBefore10Minutes}
-                          onChange={(event) =>
-                            setQuickBefore10Minutes(event.target.value)
-                          }
-                          onBlur={() =>
-                            applyDurationNormalization(
-                              quickBefore10Hours,
-                              quickBefore10Minutes,
-                              setQuickBefore10Hours,
-                              setQuickBefore10Minutes,
-                            )
-                          }
-                        />
-                        <UnitText>분</UnitText>
-                      </DurationInputs>
-                    </DurationCard>
-
-                    <DurationCard>
-                      <FieldLabel>10시 이후 야근</FieldLabel>
-                      <DurationInputs>
-                        <CompactInput
-                          type="text"
-                          min="0"
-                          placeholder="시간"
-                          value={quickAfter10Hours}
-                          onChange={(event) =>
-                            setQuickAfter10Hours(event.target.value)
-                          }
-                        />
-                        <UnitText>시간</UnitText>
-                        <CompactInput
-                          type="text"
-                          min="0"
-                          placeholder="분"
-                          value={quickAfter10Minutes}
-                          onChange={(event) =>
-                            setQuickAfter10Minutes(event.target.value)
-                          }
-                          onBlur={() =>
-                            applyDurationNormalization(
-                              quickAfter10Hours,
-                              quickAfter10Minutes,
-                              setQuickAfter10Hours,
-                              setQuickAfter10Minutes,
-                            )
-                          }
-                        />
-                        <UnitText>분</UnitText>
-                      </DurationInputs>
-                    </DurationCard>
-                  </SplitGrid>
-                  <PrimaryButton
-                    type="button"
-                    onClick={handleQuickAddRecord}
-                    disabled={
-                      isServerLoading ||
-                      (storageMode === "server" && !serverRoom)
-                    }
-                  >
-                    {editingRecordId
-                      ? `${formatDisplayDate(selectedDate)} 수정 저장하기`
-                      : `${formatDisplayDate(selectedDate)}에 추가하기`}
-                  </PrimaryButton>
-                </QuickAddCard>
-              </SelectedDatePanel>
-
-              <SectionDivider />
-
-              <AccordionSection>
-                <AccordionHeader>
-                  <SectionTitle>
-                    {formatMonthLabel(currentMonth)} 저장된 야근 기록
-                  </SectionTitle>
-                  <AccordionToggleButton
-                    type="button"
-                    onClick={() => setIsRecordsExpanded((prev) => !prev)}
-                  >
-                    {isRecordsExpanded ? "접기" : "더보기"}
-                  </AccordionToggleButton>
-                </AccordionHeader>
-                {isRecordsExpanded ? (
-                  <RecordList>
-                    {displayedRecords.length === 0 ? (
-                      <EmptyItem>
-                        {storageMode === "server" && !serverRoom
-                          ? "먼저 서버 저장 방을 연결해주세요."
-                          : "저장된 야근 기록이 없습니다."}
-                      </EmptyItem>
-                    ) : (
-                      displayedRecords.map((record) => (
-                        <RecordItem key={record.id}>
-                          <RecordInfo>
-                            <strong>{record.date}</strong>
-                            <span>
-                              <MutedPrefix>10시 전</MutedPrefix>{" "}
-                              {formatRawDuration(record.before10Minutes)}
-                            </span>
-                            <span>
-                              <MutedPrefix>10시 이후</MutedPrefix>{" "}
-                              {formatRawDuration(record.after10Minutes)}
-                            </span>
-                          </RecordInfo>
-                          <RecordActions>
-                            <EditButton
-                              type="button"
-                              onClick={() => handleEditRecord(record)}
-                              disabled={isServerLoading}
-                            >
-                              수정
-                            </EditButton>
-                            <DeleteButton
-                              type="button"
-                              onClick={() => handleDeleteRecord(record.id)}
-                              disabled={isServerLoading}
-                            >
-                              삭제
-                            </DeleteButton>
-                          </RecordActions>
-                        </RecordItem>
-                      ))
-                    )}
-                  </RecordList>
-                ) : (
-                  <AccordionHint>
-                    현재 월 기록은 더보기로 펼쳐서 확인할 수 있어요.
-                  </AccordionHint>
-                )}
-              </AccordionSection>
-
-              <DangerButton
-                type="button"
-                onClick={handleClearRecords}
-                disabled={records.length === 0 || isServerLoading}
-              >
-                전체 기록 초기화
-              </DangerButton>
-
-              <StorageCard>
-                <StorageHeader>
-                  <div>
-                    <StorageTitle>기록 저장 방식</StorageTitle>
-                    <StorageDescription>
-                      {storageMode === "local"
-                        ? "바로 기록하고 이 브라우저에만 저장할 수 있어요."
-                        : serverRoom
-                          ? "서버 저장 방에 연결되어 있어서 다른 브라우저에서도 같은 기록을 불러올 수 있어요."
-                          : "서버 저장 방을 만들거나 방 코드로 연결하면 기록을 서버에 저장할 수 있어요."}
-                    </StorageDescription>
-                  </div>
-                  <StorageModeTabs>
-                    <StorageModeButton
-                      type="button"
-                      $isActive={storageMode === "local"}
-                      onClick={() => handleSwitchStorageMode("local")}
-                    >
-                      로컬 저장
-                    </StorageModeButton>
-                    <StorageModeButton
-                      type="button"
-                      $isActive={storageMode === "server"}
-                      onClick={() => handleSwitchStorageMode("server")}
-                    >
-                      서버 저장
-                    </StorageModeButton>
-                  </StorageModeTabs>
-                </StorageHeader>
-
-                {storageMode === "server" ? (
-                  serverRoom ? (
-                    <ConnectedRoomCard>
-                      <ConnectedRoomInfo>
-                        <span>연결된 방</span>
-                        <strong>{serverRoom.roomName}</strong>
-                        <small>{serverRoom.roomRef}</small>
-                      </ConnectedRoomInfo>
-                      <StorageActions>
-                        <SecondaryButton
-                          type="button"
-                          onClick={handleCopyRoomCode}
-                          disabled={isServerLoading}
-                        >
-                          코드 복사
-                        </SecondaryButton>
-                        <SecondaryButton
-                          type="button"
-                          onClick={handleConnectServerRoom}
-                          disabled={isServerLoading}
-                        >
-                          다시 불러오기
-                        </SecondaryButton>
-                        <DangerGhostButton
-                          type="button"
-                          onClick={handleDisconnectServerRoom}
-                          disabled={isServerLoading}
-                        >
-                          연결 해제
-                        </DangerGhostButton>
-                      </StorageActions>
-                    </ConnectedRoomCard>
-                  ) : (
-                    <StorageSetupGrid>
-                      <StorageSetupCard>
-                        <StorageLabel>새 서버 방 만들기</StorageLabel>
-                        <StorageInlineField>
-                          <StorageInput
-                            placeholder="예: 2026년 야근 기록"
-                            value={roomNameInput}
-                            onChange={(event) =>
-                              setRoomNameInput(event.target.value)
-                            }
-                            disabled={isServerLoading}
-                          />
-                          <SecondaryButton
-                            type="button"
-                            onClick={handleCreateServerRoom}
-                            disabled={isServerLoading}
-                          >
-                            방 만들기
-                          </SecondaryButton>
-                        </StorageInlineField>
-                      </StorageSetupCard>
-
-                      <StorageSetupCard>
-                        <StorageLabel>기존 서버 방 불러오기</StorageLabel>
-                        <StorageInlineField>
-                          <StorageInput
-                            placeholder="방 코드 입력"
-                            value={roomCodeInput}
-                            onChange={(event) =>
-                              setRoomCodeInput(event.target.value)
-                            }
-                            disabled={isServerLoading}
-                          />
-                          <SecondaryButton
-                            type="button"
-                            onClick={handleConnectServerRoom}
-                            disabled={isServerLoading}
-                          >
-                            불러오기
-                          </SecondaryButton>
-                        </StorageInlineField>
-                      </StorageSetupCard>
-                    </StorageSetupGrid>
-                  )
-                ) : (
-                  <StorageHint>
-                    로컬 저장은 지금 쓰고 있는 브라우저에서만 유지돼요. 다른
-                    기기에서도 이어서 보고 싶다면 서버 저장 방을 연결해보세요.
-                  </StorageHint>
-                )}
-              </StorageCard>
-            </TabPanel>
+            <RecordsTab
+              currentMonth={currentMonth}
+              monthlyRecordCount={monthlyRecords.length}
+              recordSummary={recordSummary}
+              recordResult={recordResult}
+              targetUsableDays={targetUsableDays}
+              targetDayGuide={targetDayGuide}
+              visibleWeekdays={visibleWeekdays}
+              calendarWeeks={calendarWeeks}
+              recordsByDate={recordsByDate}
+              showWeekends={showWeekends}
+              selectedDate={selectedDate}
+              selectedDateBucket={selectedDateBucket}
+              quickBefore10Hours={quickBefore10Hours}
+              quickBefore10Minutes={quickBefore10Minutes}
+              quickAfter10Hours={quickAfter10Hours}
+              quickAfter10Minutes={quickAfter10Minutes}
+              editingRecordId={editingRecordId}
+              isRecordsExpanded={isRecordsExpanded}
+              displayedRecords={displayedRecords}
+              recordsLength={records.length}
+              storageMode={storageMode}
+              serverRoom={serverRoom}
+              roomNameInput={roomNameInput}
+              roomCodeInput={roomCodeInput}
+              isServerLoading={isServerLoading}
+              onChangeTargetUsableDays={setTargetUsableDays}
+              onMoveMonth={moveMonth}
+              onGoToday={() => {
+                const todayDate = parseDateKey(todayKey);
+                setCurrentMonth(todayDate);
+                setSelectedDate(todayKey);
+                resetQuickAddForm();
+              }}
+              onToggleWeekends={() => setShowWeekends((prev) => !prev)}
+              onSelectDate={setSelectedDate}
+              onResetQuickAddForm={resetQuickAddForm}
+              onEditRecord={handleEditRecord}
+              onDeleteRecord={handleDeleteRecord}
+              onChangeQuickBefore10Hours={setQuickBefore10Hours}
+              onChangeQuickBefore10Minutes={setQuickBefore10Minutes}
+              onChangeQuickAfter10Hours={setQuickAfter10Hours}
+              onChangeQuickAfter10Minutes={setQuickAfter10Minutes}
+              onNormalizeQuickBefore10={() =>
+                applyDurationNormalization(
+                  quickBefore10Hours,
+                  quickBefore10Minutes,
+                  setQuickBefore10Hours,
+                  setQuickBefore10Minutes,
+                )
+              }
+              onNormalizeQuickAfter10={() =>
+                applyDurationNormalization(
+                  quickAfter10Hours,
+                  quickAfter10Minutes,
+                  setQuickAfter10Hours,
+                  setQuickAfter10Minutes,
+                )
+              }
+              onSaveQuickRecord={handleQuickAddRecord}
+              onToggleRecordsExpanded={() =>
+                setIsRecordsExpanded((prev) => !prev)
+              }
+              onClearRecords={handleClearRecords}
+              onChangeStorageMode={handleSwitchStorageMode}
+              onChangeRoomNameInput={setRoomNameInput}
+              onChangeRoomCodeInput={setRoomCodeInput}
+              onCreateServerRoom={handleCreateServerRoom}
+              onConnectServerRoom={handleConnectServerRoom}
+              onCopyRoomCode={handleCopyRoomCode}
+              onDisconnectServerRoom={handleDisconnectServerRoom}
+            />
           )}
 
           <SectionDivider />
 
-          <AccordionSection>
-            <AccordionHeader>
-              <SectionTitle>보상 규칙 요약</SectionTitle>
-              <AccordionToggleButton
-                type="button"
-                onClick={() => setIsRuleGuideExpanded((prev) => !prev)}
-              >
-                {isRuleGuideExpanded ? "접기" : "더보기"}
-              </AccordionToggleButton>
-            </AccordionHeader>
-            {isRuleGuideExpanded ? (
-              <>
-                <RuleList>
-                  {activeRule.ruleSummaryItems.map((item) => (
-                    <RuleItem key={`${activeRule.id}-${item.label}`}>
-                      <span>{item.label}</span>
-                      <strong>{item.value}</strong>
-                    </RuleItem>
-                  ))}
-                </RuleList>
-                <GuidePanel>
-                  <GuideTitle>{activeRule.guideTitle}</GuideTitle>
-                  <GuideList>
-                    {activeRuleGuide.map((item) => (
-                      <GuideItem key={item.days}>
-                        <span>{item.days}일 휴가</span>
-                        <strong>
-                          {formatRawDuration(item.totalMinutes)} 야근 필요
-                        </strong>
-                      </GuideItem>
-                    ))}
-                  </GuideList>
-                </GuidePanel>
-                <SubText>{activeRule.exampleText}</SubText>
-              </>
-            ) : (
-              <AccordionHint>{activeRule.collapsedHint}</AccordionHint>
-            )}
-          </AccordionSection>
+          <RuleGuideAccordion
+            isExpanded={isRuleGuideExpanded}
+            activeRule={activeRule}
+            guideItems={activeRuleGuide}
+            onToggle={() => setIsRuleGuideExpanded((prev) => !prev)}
+          />
         </SurfaceCard>
       </StWrapper>
     </StContainer>
   );
 }
-
-const SurfaceCard = styled.section`
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  border: 1px solid #dbe7f4;
-  border-radius: 28px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
-  padding: 1.5rem;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-    border-radius: 22px;
-  }
-`;
-
-const RuleSelectorCard = styled.div`
-  margin-bottom: 1rem;
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  background: #f8fbff;
-  border: 1px solid #dbe7f4;
-`;
-
-const RuleSelectorHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-  }
-`;
-
-const RuleSelectorTitle = styled.strong`
-  display: block;
-  color: #123865;
-  font-size: 0.98rem;
-`;
-
-const RuleSelectorDescription = styled.p`
-  margin: 0.35rem 0 0;
-  color: #5a718d;
-  font-size: 0.9rem;
-  line-height: 1.55;
-`;
-
-const RuleSelectorTabs = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-`;
-
-const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
-  border-radius: 999px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const TabList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-`;
-
-const TabButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#f8fbff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#4a5d78")};
-  border-radius: 16px;
-  padding: 0.85rem 1rem;
-  font-size: 0.98rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.14);
-  }
-`;
-
-const TabPanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const GuideText = styled.p`
-  margin: 0;
-  padding: 1rem 1.1rem;
-  border-radius: 18px;
-  background: #eef5ff;
-  color: #39506c;
-  line-height: 1.7;
-  font-size: 0.95rem;
-`;
-
-const SplitGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const DurationCard = styled.div`
-  border: 1px solid #dbe7f4;
-  background: #f8fbff;
-  border-radius: 18px;
-  padding: 1rem;
-`;
-
-const DurationInputs = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  margin-top: 0.6rem;
-`;
-
-const FieldLabel = styled.label`
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #2d3b4f;
-`;
-
-const CompactInput = styled.input`
-  width: 64px;
-  min-height: 48px;
-  padding: 0.8rem 0.85rem;
-  border: 1px solid #d3deed;
-  border-radius: 14px;
-  background: #ffffff;
-  font-size: 1rem;
-  outline: none;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-  }
-`;
-
-const UnitText = styled.span`
-  color: #64748b;
-  font-weight: 600;
-`;
-
-const PrimaryButton = styled.button`
-  border: none;
-  border-radius: 16px;
-  background: #234f8d;
-  color: #ffffff;
-  padding: 0.95rem 1.15rem;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1px solid #1c4277;
-  box-shadow: 0 8px 18px rgba(35, 79, 141, 0.14);
-  transition:
-    background-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-
-  &:hover {
-    background: #1d457d;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(35, 79, 141, 0.18);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const DangerButton = styled(PrimaryButton)`
-  background: #c53b3b;
-  border-color: #b43333;
-  box-shadow: 0 8px 16px rgba(197, 59, 59, 0.12);
-
-  &:hover {
-    background: #b43333;
-    box-shadow: 0 10px 18px rgba(197, 59, 59, 0.16);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-`;
-
-const SecondaryButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #cfe0fb;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #234f8d;
-  padding: 0.72rem 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-`;
-
-const DangerGhostButton = styled(SecondaryButton)`
-  border-color: #fecaca;
-  color: #b91c1c;
-`;
-
-const ResultBox = styled.pre`
-  margin: 0;
-  padding: 1rem 1.1rem;
-  border-radius: 18px;
-  background: #0f172a;
-  color: #f8fafc;
-  font-family: inherit;
-  white-space: pre-wrap;
-  line-height: 1.7;
-  font-size: 0.95rem;
-`;
-
-const StatsRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem 1.1rem;
-  border-radius: 18px;
-  background: #f7fbff;
-  border: 1px solid #dbe7f4;
-
-  span {
-    color: #64748b;
-    font-size: 0.85rem;
-  }
-
-  strong {
-    color: #0f172a;
-    font-size: 1.05rem;
-  }
-`;
-
-const StorageCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  background: #f8fbff;
-  border: 1px solid #dbe7f4;
-`;
-
-const StorageHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-  }
-`;
-
-const StorageTitle = styled.strong`
-  display: block;
-  color: #123865;
-  font-size: 0.98rem;
-`;
-
-const StorageDescription = styled.p`
-  margin: 0.35rem 0 0;
-  color: #5a718d;
-  font-size: 0.9rem;
-  line-height: 1.55;
-`;
-
-const StorageModeTabs = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-`;
-
-const StorageModeButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
-  border-radius: 999px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const StorageSetupGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StorageSetupCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  min-width: 0;
-  padding: 0.9rem;
-  border-radius: 16px;
-  border: 1px solid #dbe7f4;
-  background: #ffffff;
-`;
-
-const StorageLabel = styled.label`
-  color: #2d3b4f;
-  font-size: 0.88rem;
-  font-weight: 700;
-`;
-
-const StorageInlineField = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.55rem;
-
-  ${SecondaryButton} {
-    width: 100%;
-    justify-content: center;
-  }
-`;
-
-const StorageInput = styled.input`
-  width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid #d3deed;
-  border-radius: 14px;
-  background: #ffffff;
-  font-size: 0.95rem;
-  outline: none;
-
-  &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-  }
-`;
-
-const StorageHint = styled.p`
-  margin: 0;
-  color: #5a718d;
-  font-size: 0.9rem;
-  line-height: 1.6;
-`;
-
-const ConnectedRoomCard = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 16px;
-  border: 1px solid #dbe7f4;
-  background: #ffffff;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`;
-
-const ConnectedRoomInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-
-  span {
-    color: #64748b;
-    font-size: 0.82rem;
-    font-weight: 700;
-  }
-
-  strong {
-    color: #0f172a;
-    font-size: 1rem;
-  }
-
-  small {
-    color: #64748b;
-    font-size: 0.82rem;
-  }
-`;
-
-const StorageActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-`;
-
-const NoticeCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem 1.1rem;
-  border-radius: 18px;
-  background: #eef5ff;
-  border: 1px solid #cfe0fb;
-  color: #234f8d;
-
-  strong {
-    font-size: 0.96rem;
-    color: #123865;
-  }
-
-  span {
-    font-size: 0.9rem;
-    color: #31567d;
-  }
-`;
-
-const TargetDayTabs = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 10px;
-`;
-
-const NoticeContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-`;
-
-const TargetDayButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#cfe0fb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#234f8d")};
-  border-radius: 999px;
-  padding: 0.35rem 0.45rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const SectionDivider = styled.hr`
-  margin: 1.75rem 0 1.25rem;
-  border: none;
-  border-top: 1px solid #e2e8f0;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0;
-  color: #0f172a;
-  font-size: 1.08rem;
-  font-weight: 800;
-`;
-
-const CalendarToolbar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-  width: 100%;
-`;
-
-const CalendarToolbarMain = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-`;
-
-const CalendarNavButton = styled.button`
-  border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #334155;
-  border-radius: 12px;
-  padding: 0.55rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const TodayButton = styled(CalendarNavButton)`
-  background: #eef5ff;
-  color: #234f8d;
-  border-color: #cfe0fb;
-`;
-
-const CalendarMonthLabel = styled.strong`
-  color: #0f172a;
-  font-size: 1rem;
-  font-weight: 800;
-  margin-right: 0.2rem;
-`;
-
-const WeekendToggleButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#eef5ff" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#234f8d" : "#475569")};
-  border-radius: 12px;
-  padding: 0.55rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const WeekdayRow = styled.div<{ $columns: number }>`
-  display: grid;
-  grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
-  gap: 0.5rem;
-`;
-
-const WeekdayCell = styled.div`
-  text-align: center;
-  color: #64748b;
-  font-size: 0.84rem;
-  font-weight: 700;
-`;
-
-const CalendarGrid = styled.div<{ $columns: number }>`
-  display: grid;
-  grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
-  gap: 0.5rem;
-
-  @media (max-width: 720px) {
-    gap: 0.35rem;
-  }
-`;
-
-const CalendarCellButton = styled.button<{
-  $isCurrentMonth: boolean;
-  $isSelected: boolean;
-  $isToday: boolean;
-}>`
-  height: 100px;
-  border-radius: 16px;
-  padding: 0.7rem;
-  border: 1px solid
-    ${({ $isSelected, $isToday }) =>
-      $isSelected ? "#234f8d" : $isToday ? "#60a5fa" : "#dbe7f4"};
-  background: ${({ $isSelected }) => ($isSelected ? "#eef5ff" : "#ffffff")};
-  color: ${({ $isCurrentMonth }) => ($isCurrentMonth ? "#0f172a" : "#94a3b8")};
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  cursor: pointer;
-
-  @media (max-width: 720px) {
-    height: 100px;
-    padding: 0.55rem;
-  }
-`;
-
-const CalendarPlaceholder = styled.div`
-  height: 100px;
-
-  @media (max-width: 720px) {
-    height: 100px;
-  }
-`;
-
-const CalendarDayNumber = styled.span`
-  font-size: 0.95rem;
-  font-weight: 800;
-`;
-
-const CalendarDaySummary = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.73rem;
-  line-height: 1.35;
-  color: #334155;
-
-  span {
-    display: block;
-    background: #f8fbff;
-    border-radius: 10px;
-    padding: 0.2rem 0.35rem;
-  }
-`;
-
-const MutedPrefix = styled.span`
-  color: #8a99b2;
-  font-weight: 600;
-  margin-right: 0.3rem;
-`;
-
-const SelectedDatePanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-`;
-
-const QuickAddCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-`;
-
-const QuickAddHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  min-height: 35px;
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`;
-
-const QuickAddTitle = styled.strong`
-  color: #123865;
-  font-size: 0.96rem;
-`;
-
-const EditCancelButton = styled.button`
-  border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #475569;
-  border-radius: 12px;
-  padding: 0.5rem 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const AccordionSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  border: 1px solid #dbe7f4;
-  background: #f8fbff;
-  border-radius: 20px;
-  padding: 1rem;
-`;
-
-const AccordionHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const AccordionToggleButton = styled.button`
-  border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #234f8d;
-  border-radius: 12px;
-  padding: 0.55rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const AccordionHint = styled.p`
-  margin: 0;
-  color: #64748b;
-  font-size: 0.92rem;
-  line-height: 1.6;
-`;
-
-const SubText = styled.p`
-  margin: 0.85rem 0 0;
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.6;
-`;
-
-const RecordList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-`;
-
-const RecordItem = styled.li`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-
-  @media (max-width: 640px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-`;
-
-const RecordActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-`;
-
-const EditButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  background: #e0ecff;
-  color: #1d4f91;
-  padding: 0.65rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-`;
-
-const EmptyItem = styled.div`
-  padding: 1rem;
-  border-radius: 16px;
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
-`;
-
-const RecordInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-
-  strong {
-    color: #0f172a;
-  }
-
-  span {
-    color: #64748b;
-
-    ${MutedPrefix} {
-      display: inline-block;
-      width: 70px;
-    }
-  }
-`;
-
-const DeleteButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 0.65rem 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-`;
-
-const RuleList = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const GuidePanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 20px;
-  background: #f8fbff;
-  border: 1px solid #dbe7f4;
-`;
-
-const GuideTitle = styled.h3`
-  margin: 0;
-  color: #123865;
-  font-size: 1rem;
-  font-weight: 800;
-`;
-
-const GuideList = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-`;
-
-const GuideItem = styled.li`
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #dbe7f4;
-  color: #334155;
-
-  strong {
-    color: #0f172a;
-  }
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-`;
-
-const RuleItem = styled.li`
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 16px;
-  background: #f8fbff;
-  border: 1px solid #dbe7f4;
-  color: #334155;
-
-  strong {
-    color: #0f172a;
-  }
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-`;
