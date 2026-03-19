@@ -87,7 +87,6 @@ interface RecordsTabProps {
   editingRecordId: string | null;
   isRecordsExpanded: boolean;
   displayedRecords: OvertimeRecord[];
-  recordsLength: number;
   storageMode: StorageMode;
   serverRoom: OvertimeRoomInfo | null;
   roomNameInput: string;
@@ -139,7 +138,6 @@ export default function RecordsTab({
   editingRecordId,
   isRecordsExpanded,
   displayedRecords,
-  recordsLength,
   storageMode,
   serverRoom,
   roomNameInput,
@@ -457,9 +455,9 @@ export default function RecordsTab({
       <DangerButton
         type="button"
         onClick={onClearRecords}
-        disabled={recordsLength === 0 || isServerLoading}
+        disabled={monthlyRecordCount === 0 || isServerLoading}
       >
-        전체 기록 초기화
+        현재 월 기록 초기화
       </DangerButton>
 
       <StorageModeCard

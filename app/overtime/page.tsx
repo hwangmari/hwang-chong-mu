@@ -28,6 +28,7 @@ import {
   buildSummaryMessage,
   createRecordId,
   formatDateKey,
+  formatMonthLabel,
   formatMonthKey,
   getAdditionalMinutesForTargetDays,
   getDurationMinutes,
@@ -527,20 +528,16 @@ export default function OvertimePage() {
   };
 
   const handleClearRecords = async () => {
-    if (!window.confirm("모든 기록을 삭제하시겠습니까?")) {
+    const targetMonthLabel = formatMonthLabel(currentMonth);
+    if (!window.confirm(`${targetMonthLabel} 기록만 삭제하시겠습니까?`)) {
       return;
     }
 
-    if (storageMode === "server") {
-      const didPersist = await persistServerRecords([]);
-      if (didPersist) {
-        setServerRecords([]);
-      }
-      return;
-    }
-
-    setLocalRecords([]);
-    localStorage.removeItem(STORAGE_KEY);
+    const nextRecords = records.filter(
+      (record) => !record.date.startsWith(currentMonthKey),
+    );
+    await persistRecords(nextRecords);
+    resetQuickAddForm();
   };
 
   const handleSwitchStorageMode = (nextMode: StorageMode) => {
@@ -712,7 +709,6 @@ export default function OvertimePage() {
               editingRecordId={editingRecordId}
               isRecordsExpanded={isRecordsExpanded}
               displayedRecords={displayedRecords}
-              recordsLength={records.length}
               storageMode={storageMode}
               serverRoom={serverRoom}
               roomNameInput={roomNameInput}
