@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PageIntro from "@/components/common/PageIntro";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import CalculatorTab from "@/app/overtime/components/CalculatorTab";
@@ -63,23 +63,9 @@ export default function OvertimePage() {
   } = useOvertimePersistence();
 
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
-  const [storageMode, setStorageMode] = useState<StorageMode>(() => {
-    if (typeof window === "undefined") {
-      return "local";
-    }
-
-    return localStorage.getItem(STORAGE_MODE_KEY) === "server"
-      ? "server"
-      : "local";
-  });
-  const [ruleId, setRuleId] = useState<OvertimeRuleId>(() => {
-    if (typeof window === "undefined") {
-      return "threshold_15h";
-    }
-
-    const savedRule = localStorage.getItem(RULE_KEY);
-    return savedRule === "from_1830" ? "from_1830" : "threshold_15h";
-  });
+  const hasLoadedClientStateRef = useRef(false);
+  const [storageMode, setStorageMode] = useState<StorageMode>("local");
+  const [ruleId, setRuleId] = useState<OvertimeRuleId>("threshold_15h");
   const [currentMonth, setCurrentMonth] = useState(() =>
     parseDateKey(todayKey),
   );
@@ -103,18 +89,35 @@ export default function OvertimePage() {
   const [roomNameInput, setRoomNameInput] = useState("");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [serverRoom, setServerRoom] = useState<OvertimeRoomInfo | null>(null);
-  const [localRecords, setLocalRecords] = useState<OvertimeRecord[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    return parseStoredRecords(localStorage.getItem(STORAGE_KEY));
-  });
+  const [localRecords, setLocalRecords] = useState<OvertimeRecord[]>([]);
   const [serverRecords, setServerRecords] = useState<OvertimeRecord[]>([]);
 
   const activeRule = OVERTIME_RULES[ruleId];
   const activeRuleGuide = useMemo(() => getRuleGuideItems(activeRule), [activeRule]);
   const records = storageMode === "server" ? serverRecords : localRecords;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setStorageMode(
+        localStorage.getItem(STORAGE_MODE_KEY) === "server"
+          ? "server"
+          : "local",
+      );
+
+      const savedRule = localStorage.getItem(RULE_KEY);
+      setRuleId(savedRule === "from_1830" ? "from_1830" : "threshold_15h");
+      setLocalRecords(parseStoredRecords(localStorage.getItem(STORAGE_KEY)));
+      hasLoadedClientStateRef.current = true;
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -155,13 +158,13 @@ export default function OvertimePage() {
   }, [fetchRoomData]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && hasLoadedClientStateRef.current) {
       localStorage.setItem(STORAGE_MODE_KEY, storageMode);
     }
   }, [storageMode]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && hasLoadedClientStateRef.current) {
       localStorage.setItem(RULE_KEY, ruleId);
     }
   }, [ruleId]);
