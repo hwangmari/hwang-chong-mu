@@ -7,20 +7,16 @@ type Props = {
   title: string;
   monthLabel: string;
   monthRangeLabel: string;
-  showActions?: boolean;
   onBack?: () => void;
   onMonthMove?: (diff: number) => void;
-  onLoadSeed?: () => void;
 };
 
 export default function WorkspaceHeader({
   title,
   monthLabel,
   monthRangeLabel,
-  showActions = true,
   onBack,
   onMonthMove,
-  onLoadSeed,
 }: Props) {
   const router = useRouter();
 
@@ -61,15 +57,6 @@ export default function WorkspaceHeader({
         </StMonthHeader>
       </StHeaderCenter>
 
-      {showActions && (
-        <StHeaderRight>
-          <StTopActions>
-            <StSeedButton type="button" onClick={onLoadSeed}>
-              샘플 데이터 다시 넣기
-            </StSeedButton>
-          </StTopActions>
-        </StHeaderRight>
-      )}
     </StWorkspaceHeader>
   );
 }
@@ -132,30 +119,6 @@ const StHeaderTitle = styled.h1`
   @media (max-width: 720px) {
     font-size: 1rem;
   }
-`;
-
-const StHeaderRight = styled.div`
-  display: inline-flex;
-  padding: 0.4rem 0.65rem;
-  @media (max-width: 720px) {
-    display: none;
-  }
-`;
-
-const StTopActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  align-items: center;
-`;
-const StSeedButton = styled.button`
-  border: 1px solid #cdd9e5;
-  background: #fff;
-  color: #5c6b7f;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 0.45rem 0.8rem;
 `;
 
 const StMonthHeader = styled.div`

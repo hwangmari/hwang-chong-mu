@@ -1,21 +1,29 @@
 "use client";
 
-import { Fragment, useMemo, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useParams, useRouter } from "next/navigation";
 import { Typography } from "@hwangchongmu/ui";
-import ColorPickerPanel from "@/components/common/ColorPickerPanel";
+import {
+  changeDailyAccessCode,
+  fetchDailyMonthEntries,
+  fetchDailyMonthlyChecklist,
+  fetchDailyNotebook,
+  saveDailyEntry,
+  saveDailyMonthlyChecklist,
+} from "../repository";
 import {
   DailyNotebookConfig,
   DailyNotebookEntry,
-  getChecklistForMonth,
-  getDailyNotebookById,
-  getDailyNotebookEntries,
+  buildMonthEntries,
+  clearLegacyDailyLocalData,
+  clearStoredDailyAccessCode,
   getMonthKey,
+  getStoredDailyAccessCode,
   getTodayDateKey,
-  saveDailyNotebook,
-  saveChecklistForMonth,
-  saveDailyNotebookEntries,
+  normalizeEntries,
+  sanitizeChecklist,
+  setStoredDailyAccessCode,
   toDateLabel,
 } from "../storage";
 
@@ -29,28 +37,36 @@ function normalizeChecklistInput(items: string[]) {
   return items.map((item) => item.trim()).filter(Boolean);
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 const TREND_COLUMN_WIDTH = 220;
 const TREND_ROW_HEIGHT = 56;
-const DAILY_COLORS = ["#22c55e", "#3b82f6", "#6366f1", "#f97316", "#f43f5e", "#14b8a6", "#64748b"];
-
-function unlockedKey(notebookId: string) {
-  return `daily-unlocked:${notebookId}`;
-}
+const THEME_COLOR = "#22c55e";
 
 export default function DailyLogPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const notebookId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const [version, setVersion] = useState(0);
+  const [notebook, setNotebook] = useState<DailyNotebookConfig | null>(null);
+  const [entries, setEntries] = useState<DailyNotebookEntry[]>([]);
+  const [monthChecklist, setMonthChecklist] = useState<string[]>([]);
   const [accessInput, setAccessInput] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [accessError, setAccessError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
   const [nextAccessCode, setNextAccessCode] = useState("");
-  const [draftColor, setDraftColor] = useState(DAILY_COLORS[0]);
   const [accessNotice, setAccessNotice] = useState("");
   const [accessNoticeType, setAccessNoticeType] = useState<"success" | "error" | "">(
-    ""
+    "",
   );
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -60,36 +76,94 @@ export default function DailyLogPage() {
     Record<string, string[]>
   >({});
 
-  const isClient = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false
-  );
-  const todayDateKey = isClient ? getTodayDateKey() : "";
-  const isUnlocked =
-    isClient && notebookId
-      ? window.sessionStorage.getItem(unlockedKey(notebookId)) === "1"
-      : false;
+  useEffect(() => {
+    clearLegacyDailyLocalData();
+    if (!notebookId) {
+      setIsLoading(false);
+      return;
+    }
 
-  const notebook = useMemo<DailyNotebookConfig | null>(() => {
-    void version;
-    if (!notebookId) return null;
-    return getDailyNotebookById(notebookId);
-  }, [notebookId, version]);
+    setAccessCode(getStoredDailyAccessCode(notebookId));
+  }, [notebookId]);
 
   const monthKey = useMemo(() => getMonthKey(currentMonth), [currentMonth]);
-  const monthChecklist = useMemo(() => {
-    if (!notebook) return [];
-    return getChecklistForMonth(notebook, monthKey);
-  }, [notebook, monthKey]);
-
+  const todayDateKey = getTodayDateKey();
   const draftChecklist = draftChecklistByMonth[monthKey] ?? monthChecklist;
 
-  const entries = useMemo<DailyNotebookEntry[]>(() => {
-    void version;
-    if (!notebookId || !notebook || monthChecklist.length === 0) return [];
-    return getDailyNotebookEntries(notebookId, monthKey, monthChecklist.length);
-  }, [notebookId, notebook, monthChecklist, monthKey, version]);
+  useEffect(() => {
+    let active = true;
+
+    if (!notebookId) {
+      setLoadError("기록장 ID가 올바르지 않아요.");
+      setIsLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    if (!accessCode) {
+      setNotebook(null);
+      setEntries([]);
+      setMonthChecklist([]);
+      setIsLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setIsLoading(true);
+    setLoadError("");
+
+    void (async () => {
+      try {
+        const [nextNotebook, nextChecklistRaw, nextEntriesRaw] = await Promise.all([
+          fetchDailyNotebook(notebookId, accessCode),
+          fetchDailyMonthlyChecklist(notebookId, monthKey, accessCode),
+          fetchDailyMonthEntries(notebookId, monthKey, accessCode),
+        ]);
+
+        if (!active) return;
+
+        const nextChecklist = sanitizeChecklist(nextChecklistRaw);
+        setNotebook(nextNotebook);
+        setMonthChecklist(nextChecklist);
+        setDraftChecklistByMonth((prev) => ({
+          ...prev,
+          [monthKey]: nextChecklist,
+        }));
+        setEntries(
+          buildMonthEntries(monthKey, nextEntriesRaw, nextChecklist.length),
+        );
+        setStoredDailyAccessCode(notebookId, accessCode);
+        setAccessError("");
+        setLoadError("");
+      } catch (error) {
+        console.error("기록장 불러오기 실패:", error);
+        if (!active) return;
+
+        clearStoredDailyAccessCode(notebookId);
+        setAccessCode("");
+        setNotebook(null);
+        setEntries([]);
+        setMonthChecklist([]);
+        setLoadError("기록장을 서버에서 불러오지 못했습니다.");
+        setAccessError(
+          getErrorMessage(
+            error,
+            "기록장 ID 또는 비밀번호를 다시 확인해주세요.",
+          ),
+        );
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [accessCode, monthKey, notebookId]);
 
   const avgScore = useMemo(() => {
     if (entries.length === 0) return 0;
@@ -99,7 +173,7 @@ export default function DailyLogPage() {
 
   const monthLabel = useMemo(
     () => `${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`,
-    [currentMonth]
+    [currentMonth],
   );
 
   const isCurrentMonth = monthKey === getMonthKey(new Date());
@@ -140,16 +214,58 @@ export default function DailyLogPage() {
     setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
-  const saveChecklist = () => {
-    if (!notebookId) return;
-    const nextChecklist = normalizeChecklistInput(draftChecklist);
+  const tryUnlock = () => {
+    const trimmedCode = accessInput.trim();
+    if (!trimmedCode) {
+      setAccessError("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setAccessError("");
+    setLoadError("");
+    setAccessCode(trimmedCode);
+  };
+
+  const persistEntry = async (entry: DailyNotebookEntry) => {
+    if (!notebookId || !accessCode) return;
+
+    try {
+      await saveDailyEntry(
+        notebookId,
+        entry.date,
+        entry.diary,
+        entry.checks,
+        accessCode,
+      );
+    } catch (error) {
+      console.error("일일 기록 저장 실패:", error);
+      throw error;
+    }
+  };
+
+  const saveChecklist = async () => {
+    if (!notebookId || !accessCode) return;
+
+    const nextChecklist = sanitizeChecklist(draftChecklist);
     if (nextChecklist.length === 0) {
       alert("체크리스트를 1개 이상 입력해주세요.");
       return;
     }
-    saveChecklistForMonth(notebookId, monthKey, nextChecklist);
-    setDraftChecklistByMonth((prev) => ({ ...prev, [monthKey]: nextChecklist }));
-    setVersion((prev) => prev + 1);
+
+    try {
+      await saveDailyMonthlyChecklist(
+        notebookId,
+        monthKey,
+        nextChecklist,
+        accessCode,
+      );
+      setMonthChecklist(nextChecklist);
+      setDraftChecklistByMonth((prev) => ({ ...prev, [monthKey]: nextChecklist }));
+      setEntries((prev) => normalizeEntries(prev, nextChecklist.length));
+    } catch (error) {
+      console.error("체크리스트 저장 실패:", error);
+      alert("체크리스트를 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   const addChecklistItem = () => {
@@ -163,7 +279,7 @@ export default function DailyLogPage() {
     setDraftChecklistByMonth((prev) => ({
       ...prev,
       [monthKey]: draftChecklist.map((item, current) =>
-        current === index ? value : item
+        current === index ? value : item,
       ),
     }));
   };
@@ -176,76 +292,74 @@ export default function DailyLogPage() {
   };
 
   const updateDiary = (entryDate: string, diary: string) => {
-    if (!notebookId || !notebook) return;
-    const nextEntries = entries.map((entry) =>
-      entry.date === entryDate ? { ...entry, diary } : entry
+    setEntries((prev) =>
+      prev.map((entry) => (entry.date === entryDate ? { ...entry, diary } : entry)),
     );
-    saveDailyNotebookEntries(notebookId, monthKey, nextEntries);
-    setVersion((prev) => prev + 1);
   };
 
-  const toggleCheck = (entryDate: string, checkIndex: number) => {
-    if (!notebookId || !notebook) return;
-    const nextEntries = entries.map((entry) => {
-      if (entry.date !== entryDate) return entry;
-      const nextChecks = entry.checks.map((check, index) =>
-        index === checkIndex ? !check : check
+  const saveDiary = async (entryDate: string) => {
+    const targetEntry = entries.find((entry) => entry.date === entryDate);
+    if (!targetEntry) return;
+    try {
+      await persistEntry(targetEntry);
+    } catch {
+      alert("기록을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  const toggleCheck = async (entryDate: string, checkIndex: number) => {
+    const currentEntry = entries.find((entry) => entry.date === entryDate);
+    if (!currentEntry) return;
+
+    const nextEntry: DailyNotebookEntry = {
+      ...currentEntry,
+      checks: currentEntry.checks.map((check, index) =>
+        index === checkIndex ? !check : check,
+      ),
+    };
+
+    setEntries((prev) =>
+      prev.map((entry) => (entry.date === entryDate ? nextEntry : entry)),
+    );
+
+    try {
+      await persistEntry(nextEntry);
+    } catch {
+      setEntries((prev) =>
+        prev.map((entry) => (entry.date === entryDate ? currentEntry : entry)),
       );
-      return { ...entry, checks: nextChecks };
-    });
-    saveDailyNotebookEntries(notebookId, monthKey, nextEntries);
-    setVersion((prev) => prev + 1);
+    }
   };
 
-  const saveAccessCode = () => {
-    if (!notebookId || !notebook) return;
+  const saveAccessCode = async () => {
+    if (!notebookId || !accessCode) return;
+
     const code = nextAccessCode.trim();
-    if (!code) {
+    if (code.length < 4) {
       setAccessNoticeType("error");
-      setAccessNotice("새 비밀번호를 입력해주세요.");
+      setAccessNotice("새 비밀번호는 4자 이상 입력해주세요.");
       return;
     }
-    saveDailyNotebook({ ...notebook, accessCode: code });
-    if (isClient) {
-      window.sessionStorage.setItem(unlockedKey(notebookId), "1");
+
+    try {
+      await changeDailyAccessCode(notebookId, accessCode, code);
+      setStoredDailyAccessCode(notebookId, code);
+      setAccessCode(code);
+      setNextAccessCode("");
+      setIsAccessModalOpen(false);
+      alert("비밀번호를 변경했어요.");
+    } catch (error) {
+      console.error("비밀번호 변경 실패:", error);
+      setAccessNoticeType("error");
+      setAccessNotice("비밀번호를 변경하지 못했어요. 다시 시도해주세요.");
     }
-    setNextAccessCode("");
-    setAccessNoticeType("success");
-    setAccessNotice("비밀번호를 저장했어요.");
-    setIsAccessModalOpen(false);
-    setVersion((prev) => prev + 1);
   };
 
-  const clearAccessCode = () => {
-    if (!notebookId || !notebook) return;
-    saveDailyNotebook({ ...notebook, accessCode: undefined });
-    if (isClient) {
-      window.sessionStorage.removeItem(unlockedKey(notebookId));
-    }
-    setNextAccessCode("");
-    setAccessNoticeType("success");
-    setAccessNotice("비밀번호를 해제했어요.");
-    setIsAccessModalOpen(false);
-    setVersion((prev) => prev + 1);
-  };
-
-  const saveThemeColor = () => {
-    if (!notebook) return;
-    saveDailyNotebook({ ...notebook, color: draftColor });
-    setAccessNoticeType("success");
-    setAccessNotice("테마 컬러를 저장했어요.");
-    setVersion((prev) => prev + 1);
-  };
-
-  if (!isClient) {
-    return <PageContainer />;
-  }
-
-  if (!notebook) {
+  if (!notebookId) {
     return (
       <PageContainer>
         <Typography variant="h2" className="mb-2">
-          기록장을 찾을 수 없어요.
+          기록장 ID가 올바르지 않아요.
         </Typography>
         <BackButton type="button" onClick={() => router.push("/daily")}>
           기록장 목록으로 돌아가기
@@ -254,27 +368,17 @@ export default function DailyLogPage() {
     );
   }
 
-  const themeColor = notebook.color || "#22c55e";
-  const isLocked = Boolean(notebook.accessCode);
-  if (isLocked && !isUnlocked) {
-    const tryUnlock = () => {
-      if (!notebookId) return;
-      if (accessInput.trim() === (notebook.accessCode ?? "")) {
-        window.sessionStorage.setItem(unlockedKey(notebookId), "1");
-        setAccessError("");
-        setVersion((prev) => prev + 1);
-        return;
-      }
-      setAccessError("비밀번호가 일치하지 않아요.");
-    };
-
+  if (!accessCode) {
     return (
       <PageContainer>
         <LockCard>
           <Typography variant="h2" className="mb-2">
-            🔒 {notebook.title}
+            🔒 서버 기록장 열기
           </Typography>
-          <LockDescription>이 기록장은 비밀번호로 보호되어 있어요.</LockDescription>
+          <LockDescription>
+            기록장 ID에 연결된 비밀번호를 입력하면 서버에 저장된 기록을 불러옵니다.
+          </LockDescription>
+          <NotebookIdText>ID: {notebookId}</NotebookIdText>
           <LockInput
             type="password"
             value={accessInput}
@@ -287,16 +391,40 @@ export default function DailyLogPage() {
               }
             }}
           />
-          {accessError && <LockError>{accessError}</LockError>}
+          {(accessError || loadError) && (
+            <LockError>{accessError || loadError}</LockError>
+          )}
           <LockActions>
             <UnlockButton type="button" onClick={tryUnlock}>
               기록장 열기
             </UnlockButton>
             <BackButton type="button" onClick={() => router.push("/daily")}>
-              목록으로
+              돌아가기
             </BackButton>
           </LockActions>
         </LockCard>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <LoadingCard>서버 기록장을 불러오는 중...</LoadingCard>
+      </PageContainer>
+    );
+  }
+
+  if (loadError || !notebook) {
+    return (
+      <PageContainer>
+        <Typography variant="h2" className="mb-2">
+          기록장을 불러오지 못했어요.
+        </Typography>
+        <LockDescription>{loadError}</LockDescription>
+        <BackButton type="button" onClick={() => router.push("/daily")}>
+          기록장 목록으로 돌아가기
+        </BackButton>
       </PageContainer>
     );
   }
@@ -306,21 +434,21 @@ export default function DailyLogPage() {
       <TopSection>
         <div>
           <Typography variant="h1">{notebook.title}</Typography>
-          <Subtitle>월별 한 줄 일기와 체크 완료율을 함께 관리합니다.</Subtitle>
+          <Subtitle>월별 한 줄 일기와 체크 완료율을 서버에서 관리합니다.</Subtitle>
+          <NotebookIdText>ID: {notebook.id}</NotebookIdText>
         </div>
         <TopActions>
           <SummaryCard>
             <SummaryTitle>{monthLabel} 평균 달성률</SummaryTitle>
-            <SummaryValue $color={themeColor}>{avgScore}%</SummaryValue>
+            <SummaryValue $color={THEME_COLOR}>{avgScore}%</SummaryValue>
           </SummaryCard>
           <OpenSettingsButton
             type="button"
-            $color={themeColor}
+            $color={THEME_COLOR}
             onClick={() => {
               setAccessNotice("");
               setAccessNoticeType("");
               setNextAccessCode("");
-              setDraftColor(themeColor);
               setIsAccessModalOpen(true);
             }}
           >
@@ -341,7 +469,7 @@ export default function DailyLogPage() {
           type="button"
           onClick={jumpToCurrentMonth}
           disabled={isCurrentMonth}
-          $color={themeColor}
+          $color={THEME_COLOR}
         >
           이번 달
         </CurrentMonthButton>
@@ -372,11 +500,14 @@ export default function DailyLogPage() {
                 <DiaryCell $row={rowIndex + 1} $last={isLast} $isToday={isToday}>
                   <DateLabel>
                     {toDateLabel(entry.date)}
-                    {isToday && <TodayBadge $color={themeColor}>오늘</TodayBadge>}
+                    {isToday && <TodayBadge $color={THEME_COLOR}>오늘</TodayBadge>}
                   </DateLabel>
                   <DiaryInput
                     value={entry.diary}
                     onChange={(event) => updateDiary(entry.date, event.target.value)}
+                    onBlur={() => {
+                      void saveDiary(entry.date);
+                    }}
                     placeholder="오늘의 한 줄 기록을 남겨보세요."
                   />
                 </DiaryCell>
@@ -391,9 +522,11 @@ export default function DailyLogPage() {
                     <CheckButton
                       key={`${entry.date}-${index}`}
                       type="button"
-                      $color={themeColor}
+                      $color={THEME_COLOR}
                       $checked={checked}
-                      onClick={() => toggleCheck(entry.date, index)}
+                      onClick={() => {
+                        void toggleCheck(entry.date, index);
+                      }}
                       aria-label={`${toDateLabel(entry.date)} ${monthChecklist[index]}`}
                     >
                       {checked ? "O" : "X"}
@@ -430,7 +563,7 @@ export default function DailyLogPage() {
 
               {trendGraph.points.length > 1 && (
                 <TrendPath
-                  $color={themeColor}
+                  $color={THEME_COLOR}
                   points={trendGraph.points.map((point) => `${point.x},${point.y}`).join(" ")}
                 />
               )}
@@ -439,7 +572,7 @@ export default function DailyLogPage() {
                 <g key={point.date}>
                   <TrendPoint $isToday={point.isToday} cx={point.x} cy={point.y} r="4.5" />
                   <TrendPointLabel
-                    $color={themeColor}
+                    $color={THEME_COLOR}
                     $isToday={point.isToday}
                     x={point.score >= 90 ? point.x - 8 : point.x + 8}
                     y={point.y - 8}
@@ -470,15 +603,12 @@ export default function DailyLogPage() {
             <AccessModalTitle>기록장 설정</AccessModalTitle>
             <SettingsSection>
               <AccessHeader>
-                <AccessTitle>접근 비밀번호 관리</AccessTitle>
-                <AccessStatus $locked={Boolean(notebook.accessCode)}>
-                  {notebook.accessCode ? "설정됨" : "미설정"}
-                </AccessStatus>
+                <AccessTitle>접근 비밀번호 변경</AccessTitle>
+                <AccessStatus $locked>서버 보호 중</AccessStatus>
               </AccessHeader>
               <AccessModalDesc>
-                {notebook.accessCode
-                  ? "새 비밀번호를 입력하면 즉시 교체됩니다."
-                  : "비밀번호를 설정하면 접근 시 잠금 해제가 필요합니다."}
+                서버 저장소를 사용하므로 비밀번호는 항상 필요합니다. 새 비밀번호는 4자
+                이상으로 입력해주세요.
               </AccessModalDesc>
               <AccessInput
                 autoFocus
@@ -489,18 +619,18 @@ export default function DailyLogPage() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    saveAccessCode();
+                    void saveAccessCode();
                   }
                 }}
               />
               <AccessModalActions>
-                {notebook.accessCode && (
-                  <AccessClearButton type="button" onClick={clearAccessCode}>
-                    해제
-                  </AccessClearButton>
-                )}
-                <AccessButton type="button" onClick={saveAccessCode}>
-                  {notebook.accessCode ? "변경 저장" : "설정 저장"}
+                <AccessButton
+                  type="button"
+                  onClick={() => {
+                    void saveAccessCode();
+                  }}
+                >
+                  변경 저장
                 </AccessButton>
               </AccessModalActions>
               {accessNotice && (
@@ -517,8 +647,10 @@ export default function DailyLogPage() {
                   </AddItemButton>
                   <SaveChecklistButton
                     type="button"
-                    $color={themeColor}
-                    onClick={saveChecklist}
+                    $color={THEME_COLOR}
+                    onClick={() => {
+                      void saveChecklist();
+                    }}
                     disabled={!hasChecklistChanges}
                   >
                     체크리스트 저장
@@ -546,26 +678,6 @@ export default function DailyLogPage() {
               </ChecklistEditGrid>
             </SettingsSection>
 
-            <SettingsSection>
-              <EditorHeader>
-                <EditorTitle>테마 컬러</EditorTitle>
-                <EditorActions>
-                  <SaveChecklistButton
-                    type="button"
-                    $color={draftColor}
-                    onClick={saveThemeColor}
-                  >
-                    컬러 저장
-                  </SaveChecklistButton>
-                </EditorActions>
-              </EditorHeader>
-              <ColorPickerPanel
-                selectedColor={draftColor}
-                onSelect={setDraftColor}
-                colors={DAILY_COLORS}
-              />
-            </SettingsSection>
-
             <AccessModalActions>
               <AccessModalCancel type="button" onClick={() => setIsAccessModalOpen(false)}>
                 닫기
@@ -584,6 +696,18 @@ const PageContainer = styled.div`
   padding: 0 1rem 1rem;
 `;
 
+const LoadingCard = styled.section`
+  max-width: 420px;
+  margin: 3.5rem auto 0;
+  border: 1px solid #d9dce3;
+  border-radius: 12px;
+  background: #fff;
+  padding: 1rem;
+  text-align: center;
+  color: #475569;
+  font-weight: 700;
+`;
+
 const LockCard = styled.section`
   max-width: 420px;
   margin: 3.5rem auto 0;
@@ -597,6 +721,13 @@ const LockDescription = styled.p`
   color: #6b7280;
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
+`;
+
+const NotebookIdText = styled.p`
+  color: #475569;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  word-break: break-all;
 `;
 
 const LockInput = styled.input`
@@ -760,16 +891,6 @@ const AccessButton = styled.button`
   padding: 0.45rem 0.65rem;
   font-size: 0.8rem;
   font-weight: 700;
-`;
-
-const AccessClearButton = styled.button`
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.8rem;
-  font-weight: 600;
 `;
 
 const AccessNotice = styled.p<{ $type: "success" | "error" | "" }>`

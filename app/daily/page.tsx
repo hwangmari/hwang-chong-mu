@@ -1,41 +1,31 @@
 "use client";
 
-import React, { useMemo, useState, useSyncExternalStore } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import { Typography } from "@hwangchongmu/ui";
 import CreateButton from "@/components/common/CreateButton";
-import ColorPickerPanel from "@/components/common/ColorPickerPanel";
+import { createDailyNotebook } from "./repository";
 import {
-  DailyNotebookConfig,
-  getDailyNotebooks,
-  saveDailyNotebook,
+  clearLegacyDailyLocalData,
+  getMonthKey,
+  sanitizeChecklist,
+  setStoredDailyAccessCode,
 } from "./storage";
-
-const DAILY_COLORS = ["#22c55e", "#3b82f6", "#6366f1", "#f97316", "#f43f5e", "#14b8a6", "#64748b"];
-
-function createNotebookId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
 
 export default function DailyCreatePage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [items, setItems] = useState(["운동", "물 2L", "영양제"]);
   const [accessCode, setAccessCode] = useState("");
-  const [selectedColor, setSelectedColor] = useState(DAILY_COLORS[0]);
-  const isClient = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false
-  );
-  const savedNotebooks = useMemo<DailyNotebookConfig[]>(
-    () => (isClient ? getDailyNotebooks() : []),
-    [isClient]
-  );
+  const [openNotebookId, setOpenNotebookId] = useState("");
+  const [openAccessCode, setOpenAccessCode] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
+
+  useEffect(() => {
+    clearLegacyDailyLocalData();
+  }, []);
 
   const addItem = () => setItems((prev) => [...prev, ""]);
 
@@ -45,34 +35,60 @@ export default function DailyCreatePage() {
 
   const updateItem = (index: number, value: string) => {
     setItems((prev) =>
-      prev.map((item, current) => (current === index ? value : item))
+      prev.map((item, current) => (current === index ? value : item)),
     );
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const trimmedTitle = title.trim();
-    const checklist = items.map((item) => item.trim()).filter(Boolean);
+    const checklist = sanitizeChecklist(items);
     const trimmedCode = accessCode.trim();
+
     if (!trimmedTitle) {
       alert("기록장 이름을 입력해주세요.");
       return;
     }
-    if (checklist.length === 0) {
-      alert("체크리스트를 1개 이상 입력해주세요.");
+
+    if (trimmedCode.length < 4) {
+      alert("접근 비밀번호는 4자 이상 입력해주세요.");
       return;
     }
 
-    const id = createNotebookId();
-    saveDailyNotebook({
-      id,
-      title: trimmedTitle,
-      checklist,
-      createdAt: new Date().toISOString(),
-      accessCode: trimmedCode || undefined,
-      color: selectedColor,
-    });
+    setIsCreating(true);
+    try {
+      const notebookId = await createDailyNotebook(
+        trimmedTitle,
+        trimmedCode,
+        getMonthKey(new Date()),
+        checklist,
+      );
+      setStoredDailyAccessCode(notebookId, trimmedCode);
+      router.push(`/daily/${notebookId}`);
+    } catch (error) {
+      console.error("기록장 생성 실패:", error);
+      alert("기록장을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
-    router.push(`/daily/${id}`);
+  const handleOpenNotebook = () => {
+    const trimmedId = openNotebookId.trim();
+    const trimmedCode = openAccessCode.trim();
+
+    if (!trimmedId) {
+      alert("기록장 ID를 입력해주세요.");
+      return;
+    }
+
+    if (!trimmedCode) {
+      alert("접근 비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setIsOpening(true);
+    setStoredDailyAccessCode(trimmedId, trimmedCode);
+    router.push(`/daily/${trimmedId}`);
   };
 
   return (
@@ -82,7 +98,7 @@ export default function DailyCreatePage() {
           📓 일일 기록
         </Typography>
         <Typography variant="body2" className="text-gray-500">
-          한 줄 일기와 O/X 체크리스트를 함께 기록해요.
+          이제 기록은 브라우저가 아니라 서버에서 불러옵니다.
         </Typography>
       </header>
 
@@ -91,38 +107,30 @@ export default function DailyCreatePage() {
           1. 기록장 이름
         </Typography>
         <InputField
-          placeholder="예: 2월 루틴 기록장"
+          placeholder="예: 4월 루틴 기록장"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(event) => setTitle(event.target.value)}
         />
       </FormSection>
 
       <FormSection>
         <HeaderRow>
-          <Typography variant="h3">2. 개인 비밀번호(선택)</Typography>
+          <Typography variant="h3">2. 접근 비밀번호</Typography>
         </HeaderRow>
         <InputField
           type="password"
-          placeholder="비워두면 누구나 접근 가능"
+          placeholder="4자 이상 입력해주세요"
           value={accessCode}
-          onChange={(e) => setAccessCode(e.target.value)}
+          onChange={(event) => setAccessCode(event.target.value)}
         />
+        <HelperText>
+          서버에 암호화되어 저장되므로 이후에도 이 비밀번호가 필요해요.
+        </HelperText>
       </FormSection>
 
       <FormSection>
         <HeaderRow>
-          <Typography variant="h3">3. 테마 컬러</Typography>
-        </HeaderRow>
-        <ColorPickerPanel
-          selectedColor={selectedColor}
-          onSelect={setSelectedColor}
-          colors={DAILY_COLORS}
-        />
-      </FormSection>
-
-      <FormSection>
-        <HeaderRow>
-          <Typography variant="h3">4. 체크리스트 항목</Typography>
+          <Typography variant="h3">3. 체크리스트 항목</Typography>
           <TextButton type="button" onClick={addItem}>
             + 항목 추가
           </TextButton>
@@ -134,7 +142,7 @@ export default function DailyCreatePage() {
             <InputField
               placeholder="체크할 항목을 입력하세요"
               value={item}
-              onChange={(e) => updateItem(index, e.target.value)}
+              onChange={(event) => updateItem(index, event.target.value)}
             />
             <DeleteButton
               type="button"
@@ -147,34 +155,44 @@ export default function DailyCreatePage() {
         ))}
       </FormSection>
 
-      {savedNotebooks.length > 0 && (
-        <FormSection>
-          <HeaderRow>
-            <Typography variant="h3">기존 기록장</Typography>
-          </HeaderRow>
-          <NotebookList>
-            {savedNotebooks.slice(0, 4).map((notebook) => (
-              <NotebookButton
-                key={notebook.id}
-                type="button"
-                onClick={() => router.push(`/daily/${notebook.id}`)}
-              >
-                <strong>
-                  {notebook.title}
-                  {notebook.accessCode ? " 🔒" : ""}
-                </strong>
-                <span>{notebook.checklist.length}개 항목</span>
-              </NotebookButton>
-            ))}
-          </NotebookList>
-        </FormSection>
-      )}
-
       <div className="mt-8">
-        <CreateButton onClick={handleCreate} className="w-full" bgColor={selectedColor}>
-          기록장 만들기
+        <CreateButton
+          onClick={handleCreate}
+          className="w-full"
+          bgColor="#22c55e"
+          disabled={isCreating}
+        >
+          {isCreating ? "기록장 만드는 중..." : "기록장 만들기"}
         </CreateButton>
       </div>
+
+      <OpenSection>
+        <Typography variant="h3" className="mb-3">
+          기존 기록장 열기
+        </Typography>
+        <OpenGrid>
+          <InputField
+            placeholder="기록장 ID"
+            value={openNotebookId}
+            onChange={(event) => setOpenNotebookId(event.target.value)}
+          />
+          <InputField
+            type="password"
+            placeholder="접근 비밀번호"
+            value={openAccessCode}
+            onChange={(event) => setOpenAccessCode(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void handleOpenNotebook();
+              }
+            }}
+          />
+        </OpenGrid>
+        <OpenButton type="button" onClick={handleOpenNotebook} disabled={isOpening}>
+          기록장 열기
+        </OpenButton>
+      </OpenSection>
     </CreateContainer>
   );
 }
@@ -191,6 +209,12 @@ const CreateContainer = styled.div`
 
 const FormSection = styled.section`
   margin-bottom: 2rem;
+`;
+
+const OpenSection = styled.section`
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #ece4d8;
 `;
 
 const HeaderRow = styled.div`
@@ -213,6 +237,12 @@ const InputField = styled.input`
     border-color: #7aa1db;
     box-shadow: 0 0 0 3px rgba(122, 161, 219, 0.2);
   }
+`;
+
+const HelperText = styled.p`
+  margin-top: 0.55rem;
+  font-size: 0.85rem;
+  color: #6b7280;
 `;
 
 const ChecklistItem = styled.div`
@@ -247,34 +277,23 @@ const DeleteButton = styled.button`
   }
 `;
 
-const NotebookList = styled.div`
+const OpenGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const NotebookButton = styled.button`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  text-align: left;
-  padding: 0.75rem;
+const OpenButton = styled.button`
+  margin-top: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #cbd5e1;
   background: #fff;
-
-  strong {
-    font-size: 0.95rem;
-    color: #111827;
-  }
-
-  span {
-    color: #6b7280;
-    font-size: 0.8rem;
-  }
-
-  &:hover {
-    border-color: #c3d5f2;
-    background: #f8fbff;
-  }
+  color: #1f2937;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 700;
 `;

@@ -16,7 +16,6 @@ export type WorkspaceLedgerViewProps = {
   onToggleShare: (entryId: string, targetWorkspaceId: string) => void;
   onSaveEntry: (entry: AccountEntry) => void;
   onDeleteEntry: (entryId: string) => void;
-  onLoadSeed: () => void;
   onBack: () => void;
 };
 

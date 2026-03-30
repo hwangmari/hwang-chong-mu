@@ -52,8 +52,6 @@ import {
   toPaymentValue,
 } from "./utils";
 
-export { createWorkspaceSeedEntries } from "./utils";
-
 export default function WorkspaceLedgerView({
   workspace,
   users,
@@ -63,7 +61,6 @@ export default function WorkspaceLedgerView({
   onToggleShare,
   onSaveEntry,
   onDeleteEntry,
-  onLoadSeed,
   onBack,
 }: WorkspaceLedgerViewProps) {
   const router = useRouter();
@@ -883,7 +880,6 @@ export default function WorkspaceLedgerView({
         monthRangeLabel={monthRangeLabel}
         onBack={onBack}
         onMonthMove={onMonthMove}
-        onLoadSeed={onLoadSeed}
       />
       <StContentWrap>
         <WorkspaceInfoBar

@@ -10,7 +10,6 @@ import {
   deleteAccountBookSharedWorkspace,
   deleteAccountBookUser,
   fetchAccountBookStore,
-  replaceWorkspaceEntries,
   toggleAccountBookShareLink,
   updateAccountBookUser,
   upsertAccountBookEntry,
@@ -18,9 +17,7 @@ import {
 } from "./repository";
 import AccountBookLockGate from "./components/AccountBookLockGate";
 import WorkspaceHub from "./components/WorkspaceHub";
-import WorkspaceLedgerView, {
-  createWorkspaceSeedEntries,
-} from "./components/WorkspaceLedgerView";
+import WorkspaceLedgerView from "./components/WorkspaceLedgerView";
 import WorkspaceSettingsModal from "./components/WorkspaceSettingsModal";
 import {
   getPersonalShareTargets,
@@ -173,21 +170,6 @@ function AccountBookPageContent() {
             onDeleteEntry={async (entryId: string) =>
               commitStoreChange(() => deleteAccountBookEntry(entryId))
             }
-            onLoadSeed={async () => {
-              const nextSeedEntries = createWorkspaceSeedEntries(
-                selectedWorkspace,
-                store.users,
-              );
-              await commitStoreChange(
-                () =>
-                  replaceWorkspaceEntries(
-                    store,
-                    selectedWorkspace.id,
-                    nextSeedEntries,
-                  ),
-                "샘플 데이터를 다시 넣지 못했어요. 잠시 후 다시 시도해주세요.",
-              );
-            }}
             onBack={() => router.push("/account-book")}
           />
         </AccountBookLockGate>

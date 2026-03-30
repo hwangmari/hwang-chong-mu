@@ -193,6 +193,7 @@ const StCalendarSplit = styled.div`
   align-items: stretch;
 
   @media (max-width: 1080px) {
+    display: block;
     height: auto;
     grid-template-columns: 1fr;
     align-items: start;
@@ -255,5 +256,6 @@ const StRightSplitCard = styled.section`
 
   @media (max-width: 1080px) {
     overflow: visible;
+    margin: 20px 0;
   }
 `;

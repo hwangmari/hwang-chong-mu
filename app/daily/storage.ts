@@ -1,11 +1,8 @@
 export interface DailyNotebookConfig {
   id: string;
   title: string;
-  checklist: string[];
   createdAt: string;
-  monthlyChecklists?: Record<string, string[]>;
-  accessCode?: string;
-  color?: string;
+  updatedAt: string;
 }
 
 export interface DailyNotebookEntry {
@@ -14,37 +11,21 @@ export interface DailyNotebookEntry {
   checks: boolean[];
 }
 
-const NOTEBOOKS_KEY = "daily-notebooks";
+const LEGACY_NOTEBOOKS_KEY = "daily-notebooks";
+const LEGACY_ENTRIES_PREFIX = "daily-notebook-entries:";
+const LEGACY_UNLOCK_PREFIX = "daily-unlocked:";
+const ACCESS_CODE_PREFIX = "daily-access-code:";
 
 function isBrowser() {
   return typeof window !== "undefined";
 }
 
-function safeParse<T>(value: string | null, fallback: T): T {
-  if (!value) return fallback;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function sanitizeChecklist(items: string[]) {
+export function sanitizeChecklist(items: string[]) {
   const cleaned = items.map((item) => item.trim()).filter(Boolean);
   return cleaned.length > 0 ? cleaned : ["기본 항목"];
 }
 
-function normalizeNotebook(notebook: DailyNotebookConfig): DailyNotebookConfig {
-  return {
-    ...notebook,
-    checklist: sanitizeChecklist(notebook.checklist ?? []),
-    monthlyChecklists: notebook.monthlyChecklists ?? {},
-    accessCode: notebook.accessCode?.trim() || undefined,
-    color: notebook.color || "#22c55e",
-  };
-}
-
-function formatDate(date: Date) {
+export function formatDate(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -80,101 +61,33 @@ export function buildMonthDates(monthKey: string): string[] {
   });
 }
 
-export function getDailyNotebooks(): DailyNotebookConfig[] {
-  if (!isBrowser()) return [];
-  const raw = safeParse<DailyNotebookConfig[]>(
-    window.localStorage.getItem(NOTEBOOKS_KEY),
-    []
-  );
-  return raw.map(normalizeNotebook);
-}
-
-export function saveDailyNotebook(notebook: DailyNotebookConfig) {
-  if (!isBrowser()) return;
-  const normalized = normalizeNotebook(notebook);
-  const notebooks = getDailyNotebooks();
-  const next = [normalized, ...notebooks.filter((item) => item.id !== normalized.id)];
-  window.localStorage.setItem(NOTEBOOKS_KEY, JSON.stringify(next));
-}
-
-export function getDailyNotebookById(id: string): DailyNotebookConfig | null {
-  const notebook = getDailyNotebooks().find((item) => item.id === id);
-  return notebook ?? null;
-}
-
-function entriesKey(notebookId: string) {
-  return `daily-notebook-entries:${notebookId}`;
-}
-
-function normalizeEntries(
+export function normalizeEntries(
   entries: DailyNotebookEntry[],
-  checkCount: number
+  checkCount: number,
 ): DailyNotebookEntry[] {
   return entries.map((entry) => ({
     date: entry.date,
     diary: entry.diary ?? "",
     checks: Array.from({ length: checkCount }, (_, index) =>
-      Boolean(entry.checks?.[index])
+      Boolean(entry.checks?.[index]),
     ),
   }));
 }
 
-function sortByDate(entries: DailyNotebookEntry[]) {
-  return [...entries].sort((a, b) => a.date.localeCompare(b.date));
-}
-
-export function getChecklistForMonth(
-  notebook: DailyNotebookConfig,
-  monthKey: string
-): string[] {
-  const monthly = notebook.monthlyChecklists?.[monthKey];
-  return sanitizeChecklist(monthly ?? notebook.checklist);
-}
-
-export function saveChecklistForMonth(
-  notebookId: string,
+export function buildMonthEntries(
   monthKey: string,
-  checklist: string[]
+  rawEntries: DailyNotebookEntry[],
+  checkCount: number,
 ) {
-  if (!isBrowser()) return;
-  const notebooks = getDailyNotebooks();
-  const target = notebooks.find((item) => item.id === notebookId);
-  if (!target) return;
-
-  const nextChecklist = sanitizeChecklist(checklist);
-  const nextNotebook: DailyNotebookConfig = {
-    ...target,
-    monthlyChecklists: {
-      ...(target.monthlyChecklists ?? {}),
-      [monthKey]: nextChecklist,
-    },
-  };
-
-  saveDailyNotebook(nextNotebook);
-}
-
-export function getDailyNotebookEntries(
-  notebookId: string,
-  monthKey: string,
-  checkCount: number
-): DailyNotebookEntry[] {
-  if (!isBrowser()) return [];
-
-  const allEntries = safeParse<DailyNotebookEntry[]>(
-    window.localStorage.getItem(entriesKey(notebookId)),
-    []
-  );
-
-  const datesInMonth = buildMonthDates(monthKey);
   const entryMap = new Map<string, DailyNotebookEntry>();
 
-  allEntries.forEach((entry) => {
+  rawEntries.forEach((entry) => {
     if (entry.date.startsWith(`${monthKey}-`)) {
       entryMap.set(entry.date, entry);
     }
   });
 
-  const monthlyEntries = datesInMonth.map((date) => {
+  const monthlyEntries = buildMonthDates(monthKey).map((date) => {
     const entry = entryMap.get(date);
     return entry ?? { date, diary: "", checks: [] };
   });
@@ -182,18 +95,40 @@ export function getDailyNotebookEntries(
   return normalizeEntries(monthlyEntries, checkCount);
 }
 
-export function saveDailyNotebookEntries(
-  notebookId: string,
-  monthKey: string,
-  entries: DailyNotebookEntry[]
-) {
-  if (!isBrowser()) return;
-  const raw = safeParse<DailyNotebookEntry[]>(
-    window.localStorage.getItem(entriesKey(notebookId)),
-    []
-  );
+function accessCodeKey(notebookId: string) {
+  return `${ACCESS_CODE_PREFIX}${notebookId}`;
+}
 
-  const otherMonths = raw.filter((entry) => !entry.date.startsWith(`${monthKey}-`));
-  const next = sortByDate([...otherMonths, ...entries]);
-  window.localStorage.setItem(entriesKey(notebookId), JSON.stringify(next));
+export function getStoredDailyAccessCode(notebookId: string) {
+  if (!isBrowser()) return "";
+  return window.sessionStorage.getItem(accessCodeKey(notebookId)) || "";
+}
+
+export function setStoredDailyAccessCode(notebookId: string, accessCode: string) {
+  if (!isBrowser()) return;
+  window.sessionStorage.setItem(accessCodeKey(notebookId), accessCode);
+}
+
+export function clearStoredDailyAccessCode(notebookId: string) {
+  if (!isBrowser()) return;
+  window.sessionStorage.removeItem(accessCodeKey(notebookId));
+}
+
+export function clearLegacyDailyLocalData() {
+  if (!isBrowser()) return;
+
+  window.localStorage.removeItem(LEGACY_NOTEBOOKS_KEY);
+  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.localStorage.key(index);
+    if (key?.startsWith(LEGACY_ENTRIES_PREFIX)) {
+      window.localStorage.removeItem(key);
+    }
+  }
+
+  for (let index = window.sessionStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.sessionStorage.key(index);
+    if (key?.startsWith(LEGACY_UNLOCK_PREFIX)) {
+      window.sessionStorage.removeItem(key);
+    }
+  }
 }

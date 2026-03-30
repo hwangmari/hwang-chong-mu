@@ -92,8 +92,10 @@ const StSummaryLine = styled.div`
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.6rem;
   margin-bottom: 0.75rem;
+
   @media (max-width: 720px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 `;
 const StSummaryBox = styled.div`
@@ -105,6 +107,11 @@ const StSummaryBox = styled.div`
   background: #f9fbff;
   border: 1px solid #e5eaf1;
   padding: 0.7rem;
+
+  @media (max-width: 720px) {
+    min-height: 8.5rem;
+    padding: 0.85rem 0.75rem;
+  }
 `;
 const StSummaryButton = styled.button`
   display: flex;
@@ -117,8 +124,14 @@ const StSummaryButton = styled.button`
   padding: 0.7rem;
   text-align: left;
   cursor: pointer;
+
   &:hover {
     background: #f2f7fd;
+  }
+
+  @media (max-width: 720px) {
+    min-height: 8.5rem;
+    padding: 0.85rem 0.75rem;
   }
 `;
 const StSummaryLabel = styled.p`
@@ -130,15 +143,29 @@ const StSummaryValue = styled.p<{ $kind: EntryType }>`
   font-size: 1.2rem;
   font-weight: 800;
   color: ${({ $kind }) => ($kind === "income" ? "#26a269" : "#da4f7f")};
+
+  @media (max-width: 720px) {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
 `;
 const StSummaryDetail = styled.div`
   display: grid;
   gap: 0.15rem;
   margin-top: 0.35rem;
+
   span {
     font-size: 0.74rem;
     color: #7b8596;
     line-height: 1.2;
+  }
+
+  @media (max-width: 720px) {
+    margin-top: auto;
+
+    span {
+      font-size: 0.7rem;
+    }
   }
 `;
 
