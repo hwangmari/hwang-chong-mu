@@ -12,6 +12,7 @@ type Props = {
   type: EntryType;
   category: string;
   subCategory: string;
+  merchant: string;
   item: string;
   amount: string;
   payment: PaymentType;
@@ -24,6 +25,7 @@ type Props = {
   onSetMember: (member: string) => void;
   onSetCategory: (category: string) => void;
   onSetSubCategory: (value: string) => void;
+  onSetMerchant: (value: string) => void;
   onSetItem: (value: string) => void;
   onSetAmount: (value: string) => void;
   onSetPayment: (payment: PaymentType) => void;
@@ -42,6 +44,7 @@ export default function EntryFormModal({
   type,
   category,
   subCategory,
+  merchant,
   item,
   amount,
   payment,
@@ -54,6 +57,7 @@ export default function EntryFormModal({
   onSetMember,
   onSetCategory,
   onSetSubCategory,
+  onSetMerchant,
   onSetItem,
   onSetAmount,
   onSetPayment,
@@ -78,7 +82,7 @@ export default function EntryFormModal({
           </StCloseButton>
         </StModalHeader>
 
-        <StFormRow $columns={3}>
+        <StFormRow $columns={2}>
           <StFormField>
             <StLabel>날짜</StLabel>
             <StInput
@@ -102,6 +106,9 @@ export default function EntryFormModal({
               ))}
             </StMemberSelector>
           </StFormField>
+        </StFormRow>
+
+        <StFormRow $columns={2}>
           <StFormField>
             <StLabel>구분</StLabel>
             <StTypeSelector>
@@ -121,9 +128,6 @@ export default function EntryFormModal({
               </StTypeOption>
             </StTypeSelector>
           </StFormField>
-        </StFormRow>
-
-        <StFormRow $columns={3}>
           <StFormField>
             <StLabel>금액</StLabel>
             <StInput
@@ -134,6 +138,9 @@ export default function EntryFormModal({
               placeholder="예: 15000"
             />
           </StFormField>
+        </StFormRow>
+
+        <StFormRow $columns={2}>
           <StFormField>
             <StLabel>세부항목</StLabel>
             <StPaymentSelector>
@@ -165,11 +172,16 @@ export default function EntryFormModal({
             </StPaymentSelector>
           </StFormField>
           <StFormField>
-            <StLabel>항목 / 메모</StLabel>
+            <StLabel>가맹점 / 항목 / 메모</StLabel>
             <StInput
+              value={merchant}
+              onChange={(e) => onSetMerchant(e.target.value)}
+              placeholder="예: 스타벅스 강남점"
+            />
+            <StInlineSubInput
               value={item}
               onChange={(e) => onSetItem(e.target.value)}
-              placeholder="예: 카카오 T 주차"
+              placeholder="예: 카페라떼, 주차비"
             />
             <StInlineSubInput
               value={memo}
@@ -266,7 +278,7 @@ const StFormRow = styled.div<{ $columns?: number }>`
   grid-template-columns: ${({ $columns = 2 }) =>
     `repeat(${$columns}, minmax(0, 1fr))`};
   gap: 0.65rem;
-  @media (max-width: 900px) {
+  @media (max-width: 720px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -278,6 +290,10 @@ const StQuickRow = styled.div`
   grid-template-columns: 1fr auto;
   gap: 0.5rem;
   align-items: stretch;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const StQuickTextarea = styled.textarea`
   width: 100%;
@@ -325,13 +341,13 @@ const StSelectedCategory = styled.div`
   }
 `;
 const StCategoryPicker = styled.div`
-  max-height: 190px;
+  max-height: 150px;
   overflow: auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   padding-right: 0.25rem;
-  @media (max-width: 900px) {
+  @media (max-width: 1080px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @media (max-width: 640px) {
@@ -459,40 +475,66 @@ const StInlineSubInput = styled.input`
 `;
 const StAddButton = styled.button`
   width: 100%;
-  border: none;
-  border-radius: 11px;
-  padding: 0.75rem;
+  border: 1px solid #4e67d0;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
   font-size: 0.95rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #6d87ef, #5f73d9);
+  background: #5f73d9;
+  position: sticky;
+  bottom: 0;
+  box-shadow: 0 -10px 24px rgba(255, 255, 255, 0.92);
 `;
 const StModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.45);
+  background: rgba(17, 24, 39, 0.2);
+  backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0.9rem;
   z-index: 120;
+
+  @media (max-width: 720px) {
+    align-items: flex-end;
+    padding: 0.75rem;
+  }
 `;
 const StModalCard = styled.div`
-  width: min(680px, 100%);
-  max-height: 80vh;
+  width: min(480px, 100%);
+  height: calc(100vh - 1.8rem);
+  max-height: calc(100vh - 1.8rem);
   overflow: auto;
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  padding: 0.9rem;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 28px;
+  border: 1px solid #dde5f0;
+  padding: 1rem;
+  box-shadow: -18px 0 40px rgba(49, 67, 110, 0.14);
+
+  @media (max-width: 720px) {
+    width: 100%;
+    height: auto;
+    max-height: min(82vh, 900px);
+    border-radius: 24px;
+    box-shadow: 0 -18px 38px rgba(49, 67, 110, 0.14);
+  }
 `;
 const StModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.7rem;
+  position: sticky;
+  top: -1rem;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.15rem 0 0.75rem;
+  backdrop-filter: blur(10px);
+
   strong {
-    font-size: 1.35rem;
+    font-size: 1.18rem;
     font-weight: 900;
     color: #111827;
   }

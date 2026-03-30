@@ -4,17 +4,22 @@ import { ReactNode, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-const ACCOUNT_BOOK_PASSWORD = "6155";
-const ACCOUNT_BOOK_ACCESS_KEY = "hwang-account-book-access-granted";
 const KEYPAD_VALUES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 type Props = {
   children: ReactNode;
+  password?: string;
+  accessKey?: string;
+  title?: string;
+  description?: string;
+  backToHome?: boolean;
+  onBack?: () => void;
+  overlay?: boolean;
 };
 
-function isAccountBookUnlocked() {
+function isAccountBookUnlocked(accessKey: string) {
   if (typeof window === "undefined") return false;
-  return window.sessionStorage.getItem(ACCOUNT_BOOK_ACCESS_KEY) === "true";
+  return window.sessionStorage.getItem(accessKey) === "true";
 }
 
 function subscribeAccountBookAccess(onStoreChange: () => void) {
@@ -33,36 +38,45 @@ function subscribeAccountBookAccess(onStoreChange: () => void) {
   };
 }
 
-export default function AccountBookLockGate({ children }: Props) {
+export default function AccountBookLockGate({
+  children,
+  password = "6155",
+  accessKey = "hwang-account-book-access-granted",
+  title = "가계부 비밀번호",
+  description = "숫자 4자리를 눌러서 가계부에 들어가세요.",
+  backToHome = true,
+  onBack,
+  overlay = false,
+}: Props) {
   const router = useRouter();
   const [passcode, setPasscode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const isUnlocked = useSyncExternalStore(
     subscribeAccountBookAccess,
-    isAccountBookUnlocked,
+    () => isAccountBookUnlocked(accessKey),
     () => false,
   );
 
   const submitPasscode = (nextValue: string) => {
-    if (nextValue !== ACCOUNT_BOOK_PASSWORD) {
+    if (nextValue !== password) {
       setPasscode("");
       setErrorMessage("비밀번호가 맞지 않아요.");
       return;
     }
 
-    window.sessionStorage.setItem(ACCOUNT_BOOK_ACCESS_KEY, "true");
+    window.sessionStorage.setItem(accessKey, "true");
     window.dispatchEvent(new Event("account-book-access-change"));
     setErrorMessage("");
     setPasscode(nextValue);
   };
 
   const handleDigitClick = (digit: string) => {
-    if (passcode.length >= ACCOUNT_BOOK_PASSWORD.length) return;
+    if (passcode.length >= password.length) return;
     const nextValue = `${passcode}${digit}`;
     setPasscode(nextValue);
     setErrorMessage("");
 
-    if (nextValue.length === ACCOUNT_BOOK_PASSWORD.length) {
+    if (nextValue.length === password.length) {
       submitPasscode(nextValue);
     }
   };
@@ -82,19 +96,28 @@ export default function AccountBookLockGate({ children }: Props) {
   }
 
   return (
-    <StGatePage>
+    <StGatePage $overlay={overlay}>
       <StGateCard>
-        <StBackButton type="button" onClick={() => router.push("/")}>
-          홈으로
+        <StBackButton
+          type="button"
+          onClick={() => {
+            if (onBack) {
+              onBack();
+              return;
+            }
+            if (backToHome) {
+              router.push("/");
+            }
+          }}
+        >
+          {backToHome ? "홈으로" : "뒤로"}
         </StBackButton>
         <StEmoji>🔐</StEmoji>
-        <StGateTitle>가계부 비밀번호</StGateTitle>
-        <StGateDescription>
-          숫자 4자리를 눌러서 가계부에 들어가세요.
-        </StGateDescription>
+        <StGateTitle>{title}</StGateTitle>
+        <StGateDescription>{description}</StGateDescription>
 
         <StPasscodeDots aria-label="비밀번호 입력 상태">
-          {Array.from({ length: ACCOUNT_BOOK_PASSWORD.length }, (_, index) => (
+          {Array.from({ length: password.length }, (_, index) => (
             <StPasscodeDot key={index} $filled={index < passcode.length} />
           ))}
         </StPasscodeDots>
@@ -126,14 +149,18 @@ export default function AccountBookLockGate({ children }: Props) {
   );
 }
 
-const StGatePage = styled.main`
-  min-height: 100vh;
+const StGatePage = styled.main<{ $overlay: boolean }>`
+  min-height: ${({ $overlay }) => ($overlay ? "0" : "100vh")};
+  position: ${({ $overlay }) => ($overlay ? "fixed" : "relative")};
+  inset: ${({ $overlay }) => ($overlay ? "0" : "auto")};
+  z-index: ${({ $overlay }) => ($overlay ? "80" : "auto")};
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background:
-    radial-gradient(circle at top, rgba(109, 135, 239, 0.16), transparent 32%),
-    linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
+  background: ${({ $overlay }) =>
+    $overlay
+      ? "rgba(15, 23, 42, 0.34)"
+      : "radial-gradient(circle at top, rgba(109, 135, 239, 0.16), transparent 32%), linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%)"};
 `;
 
 const StGateCard = styled.section`

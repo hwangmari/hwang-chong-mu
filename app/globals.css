@@ -1,3 +1,13 @@
+html,
+body {
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  margin: 0;
+}
+
 /* 모바일에서만 폰트 크기 16px 강제 (줌인 방지) */
 @media screen and (max-width: 768px) {
   input,

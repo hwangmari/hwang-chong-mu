@@ -75,13 +75,12 @@ export default function WorkspaceHeader({
 }
 
 const StWorkspaceHeader = styled.header`
-  height: 72px;
   border-bottom: 1px solid #d9dde3;
   background: #f7f8fa;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0.5rem 1rem;
   gap: 0.75rem;
   @media (max-width: 720px) {
     height: 56px;

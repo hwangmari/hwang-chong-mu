@@ -1,28 +1,15 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
+import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
-import { AccountEntry } from "../types";
-
-const STORAGE_KEY = "hwang-account-book-v2";
-const CATEGORY_COLOR_MAP: Record<string, string> = {
-  "식비/외식": "#9b9b9b",
-  "병원/의료": "#bf8a79",
-  "선물/기타": "#3c3d41",
-  "쇼핑/패션": "#bf8a79",
-  "쇼핑/기타": "#818bd7",
-  "교통/택시": "#78c99b",
-  "여행/관광": "#68b383",
-  "주차/교통": "#dbc85a",
-  "결제/플랫폼": "#d8c553",
-  "문화/구독": "#67b182",
-  저축: "#5d9cec",
-  "교통카드/충전": "#e28da8",
-  통행료: "#bbd271",
-  약국: "#7f86d6",
-};
+import {
+  getWorkspaceById,
+  resolveWorkspaceEntries,
+} from "../storage";
+import type { AccountBookStore } from "../types";
 
 type AnnualKind = "income" | "expense" | "asset";
 type PaymentKey = "cash" | "card" | "check_card";
@@ -37,53 +24,47 @@ function formatAmount(value: number) {
   return `${value.toLocaleString()}원`;
 }
 
-function normalizeEntry(
-  raw: Partial<AccountEntry>,
-  fallbackId: string,
-): AccountEntry {
-  return {
-    id: raw.id || fallbackId,
-    date: raw.date || "2026-01-01",
-    member: raw.member || "나",
-    type: raw.type === "income" ? "income" : "expense",
-    category: raw.category || "기타",
-    subCategory: raw.subCategory || "",
-    item: raw.item || "항목명 없음",
-    amount: Number(raw.amount) || 0,
-    cardCompany: raw.cardCompany || "",
-    payment:
-      raw.payment === "cash"
-        ? "cash"
-        : raw.payment === "check_card"
-          ? "check_card"
-          : "card",
-    memo: raw.memo || "",
-  };
-}
-
-function getSavedEntries() {
-  if (typeof window === "undefined") return [] as AccountEntry[];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [] as AccountEntry[];
-    const parsed = JSON.parse(raw) as Partial<AccountEntry>[];
-    if (!Array.isArray(parsed)) return [] as AccountEntry[];
-    return parsed.map((entry, index) =>
-      normalizeEntry(entry, `annual-${index}`),
-    );
-  } catch {
-    return [] as AccountEntry[];
-  }
+function buildBackUrl(workspaceId?: string) {
+  if (!workspaceId) return "/account-book";
+  return `/account-book?workspaceId=${workspaceId}`;
 }
 
 function AccountBookAnnualContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [entries] = useState<AccountEntry[]>(() => getSavedEntries());
+  const [store, setStore] = useState<AccountBookStore | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {},
   );
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const nextStore = await fetchAccountBookStore();
+        if (!active) return;
+        setStore(nextStore);
+        setLoadError(null);
+      } catch (error) {
+        console.error("가계부 연간 데이터 불러오기 실패:", error);
+        if (!active) return;
+        setLoadError("연간 데이터를 불러오지 못했습니다.");
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const selectedYear = useMemo(() => {
     const nextYear = Number(searchParams.get("year"));
     if (Number.isFinite(nextYear) && nextYear > 2000 && nextYear < 3000) {
@@ -104,10 +85,31 @@ function AccountBookAnnualContent() {
     return "expense";
   }, [searchParams]);
 
+  const workspaceId = searchParams.get("workspaceId") || "";
+  const memberId = searchParams.get("memberId") || "";
+  const workspace = store ? getWorkspaceById(store, workspaceId) : null;
+  const selectedParticipant =
+    store?.users.find((user) => user.id === memberId) || null;
+  const workspaceEntries = useMemo(
+    () => (store && workspace ? resolveWorkspaceEntries(store, workspace.id) : []),
+    [store, workspace],
+  );
+  const scopedEntries = useMemo(() => {
+    if (!workspace || workspace.type !== "shared" || !memberId) {
+      return workspaceEntries;
+    }
+
+    return workspaceEntries.filter(
+      (entry) =>
+        entry.createdByUserId === memberId ||
+        entry.member === selectedParticipant?.name,
+    );
+  }, [memberId, selectedParticipant?.name, workspace, workspaceEntries]);
+
   const annualEntries = useMemo(() => {
     const yearPrefix = `${selectedYear}-`;
-    return entries.filter((entry) => entry.date.startsWith(yearPrefix));
-  }, [entries, selectedYear]);
+    return scopedEntries.filter((entry) => entry.date.startsWith(yearPrefix));
+  }, [scopedEntries, selectedYear]);
 
   const filteredEntries = useMemo(() => {
     if (kind === "income")
@@ -192,660 +194,381 @@ function AccountBookAnnualContent() {
   const kindLabel =
     kind === "income" ? "수입" : kind === "asset" ? "자산" : "지출";
 
-  return (
-    <StPage>
-      <StHeader>
-        <StBackButton
-          type="button"
-          onClick={() => router.push("/account-book")}
-        >
-          뒤로
-        </StBackButton>
-        <StTitle>
-          {selectedYear}년 {kindLabel} 연간 상세
-        </StTitle>
-      </StHeader>
-
-      <StSplit>
+  if (isLoading) {
+    return (
+      <StPage>
         <StCard>
-          <StSectionTitle>연간 요약</StSectionTitle>
-          <StTotal>{formatAmount(total)}</StTotal>
-          <StPaymentLegend>
-            {PAYMENT_META.map((payment) => {
-              const value = annualPaymentTotals[payment.key];
-              return (
-                <StLegendItem key={payment.key}>
-                  <span className="dot" style={{ background: payment.color }} />
-                  <strong>{payment.label}</strong>
-                  <em>{formatAmount(value)}</em>
-                </StLegendItem>
-              );
-            })}
-          </StPaymentLegend>
-          {total === 0 ? (
-            <StEmpty>연간 요약 그래프 데이터가 없습니다.</StEmpty>
-          ) : (
-            <StChartWrap>
-              {monthlyRows.map((row) => {
-                const height =
-                  row.amount > 0 && maxMonthlyAmount > 0
-                    ? `${Math.max((row.amount / maxMonthlyAmount) * 100, 6)}%`
-                    : "4px";
-                const isActive = selectedMonth === row.month;
+          <StSectionTitle>연간 상세를 불러오는 중...</StSectionTitle>
+        </StCard>
+      </StPage>
+    );
+  }
+
+  if (loadError || !store) {
+    return (
+      <StPage>
+        <StCard>
+          <StSectionTitle>연간 상세를 열 수 없습니다.</StSectionTitle>
+          <StEmpty>{loadError || "연간 데이터를 불러오지 못했습니다."}</StEmpty>
+          <StBackButton
+            type="button"
+            onClick={() => router.push(buildBackUrl(workspaceId))}
+          >
+            허브로 돌아가기
+          </StBackButton>
+        </StCard>
+      </StPage>
+    );
+  }
+
+  if (!workspace) {
+    return (
+      <StPage>
+        <StCard>
+          <StSectionTitle>연간 상세를 열 수 없습니다.</StSectionTitle>
+          <StEmpty>
+            워크스페이스 정보가 없습니다. 허브에서 다시 선택해주세요.
+          </StEmpty>
+          <StBackButton
+            type="button"
+            onClick={() => router.push(buildBackUrl(workspaceId))}
+          >
+            허브로 돌아가기
+          </StBackButton>
+        </StCard>
+      </StPage>
+    );
+  }
+
+  return (
+    <AccountBookLockGate
+      password={workspace.password}
+      accessKey={`hwang-account-book-access-${workspace.id}`}
+      title={`${workspace.name} 비밀번호`}
+      description="연간 상세도 같은 비밀번호로 확인합니다."
+      backToHome={false}
+      onBack={() => router.push(buildBackUrl(workspace.id))}
+    >
+      <StPage>
+        <StHeader>
+          <StBackButton
+            type="button"
+            onClick={() => router.push(buildBackUrl(workspace.id))}
+          >
+            뒤로
+          </StBackButton>
+          <StTitle>
+            {workspace.name}
+            {selectedParticipant ? ` · ${selectedParticipant.name}` : ""}
+            {" · "}
+            {selectedYear}년 {kindLabel} 연간 상세
+          </StTitle>
+        </StHeader>
+
+        <StSplit>
+          <StCard>
+            <StSectionTitle>연간 요약</StSectionTitle>
+            <StTotal>{formatAmount(total)}</StTotal>
+            <StPaymentLegend>
+              {PAYMENT_META.map((payment) => {
+                const value = annualPaymentTotals[payment.key];
                 return (
-                  <StChartColumn
-                    key={row.month}
-                    type="button"
-                    $active={isActive}
-                    onClick={() =>
-                      setSelectedMonth((prev) =>
-                        prev === row.month ? null : row.month,
-                      )
-                    }
-                  >
-                    <StChartBarArea>
-                      <StChartBar style={{ height }}>
-                        {PAYMENT_META.map((payment) => {
-                          if (
-                            row.amount <= 0 ||
-                            row.payments[payment.key] <= 0
-                          ) {
-                            return null;
-                          }
-                          const segmentRatio =
-                            (row.payments[payment.key] / row.amount) * 100;
-                          return (
-                            <StChartSegment
-                              key={`${row.month}-${payment.key}`}
-                              style={{
-                                height: `${Math.max(segmentRatio, 6)}%`,
-                                background: payment.color,
-                              }}
-                            />
-                          );
-                        })}
-                      </StChartBar>
-                    </StChartBarArea>
-                    <strong>{row.month}</strong>
-                    <span>{row.count}건</span>
-                    <em>{formatAmount(row.amount)}</em>
-                    <StBarTooltip className="tooltip">
-                      <h5>{row.month}</h5>
-                      {PAYMENT_META.map((payment) => (
-                        <p key={`tt-${row.month}-${payment.key}`}>
-                          <span>{payment.label}</span>
-                          <strong>
-                            {formatAmount(row.payments[payment.key])}
-                          </strong>
-                        </p>
-                      ))}
-                      <p className="total">
-                        <span>합계</span>
-                        <strong>{formatAmount(row.amount)}</strong>
-                      </p>
-                    </StBarTooltip>
-                  </StChartColumn>
+                  <StLegendItem key={payment.key}>
+                    <span
+                      className="dot"
+                      style={{ background: payment.color }}
+                    />
+                    <strong>{payment.label}</strong>
+                    <em>{formatAmount(value)}</em>
+                  </StLegendItem>
                 );
               })}
-            </StChartWrap>
-          )}
-        </StCard>
-
-        <StCard>
-          <StDetailHead>
-            <StSectionTitle>
-              {selectedMonth ? `${selectedMonth} 세부 내역` : "월별 세부 내역"}
-            </StSectionTitle>
-            {selectedMonth && (
-              <StResetButton
-                type="button"
-                onClick={() => setSelectedMonth(null)}
-              >
-                전체 보기
-              </StResetButton>
-            )}
-          </StDetailHead>
-          <StDetailList>
-            {entriesByMonth.length === 0 ? (
-              <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
+            </StPaymentLegend>
+            {total === 0 ? (
+              <StEmpty>연간 요약 그래프 데이터가 없습니다.</StEmpty>
             ) : (
-              entriesByMonth.map((monthGroup) => (
-                <StMonthGroup key={monthGroup.month}>
-                  <h4>{monthGroup.month}</h4>
-                  {(() => {
-                    const monthTotal = monthGroup.entries.reduce(
-                      (sum, entry) => sum + entry.amount,
-                      0,
-                    );
-                    const groupedCategories = Object.entries(
-                      monthGroup.entries.reduce<Record<string, AccountEntry[]>>(
-                        (acc, entry) => {
-                          const key = entry.category || "기타";
-                          if (!acc[key]) acc[key] = [];
-                          acc[key].push(entry);
-                          return acc;
-                        },
-                        {},
-                      ),
-                    )
-                      .map(([category, categoryEntries]) => ({
-                        category,
-                        entries: categoryEntries,
-                        total: categoryEntries.reduce(
-                          (sum, entry) => sum + entry.amount,
-                          0,
-                        ),
-                      }))
-                      .map((group) => ({
-                        ...group,
-                        ratio:
-                          monthTotal > 0 ? (group.total / monthTotal) * 100 : 0,
-                        color: CATEGORY_COLOR_MAP[group.category] || "#8a94a6",
-                      }))
-                      .sort((a, b) => b.total - a.total);
-
-                    const maxTitleColumnWidth = Math.min(
-                      Math.max(
-                        ...groupedCategories.map(
-                          (group) => group.category.length * 10 + 92,
-                        ),
-                        170,
-                      ),
-                      320,
-                    );
-
-                    return groupedCategories.map((group) => {
-                      const accordionKey = `${monthGroup.month}-${group.category}`;
-                      const isOpen = Boolean(openAccordions[accordionKey]);
-                      return (
-                        <StAccordion key={accordionKey}>
-                          <StAccordionHeader
-                            $titleWidth={maxTitleColumnWidth}
-                            type="button"
-                            onClick={() =>
-                              setOpenAccordions((prev) => ({
-                                ...prev,
-                                [accordionKey]: !prev[accordionKey],
-                              }))
-                            }
-                          >
-                            <StAccordionTitleWrap>
-                              <StCategoryDot
-                                style={{ background: group.color }}
-                              />
-                              <strong>{group.category}</strong>
-                              <span>{group.entries.length}건</span>
-                            </StAccordionTitleWrap>
-                            <StAccordionGraph>
-                              <StAccordionTrack>
-                                <StAccordionFill
-                                  style={{
-                                    width: `${Math.max(group.ratio, 2)}%`,
-                                    background: group.color,
-                                  }}
-                                />
-                              </StAccordionTrack>
-                              <em>{Math.round(group.ratio)}%</em>
-                            </StAccordionGraph>
-                            <StAccordionRight>
-                              <strong>{formatAmount(group.total)}</strong>
-                              <StAccordionChevron
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                                $open={isOpen}
-                              >
-                                <path d="m7 10 5 5 5-5z" />
-                              </StAccordionChevron>
-                            </StAccordionRight>
-                          </StAccordionHeader>
-
-                          {isOpen && (
-                            <StAccordionBody>
-                              {group.entries
-                                .slice()
-                                .sort((a, b) => b.date.localeCompare(a.date))
-                                .map((entry) => (
-                                  <StEntry key={entry.id}>
-                                    <div>
-                                      <p>
-                                        {entry.item}
-                                        {entry.subCategory
-                                          ? ` · ${entry.subCategory}`
-                                          : ""}
-                                      </p>
-                                      <span>
-                                        {entry.date} | {entry.member || "나"}
-                                      </span>
-                                    </div>
-                                    <strong>
-                                      {formatAmount(entry.amount)}
-                                    </strong>
-                                  </StEntry>
-                                ))}
-                            </StAccordionBody>
-                          )}
-                        </StAccordion>
-                      );
-                    });
-                  })()}
-                </StMonthGroup>
-              ))
+              <StChartWrap>
+                {monthlyRows.map((row) => {
+                  const height =
+                    row.amount > 0 && maxMonthlyAmount > 0
+                      ? `${Math.max((row.amount / maxMonthlyAmount) * 100, 6)}%`
+                      : "4px";
+                  const isActive = selectedMonth === row.month;
+                  return (
+                    <StChartColumn
+                      key={row.month}
+                      type="button"
+                      $active={isActive}
+                      onClick={() =>
+                        setSelectedMonth((prev) =>
+                          prev === row.month ? null : row.month,
+                        )
+                      }
+                    >
+                      <div className="bar" style={{ height }} />
+                      <span>{row.month}</span>
+                    </StChartColumn>
+                  );
+                })}
+              </StChartWrap>
             )}
-          </StDetailList>
-        </StCard>
-      </StSplit>
-    </StPage>
+          </StCard>
+
+          <StCard>
+            <StSectionTitle>월별 상세</StSectionTitle>
+            <StAccordionList>
+              {entriesByMonth.length === 0 ? (
+                <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
+              ) : (
+                entriesByMonth.map((row) => {
+                  const isOpen = openAccordions[row.month] ?? true;
+                  return (
+                    <StAccordion key={row.month}>
+                      <StAccordionButton
+                        type="button"
+                        onClick={() =>
+                          setOpenAccordions((prev) => ({
+                            ...prev,
+                            [row.month]: !isOpen,
+                          }))
+                        }
+                      >
+                        <strong>{row.month}</strong>
+                        <span>{row.entries.length}건</span>
+                      </StAccordionButton>
+                      {isOpen && (
+                        <StEntryList>
+                          {row.entries.map((entry) => (
+                            <StEntryItem key={entry.resolvedId}>
+                              <div>
+                                <strong>{entry.item}</strong>
+                                <p>
+                                  {entry.date} · {entry.member || "작성자 미상"}{" "}
+                                  · {entry.category}
+                                </p>
+                              </div>
+                              <em>{formatAmount(entry.amount)}</em>
+                            </StEntryItem>
+                          ))}
+                        </StEntryList>
+                      )}
+                    </StAccordion>
+                  );
+                })
+              )}
+            </StAccordionList>
+          </StCard>
+        </StSplit>
+      </StPage>
+    </AccountBookLockGate>
   );
 }
 
 export default function AccountBookAnnualPage() {
   return (
-    <AccountBookLockGate>
-      <Suspense fallback={<StPage />}>
-        <AccountBookAnnualContent />
-      </Suspense>
-    </AccountBookLockGate>
+    <Suspense fallback={<StPage>연간 화면을 준비하는 중...</StPage>}>
+      <AccountBookAnnualContent />
+    </Suspense>
   );
 }
 
 const StPage = styled.main`
   position: fixed;
   top: 0;
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
   z-index: 200;
+  overflow: auto;
+  overscroll-behavior: none;
   min-height: 100vh;
+  background: #f5f7fb;
   padding: 1rem;
-  background: #f3f5f7;
-  @media (max-width: 720px) {
-    position: relative;
-    min-height: auto;
-  }
 `;
 
 const StHeader = styled.header`
   display: flex;
-  align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
-  min-width: 0;
+  align-items: center;
+  margin-bottom: 1rem;
 `;
 
 const StBackButton = styled.button`
-  border: 1px solid #d0d7e2;
+  border: none;
+  border-radius: 999px;
   background: #fff;
-  color: #475569;
-  border-radius: 10px;
-  padding: 0.4rem 0.65rem;
+  color: #53647c;
+  padding: 0.55rem 0.9rem;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 800;
 `;
 
 const StTitle = styled.h1`
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-size: 1.3rem;
+  font-weight: 900;
   color: #1f2937;
-  min-width: 0;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
 `;
 
 const StSplit = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  height: calc(100vh - 120px);
-  min-height: 0;
-  @media (max-width: 900px) {
-    height: auto;
-  }
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
 `;
 
 const StCard = styled.section`
-  background: #fff;
-  border: 1px solid #dde3ea;
-  border-radius: 12px;
-  padding: 0.85rem;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  &:first-child {
-    flex: 3;
-  }
-  &:last-child {
-    flex: 7;
-  }
+  border-radius: 24px;
+  border: 1px solid #dbe4ef;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 1rem;
 `;
 
-const StSectionTitle = styled.h3`
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #1f2937;
-  margin-bottom: 0.6rem;
+const StSectionTitle = styled.h2`
+  font-size: 1rem;
+  font-weight: 900;
+  color: #223247;
 `;
 
 const StTotal = styled.strong`
-  font-size: 1.15rem;
-  color: #164e63;
-  margin-bottom: 0.65rem;
+  display: block;
+  margin-top: 0.8rem;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #304e95;
+`;
+
+const StPaymentLegend = styled.div`
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+`;
+
+const StLegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: #55657d;
+
+  .dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
+  }
+
+  strong {
+    min-width: 4rem;
+  }
+
+  em {
+    margin-left: auto;
+    font-style: normal;
+    font-weight: 800;
+  }
 `;
 
 const StChartWrap = styled.div`
-  margin-top: 0.25rem;
-  flex: 1;
-  min-height: 240px;
-  border: 1px solid #edf1f5;
-  border-radius: 10px;
-  padding: 0.8rem 0.55rem 0.55rem;
+  margin-top: 1rem;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 0.35rem;
+  gap: 0.45rem;
+  min-height: 14rem;
   align-items: end;
-  background: linear-gradient(180deg, #f8fbff, #ffffff);
 `;
 
 const StChartColumn = styled.button<{ $active: boolean }>`
-  border: none;
-  background: ${({ $active }) => ($active ? "#eef5ff" : "transparent")};
-  border-radius: 8px;
-  padding: 0.2rem 0.1rem;
+  border: 1px solid ${({ $active }) => ($active ? "#9db4f7" : "#dbe4ef")};
+  border-radius: 16px;
+  background: ${({ $active }) => ($active ? "#eef3ff" : "#f8fbff")};
+  padding: 0.55rem 0.35rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.22rem;
-  min-height: 0;
-  cursor: pointer;
-  outline: none;
-  &:hover {
-    background: #f2f6fc;
-  }
-  &:hover .tooltip {
-    opacity: 1;
-    transform: translate(-50%, -6px);
-    pointer-events: auto;
-  }
-  strong {
-    font-size: 0.68rem;
-    color: ${({ $active }) => ($active ? "#2b5cab" : "#4b5563")};
-    font-weight: 700;
-  }
-  span {
-    font-size: 0.62rem;
-    color: #94a3b8;
-  }
-  em {
-    font-style: normal;
-    font-size: 0.62rem;
-    color: #60718b;
-    white-space: nowrap;
-  }
-`;
+  justify-content: flex-end;
+  gap: 0.4rem;
 
-const StChartBarArea = styled.div`
-  height: 160px;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-`;
-
-const StChartBar = styled.div`
-  width: 100%;
-  max-width: 18px;
-  min-height: 4px;
-  border-radius: 8px 8px 3px 3px;
-  background: #dbe4ef;
-  display: flex;
-  flex-direction: column-reverse;
-  overflow: hidden;
-`;
-
-const StChartSegment = styled.div`
-  width: 100%;
-`;
-const StBarTooltip = styled.div`
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 6px);
-  transform: translate(-50%, 0);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 0.14s ease,
-    transform 0.14s ease;
-  background: rgba(20, 26, 38, 0.95);
-  color: #f8fafc;
-  border-radius: 8px;
-  padding: 0.45rem 0.5rem;
-  min-width: 146px;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.26);
-  z-index: 20;
-  h5 {
-    font-size: 0.68rem;
-    margin-bottom: 0.25rem;
-    color: #e2e8f0;
-  }
-  p {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.4rem;
-    font-size: 0.66rem;
-    margin: 0.1rem 0;
-  }
-  p.total {
-    margin-top: 0.28rem;
-    padding-top: 0.24rem;
-    border-top: 1px solid rgba(226, 232, 240, 0.24);
-    font-weight: 700;
-  }
-`;
-const StPaymentLegend = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-bottom: 0.45rem;
-`;
-const StLegendItem = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 0.18rem 0.5rem;
-  background: #fff;
-  .dot {
-    width: 0.58rem;
-    height: 0.58rem;
+  .bar {
+    width: 100%;
     border-radius: 999px;
-    flex-shrink: 0;
+    background: linear-gradient(180deg, #7ea4f2, #5c7fdd);
+    min-height: 4px;
   }
-  strong {
-    font-size: 0.72rem;
-    color: #334155;
-    font-weight: 700;
-  }
-  em {
-    font-style: normal;
-    font-size: 0.68rem;
-    color: #60718b;
-  }
-`;
 
-const StDetailList = styled.div`
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  display: grid;
-  gap: 0.7rem;
-`;
-const StDetailHead = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.6rem;
-`;
-const StResetButton = styled.button`
-  border: 1px solid #d1d9e5;
-  background: #fff;
-  color: #52617b;
-  border-radius: 999px;
-  padding: 0.28rem 0.62rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-`;
-
-const StMonthGroup = styled.section`
-  h4 {
-    font-size: 0.86rem;
+  span {
+    font-size: 0.7rem;
     font-weight: 800;
-    color: #1f2937;
-    margin-bottom: 0.35rem;
+    color: #60718a;
   }
 `;
-const StAccordion = styled.section`
-  border: 1px solid #e6edf5;
-  border-radius: 10px;
-  background: #fff;
-  overflow: hidden;
-  margin-bottom: 0.45rem;
+
+const StAccordionList = styled.div`
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
 `;
-const StAccordionHeader = styled.button<{ $titleWidth: number }>`
+
+const StAccordion = styled.article`
+  border: 1px solid #e2e9f2;
+  border-radius: 18px;
+  overflow: hidden;
+`;
+
+const StAccordionButton = styled.button`
   width: 100%;
   border: none;
   background: #f8fbff;
-  padding: 0.5rem 0.6rem;
-  display: grid;
-  grid-template-columns: ${({ $titleWidth }) =>
-    `${$titleWidth}px minmax(110px, 180px) minmax(92px, auto)`};
-  align-items: center;
-  gap: 0.55rem;
-  text-align: left;
-  @media (max-width: 900px) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.35rem;
-  }
-`;
-const StAccordionTitleWrap = styled.div`
-  min-width: 0;
+  padding: 0.8rem 0.9rem;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.4rem;
+  color: #24364d;
+
   strong {
-    font-size: 0.82rem;
-    color: #2f3b4f;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+    font-weight: 900;
   }
+
   span {
-    font-size: 0.7rem;
-    color: #7a8495;
-    flex-shrink: 0;
-  }
-`;
-const StCategoryDot = styled.span`
-  width: 0.72rem;
-  height: 0.72rem;
-  border-radius: 999px;
-  flex-shrink: 0;
-`;
-const StAccordionGraph = styled.div`
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.35rem;
-  align-items: center;
-  justify-items: stretch;
-  em {
-    justify-self: flex-end;
-    font-style: normal;
-    font-size: 0.68rem;
-    color: #60718b;
-    line-height: 1;
-  }
-`;
-const StAccordionTrack = styled.div`
-  height: 0.5rem;
-  border-radius: 999px;
-  background: #e4ebf3;
-  overflow: hidden;
-  width: 100%;
-`;
-const StAccordionFill = styled.div`
-  height: 100%;
-  border-radius: inherit;
-`;
-const StAccordionRight = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  flex-shrink: 0;
-  min-width: 96px;
-  strong {
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+    color: #728197;
     font-weight: 800;
-    color: #1f2937;
-    white-space: nowrap;
   }
-`;
-const StAccordionChevron = styled.svg<{ $open: boolean }>`
-  width: 0.95rem;
-  height: 0.95rem;
-  fill: #60718b;
-  flex-shrink: 0;
-  transform: rotate(${({ $open }) => ($open ? "0deg" : "-90deg")});
-  transition: transform 0.16s ease;
-`;
-const StAccordionBody = styled.div`
-  padding: 0.45rem 0.5rem 0.55rem;
-  display: grid;
-  gap: 0.4rem;
 `;
 
-const StEntry = styled.article`
-  border: 1px solid #edf1f5;
-  border-radius: 10px;
-  padding: 0.5rem 0.6rem;
+const StEntryList = styled.div`
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.8rem;
+`;
+
+const StEntryItem = styled.div`
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.65rem;
-  min-width: 0;
-  > div {
-    min-width: 0;
-    flex: 1;
-  }
-  p {
-    font-size: 0.8rem;
-    color: #334155;
-    font-weight: 700;
-    white-space: normal;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-  }
-  span {
-    font-size: 0.72rem;
-    color: #7a8495;
-    display: block;
-    white-space: normal;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-  }
+  gap: 0.8rem;
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem;
+
   strong {
-    font-size: 0.8rem;
-    color: #111827;
+    font-size: 0.88rem;
+    color: #1f2937;
+  }
+
+  p {
+    margin-top: 0.2rem;
+    font-size: 0.76rem;
+    color: #78879b;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 800;
+    color: #304e95;
     white-space: nowrap;
-    flex-shrink: 0;
   }
 `;
 
 const StEmpty = styled.p`
-  color: #8a94a6;
-  font-size: 0.88rem;
+  margin-top: 0.85rem;
+  font-size: 0.84rem;
+  color: #8693a5;
 `;

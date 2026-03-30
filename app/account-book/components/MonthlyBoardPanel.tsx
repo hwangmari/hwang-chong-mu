@@ -37,8 +37,8 @@ export default function MonthlyBoardPanel({
           <StTitle>{monthLabel} 보드</StTitle>
         </div>
         <StDescription>
-          생활비와 사용내역 성격별로 묶어서 보고, 카드를 누르면 해당 날짜 상세를
-          오른쪽 패널에서 바로 이어서 확인합니다.
+          생활비와 사용내역 성격별로 묶어서 보고, 컬럼 카드를 누르면 해당 항목
+          상세를 오른쪽 패널에서 바로 이어서 확인합니다.
         </StDescription>
       </StBoardIntro>
 
@@ -68,7 +68,7 @@ export default function MonthlyBoardPanel({
                     총 {column.cards.length}건의 내역이 이 항목에 포함됩니다.
                   </StColumnMeta>
                   <StColumnHint>
-                    날짜를 선택하면 오른쪽에서 상세 내역을 확인할 수 있습니다.
+                    이 카드를 누르면 오른쪽에서 상세 내역을 확인할 수 있습니다.
                   </StColumnHint>
                 </>
               )}
