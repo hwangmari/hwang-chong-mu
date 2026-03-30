@@ -59,7 +59,12 @@ export default function DetailEntriesPanel({
             <StEntryBadge $kind={entry.type}>
               {entry.type === "income" ? "수입" : "지출"}
             </StEntryBadge>
-            <StEntryPayment>{paymentLabel(entry.payment)}</StEntryPayment>
+            <StEntryPayment>
+              {paymentLabel(entry.payment)}
+              {entry.payment !== "cash" && entry.cardCompany
+                ? ` · ${entry.cardCompany}`
+                : ""}
+            </StEntryPayment>
             {entry.source !== "direct" ? (
               <StMirrorBadge>
                 {entry.source === "shared_link" ? "공용방에 공유됨" : "공용방 자동반영"}

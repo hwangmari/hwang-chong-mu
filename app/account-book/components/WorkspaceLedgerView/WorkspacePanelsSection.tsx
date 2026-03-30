@@ -102,7 +102,6 @@ export default function WorkspacePanelsSection({
           monthPaymentTotals={monthPaymentTotals}
           cashBalance={cashBalance}
           assetTotal={monthAssetTotal}
-          memberExpenseTotals={memberExpenseTotals}
           onOpenIncomeYearly={onOpenIncomeYearly}
           onOpenExpenseYearly={onOpenExpenseYearly}
           onOpenAssetYearly={onOpenAssetYearly}
@@ -117,6 +116,7 @@ export default function WorkspacePanelsSection({
               monthTotals={monthTotals}
               monthAssetTotal={monthAssetTotal}
               monthEntries={monthEntries}
+              memberExpenseTotals={memberExpenseTotals}
               monthCategorySummary={monthCategorySummary}
               formatAmount={formatAmount}
             />

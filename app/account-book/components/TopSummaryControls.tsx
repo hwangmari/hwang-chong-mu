@@ -13,7 +13,6 @@ type Props = {
   monthPaymentTotals: { income: PaymentTotals; expense: PaymentTotals };
   cashBalance: number;
   assetTotal: number;
-  memberExpenseTotals: Array<[string, number]>;
   onOpenIncomeYearly: () => void;
   onOpenExpenseYearly: () => void;
   onOpenAssetYearly: () => void;
@@ -25,7 +24,6 @@ export default function TopSummaryControls({
   monthPaymentTotals,
   cashBalance,
   assetTotal,
-  memberExpenseTotals,
   onOpenIncomeYearly,
   onOpenExpenseYearly,
   onOpenAssetYearly,
@@ -70,16 +68,6 @@ export default function TopSummaryControls({
           </StSummaryDetail>
         </StSummaryButton>
       </StSummaryLine>
-
-      {memberExpenseTotals.length > 0 && (
-        <StMemberSummary>
-          {memberExpenseTotals.map(([name, amount]) => (
-            <span key={name}>
-              {name} {formatAmount(amount)}
-            </span>
-          ))}
-        </StMemberSummary>
-      )}
     </StTopControls>
   );
 }
@@ -166,22 +154,5 @@ const StSummaryDetail = styled.div`
     span {
       font-size: 0.7rem;
     }
-  }
-`;
-
-const StMemberSummary = styled.div`
-  margin-top: 0.6rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-
-  span {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: #4f6178;
-    background: #edf3f9;
-    border: 1px solid #d7e3ef;
-    border-radius: 999px;
-    padding: 0.2rem 0.5rem;
   }
 `;

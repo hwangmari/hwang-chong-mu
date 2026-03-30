@@ -12,6 +12,7 @@ type Props = {
   monthTotals: { income: number; expense: number };
   monthAssetTotal: number;
   monthEntries: ResolvedAccountEntry[];
+  memberExpenseTotals: Array<[string, number]>;
   monthCategorySummary: Array<[string, number]>;
   formatAmount: (value: number) => string;
 };
@@ -22,10 +23,16 @@ export default function LedgerOverviewSection({
   monthTotals,
   monthAssetTotal,
   monthEntries,
+  memberExpenseTotals,
   monthCategorySummary,
   formatAmount,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const compareColors = ["#6d87ef", "#67b182", "#d08b5b", "#f28b82"];
+  const maxMemberExpense = Math.max(
+    ...memberExpenseTotals.map(([, amount]) => amount),
+    0,
+  );
 
   const categoryDetails = useMemo(() => {
     const grouped = monthEntries.reduce<
@@ -76,6 +83,38 @@ export default function LedgerOverviewSection({
         <span>수입 {formatAmount(monthTotals.income)}</span>
         <span>자산 {formatAmount(monthAssetTotal)}</span>
       </StLedgerOverviewSummary>
+      {memberExpenseTotals.length > 1 ? (
+        <StCompareCard>
+          <StCompareHeader>
+            <strong>사용 금액 비교</strong>
+            <span>공용 가계부 참여자별 이번 달 지출을 비교합니다.</span>
+          </StCompareHeader>
+          <StCompareList>
+            {memberExpenseTotals.map(([name, amount], index) => {
+              const width =
+                amount > 0 && maxMemberExpense > 0
+                  ? `${Math.max((amount / maxMemberExpense) * 100, 8)}%`
+                  : "0%";
+              const color = compareColors[index % compareColors.length];
+
+              return (
+                <StCompareRow key={name}>
+                  <StCompareMeta>
+                    <StCompareName>
+                      <span className="dot" style={{ background: color }} />
+                      <strong>{name}</strong>
+                    </StCompareName>
+                    <em>{formatAmount(amount)}</em>
+                  </StCompareMeta>
+                  <StCompareBar>
+                    <StCompareFill style={{ width, background: color }} />
+                  </StCompareBar>
+                </StCompareRow>
+              );
+            })}
+          </StCompareList>
+        </StCompareCard>
+      ) : null}
       <StLedgerCategoryList>
         {monthCategorySummary.length === 0 ? (
           <StLedgerEmpty>
@@ -184,6 +223,84 @@ const StLedgerOverviewSummary = styled.div`
 const StLedgerCategoryList = styled.div`
   display: grid;
   gap: 0.55rem;
+`;
+
+const StCompareCard = styled.section`
+  border-radius: 16px;
+  border: 1px solid #dbe5f0;
+  background: linear-gradient(180deg, #fbfdff, #f5f9ff);
+  padding: 0.85rem;
+`;
+
+const StCompareHeader = styled.div`
+  display: grid;
+  gap: 0.18rem;
+  margin-bottom: 0.7rem;
+
+  strong {
+    font-size: 0.9rem;
+    color: #213247;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: #74849a;
+  }
+`;
+
+const StCompareList = styled.div`
+  display: grid;
+  gap: 0.6rem;
+`;
+
+const StCompareRow = styled.div`
+  display: grid;
+  gap: 0.32rem;
+`;
+
+const StCompareMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+
+  em {
+    font-style: normal;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #223147;
+  }
+`;
+
+const StCompareName = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+
+  .dot {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  strong {
+    font-size: 0.82rem;
+    color: #42546a;
+  }
+`;
+
+const StCompareBar = styled.div`
+  width: 100%;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #e9eef5;
+  overflow: hidden;
+`;
+
+const StCompareFill = styled.div`
+  height: 100%;
+  border-radius: inherit;
 `;
 
 const StLedgerCategoryCard = styled.div`

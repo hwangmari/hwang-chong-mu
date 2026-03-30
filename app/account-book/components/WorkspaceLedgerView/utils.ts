@@ -16,6 +16,17 @@ import type {
 export const CARD_COMPANY_DEFAULT = "KB국민카드";
 export const MEMBER_FALLBACK = "사용자1";
 export const ALL_PARTICIPANTS_ID = "all";
+export const CARD_COMPANY_OPTIONS = [
+  "KB국민카드",
+  "신한카드",
+  "삼성카드",
+  "현대카드",
+  "롯데카드",
+  "하나카드",
+  "우리카드",
+  "NH농협카드",
+  "BC카드",
+] as const;
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
   {
@@ -107,6 +118,98 @@ const ASSET_SUBCATEGORY_OPTIONS = [
   "연금",
   "코인",
 ] as const;
+const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
+  "식비/외식": [
+    "배민",
+    "쿠팡이츠",
+    "요기요",
+    "카페",
+    "편의점",
+    "마트",
+    "식당",
+  ],
+  "병원/의료": ["병원", "치과", "한의원", "검사", "진료"],
+  "선물/기타": ["선물", "경조사", "이벤트", "기타"],
+  "쇼핑/패션": ["의류", "신발", "가방", "뷰티"],
+  "쇼핑/기타": ["온라인쇼핑", "생활용품", "마트", "가전"],
+  "교통/택시": ["택시", "버스", "지하철", "기차"],
+  "여행/관광": ["숙소", "항공", "레저", "관광"],
+  "주차/교통": ["주차장", "주유", "충전", "대리"],
+  "결제/플랫폼": ["네이버페이", "카카오페이", "토스페이", "간편결제"],
+  "문화/구독": ["OTT", "음악", "도서", "전시"],
+  저축: ASSET_SUBCATEGORY_OPTIONS,
+  "교통카드/충전": ["티머니", "캐시비", "교통카드"],
+  통행료: ["하이패스", "유료도로"],
+  약국: ["처방약", "일반약", "영양제"],
+};
+const CATEGORY_DETAIL_RULES = [
+  {
+    category: "식비/외식",
+    detail: "배민",
+    patterns: [/우아한형제들/i, /배달의민족/i, /\b배민\b/i],
+  },
+  {
+    category: "식비/외식",
+    detail: "쿠팡이츠",
+    patterns: [/쿠팡이츠/i],
+  },
+  {
+    category: "식비/외식",
+    detail: "요기요",
+    patterns: [/요기요/i],
+  },
+  {
+    category: "식비/외식",
+    detail: "카페",
+    patterns: [/스타벅스/i, /투썸/i, /메가커피/i, /커피/i, /카페/i],
+  },
+  {
+    category: "식비/외식",
+    detail: "편의점",
+    patterns: [/gs25/i, /cu\b/i, /세븐일레븐/i, /편의점/i],
+  },
+  {
+    category: "식비/외식",
+    detail: "마트",
+    patterns: [/이마트/i, /홈플러스/i, /롯데마트/i, /마트/i],
+  },
+  {
+    category: "교통/택시",
+    detail: "택시",
+    patterns: [/카카오 ?t/i, /우버/i, /택시/i],
+  },
+  {
+    category: "결제/플랫폼",
+    detail: "네이버페이",
+    patterns: [/네이버페이/i],
+  },
+  {
+    category: "결제/플랫폼",
+    detail: "카카오페이",
+    patterns: [/카카오페이/i],
+  },
+  {
+    category: "결제/플랫폼",
+    detail: "토스페이",
+    patterns: [/토스페이/i],
+  },
+  {
+    category: "문화/구독",
+    detail: "OTT",
+    patterns: [/넷플릭스/i, /티빙/i, /웨이브/i, /디즈니/i],
+  },
+] as const;
+const CARD_COMPANY_PATTERNS = [
+  [/kb국민카드|국민카드|kb국민/i, "KB국민카드"],
+  [/신한카드|shinhan/i, "신한카드"],
+  [/삼성카드|samsungcard/i, "삼성카드"],
+  [/현대카드|hyundaicard/i, "현대카드"],
+  [/롯데카드|lottecard/i, "롯데카드"],
+  [/하나카드|hanacard/i, "하나카드"],
+  [/우리카드|wooricard/i, "우리카드"],
+  [/nh농협카드|농협카드|nhcard/i, "NH농협카드"],
+  [/\bbc카드\b|\bbccard\b/i, "BC카드"],
+] as const;
 
 const KOREAN_UNIT_AMOUNT_PATTERN =
   "-?(?:(?:\\d[\\d,]*)\\s*(?:만|천|백|십)\\s*)+(?:\\d[\\d,]*)?\\s*원?";
@@ -140,6 +243,10 @@ export function paymentLabel(payment: PaymentType) {
   return "카드";
 }
 
+export function getCategoryDetailOptions(category: string) {
+  return [...(CATEGORY_DETAIL_OPTIONS[category] || [])];
+}
+
 export function toPaymentValue(text: string): PaymentType | null {
   if (text.includes("체크")) return "check_card";
   if (text.includes("현금")) return "cash";
@@ -149,6 +256,9 @@ export function toPaymentValue(text: string): PaymentType | null {
 
 export function inferCategoryFromItemText(text: string) {
   if (!text) return null;
+  if (/우아한형제들|배민|배달의민족|요기요|쿠팡이츠/.test(text)) {
+    return "식비/외식";
+  }
   if (/식당|밥|카페|편의점|마트|치킨|한우|커피/.test(text)) return "식비/외식";
   if (/병원|약국|의원|검사|진료/.test(text)) return "병원/의료";
   if (/택시|우버|카카오 ?t|교통/.test(text)) return "교통/택시";
@@ -171,6 +281,73 @@ export function inferAssetSubCategoryFromText(text: string) {
       lower.includes(option.toLowerCase()),
     ) || ""
   );
+}
+
+export function inferSubCategoryFromText(category: string, text: string) {
+  if (!text) return "";
+  if (category === "저축") {
+    return inferAssetSubCategoryFromText(text);
+  }
+
+  const matchedRule = CATEGORY_DETAIL_RULES.find(
+    (rule) =>
+      rule.category === category &&
+      rule.patterns.some((pattern) => pattern.test(text)),
+  );
+  if (matchedRule) {
+    return matchedRule.detail;
+  }
+
+  return (
+    getCategoryDetailOptions(category).find((option) => text.includes(option)) || ""
+  );
+}
+
+export function inferCardCompanyFromText(text: string) {
+  if (!text) return "";
+  const normalized = text.replace(/\s+/g, "");
+  return (
+    CARD_COMPANY_PATTERNS.find(([pattern]) => pattern.test(normalized))?.[1] || ""
+  );
+}
+
+function normalizeCompanyLabel(text: string) {
+  return text.replace(/\s+/g, "").toLowerCase();
+}
+
+export function isCardSettlementEntry(
+  entry: Pick<
+    AccountEntry,
+    "type" | "payment" | "merchant" | "item" | "memo" | "rawText" | "cardCompany"
+  >,
+) {
+  if (entry.type !== "expense") return false;
+
+  const merchantText = normalizeCompanyLabel(entry.merchant || "");
+  const itemText = normalizeCompanyLabel(entry.item || "");
+  const memoText = normalizeCompanyLabel(entry.memo || "");
+  const rawText = normalizeCompanyLabel(entry.rawText || "");
+  const cardCompanyText = normalizeCompanyLabel(entry.cardCompany || "");
+  const mergedText = [merchantText, itemText, memoText, rawText, cardCompanyText]
+    .filter(Boolean)
+    .join(" ");
+  const settlementKeywordPattern =
+    /카드대금|이용대금|대금결제|결제대금|카드값|청구금액|결제일|자동이체|카드결제/;
+  const hasSettlementKeyword = settlementKeywordPattern.test(mergedText);
+  const matchedCompany = [...CARD_COMPANY_OPTIONS].find((company) => {
+    const normalizedCompany = normalizeCompanyLabel(company);
+    return (
+      merchantText.includes(normalizedCompany) ||
+      itemText.includes(normalizedCompany) ||
+      memoText.includes(normalizedCompany) ||
+      rawText.includes(normalizedCompany) ||
+      (cardCompanyText && cardCompanyText === normalizedCompany)
+    );
+  });
+
+  if (!matchedCompany) return false;
+
+  return hasSettlementKeyword || entry.payment === "cash";
 }
 
 export function parseQuickDate(text: string, fallbackDate: string) {
@@ -363,14 +540,15 @@ export function parseNaturalInputEntry(
     text,
     context.memberUsers.map((user) => user.name).filter(Boolean),
   );
-  const detailText = [merchant, item].filter(Boolean).join(" ");
+  const detailText = [merchant, item, text].filter(Boolean).join(" ");
   const category =
     inferCategoryFromItemText(detailText || text) ||
     (type === "income" ? "월급" : "쇼핑/기타");
-  const subCategory =
-    category === "저축" ? inferAssetSubCategoryFromText(text) : "";
+  const subCategory = inferSubCategoryFromText(category, detailText || text);
   const normalizedItem =
     item || merchant || (type === "income" ? "수입" : "미입력");
+  const cardCompany =
+    payment === "cash" ? "" : inferCardCompanyFromText(text) || CARD_COMPANY_DEFAULT;
 
   return {
     id: createEntryId(),
@@ -384,7 +562,7 @@ export function parseNaturalInputEntry(
     merchant,
     item: normalizedItem,
     amount,
-    cardCompany: CARD_COMPANY_DEFAULT,
+    cardCompany,
     payment,
     memo: "",
     rawText: text,
@@ -535,8 +713,7 @@ export function extractImageCandidatesFromText(
       const supportText = rawParts.join(" ");
       const category =
         inferCategoryFromItemText(merchant || supportText) || "쇼핑/기타";
-      const subCategory =
-        category === "저축" ? inferAssetSubCategoryFromText(supportText) : "";
+      const subCategory = inferSubCategoryFromText(category, supportText);
 
       const candidate: ExtractedImageEntryCandidate = {
         id: `ocr-local-${Date.now()}-${candidates.length}`,

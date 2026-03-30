@@ -16,9 +16,12 @@ type Props = {
   item: string;
   amount: string;
   payment: PaymentType;
+  cardCompany: string;
   memo: string;
   quickInput: string;
   categoryOptions: CategoryOption[];
+  categoryDetailOptions: string[];
+  cardCompanyOptions: string[];
   onClose: () => void;
   onSetDate: (date: string) => void;
   onSetType: (type: EntryType) => void;
@@ -29,6 +32,7 @@ type Props = {
   onSetItem: (value: string) => void;
   onSetAmount: (value: string) => void;
   onSetPayment: (payment: PaymentType) => void;
+  onSetCardCompany: (value: string) => void;
   onSetMemo: (value: string) => void;
   onSetQuickInput: (value: string) => void;
   onApplyQuickInput: () => void;
@@ -48,9 +52,12 @@ export default function EntryFormModal({
   item,
   amount,
   payment,
+  cardCompany,
   memo,
   quickInput,
   categoryOptions,
+  categoryDetailOptions,
+  cardCompanyOptions,
   onClose,
   onSetDate,
   onSetType,
@@ -61,14 +68,24 @@ export default function EntryFormModal({
   onSetItem,
   onSetAmount,
   onSetPayment,
+  onSetCardCompany,
   onSetMemo,
   onSetQuickInput,
   onApplyQuickInput,
   onSubmit,
 }: Props) {
   if (!isOpen) return null;
+
   const isSavingCategory = type === "expense" && category === "저축";
-  const savingSubCategories = ["예금", "적금", "주식", "ETF", "연금", "코인"];
+  const shouldShowCategoryDetail = type === "expense" && Boolean(category);
+  const shouldShowCardCompany = type === "expense" && payment !== "cash";
+  const categoryDetailLabel = isSavingCategory
+    ? "저축 세부카테고리"
+    : "카테고리 디테일";
+  const categoryDetailPlaceholder =
+    categoryDetailOptions.length > 0
+      ? `예: ${categoryDetailOptions.slice(0, 3).join(", ")}`
+      : "예: 배민, 카페, 온라인쇼핑";
 
   return (
     <StModalBackdrop onClick={onClose}>
@@ -142,7 +159,7 @@ export default function EntryFormModal({
 
         <StFormRow $columns={2}>
           <StFormField>
-            <StLabel>세부항목</StLabel>
+            <StLabel>결제수단</StLabel>
             <StPaymentSelector>
               <StPaymentOption
                 type="button"
@@ -151,7 +168,7 @@ export default function EntryFormModal({
               >
                 현금
               </StPaymentOption>
-              {type === "expense" && (
+              {type === "expense" ? (
                 <>
                   <StPaymentOption
                     type="button"
@@ -168,8 +185,30 @@ export default function EntryFormModal({
                     체크카드
                   </StPaymentOption>
                 </>
-              )}
+              ) : null}
             </StPaymentSelector>
+            {shouldShowCardCompany ? (
+              <>
+                <StSubLabel>카드사</StSubLabel>
+                <StSubCategorySelector>
+                  {cardCompanyOptions.map((option) => (
+                    <StSubCategoryOption
+                      key={option}
+                      type="button"
+                      $active={cardCompany === option}
+                      onClick={() => onSetCardCompany(option)}
+                    >
+                      {option}
+                    </StSubCategoryOption>
+                  ))}
+                </StSubCategorySelector>
+                <StInlineSubInput
+                  value={cardCompany}
+                  onChange={(e) => onSetCardCompany(e.target.value)}
+                  placeholder="예: 삼성카드"
+                />
+              </>
+            ) : null}
           </StFormField>
           <StFormField>
             <StLabel>가맹점 / 항목 / 메모</StLabel>
@@ -226,30 +265,32 @@ export default function EntryFormModal({
           </StFormField>
         </StFormRow>
 
-        {isSavingCategory && (
+        {shouldShowCategoryDetail ? (
           <StFormRow>
             <StFormField>
-              <StLabel>저축 세부카테고리</StLabel>
-              <StSubCategorySelector>
-                {savingSubCategories.map((option) => (
-                  <StSubCategoryOption
-                    key={option}
-                    type="button"
-                    $active={subCategory === option}
-                    onClick={() => onSetSubCategory(option)}
-                  >
-                    {option}
-                  </StSubCategoryOption>
-                ))}
-              </StSubCategorySelector>
+              <StLabel>{categoryDetailLabel}</StLabel>
+              {categoryDetailOptions.length > 0 ? (
+                <StSubCategorySelector>
+                  {categoryDetailOptions.map((option) => (
+                    <StSubCategoryOption
+                      key={option}
+                      type="button"
+                      $active={subCategory === option}
+                      onClick={() => onSetSubCategory(option)}
+                    >
+                      {option}
+                    </StSubCategoryOption>
+                  ))}
+                </StSubCategorySelector>
+              ) : null}
               <StInput
                 value={subCategory}
                 onChange={(e) => onSetSubCategory(e.target.value)}
-                placeholder="예: 예금, 주식"
+                placeholder={categoryDetailPlaceholder}
               />
             </StFormField>
           </StFormRow>
-        )}
+        ) : null}
 
         <StQuickInputBox>
           <StLabel>텍스트로 빠르게 입력</StLabel>
@@ -257,7 +298,7 @@ export default function EntryFormModal({
             <StQuickTextarea
               value={quickInput}
               onChange={(e) => onSetQuickInput(e.target.value)}
-              placeholder="예: 남편 지출 식당 30000, 쇼핑 20000, 차비 10000"
+              placeholder="예: 우아한형제들 배민 삼성카드 30000, 쇼핑 20000"
             />
             <StQuickButton type="button" onClick={onApplyQuickInput}>
               해석
@@ -282,9 +323,11 @@ const StFormRow = styled.div<{ $columns?: number }>`
     grid-template-columns: 1fr;
   }
 `;
+
 const StQuickInputBox = styled.div`
   margin-bottom: 0.75rem;
 `;
+
 const StQuickRow = styled.div`
   display: grid;
   grid-template-columns: 1fr auto;
@@ -295,6 +338,7 @@ const StQuickRow = styled.div`
     grid-template-columns: 1fr;
   }
 `;
+
 const StQuickTextarea = styled.textarea`
   width: 100%;
   min-height: 68px;
@@ -311,6 +355,7 @@ const StQuickTextarea = styled.textarea`
     box-shadow: 0 0 0 3px rgba(111, 166, 201, 0.15);
   }
 `;
+
 const StQuickButton = styled.button`
   border: 1px solid #bfd2e4;
   background: #edf6fe;
@@ -321,9 +366,11 @@ const StQuickButton = styled.button`
   font-weight: 700;
   padding: 0 0.75rem;
 `;
+
 const StFormField = styled.div`
   margin-bottom: 0.65rem;
 `;
+
 const StSelectedCategory = styled.div`
   display: flex;
   align-items: center;
@@ -340,6 +387,7 @@ const StSelectedCategory = styled.div`
     color: #374151;
   }
 `;
+
 const StCategoryPicker = styled.div`
   max-height: 150px;
   overflow: auto;
@@ -354,6 +402,7 @@ const StCategoryPicker = styled.div`
     grid-template-columns: 1fr;
   }
 `;
+
 const StCategoryButton = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#b9d0e5" : "#e5eaf0")};
   background: ${({ $active }) => ($active ? "#f1f7fc" : "#fff")};
@@ -376,10 +425,12 @@ const StCategoryButton = styled.button<{ $active: boolean }>`
     line-height: 1;
   }
 `;
+
 const StCategoryDescription = styled.p`
   font-size: 0.75rem;
   color: #708197;
 `;
+
 const StLabel = styled.label`
   display: block;
   margin-bottom: 0.25rem;
@@ -387,11 +438,21 @@ const StLabel = styled.label`
   color: #6b7280;
   font-weight: 700;
 `;
+
+const StSubLabel = styled.label`
+  display: block;
+  margin: 0.55rem 0 0.25rem;
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 700;
+`;
+
 const StTypeSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
 `;
+
 const StTypeOption = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#b7d0e5" : "#dce3eb")};
   background: ${({ $active }) => ($active ? "#eff6fc" : "#fff")};
@@ -401,11 +462,13 @@ const StTypeOption = styled.button<{ $active: boolean }>`
   font-size: 0.85rem;
   font-weight: 700;
 `;
+
 const StMemberSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
 `;
+
 const StMemberOption = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#b7d0e5" : "#dce3eb")};
   background: ${({ $active }) => ($active ? "#eff6fc" : "#fff")};
@@ -415,11 +478,13 @@ const StMemberOption = styled.button<{ $active: boolean }>`
   font-size: 0.82rem;
   font-weight: 700;
 `;
+
 const StPaymentSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
   gap: 0.4rem;
 `;
+
 const StPaymentOption = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#b7d0e5" : "#dce3eb")};
   background: ${({ $active }) => ($active ? "#eff6fc" : "#fff")};
@@ -429,12 +494,14 @@ const StPaymentOption = styled.button<{ $active: boolean }>`
   font-size: 0.8rem;
   font-weight: 700;
 `;
+
 const StSubCategorySelector = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-bottom: 0.45rem;
 `;
+
 const StSubCategoryOption = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#b7d0e5" : "#dce3eb")};
   background: ${({ $active }) => ($active ? "#eff6fc" : "#fff")};
@@ -444,6 +511,7 @@ const StSubCategoryOption = styled.button<{ $active: boolean }>`
   font-size: 0.76rem;
   font-weight: 700;
 `;
+
 const inputBase = `
   width: 100%;
   border: 1px solid #dce3eb;
@@ -458,6 +526,7 @@ const inputBase = `
     box-shadow: 0 0 0 3px rgba(111, 166, 201, 0.15);
   }
 `;
+
 const StInput = styled.input<{ $large?: boolean }>`
   ${inputBase}
   ${({ $large }) =>
@@ -469,10 +538,12 @@ const StInput = styled.input<{ $large?: boolean }>`
   `
       : ""}
 `;
+
 const StInlineSubInput = styled.input`
   ${inputBase}
   margin-top: 0.35rem;
 `;
+
 const StAddButton = styled.button`
   width: 100%;
   border: 1px solid #4e67d0;
@@ -486,6 +557,7 @@ const StAddButton = styled.button`
   bottom: 0;
   box-shadow: 0 -10px 24px rgba(255, 255, 255, 0.92);
 `;
+
 const StModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
@@ -502,6 +574,7 @@ const StModalBackdrop = styled.div`
     padding: 0.75rem;
   }
 `;
+
 const StModalCard = styled.div`
   width: min(480px, 100%);
   height: calc(100vh - 1.8rem);
@@ -521,6 +594,7 @@ const StModalCard = styled.div`
     box-shadow: 0 -18px 38px rgba(49, 67, 110, 0.14);
   }
 `;
+
 const StModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -539,6 +613,7 @@ const StModalHeader = styled.div`
     color: #111827;
   }
 `;
+
 const StCloseButton = styled.button`
   width: 30px;
   height: 30px;

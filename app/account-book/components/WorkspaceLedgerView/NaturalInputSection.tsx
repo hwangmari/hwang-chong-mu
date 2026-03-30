@@ -111,6 +111,7 @@ export default function NaturalInputSection({
 
             <StHints>
               <span>예: 오늘 스타벅스 라떼 카드 6100원</span>
+              <span>예: 오늘 우아한형제들 배민 삼성카드 1만8천원</span>
               <span>예: 3월 17일 네이버쇼핑 마라샹궈 구매 16만원</span>
             </StHints>
 
@@ -121,7 +122,13 @@ export default function NaturalInputSection({
                     <strong>{formatPreviewDate(naturalPreview.date)}</strong>
                     <span>{naturalPreview.merchant || "가맹점 미입력"}</span>
                     <span>{naturalPreview.item}</span>
+                    {naturalPreview.subCategory ? (
+                      <span>{naturalPreview.subCategory}</span>
+                    ) : null}
                     <span>{paymentLabel(naturalPreview.payment)}</span>
+                    {naturalPreview.payment !== "cash" && naturalPreview.cardCompany ? (
+                      <span>{naturalPreview.cardCompany}</span>
+                    ) : null}
                     <em>{formatAmount(naturalPreview.amount)}</em>
                   </>
                 ) : (

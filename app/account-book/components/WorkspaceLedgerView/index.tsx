@@ -32,6 +32,7 @@ import WorkspaceInfoBar from "./WorkspaceInfoBar";
 import WorkspacePanelsSection from "./WorkspacePanelsSection";
 import {
   ALL_PARTICIPANTS_ID,
+  CARD_COMPANY_OPTIONS,
   CARD_COMPANY_DEFAULT,
   CATEGORY_OPTIONS,
   MEMBER_FALLBACK,
@@ -41,8 +42,11 @@ import {
   formatPreviewDate,
   formatSelectedDateTitle,
   getAccountEntryDuplicateKey,
-  inferAssetSubCategoryFromText,
+  getCategoryDetailOptions,
+  inferCardCompanyFromText,
   inferCategoryFromItemText,
+  inferSubCategoryFromText,
+  isCardSettlementEntry,
   parseAmountValue,
   parseIsoDate,
   parseNaturalInputEntry,
@@ -97,6 +101,7 @@ export default function WorkspaceLedgerView({
   const [item, setItem] = useState("");
   const [amount, setAmount] = useState("");
   const [payment, setPayment] = useState<PaymentType>("card");
+  const [cardCompany, setCardCompany] = useState(CARD_COMPANY_DEFAULT);
   const [memo, setMemo] = useState("");
   const [quickInput, setQuickInput] = useState("");
   const [naturalInput, setNaturalInput] = useState("");
@@ -158,12 +163,20 @@ export default function WorkspaceLedgerView({
     const ym = format(currentMonth, "yyyy-MM");
     return visibleEntries.filter((entry) => entry.date.startsWith(ym));
   }, [currentMonth, visibleEntries]);
+  const displayMonthEntries = useMemo(
+    () => monthEntries.filter((entry) => !isCardSettlementEntry(entry)),
+    [monthEntries],
+  );
 
   const monthTotals = useMemo(() => {
     return monthEntries.reduce(
       (acc, entry) => {
         if (entry.type === "income") acc.income += entry.amount;
-        if (entry.type === "expense" && entry.category.trim() !== "저축") {
+        if (
+          entry.type === "expense" &&
+          entry.category.trim() !== "저축" &&
+          !isCardSettlementEntry(entry)
+        ) {
           acc.expense += entry.amount;
         }
         return acc;
@@ -179,7 +192,10 @@ export default function WorkspaceLedgerView({
           acc.income[entry.payment] += entry.amount;
           return acc;
         }
-        if (entry.category.trim() !== "저축") {
+        if (
+          entry.category.trim() !== "저축" &&
+          !isCardSettlementEntry(entry)
+        ) {
           acc.expense[entry.payment] += entry.amount;
         }
         return acc;
@@ -206,7 +222,10 @@ export default function WorkspaceLedgerView({
   const memberExpenseTotals = useMemo(() => {
     const totals = monthEntries
       .filter(
-        (entry) => entry.type === "expense" && entry.category.trim() !== "저축",
+        (entry) =>
+          entry.type === "expense" &&
+          entry.category.trim() !== "저축" &&
+          !isCardSettlementEntry(entry),
       )
       .reduce<Record<string, number>>((acc, entry) => {
         const key = entry.member || defaultMember;
@@ -230,6 +249,9 @@ export default function WorkspaceLedgerView({
   const monthCategorySummary = useMemo(() => {
     return Object.entries(
       monthEntries.reduce<Record<string, number>>((acc, entry) => {
+        if (entry.type === "expense" && isCardSettlementEntry(entry)) {
+          return acc;
+        }
         const key =
           entry.type === "income"
             ? "수입"
@@ -250,6 +272,7 @@ export default function WorkspaceLedgerView({
         (entry) =>
           !(entry.type === "expense" && entry.category.trim() === "저축"),
       )
+      .filter((entry) => !isCardSettlementEntry(entry))
       .filter((entry) => entry.date === selectedDate)
       .sort((a, b) => b.amount - a.amount);
   }, [selectedDate, visibleEntries]);
@@ -268,7 +291,9 @@ export default function WorkspaceLedgerView({
     >((acc, entry) => {
       const target = acc[entry.date] || { income: 0, expense: 0 };
       if (entry.type === "income") target.income += entry.amount;
-      if (entry.type === "expense") target.expense += entry.amount;
+      if (entry.type === "expense" && !isCardSettlementEntry(entry)) {
+        target.expense += entry.amount;
+      }
       acc[entry.date] = target;
       return acc;
     }, {});
@@ -288,6 +313,7 @@ export default function WorkspaceLedgerView({
         description: "식비, 의료, 약국, 구독/플랫폼",
         matches: (entry: ResolvedAccountEntry) =>
           entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
           [
             "식비/외식",
             "병원/의료",
@@ -302,6 +328,7 @@ export default function WorkspaceLedgerView({
         description: "택시, 주차, 통행료, 교통카드",
         matches: (entry: ResolvedAccountEntry) =>
           entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
           ["교통/택시", "주차/교통", "통행료", "교통카드/충전"].includes(
             entry.category,
           ),
@@ -312,6 +339,7 @@ export default function WorkspaceLedgerView({
         description: "쇼핑, 여행, 취향 소비",
         matches: (entry: ResolvedAccountEntry) =>
           entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
           ["쇼핑/패션", "쇼핑/기타", "여행/관광"].includes(entry.category),
       },
       {
@@ -319,7 +347,9 @@ export default function WorkspaceLedgerView({
         title: "특별/기타",
         description: "선물, 이벤트, 기타 지출",
         matches: (entry: ResolvedAccountEntry) =>
-          entry.type === "expense" && ["선물/기타"].includes(entry.category),
+          entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
+          ["선물/기타"].includes(entry.category),
       },
       {
         id: "asset",
@@ -366,6 +396,9 @@ export default function WorkspaceLedgerView({
     monthEntries.forEach((entry) => {
       if (entry.type === "income") {
         groups.income.push(entry);
+        return;
+      }
+      if (isCardSettlementEntry(entry)) {
         return;
       }
       if (entry.category.trim() === "저축") {
@@ -446,6 +479,10 @@ export default function WorkspaceLedgerView({
     () => new Set(entries.map((entry) => getAccountEntryDuplicateKey(entry))),
     [entries],
   );
+  const categoryDetailOptions = useMemo(
+    () => getCategoryDetailOptions(category),
+    [category],
+  );
 
   const closeFormModal = () => {
     setIsFormModalOpen(false);
@@ -476,6 +513,7 @@ export default function WorkspaceLedgerView({
     setDraftRawText("");
     setMember(selectedParticipant?.name || defaultMember);
     setPayment(nextType === "income" ? "cash" : "card");
+    setCardCompany(CARD_COMPANY_DEFAULT);
     setIsFormModalOpen(true);
   };
 
@@ -491,6 +529,7 @@ export default function WorkspaceLedgerView({
     setItem(entry.item);
     setAmount(String(entry.amount));
     setPayment(entry.payment);
+    setCardCompany(entry.cardCompany || CARD_COMPANY_DEFAULT);
     setMemo(entry.memo);
     setDraftRawText(entry.rawText || "");
     setIsFormModalOpen(true);
@@ -520,6 +559,10 @@ export default function WorkspaceLedgerView({
       alert("저축 세부카테고리를 입력해주세요.");
       return;
     }
+    if (type === "expense" && payment !== "cash" && !cardCompany.trim()) {
+      alert("카드 결제 내역은 카드사를 선택해주세요.");
+      return;
+    }
     if (!Number.isFinite(parsedAmount) || parsedAmount === 0) {
       alert("금액은 0이 아닌 숫자로 입력해주세요.");
       return;
@@ -538,14 +581,14 @@ export default function WorkspaceLedgerView({
       createdByUserId: matchedUser.id,
       type,
       category: category.trim(),
-      subCategory:
-        type === "expense" && category.trim() === "저축"
-          ? subCategory.trim()
-          : "",
+      subCategory: type === "expense" ? subCategory.trim() : "",
       merchant: merchant.trim(),
       item: item.trim(),
       amount: Math.trunc(parsedAmount),
-      cardCompany: CARD_COMPANY_DEFAULT,
+      cardCompany:
+        type === "expense" && payment !== "cash"
+          ? cardCompany.trim() || CARD_COMPANY_DEFAULT
+          : "",
       payment: type === "income" ? "cash" : payment,
       memo: memo.trim(),
       rawText: draftRawText.trim() || editingEntry?.rawText || "",
@@ -587,6 +630,10 @@ export default function WorkspaceLedgerView({
             ?.label ||
           inferCategoryFromItemText(segment) ||
           defaultCategory;
+        const nextPayment =
+          segment.includes("수입") || defaultType === "income"
+            ? "cash"
+            : toPaymentValue(segment) || defaultPayment;
         const cleanedItem = segment
           .replace(/(-?\d[\d,]*)\s*원?/g, " ")
           .replace(/수입|지출/g, " ")
@@ -602,18 +649,15 @@ export default function WorkspaceLedgerView({
             matchedMember?.id || memberUsers[0]?.id || users[0].id,
           type: segment.includes("수입") ? "income" : defaultType,
           category: nextCategory,
-          subCategory:
-            nextCategory === "저축"
-              ? inferAssetSubCategoryFromText(segment)
-              : "",
+          subCategory: inferSubCategoryFromText(nextCategory, segment),
           merchant: "",
           item: cleanedItem || "미입력",
           amount: parsedAmount,
-          cardCompany: CARD_COMPANY_DEFAULT,
-          payment:
-            segment.includes("수입") || defaultType === "income"
-              ? "cash"
-              : toPaymentValue(segment) || defaultPayment,
+          cardCompany:
+            nextPayment === "cash"
+              ? ""
+              : inferCardCompanyFromText(segment) || CARD_COMPANY_DEFAULT,
+          payment: nextPayment,
           memo: "",
           rawText: segment,
         } satisfies AccountEntry;
@@ -637,6 +681,8 @@ export default function WorkspaceLedgerView({
       setMerchant(first.merchant || "");
       setAmount(String(first.amount));
       setItem(first.item);
+      setPayment(first.payment);
+      setCardCompany(first.cardCompany || CARD_COMPANY_DEFAULT);
       setDraftRawText(first.rawText || "");
       return;
     }
@@ -692,6 +738,8 @@ export default function WorkspaceLedgerView({
         CATEGORY_OPTIONS.find((option) => option.label === candidate.category)?.label ||
         inferCategoryFromItemText(supportText) ||
         (nextType === "income" ? "월급" : "식비/외식");
+      const nextPayment =
+        nextType === "income" ? "cash" : candidate.payment || "card";
 
       return {
         id: createEntryId(),
@@ -702,15 +750,16 @@ export default function WorkspaceLedgerView({
         type: nextType,
         category: normalizedCategory,
         subCategory:
-          normalizedCategory === "저축"
-            ? candidate.subCategory || inferAssetSubCategoryFromText(supportText)
-            : "",
+          candidate.subCategory ||
+          inferSubCategoryFromText(normalizedCategory, supportText),
         merchant: candidate.merchant.trim(),
         item: (candidate.item || candidate.merchant || "미입력").trim(),
         amount: Math.max(0, Math.trunc(candidate.amount)),
-        cardCompany: CARD_COMPANY_DEFAULT,
-        payment:
-          nextType === "income" ? "cash" : candidate.payment || "card",
+        cardCompany:
+          nextPayment === "cash"
+            ? ""
+            : inferCardCompanyFromText(supportText) || CARD_COMPANY_DEFAULT,
+        payment: nextPayment,
         memo: candidate.memo.trim(),
         rawText: candidate.rawText.trim(),
       } satisfies AccountEntry;
@@ -894,7 +943,7 @@ export default function WorkspaceLedgerView({
           <NaturalInputSection
             mode={registerMode}
             currentMonth={currentMonth}
-            monthEntriesCount={monthEntries.length}
+            monthEntriesCount={displayMonthEntries.length}
             naturalInput={naturalInput}
             naturalPreview={naturalPreview}
             isExtractingImage={isExtractingImage}
@@ -920,7 +969,7 @@ export default function WorkspaceLedgerView({
           viewMode={viewMode}
           currentMonth={currentMonth}
           selectedDate={selectedDate}
-          monthEntries={monthEntries}
+          monthEntries={displayMonthEntries}
           monthTotals={monthTotals}
           monthPaymentTotals={monthPaymentTotals}
           cashBalance={cashBalance}
@@ -1009,9 +1058,12 @@ export default function WorkspaceLedgerView({
         item={item}
         amount={amount}
         payment={payment}
+        cardCompany={cardCompany}
         memo={memo}
         quickInput={quickInput}
         categoryOptions={CATEGORY_OPTIONS}
+        categoryDetailOptions={categoryDetailOptions}
+        cardCompanyOptions={[...CARD_COMPANY_OPTIONS]}
         onClose={closeFormModal}
         onSetDate={setSelectedDate}
         onSetType={(nextType) => {
@@ -1022,17 +1074,19 @@ export default function WorkspaceLedgerView({
             setCategory("식비/외식");
           if (nextType !== "expense") setSubCategory("");
           if (nextType === "income") setPayment("cash");
+          if (nextType === "income") setCardCompany(CARD_COMPANY_DEFAULT);
         }}
         onSetMember={setMember}
         onSetCategory={(nextCategory) => {
           setCategory(nextCategory);
-          if (nextCategory !== "저축") setSubCategory("");
+          setSubCategory("");
         }}
         onSetSubCategory={setSubCategory}
         onSetMerchant={setMerchant}
         onSetItem={setItem}
         onSetAmount={setAmount}
         onSetPayment={setPayment}
+        onSetCardCompany={setCardCompany}
         onSetMemo={setMemo}
         onSetQuickInput={setQuickInput}
         onApplyQuickInput={applyQuickInput}

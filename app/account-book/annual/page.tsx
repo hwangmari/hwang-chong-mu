@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
+import { isCardSettlementEntry } from "../components/WorkspaceLedgerView/utils";
 import {
   getWorkspaceById,
   resolveWorkspaceEntries,
@@ -120,7 +121,10 @@ function AccountBookAnnualContent() {
       );
     }
     return annualEntries.filter(
-      (entry) => entry.type === "expense" && entry.category.trim() !== "저축",
+      (entry) =>
+        entry.type === "expense" &&
+        entry.category.trim() !== "저축" &&
+        !isCardSettlementEntry(entry),
     );
   }, [annualEntries, kind]);
 
