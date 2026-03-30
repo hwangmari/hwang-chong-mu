@@ -305,7 +305,9 @@ function AccountBookAnnualContent() {
                         )
                       }
                     >
-                      <div className="bar" style={{ height }} />
+                      <div className="barTrack">
+                        <div className="bar" style={{ height }} />
+                      </div>
                       <span>{row.month}</span>
                     </StChartColumn>
                   );
@@ -471,8 +473,8 @@ const StChartWrap = styled.div`
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0.45rem;
-  min-height: 14rem;
-  align-items: end;
+  height: 14rem;
+  align-items: stretch;
 `;
 
 const StChartColumn = styled.button<{ $active: boolean }>`
@@ -480,11 +482,19 @@ const StChartColumn = styled.button<{ $active: boolean }>`
   border-radius: 16px;
   background: ${({ $active }) => ($active ? "#eef3ff" : "#f8fbff")};
   padding: 0.55rem 0.35rem;
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-end;
   gap: 0.4rem;
+
+  .barTrack {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: flex-end;
+  }
 
   .bar {
     width: 100%;

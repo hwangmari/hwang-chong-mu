@@ -417,8 +417,8 @@ function extractDateLabel(text: string) {
   return match?.[1] || "";
 }
 
-function normalizeCandidateFragment(text: string) {
-  return text
+function normalizeCandidateFragment(text?: string) {
+  return (text || "")
     .toLowerCase()
     .replace(/[^0-9a-zA-Z가-힣]+/g, "")
     .trim();
