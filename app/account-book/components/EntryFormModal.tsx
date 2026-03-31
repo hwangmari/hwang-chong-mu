@@ -77,15 +77,20 @@ export default function EntryFormModal({
   if (!isOpen) return null;
 
   const isSavingCategory = type === "expense" && category === "저축";
+  const isFixedExpenseCategory = type === "expense" && category === "고정비";
   const shouldShowCategoryDetail = type === "expense" && Boolean(category);
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
   const categoryDetailLabel = isSavingCategory
     ? "저축 세부카테고리"
+    : isFixedExpenseCategory
+      ? "고정비 세부카테고리"
     : "카테고리 디테일";
   const categoryDetailPlaceholder =
     categoryDetailOptions.length > 0
       ? `예: ${categoryDetailOptions.slice(0, 3).join(", ")}`
-      : "예: 배민, 카페, 온라인쇼핑";
+      : isFixedExpenseCategory
+        ? "예: 공과금, 핸드폰비, 보험료"
+        : "예: 배민, 카페, 온라인쇼핑";
 
   return (
     <StModalBackdrop onClick={onClose}>

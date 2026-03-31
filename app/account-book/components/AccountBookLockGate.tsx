@@ -1,10 +1,8 @@
 "use client";
 
-import { ReactNode, useState, useSyncExternalStore } from "react";
+import { FormEvent, ReactNode, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
-
-const KEYPAD_VALUES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 type Props = {
   children: ReactNode;
@@ -57,8 +55,11 @@ export default function AccountBookLockGate({
     () => false,
   );
 
-  const submitPasscode = (nextValue: string) => {
-    if (nextValue !== password) {
+  const submitPasscode = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    const nextValue = passcode.trim();
+
+    if (!nextValue || nextValue !== password) {
       setPasscode("");
       setErrorMessage("비밀번호가 맞지 않아요.");
       return;
@@ -68,27 +69,6 @@ export default function AccountBookLockGate({
     window.dispatchEvent(new Event("account-book-access-change"));
     setErrorMessage("");
     setPasscode(nextValue);
-  };
-
-  const handleDigitClick = (digit: string) => {
-    if (passcode.length >= password.length) return;
-    const nextValue = `${passcode}${digit}`;
-    setPasscode(nextValue);
-    setErrorMessage("");
-
-    if (nextValue.length === password.length) {
-      submitPasscode(nextValue);
-    }
-  };
-
-  const handleClear = () => {
-    setPasscode("");
-    setErrorMessage("");
-  };
-
-  const handleDelete = () => {
-    setPasscode((prev) => prev.slice(0, -1));
-    setErrorMessage("");
   };
 
   if (isUnlocked) {
@@ -115,35 +95,21 @@ export default function AccountBookLockGate({
         <StEmoji>🔐</StEmoji>
         <StGateTitle>{title}</StGateTitle>
         <StGateDescription>{description}</StGateDescription>
-
-        <StPasscodeDots aria-label="비밀번호 입력 상태">
-          {Array.from({ length: password.length }, (_, index) => (
-            <StPasscodeDot key={index} $filled={index < passcode.length} />
-          ))}
-        </StPasscodeDots>
-
         <StErrorMessage>{errorMessage || " "}</StErrorMessage>
-
-        <StKeypad>
-          {KEYPAD_VALUES.map((value) => (
-            <StKeyButton
-              key={value}
-              type="button"
-              onClick={() => handleDigitClick(value)}
-            >
-              {value}
-            </StKeyButton>
-          ))}
-          <StSubButton type="button" onClick={handleClear}>
-            전체삭제
-          </StSubButton>
-          <StKeyButton type="button" onClick={() => handleDigitClick("0")}>
-            0
-          </StKeyButton>
-          <StSubButton type="button" onClick={handleDelete}>
-            지우기
-          </StSubButton>
-        </StKeypad>
+        <StForm onSubmit={submitPasscode}>
+          <StPasswordInput
+            type="password"
+            value={passcode}
+            onChange={(event) => {
+              setPasscode(event.target.value);
+              setErrorMessage("");
+            }}
+            placeholder="비밀번호를 입력하세요"
+            autoComplete="current-password"
+            autoFocus
+          />
+          <StSubmitButton type="submit">들어가기</StSubmitButton>
+        </StForm>
       </StGateCard>
     </StGatePage>
   );
@@ -200,59 +166,47 @@ const StGateDescription = styled.p`
   line-height: 1.5;
 `;
 
-const StPasscodeDots = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-top: 1.25rem;
-`;
-
-const StPasscodeDot = styled.span<{ $filled: boolean }>`
-  width: 0.9rem;
-  height: 0.9rem;
-  border-radius: 999px;
-  border: 2px solid ${({ $filled }) => ($filled ? "#4f69d2" : "#c7d2e1")};
-  background: ${({ $filled }) => ($filled ? "#4f69d2" : "transparent")};
-  transition: all 0.16s ease;
-`;
-
 const StErrorMessage = styled.p`
   min-height: 1.35rem;
-  margin-top: 0.85rem;
-  text-align: center;
+  margin-top: 1rem;
   color: #d04a73;
   font-size: 0.82rem;
   font-weight: 700;
 `;
 
-const StKeypad = styled.div`
+const StForm = styled.form`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-top: 0.45rem;
+  gap: 0.75rem;
 `;
 
-const StKeyButton = styled.button`
-  min-height: 4rem;
+const StPasswordInput = styled.input`
+  min-height: 3.4rem;
   border: 1px solid #d9e2ee;
-  border-radius: 1.1rem;
+  border-radius: 1rem;
   background: #fff;
   color: #1f2937;
-  font-size: 1.3rem;
-  font-weight: 800;
-  box-shadow: 0 10px 24px rgba(80, 102, 145, 0.08);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-  &:active {
-    transform: translateY(1px);
+  &:focus {
+    outline: none;
+    border-color: #9db6ff;
+    box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.12);
+  }
+
+  &::placeholder {
+    color: #9aa7ba;
   }
 `;
 
-const StSubButton = styled.button`
-  min-height: 4rem;
-  border: 1px solid #d9e2ee;
-  border-radius: 1.1rem;
-  background: #f7f9fc;
-  color: #5d6c82;
-  font-size: 0.88rem;
+const StSubmitButton = styled.button`
+  min-height: 3.4rem;
+  border: none;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #607de0, #4b69c8);
+  color: #fff;
+  font-size: 0.95rem;
   font-weight: 800;
 `;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addMonths,
@@ -28,7 +28,6 @@ import EntryFormModal from "../EntryFormModal";
 import WorkspaceHeader from "../WorkspaceHeader";
 import NaturalInputSection from "./NaturalInputSection";
 import ViewModeTabs from "./ViewModeTabs";
-import WorkspaceInfoBar from "./WorkspaceInfoBar";
 import WorkspacePanelsSection from "./WorkspacePanelsSection";
 import {
   ALL_PARTICIPANTS_ID,
@@ -56,9 +55,141 @@ import {
   toPaymentValue,
 } from "./utils";
 
+const FIXED_EXPENSE_CATEGORIES = ["고정비"] as const;
+const DEFAULT_ANNUAL_SAVING_GOAL = 1_200_000;
+const FIXED_EXPENSE_STORAGE_PREFIX = "hwang-account-book-fixed-expense";
+
+type FixedExpenseTemplate = {
+  id: string;
+  workspaceId: string;
+  createdByUserId: string;
+  member: string;
+  merchant: string;
+  item: string;
+  amount: number;
+  payment: PaymentType;
+  cardCompany: string;
+  memo: string;
+  subCategory: string;
+  dayOfMonth: number;
+  startDate: string;
+};
+
+function getAnnualGoalStorageKey(workspaceId: string) {
+  return `hwang-account-book-annual-goal-${workspaceId}`;
+}
+
+function getListMemoStorageKey(workspaceId: string, monthKey: string) {
+  return `hwang-account-book-list-memo-${workspaceId}-${monthKey}`;
+}
+
+function getFixedExpenseStorageKey(workspaceId: string) {
+  return `${FIXED_EXPENSE_STORAGE_PREFIX}-${workspaceId}`;
+}
+
+function createFixedExpenseTemplateId() {
+  return `fixed-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function extractFixedExpenseTemplateId(rawText?: string) {
+  const match = rawText?.match(/#fixed-template:([a-z0-9-]+)/i);
+  return match?.[1] || null;
+}
+
+function stripFixedExpenseMeta(rawText?: string) {
+  return (rawText || "")
+    .replace(/\s*#fixed-template:[a-z0-9-]+\s*/gi, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function attachFixedExpenseMeta(rawText: string, templateId: string) {
+  const baseText = stripFixedExpenseMeta(rawText);
+  return [baseText, `#fixed-template:${templateId}`].filter(Boolean).join("\n");
+}
+
+function readFixedExpenseTemplates(workspaceId: string): FixedExpenseTemplate[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(getFixedExpenseStorageKey(workspaceId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as FixedExpenseTemplate[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeFixedExpenseTemplates(
+  workspaceId: string,
+  templates: FixedExpenseTemplate[],
+) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    getFixedExpenseStorageKey(workspaceId),
+    JSON.stringify(templates),
+  );
+}
+
+function buildFixedExpenseTemplate(
+  entry: AccountEntry,
+  templateId: string,
+): FixedExpenseTemplate {
+  const parsedDate = parseIsoDate(entry.date) || new Date();
+  return {
+    id: templateId,
+    workspaceId: entry.workspaceId,
+    createdByUserId: entry.createdByUserId,
+    member: entry.member || "",
+    merchant: entry.merchant || "",
+    item: entry.item,
+    amount: entry.amount,
+    payment: entry.payment,
+    cardCompany: entry.cardCompany,
+    memo: entry.memo,
+    subCategory: entry.subCategory || "",
+    dayOfMonth: parsedDate.getDate(),
+    startDate: entry.date,
+  };
+}
+
+function buildFixedExpenseEntry(
+  template: FixedExpenseTemplate,
+  year: number,
+  monthIndex: number,
+): AccountEntry {
+  const monthStart = new Date(year, monthIndex, 1);
+  const maxDay = endOfMonth(monthStart).getDate();
+  const date = new Date(
+    year,
+    monthIndex,
+    Math.min(template.dayOfMonth, maxDay),
+  );
+
+  return {
+    id: createEntryId(),
+    date: toIsoDate(date),
+    member: template.member,
+    workspaceId: template.workspaceId,
+    createdByUserId: template.createdByUserId,
+    type: "expense",
+    category: "고정비",
+    subCategory: template.subCategory,
+    merchant: template.merchant,
+    item: template.item,
+    amount: template.amount,
+    cardCompany: template.payment === "cash" ? "" : template.cardCompany,
+    payment: template.payment,
+    memo: template.memo,
+    rawText: attachFixedExpenseMeta("", template.id),
+  };
+}
+
 export default function WorkspaceLedgerView({
   workspace,
   users,
+  currentUserId,
   entries,
   shareTargets,
   isEntryShared,
@@ -66,6 +197,7 @@ export default function WorkspaceLedgerView({
   onSaveEntry,
   onDeleteEntry,
   onBack,
+  initialViewMode = "ledger",
 }: WorkspaceLedgerViewProps) {
   const router = useRouter();
   const initialDate = toIsoDate(new Date());
@@ -79,8 +211,17 @@ export default function WorkspaceLedgerView({
   );
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("ledger");
-  const [selectedBoardColumnId, setSelectedBoardColumnId] = useState("living");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const [annualSavingGoal, setAnnualSavingGoal] = useState(
+    DEFAULT_ANNUAL_SAVING_GOAL,
+  );
+  const [listMemo, setListMemo] = useState("");
+  const [listMemoDraft, setListMemoDraft] = useState("");
+  const [isListMemoEditing, setIsListMemoEditing] = useState(true);
+  const [fixedExpenseTemplates, setFixedExpenseTemplates] = useState<
+    FixedExpenseTemplate[]
+  >([]);
+  const fixedExpenseSyncRef = useRef<Set<string>>(new Set());
 
   const memberUsers = useMemo(
     () => users.filter((user) => workspace.memberIds.includes(user.id)),
@@ -119,45 +260,75 @@ export default function WorkspaceLedgerView({
   >([]);
 
   const monthLabel = format(currentMonth, "M월", { locale: ko });
+  const currentMonthKey = format(currentMonth, "yyyy-MM");
   const monthRangeLabel = `${format(currentMonth, "M.1", { locale: ko })} - ${format(endOfMonth(currentMonth), "M.d", { locale: ko })}`;
   const selectedYear = format(currentMonth, "yyyy");
+  const currentYear = currentMonth.getFullYear();
+  const currentMonthIndex = currentMonth.getMonth();
+  const monthlySavingGoal = Math.round(annualSavingGoal / 12);
   const isSharedWorkspace = workspace.type === "shared";
   const selectedParticipant = useMemo(
     () => memberUsers.find((user) => user.id === selectedParticipantId) || null,
     [memberUsers, selectedParticipantId],
   );
-  const selectedParticipantLabel =
-    isSharedWorkspace
-      ? selectedParticipant?.name || ""
-      : selectedParticipant?.name || workspace.name;
-  const workspaceTitle = isSharedWorkspace
-    ? `${workspace.name} · ${format(currentMonth, "yyyy년 M월", { locale: ko })}`
-    : `${workspace.name} · ${selectedParticipantLabel} · ${format(currentMonth, "yyyy년 M월", { locale: ko })}`;
-  const ledgerDetailTitle = isSharedWorkspace
-    ? `${format(currentMonth, "M월", { locale: ko })} 전체 내역`
-    : `${format(currentMonth, "M월", { locale: ko })} 전체 내역 · ${selectedParticipantLabel}`;
-  const boardMonthLabel = isSharedWorkspace
-    ? `${workspace.name} · ${format(currentMonth, "yyyy년 M월", { locale: ko })}`
-    : `${format(currentMonth, "yyyy년 M월", { locale: ko })} · ${selectedParticipantLabel}`;
+  const selectedParticipantLabel = isSharedWorkspace
+    ? selectedParticipant?.name || ""
+    : selectedParticipant?.name || workspace.name;
+  const workspaceKindLabel =
+    workspace.type === "personal" ? "개인 가계부" : "공용 가계부방";
+  const normalizedWorkspaceName = workspace.name.replace(/\s+/g, " ").trim();
+  const workspaceTitle =
+    normalizedWorkspaceName.includes(workspaceKindLabel) ||
+    workspaceKindLabel.startsWith(normalizedWorkspaceName)
+      ? workspaceKindLabel
+      : `${workspace.name} ${workspaceKindLabel}`;
+  const workspaceSubtitle = isSharedWorkspace
+    ? `멤버 ${memberUsers.map((user) => user.name).join(", ") || "미설정"}`
+    : `멤버 ${selectedParticipantLabel || memberUsers[0]?.name || "미설정"}`;
+  const workspaceInfoText =
+    workspace.type === "personal"
+      ? "공용방에서 내가 직접 쓴 내역은 이 화면에 자동 반영됩니다."
+      : "공용방은 참가자별 내역을 함께 보고 비교하는 기준 화면입니다.";
   const calendarDetailTitle = isSharedWorkspace
     ? formatSelectedDateTitle(selectedDate)
     : `${formatSelectedDateTitle(selectedDate)} · ${selectedParticipantLabel}`;
 
+  const entriesWithPermissions = useMemo(
+    () =>
+      entries.map((entry) => {
+        if (
+          workspace.type === "shared" &&
+          entry.source === "direct" &&
+          entry.createdByUserId !== currentUserId
+        ) {
+          return {
+            ...entry,
+            readonly: true,
+          };
+        }
+
+        return entry;
+      }),
+    [currentUserId, entries, workspace.type],
+  );
+
   const visibleEntries = useMemo(() => {
-    if (
-      !isSharedWorkspace ||
-      selectedParticipantId === ALL_PARTICIPANTS_ID
-    ) {
-      return entries;
+    if (!isSharedWorkspace || selectedParticipantId === ALL_PARTICIPANTS_ID) {
+      return entriesWithPermissions;
     }
 
     const participantName = selectedParticipant?.name;
-    return entries.filter(
+    return entriesWithPermissions.filter(
       (entry) =>
         entry.createdByUserId === selectedParticipantId ||
         (participantName ? entry.member === participantName : false),
     );
-  }, [entries, isSharedWorkspace, selectedParticipant, selectedParticipantId]);
+  }, [
+    entriesWithPermissions,
+    isSharedWorkspace,
+    selectedParticipant,
+    selectedParticipantId,
+  ]);
 
   const monthEntries = useMemo(() => {
     const ym = format(currentMonth, "yyyy-MM");
@@ -188,35 +359,31 @@ export default function WorkspaceLedgerView({
   const monthPaymentTotals = useMemo(() => {
     return monthEntries.reduce(
       (acc, entry) => {
-        if (entry.type === "income") {
-          acc.income[entry.payment] += entry.amount;
-          return acc;
-        }
         if (
+          entry.type === "expense" &&
           entry.category.trim() !== "저축" &&
           !isCardSettlementEntry(entry)
         ) {
-          acc.expense[entry.payment] += entry.amount;
+          acc[entry.payment] += entry.amount;
         }
         return acc;
       },
-      {
-        income: { cash: 0, card: 0, check_card: 0 },
-        expense: { cash: 0, card: 0, check_card: 0 },
-      },
+      { cash: 0, card: 0, check_card: 0 },
     );
   }, [monthEntries]);
 
-  const monthCashFlowTotals = useMemo(() => {
-    return monthEntries.reduce(
-      (acc, entry) => {
-        if (entry.payment !== "cash") return acc;
-        if (entry.type === "income") acc.incomeCash += entry.amount;
-        if (entry.type === "expense") acc.expenseCash += entry.amount;
-        return acc;
-      },
-      { incomeCash: 0, expenseCash: 0 },
-    );
+  const cashBalance = useMemo(() => {
+    return monthEntries.reduce((sum, entry) => {
+      if (entry.payment !== "cash" || isCardSettlementEntry(entry)) {
+        return sum;
+      }
+
+      if (entry.type === "income") {
+        return sum + entry.amount;
+      }
+
+      return sum - entry.amount;
+    }, 0);
   }, [monthEntries]);
 
   const memberExpenseTotals = useMemo(() => {
@@ -235,9 +402,6 @@ export default function WorkspaceLedgerView({
 
     return Object.entries(totals).sort((a, b) => b[1] - a[1]);
   }, [defaultMember, monthEntries]);
-
-  const cashBalance =
-    monthCashFlowTotals.incomeCash - monthCashFlowTotals.expenseCash;
 
   const monthAssetTotal = useMemo(() => {
     return monthEntries
@@ -265,6 +429,167 @@ export default function WorkspaceLedgerView({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
   }, [monthEntries]);
+
+  const dashboardRows = useMemo(() => {
+    let cumulativeSavings = 0;
+
+    return Array.from({ length: 12 }, (_, index) => {
+      const monthNumber = index + 1;
+      const monthKey = `${selectedYear}-${String(monthNumber).padStart(2, "0")}`;
+      const rows = visibleEntries.filter((entry) =>
+        entry.date.startsWith(monthKey),
+      );
+      const income = rows
+        .filter((entry) => entry.type === "income")
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      const regularSavings = rows
+        .filter(
+          (entry) =>
+            entry.type === "expense" && entry.category.trim() === "저축",
+        )
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      const fixedExpense = rows
+        .filter(
+          (entry) =>
+            entry.type === "expense" &&
+            !isCardSettlementEntry(entry) &&
+            FIXED_EXPENSE_CATEGORIES.includes(
+              entry.category.trim() as (typeof FIXED_EXPENSE_CATEGORIES)[number],
+            ),
+        )
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      const consumptionExpense = rows
+        .filter(
+          (entry) =>
+            entry.type === "expense" &&
+            !isCardSettlementEntry(entry) &&
+            entry.category.trim() !== "저축" &&
+            !FIXED_EXPENSE_CATEGORIES.includes(
+              entry.category.trim() as (typeof FIXED_EXPENSE_CATEGORIES)[number],
+            ),
+        )
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      const totalExpense = fixedExpense + consumptionExpense + regularSavings;
+      const netAmount = income - totalExpense;
+      const actualSavings = netAmount + regularSavings;
+      cumulativeSavings += actualSavings;
+
+      return {
+        monthNumber,
+        monthLabel: `${monthNumber}월`,
+        income,
+        totalExpense,
+        fixedExpense,
+        consumptionExpense,
+        regularSavings,
+        netAmount,
+        actualSavings,
+        savingsRate: income > 0 ? (actualSavings / income) * 100 : null,
+        cumulativeSavings,
+        goalAmount: monthlySavingGoal * monthNumber,
+        achievementRate:
+          annualSavingGoal > 0
+            ? (cumulativeSavings / annualSavingGoal) * 100
+            : null,
+      };
+    });
+  }, [annualSavingGoal, monthlySavingGoal, selectedYear, visibleEntries]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedValue = window.localStorage.getItem(
+      getAnnualGoalStorageKey(workspace.id),
+    );
+    const parsedValue = storedValue ? Number(storedValue) : NaN;
+
+    if (Number.isFinite(parsedValue) && parsedValue > 0) {
+      setAnnualSavingGoal(Math.trunc(parsedValue));
+      return;
+    }
+
+    setAnnualSavingGoal(DEFAULT_ANNUAL_SAVING_GOAL);
+  }, [workspace.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedMemo = window.localStorage.getItem(
+      getListMemoStorageKey(workspace.id, currentMonthKey),
+    );
+    const nextMemo = storedMemo || "";
+    setListMemo(nextMemo);
+    setListMemoDraft(nextMemo);
+    setIsListMemoEditing(nextMemo.length === 0);
+  }, [currentMonthKey, workspace.id]);
+
+  useEffect(() => {
+    setFixedExpenseTemplates(readFixedExpenseTemplates(workspace.id));
+    fixedExpenseSyncRef.current.clear();
+  }, [workspace.id]);
+
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode, workspace.id]);
+
+  useEffect(() => {
+    if (fixedExpenseTemplates.length === 0) return;
+
+    const directWorkspaceEntries = entries.filter((entry) => !entry.readonly);
+    const targetMonth = startOfMonth(currentMonth);
+    let cancelled = false;
+
+    const syncFixedExpenses = async () => {
+      const pendingEntries: AccountEntry[] = [];
+
+      for (const template of fixedExpenseTemplates) {
+        const startMonth = startOfMonth(
+          parseIsoDate(template.startDate) || targetMonth,
+        );
+
+        if (startMonth > targetMonth) {
+          continue;
+        }
+
+        let cursor = startMonth;
+        while (cursor <= targetMonth) {
+          const monthKey = format(cursor, "yyyy-MM");
+          const syncKey = `${template.id}-${monthKey}`;
+          const alreadyExists = directWorkspaceEntries.some(
+            (entry) =>
+              entry.category.trim() === "고정비" &&
+              entry.date.startsWith(monthKey) &&
+              extractFixedExpenseTemplateId(entry.rawText) === template.id,
+          );
+
+          if (
+            !alreadyExists &&
+            !fixedExpenseSyncRef.current.has(syncKey)
+          ) {
+            fixedExpenseSyncRef.current.add(syncKey);
+            pendingEntries.push(
+              buildFixedExpenseEntry(
+                template,
+                cursor.getFullYear(),
+                cursor.getMonth(),
+              ),
+            );
+          }
+
+          cursor = startOfMonth(addMonths(cursor, 1));
+        }
+      }
+
+      for (const entry of pendingEntries) {
+        if (cancelled) return;
+        await Promise.resolve(onSaveEntry(entry));
+      }
+    };
+
+    void syncFixedExpenses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentMonth, entries, fixedExpenseTemplates, onSaveEntry]);
 
   const selectedDateEntries = useMemo(() => {
     return visibleEntries
@@ -310,7 +635,7 @@ export default function WorkspaceLedgerView({
       {
         id: "living",
         title: "생활비",
-        description: "식비, 의료, 약국, 구독/플랫폼",
+        description: "식비, 의료, 약국, 구독/고정 생활비",
         matches: (entry: ResolvedAccountEntry) =>
           entry.type === "expense" &&
           !isCardSettlementEntry(entry) &&
@@ -320,6 +645,7 @@ export default function WorkspaceLedgerView({
             "약국",
             "문화/구독",
             "결제/플랫폼",
+            "고정비",
           ].includes(entry.category),
       },
       {
@@ -383,75 +709,17 @@ export default function WorkspaceLedgerView({
     });
   }, [monthEntries]);
 
-  const monthlyBoardDetailEntries = useMemo(() => {
-    const groups: Record<string, ResolvedAccountEntry[]> = {
-      living: [],
-      move: [],
-      shopping: [],
-      special: [],
-      asset: [],
-      income: [],
-    };
-
-    monthEntries.forEach((entry) => {
-      if (entry.type === "income") {
-        groups.income.push(entry);
-        return;
-      }
-      if (isCardSettlementEntry(entry)) {
-        return;
-      }
-      if (entry.category.trim() === "저축") {
-        groups.asset.push(entry);
-        return;
-      }
-      if (
-        ["식비/외식", "병원/의료", "약국", "문화/구독", "결제/플랫폼"].includes(
-          entry.category,
-        )
-      ) {
-        groups.living.push(entry);
-        return;
-      }
-      if (
-        ["교통/택시", "주차/교통", "통행료", "교통카드/충전"].includes(
-          entry.category,
-        )
-      ) {
-        groups.move.push(entry);
-        return;
-      }
-      if (["쇼핑/패션", "쇼핑/기타", "여행/관광"].includes(entry.category)) {
-        groups.shopping.push(entry);
-        return;
-      }
-      groups.special.push(entry);
-    });
-
-    return groups;
-  }, [monthEntries]);
-
-  const effectiveBoardColumnId = useMemo(() => {
-    if (selectedBoardColumnId in monthlyBoardDetailEntries) {
-      return selectedBoardColumnId;
-    }
-    return monthlyBoardColumns[0]?.id || "living";
-  }, [monthlyBoardColumns, monthlyBoardDetailEntries, selectedBoardColumnId]);
-
-  const selectedBoardColumn = useMemo(() => {
-    return (
-      monthlyBoardColumns.find(
-        (column) => column.id === effectiveBoardColumnId,
-      ) ||
-      monthlyBoardColumns[0] ||
-      null
-    );
-  }, [effectiveBoardColumnId, monthlyBoardColumns]);
-  const boardDetailTitle = selectedBoardColumn
-    ? isSharedWorkspace
-      ? `${format(currentMonth, "M월", { locale: ko })} ${selectedBoardColumn.title} 상세`
-      : `${format(currentMonth, "M월", { locale: ko })} ${selectedParticipantLabel} ${selectedBoardColumn.title} 상세`
-    : "보드 상세";
+  const boardSummaryCards = useMemo(
+    () =>
+      monthlyBoardColumns.map((column) => ({
+        id: column.id,
+        label: column.title,
+        amount: column.totalAmount,
+        count: column.cards.length,
+        description: column.description,
+      })),
+    [monthlyBoardColumns],
+  );
 
   const naturalPreview = useMemo(
     () =>
@@ -472,12 +740,13 @@ export default function WorkspaceLedgerView({
     ],
   );
   const editingEntry = useMemo(
-    () => entries.find((entry) => entry.id === editingEntryId) || null,
-    [editingEntryId, entries],
+    () => entriesWithPermissions.find((entry) => entry.id === editingEntryId) || null,
+    [editingEntryId, entriesWithPermissions],
   );
   const existingEntryDuplicateKeys = useMemo(
-    () => new Set(entries.map((entry) => getAccountEntryDuplicateKey(entry))),
-    [entries],
+    () =>
+      new Set(entriesWithPermissions.map((entry) => getAccountEntryDuplicateKey(entry))),
+    [entriesWithPermissions],
   );
   const categoryDetailOptions = useMemo(
     () => getCategoryDetailOptions(category),
@@ -541,6 +810,89 @@ export default function WorkspaceLedgerView({
     setSelectedDate(toIsoDate(next));
   };
 
+  const onDashboardMonthSelect = (monthNumber: number) => {
+    const next = startOfMonth(new Date(currentYear, monthNumber - 1, 1));
+    setCurrentMonth(next);
+    setSelectedDate(toIsoDate(next));
+  };
+
+  const onAnnualGoalChange = (nextGoal: number) => {
+    const normalizedGoal = Math.max(0, Math.trunc(nextGoal));
+    setAnnualSavingGoal(normalizedGoal);
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      getAnnualGoalStorageKey(workspace.id),
+      String(normalizedGoal),
+    );
+  };
+
+  const annualDetailQuery = useMemo(() => {
+    const params = new URLSearchParams({
+      year: selectedYear,
+      workspaceId: workspace.id,
+      view: "board",
+    });
+
+    if (workspace.type === "shared" && selectedParticipantId !== ALL_PARTICIPANTS_ID) {
+      params.set("memberId", selectedParticipantId);
+    }
+
+    return params;
+  }, [selectedParticipantId, selectedYear, workspace.id, workspace.type]);
+
+  const onMonthlyGoalChange = (nextGoal: number) => {
+    const normalizedGoal = Math.max(0, Math.trunc(nextGoal));
+    onAnnualGoalChange(normalizedGoal * 12);
+  };
+
+  const saveListMemo = () => {
+    const nextMemo = listMemoDraft.trim();
+    setListMemo(nextMemo);
+    setListMemoDraft(nextMemo);
+    setIsListMemoEditing(false);
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      getListMemoStorageKey(workspace.id, currentMonthKey),
+      nextMemo,
+    );
+  };
+
+  const startListMemoEdit = () => {
+    setListMemoDraft(listMemo);
+    setIsListMemoEditing(true);
+  };
+
+  const syncFixedExpenseTemplateState = (
+    updater: (prev: FixedExpenseTemplate[]) => FixedExpenseTemplate[],
+  ) => {
+    setFixedExpenseTemplates((prev) => {
+      const next = updater(prev);
+      writeFixedExpenseTemplates(workspace.id, next);
+      return next;
+    });
+  };
+
+  const upsertFixedExpenseTemplate = (entry: AccountEntry, templateId: string) => {
+    const existingTemplate = fixedExpenseTemplates.find(
+      (template) => template.id === templateId,
+    );
+    const nextTemplate = {
+      ...buildFixedExpenseTemplate(entry, templateId),
+      startDate: existingTemplate?.startDate || entry.date,
+    };
+    syncFixedExpenseTemplateState((prev) => {
+      const rest = prev.filter((template) => template.id !== templateId);
+      return [nextTemplate, ...rest];
+    });
+  };
+
+  const removeFixedExpenseTemplate = (templateId: string | null) => {
+    if (!templateId) return;
+    syncFixedExpenseTemplateState((prev) =>
+      prev.filter((template) => template.id !== templateId),
+    );
+  };
+
   const onSubmitEntry = () => {
     const parsedAmount = Number(amount);
     if (!category.trim()) {
@@ -559,6 +911,14 @@ export default function WorkspaceLedgerView({
       alert("저축 세부카테고리를 입력해주세요.");
       return;
     }
+    if (
+      type === "expense" &&
+      category.trim() === "고정비" &&
+      !subCategory.trim()
+    ) {
+      alert("고정비 세부카테고리를 입력해주세요.");
+      return;
+    }
     if (type === "expense" && payment !== "cash" && !cardCompany.trim()) {
       alert("카드 결제 내역은 카드사를 선택해주세요.");
       return;
@@ -572,6 +932,15 @@ export default function WorkspaceLedgerView({
       memberUsers.find((user) => user.name === member) ||
       memberUsers[0] ||
       users[0];
+    const normalizedCategory = category.trim();
+    const isFixedExpense = type === "expense" && normalizedCategory === "고정비";
+    const existingFixedTemplateId = extractFixedExpenseTemplateId(
+      editingEntry?.rawText,
+    );
+    const nextFixedTemplateId = isFixedExpense
+      ? existingFixedTemplateId || createFixedExpenseTemplateId()
+      : null;
+    const rawTextBase = draftRawText.trim() || editingEntry?.rawText || "";
 
     const payload: AccountEntry = {
       id: editingEntryId || createEntryId(),
@@ -580,7 +949,7 @@ export default function WorkspaceLedgerView({
       workspaceId: workspace.id,
       createdByUserId: matchedUser.id,
       type,
-      category: category.trim(),
+      category: normalizedCategory,
       subCategory: type === "expense" ? subCategory.trim() : "",
       merchant: merchant.trim(),
       item: item.trim(),
@@ -591,10 +960,18 @@ export default function WorkspaceLedgerView({
           : "",
       payment: type === "income" ? "cash" : payment,
       memo: memo.trim(),
-      rawText: draftRawText.trim() || editingEntry?.rawText || "",
+      rawText:
+        nextFixedTemplateId && type === "expense"
+          ? attachFixedExpenseMeta(rawTextBase, nextFixedTemplateId)
+          : stripFixedExpenseMeta(rawTextBase),
     };
 
-    onSaveEntry(payload);
+    void Promise.resolve(onSaveEntry(payload));
+    if (nextFixedTemplateId) {
+      upsertFixedExpenseTemplate(payload, nextFixedTemplateId);
+    } else if (existingFixedTemplateId) {
+      removeFixedExpenseTemplate(existingFixedTemplateId);
+    }
     closeFormModal();
   };
 
@@ -719,7 +1096,9 @@ export default function WorkspaceLedgerView({
     }
 
     const matchedUser =
-      memberUsers.find((user) => user.name === (selectedParticipant?.name || defaultMember)) ||
+      memberUsers.find(
+        (user) => user.name === (selectedParticipant?.name || defaultMember),
+      ) ||
       memberUsers[0] ||
       users[0];
     const nextEntries = candidates.map((candidate) => {
@@ -735,7 +1114,8 @@ export default function WorkspaceLedgerView({
         .filter(Boolean)
         .join(" ");
       const normalizedCategory =
-        CATEGORY_OPTIONS.find((option) => option.label === candidate.category)?.label ||
+        CATEGORY_OPTIONS.find((option) => option.label === candidate.category)
+          ?.label ||
         inferCategoryFromItemText(supportText) ||
         (nextType === "income" ? "월급" : "식비/외식");
       const nextPayment =
@@ -773,7 +1153,9 @@ export default function WorkspaceLedgerView({
 
     validEntries.forEach((entry) => onSaveEntry(entry));
     setSelectedDate(validEntries[0].date);
-    setCurrentMonth(startOfMonth(parseIsoDate(validEntries[0].date) || new Date()));
+    setCurrentMonth(
+      startOfMonth(parseIsoDate(validEntries[0].date) || new Date()),
+    );
     closeRegisterModal();
 
     alert(`${validEntries.length}건을 가계부에 저장했어요.`);
@@ -821,9 +1203,7 @@ export default function WorkspaceLedgerView({
     } catch (error) {
       setExtractedImageEntries([]);
       setOcrErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "무료 OCR 처리에 실패했어요.",
+        error instanceof Error ? error.message : "무료 OCR 처리에 실패했어요.",
       );
     } finally {
       setIsExtractingImage(false);
@@ -921,24 +1301,32 @@ export default function WorkspaceLedgerView({
     return [];
   };
 
+  const handleDeleteEntry = async (entryId: string) => {
+    const targetEntry = entries.find((entry) => entry.id === entryId) || null;
+    const fixedTemplateId = extractFixedExpenseTemplateId(targetEntry?.rawText);
+
+    await Promise.resolve(onDeleteEntry(entryId));
+
+    if (targetEntry?.category.trim() === "고정비" && fixedTemplateId) {
+      removeFixedExpenseTemplate(fixedTemplateId);
+    }
+  };
+
   return (
     <StPage>
       <WorkspaceHeader
         title={workspaceTitle}
+        subtitle={workspaceSubtitle}
+        infoText={workspaceInfoText}
         monthLabel={monthLabel}
         monthRangeLabel={monthRangeLabel}
+        onOpenNaturalRegister={() => openRegisterModal("natural")}
+        onOpenImageRegister={() => openRegisterModal("image")}
+        onOpenManual={openManualEntryModal}
         onBack={onBack}
         onMonthMove={onMonthMove}
       />
       <StContentWrap>
-        <WorkspaceInfoBar
-          workspaceType={workspace.type}
-          memberNames={memberUsers.map((user) => user.name)}
-          onOpenNaturalRegister={() => openRegisterModal("natural")}
-          onOpenImageRegister={() => openRegisterModal("image")}
-          onOpenManual={openManualEntryModal}
-        />
-
         {isRegisterModalOpen ? (
           <NaturalInputSection
             mode={registerMode}
@@ -968,47 +1356,54 @@ export default function WorkspaceLedgerView({
         <WorkspacePanelsSection
           viewMode={viewMode}
           currentMonth={currentMonth}
+          currentYear={currentYear}
+          currentMonthIndex={currentMonthIndex}
           selectedDate={selectedDate}
           monthEntries={displayMonthEntries}
           monthTotals={monthTotals}
           monthPaymentTotals={monthPaymentTotals}
           cashBalance={cashBalance}
           monthAssetTotal={monthAssetTotal}
+          listMemo={listMemoDraft}
+          isListMemoEditing={isListMemoEditing}
+          onChangeListMemo={setListMemoDraft}
+          onSaveListMemo={saveListMemo}
+          onEditListMemo={startListMemoEdit}
           memberExpenseTotals={memberExpenseTotals}
           monthCategorySummary={monthCategorySummary}
           onOpenIncomeYearly={() =>
             router.push(
-              `/account-book/annual?kind=income&year=${selectedYear}&workspaceId=${workspace.id}${workspace.type === "shared" && selectedParticipantId !== ALL_PARTICIPANTS_ID ? `&memberId=${selectedParticipantId}` : ""}`,
+              `/account-book/annual?kind=income&${annualDetailQuery.toString()}`,
             )
           }
           onOpenExpenseYearly={() =>
             router.push(
-              `/account-book/annual?kind=expense&year=${selectedYear}&workspaceId=${workspace.id}${workspace.type === "shared" && selectedParticipantId !== ALL_PARTICIPANTS_ID ? `&memberId=${selectedParticipantId}` : ""}`,
+              `/account-book/annual?kind=expense&${annualDetailQuery.toString()}`,
             )
           }
           onOpenAssetYearly={() =>
             router.push(
-              `/account-book/annual?kind=asset&year=${selectedYear}&workspaceId=${workspace.id}${workspace.type === "shared" && selectedParticipantId !== ALL_PARTICIPANTS_ID ? `&memberId=${selectedParticipantId}` : ""}`,
+              `/account-book/annual?kind=asset&${annualDetailQuery.toString()}`,
             )
           }
           formatAmount={formatAmount}
-          boardMonthLabel={boardMonthLabel}
-          monthlyBoardColumns={monthlyBoardColumns}
-          effectiveBoardColumnId={effectiveBoardColumnId}
-          onSelectBoardColumn={setSelectedBoardColumnId}
+          boardSummaryCards={boardSummaryCards}
+          annualSavingGoal={annualSavingGoal}
+          monthlySavingGoal={monthlySavingGoal}
+          onChangeMonthlySavingGoal={onMonthlyGoalChange}
+          dashboardRows={dashboardRows}
+          onSelectBoardMonth={onDashboardMonthSelect}
+          onChangeAnnualSavingGoal={onAnnualGoalChange}
           calendarDays={calendarDays}
           daySummary={daySummary}
           toIsoDate={toIsoDate}
           onSelectDate={setSelectedDate}
-          ledgerDetailTitle={ledgerDetailTitle}
-          boardDetailTitle={boardDetailTitle}
           calendarDetailTitle={calendarDetailTitle}
           selectedDateEntries={selectedDateEntries}
           selectedDateAssetEntries={selectedDateAssetEntries}
-          monthlyBoardDetailEntries={monthlyBoardDetailEntries}
           onOpenAdd={() => openFormModal({ date: selectedDate })}
           onEdit={openEditModal}
-          onDelete={onDeleteEntry}
+          onDelete={handleDeleteEntry}
           entryActions={entryActions}
           paymentLabel={paymentLabel}
         />

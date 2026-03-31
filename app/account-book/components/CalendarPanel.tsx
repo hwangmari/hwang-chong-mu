@@ -50,11 +50,11 @@ export default function CalendarPanel({
               $muted={!isCurrent}
               onClick={() => onSelectDate(dayIso)}
             >
-              <StDayNum>{format(day, "d")}</StDayNum>
-              <StDayMeta $kind="income">
+              <StDayNum $selected={isSelected}>{format(day, "d")}</StDayNum>
+              <StDayMeta $kind="income" $selected={isSelected}>
                 {info?.income ? `+${formatCalendarAmount(info.income)}` : ""}
               </StDayMeta>
-              <StDayMeta $kind="expense">
+              <StDayMeta $kind="expense" $selected={isSelected}>
                 {info?.expense ? `-${formatCalendarAmount(info.expense)}` : ""}
               </StDayMeta>
             </StDayCell>
@@ -83,26 +83,37 @@ const StCalendarGrid = styled.div`
   margin-bottom: 1rem;
 `;
 const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
-  border: 1px solid ${({ $selected }) => ($selected ? "#f4a5bd" : "#edf1f5")};
+  border: 1px solid ${({ $selected }) => ($selected ? "#88a5f4" : "#edf1f5")};
   background: ${({ $selected }) =>
-    $selected ? "linear-gradient(145deg, #f7b5cb, #f18bb1)" : "#fff"};
+    $selected
+      ? "linear-gradient(180deg, #eef4ff, #e2ebff)"
+      : "linear-gradient(180deg, #ffffff, #fbfdff)"};
   color: ${({ $selected, $muted }) =>
-    $selected ? "#fff" : $muted ? "#c2c8d2" : "#111827"};
-  border-radius: 10px;
+    $selected ? "#213453" : $muted ? "#c2c8d2" : "#111827"};
+  box-shadow: ${({ $selected }) =>
+    $selected ? "0 10px 22px rgba(99, 126, 212, 0.14)" : "none"};
+  border-radius: 16px;
   min-height: 74px;
-  padding: 0.35rem 0.25rem;
+  padding: 0.45rem 0.3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.15rem;
+  gap: 0.18rem;
 `;
-const StDayNum = styled.span`
+const StDayNum = styled.span<{ $selected: boolean }>`
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 800;
+  color: ${({ $selected }) => ($selected ? "#1f2f4d" : "inherit")};
 `;
-const StDayMeta = styled.span<{ $kind: EntryType }>`
+const StDayMeta = styled.span<{ $kind: EntryType; $selected: boolean }>`
   font-size: 0.65rem;
-  color: ${({ $kind }) => ($kind === "income" ? "#2ea66d" : "#e0648f")};
+  color: ${({ $kind, $selected }) => {
+    if ($selected) {
+      return $kind === "income" ? "#3e67d8" : "#655ae0";
+    }
+    return $kind === "income" ? "#4f7cff" : "#6b63e8";
+  }};
   line-height: 1;
+  font-weight: ${({ $selected }) => ($selected ? 800 : 700)};
 `;

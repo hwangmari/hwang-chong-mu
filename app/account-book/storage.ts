@@ -14,6 +14,12 @@ export const LEGACY_ACCOUNT_BOOK_KEY = "hwang-account-book-v2";
 
 const DEFAULT_PASSWORD = "6155";
 const DEFAULT_VERSION = 1;
+const SAMPLE_USER_IDS = new Set(["user-1", "user-2"]);
+const SAMPLE_WORKSPACE_IDS = new Set([
+  "workspace-user-1",
+  "workspace-user-2",
+  "workspace-shared-main",
+]);
 
 function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -57,6 +63,16 @@ function normalizeLegacyEntry(
 }
 
 export function createInitialStore(): AccountBookStore {
+  return {
+    version: DEFAULT_VERSION,
+    users: [],
+    workspaces: [],
+    entries: [],
+    shareLinks: [],
+  };
+}
+
+function createLegacySeedStore(): AccountBookStore {
   const user1WorkspaceId = "workspace-user-1";
   const user2WorkspaceId = "workspace-user-2";
   const sharedWorkspaceId = "workspace-shared-main";
@@ -99,6 +115,7 @@ export function createInitialStore(): AccountBookStore {
       type: "shared",
       password: DEFAULT_PASSWORD,
       memberIds: ["user-1", "user-2"],
+      inviteCode: "SHARED01",
     },
   ];
 
@@ -112,7 +129,7 @@ export function createInitialStore(): AccountBookStore {
 }
 
 function migrateLegacyStore(): AccountBookStore {
-  const base = createInitialStore();
+  const base = createLegacySeedStore();
 
   if (typeof window === "undefined") {
     return base;
@@ -162,7 +179,7 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
   const entries = Array.isArray(raw.entries) ? raw.entries : [];
   const shareLinks = Array.isArray(raw.shareLinks) ? raw.shareLinks : [];
 
-  return {
+  const normalizedStore: AccountBookStore = {
     version: DEFAULT_VERSION,
     users: users.map((user, index) => ({
       id: user.id || `user-${index + 1}`,
@@ -185,13 +202,15 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
           : workspace.ownerUserId
             ? [workspace.ownerUserId]
             : [],
+      inviteCode:
+        workspace.type === "shared" ? workspace.inviteCode || "" : undefined,
     })),
     entries: entries.map((entry, index) => ({
       id: entry.id || `entry-${index + 1}`,
       date: entry.date || "2026-02-01",
       member: entry.member || "사용자1",
-      workspaceId: entry.workspaceId || workspaces[0]?.id || base.workspaces[0].id,
-      createdByUserId: entry.createdByUserId || users[0]?.id || base.users[0].id,
+      workspaceId: entry.workspaceId || workspaces[0]?.id || "",
+      createdByUserId: entry.createdByUserId || users[0]?.id || "",
       type: entry.type === "income" ? "income" : "expense",
       category: mapLegacyCategory(entry.category),
       subCategory: entry.subCategory || "",
@@ -216,6 +235,56 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       sharedByUserId: link.sharedByUserId || users[0]?.id || base.users[0].id,
       createdAt: link.createdAt || new Date().toISOString(),
     })),
+  };
+
+  return removeSeedDataIfActualExists(normalizedStore);
+}
+
+function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore {
+  const hasActualData =
+    store.users.some((user) => !SAMPLE_USER_IDS.has(user.id)) ||
+    store.workspaces.some((workspace) => !SAMPLE_WORKSPACE_IDS.has(workspace.id));
+
+  if (!hasActualData) {
+    return store;
+  }
+
+  const users = store.users.filter((user) => !SAMPLE_USER_IDS.has(user.id));
+  const workspaces = store.workspaces.filter(
+    (workspace) => !SAMPLE_WORKSPACE_IDS.has(workspace.id),
+  );
+  const validUserIds = new Set(users.map((user) => user.id));
+  const validWorkspaceIds = new Set(workspaces.map((workspace) => workspace.id));
+  const entries = store.entries.filter(
+    (entry) =>
+      validUserIds.has(entry.createdByUserId) &&
+      validWorkspaceIds.has(entry.workspaceId),
+  );
+  const validEntryIds = new Set(entries.map((entry) => entry.id));
+  const shareLinks = store.shareLinks.filter(
+    (link) =>
+      validUserIds.has(link.sharedByUserId) &&
+      validWorkspaceIds.has(link.sourceWorkspaceId) &&
+      validWorkspaceIds.has(link.targetWorkspaceId) &&
+      validEntryIds.has(link.sourceEntryId),
+  );
+
+  return {
+    ...store,
+    users: users.map((user) => ({
+      ...user,
+      personalWorkspaceId:
+        workspaces.find(
+          (workspace) =>
+            workspace.type === "personal" && workspace.ownerUserId === user.id,
+        )?.id ||
+        (validWorkspaceIds.has(user.personalWorkspaceId)
+          ? user.personalWorkspaceId
+          : ""),
+    })),
+    workspaces,
+    entries,
+    shareLinks,
   };
 }
 
@@ -292,6 +361,41 @@ export function isEntrySharedToWorkspace(
   );
 }
 
+function normalizeEntryFragment(text?: string) {
+  return (text || "").replace(/\s+/g, "").toLowerCase();
+}
+
+function getResolvedEntryDuplicateKey(
+  entry: Pick<AccountEntry, "date" | "amount" | "type" | "merchant" | "item">,
+) {
+  return [
+    entry.date,
+    entry.amount,
+    entry.type,
+    normalizeEntryFragment(entry.merchant || entry.item),
+    normalizeEntryFragment(entry.item || entry.merchant),
+  ].join("|");
+}
+
+function dedupeResolvedEntries(entries: ResolvedAccountEntry[]) {
+  const keptEntries = new Map<string, ResolvedAccountEntry>();
+
+  for (const entry of entries) {
+    const dedupeKey = `${entry.createdByUserId}|${getResolvedEntryDuplicateKey(entry)}`;
+    const existing = keptEntries.get(dedupeKey);
+    if (!existing) {
+      keptEntries.set(dedupeKey, entry);
+      continue;
+    }
+
+    if (existing.source === "direct" && entry.source !== "direct") {
+      keptEntries.set(dedupeKey, entry);
+    }
+  }
+
+  return Array.from(keptEntries.values()).sort(sortEntries);
+}
+
 export function resolveWorkspaceEntries(
   store: AccountBookStore,
   workspaceId: string,
@@ -330,7 +434,7 @@ export function resolveWorkspaceEntries(
       })
       .filter(Boolean) as ResolvedAccountEntry[];
 
-    return [...directEntries, ...linkedEntries].sort(sortEntries);
+    return dedupeResolvedEntries([...directEntries, ...linkedEntries]);
   }
 
   const mirroredSharedEntries = store.entries
@@ -355,7 +459,7 @@ export function resolveWorkspaceEntries(
         getWorkspaceById(store, entry.workspaceId)?.name || "공용 가계부방",
     }));
 
-  return [...directEntries, ...mirroredSharedEntries].sort(sortEntries);
+  return dedupeResolvedEntries([...directEntries, ...mirroredSharedEntries]);
 }
 
 function sortEntries(a: AccountEntry, b: AccountEntry) {

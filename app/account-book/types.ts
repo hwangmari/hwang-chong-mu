@@ -45,6 +45,7 @@ export type AccountBookWorkspace = {
   password: string;
   ownerUserId?: string;
   memberIds: string[];
+  inviteCode?: string;
 };
 
 export type AccountBookShareLink = {

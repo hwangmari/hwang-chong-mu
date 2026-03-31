@@ -13,13 +13,6 @@ import {
   normalizeStore,
 } from "./storage";
 
-function isEmptyRemoteStore(raw: Partial<AccountBookStore> | null | undefined) {
-  if (!raw) return true;
-  const users = Array.isArray(raw.users) ? raw.users : [];
-  const workspaces = Array.isArray(raw.workspaces) ? raw.workspaces : [];
-  return users.length === 0 && workspaces.length === 0;
-}
-
 function createId(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `${prefix}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
@@ -32,6 +25,19 @@ function normalizeRpcStore(raw: Partial<AccountBookStore> | null | undefined) {
   clearLegacyAccountBookLocalData();
   return normalizeStore(raw || {});
 }
+
+type RoomActionResult = {
+  store: AccountBookStore;
+  userId: string;
+  workspaceId: string;
+  inviteCode: string;
+};
+
+type UserActionResult = {
+  store: AccountBookStore;
+  userId: string;
+  workspaceId: string;
+};
 
 async function callStoreRpc<TParams extends Record<string, unknown>>(
   name: string,
@@ -58,11 +64,33 @@ export async function fetchAccountBookStore() {
   }
 
   const rawStore = (data || null) as Partial<AccountBookStore> | null;
-  if (isEmptyRemoteStore(rawStore)) {
-    return callStoreRpc("account_book_seed_defaults");
+  return normalizeRpcStore(rawStore);
+}
+
+async function callRoomActionRpc<TParams extends Record<string, unknown>>(
+  name: string,
+  params: TParams,
+): Promise<RoomActionResult> {
+  const { data, error } = await supabase.rpc(name, params);
+  if (error) {
+    throw error;
   }
 
-  return normalizeRpcStore(rawStore);
+  const payload = (data || null) as
+    | {
+        store?: Partial<AccountBookStore> | null;
+        userId?: string;
+        workspaceId?: string;
+        inviteCode?: string;
+      }
+    | null;
+
+  return {
+    store: normalizeRpcStore(payload?.store || {}),
+    userId: payload?.userId || "",
+    workspaceId: payload?.workspaceId || "",
+    inviteCode: payload?.inviteCode || "",
+  };
 }
 
 export async function upsertAccountBookEntry(entry: AccountEntry) {
@@ -126,12 +154,18 @@ export async function createAccountBookUser(name: string, password: string) {
     p_member_ids: [userId],
   });
 
-  return callStoreRpc("account_book_upsert_user", {
+  const store = await callStoreRpc("account_book_upsert_user", {
     p_id: userId,
     p_name: name,
     p_password: password,
     p_personal_workspace_id: personalWorkspaceId,
   });
+
+  return {
+    store,
+    userId,
+    workspaceId: personalWorkspaceId,
+  } satisfies UserActionResult;
 }
 
 export async function deleteAccountBookUser(userId: string) {
@@ -165,6 +199,54 @@ export async function createAccountBookSharedWorkspace(
     p_password: password,
     p_owner_user_id: "",
     p_member_ids: memberIds,
+  });
+}
+
+export async function createAccountBookSharedRoomWithOwner(
+  roomName: string,
+  roomPassword: string,
+  ownerName: string,
+  ownerPassword: string,
+) {
+  return callRoomActionRpc("account_book_create_shared_room", {
+    p_room_name: roomName,
+    p_room_password: roomPassword,
+    p_owner_name: ownerName,
+    p_owner_password: ownerPassword,
+  });
+}
+
+export async function joinAccountBookSharedRoom(
+  inviteCode: string,
+  userName: string,
+  userPassword: string,
+) {
+  return callRoomActionRpc("account_book_join_shared_room", {
+    p_invite_code: inviteCode,
+    p_user_name: userName,
+    p_user_password: userPassword,
+  });
+}
+
+export async function addAccountBookSharedRoomMember(
+  workspaceId: string,
+  userName: string,
+  userPassword: string,
+) {
+  return callStoreRpc("account_book_add_shared_room_member", {
+    p_workspace_id: workspaceId,
+    p_user_name: userName,
+    p_user_password: userPassword,
+  });
+}
+
+export async function removeAccountBookSharedRoomMember(
+  workspaceId: string,
+  userId: string,
+) {
+  return callStoreRpc("account_book_remove_shared_room_member", {
+    p_workspace_id: workspaceId,
+    p_user_id: userId,
   });
 }
 

@@ -92,6 +92,55 @@ export const StInput = styled.input`
   color: #1f2937;
 `;
 
+export const StSubTitle = styled.h4`
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #314157;
+`;
+
+export const StMetaText = styled.p`
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #6d7b8f;
+`;
+
+export const StInlineLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  background: #eaf1ff;
+  color: #3657b5;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.28rem 0.55rem;
+`;
+
+export const StButtonRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+export const StParticipantList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const StParticipantCard = styled.div`
+  border: 1px solid #dfe7f3;
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+`;
+
 export const StMemberGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -116,6 +165,11 @@ export const StApplyButton = styled.button`
   padding: 0.75rem 0.9rem;
   font-size: 0.84rem;
   font-weight: 800;
+
+  &:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+  }
 `;
 
 export const StDangerButton = styled.button`
@@ -126,4 +180,9 @@ export const StDangerButton = styled.button`
   padding: 0.75rem 0.9rem;
   font-size: 0.84rem;
   font-weight: 800;
+
+  &:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+  }
 `;

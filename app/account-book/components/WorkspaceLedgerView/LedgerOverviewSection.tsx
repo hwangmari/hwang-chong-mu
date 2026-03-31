@@ -28,7 +28,7 @@ export default function LedgerOverviewSection({
   formatAmount,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const compareColors = ["#6d87ef", "#67b182", "#d08b5b", "#f28b82"];
+  const compareColors = ["#4f7cff", "#6b63e8", "#3f8f8a", "#7f91ac"];
   const maxMemberExpense = Math.max(
     ...memberExpenseTotals.map(([, amount]) => amount),
     0,

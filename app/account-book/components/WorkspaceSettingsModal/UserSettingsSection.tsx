@@ -49,11 +49,13 @@ export default function UserSettingsSection({
               }
               placeholder="사용자 이름"
             />
-            <StInput
-              value={userDrafts[user.id]?.password || ""}
-              onChange={(event) =>
-                onChangeUserDraft(user.id, {
-                  ...userDrafts[user.id],
+          <StInput
+            value={userDrafts[user.id]?.password || ""}
+            type="password"
+            autoComplete="current-password"
+            onChange={(event) =>
+              onChangeUserDraft(user.id, {
+                ...userDrafts[user.id],
                   password: event.target.value,
                 })
               }
@@ -89,6 +91,8 @@ export default function UserSettingsSection({
           />
           <StInput
             value={newUser.password}
+            type="password"
+            autoComplete="new-password"
             onChange={(event) =>
               onChangeNewUser({ ...newUser, password: event.target.value })
             }

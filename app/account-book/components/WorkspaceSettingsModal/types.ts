@@ -8,27 +8,26 @@ export type UserDraft = {
 export type RoomDraft = {
   name: string;
   password: string;
-  memberIds: string[];
 };
 
 export type WorkspaceSettingsModalProps = {
   isOpen: boolean;
+  activeUser: AccountBookUser | null;
   users: AccountBookUser[];
   sharedWorkspaces: AccountBookWorkspace[];
   onClose: () => void;
+  onCreateSharedWorkspace: (name: string, password: string) => void;
   onUpdateUser: (userId: string, name: string, password: string) => void;
-  onDeleteUser: (userId: string) => void;
-  onAddUser: (name: string, password: string) => void;
   onUpdateSharedWorkspace: (
     workspaceId: string,
     name: string,
     password: string,
-    memberIds: string[],
   ) => void;
   onDeleteSharedWorkspace: (workspaceId: string) => void;
-  onAddSharedWorkspace: (
+  onAddRoomMember: (
+    workspaceId: string,
     name: string,
     password: string,
-    memberIds: string[],
   ) => void;
+  onRemoveRoomMember: (workspaceId: string, userId: string) => void;
 };

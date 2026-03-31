@@ -2,9 +2,9 @@
 
 import styled from "styled-components";
 import type { PaymentType, ResolvedAccountEntry, ViewMode } from "../../types";
+import AccountBookDashboardPanel from "../AccountBookDashboardPanel";
 import CalendarPanel from "../CalendarPanel";
 import DetailEntriesPanel from "../DetailEntriesPanel";
-import MonthlyBoardPanel from "../MonthlyBoardPanel";
 import TopSummaryControls from "../TopSummaryControls";
 import LedgerOverviewSection from "./LedgerOverviewSection";
 
@@ -17,41 +17,59 @@ type EntryAction = {
 type Props = {
   viewMode: ViewMode;
   currentMonth: Date;
+  currentYear: number;
+  currentMonthIndex: number;
   selectedDate: string;
   monthEntries: ResolvedAccountEntry[];
   monthTotals: { income: number; expense: number };
-  monthPaymentTotals: {
-    income: { cash: number; card: number; check_card: number };
-    expense: { cash: number; card: number; check_card: number };
-  };
+  monthPaymentTotals: { cash: number; card: number; check_card: number };
   cashBalance: number;
   monthAssetTotal: number;
+  listMemo: string;
+  isListMemoEditing: boolean;
+  onChangeListMemo: (value: string) => void;
+  onSaveListMemo: () => void;
+  onEditListMemo: () => void;
   memberExpenseTotals: Array<[string, number]>;
   monthCategorySummary: Array<[string, number]>;
   onOpenIncomeYearly: () => void;
   onOpenExpenseYearly: () => void;
   onOpenAssetYearly: () => void;
   formatAmount: (value: number) => string;
-  boardMonthLabel: string;
-  monthlyBoardColumns: Array<{
+  boardSummaryCards: Array<{
     id: string;
-    title: string;
+    label: string;
+    amount: number;
+    count: number;
     description: string;
-    totalAmount: number;
-    cards: Array<{ amount: number }>;
   }>;
-  effectiveBoardColumnId: string;
-  onSelectBoardColumn: (columnId: string) => void;
+  annualSavingGoal: number;
+  monthlySavingGoal: number;
+  onChangeAnnualSavingGoal: (value: number) => void;
+  onChangeMonthlySavingGoal: (value: number) => void;
+  dashboardRows: Array<{
+    monthNumber: number;
+    monthLabel: string;
+    income: number;
+    totalExpense: number;
+    fixedExpense: number;
+    consumptionExpense: number;
+    regularSavings: number;
+    netAmount: number;
+    actualSavings: number;
+    savingsRate: number | null;
+    cumulativeSavings: number;
+    goalAmount: number;
+    achievementRate: number | null;
+  }>;
+  onSelectBoardMonth: (monthNumber: number) => void;
   calendarDays: Date[];
   daySummary: Record<string, { income: number; expense: number }>;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
-  ledgerDetailTitle: string;
-  boardDetailTitle: string;
   calendarDetailTitle: string;
   selectedDateEntries: ResolvedAccountEntry[];
   selectedDateAssetEntries: ResolvedAccountEntry[];
-  monthlyBoardDetailEntries: Record<string, ResolvedAccountEntry[]>;
   onOpenAdd: () => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
   onDelete: (id: string) => void;
@@ -62,54 +80,119 @@ type Props = {
 export default function WorkspacePanelsSection({
   viewMode,
   currentMonth,
+  currentYear,
+  currentMonthIndex,
   selectedDate,
   monthEntries,
   monthTotals,
   monthPaymentTotals,
   cashBalance,
   monthAssetTotal,
+  listMemo,
+  isListMemoEditing,
+  onChangeListMemo,
+  onSaveListMemo,
+  onEditListMemo,
   memberExpenseTotals,
   monthCategorySummary,
   onOpenIncomeYearly,
   onOpenExpenseYearly,
   onOpenAssetYearly,
   formatAmount,
-  boardMonthLabel,
-  monthlyBoardColumns,
-  effectiveBoardColumnId,
-  onSelectBoardColumn,
+  boardSummaryCards,
+  annualSavingGoal,
+  monthlySavingGoal,
+  onChangeAnnualSavingGoal,
+  onChangeMonthlySavingGoal,
+  dashboardRows,
+  onSelectBoardMonth,
   calendarDays,
   daySummary,
   toIsoDate,
   onSelectDate,
-  ledgerDetailTitle,
-  boardDetailTitle,
   calendarDetailTitle,
   selectedDateEntries,
   selectedDateAssetEntries,
-  monthlyBoardDetailEntries,
   onOpenAdd,
   onEdit,
   onDelete,
   entryActions,
   paymentLabel,
 }: Props) {
-  return (
-    <StCalendarSplit>
-      <StLeftSplitCard>
-        <TopSummaryControls
-          monthTotals={monthTotals}
-          monthPaymentTotals={monthPaymentTotals}
-          cashBalance={cashBalance}
-          assetTotal={monthAssetTotal}
-          onOpenIncomeYearly={onOpenIncomeYearly}
-          onOpenExpenseYearly={onOpenExpenseYearly}
-          onOpenAssetYearly={onOpenAssetYearly}
-          formatAmount={formatAmount}
-        />
+  const hasDetailPanel = viewMode !== "board";
+  const isLedgerLayout = viewMode === "ledger";
 
-        <StLeftBody>
-          {viewMode === "ledger" ? (
+  return (
+    <StCalendarSplit $hasDetailPanel={hasDetailPanel} $viewMode={viewMode}>
+      <StLeftSplitCard>
+        {viewMode === "board" ? null : (
+          <TopSummaryControls
+            viewMode={viewMode === "calendar" ? "calendar" : "ledger"}
+            monthTotals={monthTotals}
+            monthPaymentTotals={monthPaymentTotals}
+            cashBalance={cashBalance}
+            monthAssetTotal={monthAssetTotal}
+            boardSummaryCards={boardSummaryCards}
+            formatAmount={formatAmount}
+          />
+        )}
+
+        {isLedgerLayout ? (
+          <StLedgerMemoCard>
+            <StLedgerMemoHeader>
+              <StLedgerMemoTitleWrap>
+                <strong>이번 달 메모</strong>
+                <span>리스트 화면에서만 보는 메모</span>
+              </StLedgerMemoTitleWrap>
+              <StLedgerMemoActionButton
+                type="button"
+                onClick={isListMemoEditing ? onSaveListMemo : onEditListMemo}
+              >
+                {isListMemoEditing ? "저장" : "수정"}
+              </StLedgerMemoActionButton>
+            </StLedgerMemoHeader>
+            <StLedgerMemoTextarea
+              value={listMemo}
+              onChange={(event) => onChangeListMemo(event.target.value)}
+              readOnly={!isListMemoEditing}
+              placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
+            />
+          </StLedgerMemoCard>
+        ) : null}
+
+        {isLedgerLayout ? null : (
+          <StLeftBody>
+            {viewMode === "board" ? (
+              <AccountBookDashboardPanel
+                currentYear={currentYear}
+                currentMonthIndex={currentMonthIndex}
+                annualGoal={annualSavingGoal}
+                monthlyGoal={monthlySavingGoal}
+                onChangeAnnualGoal={onChangeAnnualSavingGoal}
+                onChangeMonthlyGoal={onChangeMonthlySavingGoal}
+                dashboardRows={dashboardRows}
+                onSelectMonth={onSelectBoardMonth}
+                onOpenIncomeYearly={onOpenIncomeYearly}
+                onOpenExpenseYearly={onOpenExpenseYearly}
+                onOpenAssetYearly={onOpenAssetYearly}
+              />
+            ) : (
+              <CalendarPanel
+                currentMonth={currentMonth}
+                calendarDays={calendarDays}
+                daySummary={daySummary}
+                selectedDate={selectedDate}
+                toIsoDate={toIsoDate}
+                onSelectDate={onSelectDate}
+              />
+            )}
+          </StLeftBody>
+        )}
+      </StLeftSplitCard>
+
+      {hasDetailPanel ? (
+        <StRightSplitCard>
+          {isLedgerLayout ? (
             <LedgerOverviewSection
               currentMonth={currentMonth}
               monthEntriesCount={monthEntries.length}
@@ -120,77 +203,41 @@ export default function WorkspacePanelsSection({
               monthCategorySummary={monthCategorySummary}
               formatAmount={formatAmount}
             />
-          ) : viewMode === "board" ? (
-            <MonthlyBoardPanel
-              monthLabel={boardMonthLabel}
-              columns={monthlyBoardColumns}
-              selectedColumnId={effectiveBoardColumnId}
-              formatAmount={formatAmount}
-              onSelectColumn={onSelectBoardColumn}
-            />
           ) : (
-            <CalendarPanel
-              currentMonth={currentMonth}
-              calendarDays={calendarDays}
-              daySummary={daySummary}
-              selectedDate={selectedDate}
-              toIsoDate={toIsoDate}
-              onSelectDate={onSelectDate}
+            <DetailEntriesPanel
+              title={calendarDetailTitle}
+              entries={selectedDateEntries}
+              assetEntries={selectedDateAssetEntries}
+              onOpenAdd={onOpenAdd}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              entryActions={entryActions}
+              formatAmount={formatAmount}
+              paymentLabel={paymentLabel}
             />
           )}
-        </StLeftBody>
-      </StLeftSplitCard>
-
-      <StRightSplitCard>
-        {viewMode === "ledger" ? (
-          <DetailEntriesPanel
-            title={ledgerDetailTitle}
-            entries={monthEntries}
-            onOpenAdd={onOpenAdd}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            entryActions={entryActions}
-            formatAmount={formatAmount}
-            paymentLabel={paymentLabel}
-            showDateMeta
-          />
-        ) : viewMode === "board" ? (
-          <DetailEntriesPanel
-            title={boardDetailTitle}
-            entries={monthlyBoardDetailEntries[effectiveBoardColumnId] || []}
-            onOpenAdd={onOpenAdd}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            entryActions={entryActions}
-            formatAmount={formatAmount}
-            paymentLabel={paymentLabel}
-            showDateMeta
-          />
-        ) : (
-          <DetailEntriesPanel
-            title={calendarDetailTitle}
-            entries={selectedDateEntries}
-            assetEntries={selectedDateAssetEntries}
-            onOpenAdd={onOpenAdd}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            entryActions={entryActions}
-            formatAmount={formatAmount}
-            paymentLabel={paymentLabel}
-          />
-        )}
-      </StRightSplitCard>
+        </StRightSplitCard>
+      ) : null}
     </StCalendarSplit>
   );
 }
 
-const StCalendarSplit = styled.div`
+const StCalendarSplit = styled.div<{
+  $hasDetailPanel: boolean;
+  $viewMode: ViewMode;
+}>`
   height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.78fr);
+  grid-template-columns: ${({ $hasDetailPanel, $viewMode }) => {
+    if (!$hasDetailPanel) return "minmax(0, 1fr)";
+    if ($viewMode === "ledger") {
+      return "minmax(0, 1fr) minmax(0, 1fr)";
+    }
+    return "minmax(0, 1.35fr) minmax(320px, 0.78fr)";
+  }};
   gap: 0.85rem;
   min-height: 0;
-  align-items: stretch;
+  align-items: ${({ $viewMode }) => ($viewMode === "ledger" ? "start" : "stretch")};
 
   @media (max-width: 1080px) {
     display: block;
@@ -203,7 +250,6 @@ const StCalendarSplit = styled.div`
 const StLeftSplitCard = styled.section`
   display: flex;
   flex-direction: column;
-  min-height: 0;
   border: 1px solid #dce5f0;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
@@ -212,6 +258,93 @@ const StLeftSplitCard = styled.section`
 
   @media (max-width: 1080px) {
     overflow: visible;
+  }
+`;
+
+const StLedgerMemoCard = styled.section`
+  margin-top: 0.75rem;
+  border: 1px solid #dce5f0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fcfdff, #f8fbff);
+  padding: 0.9rem;
+`;
+
+const StLedgerMemoHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+`;
+
+const StLedgerMemoTitleWrap = styled.div`
+  display: grid;
+  gap: 0.18rem;
+
+  strong {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: #223147;
+  }
+
+  span {
+    font-size: 0.74rem;
+    color: #7a8799;
+    font-weight: 700;
+  }
+`;
+
+const StLedgerMemoActionButton = styled.button`
+  flex-shrink: 0;
+  border: 1px solid #cad8ee;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #4f7cff;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease;
+
+  &:hover {
+    border-color: #b5c8ea;
+    background: #f5f8ff;
+  }
+`;
+
+const StLedgerMemoTextarea = styled.textarea`
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0.85rem 0.9rem;
+  resize: vertical;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: #334155;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+
+  &:read-only {
+    background: #f8fbff;
+    color: #516074;
+    cursor: default;
+  }
+
+  &::placeholder {
+    color: #99a5b6;
+  }
+
+  &:focus {
+    border-color: #b9cdf8;
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.08);
   }
 `;
 

@@ -90,6 +90,12 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     description: "콘텐츠/문화/구독 결제",
   },
   {
+    label: "고정비",
+    color: "#5f73d9",
+    icon: "📌",
+    description: "공과금, 통신비, 보험료 같은 반복 지출",
+  },
+  {
     label: "저축",
     color: "#5d9cec",
     icon: "💰",
@@ -118,6 +124,16 @@ const ASSET_SUBCATEGORY_OPTIONS = [
   "연금",
   "코인",
 ] as const;
+const FIXED_EXPENSE_SUBCATEGORY_OPTIONS = [
+  "공과금",
+  "핸드폰비",
+  "보험료",
+  "관리비",
+  "월세",
+  "구독료",
+  "대출이자",
+  "기타",
+] as const;
 const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
   "식비/외식": [
     "배민",
@@ -137,6 +153,7 @@ const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
   "주차/교통": ["주차장", "주유", "충전", "대리"],
   "결제/플랫폼": ["네이버페이", "카카오페이", "토스페이", "간편결제"],
   "문화/구독": ["OTT", "음악", "도서", "전시"],
+  고정비: FIXED_EXPENSE_SUBCATEGORY_OPTIONS,
   저축: ASSET_SUBCATEGORY_OPTIONS,
   "교통카드/충전": ["티머니", "캐시비", "교통카드"],
   통행료: ["하이패스", "유료도로"],
@@ -266,6 +283,9 @@ export function inferCategoryFromItemText(text: string) {
   if (/통행료|하이패스/.test(text)) return "통행료";
   if (/여행|숙소|항공|레저/.test(text)) return "여행/관광";
   if (/선물|이벤트|축의|조의/.test(text)) return "선물/기타";
+  if (/공과금|전기|가스|수도|휴대폰|핸드폰|통신비|보험|월세|관리비/.test(text)) {
+    return "고정비";
+  }
   if (/적금|예금|주식|etf|연금|코인/.test(text.toLowerCase())) return "저축";
   if (/구독|넷플릭스|유튜브|티빙|멜론|문화/.test(text)) return "문화/구독";
   if (/페이|결제|플랫폼/.test(text)) return "결제/플랫폼";
@@ -287,6 +307,15 @@ export function inferSubCategoryFromText(category: string, text: string) {
   if (!text) return "";
   if (category === "저축") {
     return inferAssetSubCategoryFromText(text);
+  }
+  if (category === "고정비") {
+    if (/전기|가스|수도|공과금/.test(text)) return "공과금";
+    if (/휴대폰|핸드폰|통신비/.test(text)) return "핸드폰비";
+    if (/보험/.test(text)) return "보험료";
+    if (/관리비/.test(text)) return "관리비";
+    if (/월세/.test(text)) return "월세";
+    if (/구독/.test(text)) return "구독료";
+    if (/이자/.test(text)) return "대출이자";
   }
 
   const matchedRule = CATEGORY_DETAIL_RULES.find(
