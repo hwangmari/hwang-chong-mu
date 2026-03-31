@@ -108,6 +108,24 @@ function attachFixedExpenseMeta(rawText: string, templateId: string) {
   return [baseText, `#fixed-template:${templateId}`].filter(Boolean).join("\n");
 }
 
+function resolveEntryItemLabel(params: {
+  type: EntryType;
+  category: string;
+  subCategory: string;
+  merchant: string;
+  item: string;
+  memo: string;
+}) {
+  return (
+    params.item.trim() ||
+    params.merchant.trim() ||
+    params.memo.trim() ||
+    params.subCategory.trim() ||
+    params.category.trim() ||
+    (params.type === "income" ? "수입" : "지출")
+  );
+}
+
 function readFixedExpenseTemplates(workspaceId: string): FixedExpenseTemplate[] {
   if (typeof window === "undefined") return [];
 
@@ -260,6 +278,7 @@ export default function WorkspaceLedgerView({
   >([]);
 
   const monthLabel = format(currentMonth, "M월", { locale: ko });
+  const monthValue = format(currentMonth, "yyyy-MM");
   const currentMonthKey = format(currentMonth, "yyyy-MM");
   const monthRangeLabel = `${format(currentMonth, "M.1", { locale: ko })} - ${format(endOfMonth(currentMonth), "M.d", { locale: ko })}`;
   const selectedYear = format(currentMonth, "yyyy");
@@ -810,6 +829,19 @@ export default function WorkspaceLedgerView({
     setSelectedDate(toIsoDate(next));
   };
 
+  const onMonthSelect = (value: string) => {
+    const [yearText, monthText] = value.split("-");
+    const nextYear = Number(yearText);
+    const nextMonthIndex = Number(monthText) - 1;
+    if (!Number.isInteger(nextYear) || !Number.isInteger(nextMonthIndex)) {
+      return;
+    }
+
+    const next = startOfMonth(new Date(nextYear, nextMonthIndex, 1));
+    setCurrentMonth(next);
+    setSelectedDate(toIsoDate(next));
+  };
+
   const onDashboardMonthSelect = (monthNumber: number) => {
     const next = startOfMonth(new Date(currentYear, monthNumber - 1, 1));
     setCurrentMonth(next);
@@ -899,10 +931,6 @@ export default function WorkspaceLedgerView({
       alert("카테고리를 입력해주세요.");
       return;
     }
-    if (!item.trim()) {
-      alert("항목(가맹점)을 입력해주세요.");
-      return;
-    }
     if (
       type === "expense" &&
       category.trim() === "저축" &&
@@ -941,6 +969,14 @@ export default function WorkspaceLedgerView({
       ? existingFixedTemplateId || createFixedExpenseTemplateId()
       : null;
     const rawTextBase = draftRawText.trim() || editingEntry?.rawText || "";
+    const resolvedItem = resolveEntryItemLabel({
+      type,
+      category: normalizedCategory,
+      subCategory,
+      merchant,
+      item,
+      memo,
+    });
 
     const payload: AccountEntry = {
       id: editingEntryId || createEntryId(),
@@ -952,7 +988,7 @@ export default function WorkspaceLedgerView({
       category: normalizedCategory,
       subCategory: type === "expense" ? subCategory.trim() : "",
       merchant: merchant.trim(),
-      item: item.trim(),
+      item: resolvedItem,
       amount: Math.trunc(parsedAmount),
       cardCompany:
         type === "expense" && payment !== "cash"
@@ -1320,11 +1356,13 @@ export default function WorkspaceLedgerView({
         infoText={workspaceInfoText}
         monthLabel={monthLabel}
         monthRangeLabel={monthRangeLabel}
+        monthValue={monthValue}
         onOpenNaturalRegister={() => openRegisterModal("natural")}
         onOpenImageRegister={() => openRegisterModal("image")}
         onOpenManual={openManualEntryModal}
         onBack={onBack}
         onMonthMove={onMonthMove}
+        onMonthSelect={onMonthSelect}
       />
       <StContentWrap>
         {isRegisterModalOpen ? (

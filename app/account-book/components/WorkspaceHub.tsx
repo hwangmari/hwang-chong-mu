@@ -200,154 +200,192 @@ export default function WorkspaceHub({
 
   return (
     <StPage>
-      <StHeader>
-        <div>
-          <StEyebrow>Account Book Hub</StEyebrow>
-          <StTitle>서버 가계부방 허브</StTitle>
-          <StDescription>
-            공용 가계부를 서버방처럼 만들고, 참여 코드로 다른 사람을 초대해 함께
-            기록하고 비교할 수 있습니다.
-          </StDescription>
-        </div>
-        <StHeaderActions>
-          <StManageButton
-            type="button"
-            disabled={!activeUser}
-            onClick={onOpenManage}
-          >
-            서버방 참가자 설정
-          </StManageButton>
-        </StHeaderActions>
-      </StHeader>
+      <StPageInner>
+        <StHeader>
+          <div>
+            <StEyebrow>Together Ledger</StEyebrow>
+            <StTitle>함께 쓰는 가계부 허브</StTitle>
+            <StDescription>
+              개인 가계부로 시작하고, 필요할 때 공용방으로 자연스럽게
+              확장해보세요. 참여 코드를 보내면 같은 흐름 안에서 함께 기록하고
+              비교할 수 있습니다.
+            </StDescription>
+          </div>
+          <StHeaderActions>
+            <StManageButton
+              type="button"
+              disabled={!activeUser}
+              onClick={onOpenManage}
+            >
+              서버방 참가자 설정
+            </StManageButton>
+          </StHeaderActions>
+        </StHeader>
 
-      <StHeroPanel>
-        <StHeroCopy>
-          <strong>
-            {activeUser
-              ? `${activeUser.name} 님으로 참여 중`
-              : "먼저 서버방을 만들거나 참여하세요"}
-          </strong>
-          <span>
-            {activeUser
-              ? "이 계정으로 참여한 공용 가계부방과 개인 작업공간만 보여줍니다."
-              : "참여 코드로 입장하면 내 전용 작업공간도 함께 만들어집니다."}
-          </span>
-        </StHeroCopy>
-        <StHeroActions>
-          <StPrimaryButton
-            type="button"
-            onClick={() => {
-              setCreateForm((prev) => ({
-                ...prev,
-                userName: activeUser?.name || prev.userName,
-              }));
-              setModalMode("create");
-            }}
-          >
-            서버방 만들기
-          </StPrimaryButton>
-          <StSecondaryButton type="button" onClick={() => setModalMode("join")}>
-            참여 코드로 입장
-          </StSecondaryButton>
-          {activeUser ? (
-            <StGhostButton type="button" onClick={onResetActiveUser}>
-              참여 계정 바꾸기
-            </StGhostButton>
-          ) : null}
-        </StHeroActions>
-      </StHeroPanel>
+        <StHeroPanel>
+          <StHeroCopy>
+            <strong>
+              {activeUser
+                ? `${activeUser.name} 님으로 참여 중`
+                : "먼저 서버방을 만들거나 참여하세요"}
+            </strong>
+            <span>
+              {activeUser
+                ? "이 계정으로 참여한 공용 가계부방과 개인 작업공간만 보여줍니다."
+                : "참여 코드로 입장하면 내 전용 작업공간도 함께 만들어집니다."}
+            </span>
+          </StHeroCopy>
+          <StHeroActions>
+            <StPrimaryButton
+              type="button"
+              onClick={() => {
+                setCreateForm((prev) => ({
+                  ...prev,
+                  userName: activeUser?.name || prev.userName,
+                }));
+                setModalMode("create");
+              }}
+            >
+              서버방 만들기
+            </StPrimaryButton>
+            <StSecondaryButton
+              type="button"
+              onClick={() => setModalMode("join")}
+            >
+              참여 코드로 입장
+            </StSecondaryButton>
+            {activeUser ? (
+              <StGhostButton type="button" onClick={onResetActiveUser}>
+                참여 계정 바꾸기
+              </StGhostButton>
+            ) : null}
+          </StHeroActions>
+        </StHeroPanel>
 
-      {!activeUser ? (
-        <StEmptyCard>
-          서버방을 만들거나 참여 코드로 입장하면, 이 허브에 내가 사용할
-          가계부방이 표시됩니다.
-        </StEmptyCard>
-      ) : (
-        <>
-          <StSection>
-            <StSectionTitle>내 공용 가계부방</StSectionTitle>
-            <StGrid>
-              {sharedWorkspaces.length === 0 ? (
-                <StEmptyCard>
-                  아직 참여한 공용 가계부방이 없습니다. 참여 코드로 입장하거나
-                  새 서버방을 만들어보세요.
-                </StEmptyCard>
-              ) : (
-                sharedWorkspaces.map((workspace) => (
+        {!activeUser ? (
+          <StEmptyCard>
+            서버방을 만들거나 참여 코드로 입장하면, 이 허브에 내가 사용할
+            가계부방이 표시됩니다.
+          </StEmptyCard>
+        ) : (
+          <StWorkspaceColumns>
+            <StSection>
+              <StSectionTitle>개인 작업공간</StSectionTitle>
+              <StSectionDescription>
+                참여 시 자동 생성된 개인 작업공간입니다. 개인 정리용 원본 기록을
+                남기고 필요한 항목만 공유할 수 있습니다.
+              </StSectionDescription>
+              <StGrid>
+                {personalWorkspaces.map((workspace) => (
                   <StCard
                     key={workspace.id}
                     type="button"
                     onClick={() => onSelectWorkspace(workspace.id)}
                   >
-                    <StCardType>SHARED ROOM</StCardType>
-                    <StCardTitle>{workspace.name}</StCardTitle>
-                    <StCardMeta>
-                      참가자 {getMembersLabel(workspace) || "미설정"}
-                    </StCardMeta>
-                    {workspace.inviteCode ? (
-                      <StInviteRow>
-                        <span>초대 코드 {workspace.inviteCode}</span>
-                        <StInviteCopyAction
-                          role="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void copyInviteCode(workspace.inviteCode || "");
-                          }}
-                        >
-                          복사
-                        </StInviteCopyAction>
-                      </StInviteRow>
-                    ) : null}
-                    <StMemberPreview>
-                      {workspace.memberIds.map((memberId) => {
-                        const label =
-                          users.find((user) => user.id === memberId)?.name ||
-                          "참가자";
-                        return (
-                          <span key={`${workspace.id}-${memberId}`}>
-                            {label}
-                          </span>
-                        );
-                      })}
-                    </StMemberPreview>
-                    <StCardHint>
-                      방 안에서 `전체 / 참가자별`로 필터링해서 생활비와
-                      사용내역을 바로 볼 수 있습니다.
-                    </StCardHint>
+                    <StCardBody>
+                      <StCardMain>
+                        <StCardType>PERSONAL</StCardType>
+                        <StCardTitle>{workspace.name}</StCardTitle>
+                        <StCardMeta>
+                          작성자 {getMembersLabel(workspace) || activeUser.name}
+                        </StCardMeta>
+                        <StCardHint>
+                          개인 기준 원본 기록을 관리하고, 필요한 항목만 공용
+                          가계부방으로 연결합니다.
+                        </StCardHint>
+                      </StCardMain>
+                      <StCardAside>
+                        <StCardAsideLabel>개인 작업 흐름</StCardAsideLabel>
+                        <StCardAsideValue>원본 기록 정리</StCardAsideValue>
+                        <StCardAsideDescription>
+                          혼자 먼저 내용을 정리하고, 필요한 내역만 골라
+                          공용방으로 연결할 수 있어요.
+                        </StCardAsideDescription>
+                        <StCardAsideTags>
+                          <span>개인 기록</span>
+                          <span>공용 연결</span>
+                        </StCardAsideTags>
+                      </StCardAside>
+                    </StCardBody>
                   </StCard>
-                ))
-              )}
-            </StGrid>
-          </StSection>
+                ))}
+              </StGrid>
+            </StSection>
 
-          <StSection>
-            <StSectionTitle>내 개인 작업공간</StSectionTitle>
-            <StSectionDescription>
-              참여 시 자동 생성된 개인 작업공간입니다. 개인 정리용 원본 기록을
-              남기고 필요한 항목만 공유할 수 있습니다.
-            </StSectionDescription>
-            <StGrid>
-              {personalWorkspaces.map((workspace) => (
-                <StCard
-                  key={workspace.id}
-                  type="button"
-                  onClick={() => onSelectWorkspace(workspace.id)}
-                >
-                  <StCardType>PERSONAL</StCardType>
-                  <StCardTitle>{workspace.name}</StCardTitle>
-                  <StCardMeta>
-                    작성자 {getMembersLabel(workspace) || activeUser.name}
-                  </StCardMeta>
-                  <StCardHint>
-                    개인 기준 원본 기록을 관리하고, 필요한 항목만 공용
-                    가계부방으로 연결합니다.
-                  </StCardHint>
-                </StCard>
-              ))}
-            </StGrid>
-          </StSection>
-        </>
-      )}
+            <StSection>
+              <StSectionTitle>공용 가계부방</StSectionTitle>
+              <StGrid>
+                {sharedWorkspaces.length === 0 ? (
+                  <StEmptyCard>
+                    아직 참여한 공용 가계부방이 없습니다. 참여 코드로 입장하거나
+                    새 서버방을 만들어보세요.
+                  </StEmptyCard>
+                ) : (
+                  sharedWorkspaces.map((workspace) => (
+                    <StCard
+                      key={workspace.id}
+                      type="button"
+                      onClick={() => onSelectWorkspace(workspace.id)}
+                    >
+                      <StCardBody>
+                        <StCardMain>
+                          <StCardType>SHARED ROOM</StCardType>
+                          <StCardTitle>{workspace.name}</StCardTitle>
+                          <StCardMeta>
+                            참가자 {getMembersLabel(workspace) || "미설정"}
+                          </StCardMeta>
+                          {workspace.inviteCode ? (
+                            <StInviteRow>
+                              <span>초대 코드 {workspace.inviteCode}</span>
+                            </StInviteRow>
+                          ) : null}
+                          <StMemberPreview>
+                            {workspace.memberIds.map((memberId) => {
+                              const label =
+                                users.find((user) => user.id === memberId)
+                                  ?.name || "참가자";
+                              return (
+                                <span key={`${workspace.id}-${memberId}`}>
+                                  {label}
+                                </span>
+                              );
+                            })}
+                          </StMemberPreview>
+                          <StCardHint>
+                            방 안에서 `전체 / 참가자별`로 필터링해서 생활비와
+                            사용내역을 바로 볼 수 있습니다.
+                          </StCardHint>
+                        </StCardMain>
+                        <StCardAside>
+                          <StCardAsideLabel>공용방 요약</StCardAsideLabel>
+                          <StCardAsideValue>
+                            {workspace.memberIds.length}명 참여 중
+                          </StCardAsideValue>
+                          <StCardAsideDescription>
+                            참여 코드를 공유하고, 함께 쓴 내역을 한 공간에서
+                            바로 비교해볼 수 있어요.
+                          </StCardAsideDescription>
+                          {workspace.inviteCode ? (
+                            <StInviteCopyAction
+                              role="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void copyInviteCode(workspace.inviteCode || "");
+                              }}
+                            >
+                              초대 코드 복사
+                            </StInviteCopyAction>
+                          ) : null}
+                        </StCardAside>
+                      </StCardBody>
+                    </StCard>
+                  ))
+                )}
+              </StGrid>
+            </StSection>
+          </StWorkspaceColumns>
+        )}
+      </StPageInner>
 
       {modalMode ? (
         <StModalBackdrop onClick={closeModal}>
@@ -541,14 +579,14 @@ export default function WorkspaceHub({
 
 const StPage = styled.main`
   min-height: 100vh;
-  padding: 1.25rem;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(109, 135, 239, 0.16),
-      transparent 28%
-    ),
-    linear-gradient(180deg, #f6f8fc 0%, #edf2f8 100%);
+  padding: 1.4rem 1.25rem 2rem;
+  background: #f7f9fc;
+`;
+
+const StPageInner = styled.div`
+  width: 100%;
+  max-width: 1025px;
+  margin: 0 auto;
 `;
 
 const StHeader = styled.header`
@@ -596,7 +634,7 @@ const StModeSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
-  margin-bottom: 0.9rem;
+  margin: 0.9rem 0;
 
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
@@ -682,9 +720,8 @@ const StGhostButton = styled.button`
 const StHeroPanel = styled.section`
   border: 1px solid #d7e2ef;
   border-radius: 26px;
-  background: rgba(255, 255, 255, 0.94);
+  background: #ffffff;
   padding: 1rem;
-  box-shadow: 0 18px 45px rgba(71, 95, 140, 0.08);
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -718,6 +755,13 @@ const StHeroActions = styled.div`
   flex-wrap: wrap;
 `;
 
+const StWorkspaceColumns = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.1rem;
+  align-items: start;
+`;
+
 const StSection = styled.section`
   margin-top: 1.1rem;
 `;
@@ -737,30 +781,94 @@ const StSectionDescription = styled.p`
 
 const StGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.85rem;
-
-  @media (max-width: 1080px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const StCard = styled.button`
   text-align: left;
-  min-height: 13rem;
   border: 1px solid #d8e1ee;
   border-radius: 22px;
   padding: 1rem;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.98),
-    rgba(244, 248, 253, 0.98)
-  );
-  box-shadow: 0 18px 45px rgba(71, 95, 140, 0.08);
+  background: #ffffff;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    border-color: #c7d5ea;
+    box-shadow: 0 16px 36px rgba(76, 96, 135, 0.08);
+    transform: translateY(-1px);
+  }
+`;
+
+const StCardBody = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.9fr);
+  gap: 1.1rem;
+  align-items: stretch;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StCardMain = styled.div`
+  min-width: 0;
+`;
+
+const StCardAside = styled.div`
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding-left: 1.05rem;
+  border-left: 1px dashed #cfd9e8;
+
+  @media (max-width: 760px) {
+    padding-left: 0;
+    padding-top: 0.95rem;
+    border-left: 0;
+    border-top: 1px dashed #cfd9e8;
+  }
+`;
+
+const StCardAsideLabel = styled.span`
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7485a1;
+`;
+
+const StCardAsideValue = styled.strong`
+  font-size: 1rem;
+  font-weight: 900;
+  color: #233248;
+`;
+
+const StCardAsideDescription = styled.p`
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #6f8097;
+`;
+
+const StCardAsideTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid #d7e2ef;
+    background: #f8fbff;
+    color: #516785;
+    padding: 0.24rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
 `;
 
 const StCardType = styled.span`
@@ -788,10 +896,6 @@ const StCardMeta = styled.p`
 `;
 
 const StInviteRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  align-items: center;
   margin-top: 0.75rem;
 
   span {
@@ -802,11 +906,15 @@ const StInviteRow = styled.div`
 `;
 
 const StInviteCopyAction = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
   border: 1px solid #cad8ea;
   background: #fff;
   color: #49628b;
   border-radius: 999px;
-  padding: 0.28rem 0.55rem;
+  padding: 0.5rem 0.78rem;
   font-size: 0.74rem;
   font-weight: 800;
 `;
@@ -840,7 +948,7 @@ const StEmptyCard = styled.div`
   margin-top: 1rem;
   border-radius: 22px;
   border: 1px dashed #cbd7e7;
-  background: rgba(255, 255, 255, 0.84);
+  background: #ffffff;
   color: #708096;
   font-size: 0.9rem;
   line-height: 1.6;

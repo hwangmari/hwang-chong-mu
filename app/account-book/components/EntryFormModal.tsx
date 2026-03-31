@@ -216,21 +216,21 @@ export default function EntryFormModal({
             ) : null}
           </StFormField>
           <StFormField>
-            <StLabel>가맹점 / 항목 / 메모</StLabel>
+            <StLabel>가맹점 / 항목 / 메모 (선택)</StLabel>
             <StInput
               value={merchant}
               onChange={(e) => onSetMerchant(e.target.value)}
-              placeholder="예: 스타벅스 강남점"
+              placeholder="가맹점 (선택)"
             />
             <StInlineSubInput
               value={item}
               onChange={(e) => onSetItem(e.target.value)}
-              placeholder="예: 카페라떼, 주차비"
+              placeholder="항목 (선택)"
             />
             <StInlineSubInput
               value={memo}
               onChange={(e) => onSetMemo(e.target.value)}
-              placeholder="메모 (선택)"
+              placeholder="메모 한 줄 (선택)"
             />
           </StFormField>
         </StFormRow>

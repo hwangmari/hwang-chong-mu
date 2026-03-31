@@ -117,9 +117,7 @@ export default function LedgerOverviewSection({
       ) : null}
       <StLedgerCategoryList>
         {monthCategorySummary.length === 0 ? (
-          <StLedgerEmpty>
-            이번 달 기록이 아직 없습니다. 위 문장 입력창으로 바로 추가해보세요.
-          </StLedgerEmpty>
+          <StLedgerEmpty>이번 달 기록이 아직 없습니다.</StLedgerEmpty>
         ) : (
           categoryDetails.map(({ label, total, entries }) => {
             const isExpanded = expandedCategory === label;
@@ -153,8 +151,14 @@ export default function LedgerOverviewSection({
                           <span>{formatAmount(entry.amount)}</span>
                         </StLedgerDetailHead>
                         <StLedgerDetailMeta>
-                          <span>{format(new Date(entry.date), "M월 d일", { locale: ko })}</span>
-                          {entry.merchant ? <span>{entry.merchant}</span> : null}
+                          <span>
+                            {format(new Date(entry.date), "M월 d일", {
+                              locale: ko,
+                            })}
+                          </span>
+                          {entry.merchant ? (
+                            <span>{entry.merchant}</span>
+                          ) : null}
                           {entry.member ? <span>{entry.member}</span> : null}
                         </StLedgerDetailMeta>
                       </StLedgerDetailItem>
