@@ -23,6 +23,8 @@ type Props = {
     description: string;
   }>;
   formatAmount: (value: number) => string;
+  selectedLedgerCardId?: string | null;
+  onSelectLedgerCard?: (cardId: string) => void;
 };
 
 export default function TopSummaryControls({
@@ -33,6 +35,8 @@ export default function TopSummaryControls({
   monthAssetTotal,
   boardSummaryCards,
   formatAmount,
+  selectedLedgerCardId = null,
+  onSelectLedgerCard,
 }: Props) {
   const calendarCards = [
     {
@@ -70,7 +74,12 @@ export default function TopSummaryControls({
       <StTopControls>
         <StLedgerGrid>
           {boardSummaryCards.map((card) => (
-            <StLedgerCard key={card.id}>
+            <StLedgerCard
+              key={card.id}
+              type="button"
+              $active={selectedLedgerCardId === card.id}
+              onClick={() => onSelectLedgerCard?.(card.id)}
+            >
               <StLedgerCardHead>
                 <strong>{card.label}</strong>
                 <em>{formatAmount(card.amount)}</em>
@@ -124,15 +133,38 @@ const StLedgerGrid = styled.div`
   }
 `;
 
-const StLedgerCard = styled.article`
+const StLedgerCard = styled.button<{ $active: boolean }>`
   display: flex;
   flex-direction: column;
   min-height: 8.3rem;
+  width: 100%;
   border-radius: 22px;
-  border: 1px solid #d9e3f0;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
+  border: 1px solid ${({ $active }) => ($active ? "#9bb7ff" : "#d9e3f0")};
+  background: ${({ $active }) =>
+    $active
+      ? "linear-gradient(180deg, #f2f6ff 0%, #eef4ff 100%)"
+      : "linear-gradient(180deg, #fcfdff 0%, #f7faff 100%)"};
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(102, 120, 160, 0.05);
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+
+  &:hover {
+    border-color: #b7caef;
+    box-shadow: 0 10px 22px rgba(102, 120, 160, 0.1);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px rgba(79, 124, 255, 0.14),
+      0 10px 22px rgba(102, 120, 160, 0.1);
+  }
 
   @media (max-width: 720px) {
     min-height: auto;

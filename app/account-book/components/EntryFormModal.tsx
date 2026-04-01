@@ -47,7 +47,6 @@ export default function EntryFormModal({
   memberOptions,
   type,
   category,
-  subCategory,
   merchant,
   item,
   amount,
@@ -56,14 +55,12 @@ export default function EntryFormModal({
   memo,
   quickInput,
   categoryOptions,
-  categoryDetailOptions,
   cardCompanyOptions,
   onClose,
   onSetDate,
   onSetType,
   onSetMember,
   onSetCategory,
-  onSetSubCategory,
   onSetMerchant,
   onSetItem,
   onSetAmount,
@@ -76,21 +73,7 @@ export default function EntryFormModal({
 }: Props) {
   if (!isOpen) return null;
 
-  const isSavingCategory = type === "expense" && category === "저축";
-  const isFixedExpenseCategory = type === "expense" && category === "고정비";
-  const shouldShowCategoryDetail = type === "expense" && Boolean(category);
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
-  const categoryDetailLabel = isSavingCategory
-    ? "저축 세부카테고리"
-    : isFixedExpenseCategory
-      ? "고정비 세부카테고리"
-    : "카테고리 디테일";
-  const categoryDetailPlaceholder =
-    categoryDetailOptions.length > 0
-      ? `예: ${categoryDetailOptions.slice(0, 3).join(", ")}`
-      : isFixedExpenseCategory
-        ? "예: 공과금, 핸드폰비, 보험료"
-        : "예: 배민, 카페, 온라인쇼핑";
 
   return (
     <StModalBackdrop onClick={onClose}>
@@ -275,47 +258,6 @@ export default function EntryFormModal({
             </StCategoryPicker>
           </StFormField>
         </StFormRow>
-
-        {shouldShowCategoryDetail ? (
-          <StFormRow>
-            <StFormField>
-              <StLabel>{categoryDetailLabel}</StLabel>
-              {categoryDetailOptions.length > 0 ? (
-                <StSubCategorySelector>
-                  {categoryDetailOptions.map((option) => (
-                    <StSubCategoryOption
-                      key={option}
-                      type="button"
-                      $active={subCategory === option}
-                      onClick={() => onSetSubCategory(option)}
-                    >
-                      {option}
-                    </StSubCategoryOption>
-                  ))}
-                </StSubCategorySelector>
-              ) : null}
-              <StInput
-                value={subCategory}
-                onChange={(e) => onSetSubCategory(e.target.value)}
-                placeholder={categoryDetailPlaceholder}
-              />
-            </StFormField>
-          </StFormRow>
-        ) : null}
-
-        <StQuickInputBox>
-          <StLabel>텍스트로 빠르게 입력</StLabel>
-          <StQuickRow>
-            <StQuickTextarea
-              value={quickInput}
-              onChange={(e) => onSetQuickInput(e.target.value)}
-              placeholder="예: 우아한형제들 배민 삼성카드 30000, 쇼핑 20000"
-            />
-            <StQuickButton type="button" onClick={onApplyQuickInput}>
-              해석
-            </StQuickButton>
-          </StQuickRow>
-        </StQuickInputBox>
 
         <StFooterActionBar>
           <StAddButton type="button" onClick={onSubmit}>

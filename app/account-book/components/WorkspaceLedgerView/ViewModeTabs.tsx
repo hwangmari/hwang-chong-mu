@@ -9,8 +9,8 @@ type Props = {
 };
 
 const VIEW_MODES: Array<{ id: ViewMode; label: string }> = [
-  { id: "ledger", label: "리스트" },
   { id: "calendar", label: "캘린더" },
+  { id: "ledger", label: "리스트" },
   { id: "board", label: "보드" },
 ];
 

@@ -43,10 +43,15 @@ type Props = {
     count: number;
     description: string;
   }>;
+  selectedLedgerCardId: string | null;
+  onSelectLedgerCard: (cardId: string) => void;
+  ledgerDetailTitle: string;
+  ledgerDetailEntries: ResolvedAccountEntry[];
+  ledgerDetailAssetEntries: ResolvedAccountEntry[];
   annualSavingGoal: number;
   monthlySavingGoal: number;
-  onChangeAnnualSavingGoal: (value: number) => void;
-  onChangeMonthlySavingGoal: (value: number) => void;
+  onChangeAnnualSavingGoal: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlySavingGoal: (value: number) => boolean | Promise<boolean>;
   dashboardRows: Array<{
     monthNumber: number;
     monthLabel: string;
@@ -71,6 +76,7 @@ type Props = {
   selectedDateEntries: ResolvedAccountEntry[];
   selectedDateAssetEntries: ResolvedAccountEntry[];
   onOpenAdd: () => void;
+  onOpenAddForDate: (date: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
   onDelete: (id: string) => void;
   entryActions: (entry: ResolvedAccountEntry) => EntryAction[];
@@ -100,6 +106,11 @@ export default function WorkspacePanelsSection({
   onOpenAssetYearly,
   formatAmount,
   boardSummaryCards,
+  selectedLedgerCardId,
+  onSelectLedgerCard,
+  ledgerDetailTitle,
+  ledgerDetailEntries,
+  ledgerDetailAssetEntries,
   annualSavingGoal,
   monthlySavingGoal,
   onChangeAnnualSavingGoal,
@@ -114,6 +125,7 @@ export default function WorkspacePanelsSection({
   selectedDateEntries,
   selectedDateAssetEntries,
   onOpenAdd,
+  onOpenAddForDate,
   onEdit,
   onDelete,
   entryActions,
@@ -121,10 +133,9 @@ export default function WorkspacePanelsSection({
 }: Props) {
   const hasDetailPanel = viewMode !== "board";
   const isLedgerLayout = viewMode === "ledger";
-  const usePageScroll = viewMode !== "ledger";
 
   return (
-    <StCalendarSplit $hasDetailPanel={hasDetailPanel} $viewMode={viewMode}>
+    <StCalendarSplit $hasDetailPanel={hasDetailPanel}>
       <StLeftSplitCard>
         {viewMode === "board" ? null : (
           <TopSummaryControls
@@ -135,36 +146,54 @@ export default function WorkspacePanelsSection({
             monthAssetTotal={monthAssetTotal}
             boardSummaryCards={boardSummaryCards}
             formatAmount={formatAmount}
+            selectedLedgerCardId={selectedLedgerCardId}
+            onSelectLedgerCard={onSelectLedgerCard}
           />
         )}
 
         {isLedgerLayout ? (
-          <StLedgerMemoCard>
-            <StLedgerMemoHeader>
-              <StLedgerMemoTitleWrap>
-                <strong>이번 달 메모</strong>
-                <span>리스트 화면에서만 보는 메모</span>
-              </StLedgerMemoTitleWrap>
-              <StLedgerMemoActionButton
-                type="button"
-                onClick={isListMemoEditing ? onSaveListMemo : onEditListMemo}
-              >
-                {isListMemoEditing ? "저장" : "수정"}
-              </StLedgerMemoActionButton>
-            </StLedgerMemoHeader>
-            <StLedgerMemoTextarea
-              value={listMemo}
-              onChange={(event) => onChangeListMemo(event.target.value)}
-              readOnly={!isListMemoEditing}
-              placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
-            />
-          </StLedgerMemoCard>
-        ) : null}
-
-        {isLedgerLayout ? null : (
-            <StLeftBody $usePageScroll={usePageScroll}>
-              {viewMode === "board" ? (
-                <AccountBookDashboardPanel
+          <StLeftBody>
+            <StLedgerLeftStack>
+              <StLedgerMemoCard>
+                <StLedgerMemoHeader>
+                  <StLedgerMemoTitleWrap>
+                    <strong>이번 달 메모</strong>
+                    <span>리스트 화면에서만 보는 메모</span>
+                  </StLedgerMemoTitleWrap>
+                  <StLedgerMemoActionButton
+                    type="button"
+                    onClick={
+                      isListMemoEditing ? onSaveListMemo : onEditListMemo
+                    }
+                  >
+                    {isListMemoEditing ? "저장" : "수정"}
+                  </StLedgerMemoActionButton>
+                </StLedgerMemoHeader>
+                <StLedgerMemoTextarea
+                  value={listMemo}
+                  onChange={(event) => onChangeListMemo(event.target.value)}
+                  readOnly={!isListMemoEditing}
+                  placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
+                />
+              </StLedgerMemoCard>
+              <StLedgerOverviewBlock>
+                <LedgerOverviewSection
+                  currentMonth={currentMonth}
+                  monthEntriesCount={monthEntries.length}
+                  monthTotals={monthTotals}
+                  monthAssetTotal={monthAssetTotal}
+                  monthEntries={monthEntries}
+                  memberExpenseTotals={memberExpenseTotals}
+                  monthCategorySummary={monthCategorySummary}
+                  formatAmount={formatAmount}
+                />
+              </StLedgerOverviewBlock>
+            </StLedgerLeftStack>
+          </StLeftBody>
+        ) : (
+          <StLeftBody>
+            {viewMode === "board" ? (
+              <AccountBookDashboardPanel
                 currentYear={currentYear}
                 currentMonthIndex={currentMonthIndex}
                 annualGoal={annualSavingGoal}
@@ -185,6 +214,7 @@ export default function WorkspacePanelsSection({
                 selectedDate={selectedDate}
                 toIsoDate={toIsoDate}
                 onSelectDate={onSelectDate}
+                onOpenAddForDate={onOpenAddForDate}
               />
             )}
           </StLeftBody>
@@ -194,28 +224,32 @@ export default function WorkspacePanelsSection({
       {hasDetailPanel ? (
         <StRightSplitCard>
           {isLedgerLayout ? (
-            <LedgerOverviewSection
-              currentMonth={currentMonth}
-              monthEntriesCount={monthEntries.length}
-              monthTotals={monthTotals}
-              monthAssetTotal={monthAssetTotal}
-              monthEntries={monthEntries}
-              memberExpenseTotals={memberExpenseTotals}
-              monthCategorySummary={monthCategorySummary}
-              formatAmount={formatAmount}
-            />
+            <StLedgerDetailBlock>
+              <DetailEntriesPanel
+                title={ledgerDetailTitle}
+                entries={ledgerDetailEntries}
+                assetEntries={ledgerDetailAssetEntries}
+                onOpenAdd={onOpenAdd}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                entryActions={entryActions}
+                formatAmount={formatAmount}
+                paymentLabel={paymentLabel}
+                showDateMeta
+              />
+            </StLedgerDetailBlock>
           ) : (
             <DetailEntriesPanel
               title={calendarDetailTitle}
               entries={selectedDateEntries}
               assetEntries={selectedDateAssetEntries}
-              usePageScroll={usePageScroll}
               onOpenAdd={onOpenAdd}
               onEdit={onEdit}
               onDelete={onDelete}
               entryActions={entryActions}
               formatAmount={formatAmount}
               paymentLabel={paymentLabel}
+              showSupportDate={false}
             />
           )}
         </StRightSplitCard>
@@ -224,22 +258,16 @@ export default function WorkspacePanelsSection({
   );
 }
 
-const StCalendarSplit = styled.div<{
-  $hasDetailPanel: boolean;
-  $viewMode: ViewMode;
-}>`
-  height: ${({ $viewMode }) => ($viewMode === "ledger" ? "100%" : "auto")};
+const StCalendarSplit = styled.div<{ $hasDetailPanel: boolean }>`
+  height: auto;
   display: grid;
-  grid-template-columns: ${({ $hasDetailPanel, $viewMode }) => {
+  grid-template-columns: ${({ $hasDetailPanel }) => {
     if (!$hasDetailPanel) return "minmax(0, 1fr)";
-    if ($viewMode === "ledger") {
-      return "minmax(0, 1fr) minmax(0, 1fr)";
-    }
     return "minmax(0, 1.35fr) minmax(320px, 0.78fr)";
   }};
   gap: 0.85rem;
   min-height: 0;
-  align-items: ${({ $viewMode }) => ($viewMode === "ledger" ? "start" : "stretch")};
+  align-items: start;
 
   @media (max-width: 1080px) {
     display: block;
@@ -256,11 +284,6 @@ const StLeftSplitCard = styled.section`
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
   padding: 0.9rem;
-  overflow: hidden;
-
-  @media (max-width: 1080px) {
-    overflow: visible;
-  }
 `;
 
 const StLedgerMemoCard = styled.section`
@@ -319,7 +342,7 @@ const StLedgerMemoActionButton = styled.button`
 
 const StLedgerMemoTextarea = styled.textarea`
   width: 100%;
-  min-height: 220px;
+  min-height: 80px;
   border: 1px solid #dbe4f0;
   border-radius: 14px;
   background: #ffffff;
@@ -350,30 +373,12 @@ const StLedgerMemoTextarea = styled.textarea`
   }
 `;
 
-const StLeftBody = styled.div<{ $usePageScroll: boolean }>`
+const StLeftBody = styled.div`
   flex: 1;
   min-height: 0;
-  overflow-y: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "auto")};
-  padding-right: ${({ $usePageScroll }) => ($usePageScroll ? "0" : "0.25rem")};
   padding-bottom: 1rem;
-  overscroll-behavior: contain;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-  }
 
   @media (max-width: 1080px) {
-    overflow: visible;
-    padding-right: 0;
     padding-bottom: 0;
   }
 `;
@@ -386,11 +391,23 @@ const StRightSplitCard = styled.section`
   padding: 0.9rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  overscroll-behavior: contain;
 
   @media (max-width: 1080px) {
-    overflow: visible;
     margin: 20px 0;
   }
+`;
+
+const StLedgerLeftStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const StLedgerOverviewBlock = styled.section`
+  flex-shrink: 0;
+`;
+
+const StLedgerDetailBlock = styled.section`
+  flex: 1;
+  min-height: 0;
 `;

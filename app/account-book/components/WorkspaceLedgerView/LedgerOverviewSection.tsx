@@ -5,6 +5,10 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
 import type { ResolvedAccountEntry } from "../../types";
+import {
+  getRepresentativeExpenseCategory,
+  isSavingsCategory,
+} from "./utils";
 
 type Props = {
   currentMonth: Date;
@@ -41,9 +45,9 @@ export default function LedgerOverviewSection({
       const key =
         entry.type === "income"
           ? "수입"
-          : entry.category.trim() === "저축"
+          : isSavingsCategory(entry.category)
             ? "자산/저축"
-            : entry.category;
+            : getRepresentativeExpenseCategory(entry.category);
 
       if (!acc[key]) {
         acc[key] = { total: 0, entries: [] };

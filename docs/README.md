@@ -63,6 +63,7 @@
 - [아키텍처 개요](./architecture/system-overview.md)
 - [프론트엔드 런타임 구조](./architecture/frontend-runtime.md)
 - [메뉴 구성 및 책임 분리](./architecture/menu-composition.md)
+- [메뉴별 MD 아키텍처 작성 기준](./architecture/menu-md-vibe-coding-guide.md)
 
 ### Data
 

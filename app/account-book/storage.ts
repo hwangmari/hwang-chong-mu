@@ -14,6 +14,7 @@ export const LEGACY_ACCOUNT_BOOK_KEY = "hwang-account-book-v2";
 
 const DEFAULT_PASSWORD = "6155";
 const DEFAULT_VERSION = 1;
+const DEFAULT_ANNUAL_SAVING_GOAL = 1_200_000;
 const SAMPLE_USER_IDS = new Set(["user-1", "user-2"]);
 const SAMPLE_WORKSPACE_IDS = new Set([
   "workspace-user-1",
@@ -50,19 +51,20 @@ function normalizeLegacyEntry(
     merchant: raw.merchant || "",
     item: raw.item || raw.memo || "항목명 없음",
     amount: Number(raw.amount) || 0,
-    cardCompany: raw.cardCompany || "KB국민카드",
     payment:
       raw.payment === "cash"
         ? "cash"
         : raw.payment === "check_card"
           ? "check_card"
           : "card",
+    cardCompany:
+      raw.payment === "cash" ? "" : raw.cardCompany || "KB국민카드",
     memo: raw.memo || "",
     rawText: raw.rawText || "",
   };
 }
 
-export function createInitialStore(): AccountBookStore {
+function createInitialStore(): AccountBookStore {
   return {
     version: DEFAULT_VERSION,
     users: [],
@@ -98,6 +100,7 @@ function createLegacySeedStore(): AccountBookStore {
       name: "사용자1 개인 가계부",
       type: "personal",
       password: DEFAULT_PASSWORD,
+      annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       ownerUserId: "user-1",
       memberIds: ["user-1"],
     },
@@ -106,6 +109,7 @@ function createLegacySeedStore(): AccountBookStore {
       name: "사용자2 개인 가계부",
       type: "personal",
       password: DEFAULT_PASSWORD,
+      annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       ownerUserId: "user-2",
       memberIds: ["user-2"],
     },
@@ -114,6 +118,7 @@ function createLegacySeedStore(): AccountBookStore {
       name: "공용 가계부방",
       type: "shared",
       password: DEFAULT_PASSWORD,
+      annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       memberIds: ["user-1", "user-2"],
       inviteCode: "SHARED01",
     },
@@ -195,6 +200,11 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       name: workspace.name || `가계부방 ${index + 1}`,
       type: workspace.type === "shared" ? "shared" : "personal",
       password: workspace.password || DEFAULT_PASSWORD,
+      annualSavingGoal:
+        Number.isFinite(Number(workspace.annualSavingGoal)) &&
+        Number(workspace.annualSavingGoal) > 0
+          ? Math.trunc(Number(workspace.annualSavingGoal))
+          : DEFAULT_ANNUAL_SAVING_GOAL,
       ownerUserId: workspace.ownerUserId,
       memberIds:
         Array.isArray(workspace.memberIds) && workspace.memberIds.length > 0
@@ -217,13 +227,14 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       merchant: entry.merchant || "",
       item: entry.item || "항목명 없음",
       amount: Number(entry.amount) || 0,
-      cardCompany: entry.cardCompany || "KB국민카드",
       payment:
         entry.payment === "cash"
           ? "cash"
-        : entry.payment === "check_card"
+          : entry.payment === "check_card"
             ? "check_card"
             : "card",
+      cardCompany:
+        entry.payment === "cash" ? "" : entry.cardCompany || "KB국민카드",
       memo: entry.memo || "",
       rawText: entry.rawText || "",
     })),
@@ -322,20 +333,6 @@ export function getWorkspaceById(store: AccountBookStore, workspaceId: string) {
   return store.workspaces.find((workspace) => workspace.id === workspaceId) || null;
 }
 
-export function getUserById(store: AccountBookStore, userId?: string) {
-  if (!userId) return null;
-  return store.users.find((user) => user.id === userId) || null;
-}
-
-export function getWorkspaceMemberUsers(
-  store: AccountBookStore,
-  workspace: AccountBookWorkspace,
-) {
-  return workspace.memberIds
-    .map((memberId) => getUserById(store, memberId))
-    .filter(Boolean) as AccountBookUser[];
-}
-
 export function getPersonalShareTargets(
   store: AccountBookStore,
   workspace: AccountBookWorkspace,
@@ -361,35 +358,15 @@ export function isEntrySharedToWorkspace(
   );
 }
 
-function normalizeEntryFragment(text?: string) {
-  return (text || "").replace(/\s+/g, "").toLowerCase();
-}
-
-function getResolvedEntryDuplicateKey(
-  entry: Pick<AccountEntry, "date" | "amount" | "type" | "merchant" | "item">,
-) {
-  return [
-    entry.date,
-    entry.amount,
-    entry.type,
-    normalizeEntryFragment(entry.merchant || entry.item),
-    normalizeEntryFragment(entry.item || entry.merchant),
-  ].join("|");
-}
-
 function dedupeResolvedEntries(entries: ResolvedAccountEntry[]) {
   const keptEntries = new Map<string, ResolvedAccountEntry>();
 
   for (const entry of entries) {
-    const dedupeKey = `${entry.createdByUserId}|${getResolvedEntryDuplicateKey(entry)}`;
+    const dedupeKey = entry.resolvedId;
     const existing = keptEntries.get(dedupeKey);
     if (!existing) {
       keptEntries.set(dedupeKey, entry);
       continue;
-    }
-
-    if (existing.source === "direct" && entry.source !== "direct") {
-      keptEntries.set(dedupeKey, entry);
     }
   }
 
@@ -468,31 +445,6 @@ function sortEntries(a: AccountEntry, b: AccountEntry) {
   );
 }
 
-export function upsertEntry(
-  store: AccountBookStore,
-  entry: AccountEntry,
-): AccountBookStore {
-  const nextEntries = store.entries.some((item) => item.id === entry.id)
-    ? store.entries.map((item) => (item.id === entry.id ? entry : item))
-    : [entry, ...store.entries];
-
-  return {
-    ...store,
-    entries: nextEntries,
-  };
-}
-
-export function deleteEntry(
-  store: AccountBookStore,
-  entryId: string,
-): AccountBookStore {
-  return {
-    ...store,
-    entries: store.entries.filter((entry) => entry.id !== entryId),
-    shareLinks: store.shareLinks.filter((link) => link.sourceEntryId !== entryId),
-  };
-}
-
 export function toggleShareLink(
   store: AccountBookStore,
   sourceEntryId: string,
@@ -525,159 +477,5 @@ export function toggleShareLink(
   return {
     ...store,
     shareLinks: [nextLink, ...store.shareLinks],
-  };
-}
-
-export function updateUser(
-  store: AccountBookStore,
-  userId: string,
-  payload: Pick<AccountBookUser, "name" | "password">,
-): AccountBookStore {
-  return {
-    ...store,
-    users: store.users.map((user) =>
-      user.id === userId ? { ...user, ...payload } : user,
-    ),
-    workspaces: store.workspaces.map((workspace) =>
-      workspace.ownerUserId === userId && workspace.type === "personal"
-        ? {
-            ...workspace,
-            name: `${payload.name} 개인 가계부`,
-            password: payload.password,
-          }
-        : workspace,
-    ),
-  };
-}
-
-export function addUser(
-  store: AccountBookStore,
-  payload: Pick<AccountBookUser, "name" | "password">,
-): AccountBookStore {
-  const userId = createId("user");
-  const personalWorkspaceId = createId("workspace");
-  const nextUser: AccountBookUser = {
-    id: userId,
-    name: payload.name,
-    password: payload.password,
-    personalWorkspaceId,
-  };
-  const nextWorkspace: AccountBookWorkspace = {
-    id: personalWorkspaceId,
-    name: `${payload.name} 개인 가계부`,
-    type: "personal",
-    password: payload.password,
-    ownerUserId: userId,
-    memberIds: [userId],
-  };
-
-  return {
-    ...store,
-    users: [...store.users, nextUser],
-    workspaces: [...store.workspaces, nextWorkspace],
-  };
-}
-
-export function deleteUser(
-  store: AccountBookStore,
-  userId: string,
-): AccountBookStore {
-  if (store.users.length <= 1) {
-    return store;
-  }
-
-  const removedWorkspaceIds = new Set(
-    store.workspaces
-      .filter((workspace) => workspace.ownerUserId === userId)
-      .map((workspace) => workspace.id),
-  );
-
-  const nextWorkspaces = store.workspaces
-    .filter((workspace) => !removedWorkspaceIds.has(workspace.id))
-    .map((workspace) => ({
-      ...workspace,
-      memberIds: workspace.memberIds.filter((memberId) => memberId !== userId),
-    }))
-    .filter((workspace) =>
-      workspace.type === "shared" ? workspace.memberIds.length > 0 : true,
-    );
-
-  const validWorkspaceIds = new Set(nextWorkspaces.map((workspace) => workspace.id));
-  const nextEntries = store.entries.filter(
-    (entry) =>
-      entry.createdByUserId !== userId && validWorkspaceIds.has(entry.workspaceId),
-  );
-  const validEntryIds = new Set(nextEntries.map((entry) => entry.id));
-
-  return {
-    ...store,
-    users: store.users.filter((user) => user.id !== userId),
-    workspaces: nextWorkspaces,
-    entries: nextEntries,
-    shareLinks: store.shareLinks.filter(
-      (link) =>
-        link.sharedByUserId !== userId &&
-        validWorkspaceIds.has(link.sourceWorkspaceId) &&
-        validWorkspaceIds.has(link.targetWorkspaceId) &&
-        validEntryIds.has(link.sourceEntryId),
-    ),
-  };
-}
-
-export function updateWorkspace(
-  store: AccountBookStore,
-  workspaceId: string,
-  payload: Pick<AccountBookWorkspace, "name" | "password" | "memberIds">,
-): AccountBookStore {
-  return {
-    ...store,
-    workspaces: store.workspaces.map((workspace) =>
-      workspace.id === workspaceId ? { ...workspace, ...payload } : workspace,
-    ),
-  };
-}
-
-export function addSharedWorkspace(
-  store: AccountBookStore,
-  payload: Pick<AccountBookWorkspace, "name" | "password" | "memberIds">,
-): AccountBookStore {
-  const nextWorkspace: AccountBookWorkspace = {
-    id: createId("workspace"),
-    name: payload.name,
-    type: "shared",
-    password: payload.password,
-    memberIds: payload.memberIds,
-  };
-
-  return {
-    ...store,
-    workspaces: [...store.workspaces, nextWorkspace],
-  };
-}
-
-export function deleteSharedWorkspace(
-  store: AccountBookStore,
-  workspaceId: string,
-): AccountBookStore {
-  const sharedWorkspaces = store.workspaces.filter(
-    (workspace) => workspace.type === "shared",
-  );
-  if (sharedWorkspaces.length <= 1) {
-    return store;
-  }
-
-  const nextEntries = store.entries.filter((entry) => entry.workspaceId !== workspaceId);
-  const validEntryIds = new Set(nextEntries.map((entry) => entry.id));
-
-  return {
-    ...store,
-    workspaces: store.workspaces.filter((workspace) => workspace.id !== workspaceId),
-    entries: nextEntries,
-    shareLinks: store.shareLinks.filter(
-      (link) =>
-        link.sourceWorkspaceId !== workspaceId &&
-        link.targetWorkspaceId !== workspaceId &&
-        validEntryIds.has(link.sourceEntryId),
-    ),
   };
 }

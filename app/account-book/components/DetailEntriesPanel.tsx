@@ -2,7 +2,11 @@
 
 import styled from "styled-components";
 import { ResolvedAccountEntry } from "../types";
-import { formatPreviewDate } from "./WorkspaceLedgerView/utils";
+import {
+  formatPreviewDate,
+  getRepresentativeCategory,
+  isSavingsCategory,
+} from "./WorkspaceLedgerView/utils";
 
 type EntryAction = {
   label: string;
@@ -22,7 +26,7 @@ type Props = {
   formatAmount: (value: number) => string;
   paymentLabel: (payment: ResolvedAccountEntry["payment"]) => string;
   showDateMeta?: boolean;
-  usePageScroll?: boolean;
+  showSupportDate?: boolean;
 };
 
 export default function DetailEntriesPanel({
@@ -37,8 +41,9 @@ export default function DetailEntriesPanel({
   formatAmount,
   paymentLabel,
   showDateMeta = false,
-  usePageScroll = false,
+  showSupportDate,
 }: Props) {
+  const shouldShowSupportDate = showSupportDate ?? !showDateMeta;
   const maxTrackingAmount = Math.max(
     ...(monthlyTracking?.map((row) => row.amount) || [0]),
   );
@@ -50,10 +55,117 @@ export default function DetailEntriesPanel({
     return entry.rawText.replace(/오늘|어제|그제/g, formatPreviewDate(entry.date));
   };
 
+  const normalizeDisplayText = (value?: string) =>
+    (value || "")
+      .replace(/\s*#fixed-template:[a-z0-9-]+\s*/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const toCompareKey = (value?: string) =>
+    normalizeDisplayText(value)
+      .toLowerCase()
+      .replace(/[^0-9a-zA-Z가-힣]+/g, "");
+
+  const isSameMeaning = (left?: string, right?: string) => {
+    const leftKey = toCompareKey(left);
+    const rightKey = toCompareKey(right);
+    return Boolean(leftKey) && Boolean(rightKey) && leftKey === rightKey;
+  };
+
+  const getCondensedRawDetail = (entry: ResolvedAccountEntry) => {
+    const formattedText = formatEntryRawText(entry);
+    if (!formattedText) return "";
+
+    return normalizeDisplayText(
+      formattedText
+        .replace(/\d{4}-\d{2}-\d{2}/g, " ")
+        .replace(/\d{1,2}월\s*\d{1,2}일(?:\s*[가-힣]+요일)?/g, " ")
+        .replace(/오늘|어제|그제/g, " ")
+        .replace(/-?\d[\d,]*원/g, " ")
+        .replace(/일시불|할부|체크카드|체크|현금|카드/g, " ")
+        .replace(entry.cardCompany, " ")
+        .replace(entry.member || "", " "),
+    );
+  };
+
+  const buildCategoryLabel = (
+    entry: ResolvedAccountEntry,
+    representativeCategory: string,
+  ) => {
+    const categoryDetail = normalizeDisplayText(
+      entry.subCategory ||
+        (isSameMeaning(entry.category, representativeCategory)
+          ? ""
+          : entry.category),
+    );
+
+    if (!categoryDetail || isSameMeaning(categoryDetail, representativeCategory)) {
+      return representativeCategory;
+    }
+
+    return `${representativeCategory} · ${categoryDetail}`;
+  };
+
+  const buildHeadline = (entry: ResolvedAccountEntry, categoryLabel: string) => {
+    const candidates = [
+      normalizeDisplayText(entry.item),
+      normalizeDisplayText(entry.merchant),
+      getCondensedRawDetail(entry),
+      categoryLabel,
+    ];
+
+    return (
+      candidates.find(
+        (candidate, index) =>
+          candidate &&
+          candidates
+            .slice(0, index)
+            .every((previous) => !isSameMeaning(previous, candidate)),
+      ) || "내역"
+    );
+  };
+
+  const buildSupportLabels = (
+    entry: ResolvedAccountEntry,
+    categoryLabel: string,
+    headline: string,
+  ) => {
+    const labels: string[] = [];
+    const pushLabel = (value?: string) => {
+      const normalized = normalizeDisplayText(value);
+      if (!normalized) return;
+      if (labels.some((label) => isSameMeaning(label, normalized))) return;
+      if (isSameMeaning(headline, normalized)) return;
+      labels.push(normalized);
+    };
+
+    pushLabel(categoryLabel);
+    pushLabel(entry.merchant);
+    pushLabel(getCondensedRawDetail(entry));
+
+    if (shouldShowSupportDate) {
+      pushLabel(formatPreviewDate(entry.date));
+    }
+
+    if (entry.sourceWorkspaceName && entry.source !== "direct") {
+      pushLabel(entry.sourceWorkspaceName);
+    }
+
+    return labels;
+  };
+
   const renderEntryItem = (entry: ResolvedAccountEntry) => {
     const actions = entryActions ? entryActions(entry) : [];
+    const representativeCategory = getRepresentativeCategory(
+      entry.category,
+      entry.type,
+    );
+    const categoryLabel = buildCategoryLabel(entry, representativeCategory);
+    const headline = buildHeadline(entry, categoryLabel);
+    const supportLabels = buildSupportLabels(entry, categoryLabel, headline);
+    const memoText = normalizeDisplayText(entry.memo);
     const accentTone =
-      entry.category.trim() === "저축"
+      isSavingsCategory(entry.category)
         ? "asset"
         : entry.type === "income"
           ? "income"
@@ -65,7 +177,7 @@ export default function DetailEntriesPanel({
           <StEntryTop>
             <StMemberBadge>{entry.member || "나"}</StMemberBadge>
             <StEntryBadge $tone={accentTone}>
-              {entry.category.trim() === "저축"
+              {isSavingsCategory(entry.category)
                 ? "저축"
                 : entry.type === "income"
                   ? "수입"
@@ -83,19 +195,17 @@ export default function DetailEntriesPanel({
               </StMirrorBadge>
             ) : null}
           </StEntryTop>
-          <StEntryCategory>{entry.category}</StEntryCategory>
-          {entry.subCategory ? (
-            <StEntrySubCategory>{entry.subCategory}</StEntrySubCategory>
+          <StEntryName>{headline}</StEntryName>
+          {supportLabels.length > 0 ? (
+            <StEntryMetaList>
+              {supportLabels.map((label) => (
+                <StEntryMetaText key={`${entry.resolvedId}-${label}`}>
+                  {label}
+                </StEntryMetaText>
+              ))}
+            </StEntryMetaList>
           ) : null}
-          {entry.merchant ? <StEntryMerchant>{entry.merchant}</StEntryMerchant> : null}
-          <StEntryName>{entry.item}</StEntryName>
-          {entry.memo.trim() ? <StEntryMemo>{entry.memo}</StEntryMemo> : null}
-          {entry.rawText ? (
-            <StEntryRawText>{formatEntryRawText(entry)}</StEntryRawText>
-          ) : null}
-          {entry.sourceWorkspaceName && entry.source !== "direct" ? (
-            <StEntrySource>{entry.sourceWorkspaceName}</StEntrySource>
-          ) : null}
+          {memoText ? <StEntryMemo>{memoText}</StEntryMemo> : null}
           {actions.length > 0 ? (
             <StEntryActions>
               {actions.map((action) => (
@@ -136,14 +246,14 @@ export default function DetailEntriesPanel({
   };
 
   return (
-    <StPanel $usePageScroll={usePageScroll}>
+    <StPanel>
       <StDetailHeader>
         <StBlockTitle>{title}</StBlockTitle>
         <StDetailAddButton type="button" onClick={onOpenAdd} aria-label="내역 추가">
           +
         </StDetailAddButton>
       </StDetailHeader>
-      <StEntryList $usePageScroll={usePageScroll}>
+      <StEntryList>
         {monthlyTracking ? (
           monthlyTracking.length === 0 ? (
             <StEmpty>월별 통계 데이터가 없습니다.</StEmpty>
@@ -188,12 +298,10 @@ export default function DetailEntriesPanel({
   );
 }
 
-const StPanel = styled.div<{ $usePageScroll: boolean }>`
+const StPanel = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: ${({ $usePageScroll }) => ($usePageScroll ? "auto" : "100%")};
-  overflow: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "hidden")};
 `;
 
 const StBlockTitle = styled.h3`
@@ -225,26 +333,13 @@ const StDetailAddButton = styled.button`
   justify-content: center;
   box-shadow: 0 10px 22px rgba(95, 115, 217, 0.2);
 `;
-const StEntryList = styled.div<{ $usePageScroll: boolean }>`
+const StEntryList = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   min-height: 0;
-  overflow-y: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "auto")};
-  padding-right: ${({ $usePageScroll }) => ($usePageScroll ? "0" : "0.25rem")};
   padding-bottom: 1rem;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-  }
 `;
 const StEmpty = styled.p`
   font-size: 0.9rem;
@@ -254,8 +349,8 @@ const StEmpty = styled.p`
 const StEntryItem = styled.article`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  padding: 0.95rem 1rem;
+  gap: 0.85rem;
+  padding: 0.82rem 0.9rem;
   border: 1px solid #e3ebf5;
   border-radius: 18px;
   background: linear-gradient(180deg, #ffffff, #fbfdff);
@@ -268,14 +363,14 @@ const StEntryItem = styled.article`
 const StEntryMain = styled.div`
   min-width: 0;
   display: grid;
-  gap: 0.14rem;
+  gap: 0.32rem;
 `;
 const StEntryTop = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
-  margin-bottom: 0.42rem;
+  margin-bottom: 0.12rem;
 `;
 const StEntryBadge = styled.span<{
   $tone: "income" | "expense" | "asset";
@@ -323,58 +418,44 @@ const StMirrorBadge = styled.span`
   background: #f3f6fa;
   border: 1px solid #e1e7ef;
 `;
-const StEntryCategory = styled.p`
-  font-size: 0.96rem;
-  color: #24344a;
-  font-weight: 700;
-`;
-const StEntrySubCategory = styled.p`
-  font-size: 0.77rem;
-  color: #4d6ea0;
-  font-weight: 700;
-  margin-top: 0.08rem;
-`;
 const StEntryName = styled.p`
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #111827;
   font-weight: 800;
-  margin-top: 0.18rem;
+  line-height: 1.35;
 `;
-const StEntryMerchant = styled.p`
-  margin-top: 0.14rem;
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #5470a0;
+const StEntryMetaList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.45;
+`;
+const StEntryMetaText = styled.span`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+
+  &:not(:first-child)::before {
+    content: "·";
+    margin-right: 0.5rem;
+    color: #a1afc2;
+    font-weight: 700;
+  }
 `;
 const StEntryMemo = styled.p`
   font-size: 0.76rem;
   color: #8a94a6;
-`;
-const StEntryRawText = styled.p`
-  margin-top: 0.22rem;
-  font-size: 0.73rem;
   line-height: 1.45;
-  color: #708197;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  @media (max-width: 720px) {
-    display: none;
-  }
-`;
-const StEntrySource = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.72rem;
-  color: #4e6ca1;
-  font-weight: 700;
 `;
 const StEntryActions = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.45rem;
+  margin-top: 0.18rem;
 `;
 const StEntryActionButton = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#99b4ff" : "#d9e4f1")};
@@ -390,8 +471,8 @@ const StEntryAside = styled.div`
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.55rem;
-  min-width: 7.4rem;
+  gap: 0.4rem;
+  min-width: 6.8rem;
 
   @media (max-width: 720px) {
     align-items: flex-start;
@@ -401,7 +482,7 @@ const StEntryAside = styled.div`
 const StEntryAmount = styled.span<{
   $tone: "income" | "expense" | "asset";
 }>`
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 900;
   color: ${({ $tone }) => {
     if ($tone === "income") return "#4f7cff";

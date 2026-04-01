@@ -10,8 +10,13 @@ import {
 import {
   ACCOUNT_BOOK_STORE_KEY,
   LEGACY_ACCOUNT_BOOK_KEY,
+  getAccountBookStore,
   normalizeStore,
+  saveAccountBookStore,
+  toggleShareLink,
 } from "./storage";
+
+const DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL = 1_200_000;
 
 function createId(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -23,7 +28,15 @@ function createId(prefix: string) {
 
 function normalizeRpcStore(raw: Partial<AccountBookStore> | null | undefined) {
   clearLegacyAccountBookLocalData();
-  return normalizeStore(raw || {});
+  const normalized = normalizeStore(raw || {});
+  saveAccountBookStore(normalized);
+  return normalized;
+}
+
+function persistLocalStore(store: Partial<AccountBookStore> | AccountBookStore) {
+  const normalized = normalizeStore(store || {});
+  saveAccountBookStore(normalized);
+  return normalized;
 }
 
 type RoomActionResult = {
@@ -58,13 +71,22 @@ export function clearLegacyAccountBookLocalData() {
 }
 
 export async function fetchAccountBookStore() {
-  const { data, error } = await supabase.rpc("account_book_get_store");
-  if (error) {
+  try {
+    const { data, error } = await supabase.rpc("account_book_get_store");
+    if (error) {
+      throw error;
+    }
+
+    const rawStore = (data || null) as Partial<AccountBookStore> | null;
+    return normalizeRpcStore(rawStore);
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      console.warn("가계부 원격 불러오기에 실패해 로컬 데이터를 사용합니다.", error);
+      return getAccountBookStore();
+    }
+
     throw error;
   }
-
-  const rawStore = (data || null) as Partial<AccountBookStore> | null;
-  return normalizeRpcStore(rawStore);
 }
 
 async function callRoomActionRpc<TParams extends Record<string, unknown>>(
@@ -94,15 +116,60 @@ async function callRoomActionRpc<TParams extends Record<string, unknown>>(
 }
 
 export async function upsertAccountBookEntry(entry: AccountEntry) {
-  return callStoreRpc("account_book_upsert_entry", {
-    p_entry: entry,
-  });
+  try {
+    return await callStoreRpc("account_book_upsert_entry", {
+      p_entry: entry,
+    });
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      console.warn(
+        "가계부 원격 저장에 실패해 로컬 데이터로 내역을 저장합니다.",
+        error,
+      );
+      const currentStore = getAccountBookStore();
+      const existingEntry = currentStore.entries.find(
+        (currentEntry) => currentEntry.id === entry.id,
+      );
+      const nextEntries = existingEntry
+        ? currentStore.entries.map((currentEntry) =>
+            currentEntry.id === entry.id ? entry : currentEntry,
+          )
+        : [entry, ...currentStore.entries];
+
+      return persistLocalStore({
+        ...currentStore,
+        entries: nextEntries,
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteAccountBookEntry(entryId: string) {
-  return callStoreRpc("account_book_delete_entry", {
-    p_entry_id: entryId,
-  });
+  try {
+    return await callStoreRpc("account_book_delete_entry", {
+      p_entry_id: entryId,
+    });
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      console.warn(
+        "가계부 원격 삭제에 실패해 로컬 데이터에서 내역을 제거합니다.",
+        error,
+      );
+      const currentStore = getAccountBookStore();
+
+      return persistLocalStore({
+        ...currentStore,
+        entries: currentStore.entries.filter((entry) => entry.id !== entryId),
+        shareLinks: currentStore.shareLinks.filter(
+          (link) => link.sourceEntryId !== entryId,
+        ),
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function toggleAccountBookShareLink(
@@ -111,18 +178,40 @@ export async function toggleAccountBookShareLink(
   targetWorkspaceId: string,
   sharedByUserId: string,
 ) {
-  return callStoreRpc("account_book_toggle_share_link", {
-    p_source_entry_id: sourceEntryId,
-    p_source_workspace_id: sourceWorkspaceId,
-    p_target_workspace_id: targetWorkspaceId,
-    p_shared_by_user_id: sharedByUserId,
-  });
+  try {
+    return await callStoreRpc("account_book_toggle_share_link", {
+      p_source_entry_id: sourceEntryId,
+      p_source_workspace_id: sourceWorkspaceId,
+      p_target_workspace_id: targetWorkspaceId,
+      p_shared_by_user_id: sharedByUserId,
+    });
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      console.warn(
+        "가계부 원격 공유 처리에 실패해 로컬 데이터에만 반영합니다.",
+        error,
+      );
+      const currentStore = getAccountBookStore();
+      return persistLocalStore(
+        toggleShareLink(
+          currentStore,
+          sourceEntryId,
+          sourceWorkspaceId,
+          targetWorkspaceId,
+          sharedByUserId,
+        ),
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function updateAccountBookUser(
   currentUser: AccountBookUser,
   name: string,
   password: string,
+  annualSavingGoal = DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
 ) {
   await callStoreRpc("account_book_upsert_user", {
     p_id: currentUser.id,
@@ -136,6 +225,7 @@ export async function updateAccountBookUser(
     p_name: `${name} 개인 가계부`,
     p_type: "personal",
     p_password: password,
+    p_annual_saving_goal: annualSavingGoal,
     p_owner_user_id: currentUser.id,
     p_member_ids: [currentUser.id],
   });
@@ -150,6 +240,7 @@ export async function createAccountBookUser(name: string, password: string) {
     p_name: `${name} 개인 가계부`,
     p_type: "personal",
     p_password: password,
+    p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
     p_owner_user_id: userId,
     p_member_ids: [userId],
   });
@@ -182,6 +273,8 @@ export async function upsertAccountBookWorkspace(
     p_name: workspace.name,
     p_type: workspace.type,
     p_password: workspace.password,
+    p_annual_saving_goal:
+      workspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
     p_owner_user_id: workspace.ownerUserId || "",
     p_member_ids: workspace.memberIds,
   });
@@ -197,6 +290,7 @@ export async function createAccountBookSharedWorkspace(
     p_name: name,
     p_type: "shared",
     p_password: password,
+    p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
     p_owner_user_id: "",
     p_member_ids: memberIds,
   });

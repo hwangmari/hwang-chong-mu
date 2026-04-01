@@ -5,7 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
-import { isCardSettlementEntry } from "../components/WorkspaceLedgerView/utils";
+import {
+  getRepresentativeCategory,
+  isCardSettlementEntry,
+  isSavingsCategory,
+} from "../components/WorkspaceLedgerView/utils";
 import {
   getWorkspaceById,
   resolveWorkspaceEntries,
@@ -33,10 +37,10 @@ function resolveViewMode(value: string | null): ViewMode {
   if (value === "board" || value === "calendar" || value === "ledger") {
     return value;
   }
-  return "ledger";
+  return "calendar";
 }
 
-function buildBackUrl(workspaceId?: string, viewMode: ViewMode = "ledger") {
+function buildBackUrl(workspaceId?: string, viewMode: ViewMode = "calendar") {
   if (!workspaceId) return "/account-book";
   return `/account-book?workspaceId=${workspaceId}&view=${viewMode}`;
 }
@@ -129,13 +133,13 @@ function AccountBookAnnualContent() {
       return annualEntries.filter((entry) => entry.type === "income");
     if (kind === "asset") {
       return annualEntries.filter(
-        (entry) => entry.type === "expense" && entry.category.trim() === "저축",
+        (entry) => entry.type === "expense" && isSavingsCategory(entry.category),
       );
     }
     return annualEntries.filter(
       (entry) =>
         entry.type === "expense" &&
-        entry.category.trim() !== "저축" &&
+        !isSavingsCategory(entry.category) &&
         !isCardSettlementEntry(entry),
     );
   }, [annualEntries, kind]);
@@ -211,7 +215,7 @@ function AccountBookAnnualContent() {
       const key =
         kind === "asset"
           ? entry.subCategory?.trim() || entry.item.trim() || entry.category.trim() || "기타"
-          : entry.category.trim() || "기타";
+          : getRepresentativeCategory(entry.category, entry.type) || "기타";
       acc[key] = (acc[key] || 0) + entry.amount;
       return acc;
     }, {});
@@ -251,7 +255,7 @@ function AccountBookAnnualContent() {
   }, [filteredEntries, monthlyRows, selectedMonth]);
 
   const kindLabel =
-    kind === "income" ? "수입" : kind === "asset" ? "저축" : "지출";
+    kind === "income" ? "수입" : kind === "asset" ? "자산/저축" : "지출";
   const kindDescription =
     kind === "income"
       ? "월별 유입 흐름과 어떤 항목에서 수입이 발생했는지 정리했어요."

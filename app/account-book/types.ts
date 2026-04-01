@@ -43,6 +43,7 @@ export type AccountBookWorkspace = {
   name: string;
   type: WorkspaceType;
   password: string;
+  annualSavingGoal?: number;
   ownerUserId?: string;
   memberIds: string[];
   inviteCode?: string;

@@ -24,8 +24,8 @@ type Props = {
   currentMonthIndex: number;
   annualGoal: number;
   monthlyGoal: number;
-  onChangeAnnualGoal: (value: number) => void;
-  onChangeMonthlyGoal: (value: number) => void;
+  onChangeAnnualGoal: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlyGoal: (value: number) => boolean | Promise<boolean>;
   dashboardRows: DashboardRow[];
   onSelectMonth: (monthNumber: number) => void;
   onOpenIncomeYearly: () => void;
@@ -93,23 +93,29 @@ export default function AccountBookDashboardPanel({
   const annualAchievementRate =
     annualGoal > 0 ? (annualSavings / annualGoal) * 100 : null;
 
-  const submitAnnualGoal = () => {
+  const submitAnnualGoal = async () => {
     const normalizedValue = Number(annualGoalInput.replace(/,/g, "").trim());
     if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
       alert("연간 목표는 0보다 큰 숫자로 입력해주세요.");
       return;
     }
-    onChangeAnnualGoal(normalizedValue);
+    const saved = await Promise.resolve(onChangeAnnualGoal(normalizedValue));
+    if (!saved) {
+      return;
+    }
     setEditingTarget(null);
   };
 
-  const submitMonthlyGoal = () => {
+  const submitMonthlyGoal = async () => {
     const normalizedValue = Number(monthlyGoalInput.replace(/,/g, "").trim());
     if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
       alert("월간 목표는 0보다 큰 숫자로 입력해주세요.");
       return;
     }
-    onChangeMonthlyGoal(normalizedValue);
+    const saved = await Promise.resolve(onChangeMonthlyGoal(normalizedValue));
+    if (!saved) {
+      return;
+    }
     setEditingTarget(null);
   };
 
@@ -217,7 +223,7 @@ export default function AccountBookDashboardPanel({
               <StGoalDisplay
                 onSubmit={(event) => {
                   event.preventDefault();
-                  submitAnnualGoal();
+                  void submitAnnualGoal();
                 }}
               >
                 <label htmlFor="annual-goal-input">연간 목표</label>
@@ -248,7 +254,7 @@ export default function AccountBookDashboardPanel({
               <StGoalDisplay
                 onSubmit={(event) => {
                   event.preventDefault();
-                  submitMonthlyGoal();
+                  void submitMonthlyGoal();
                 }}
               >
                 <label htmlFor="monthly-goal-input">월간 목표</label>

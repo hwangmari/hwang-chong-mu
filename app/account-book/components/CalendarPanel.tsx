@@ -11,6 +11,7 @@ type Props = {
   selectedDate: string;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
+  onOpenAddForDate: (date: string) => void;
 };
 
 function formatCalendarAmount(value?: number) {
@@ -25,6 +26,7 @@ export default function CalendarPanel({
   selectedDate,
   toIsoDate,
   onSelectDate,
+  onOpenAddForDate,
 }: Props) {
   return (
     <>
@@ -49,6 +51,11 @@ export default function CalendarPanel({
               $selected={isSelected}
               $muted={!isCurrent}
               onClick={() => onSelectDate(dayIso)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                onSelectDate(dayIso);
+                onOpenAddForDate(dayIso);
+              }}
             >
               <StDayNum $selected={isSelected}>{format(day, "d")}</StDayNum>
               <StDayMeta $kind="income" $selected={isSelected}>

@@ -22,6 +22,10 @@
 
 ## 공통 문서 포맷
 
+문서 작성 기준:
+
+- [메뉴별 MD 아키텍처 작성 기준](../architecture/menu-md-vibe-coding-guide.md)
+
 각 문서는 아래 항목을 공통으로 담는다.
 
 - 메뉴 목적

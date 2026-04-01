@@ -34,48 +34,6 @@ import { AccountBookStore, AccountEntry, ViewMode } from "./types";
 const SETTINGS_ACCESS_KEY = "hwang-account-book-settings-access";
 const ACTIVE_USER_ACCESS_KEY = "hwang-account-book-active-user";
 
-function normalizeEntryFragment(text?: string) {
-  return (text || "").replace(/\s+/g, "").toLowerCase();
-}
-
-function getEntryDuplicateKey(
-  entry: Pick<AccountEntry, "date" | "amount" | "type" | "merchant" | "item">,
-) {
-  return [
-    entry.date,
-    entry.amount,
-    entry.type,
-    normalizeEntryFragment(entry.merchant || entry.item),
-    normalizeEntryFragment(entry.item || entry.merchant),
-  ].join("|");
-}
-
-function findDuplicateTargetEntryIds(
-  store: AccountBookStore,
-  sourceEntry: AccountEntry,
-  targetWorkspaceId: string,
-) {
-  const sourceKey = getEntryDuplicateKey(sourceEntry);
-  return store.entries
-    .filter((entry) => entry.workspaceId === targetWorkspaceId)
-    .filter((entry) => entry.createdByUserId === sourceEntry.createdByUserId)
-    .filter((entry) => entry.id !== sourceEntry.id)
-    .filter((entry) => getEntryDuplicateKey(entry) === sourceKey)
-    .map((entry) => entry.id);
-}
-
-function removeEntriesFromStore(store: AccountBookStore, entryIds: string[]) {
-  if (entryIds.length === 0) return store;
-  const blockedIds = new Set(entryIds);
-  return {
-    ...store,
-    entries: store.entries.filter((entry) => !blockedIds.has(entry.id)),
-    shareLinks: store.shareLinks.filter(
-      (link) => !blockedIds.has(link.sourceEntryId),
-    ),
-  };
-}
-
 function getStoredActiveUserId() {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(ACTIVE_USER_ACCESS_KEY);
@@ -94,7 +52,7 @@ function resolveInitialViewMode(value: string | null): ViewMode {
   if (value === "board" || value === "calendar" || value === "ledger") {
     return value;
   }
-  return "ledger";
+  return "calendar";
 }
 
 function canAccessWorkspace(userId: string, workspaceId: string, store: AccountBookStore) {
@@ -210,9 +168,11 @@ function AccountBookPageContent() {
     try {
       const savedStore = await action();
       setStore(savedStore);
+      return savedStore;
     } catch (error) {
       console.error("가계부 저장 실패:", error);
       alert(failureMessage);
+      return null;
     }
   };
 
@@ -304,40 +264,24 @@ function AccountBookPageContent() {
                 (entry) => entry.id === entryId,
               );
               if (!sourceEntry) return;
-              const hasExistingShare = isEntrySharedToWorkspace(
+              const previousStore = store;
+              const optimisticStore = toggleShareLink(
                 store,
                 sourceEntry.id,
+                sourceEntry.workspaceId,
                 targetWorkspaceId,
-              );
-              const duplicateTargetEntryIds = hasExistingShare
-                ? []
-                : findDuplicateTargetEntryIds(store, sourceEntry, targetWorkspaceId);
-              const previousStore = store;
-              const optimisticStore = removeEntriesFromStore(
-                toggleShareLink(
-                  store,
-                  sourceEntry.id,
-                  sourceEntry.workspaceId,
-                  targetWorkspaceId,
-                  sourceEntry.createdByUserId,
-                ),
-                duplicateTargetEntryIds,
+                sourceEntry.createdByUserId,
               );
 
               setStore(optimisticStore);
 
               try {
-                let savedStore = await toggleAccountBookShareLink(
+                const savedStore = await toggleAccountBookShareLink(
                   sourceEntry.id,
                   sourceEntry.workspaceId,
                   targetWorkspaceId,
                   sourceEntry.createdByUserId,
                 );
-                if (!hasExistingShare && duplicateTargetEntryIds.length > 0) {
-                  for (const duplicateEntryId of duplicateTargetEntryIds) {
-                    savedStore = await deleteAccountBookEntry(duplicateEntryId);
-                  }
-                }
                 setStore(savedStore);
               } catch (error) {
                 console.error("가계부 공유 처리 실패:", error);
@@ -347,18 +291,25 @@ function AccountBookPageContent() {
                 } catch {
                   setStore(previousStore);
                 }
-                alert(
-                  duplicateTargetEntryIds.length > 0
-                    ? "공유 또는 중복 내역 정리에 실패했어요. 잠시 후 다시 시도해주세요."
-                    : "공유 처리에 실패했어요. 잠시 후 다시 시도해주세요.",
-                );
+                alert("공유 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
               }
             }}
             onSaveEntry={async (entry: AccountEntry) =>
-              commitStoreChange(() => upsertAccountBookEntry(entry))
+              Boolean(await commitStoreChange(() => upsertAccountBookEntry(entry)))
             }
-            onDeleteEntry={async (entryId: string) =>
-              commitStoreChange(() => deleteAccountBookEntry(entryId))
+            onDeleteEntry={async (entryId: string) => {
+              await commitStoreChange(() => deleteAccountBookEntry(entryId));
+            }}
+            onChangeAnnualSavingGoal={async (value: number) =>
+              Boolean(
+                await commitStoreChange(() =>
+                  upsertAccountBookWorkspace({
+                    ...selectedWorkspace,
+                    annualSavingGoal: value,
+                  }),
+                  "연간 저축 목표를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
+                ),
+              )
             }
             onBack={() => router.push("/account-book")}
             initialViewMode={initialViewMode}
@@ -551,8 +502,17 @@ function AccountBookPageContent() {
             onUpdateUser={async (userId, name, password) => {
               const currentUser = store.users.find((user) => user.id === userId);
               if (!currentUser) return;
+              const currentPersonalWorkspace = store.workspaces.find(
+                (workspace) => workspace.id === currentUser.personalWorkspaceId,
+              );
               await commitStoreChange(
-                () => updateAccountBookUser(currentUser, name, password),
+                () =>
+                  updateAccountBookUser(
+                    currentUser,
+                    name,
+                    password,
+                    currentPersonalWorkspace?.annualSavingGoal,
+                  ),
                 "사용자 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
               );
             }}
