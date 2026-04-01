@@ -1378,7 +1378,7 @@ export default function WorkspaceLedgerView({
         onMonthMove={onMonthMove}
         onMonthSelect={onMonthSelect}
       />
-      <StContentWrap>
+      <StContentWrap $allowPageScroll={viewMode !== "ledger"}>
         {isRegisterModalOpen ? (
           <NaturalInputSection
             mode={registerMode}
@@ -1620,14 +1620,15 @@ const StSharePrimaryButton = styled.button`
   box-shadow: 0 12px 28px rgba(95, 115, 217, 0.24);
 `;
 
-const StContentWrap = styled.div`
-  flex: 1;
-  min-height: 0;
+const StContentWrap = styled.div<{ $allowPageScroll: boolean }>`
+  flex: ${({ $allowPageScroll }) => ($allowPageScroll ? "none" : "1")};
+  min-height: ${({ $allowPageScroll }) => ($allowPageScroll ? "auto" : "0")};
   padding: 1rem;
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: ${({ $allowPageScroll }) =>
+    $allowPageScroll ? "auto auto auto auto" : "auto auto auto minmax(0, 1fr)"};
   gap: 0.8rem;
-  overflow: hidden;
+  overflow: ${({ $allowPageScroll }) => ($allowPageScroll ? "visible" : "hidden")};
 
   @media (max-width: 1080px) {
     display: flex;

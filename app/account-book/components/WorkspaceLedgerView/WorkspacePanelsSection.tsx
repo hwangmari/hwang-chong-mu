@@ -121,6 +121,7 @@ export default function WorkspacePanelsSection({
 }: Props) {
   const hasDetailPanel = viewMode !== "board";
   const isLedgerLayout = viewMode === "ledger";
+  const usePageScroll = viewMode !== "ledger";
 
   return (
     <StCalendarSplit $hasDetailPanel={hasDetailPanel} $viewMode={viewMode}>
@@ -161,9 +162,9 @@ export default function WorkspacePanelsSection({
         ) : null}
 
         {isLedgerLayout ? null : (
-          <StLeftBody>
-            {viewMode === "board" ? (
-              <AccountBookDashboardPanel
+            <StLeftBody $usePageScroll={usePageScroll}>
+              {viewMode === "board" ? (
+                <AccountBookDashboardPanel
                 currentYear={currentYear}
                 currentMonthIndex={currentMonthIndex}
                 annualGoal={annualSavingGoal}
@@ -208,6 +209,7 @@ export default function WorkspacePanelsSection({
               title={calendarDetailTitle}
               entries={selectedDateEntries}
               assetEntries={selectedDateAssetEntries}
+              usePageScroll={usePageScroll}
               onOpenAdd={onOpenAdd}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -226,7 +228,7 @@ const StCalendarSplit = styled.div<{
   $hasDetailPanel: boolean;
   $viewMode: ViewMode;
 }>`
-  height: 100%;
+  height: ${({ $viewMode }) => ($viewMode === "ledger" ? "100%" : "auto")};
   display: grid;
   grid-template-columns: ${({ $hasDetailPanel, $viewMode }) => {
     if (!$hasDetailPanel) return "minmax(0, 1fr)";
@@ -348,11 +350,11 @@ const StLedgerMemoTextarea = styled.textarea`
   }
 `;
 
-const StLeftBody = styled.div`
+const StLeftBody = styled.div<{ $usePageScroll: boolean }>`
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  padding-right: 0.25rem;
+  overflow-y: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "auto")};
+  padding-right: ${({ $usePageScroll }) => ($usePageScroll ? "0" : "0.25rem")};
   padding-bottom: 1rem;
   overscroll-behavior: contain;
 

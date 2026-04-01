@@ -22,6 +22,7 @@ type Props = {
   formatAmount: (value: number) => string;
   paymentLabel: (payment: ResolvedAccountEntry["payment"]) => string;
   showDateMeta?: boolean;
+  usePageScroll?: boolean;
 };
 
 export default function DetailEntriesPanel({
@@ -36,6 +37,7 @@ export default function DetailEntriesPanel({
   formatAmount,
   paymentLabel,
   showDateMeta = false,
+  usePageScroll = false,
 }: Props) {
   const maxTrackingAmount = Math.max(
     ...(monthlyTracking?.map((row) => row.amount) || [0]),
@@ -134,14 +136,14 @@ export default function DetailEntriesPanel({
   };
 
   return (
-    <StPanel>
+    <StPanel $usePageScroll={usePageScroll}>
       <StDetailHeader>
         <StBlockTitle>{title}</StBlockTitle>
         <StDetailAddButton type="button" onClick={onOpenAdd} aria-label="내역 추가">
           +
         </StDetailAddButton>
       </StDetailHeader>
-      <StEntryList>
+      <StEntryList $usePageScroll={usePageScroll}>
         {monthlyTracking ? (
           monthlyTracking.length === 0 ? (
             <StEmpty>월별 통계 데이터가 없습니다.</StEmpty>
@@ -186,12 +188,12 @@ export default function DetailEntriesPanel({
   );
 }
 
-const StPanel = styled.div`
+const StPanel = styled.div<{ $usePageScroll: boolean }>`
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  height: ${({ $usePageScroll }) => ($usePageScroll ? "auto" : "100%")};
+  overflow: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "hidden")};
 `;
 
 const StBlockTitle = styled.h3`
@@ -223,15 +225,16 @@ const StDetailAddButton = styled.button`
   justify-content: center;
   box-shadow: 0 10px 22px rgba(95, 115, 217, 0.2);
 `;
-const StEntryList = styled.div`
+const StEntryList = styled.div<{ $usePageScroll: boolean }>`
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   min-height: 0;
-  overflow-y: auto;
-  padding-right: 0.25rem;
+  overflow-y: ${({ $usePageScroll }) => ($usePageScroll ? "visible" : "auto")};
+  padding-right: ${({ $usePageScroll }) => ($usePageScroll ? "0" : "0.25rem")};
   padding-bottom: 1rem;
+
   &::-webkit-scrollbar {
     width: 6px;
   }
