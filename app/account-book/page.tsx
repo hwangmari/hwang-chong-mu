@@ -110,6 +110,15 @@ function normalizeMemberName(name: string) {
   return name.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function findPersonalUserByName(store: AccountBookStore, userName: string) {
+  const normalizedUserName = normalizeMemberName(userName);
+  return (
+    store.users.find(
+      (user) => normalizeMemberName(user.name) === normalizedUserName,
+    ) || null
+  );
+}
+
 function findRoomMemberByName(
   store: AccountBookStore,
   workspaceId: string,
@@ -391,6 +400,31 @@ function AccountBookPageContent() {
           }}
           onCreatePersonalWorkspace={async (userName, userPassword) => {
             try {
+              const existingUser = findPersonalUserByName(store, userName);
+              if (existingUser) {
+                if (existingUser.password !== userPassword) {
+                  alert(
+                    "이미 같은 닉네임의 개인 가계부가 있어요. 개인방 로그인으로 들어가거나 비밀번호를 다시 확인해주세요.",
+                  );
+                  return;
+                }
+
+                const existingWorkspace = store.workspaces.find(
+                  (workspace) => workspace.id === existingUser.personalWorkspaceId,
+                );
+
+                if (!existingWorkspace) {
+                  alert("기존 개인 가계부 작업공간을 찾지 못했어요.");
+                  return;
+                }
+
+                setActiveUserId(existingUser.id);
+                setStoredActiveUserId(existingUser.id);
+                router.push(`/account-book?workspaceId=${existingWorkspace.id}`);
+                alert("이미 만든 개인 가계부가 있어 기존 작업공간으로 다시 연결했어요.");
+                return;
+              }
+
               const result = await createAccountBookUser(userName, userPassword);
               setStore(result.store);
               setActiveUserId(result.userId);
@@ -448,6 +482,31 @@ function AccountBookPageContent() {
               alert("참여 코드 확인 후 다시 시도해주세요.");
               throw error;
             }
+          }}
+          onLoginPersonalWorkspace={async (userName, userPassword) => {
+            const targetUser = findPersonalUserByName(store, userName);
+            if (!targetUser) {
+              alert("일치하는 개인 가계부 사용자를 찾지 못했어요.");
+              return;
+            }
+
+            if (targetUser.password !== userPassword) {
+              alert("개인 비밀번호가 맞지 않아요.");
+              return;
+            }
+
+            const targetWorkspace = store.workspaces.find(
+              (workspace) => workspace.id === targetUser.personalWorkspaceId,
+            );
+
+            if (!targetWorkspace) {
+              alert("개인 가계부 작업공간을 찾지 못했어요.");
+              return;
+            }
+
+            setActiveUserId(targetUser.id);
+            setStoredActiveUserId(targetUser.id);
+            router.push(`/account-book?workspaceId=${targetWorkspace.id}`);
           }}
           onResetActiveUser={() => {
             setActiveUserId(null);

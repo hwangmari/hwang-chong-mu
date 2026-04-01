@@ -28,6 +28,10 @@ type Props = {
     userName: string,
     userPassword: string,
   ) => Promise<void>;
+  onLoginPersonalWorkspace: (
+    userName: string,
+    userPassword: string,
+  ) => Promise<void>;
   onResetActiveUser: () => void;
   onOpenManage: () => void;
 };
@@ -46,6 +50,11 @@ type JoinFormState = {
   userPassword: string;
 };
 
+type PersonalLoginFormState = {
+  userName: string;
+  userPassword: string;
+};
+
 export default function WorkspaceHub({
   activeUser,
   users,
@@ -55,10 +64,13 @@ export default function WorkspaceHub({
   onCreatePersonalWorkspace,
   onCreateSharedWorkspaceForActiveUser,
   onJoinServerRoom,
+  onLoginPersonalWorkspace,
   onResetActiveUser,
   onOpenManage,
 }: Props) {
-  const [modalMode, setModalMode] = useState<"create" | "join" | null>(null);
+  const [modalMode, setModalMode] = useState<
+    "create" | "join" | "personal-login" | null
+  >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createForm, setCreateForm] = useState<RoomFormState>({
     createMode: "shared",
@@ -72,6 +84,11 @@ export default function WorkspaceHub({
     userName: "",
     userPassword: "",
   });
+  const [personalLoginForm, setPersonalLoginForm] =
+    useState<PersonalLoginFormState>({
+      userName: "",
+      userPassword: "",
+    });
 
   const personalWorkspaces = useMemo(
     () =>
@@ -189,6 +206,27 @@ export default function WorkspaceHub({
     }
   };
 
+  const handlePersonalLogin = async () => {
+    if (!personalLoginForm.userName.trim() || !personalLoginForm.userPassword.trim()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onLoginPersonalWorkspace(
+        personalLoginForm.userName.trim(),
+        personalLoginForm.userPassword.trim(),
+      );
+      setPersonalLoginForm({
+        userName: "",
+        userPassword: "",
+      });
+      closeModal();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const copyInviteCode = async (inviteCode: string) => {
     try {
       await navigator.clipboard.writeText(inviteCode);
@@ -254,6 +292,14 @@ export default function WorkspaceHub({
             >
               참여 코드로 입장
             </StSecondaryButton>
+            {!activeUser ? (
+              <StGhostButton
+                type="button"
+                onClick={() => setModalMode("personal-login")}
+              >
+                개인방 로그인
+              </StGhostButton>
+            ) : null}
             {activeUser ? (
               <StGhostButton type="button" onClick={onResetActiveUser}>
                 참여 계정 바꾸기
@@ -265,7 +311,8 @@ export default function WorkspaceHub({
         {!activeUser ? (
           <StEmptyCard>
             서버방을 만들거나 참여 코드로 입장하면, 이 허브에 내가 사용할
-            가계부방이 표시됩니다.
+            가계부방이 표시됩니다. 이미 만든 개인 가계부가 있다면 개인방
+            로그인으로 다시 들어올 수 있어요.
           </StEmptyCard>
         ) : (
           <StWorkspaceColumns>
@@ -391,14 +438,20 @@ export default function WorkspaceHub({
         <StModalBackdrop onClick={closeModal}>
           <StModalCard onClick={(event) => event.stopPropagation()}>
             <StModalTitle>
-              {modalMode === "create" ? "가계부 시작하기" : "참여 코드로 입장"}
+              {modalMode === "create"
+                ? "가계부 시작하기"
+                : modalMode === "join"
+                  ? "참여 코드로 입장"
+                  : "개인 가계부 로그인"}
             </StModalTitle>
             <StModalDescription>
               {modalMode === "create"
                 ? activeUser
                   ? "현재 참여 중인 계정에 공용방을 추가하거나, 새 개인 가계부를 따로 시작할 수 있습니다."
                   : "개인만 사용할지, 공용방까지 같이 만들지 먼저 정한 뒤 시작할 수 있습니다."
-                : "초대 코드와 닉네임을 입력하면 이 방의 참여자로 등록됩니다."}
+                : modalMode === "join"
+                  ? "초대 코드와 닉네임을 입력하면 이 방의 참여자로 등록됩니다."
+                  : "이미 만든 개인 가계부가 있다면 닉네임과 비밀번호로 다시 들어올 수 있습니다."}
             </StModalDescription>
 
             {modalMode === "create" ? (
@@ -502,7 +555,7 @@ export default function WorkspaceHub({
                   </>
                 ) : null}
               </>
-            ) : (
+            ) : modalMode === "join" ? (
               <>
                 <StField>
                   <label>참여 코드</label>
@@ -546,6 +599,37 @@ export default function WorkspaceHub({
                   />
                 </StField>
               </>
+            ) : (
+              <>
+                <StField>
+                  <label>내 닉네임</label>
+                  <input
+                    value={personalLoginForm.userName}
+                    onChange={(event) =>
+                      setPersonalLoginForm((prev) => ({
+                        ...prev,
+                        userName: event.target.value,
+                      }))
+                    }
+                    placeholder="예: 마리"
+                  />
+                </StField>
+                <StField>
+                  <label>내 개인 비밀번호</label>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={personalLoginForm.userPassword}
+                    onChange={(event) =>
+                      setPersonalLoginForm((prev) => ({
+                        ...prev,
+                        userPassword: event.target.value,
+                      }))
+                    }
+                    placeholder="개인 작업공간 비밀번호"
+                  />
+                </StField>
+              </>
             )}
 
             <StModalActions>
@@ -558,7 +642,9 @@ export default function WorkspaceHub({
                 onClick={() =>
                   void (modalMode === "create"
                     ? handleCreateRoom()
-                    : handleJoinRoom())
+                    : modalMode === "join"
+                      ? handleJoinRoom()
+                      : handlePersonalLogin())
                 }
               >
                 {isSubmitting
@@ -567,7 +653,9 @@ export default function WorkspaceHub({
                     ? createForm.createMode === "shared"
                       ? "방 만들기"
                       : "개인 가계부 만들기"
-                    : "방 참여하기"}
+                    : modalMode === "join"
+                      ? "방 참여하기"
+                      : "내 가계부 열기"}
               </StPrimaryButton>
             </StModalActions>
           </StModalCard>
