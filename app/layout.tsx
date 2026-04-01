@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
@@ -31,7 +32,9 @@ export default function RootLayout({
         <StyledComponentsRegistry>
           <ModalProvider>
             {/* 공통 헤더 적용 */}
-            <GlobalHeader />
+            <Suspense fallback={null}>
+              <GlobalHeader />
+            </Suspense>
             {children}
           </ModalProvider>
         </StyledComponentsRegistry>
