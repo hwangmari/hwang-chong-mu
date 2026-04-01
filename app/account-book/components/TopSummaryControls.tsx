@@ -117,6 +117,11 @@ const StLedgerGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.65rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
 `;
 
 const StLedgerCard = styled.article`
@@ -128,6 +133,10 @@ const StLedgerCard = styled.article`
   background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(102, 120, 160, 0.05);
+
+  @media (max-width: 720px) {
+    min-height: auto;
+  }
 `;
 
 const StLedgerCardHead = styled.div`
@@ -150,6 +159,10 @@ const StLedgerCardHead = styled.div`
     color: #5973c1;
     white-space: nowrap;
   }
+
+  @media (max-width: 720px) {
+    padding: 0.85rem 0.9rem 0.3rem;
+  }
 `;
 
 const StLedgerCardDescription = styled.p`
@@ -163,6 +176,10 @@ const StLedgerCardDescription = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StLedgerCardFooter = styled.div`
@@ -173,6 +190,10 @@ const StLedgerCardFooter = styled.div`
   font-size: 0.76rem;
   font-weight: 800;
   color: #8d99ab;
+
+  @media (max-width: 720px) {
+    padding: 0.62rem 0.9rem 0.72rem;
+  }
 `;
 
 const StCalendarSummaryLine = styled.div`
@@ -201,6 +222,11 @@ const StCalendarSummaryCard = styled.article`
   border: 1px solid #dbe4f1;
   box-shadow: 0 8px 20px rgba(102, 120, 160, 0.05);
   padding: 1.12rem 1.18rem;
+
+  @media (max-width: 720px) {
+    min-height: auto;
+    padding: 0.95rem 1rem;
+  }
 `;
 const StCalendarSummaryLabel = styled.p`
   font-size: 0.88rem;
@@ -220,6 +246,10 @@ const StCalendarSummaryValue = styled.p<{
     if ($tone === "asset") return "#3f8f8a";
     return "#6b63e8";
   }};
+
+  @media (max-width: 720px) {
+    font-size: 1.35rem;
+  }
 `;
 const StCalendarSummaryDetail = styled.div`
   display: grid;
@@ -231,5 +261,9 @@ const StCalendarSummaryDetail = styled.div`
     color: #8892a3;
     line-height: 1.35;
     font-weight: 700;
+  }
+
+  @media (max-width: 720px) {
+    display: none;
   }
 `;

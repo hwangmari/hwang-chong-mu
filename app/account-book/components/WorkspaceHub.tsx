@@ -581,6 +581,10 @@ const StPage = styled.main`
   min-height: 100vh;
   padding: 1.4rem 1.25rem 2rem;
   background: #f7f9fc;
+
+  @media (max-width: 720px) {
+    padding: 1rem 0.9rem 1.4rem;
+  }
 `;
 
 const StPageInner = styled.div`
@@ -620,6 +624,10 @@ const StTitle = styled.h1`
   font-size: 2rem;
   font-weight: 900;
   color: #1f2937;
+
+  @media (max-width: 720px) {
+    font-size: 1.55rem;
+  }
 `;
 
 const StDescription = styled.p`
@@ -628,6 +636,10 @@ const StDescription = styled.p`
   font-size: 0.92rem;
   line-height: 1.6;
   color: #66758b;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StModeSelector = styled.div`
@@ -694,6 +706,10 @@ const StManageButton = styled.button`
     opacity: 0.48;
     cursor: not-allowed;
   }
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StPrimaryButton = styled.button`
@@ -701,6 +717,10 @@ const StPrimaryButton = styled.button`
   border: 1px solid #5a73d9;
   background: linear-gradient(135deg, #6d87ef, #5f73d9);
   color: #fff;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StSecondaryButton = styled.button`
@@ -708,6 +728,10 @@ const StSecondaryButton = styled.button`
   border: 1px solid #cad8ea;
   background: #f7faff;
   color: #49628b;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StGhostButton = styled.button`
@@ -715,6 +739,10 @@ const StGhostButton = styled.button`
   border: 1px solid #d8e1ee;
   background: #fff;
   color: #63758e;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StHeroPanel = styled.section`
@@ -747,12 +775,22 @@ const StHeroCopy = styled.div`
     line-height: 1.55;
     color: #6f8097;
   }
+
+  @media (max-width: 720px) {
+    span {
+      display: none;
+    }
+  }
 `;
 
 const StHeroActions = styled.div`
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StWorkspaceColumns = styled.div`
@@ -777,6 +815,10 @@ const StSectionDescription = styled.p`
   margin-bottom: 0.7rem;
   font-size: 0.82rem;
   color: #748297;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StGrid = styled.div`
@@ -851,6 +893,10 @@ const StCardAsideDescription = styled.p`
   font-size: 0.8rem;
   line-height: 1.6;
   color: #6f8097;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StCardAsideTags = styled.div`
@@ -924,6 +970,10 @@ const StCardHint = styled.p`
   font-size: 0.82rem;
   line-height: 1.55;
   color: #7b899d;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StMemberPreview = styled.div`

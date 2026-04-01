@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 
 type Props = {
@@ -34,12 +35,19 @@ export default function WorkspaceHeader({
   onMonthSelect,
 }: Props) {
   const router = useRouter();
-  const monthPickerRef = useRef<HTMLDivElement | null>(null);
+  const monthHeaderRef = useRef<HTMLDivElement | null>(null);
+  const monthPickerAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const monthPickerPopoverRef = useRef<HTMLDivElement | null>(null);
   const today = useMemo(() => new Date(), []);
   const todayYear = today.getFullYear();
   const todayMonth = today.getMonth() + 1;
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const [selectedPickerYear, setSelectedPickerYear] = useState(todayYear);
+  const [monthPickerPosition, setMonthPickerPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [activeYear, activeMonth] = useMemo(() => {
     const [yearText, monthText] = monthValue.split("-");
     return [Number(yearText) || todayYear, Number(monthText) || todayMonth];
@@ -57,13 +65,79 @@ export default function WorkspaceHeader({
     if (!isMonthPickerOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (!monthPickerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideHeader = monthHeaderRef.current?.contains(target);
+      const clickedInsidePopover =
+        monthPickerPopoverRef.current?.contains(target);
+
+      if (!clickedInsideHeader && !clickedInsidePopover) {
+        setIsMonthPickerOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         setIsMonthPickerOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMonthPickerOpen]);
+
+  useEffect(() => {
+    if (!isMonthPickerOpen) return;
+
+    const updateMonthPickerPosition = () => {
+      const triggerRect =
+        monthPickerAnchorRef.current?.getBoundingClientRect() || null;
+      if (!triggerRect) return;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const horizontalPadding = 12;
+      const verticalGap = 10;
+      const preferredWidth = 296;
+      const estimatedHeight = 382;
+      const width = Math.min(
+        preferredWidth,
+        viewportWidth - horizontalPadding * 2,
+      );
+      const centeredLeft = triggerRect.left + triggerRect.width / 2 - width / 2;
+      const left = Math.min(
+        Math.max(centeredLeft, horizontalPadding),
+        viewportWidth - width - horizontalPadding,
+      );
+      const spaceBelow = viewportHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+      const shouldOpenAbove =
+        spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+      const top = shouldOpenAbove
+        ? Math.max(
+            horizontalPadding,
+            triggerRect.top - estimatedHeight - verticalGap,
+          )
+        : Math.min(
+            triggerRect.bottom + verticalGap,
+            viewportHeight - estimatedHeight - horizontalPadding,
+          );
+
+      setMonthPickerPosition({ top, left, width });
+    };
+
+    updateMonthPickerPosition();
+    window.addEventListener("resize", updateMonthPickerPosition);
+    window.addEventListener("scroll", updateMonthPickerPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMonthPickerPosition);
+      window.removeEventListener("scroll", updateMonthPickerPosition, true);
+    };
   }, [isMonthPickerOpen]);
 
   const openMonthPicker = () => {
@@ -85,121 +159,66 @@ export default function WorkspaceHeader({
 
   return (
     <StWorkspaceHeader>
-      <StHeaderLeft>
-        <StBackButton
-          type="button"
-          aria-label="뒤로 가기"
-          onClick={() => {
-            if (onBack) onBack();
-            else router.push("/");
-          }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m14.71 6.71-1.42-1.42L6.59 12l6.7 6.71 1.42-1.42L9.41 12z" />
-          </svg>
-        </StBackButton>
-        <StTitleBlock>
-          <StHeaderTitle>{title}</StHeaderTitle>
-          {subtitle || infoText ? (
-            <StHeaderMetaRow>
-              {subtitle ? (
-                <StHeaderSubtitle>{subtitle}</StHeaderSubtitle>
-              ) : null}
-              {infoText ? (
-                <StHeaderInfoText>{infoText}</StHeaderInfoText>
-              ) : null}
-            </StHeaderMetaRow>
-          ) : null}
-        </StTitleBlock>
-      </StHeaderLeft>
-
-      <StHeaderCenter>
-        <StMonthHeader ref={monthPickerRef}>
-          <StMonthButton type="button" onClick={() => onMonthMove?.(-1)}>
-            <StChevronIcon viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-            </StChevronIcon>
-          </StMonthButton>
-          <StMonthInfoButton
+      <StHeaderMoWrap>
+        <StHeaderLeft>
+          <StBackButton
             type="button"
-            onClick={openMonthPicker}
-            disabled={!onMonthSelect}
-            aria-label="년월 선택"
-            $open={isMonthPickerOpen}
+            aria-label="뒤로 가기"
+            onClick={() => {
+              if (onBack) onBack();
+              else router.push("/");
+            }}
           >
-            <StMonthTitleRow>
-              <StMonthTitle>{monthLabel}</StMonthTitle>
-              <StMonthCaret viewBox="0 0 20 20" aria-hidden="true">
-                <path d="m5.5 7.5 4.5 4.5 4.5-4.5" />
-              </StMonthCaret>
-            </StMonthTitleRow>
-            <StMonthRange>{monthRangeLabel}</StMonthRange>
-          </StMonthInfoButton>
-          <StMonthButton type="button" onClick={() => onMonthMove?.(1)}>
-            <StChevronIcon viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m8.59 16.59 1.41 1.41 6-6-6-6-1.41 1.41L13.17 12z" />
-            </StChevronIcon>
-          </StMonthButton>
-          {isMonthPickerOpen ? (
-            <StMonthPickerPopover>
-              <StMonthPickerHeader>
-                <StMonthPickerYearButton
-                  type="button"
-                  onClick={() => movePickerYear(-1)}
-                  aria-label="이전 연도"
-                >
-                  <StMiniChevron viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M12.5 5.5 8 10l4.5 4.5" />
-                  </StMiniChevron>
-                </StMonthPickerYearButton>
-                <StMonthPickerYear>{selectedPickerYear}년</StMonthPickerYear>
-                <StMonthPickerYearButton
-                  type="button"
-                  onClick={() => movePickerYear(1)}
-                  aria-label="다음 연도"
-                >
-                  <StMiniChevron viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="m7.5 14.5 4.5-4.5-4.5-4.5" />
-                  </StMiniChevron>
-                </StMonthPickerYearButton>
-              </StMonthPickerHeader>
-              <StMonthPickerGrid>
-                {monthOptions.map((label, index) => {
-                  const monthNumber = index + 1;
-                  const isActive =
-                    selectedPickerYear === activeYear &&
-                    monthNumber === activeMonth;
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m14.71 6.71-1.42-1.42L6.59 12l6.7 6.71 1.42-1.42L9.41 12z" />
+            </svg>
+          </StBackButton>
+          <StTitleBlock>
+            <StHeaderTitle>{title}</StHeaderTitle>
+            {subtitle || infoText ? (
+              <StHeaderMetaRow>
+                {subtitle ? (
+                  <StHeaderSubtitle>{subtitle}</StHeaderSubtitle>
+                ) : null}
+                {infoText ? (
+                  <StHeaderInfoText>{infoText}</StHeaderInfoText>
+                ) : null}
+              </StHeaderMetaRow>
+            ) : null}
+          </StTitleBlock>
+        </StHeaderLeft>
 
-                  return (
-                    <StMonthChip
-                      key={`${selectedPickerYear}-${monthNumber}`}
-                      type="button"
-                      $active={isActive}
-                      onClick={() => selectMonth(monthNumber)}
-                    >
-                      {label}
-                    </StMonthChip>
-                  );
-                })}
-              </StMonthPickerGrid>
-              <StMonthPickerFooter>
-                <StMonthPickerTextButton
-                  type="button"
-                  onClick={() => {
-                    setSelectedPickerYear(todayYear);
-                    onMonthSelect?.(
-                      `${todayYear}-${String(todayMonth).padStart(2, "0")}`,
-                    );
-                    setIsMonthPickerOpen(false);
-                  }}
-                >
-                  이번 달
-                </StMonthPickerTextButton>
-              </StMonthPickerFooter>
-            </StMonthPickerPopover>
-          ) : null}
-        </StMonthHeader>
-      </StHeaderCenter>
+        <StHeaderCenter>
+          <StMonthHeader ref={monthHeaderRef}>
+            <StMonthButton type="button" onClick={() => onMonthMove?.(-1)}>
+              <StChevronIcon viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+              </StChevronIcon>
+            </StMonthButton>
+            <StMonthInfoButton
+              ref={monthPickerAnchorRef}
+              type="button"
+              onClick={openMonthPicker}
+              disabled={!onMonthSelect}
+              aria-label="년월 선택"
+              $open={isMonthPickerOpen}
+            >
+              <StMonthTitleRow>
+                <StMonthTitle>{monthLabel}</StMonthTitle>
+                <StMonthCaret viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="m5.5 7.5 4.5 4.5 4.5-4.5" />
+                </StMonthCaret>
+              </StMonthTitleRow>
+              <StMonthRange>{monthRangeLabel}</StMonthRange>
+            </StMonthInfoButton>
+            <StMonthButton type="button" onClick={() => onMonthMove?.(1)}>
+              <StChevronIcon viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m8.59 16.59 1.41 1.41 6-6-6-6-1.41 1.41L13.17 12z" />
+              </StChevronIcon>
+            </StMonthButton>
+          </StMonthHeader>
+        </StHeaderCenter>
+      </StHeaderMoWrap>
 
       <StHeaderRight>
         {onOpenNaturalRegister ? (
@@ -218,11 +237,83 @@ export default function WorkspaceHeader({
           </StSecondaryActionButton>
         ) : null}
       </StHeaderRight>
+      {isMonthPickerOpen &&
+      monthPickerPosition &&
+      typeof document !== "undefined"
+        ? createPortal(
+            <StMonthPickerLayer>
+              <StMonthPickerPopover
+                ref={monthPickerPopoverRef}
+                $top={monthPickerPosition.top}
+                $left={monthPickerPosition.left}
+                $width={monthPickerPosition.width}
+              >
+                <StMonthPickerHeader>
+                  <StMonthPickerYearButton
+                    type="button"
+                    onClick={() => movePickerYear(-1)}
+                    aria-label="이전 연도"
+                  >
+                    <StMiniChevron viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M12.5 5.5 8 10l4.5 4.5" />
+                    </StMiniChevron>
+                  </StMonthPickerYearButton>
+                  <StMonthPickerYear>{selectedPickerYear}년</StMonthPickerYear>
+                  <StMonthPickerYearButton
+                    type="button"
+                    onClick={() => movePickerYear(1)}
+                    aria-label="다음 연도"
+                  >
+                    <StMiniChevron viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="m7.5 14.5 4.5-4.5-4.5-4.5" />
+                    </StMiniChevron>
+                  </StMonthPickerYearButton>
+                </StMonthPickerHeader>
+                <StMonthPickerGrid>
+                  {monthOptions.map((label, index) => {
+                    const monthNumber = index + 1;
+                    const isActive =
+                      selectedPickerYear === activeYear &&
+                      monthNumber === activeMonth;
+
+                    return (
+                      <StMonthChip
+                        key={`${selectedPickerYear}-${monthNumber}`}
+                        type="button"
+                        $active={isActive}
+                        onClick={() => selectMonth(monthNumber)}
+                      >
+                        {label}
+                      </StMonthChip>
+                    );
+                  })}
+                </StMonthPickerGrid>
+                <StMonthPickerFooter>
+                  <StMonthPickerTextButton
+                    type="button"
+                    onClick={() => {
+                      setSelectedPickerYear(todayYear);
+                      onMonthSelect?.(
+                        `${todayYear}-${String(todayMonth).padStart(2, "0")}`,
+                      );
+                      setIsMonthPickerOpen(false);
+                    }}
+                  >
+                    이번 달
+                  </StMonthPickerTextButton>
+                </StMonthPickerFooter>
+              </StMonthPickerPopover>
+            </StMonthPickerLayer>,
+            document.body,
+          )
+        : null}
     </StWorkspaceHeader>
   );
 }
 
 const StWorkspaceHeader = styled.header`
+  position: sticky;
+  top: 0;
   border-bottom: 1px solid #d9dde3;
   background: #f7f8fa;
   display: grid;
@@ -230,13 +321,12 @@ const StWorkspaceHeader = styled.header`
   grid-template-areas: "left center right";
   align-items: center;
   padding: 0.7rem 1rem;
-  gap: 0.75rem;
+  gap: 2rem;
 
   @media (max-width: 980px) {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "left"
-      "center"
+      "main"
       "right";
     justify-items: stretch;
     padding: 0.8rem 0.75rem;
@@ -244,11 +334,30 @@ const StWorkspaceHeader = styled.header`
   }
 
   @media (max-width: 720px) {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "left center"
-      "right right";
-    align-items: start;
+      "main"
+      "right";
+    padding: 0.75rem 0.7rem;
+    gap: 0.55rem;
+  }
+`;
+
+const StHeaderMoWrap = styled.div`
+  display: contents;
+
+  @media (max-width: 980px) {
+    grid-area: main;
+    display: block;
+    position: relative;
+    min-width: 0;
+    padding-right: 12.5rem;
+    min-height: 4rem;
+  }
+
+  @media (max-width: 720px) {
+    padding-right: 11.5rem;
+    min-height: 3.5rem;
   }
 `;
 
@@ -261,6 +370,8 @@ const StHeaderLeft = styled.div`
 `;
 
 const StTitleBlock = styled.div`
+  display: grid;
+  gap: 0.12rem;
   min-width: 0;
 `;
 
@@ -271,13 +382,15 @@ const StHeaderCenter = styled.div`
   min-width: 0;
 
   @media (max-width: 980px) {
-    order: 2;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 180px;
+    justify-content: flex-end;
   }
 
   @media (max-width: 720px) {
-    order: initial;
-    justify-content: flex-end;
-    align-self: start;
+    width: 180px;
   }
 `;
 
@@ -289,13 +402,11 @@ const StHeaderRight = styled.div`
   flex-wrap: wrap;
 
   @media (max-width: 980px) {
-    order: 3;
     justify-content: flex-start;
   }
 
   @media (max-width: 720px) {
-    order: initial;
-    justify-content: flex-end;
+    justify-content: flex-start;
     width: 100%;
   }
 `;
@@ -329,6 +440,10 @@ const StHeaderTitle = styled.h1`
 const StHeaderSubtitle = styled.p`
   font-size: 0.76rem;
   color: #7b8798;
+
+  @media (max-width: 720px) {
+    font-size: 0.72rem;
+  }
 `;
 
 const StHeaderMetaRow = styled.div`
@@ -342,15 +457,23 @@ const StHeaderMetaRow = styled.div`
 const StHeaderInfoText = styled.p`
   font-size: 0.76rem;
   color: #8a94a6;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StMonthHeader = styled.div`
-  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 240px;
+  min-width: 0;
   justify-content: space-between;
+  width: 180px;
+
+  @media (max-width: 720px) {
+    max-width: 100%;
+  }
 `;
 const StMonthButton = styled.button`
   width: 2.3rem;
@@ -376,6 +499,7 @@ const StMonthInfoButton = styled.button<{ $open: boolean }>`
   text-align: center;
   border-radius: 18px;
   cursor: pointer;
+  min-width: 0;
   box-shadow: ${({ $open }) =>
     $open ? "0 12px 28px rgba(73, 93, 132, 0.1)" : "none"};
 
@@ -385,6 +509,11 @@ const StMonthInfoButton = styled.button<{ $open: boolean }>`
 
   &:hover {
     background: rgba(255, 255, 255, 0.82);
+  }
+
+  @media (max-width: 720px) {
+    flex: 1;
+    padding: 0.35rem 0.45rem;
   }
 `;
 
@@ -411,21 +540,35 @@ const StMonthCaret = styled.svg`
 const StMonthRange = styled.p`
   font-size: 0.75rem;
   color: #8a94a6;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
-const StMonthPickerPopover = styled.div`
-  position: absolute;
-  top: calc(100% + 0.55rem);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 18.5rem;
+const StMonthPickerLayer = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  pointer-events: none;
+`;
+
+const StMonthPickerPopover = styled.div<{
+  $top: number;
+  $left: number;
+  $width: number;
+}>`
+  position: fixed;
+  top: ${({ $top }) => `${$top}px`};
+  left: ${({ $left }) => `${$left}px`};
+  width: ${({ $width }) => `${$width}px`};
   border: 1px solid #d9e2ef;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 20px 40px rgba(72, 90, 126, 0.14);
   padding: 0.9rem;
-  z-index: 40;
   backdrop-filter: blur(12px);
+  pointer-events: auto;
 `;
 
 const StMonthPickerHeader = styled.div`
@@ -496,10 +639,19 @@ const StMonthPickerTextButton = styled.button`
 `;
 
 const StActionButtonBase = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 18px;
   padding: 0.8rem 1.05rem;
   font-size: 0.88rem;
   font-weight: 900;
+
+  @media (max-width: 720px) {
+    flex: 1;
+    min-width: 0;
+    padding: 0.76rem 0.8rem;
+  }
 `;
 
 const StPrimaryActionButton = styled(StActionButtonBase)`

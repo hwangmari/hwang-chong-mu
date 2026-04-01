@@ -566,7 +566,7 @@ const StLoadingPage = styled.main`
 `;
 
 const StLoadingCard = styled.section`
-  min-width: 18rem;
+  width: min(100%, 18rem);
   border-radius: 24px;
   border: 1px solid #d7e2ef;
   background: rgba(255, 255, 255, 0.94);

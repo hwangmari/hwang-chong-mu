@@ -34,6 +34,12 @@ export default function ViewModeTabs({ viewMode, onChangeViewMode }: Props) {
 const StViewModeSwitch = styled.div`
   display: inline-flex;
   gap: 0.45rem;
+
+  @media (max-width: 720px) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
 `;
 
 const StViewModeButton = styled.button<{ $active: boolean }>`
@@ -45,4 +51,10 @@ const StViewModeButton = styled.button<{ $active: boolean }>`
   padding: 0.45rem 0.95rem;
   font-size: 0.84rem;
   font-weight: 800;
+
+  @media (max-width: 720px) {
+    min-width: 0;
+    width: 100%;
+    padding: 0.7rem 0.35rem;
+  }
 `;

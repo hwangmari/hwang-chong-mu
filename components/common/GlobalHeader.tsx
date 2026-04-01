@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styled, { css } from "styled-components";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -42,8 +42,13 @@ const EXPERIENCE_NAMES: Record<string, string> = {
 export default function GlobalHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("황총무의 실험실");
+  const isAccountBookHub =
+    pathname === "/account-book" && !searchParams.get("workspaceId");
+  const shouldHideHeader =
+    pathname.startsWith("/account-book") && !isAccountBookHub;
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -91,6 +96,10 @@ export default function GlobalHeader() {
   }, [pathname]);
 
   const showBack = pathname !== "/";
+
+  if (shouldHideHeader) {
+    return null;
+  }
 
   const handleBack = () => {
     if (pathname.startsWith("/game/") && pathname.split("/").length > 2) {

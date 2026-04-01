@@ -192,6 +192,12 @@ const StModalCard = styled.div`
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
   box-shadow: 0 24px 48px rgba(45, 62, 100, 0.14);
+
+  @media (max-width: 720px) {
+    max-height: min(88vh, 920px);
+    padding: 0.9rem 0.85rem;
+    border-radius: 22px;
+  }
 `;
 
 const StModalHeader = styled.div`
@@ -207,6 +213,10 @@ const StModalEyebrow = styled.p`
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #6b82a8;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StModalTitle = styled.h3`
@@ -221,6 +231,10 @@ const StModalDescription = styled.p`
   font-size: 0.84rem;
   line-height: 1.55;
   color: #617186;
+
+  @media (max-width: 720px) {
+    font-size: 0.78rem;
+  }
 `;
 
 const StCloseButton = styled.button`
@@ -262,6 +276,10 @@ const StSectionEyebrow = styled.p`
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #6b82a8;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StSectionTitle = styled.h4`
@@ -281,6 +299,10 @@ const StMetaBadge = styled.span`
   font-size: 0.78rem;
   font-weight: 800;
   color: #56708e;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StSectionDescription = styled.p`
@@ -288,6 +310,10 @@ const StSectionDescription = styled.p`
   font-size: 0.9rem;
   line-height: 1.6;
   color: #617186;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StInputGuide = styled.p`
@@ -295,6 +321,10 @@ const StInputGuide = styled.p`
   font-size: 0.8rem;
   font-weight: 800;
   color: #4b65a0;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StNaturalInput = styled.input`
@@ -328,6 +358,10 @@ const StHints = styled.div`
     padding: 0.3rem 0.6rem;
     font-size: 0.74rem;
     font-weight: 700;
+  }
+
+  @media (max-width: 720px) {
+    display: none;
   }
 `;
 
@@ -370,6 +404,10 @@ const StActions = styled.div`
   justify-content: flex-end;
   gap: 0.6rem;
   margin-top: 1rem;
+
+  @media (max-width: 720px) {
+    flex-direction: column-reverse;
+  }
 `;
 
 const StButtonBase = styled.button`
@@ -377,6 +415,10 @@ const StButtonBase = styled.button`
   font-size: 0.92rem;
   font-weight: 900;
   padding: 0.92rem 1rem;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StPrimaryButton = styled(StButtonBase)`

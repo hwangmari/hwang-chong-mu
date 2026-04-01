@@ -95,8 +95,14 @@ export default function EntryFormModal({
   return (
     <StModalBackdrop onClick={onClose}>
       <StModalCard onClick={(event) => event.stopPropagation()}>
+        <StSheetHandle aria-hidden="true" />
         <StModalHeader>
-          <strong>{isEditing ? "내역 수정" : "내역 추가"}</strong>
+          <StModalTitleWrap>
+            <strong>{isEditing ? "내역 수정" : "내역 추가"}</strong>
+            <StModalDescription>
+              필수 항목부터 빠르게 입력하고, 나머지는 선택으로 채울 수 있어요.
+            </StModalDescription>
+          </StModalTitleWrap>
           <StCloseButton type="button" onClick={onClose} aria-label="닫기">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41 6.3 6.3-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.3z" />
@@ -311,9 +317,11 @@ export default function EntryFormModal({
           </StQuickRow>
         </StQuickInputBox>
 
-        <StAddButton type="button" onClick={onSubmit}>
-          {isEditing ? "수정 저장" : "내역 추가"}
-        </StAddButton>
+        <StFooterActionBar>
+          <StAddButton type="button" onClick={onSubmit}>
+            {isEditing ? "수정 저장" : "내역 추가"}
+          </StAddButton>
+        </StFooterActionBar>
       </StModalCard>
     </StModalBackdrop>
   );
@@ -324,13 +332,23 @@ const StFormRow = styled.div<{ $columns?: number }>`
   grid-template-columns: ${({ $columns = 2 }) =>
     `repeat(${$columns}, minmax(0, 1fr))`};
   gap: 0.65rem;
+
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
+    gap: 0.55rem;
   }
 `;
 
 const StQuickInputBox = styled.div`
   margin-bottom: 0.75rem;
+
+  @media (max-width: 720px) {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 0.85rem 0.9rem;
+    border: 1px solid #e6edf5;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fbfdff, #f8fbff);
+  }
 `;
 
 const StQuickRow = styled.div`
@@ -341,6 +359,7 @@ const StQuickRow = styled.div`
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
+    gap: 0.55rem;
   }
 `;
 
@@ -370,10 +389,23 @@ const StQuickButton = styled.button`
   font-size: 0.82rem;
   font-weight: 700;
   padding: 0 0.75rem;
+
+  @media (max-width: 720px) {
+    min-height: 44px;
+    width: 100%;
+  }
 `;
 
 const StFormField = styled.div`
   margin-bottom: 0.65rem;
+
+  @media (max-width: 720px) {
+    margin-bottom: 0;
+    padding: 0.85rem 0.85rem 0.9rem;
+    border: 1px solid #e6edf5;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fbfdff, #f8fbff);
+  }
 `;
 
 const StSelectedCategory = styled.div`
@@ -391,6 +423,11 @@ const StSelectedCategory = styled.div`
     font-size: 0.82rem;
     color: #374151;
   }
+
+  @media (max-width: 720px) {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
 `;
 
 const StCategoryPicker = styled.div`
@@ -403,7 +440,15 @@ const StCategoryPicker = styled.div`
   @media (max-width: 1080px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  @media (max-width: 640px) {
+
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    max-height: none;
+    padding-right: 0;
+  }
+
+  @media (max-width: 400px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -419,6 +464,7 @@ const StCategoryButton = styled.button<{ $active: boolean }>`
   text-align: left;
   font-size: 0.82rem;
   color: #334155;
+
   .dot {
     width: 0.62rem;
     height: 0.62rem;
@@ -428,6 +474,16 @@ const StCategoryButton = styled.button<{ $active: boolean }>`
   .icon {
     font-size: 0.9rem;
     line-height: 1;
+  }
+
+  span:last-child {
+    min-width: 0;
+    word-break: keep-all;
+  }
+
+  @media (max-width: 720px) {
+    min-height: 48px;
+    align-items: center;
   }
 `;
 
@@ -442,6 +498,12 @@ const StLabel = styled.label`
   font-size: 0.75rem;
   color: #6b7280;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    margin-bottom: 0.4rem;
+    font-size: 0.78rem;
+    color: #556274;
+  }
 `;
 
 const StSubLabel = styled.label`
@@ -466,6 +528,10 @@ const StTypeOption = styled.button<{ $active: boolean }>`
   padding: 0.55rem 0.5rem;
   font-size: 0.85rem;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    min-height: 44px;
+  }
 `;
 
 const StMemberSelector = styled.div`
@@ -482,6 +548,10 @@ const StMemberOption = styled.button<{ $active: boolean }>`
   padding: 0.55rem 0.5rem;
   font-size: 0.82rem;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    min-height: 44px;
+  }
 `;
 
 const StPaymentSelector = styled.div`
@@ -498,6 +568,10 @@ const StPaymentOption = styled.button<{ $active: boolean }>`
   padding: 0.55rem 0.5rem;
   font-size: 0.8rem;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    min-height: 42px;
+  }
 `;
 
 const StSubCategorySelector = styled.div`
@@ -515,6 +589,10 @@ const StSubCategoryOption = styled.button<{ $active: boolean }>`
   padding: 0.32rem 0.6rem;
   font-size: 0.76rem;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    padding: 0.42rem 0.72rem;
+  }
 `;
 
 const inputBase = `
@@ -558,9 +636,7 @@ const StAddButton = styled.button`
   font-weight: 800;
   color: #fff;
   background: #5f73d9;
-  position: sticky;
-  bottom: 0;
-  box-shadow: 0 -10px 24px rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 30px rgba(95, 115, 217, 0.22);
 `;
 
 const StModalBackdrop = styled.div`
@@ -594,17 +670,32 @@ const StModalCard = styled.div`
   @media (max-width: 720px) {
     width: 100%;
     height: auto;
-    max-height: min(82vh, 900px);
-    border-radius: 24px;
+    max-height: min(88vh, 900px);
+    border-radius: 26px 26px 20px 20px;
+    padding: 0.9rem 0.85rem calc(0.9rem + env(safe-area-inset-bottom));
     box-shadow: 0 -18px 38px rgba(49, 67, 110, 0.14);
+  }
+`;
+
+const StSheetHandle = styled.div`
+  display: none;
+
+  @media (max-width: 720px) {
+    display: block;
+    width: 3rem;
+    height: 0.3rem;
+    border-radius: 999px;
+    background: #d7dfea;
+    margin: 0 auto 0.7rem;
   }
 `;
 
 const StModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.7rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
   position: sticky;
   top: -1rem;
   z-index: 1;
@@ -616,6 +707,28 @@ const StModalHeader = styled.div`
     font-size: 1.18rem;
     font-weight: 900;
     color: #111827;
+  }
+
+  @media (max-width: 720px) {
+    top: -0.9rem;
+    margin-bottom: 0.9rem;
+    padding: 0.05rem 0 0.8rem;
+  }
+`;
+
+const StModalTitleWrap = styled.div`
+  min-width: 0;
+  display: grid;
+  gap: 0.22rem;
+`;
+
+const StModalDescription = styled.p`
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #7b8798;
+
+  @media (max-width: 720px) {
+    font-size: 0.75rem;
   }
 `;
 
@@ -633,5 +746,28 @@ const StCloseButton = styled.button`
     width: 20px;
     height: 20px;
     fill: currentColor;
+  }
+
+  @media (max-width: 720px) {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+`;
+
+const StFooterActionBar = styled.div`
+  position: sticky;
+  bottom: calc(-0.9rem - env(safe-area-inset-bottom));
+  padding-top: 0.2rem;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.92) 22%,
+    rgba(255, 255, 255, 0.98) 100%
+  );
+
+  @media (max-width: 720px) {
+    margin: 0 -0.1rem -0.15rem;
   }
 `;

@@ -87,7 +87,7 @@ export default function DetailEntriesPanel({
           ) : null}
           {entry.merchant ? <StEntryMerchant>{entry.merchant}</StEntryMerchant> : null}
           <StEntryName>{entry.item}</StEntryName>
-          <StEntryMemo>{entry.memo || ""}</StEntryMemo>
+          {entry.memo.trim() ? <StEntryMemo>{entry.memo}</StEntryMemo> : null}
           {entry.rawText ? (
             <StEntryRawText>{formatEntryRawText(entry)}</StEntryRawText>
           ) : null}
@@ -352,6 +352,14 @@ const StEntryRawText = styled.p`
   font-size: 0.73rem;
   line-height: 1.45;
   color: #708197;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 const StEntrySource = styled.p`
   margin-top: 0.2rem;

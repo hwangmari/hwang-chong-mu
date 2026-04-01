@@ -126,11 +126,15 @@ function resolveEntryItemLabel(params: {
   );
 }
 
-function readFixedExpenseTemplates(workspaceId: string): FixedExpenseTemplate[] {
+function readFixedExpenseTemplates(
+  workspaceId: string,
+): FixedExpenseTemplate[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const raw = window.localStorage.getItem(getFixedExpenseStorageKey(workspaceId));
+    const raw = window.localStorage.getItem(
+      getFixedExpenseStorageKey(workspaceId),
+    );
     if (!raw) return [];
     const parsed = JSON.parse(raw) as FixedExpenseTemplate[];
     return Array.isArray(parsed) ? parsed : [];
@@ -579,10 +583,7 @@ export default function WorkspaceLedgerView({
               extractFixedExpenseTemplateId(entry.rawText) === template.id,
           );
 
-          if (
-            !alreadyExists &&
-            !fixedExpenseSyncRef.current.has(syncKey)
-          ) {
+          if (!alreadyExists && !fixedExpenseSyncRef.current.has(syncKey)) {
             fixedExpenseSyncRef.current.add(syncKey);
             pendingEntries.push(
               buildFixedExpenseEntry(
@@ -759,12 +760,18 @@ export default function WorkspaceLedgerView({
     ],
   );
   const editingEntry = useMemo(
-    () => entriesWithPermissions.find((entry) => entry.id === editingEntryId) || null,
+    () =>
+      entriesWithPermissions.find((entry) => entry.id === editingEntryId) ||
+      null,
     [editingEntryId, entriesWithPermissions],
   );
   const existingEntryDuplicateKeys = useMemo(
     () =>
-      new Set(entriesWithPermissions.map((entry) => getAccountEntryDuplicateKey(entry))),
+      new Set(
+        entriesWithPermissions.map((entry) =>
+          getAccountEntryDuplicateKey(entry),
+        ),
+      ),
     [entriesWithPermissions],
   );
   const categoryDetailOptions = useMemo(
@@ -865,7 +872,10 @@ export default function WorkspaceLedgerView({
       view: "board",
     });
 
-    if (workspace.type === "shared" && selectedParticipantId !== ALL_PARTICIPANTS_ID) {
+    if (
+      workspace.type === "shared" &&
+      selectedParticipantId !== ALL_PARTICIPANTS_ID
+    ) {
       params.set("memberId", selectedParticipantId);
     }
 
@@ -904,7 +914,10 @@ export default function WorkspaceLedgerView({
     });
   };
 
-  const upsertFixedExpenseTemplate = (entry: AccountEntry, templateId: string) => {
+  const upsertFixedExpenseTemplate = (
+    entry: AccountEntry,
+    templateId: string,
+  ) => {
     const existingTemplate = fixedExpenseTemplates.find(
       (template) => template.id === templateId,
     );
@@ -961,7 +974,8 @@ export default function WorkspaceLedgerView({
       memberUsers[0] ||
       users[0];
     const normalizedCategory = category.trim();
-    const isFixedExpense = type === "expense" && normalizedCategory === "고정비";
+    const isFixedExpense =
+      type === "expense" && normalizedCategory === "고정비";
     const existingFixedTemplateId = extractFixedExpenseTemplateId(
       editingEntry?.rawText,
     );
@@ -1530,22 +1544,11 @@ export default function WorkspaceLedgerView({
 }
 
 const StPage = styled.main`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 200;
-  overflow: hidden;
   overscroll-behavior: none;
   min-height: 100vh;
   background: #f3f6fb;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 1080px) {
-    overflow: auto;
-  }
 `;
 
 const StShareConfirmBackdrop = styled.div`

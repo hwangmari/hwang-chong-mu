@@ -180,26 +180,30 @@ export default function AccountBookDashboardPanel({
         <StPanel>
           <StPanelTitle>지출</StPanelTitle>
           <StMetricTable>
-            <StMetricHead $columns="0.72fr 1fr 1fr 1fr 1fr">
-              <span>월</span>
-              <span>총 지출</span>
-              <span>고정비</span>
-              <span>소비지출</span>
-              <span>정기 저축</span>
+            <StMetricHead
+              $columns="0.72fr 1fr 1fr 1fr 1fr"
+              $mobileColumns="0.72fr 1fr 1fr"
+            >
+              <StHeadCell $align="left">월</StHeadCell>
+              <StHeadCell>총 지출</StHeadCell>
+              <StHeadCell $hideOnMobile>고정비</StHeadCell>
+              <StHeadCell>소비지출</StHeadCell>
+              <StHeadCell $hideOnMobile>정기 저축</StHeadCell>
             </StMetricHead>
             {dashboardRows.map((row) => (
               <StMetricRow
                 key={`expense-${row.monthNumber}`}
                 type="button"
                 $columns="0.72fr 1fr 1fr 1fr 1fr"
+                $mobileColumns="0.72fr 1fr 1fr"
                 $active={currentMonthIndex + 1 === row.monthNumber}
                 onClick={() => onSelectMonth(row.monthNumber)}
               >
                 <StCell $align="left">{row.monthLabel}</StCell>
                 <StCell>{formatNumber(row.totalExpense)}</StCell>
-                <StCell>{formatNumber(row.fixedExpense)}</StCell>
+                <StCell $hideOnMobile>{formatNumber(row.fixedExpense)}</StCell>
                 <StCell>{formatNumber(row.consumptionExpense)}</StCell>
-                <StCell>{formatNumber(row.regularSavings)}</StCell>
+                <StCell $hideOnMobile>{formatNumber(row.regularSavings)}</StCell>
               </StMetricRow>
             ))}
           </StMetricTable>
@@ -276,31 +280,36 @@ export default function AccountBookDashboardPanel({
           </StGoalMeta>
 
           <StMetricTable>
-            <StMetricHead $columns="0.72fr 0.9fr 1fr 0.9fr 1fr 1fr 0.9fr">
-              <span>월</span>
-              <span>순익</span>
-              <span>실제 저축</span>
-              <span>저축률</span>
-              <span>누적 저축</span>
-              <span>누적 목표</span>
-              <span>달성률</span>
+            <StMetricHead
+              $columns="0.72fr 0.9fr 1fr 0.9fr 1fr 1fr 0.9fr"
+              $mobileColumns="0.72fr 1fr 0.9fr"
+            >
+              <StHeadCell $align="left">월</StHeadCell>
+              <StHeadCell $hideOnMobile>순익</StHeadCell>
+              <StHeadCell>실제 저축</StHeadCell>
+              <StHeadCell $hideOnMobile>저축률</StHeadCell>
+              <StHeadCell $hideOnMobile>누적 저축</StHeadCell>
+              <StHeadCell $hideOnMobile>누적 목표</StHeadCell>
+              <StHeadCell>달성률</StHeadCell>
             </StMetricHead>
             {dashboardRows.map((row) => (
               <StMetricRow
                 key={`savings-${row.monthNumber}`}
                 type="button"
                 $columns="0.72fr 0.9fr 1fr 0.9fr 1fr 1fr 0.9fr"
+                $mobileColumns="0.72fr 1fr 0.9fr"
                 $active={currentMonthIndex + 1 === row.monthNumber}
                 onClick={() => onSelectMonth(row.monthNumber)}
               >
                 <StCell $align="left">{row.monthLabel}</StCell>
-                <StCell $tone={getValueTone(row.netAmount)}>
+                <StCell $hideOnMobile $tone={getValueTone(row.netAmount)}>
                   {formatNumber(row.netAmount)}
                 </StCell>
                 <StCell $tone={getValueTone(row.actualSavings)}>
                   {formatNumber(row.actualSavings)}
                 </StCell>
                 <StCell
+                  $hideOnMobile
                   $tone={
                     row.savingsRate === null
                       ? "neutral"
@@ -311,10 +320,10 @@ export default function AccountBookDashboardPanel({
                 >
                   {formatPercent(row.savingsRate)}
                 </StCell>
-                <StCell $tone={getValueTone(row.cumulativeSavings)}>
+                <StCell $hideOnMobile $tone={getValueTone(row.cumulativeSavings)}>
                   {formatNumber(row.cumulativeSavings)}
                 </StCell>
-                <StCell>{formatNumber(row.goalAmount)}</StCell>
+                <StCell $hideOnMobile>{formatNumber(row.goalAmount)}</StCell>
                 <StCell
                   $tone={
                     row.achievementRate === null
@@ -363,12 +372,20 @@ const StSubTitle = styled.p`
   margin-top: 0.18rem;
   font-size: 0.8rem;
   color: #78859a;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const StHeaderActions = styled.div`
   display: flex;
   gap: 0.45rem;
   flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 const StHeaderButton = styled.button`
@@ -379,6 +396,10 @@ const StHeaderButton = styled.button`
   padding: 0.42rem 0.8rem;
   font-size: 0.76rem;
   font-weight: 800;
+
+  @media (max-width: 720px) {
+    flex: 1;
+  }
 `;
 
 const StSummaryGrid = styled.div`
@@ -436,6 +457,12 @@ const StSummaryCard = styled.div`
     font-style: normal;
     font-size: 0.72rem;
     color: #8390a2;
+  }
+
+  @media (max-width: 720px) {
+    em {
+      display: none;
+    }
   }
 `;
 
@@ -530,7 +557,10 @@ const StMetricTable = styled.div`
   background: #fff;
 `;
 
-const StMetricHead = styled.div<{ $columns: string }>`
+const StMetricHead = styled.div<{
+  $columns: string;
+  $mobileColumns?: string;
+}>`
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
   background: #eef3fb;
@@ -548,10 +578,21 @@ const StMetricHead = styled.div<{ $columns: string }>`
     text-align: left;
     border-left: none;
   }
+
+  @media (max-width: 720px) {
+    grid-template-columns: ${({ $mobileColumns, $columns }) =>
+      $mobileColumns || $columns};
+
+    span {
+      padding: 0.45rem 0.5rem;
+      font-size: 0.7rem;
+    }
+  }
 `;
 
 const StMetricRow = styled.button<{
   $columns: string;
+  $mobileColumns?: string;
   $active: boolean;
 }>`
   width: 100%;
@@ -560,11 +601,28 @@ const StMetricRow = styled.button<{
   background: ${({ $active }) => ($active ? "#f1f5ff" : "#fff")};
   border: none;
   border-top: 1px solid #e6edf5;
+
+  @media (max-width: 720px) {
+    grid-template-columns: ${({ $mobileColumns, $columns }) =>
+      $mobileColumns || $columns};
+  }
+`;
+
+const StHeadCell = styled.span<{
+  $align?: "left" | "right";
+  $hideOnMobile?: boolean;
+}>`
+  text-align: ${({ $align = "right" }) => $align};
+
+  @media (max-width: 720px) {
+    display: ${({ $hideOnMobile }) => ($hideOnMobile ? "none" : "block")};
+  }
 `;
 
 const StCell = styled.div<{
   $tone?: "positive" | "negative" | "neutral";
   $align?: "left" | "right";
+  $hideOnMobile?: boolean;
 }>`
   padding: 0.58rem 0.7rem;
   text-align: ${({ $align = "right" }) => $align};
@@ -579,6 +637,12 @@ const StCell = styled.div<{
 
   &:first-child {
     border-left: none;
+  }
+
+  @media (max-width: 720px) {
+    display: ${({ $hideOnMobile }) => ($hideOnMobile ? "none" : "block")};
+    padding: 0.55rem 0.5rem;
+    font-size: 0.74rem;
   }
 `;
 
@@ -598,6 +662,12 @@ const StGoalMeta = styled.div`
     font-size: 0.72rem;
     font-weight: 800;
     color: #5f708b;
+  }
+
+  @media (max-width: 720px) {
+    flex-wrap: wrap;
+    overflow: visible;
+    white-space: normal;
   }
 `;
 
@@ -624,6 +694,12 @@ const StGoalDisplay = styled.form`
     padding: 0.3rem 0.62rem;
     font-size: 0.72rem;
     font-weight: 900;
+  }
+
+  @media (max-width: 720px) {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 `;
 
