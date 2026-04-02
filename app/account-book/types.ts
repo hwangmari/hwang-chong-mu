@@ -4,6 +4,10 @@ export type ViewMode = "ledger" | "calendar" | "board";
 export type StatsScope = "monthly" | "yearly";
 export type WorkspaceType = "personal" | "shared";
 export type ResolvedEntrySource = "direct" | "shared_link" | "shared_mirror";
+export type AccountBookAssetGoalMap = Record<
+  string,
+  Record<string, Record<string, number>>
+>;
 
 export type AccountEntry = {
   id: string;
@@ -44,6 +48,7 @@ export type AccountBookWorkspace = {
   type: WorkspaceType;
   password: string;
   annualSavingGoal?: number;
+  assetGoalMap?: AccountBookAssetGoalMap;
   ownerUserId?: string;
   memberIds: string[];
   inviteCode?: string;

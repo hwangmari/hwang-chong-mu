@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
@@ -53,6 +53,13 @@ export default function NaturalInputSection({
   onClearImageEntries,
   onSubmit,
 }: Props) {
+  const naturalInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (mode !== "natural") return;
+    naturalInputRef.current?.focus();
+  }, [mode]);
+
   const handleNaturalKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) return;
     if (event.key !== "Enter") return;
@@ -103,6 +110,7 @@ export default function NaturalInputSection({
             </StInputGuide>
 
             <StNaturalInput
+              ref={naturalInputRef}
               value={naturalInput}
               onChange={(event) => onChangeInput(event.target.value)}
               onKeyDown={handleNaturalKeyDown}

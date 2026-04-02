@@ -244,12 +244,18 @@ export default function WorkspaceLedgerView({
   const [registerMode, setRegisterMode] = useState<"natural" | "image">(
     "natural",
   );
+  const [selectedCalendarCardId, setSelectedCalendarCardId] = useState<
+    string | null
+  >(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [selectedLedgerCardId, setSelectedLedgerCardId] = useState<
     string | null
   >(null);
+  const [selectedCardCompany, setSelectedCardCompany] = useState<string | null>(
+    null,
+  );
   const [annualSavingGoal, setAnnualSavingGoal] = useState(
     DEFAULT_ANNUAL_SAVING_GOAL,
   );
@@ -329,8 +335,12 @@ export default function WorkspaceLedgerView({
       ? "공용방에서 내가 직접 쓴 내역은 이 화면에 자동 반영됩니다."
       : "공용방은 참가자별 내역을 함께 보고 비교하는 기준 화면입니다.";
   const calendarDetailTitle = isSharedWorkspace
-    ? formatSelectedDateTitle(selectedDate)
-    : `${formatSelectedDateTitle(selectedDate)} · ${selectedParticipantLabel}`;
+    ? selectedCalendarCardId === "asset"
+      ? `${monthLabel} 자산 상세`
+      : formatSelectedDateTitle(selectedDate)
+    : selectedCalendarCardId === "asset"
+      ? `${monthLabel} 자산 상세 · ${selectedParticipantLabel}`
+      : `${formatSelectedDateTitle(selectedDate)} · ${selectedParticipantLabel}`;
 
   const entriesWithPermissions = useMemo(
     () =>
@@ -413,7 +423,7 @@ export default function WorkspaceLedgerView({
 
   const cashBalance = useMemo(() => {
     return monthEntries.reduce((sum, entry) => {
-      if (entry.payment !== "cash" || isCardSettlementEntry(entry)) {
+      if (entry.payment !== "cash") {
         return sum;
       }
 
@@ -422,6 +432,15 @@ export default function WorkspaceLedgerView({
       }
 
       return sum - entry.amount;
+    }, 0);
+  }, [monthEntries]);
+
+  const monthSettlementTotal = useMemo(() => {
+    return monthEntries.reduce((sum, entry) => {
+      if (entry.type !== "expense" || !isCardSettlementEntry(entry)) {
+        return sum;
+      }
+      return sum + entry.amount;
     }, 0);
   }, [monthEntries]);
 
@@ -513,7 +532,9 @@ export default function WorkspaceLedgerView({
         .reduce((sum, entry) => sum + entry.amount, 0);
       const totalExpense = fixedExpense + consumptionExpense + regularSavings;
       const netAmount = income - totalExpense;
-      const actualSavings = netAmount + regularSavings;
+      // Savings metrics should follow actual savings-category entries so the
+      // dashboard stays aligned with asset/yearly views and user expectations.
+      const actualSavings = regularSavings;
       cumulativeSavings += actualSavings;
 
       return {
@@ -633,7 +654,6 @@ export default function WorkspaceLedgerView({
       .filter(
         (entry) => !(entry.type === "expense" && isSavingsCategory(entry.category)),
       )
-      .filter((entry) => !isCardSettlementEntry(entry))
       .filter((entry) => entry.date === selectedDate)
       .sort((a, b) => b.amount - a.amount);
   }, [selectedDate, visibleEntries]);
@@ -646,13 +666,62 @@ export default function WorkspaceLedgerView({
       .sort((a, b) => b.amount - a.amount);
   }, [selectedDate, visibleEntries]);
 
+  const monthAssetCategorySections = useMemo(() => {
+    const grouped = monthEntries.reduce<
+      Record<
+        string,
+        {
+          id: string;
+          title: string;
+          amount: number;
+          count: number;
+          entries: ResolvedAccountEntry[];
+        }
+      >
+    >((acc, entry) => {
+      if (!(entry.type === "expense" && isSavingsCategory(entry.category))) {
+        return acc;
+      }
+
+      const title =
+        entry.subCategory?.trim() || entry.category?.trim() || "기타 자산";
+
+      if (!acc[title]) {
+        acc[title] = {
+          id: `asset-${title}`,
+          title,
+          amount: 0,
+          count: 0,
+          entries: [],
+        };
+      }
+
+      acc[title].amount += entry.amount;
+      acc[title].count += 1;
+      acc[title].entries.push(entry);
+      return acc;
+    }, {});
+
+    return Object.values(grouped)
+      .map((group) => ({
+        ...group,
+        entries: group.entries.slice().sort(compareResolvedEntriesDesc),
+      }))
+      .sort(
+        (a, b) =>
+          b.amount - a.amount || a.title.localeCompare(b.title, "ko-KR"),
+      );
+  }, [monthEntries]);
+
   const daySummary = useMemo(() => {
     return monthEntries.reduce<
-      Record<string, { income: number; expense: number }>
+      Record<string, { income: number; expense: number; settlement: number }>
     >((acc, entry) => {
-      const target = acc[entry.date] || { income: 0, expense: 0 };
+      const target = acc[entry.date] || { income: 0, expense: 0, settlement: 0 };
       if (entry.type === "income") target.income += entry.amount;
-      if (entry.type === "expense" && !isCardSettlementEntry(entry)) {
+      if (entry.type === "expense" && isCardSettlementEntry(entry)) {
+        target.settlement += entry.amount;
+      } else if (entry.type === "expense") {
         target.expense += entry.amount;
       }
       acc[entry.date] = target;
@@ -758,6 +827,55 @@ export default function WorkspaceLedgerView({
     [monthlyBoardColumns],
   );
 
+  const cardCompanySummary = useMemo(() => {
+    const grouped = monthEntries.reduce<
+      Record<
+        string,
+        {
+          label: string;
+          amount: number;
+          count: number;
+          cardCount: number;
+          checkCardCount: number;
+        }
+      >
+    >((acc, entry) => {
+      if (entry.type !== "expense") return acc;
+      if (entry.payment === "cash") return acc;
+      if (isCardSettlementEntry(entry)) return acc;
+
+      const label =
+        entry.cardCompany.trim() ||
+        (entry.payment === "check_card" ? "기타 체크카드" : "기타 카드");
+
+      if (!acc[label]) {
+        acc[label] = {
+          label,
+          amount: 0,
+          count: 0,
+          cardCount: 0,
+          checkCardCount: 0,
+        };
+      }
+
+      acc[label].amount += entry.amount;
+      acc[label].count += 1;
+
+      if (entry.payment === "check_card") {
+        acc[label].checkCardCount += 1;
+      } else {
+        acc[label].cardCount += 1;
+      }
+
+      return acc;
+    }, {});
+
+    return Object.values(grouped).sort(
+      (a, b) =>
+        b.amount - a.amount || a.label.localeCompare(b.label, "ko-KR"),
+    );
+  }, [monthEntries]);
+
   const selectedLedgerColumn = useMemo(
     () =>
       monthlyBoardColumns.find(
@@ -770,9 +888,30 @@ export default function WorkspaceLedgerView({
     () => displayMonthEntries.slice().sort(compareResolvedEntriesDesc),
     [displayMonthEntries],
   );
+  const sortedMonthDetailEntries = useMemo(
+    () => monthEntries.slice().sort(compareResolvedEntriesDesc),
+    [monthEntries],
+  );
 
-  const ledgerDetailSourceEntries =
-    selectedLedgerColumn?.entries || sortedMonthEntries;
+  const selectedCardCompanyEntries = useMemo(
+    () =>
+      sortedMonthEntries.filter((entry) => {
+        if (entry.type !== "expense") return false;
+        if (entry.payment === "cash") return false;
+        if (isCardSettlementEntry(entry)) return false;
+
+        const label =
+          entry.cardCompany.trim() ||
+          (entry.payment === "check_card" ? "기타 체크카드" : "기타 카드");
+
+        return label === selectedCardCompany;
+      }),
+    [selectedCardCompany, sortedMonthEntries],
+  );
+
+  const ledgerDetailSourceEntries = selectedCardCompany
+    ? selectedCardCompanyEntries
+    : selectedLedgerColumn?.entries || sortedMonthDetailEntries;
 
   const ledgerDetailEntries = useMemo(
     () =>
@@ -790,9 +929,11 @@ export default function WorkspaceLedgerView({
     [ledgerDetailSourceEntries],
   );
 
-  const ledgerDetailTitle = selectedLedgerColumn
-    ? `${monthLabel} ${selectedLedgerColumn.title} 내역`
-    : `${monthLabel} 전체 내역`;
+  const ledgerDetailTitle = selectedCardCompany
+    ? `${monthLabel} ${selectedCardCompany} 내역`
+    : selectedLedgerColumn
+      ? `${monthLabel} ${selectedLedgerColumn.title} 내역`
+      : `${monthLabel} 전체 내역`;
 
   const naturalPreview = useMemo(
     () =>
@@ -887,6 +1028,7 @@ export default function WorkspaceLedgerView({
     const next = startOfMonth(addMonths(currentMonth, diff));
     setCurrentMonth(next);
     setSelectedDate(toIsoDate(next));
+    setSelectedCalendarCardId(null);
   };
 
   const onMonthSelect = (value: string) => {
@@ -900,12 +1042,14 @@ export default function WorkspaceLedgerView({
     const next = startOfMonth(new Date(nextYear, nextMonthIndex, 1));
     setCurrentMonth(next);
     setSelectedDate(toIsoDate(next));
+    setSelectedCalendarCardId(null);
   };
 
   const onDashboardMonthSelect = (monthNumber: number) => {
     const next = startOfMonth(new Date(currentYear, monthNumber - 1, 1));
     setCurrentMonth(next);
     setSelectedDate(toIsoDate(next));
+    setSelectedCalendarCardId(null);
   };
 
   const onAnnualGoalChange = async (nextGoal: number) => {
@@ -1001,10 +1145,6 @@ export default function WorkspaceLedgerView({
       alert("카테고리를 입력해주세요.");
       return;
     }
-    if (type === "expense" && payment !== "cash" && !cardCompany.trim()) {
-      alert("카드 결제 내역은 카드사를 선택해주세요.");
-      return;
-    }
     if (!Number.isFinite(parsedAmount) || parsedAmount === 0) {
       alert("금액은 0이 아닌 숫자로 입력해주세요.");
       return;
@@ -1021,6 +1161,12 @@ export default function WorkspaceLedgerView({
     const normalizedCategory = normalizedSelection.category;
     const normalizedSubCategory =
       type === "expense" ? normalizedSelection.subCategory : "";
+    const resolvedPayment =
+      type === "expense" && normalizedCategory === "카드대금" ? "cash" : payment;
+    if (type === "expense" && resolvedPayment !== "cash" && !cardCompany.trim()) {
+      alert("카드 결제 내역은 카드사를 선택해주세요.");
+      return;
+    }
     const isFixedExpense =
       type === "expense" && normalizedCategory === "고정비";
     const existingFixedTemplateId = extractFixedExpenseTemplateId(
@@ -1052,10 +1198,10 @@ export default function WorkspaceLedgerView({
       item: resolvedItem,
       amount: Math.trunc(parsedAmount),
       cardCompany:
-        type === "expense" && payment !== "cash"
+        type === "expense" && resolvedPayment !== "cash"
           ? cardCompany.trim() || CARD_COMPANY_DEFAULT
           : "",
-      payment: type === "income" ? "cash" : payment,
+      payment: type === "income" ? "cash" : resolvedPayment,
       memo: memo.trim(),
       rawText:
         nextFixedTemplateId && type === "expense"
@@ -1185,6 +1331,13 @@ export default function WorkspaceLedgerView({
   const openRegisterModal = (mode: "natural" | "image") => {
     setRegisterMode(mode);
     setIsRegisterModalOpen(true);
+  };
+
+  const openNaturalRegisterForDate = (date: string) => {
+    setSelectedCalendarCardId(null);
+    setSelectedDate(date);
+    setCurrentMonth(startOfMonth(parseIsoDate(date) || new Date()));
+    openRegisterModal("natural");
   };
 
   const openManualEntryModal = () => {
@@ -1487,7 +1640,9 @@ export default function WorkspaceLedgerView({
           monthTotals={monthTotals}
           monthPaymentTotals={monthPaymentTotals}
           cashBalance={cashBalance}
+          monthSettlementTotal={monthSettlementTotal}
           monthAssetTotal={monthAssetTotal}
+          selectedCalendarCardId={selectedCalendarCardId}
           listMemo={listMemoDraft}
           isListMemoEditing={isListMemoEditing}
           onChangeListMemo={setListMemoDraft}
@@ -1495,6 +1650,14 @@ export default function WorkspaceLedgerView({
           onEditListMemo={startListMemoEdit}
           memberExpenseTotals={memberExpenseTotals}
           monthCategorySummary={monthCategorySummary}
+          cardCompanySummary={cardCompanySummary}
+          selectedCardCompany={selectedCardCompany}
+          onSelectCardCompany={(cardCompany) => {
+            setSelectedCardCompany((current) =>
+              current === cardCompany ? null : cardCompany,
+            );
+            setSelectedLedgerCardId(null);
+          }}
           onOpenIncomeYearly={() =>
             router.push(
               `/account-book/annual?kind=income&${annualDetailQuery.toString()}`,
@@ -1513,11 +1676,12 @@ export default function WorkspaceLedgerView({
           formatAmount={formatAmount}
           boardSummaryCards={boardSummaryCards}
           selectedLedgerCardId={selectedLedgerCardId}
-          onSelectLedgerCard={(cardId) =>
+          onSelectLedgerCard={(cardId) => {
+            setSelectedCardCompany(null);
             setSelectedLedgerCardId((current) =>
               current === cardId ? null : cardId,
-            )
-          }
+            );
+          }}
           ledgerDetailTitle={ledgerDetailTitle}
           ledgerDetailEntries={ledgerDetailEntries}
           ledgerDetailAssetEntries={ledgerDetailAssetEntries}
@@ -1530,13 +1694,25 @@ export default function WorkspaceLedgerView({
           calendarDays={calendarDays}
           daySummary={daySummary}
           toIsoDate={toIsoDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={(date) => {
+            setSelectedCalendarCardId(null);
+            setSelectedDate(date);
+          }}
           calendarDetailTitle={calendarDetailTitle}
           selectedDateEntries={selectedDateEntries}
           selectedDateAssetEntries={selectedDateAssetEntries}
+          monthAssetCategorySections={monthAssetCategorySections}
           onOpenAdd={() => openFormModal({ date: selectedDate })}
-          onOpenAddForDate={(date) => openFormModal({ date })}
-          onEdit={openEditModal}
+          onOpenNaturalRegisterForDate={openNaturalRegisterForDate}
+          onSelectCalendarCard={(cardId) =>
+            setSelectedCalendarCardId((current) =>
+              current === cardId ? null : cardId,
+            )
+          }
+          onEdit={(entry) => {
+            setSelectedCalendarCardId(null);
+            openEditModal(entry);
+          }}
           onDelete={handleDeleteEntry}
           entryActions={entryActions}
           paymentLabel={paymentLabel}

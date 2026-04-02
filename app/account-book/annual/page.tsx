@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
-import { fetchAccountBookStore } from "../repository";
+import { fetchAccountBookStore, upsertAccountBookWorkspace } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
 import {
   getRepresentativeCategory,
@@ -18,11 +18,18 @@ import type { AccountBookStore, ViewMode } from "../types";
 
 type AnnualKind = "income" | "expense" | "asset";
 type PaymentKey = "cash" | "card" | "check_card";
+type AssetGoalCategory = "IRP" | "연금저축" | "퇴직연금" | "ISA";
 
 const PAYMENT_META: Array<{ key: PaymentKey; label: string; color: string }> = [
   { key: "cash", label: "현금", color: "#4f7cff" },
   { key: "card", label: "카드", color: "#6b63e8" },
   { key: "check_card", label: "체크카드", color: "#3f8f8a" },
+];
+const ASSET_GOAL_CATEGORIES: AssetGoalCategory[] = [
+  "IRP",
+  "연금저축",
+  "퇴직연금",
+  "ISA",
 ];
 
 function formatAmount(value: number) {
@@ -45,6 +52,21 @@ function buildBackUrl(workspaceId?: string, viewMode: ViewMode = "calendar") {
   return `/account-book?workspaceId=${workspaceId}&view=${viewMode}`;
 }
 
+function formatGoalInputValue(value: string) {
+  const digitsOnly = value.replace(/\D/g, "");
+  if (!digitsOnly) return "";
+  return Number(digitsOnly).toLocaleString("ko-KR");
+}
+
+function createEmptyAssetGoalInputs() {
+  return {
+    IRP: "",
+    연금저축: "",
+    퇴직연금: "",
+    ISA: "",
+  } satisfies Record<AssetGoalCategory, string>;
+}
+
 function AccountBookAnnualContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +77,12 @@ function AccountBookAnnualContent() {
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {},
   );
+  const [assetGoalInputs, setAssetGoalInputs] = useState<
+    Record<AssetGoalCategory, string>
+  >(createEmptyAssetGoalInputs());
+  const [assetGoalSaveState, setAssetGoalSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   useEffect(() => {
     let active = true;
@@ -237,6 +265,166 @@ function AccountBookAnnualContent() {
       ?.date;
   }, [filteredEntries]);
 
+  const assetCumulativeCategoryRows = useMemo(() => {
+    const grouped = filteredEntries.reduce<
+      Record<
+        string,
+        {
+          amount: number;
+          count: number;
+          latestDate: string;
+        }
+      >
+    >((acc, entry) => {
+      const key =
+        entry.subCategory?.trim() ||
+        entry.item?.trim() ||
+        entry.category?.trim() ||
+        "기타 자산";
+
+      if (!acc[key]) {
+        acc[key] = {
+          amount: 0,
+          count: 0,
+          latestDate: entry.date,
+        };
+      }
+
+      acc[key].amount += entry.amount;
+      acc[key].count += 1;
+      if (entry.date > acc[key].latestDate) {
+        acc[key].latestDate = entry.date;
+      }
+
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort((a, b) => b[1].amount - a[1].amount)
+      .map(([label, meta]) => ({
+        label,
+        amount: meta.amount,
+        count: meta.count,
+        latestDate: meta.latestDate,
+        ratio: total > 0 ? (meta.amount / total) * 100 : 0,
+      }));
+  }, [filteredEntries, total]);
+
+  const assetGoalScopeKey = memberId || "all";
+  const persistedAssetGoalInputs = useMemo(() => {
+    const savedGoals =
+      workspace?.assetGoalMap?.[String(selectedYear)]?.[assetGoalScopeKey] || {};
+
+    return ASSET_GOAL_CATEGORIES.reduce(
+      (acc, label) => {
+        const value = Number(savedGoals[label]) || 0;
+        acc[label] = value > 0 ? value.toLocaleString("ko-KR") : "";
+        return acc;
+      },
+      createEmptyAssetGoalInputs(),
+    );
+  }, [assetGoalScopeKey, selectedYear, workspace?.assetGoalMap]);
+
+  const persistedAssetGoalSignature = JSON.stringify(persistedAssetGoalInputs);
+  const assetGoalInputSignature = JSON.stringify(assetGoalInputs);
+
+  useEffect(() => {
+    setAssetGoalInputs(persistedAssetGoalInputs);
+    setAssetGoalSaveState("idle");
+  }, [persistedAssetGoalSignature, persistedAssetGoalInputs]);
+
+  useEffect(() => {
+    if (kind !== "asset" || !workspace || !store) return;
+    if (assetGoalInputSignature === persistedAssetGoalSignature) return;
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        setAssetGoalSaveState("saving");
+        const scopedGoalMap = ASSET_GOAL_CATEGORIES.reduce<Record<string, number>>(
+          (acc, label) => {
+            const value = Number(assetGoalInputs[label].replace(/,/g, "")) || 0;
+            if (value > 0) {
+              acc[label] = value;
+            }
+            return acc;
+          },
+          {},
+        );
+
+        const nextAssetGoalMap = {
+          ...(workspace.assetGoalMap || {}),
+          [String(selectedYear)]: {
+            ...((workspace.assetGoalMap || {})[String(selectedYear)] || {}),
+            [assetGoalScopeKey]: scopedGoalMap,
+          },
+        };
+
+        const nextStore = await upsertAccountBookWorkspace({
+          ...workspace,
+          assetGoalMap: nextAssetGoalMap,
+        });
+        setStore(nextStore);
+        setAssetGoalSaveState("saved");
+      } catch (error) {
+        console.error("자산 목표 저장 실패:", error);
+        setAssetGoalSaveState("error");
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    assetGoalInputSignature,
+    assetGoalInputs,
+    assetGoalScopeKey,
+    kind,
+    persistedAssetGoalSignature,
+    selectedYear,
+    store,
+    workspace,
+  ]);
+
+  const assetGoalRows = useMemo(() => {
+    const amountMap = new Map(
+      assetCumulativeCategoryRows.map((row) => [row.label, row.amount]),
+    );
+
+    return ASSET_GOAL_CATEGORIES.map((label) => {
+      const goal = Number(assetGoalInputs[label].replace(/,/g, "")) || 0;
+      const saved = amountMap.get(label) || 0;
+      const remaining = Math.max(goal - saved, 0);
+      const achievementRate = goal > 0 ? (saved / goal) * 100 : null;
+
+      return {
+        label,
+        goal,
+        saved,
+        remaining,
+        achievementRate,
+        isCompleted: goal > 0 && saved >= goal,
+      };
+    });
+  }, [assetCumulativeCategoryRows, assetGoalInputs]);
+
+  const assetGoalSummary = useMemo(() => {
+    const totalGoalAmount = assetGoalRows.reduce((sum, row) => sum + row.goal, 0);
+    const totalSavedAmount = assetGoalRows.reduce(
+      (sum, row) => sum + Math.min(row.saved, row.goal || row.saved),
+      0,
+    );
+    const completedCount = assetGoalRows.filter((row) => row.isCompleted).length;
+    const activeGoalCount = assetGoalRows.filter((row) => row.goal > 0).length;
+
+    return {
+      totalGoalAmount,
+      totalSavedAmount,
+      totalRemainingAmount: Math.max(totalGoalAmount - totalSavedAmount, 0),
+      completedCount,
+      activeGoalCount,
+      overallRate:
+        totalGoalAmount > 0 ? (totalSavedAmount / totalGoalAmount) * 100 : null,
+    };
+  }, [assetGoalRows]);
+
   const entriesByMonth = useMemo(() => {
     const filteredMonthlyRows = selectedMonth
       ? monthlyRows.filter((row) => row.month === selectedMonth)
@@ -347,7 +535,9 @@ function AccountBookAnnualContent() {
             <StSectionTitle>{kindLabel} 합계</StSectionTitle>
             <StTotal>{formatAmount(total)}</StTotal>
             <StHeroDescription>
-              {selectedMonth
+              {kind === "asset"
+                ? "연금 카테고리별 목표를 넣고 현재 누적 금액이 얼마나 찼는지 바로 확인할 수 있어요."
+                : selectedMonth
                 ? `${selectedMonth}만 보고 있어요. 다시 누르면 전체 연도로 돌아갑니다.`
                 : "월별 흐름을 눌러 해당 월만 좁혀볼 수 있어요."}
             </StHeroDescription>
@@ -376,104 +566,257 @@ function AccountBookAnnualContent() {
           </StStatGrid>
         </StHeroCard>
 
-        <StInsightGrid>
-          <StCard>
-            <StSectionHeader>
-              <StSectionTitle>월별 흐름</StSectionTitle>
-              {selectedMonth ? (
-                <StFilterChip
-                  type="button"
-                  onClick={() => setSelectedMonth(null)}
-                >
-                  {selectedMonth} 필터 해제
-                </StFilterChip>
-              ) : null}
-            </StSectionHeader>
-            {monthlyRows.every((row) => row.amount === 0) ? (
-              <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
-            ) : (
-              <StMonthlyList>
-                {monthlyRows.map((row) => {
-                  const isActive = selectedMonth === row.month;
-                  const ratio =
-                    row.amount > 0 && maxMonthlyAmount > 0
-                      ? (row.amount / maxMonthlyAmount) * 100
-                      : 0;
-
-                  return (
-                    <StMonthLine
-                      key={row.month}
-                      type="button"
-                      $active={isActive}
-                      onClick={() =>
-                        setSelectedMonth((prev) =>
-                          prev === row.month ? null : row.month,
-                        )
-                      }
-                    >
-                      <strong>{row.month}</strong>
-                      <span>{row.count}건</span>
-                      <em>{formatAmount(row.amount)}</em>
-                      <div className="track">
-                        <div
-                          className="fill"
-                          style={{ width: `${Math.max(ratio, row.amount > 0 ? 8 : 0)}%` }}
-                        />
-                      </div>
-                    </StMonthLine>
-                  );
-                })}
-              </StMonthlyList>
-            )}
-          </StCard>
-
-          <StSideColumn>
+        {kind === "asset" ? (
+          <StInsightGrid>
             <StCard>
-              <StSectionTitle>결제 수단 비중</StSectionTitle>
-              <StPaymentLegend>
-                {PAYMENT_META.map((payment) => {
-                  const value = annualPaymentTotals[payment.key];
-                  const ratio = total > 0 ? (value / total) * 100 : 0;
-
-                  return (
-                    <StLegendItem key={payment.key}>
-                      <div className="info">
-                        <span
-                          className="dot"
-                          style={{ background: payment.color }}
-                        />
-                        <strong>{payment.label}</strong>
-                      </div>
-                      <div className="meta">
-                        <em>{formatAmount(value)}</em>
-                        <span>{formatCompactPercent(ratio)}</span>
-                      </div>
-                    </StLegendItem>
-                  );
-                })}
-              </StPaymentLegend>
-            </StCard>
-
-            <StCard>
-              <StSectionTitle>많이 나온 분류</StSectionTitle>
-              {categoryRows.length === 0 ? (
-                <StEmpty>분류할 데이터가 없습니다.</StEmpty>
-              ) : (
-                <StCategoryList>
-                  {categoryRows.map((row) => (
-                    <StCategoryItem key={row.label}>
+                <StSectionHeader>
+                  <StSectionTitle>연금 목표 현황</StSectionTitle>
+                  <StSectionMeta>
+                    {assetGoalSaveState === "saving"
+                      ? "DB에 저장하는 중..."
+                      : assetGoalSaveState === "saved"
+                        ? "DB에 저장됐어요."
+                        : assetGoalSaveState === "error"
+                          ? "DB 저장에 실패했어요. 다시 수정하면 재시도해요."
+                          : "목표 금액은 DB에 저장돼요."}
+                  </StSectionMeta>
+                </StSectionHeader>
+              <StGoalList>
+                {assetGoalRows.map((row) => (
+                  <StGoalCard key={row.label}>
+                    <StGoalHeader>
                       <div>
                         <strong>{row.label}</strong>
-                        <span>{formatCompactPercent(row.ratio)}</span>
+                        <span>
+                          {row.isCompleted
+                            ? "목표 달성 완료"
+                            : row.goal > 0
+                              ? `남은 금액 ${formatAmount(row.remaining)}`
+                              : "목표 금액을 입력하면 달성률이 보여요."}
+                        </span>
                       </div>
-                      <em>{formatAmount(row.amount)}</em>
-                    </StCategoryItem>
-                  ))}
-                </StCategoryList>
+                      <StGoalInputWrap>
+                        <label htmlFor={`asset-goal-${row.label}`}>목표</label>
+                        <input
+                          id={`asset-goal-${row.label}`}
+                          inputMode="numeric"
+                          value={assetGoalInputs[row.label]}
+                          onChange={(event) =>
+                            setAssetGoalInputs((prev) => ({
+                              ...prev,
+                              [row.label]: formatGoalInputValue(event.target.value),
+                            }))
+                          }
+                          placeholder="0"
+                        />
+                        <em>원</em>
+                      </StGoalInputWrap>
+                    </StGoalHeader>
+                    <StGoalMetaGrid>
+                      <StGoalMetaCard>
+                        <span>현재 누적</span>
+                        <strong>{formatAmount(row.saved)}</strong>
+                      </StGoalMetaCard>
+                      <StGoalMetaCard>
+                        <span>달성률</span>
+                        <strong>
+                          {row.achievementRate === null
+                            ? "-"
+                            : formatCompactPercent(
+                                Math.min(row.achievementRate, 999.9),
+                              )}
+                        </strong>
+                      </StGoalMetaCard>
+                      <StGoalMetaCard>
+                        <span>남은 금액</span>
+                        <strong>{formatAmount(row.remaining)}</strong>
+                      </StGoalMetaCard>
+                    </StGoalMetaGrid>
+                    <StGoalBar>
+                      <StGoalFill
+                        style={{
+                          width: `${
+                            row.achievementRate === null
+                              ? 0
+                              : Math.max(
+                                  Math.min(row.achievementRate, 100),
+                                  row.saved > 0 ? 8 : 0,
+                                )
+                          }%`,
+                        }}
+                      />
+                    </StGoalBar>
+                  </StGoalCard>
+                ))}
+              </StGoalList>
+            </StCard>
+
+            <StSideColumn>
+              <StCard>
+                <StSectionHeader>
+                  <StSectionTitle>목표 요약</StSectionTitle>
+                  <StSectionMeta>연금 카테고리 기준</StSectionMeta>
+                </StSectionHeader>
+                <StGoalSummaryList>
+                  <StGoalSummaryItem>
+                    <span>목표 합계</span>
+                    <strong>{formatAmount(assetGoalSummary.totalGoalAmount)}</strong>
+                  </StGoalSummaryItem>
+                  <StGoalSummaryItem>
+                    <span>현재 누적</span>
+                    <strong>{formatAmount(assetGoalSummary.totalSavedAmount)}</strong>
+                  </StGoalSummaryItem>
+                  <StGoalSummaryItem>
+                    <span>남은 금액</span>
+                    <strong>
+                      {formatAmount(assetGoalSummary.totalRemainingAmount)}
+                    </strong>
+                  </StGoalSummaryItem>
+                  <StGoalSummaryItem>
+                    <span>달성한 카테고리</span>
+                    <strong>
+                      {assetGoalSummary.completedCount}/{assetGoalSummary.activeGoalCount || 0}
+                    </strong>
+                  </StGoalSummaryItem>
+                  <StGoalSummaryItem>
+                    <span>전체 달성률</span>
+                    <strong>
+                      {assetGoalSummary.overallRate === null
+                        ? "-"
+                        : formatCompactPercent(
+                            Math.min(assetGoalSummary.overallRate, 999.9),
+                          )}
+                    </strong>
+                  </StGoalSummaryItem>
+                </StGoalSummaryList>
+              </StCard>
+
+              <StCard>
+                <StSectionHeader>
+                  <StSectionTitle>카테고리 누적 금액</StSectionTitle>
+                  <StSectionMeta>자산 카테고리 전체</StSectionMeta>
+                </StSectionHeader>
+                {assetCumulativeCategoryRows.length === 0 ? (
+                  <StEmpty>누적 카테고리 데이터가 없습니다.</StEmpty>
+                ) : (
+                  <StCategoryList>
+                    {assetCumulativeCategoryRows.map((row) => (
+                      <StCategoryItem key={`asset-category-${row.label}`}>
+                        <div>
+                          <strong>{row.label}</strong>
+                          <span>
+                            {formatCompactPercent(row.ratio)} · {row.count}건 · 최근{" "}
+                            {row.latestDate}
+                          </span>
+                        </div>
+                        <em>{formatAmount(row.amount)}</em>
+                      </StCategoryItem>
+                    ))}
+                  </StCategoryList>
+                )}
+              </StCard>
+            </StSideColumn>
+          </StInsightGrid>
+        ) : (
+          <StInsightGrid>
+            <StCard>
+              <StSectionHeader>
+                <StSectionTitle>월별 흐름</StSectionTitle>
+                {selectedMonth ? (
+                  <StFilterChip
+                    type="button"
+                    onClick={() => setSelectedMonth(null)}
+                  >
+                    {selectedMonth} 필터 해제
+                  </StFilterChip>
+                ) : null}
+              </StSectionHeader>
+              {monthlyRows.every((row) => row.amount === 0) ? (
+                <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
+              ) : (
+                <StMonthlyList>
+                  {monthlyRows.map((row) => {
+                    const isActive = selectedMonth === row.month;
+                    const ratio =
+                      row.amount > 0 && maxMonthlyAmount > 0
+                        ? (row.amount / maxMonthlyAmount) * 100
+                        : 0;
+
+                    return (
+                      <StMonthLine
+                        key={row.month}
+                        type="button"
+                        $active={isActive}
+                        onClick={() =>
+                          setSelectedMonth((prev) =>
+                            prev === row.month ? null : row.month,
+                          )
+                        }
+                      >
+                        <strong>{row.month}</strong>
+                        <span>{row.count}건</span>
+                        <em>{formatAmount(row.amount)}</em>
+                        <div className="track">
+                          <div
+                            className="fill"
+                            style={{ width: `${Math.max(ratio, row.amount > 0 ? 8 : 0)}%` }}
+                          />
+                        </div>
+                      </StMonthLine>
+                    );
+                  })}
+                </StMonthlyList>
               )}
             </StCard>
-          </StSideColumn>
-        </StInsightGrid>
+
+            <StSideColumn>
+              <StCard>
+                <StSectionTitle>결제 수단 비중</StSectionTitle>
+                <StPaymentLegend>
+                  {PAYMENT_META.map((payment) => {
+                    const value = annualPaymentTotals[payment.key];
+                    const ratio = total > 0 ? (value / total) * 100 : 0;
+
+                    return (
+                      <StLegendItem key={payment.key}>
+                        <div className="info">
+                          <span
+                            className="dot"
+                            style={{ background: payment.color }}
+                          />
+                          <strong>{payment.label}</strong>
+                        </div>
+                        <div className="meta">
+                          <em>{formatAmount(value)}</em>
+                          <span>{formatCompactPercent(ratio)}</span>
+                        </div>
+                      </StLegendItem>
+                    );
+                  })}
+                </StPaymentLegend>
+              </StCard>
+
+              <StCard>
+                <StSectionTitle>많이 나온 분류</StSectionTitle>
+                {categoryRows.length === 0 ? (
+                  <StEmpty>분류할 데이터가 없습니다.</StEmpty>
+                ) : (
+                  <StCategoryList>
+                    {categoryRows.map((row) => (
+                      <StCategoryItem key={row.label}>
+                        <div>
+                          <strong>{row.label}</strong>
+                          <span>{formatCompactPercent(row.ratio)}</span>
+                        </div>
+                        <em>{formatAmount(row.amount)}</em>
+                      </StCategoryItem>
+                    ))}
+                  </StCategoryList>
+                )}
+              </StCard>
+            </StSideColumn>
+          </StInsightGrid>
+        )}
 
         <StCard>
           <StSectionHeader>
@@ -630,6 +973,155 @@ const StSideColumn = styled.div`
   display: grid;
   gap: 0.9rem;
   align-content: start;
+`;
+
+const StGoalList = styled.div`
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.95rem;
+`;
+
+const StGoalCard = styled.article`
+  border: 1px solid #dce5f1;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fcfdff, #f8fbff);
+  padding: 0.9rem;
+`;
+
+const StGoalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.9rem;
+
+  @media (max-width: 820px) {
+    flex-direction: column;
+  }
+
+  div {
+    display: grid;
+    gap: 0.18rem;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    color: #223247;
+  }
+
+  span {
+    font-size: 0.78rem;
+    color: #74839a;
+    font-weight: 700;
+  }
+`;
+
+const StGoalInputWrap = styled.label`
+  display: grid;
+  grid-template-columns: auto minmax(110px, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 250px;
+  font-size: 0.76rem;
+  color: #708099;
+  font-weight: 800;
+
+  input {
+    width: 100%;
+    border: 1px solid #d8e2ef;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #223247;
+  }
+
+  em {
+    font-style: normal;
+    color: #7d8ca0;
+  }
+
+  @media (max-width: 820px) {
+    min-width: 0;
+    width: 100%;
+  }
+`;
+
+const StGoalMetaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StGoalMetaCard = styled.div`
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e1e9f4;
+  padding: 0.75rem 0.8rem;
+
+  span {
+    display: block;
+    font-size: 0.74rem;
+    color: #7a899d;
+    font-weight: 700;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.24rem;
+    font-size: 0.96rem;
+    color: #213454;
+    font-weight: 900;
+  }
+`;
+
+const StGoalBar = styled.div`
+  margin-top: 0.8rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: #e8eef7;
+  overflow: hidden;
+`;
+
+const StGoalFill = styled.div`
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4eb3a6, #3f8f8a);
+`;
+
+const StGoalSummaryList = styled.div`
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+`;
+
+const StGoalSummaryItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  border-radius: 16px;
+  border: 1px solid #dfe7f3;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.8rem 0.9rem;
+
+  span {
+    font-size: 0.78rem;
+    color: #74839a;
+    font-weight: 700;
+  }
+
+  strong {
+    font-size: 0.92rem;
+    color: #223247;
+    font-weight: 900;
+    text-align: right;
+  }
 `;
 
 const StSectionHeader = styled.div`

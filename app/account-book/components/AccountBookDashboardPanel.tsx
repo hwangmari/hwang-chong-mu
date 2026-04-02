@@ -128,32 +128,21 @@ export default function AccountBookDashboardPanel({
             {currentYear}년 흐름을 한 화면에서 보고 월을 눌러 바로 이동합니다.
           </StSubTitle>
         </div>
-        <StHeaderActions>
-          <StHeaderButton type="button" onClick={onOpenIncomeYearly}>
-            수입
-          </StHeaderButton>
-          <StHeaderButton type="button" onClick={onOpenExpenseYearly}>
-            지출
-          </StHeaderButton>
-          <StHeaderButton type="button" onClick={onOpenAssetYearly}>
-            저축
-          </StHeaderButton>
-        </StHeaderActions>
       </StHeader>
 
       <StSummaryGrid>
-        <StSummaryCard>
+        <StSummaryCard type="button" onClick={onOpenIncomeYearly}>
           <span>수입</span>
           <strong>{formatNumber(currentMonthRow?.income || 0)}</strong>
           <em>이번 달 들어온 금액</em>
         </StSummaryCard>
         <StSummaryRightGrid>
-          <StSummaryCard>
+          <StSummaryCard type="button" onClick={onOpenExpenseYearly}>
             <span>지출</span>
             <strong>{formatNumber(currentMonthRow?.totalExpense || 0)}</strong>
             <em>총 지출 기준</em>
           </StSummaryCard>
-          <StSummaryCard>
+          <StSummaryCard type="button" onClick={onOpenAssetYearly}>
             <span>저축</span>
             <strong>{formatNumber(currentMonthRow?.actualSavings || 0)}</strong>
             <em>실제 저축 · {formatPercent(annualAchievementRate)}</em>
@@ -209,7 +198,9 @@ export default function AccountBookDashboardPanel({
                 <StCell>{formatNumber(row.totalExpense)}</StCell>
                 <StCell $hideOnMobile>{formatNumber(row.fixedExpense)}</StCell>
                 <StCell>{formatNumber(row.consumptionExpense)}</StCell>
-                <StCell $hideOnMobile>{formatNumber(row.regularSavings)}</StCell>
+                <StCell $hideOnMobile>
+                  {formatNumber(row.regularSavings)}
+                </StCell>
               </StMetricRow>
             ))}
           </StMetricTable>
@@ -291,7 +282,7 @@ export default function AccountBookDashboardPanel({
               $mobileColumns="0.72fr 1fr 0.9fr"
             >
               <StHeadCell $align="left">월</StHeadCell>
-              <StHeadCell $hideOnMobile>순익</StHeadCell>
+              <StHeadCell $hideOnMobile>수입-지출</StHeadCell>
               <StHeadCell>실제 저축</StHeadCell>
               <StHeadCell $hideOnMobile>저축률</StHeadCell>
               <StHeadCell $hideOnMobile>누적 저축</StHeadCell>
@@ -326,7 +317,10 @@ export default function AccountBookDashboardPanel({
                 >
                   {formatPercent(row.savingsRate)}
                 </StCell>
-                <StCell $hideOnMobile $tone={getValueTone(row.cumulativeSavings)}>
+                <StCell
+                  $hideOnMobile
+                  $tone={getValueTone(row.cumulativeSavings)}
+                >
                   {formatNumber(row.cumulativeSavings)}
                 </StCell>
                 <StCell $hideOnMobile>{formatNumber(row.goalAmount)}</StCell>
@@ -384,30 +378,6 @@ const StSubTitle = styled.p`
   }
 `;
 
-const StHeaderActions = styled.div`
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-
-  @media (max-width: 720px) {
-    width: 100%;
-  }
-`;
-
-const StHeaderButton = styled.button`
-  border-radius: 999px;
-  border: 1px solid #dce4ef;
-  background: #fff;
-  color: #5c6d86;
-  padding: 0.42rem 0.8rem;
-  font-size: 0.76rem;
-  font-weight: 800;
-
-  @media (max-width: 720px) {
-    flex: 1;
-  }
-`;
-
 const StSummaryGrid = styled.div`
   display: grid;
   grid-template-columns: minmax(190px, 0.62fr) minmax(0, 1.38fr);
@@ -428,11 +398,30 @@ const StSummaryRightGrid = styled.div`
   }
 `;
 
-const StSummaryCard = styled.div`
+const StSummaryCard = styled.button`
+  width: 100%;
+  display: block;
+  text-align: left;
   border-radius: 16px;
   border: 1px solid #e3eaf3;
   background: linear-gradient(180deg, #fbfdff, #f7faff);
   padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: #cfd9ea;
+    box-shadow: 0 10px 24px rgba(148, 163, 184, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(88, 110, 229, 0.34);
+    outline-offset: 2px;
+  }
 
   small {
     display: block;

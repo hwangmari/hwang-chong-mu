@@ -101,6 +101,7 @@ function createLegacySeedStore(): AccountBookStore {
       type: "personal",
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
+      assetGoalMap: {},
       ownerUserId: "user-1",
       memberIds: ["user-1"],
     },
@@ -110,6 +111,7 @@ function createLegacySeedStore(): AccountBookStore {
       type: "personal",
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
+      assetGoalMap: {},
       ownerUserId: "user-2",
       memberIds: ["user-2"],
     },
@@ -119,6 +121,7 @@ function createLegacySeedStore(): AccountBookStore {
       type: "shared",
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
+      assetGoalMap: {},
       memberIds: ["user-1", "user-2"],
       inviteCode: "SHARED01",
     },
@@ -205,6 +208,12 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
         Number(workspace.annualSavingGoal) > 0
           ? Math.trunc(Number(workspace.annualSavingGoal))
           : DEFAULT_ANNUAL_SAVING_GOAL,
+      assetGoalMap:
+        workspace.assetGoalMap &&
+        typeof workspace.assetGoalMap === "object" &&
+        !Array.isArray(workspace.assetGoalMap)
+          ? workspace.assetGoalMap
+          : {},
       ownerUserId: workspace.ownerUserId,
       memberIds:
         Array.isArray(workspace.memberIds) && workspace.memberIds.length > 0

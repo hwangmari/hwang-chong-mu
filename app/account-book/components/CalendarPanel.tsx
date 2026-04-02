@@ -2,16 +2,17 @@
 
 import { format } from "date-fns";
 import styled from "styled-components";
-import { EntryType } from "../types";
-
 type Props = {
   currentMonth: Date;
   calendarDays: Date[];
-  daySummary: Record<string, { income: number; expense: number }>;
+  daySummary: Record<
+    string,
+    { income: number; expense: number; settlement: number }
+  >;
   selectedDate: string;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
-  onOpenAddForDate: (date: string) => void;
+  onOpenNaturalRegisterForDate: (date: string) => void;
 };
 
 function formatCalendarAmount(value?: number) {
@@ -26,7 +27,7 @@ export default function CalendarPanel({
   selectedDate,
   toIsoDate,
   onSelectDate,
-  onOpenAddForDate,
+  onOpenNaturalRegisterForDate,
 }: Props) {
   return (
     <>
@@ -54,7 +55,7 @@ export default function CalendarPanel({
               onContextMenu={(event) => {
                 event.preventDefault();
                 onSelectDate(dayIso);
-                onOpenAddForDate(dayIso);
+                onOpenNaturalRegisterForDate(dayIso);
               }}
             >
               <StDayNum $selected={isSelected}>{format(day, "d")}</StDayNum>
@@ -63,6 +64,11 @@ export default function CalendarPanel({
               </StDayMeta>
               <StDayMeta $kind="expense" $selected={isSelected}>
                 {info?.expense ? `-${formatCalendarAmount(info.expense)}` : ""}
+              </StDayMeta>
+              <StDayMeta $kind="settlement" $selected={isSelected}>
+                {info?.settlement
+                  ? `정산 -${formatCalendarAmount(info.settlement)}`
+                  : ""}
               </StDayMeta>
             </StDayCell>
           );
@@ -113,13 +119,20 @@ const StDayNum = styled.span<{ $selected: boolean }>`
   font-weight: 800;
   color: ${({ $selected }) => ($selected ? "#1f2f4d" : "inherit")};
 `;
-const StDayMeta = styled.span<{ $kind: EntryType; $selected: boolean }>`
+const StDayMeta = styled.span<{
+  $kind: "income" | "expense" | "settlement";
+  $selected: boolean;
+}>`
   font-size: 0.65rem;
   color: ${({ $kind, $selected }) => {
     if ($selected) {
-      return $kind === "income" ? "#3e67d8" : "#655ae0";
+      if ($kind === "income") return "#3e67d8";
+      if ($kind === "settlement") return "#8d6328";
+      return "#655ae0";
     }
-    return $kind === "income" ? "#4f7cff" : "#6b63e8";
+    if ($kind === "income") return "#4f7cff";
+    if ($kind === "settlement") return "#a7752f";
+    return "#6b63e8";
   }};
   line-height: 1;
   font-weight: ${({ $selected }) => ($selected ? 800 : 700)};

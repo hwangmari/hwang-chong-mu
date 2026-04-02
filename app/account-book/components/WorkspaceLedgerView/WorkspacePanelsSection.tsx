@@ -24,7 +24,9 @@ type Props = {
   monthTotals: { income: number; expense: number };
   monthPaymentTotals: { cash: number; card: number; check_card: number };
   cashBalance: number;
+  monthSettlementTotal: number;
   monthAssetTotal: number;
+  selectedCalendarCardId: string | null;
   listMemo: string;
   isListMemoEditing: boolean;
   onChangeListMemo: (value: string) => void;
@@ -32,6 +34,15 @@ type Props = {
   onEditListMemo: () => void;
   memberExpenseTotals: Array<[string, number]>;
   monthCategorySummary: Array<[string, number]>;
+  cardCompanySummary: Array<{
+    label: string;
+    amount: number;
+    count: number;
+    cardCount: number;
+    checkCardCount: number;
+  }>;
+  selectedCardCompany: string | null;
+  onSelectCardCompany: (cardCompany: string) => void;
   onOpenIncomeYearly: () => void;
   onOpenExpenseYearly: () => void;
   onOpenAssetYearly: () => void;
@@ -69,14 +80,25 @@ type Props = {
   }>;
   onSelectBoardMonth: (monthNumber: number) => void;
   calendarDays: Date[];
-  daySummary: Record<string, { income: number; expense: number }>;
+  daySummary: Record<
+    string,
+    { income: number; expense: number; settlement: number }
+  >;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
   calendarDetailTitle: string;
   selectedDateEntries: ResolvedAccountEntry[];
   selectedDateAssetEntries: ResolvedAccountEntry[];
+  monthAssetCategorySections: Array<{
+    id: string;
+    title: string;
+    amount: number;
+    count: number;
+    entries: ResolvedAccountEntry[];
+  }>;
   onOpenAdd: () => void;
-  onOpenAddForDate: (date: string) => void;
+  onOpenNaturalRegisterForDate: (date: string) => void;
+  onSelectCalendarCard: (cardId: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
   onDelete: (id: string) => void;
   entryActions: (entry: ResolvedAccountEntry) => EntryAction[];
@@ -93,7 +115,9 @@ export default function WorkspacePanelsSection({
   monthTotals,
   monthPaymentTotals,
   cashBalance,
+  monthSettlementTotal,
   monthAssetTotal,
+  selectedCalendarCardId,
   listMemo,
   isListMemoEditing,
   onChangeListMemo,
@@ -101,6 +125,9 @@ export default function WorkspacePanelsSection({
   onEditListMemo,
   memberExpenseTotals,
   monthCategorySummary,
+  cardCompanySummary,
+  selectedCardCompany,
+  onSelectCardCompany,
   onOpenIncomeYearly,
   onOpenExpenseYearly,
   onOpenAssetYearly,
@@ -124,8 +151,10 @@ export default function WorkspacePanelsSection({
   calendarDetailTitle,
   selectedDateEntries,
   selectedDateAssetEntries,
+  monthAssetCategorySections,
   onOpenAdd,
-  onOpenAddForDate,
+  onOpenNaturalRegisterForDate,
+  onSelectCalendarCard,
   onEdit,
   onDelete,
   entryActions,
@@ -143,11 +172,14 @@ export default function WorkspacePanelsSection({
             monthTotals={monthTotals}
             monthPaymentTotals={monthPaymentTotals}
             cashBalance={cashBalance}
+            monthSettlementTotal={monthSettlementTotal}
             monthAssetTotal={monthAssetTotal}
             boardSummaryCards={boardSummaryCards}
             formatAmount={formatAmount}
             selectedLedgerCardId={selectedLedgerCardId}
             onSelectLedgerCard={onSelectLedgerCard}
+            selectedCalendarCardId={selectedCalendarCardId}
+            onSelectCalendarCard={onSelectCalendarCard}
           />
         )}
 
@@ -185,6 +217,9 @@ export default function WorkspacePanelsSection({
                   monthEntries={monthEntries}
                   memberExpenseTotals={memberExpenseTotals}
                   monthCategorySummary={monthCategorySummary}
+                  cardCompanySummary={cardCompanySummary}
+                  selectedCardCompany={selectedCardCompany}
+                  onSelectCardCompany={onSelectCardCompany}
                   formatAmount={formatAmount}
                 />
               </StLedgerOverviewBlock>
@@ -214,7 +249,7 @@ export default function WorkspacePanelsSection({
                 selectedDate={selectedDate}
                 toIsoDate={toIsoDate}
                 onSelectDate={onSelectDate}
-                onOpenAddForDate={onOpenAddForDate}
+                onOpenNaturalRegisterForDate={onOpenNaturalRegisterForDate}
               />
             )}
           </StLeftBody>
@@ -241,8 +276,19 @@ export default function WorkspacePanelsSection({
           ) : (
             <DetailEntriesPanel
               title={calendarDetailTitle}
-              entries={selectedDateEntries}
-              assetEntries={selectedDateAssetEntries}
+              entries={
+                selectedCalendarCardId === "asset" ? [] : selectedDateEntries
+              }
+              assetEntries={
+                selectedCalendarCardId === "asset"
+                  ? undefined
+                  : selectedDateAssetEntries
+              }
+              groupedEntries={
+                selectedCalendarCardId === "asset"
+                  ? monthAssetCategorySections
+                  : undefined
+              }
               onOpenAdd={onOpenAdd}
               onEdit={onEdit}
               onDelete={onDelete}

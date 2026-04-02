@@ -14,6 +14,7 @@ type Props = {
     check_card: number;
   };
   cashBalance: number;
+  monthSettlementTotal: number;
   monthAssetTotal: number;
   boardSummaryCards: Array<{
     id: string;
@@ -25,6 +26,8 @@ type Props = {
   formatAmount: (value: number) => string;
   selectedLedgerCardId?: string | null;
   onSelectLedgerCard?: (cardId: string) => void;
+  selectedCalendarCardId?: string | null;
+  onSelectCalendarCard?: (cardId: string) => void;
 };
 
 export default function TopSummaryControls({
@@ -32,20 +35,25 @@ export default function TopSummaryControls({
   monthTotals,
   monthPaymentTotals,
   cashBalance,
+  monthSettlementTotal,
   monthAssetTotal,
   boardSummaryCards,
   formatAmount,
   selectedLedgerCardId = null,
   onSelectLedgerCard,
+  selectedCalendarCardId = null,
+  onSelectCalendarCard,
 }: Props) {
   const calendarCards = [
     {
+      id: "income",
       label: "수입",
       value: formatAmount(monthTotals.income),
       detailLines: [],
       tone: "income" as const,
     },
     {
+      id: "expense",
       label: "지출",
       value: formatAmount(monthTotals.expense),
       detailLines: [
@@ -56,12 +64,17 @@ export default function TopSummaryControls({
       tone: "expense" as const,
     },
     {
+      id: "cash_balance",
       label: "현금 잔액",
       value: formatAmount(cashBalance),
-      detailLines: [],
+      detailLines: [
+        `현금 지출 ${formatAmount(monthPaymentTotals.cash)}`,
+        `카드정산 ${formatAmount(monthSettlementTotal)}`,
+      ],
       tone: "income" as const,
     },
     {
+      id: "asset",
       label: "자산",
       value: formatAmount(monthAssetTotal),
       detailLines: ["저축 카테고리 합계"],
@@ -101,7 +114,18 @@ export default function TopSummaryControls({
     <StTopControls>
       <StCalendarSummaryLine>
         {calendarCards.map((card) => (
-          <StCalendarSummaryCard key={card.label}>
+          <StCalendarSummaryCard
+            key={card.label}
+            as={card.id === "asset" ? "button" : "article"}
+            type={card.id === "asset" ? "button" : undefined}
+            $active={selectedCalendarCardId === card.id}
+            $clickable={card.id === "asset"}
+            onClick={
+              card.id === "asset"
+                ? () => onSelectCalendarCard?.(card.id)
+                : undefined
+            }
+          >
             <StCalendarSummaryLabel>{card.label}</StCalendarSummaryLabel>
             <StCalendarSummaryValue $tone={card.tone}>
               {card.value}
@@ -243,7 +267,10 @@ const StCalendarSummaryLine = styled.div`
     gap: 0.6rem;
   }
 `;
-const StCalendarSummaryCard = styled.article`
+const StCalendarSummaryCard = styled.article<{
+  $active: boolean;
+  $clickable: boolean;
+}>`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -251,9 +278,29 @@ const StCalendarSummaryCard = styled.article`
   min-height: 9.6rem;
   border-radius: 22px;
   background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
-  border: 1px solid #dbe4f1;
-  box-shadow: 0 8px 20px rgba(102, 120, 160, 0.05);
+  border: 1px solid ${({ $active }) => ($active ? "#9db8ee" : "#dbe4f1")};
+  box-shadow: ${({ $active }) =>
+    $active
+      ? "0 10px 24px rgba(95, 115, 217, 0.12)"
+      : "0 8px 20px rgba(102, 120, 160, 0.05)"};
   padding: 1.12rem 1.18rem;
+  text-align: left;
+  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    ${({ $clickable }) =>
+      $clickable
+        ? `
+      border-color: #bfd0ef;
+      box-shadow: 0 12px 24px rgba(102, 120, 160, 0.1);
+      transform: translateY(-1px);
+    `
+        : ""}
+  }
 
   @media (max-width: 720px) {
     min-height: auto;
@@ -269,7 +316,7 @@ const StCalendarSummaryLabel = styled.p`
 const StCalendarSummaryValue = styled.p<{
   $tone: "income" | "expense" | "asset";
 }>`
-  font-size: 1.55rem;
+  font-size: 1.36rem;
   font-weight: 900;
   line-height: 1.12;
   letter-spacing: -0.02em;
@@ -280,7 +327,7 @@ const StCalendarSummaryValue = styled.p<{
   }};
 
   @media (max-width: 720px) {
-    font-size: 1.35rem;
+    font-size: 1.18rem;
   }
 `;
 const StCalendarSummaryDetail = styled.div`

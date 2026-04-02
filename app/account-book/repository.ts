@@ -212,6 +212,7 @@ export async function updateAccountBookUser(
   name: string,
   password: string,
   annualSavingGoal = DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+  assetGoalMap: AccountBookWorkspace["assetGoalMap"] = {},
 ) {
   await callStoreRpc("account_book_upsert_user", {
     p_id: currentUser.id,
@@ -226,6 +227,7 @@ export async function updateAccountBookUser(
     p_type: "personal",
     p_password: password,
     p_annual_saving_goal: annualSavingGoal,
+    p_asset_goal_map: assetGoalMap || {},
     p_owner_user_id: currentUser.id,
     p_member_ids: [currentUser.id],
   });
@@ -241,6 +243,7 @@ export async function createAccountBookUser(name: string, password: string) {
     p_type: "personal",
     p_password: password,
     p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+    p_asset_goal_map: {},
     p_owner_user_id: userId,
     p_member_ids: [userId],
   });
@@ -268,16 +271,36 @@ export async function deleteAccountBookUser(userId: string) {
 export async function upsertAccountBookWorkspace(
   workspace: AccountBookWorkspace,
 ) {
-  return callStoreRpc("account_book_upsert_workspace", {
-    p_id: workspace.id,
-    p_name: workspace.name,
-    p_type: workspace.type,
-    p_password: workspace.password,
-    p_annual_saving_goal:
-      workspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
-    p_owner_user_id: workspace.ownerUserId || "",
-    p_member_ids: workspace.memberIds,
-  });
+  try {
+    return await callStoreRpc("account_book_upsert_workspace", {
+      p_id: workspace.id,
+      p_name: workspace.name,
+      p_type: workspace.type,
+      p_password: workspace.password,
+      p_annual_saving_goal:
+        workspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+      p_asset_goal_map: workspace.assetGoalMap || {},
+      p_owner_user_id: workspace.ownerUserId || "",
+      p_member_ids: workspace.memberIds,
+    });
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      console.warn(
+        "가계부 워크스페이스 저장에 실패해 로컬 데이터에만 반영합니다.",
+        error,
+      );
+      const currentStore = getAccountBookStore();
+
+      return persistLocalStore({
+        ...currentStore,
+        workspaces: currentStore.workspaces.map((currentWorkspace) =>
+          currentWorkspace.id === workspace.id ? workspace : currentWorkspace,
+        ),
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function createAccountBookSharedWorkspace(
@@ -291,6 +314,7 @@ export async function createAccountBookSharedWorkspace(
     p_type: "shared",
     p_password: password,
     p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+    p_asset_goal_map: {},
     p_owner_user_id: "",
     p_member_ids: memberIds,
   });

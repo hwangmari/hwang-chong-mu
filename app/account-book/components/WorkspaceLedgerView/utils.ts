@@ -22,6 +22,7 @@ export const CARD_COMPANY_OPTIONS = [
   "KB국민카드",
   "신한카드",
   "삼성카드",
+  "네이버현대카드",
   "현대카드",
   "롯데카드",
   "하나카드",
@@ -62,10 +63,16 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     description: "선물, 경조사, 이벤트 같은 특별 지출",
   },
   {
+    label: "카드대금",
+    color: "#5d6f8d",
+    icon: "💳",
+    description: "카드 청구액, 이용대금, 결제대금 같은 정산 내역",
+  },
+  {
     label: SAVINGS_CATEGORY_LABEL,
     color: "#5d9cec",
     icon: "💰",
-    description: "예금/적금/자산 증식성 지출",
+    description: "예금, 연금, 투자처럼 자산을 쌓는 항목",
   },
 ];
 
@@ -81,9 +88,18 @@ export const INCOME_CATEGORY_OPTIONS: CategoryOption[] = [
 const ASSET_SUBCATEGORY_OPTIONS = [
   "예금",
   "적금",
+  "CMA",
+  "ISA",
+  "청약",
+  "비상금",
+  "연금저축",
+  "IRP",
+  "퇴직연금",
   "주식",
+  "해외주식",
   "ETF",
-  "연금",
+  "펀드",
+  "채권",
   "코인",
 ] as const;
 const FIXED_EXPENSE_SUBCATEGORY_OPTIONS = [
@@ -114,7 +130,8 @@ const TRAVEL_KEYWORD_PATTERN =
 const GIFT_KEYWORD_PATTERN = /선물|꽃다발|꽃|케이크|경조사|축의|조의|이벤트/i;
 const FIXED_EXPENSE_KEYWORD_PATTERN =
   /공과금|전기|가스|수도|휴대폰|핸드폰|통신비|인터넷|와이파이|보험|관리비|아파트관리비/i;
-const SAVINGS_KEYWORD_PATTERN = /적금|예금|주식|etf|연금|isa|irp|코인|투자/i;
+const SAVINGS_KEYWORD_PATTERN =
+  /적금|예금|cma|isa|청약|비상금|연금저축|퇴직연금|연금|irp|주식|해외주식|etf|펀드|채권|코인|투자/i;
 const CULTURE_SUBSCRIPTION_KEYWORD_PATTERN =
   /구독|넷플릭스|유튜브\s?프리미엄|youtube|티빙|웨이브|디즈니|왓챠|멜론|지니뮤직|spotify|스포티파이|리디북스|밀리의서재|도서|서점|영화|전시|공연/i;
 const PLATFORM_PAY_KEYWORD_PATTERN =
@@ -123,14 +140,17 @@ const FASHION_BEAUTY_KEYWORD_PATTERN =
   /무신사|지그재그|에이블리|29cm|wconcept|올리브영|화장품|뷰티|미용|의류|신발|가방|패션/i;
 const SHOPPING_GENERAL_KEYWORD_PATTERN =
   /쿠팡|11번가|g마켓|옥션|네이버쇼핑|오늘의집|다이소|생활용품|생필품|가전|가구|온라인쇼핑|쇼핑|구매/i;
+const CARD_SETTLEMENT_KEYWORD_PATTERN =
+  /카드대금|이용대금|대금결제|결제대금|카드값|청구금액|결제일|자동이체|카드결제/i;
 const CAR_COMPANY_NOISE_PATTERN =
-  /kb국민카드|국민카드|신한카드|삼성카드|현대카드|롯데카드|롯데카트|하나카드|우리카드|농협카드|nh농협카드|bc카드|bccard/gi;
+  /kb\s*국민\s*카드|국민\s*카드|신한\s*카드|삼성\s*카드|네이버\s*현대\s*카드|현대\s*카드|롯데\s*카드|롯데\s*카트|하나\s*카드|우리\s*카드|농협\s*카드|nh\s*농협\s*카드|bc\s*카드|bccard/gi;
 const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
   생활비: ["식비", "카페", "병원", "약국", "구독", "플랫폼"],
   고정비: FIXED_EXPENSE_SUBCATEGORY_OPTIONS,
   "이동/차량": ["택시", "주유", "주차", "충전", "교통카드", "통행료"],
   "쇼핑/여가": ["쇼핑", "패션", "여행", "레저"],
   "특별/기타": ["선물", "경조사", "이벤트", "기타"],
+  카드대금: ["카드대금", "이용대금", "결제대금", "자동이체"],
   [SAVINGS_CATEGORY_LABEL]: ASSET_SUBCATEGORY_OPTIONS,
 };
 const CATEGORY_DETAIL_RULES = [
@@ -292,6 +312,7 @@ const CARD_COMPANY_PATTERNS = [
   [/kb국민카드|국민카드|kb국민/i, "KB국민카드"],
   [/신한카드|shinhan/i, "신한카드"],
   [/삼성카드|samsungcard/i, "삼성카드"],
+  [/네이버현대카드|네이버현대|naverhyundaicard/i, "네이버현대카드"],
   [/현대카드|hyundaicard/i, "현대카드"],
   [/롯데카드|롯데카트|lottecard/i, "롯데카드"],
   [/하나카드|hanacard/i, "하나카드"],
@@ -378,6 +399,10 @@ export function getRepresentativeExpenseCategory(category: string) {
     return "특별/기타";
   }
 
+  if (["카드대금", "카드결제", "청구결제"].includes(normalizedCategory)) {
+    return "카드대금";
+  }
+
   if (normalizedCategory === "고정비") {
     return "고정비";
   }
@@ -406,6 +431,7 @@ export function isFixedExpenseCategory(category: string) {
 }
 
 export function toPaymentValue(text: string): PaymentType | null {
+  if (CARD_SETTLEMENT_KEYWORD_PATTERN.test(text)) return "cash";
   if (text.includes("체크")) return "check_card";
   if (text.includes("현금")) return "cash";
   if (text.includes("카드")) return "card";
@@ -414,6 +440,7 @@ export function toPaymentValue(text: string): PaymentType | null {
 
 export function inferCategoryFromItemText(text: string) {
   if (!text) return null;
+  if (CARD_SETTLEMENT_KEYWORD_PATTERN.test(text)) return "카드대금";
   if (SAVINGS_KEYWORD_PATTERN.test(text)) return SAVINGS_CATEGORY_LABEL;
   if (PHARMACY_KEYWORD_PATTERN.test(text)) return "생활비";
   if (MEDICAL_KEYWORD_PATTERN.test(text)) return "생활비";
@@ -450,6 +477,7 @@ export function normalizeExpenseCategorySelection(
     category: string;
     subCategory?: string;
   }> = [
+    { pattern: /^카드대금|이용대금|결제대금|카드값|청구금액$/i, category: "카드대금" },
     {
       pattern: /^주유|주유소|세차$/i,
       category: "이동/차량",
@@ -490,11 +518,25 @@ export function normalizeExpenseCategorySelection(
 
 export function inferAssetSubCategoryFromText(text: string) {
   const lower = text.toLowerCase();
-  return (
-    ASSET_SUBCATEGORY_OPTIONS.find((option) =>
-      lower.includes(option.toLowerCase()),
-    ) || ""
-  );
+  const assetRules: Array<[RegExp, (typeof ASSET_SUBCATEGORY_OPTIONS)[number]]> = [
+    [/연금저축|연저펀|연저/i, "연금저축"],
+    [/퇴직연금/i, "퇴직연금"],
+    [/\birp\b/i, "IRP"],
+    [/\bisa\b/i, "ISA"],
+    [/\bcma\b/i, "CMA"],
+    [/청약저축|주택청약|청약/i, "청약"],
+    [/비상금/i, "비상금"],
+    [/미국주식|해외주식|해외\s*주식/i, "해외주식"],
+    [/국내주식|주식/i, "주식"],
+    [/\betf\b/i, "ETF"],
+    [/펀드/i, "펀드"],
+    [/채권/i, "채권"],
+    [/코인|비트코인|이더리움|가상자산/i, "코인"],
+    [/예금/i, "예금"],
+    [/적금/i, "적금"],
+  ];
+
+  return assetRules.find(([pattern]) => pattern.test(lower))?.[1] || "";
 }
 
 export function inferSubCategoryFromText(category: string, text: string) {
@@ -545,6 +587,7 @@ export function isCardSettlementEntry(
   entry: Pick<
     AccountEntry,
     | "type"
+    | "category"
     | "payment"
     | "merchant"
     | "item"
@@ -555,6 +598,9 @@ export function isCardSettlementEntry(
 ) {
   if (entry.type !== "expense") return false;
   if (entry.payment !== "cash") return false;
+  if (getRepresentativeExpenseCategory(entry.category || "") === "카드대금") {
+    return true;
+  }
 
   const merchantText = normalizeCompanyLabel(entry.merchant || "");
   const itemText = normalizeCompanyLabel(entry.item || "");
@@ -571,7 +617,7 @@ export function isCardSettlementEntry(
     .filter(Boolean)
     .join(" ");
   const settlementKeywordPattern =
-    /카드대금|이용대금|대금결제|결제대금|카드값|청구금액|결제일|자동이체|카드결제/;
+    CARD_SETTLEMENT_KEYWORD_PATTERN;
   const hasSettlementKeyword = settlementKeywordPattern.test(mergedText);
   const matchedCompany = [...CARD_COMPANY_OPTIONS].find((company) => {
     const normalizedCompany = normalizeCompanyLabel(company);
@@ -714,6 +760,7 @@ function removeNaturalNoise(text: string, memberNames: string[]) {
       .replace(/오늘|어제|그제/g, " ")
       .replace(/\d{4}[-./]\s*\d{1,2}[-./]\s*\d{1,2}/g, " ")
       .replace(/\d{1,2}\s*월\s*\d{1,2}\s*일/g, " ")
+      .replace(/(^|\s)\d{1,2}\s*일(?=\s|$)/g, " ")
       .replace(/\d{1,2}[./-]\s*\d{1,2}/g, " ")
       .replace(createKoreanUnitAmountRegex(), " ")
       .replace(/-?\d[\d,]*\s*원?/g, " ")
@@ -721,8 +768,8 @@ function removeNaturalNoise(text: string, memberNames: string[]) {
         /구매했어요|구매했어|구매함|구매|결제했어요|결제했어|결제함|결제|사용했어요|사용했어|사용함|사용|썼어요|썼어|샀어요|샀어|샀다|입금됐어|입금|수입|지출|환급|정산받았어|받았어|받음|월급|급여/g,
         " ",
       )
-      .replace(/체크카드|체크|현금|카드|계좌이체|이체|송금/g, " ")
       .replace(CAR_COMPANY_NOISE_PATTERN, " ")
+      .replace(/체크카드|체크|현금|카드|계좌이체|이체|송금/g, " ")
       .replace(/일시불|할부/g, " ")
       .replace(memberPattern || /$^/, " ")
       .replace(/[()]/g, " "),

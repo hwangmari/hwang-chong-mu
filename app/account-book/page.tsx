@@ -512,6 +512,7 @@ function AccountBookPageContent() {
                     name,
                     password,
                     currentPersonalWorkspace?.annualSavingGoal,
+                    currentPersonalWorkspace?.assetGoalMap,
                   ),
                 "사용자 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
               );

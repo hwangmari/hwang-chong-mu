@@ -18,6 +18,13 @@ type Props = {
   title: string;
   entries: ResolvedAccountEntry[];
   assetEntries?: ResolvedAccountEntry[];
+  groupedEntries?: Array<{
+    id: string;
+    title: string;
+    amount: number;
+    count: number;
+    entries: ResolvedAccountEntry[];
+  }>;
   monthlyTracking?: Array<{ month: string; amount: number; count: number }>;
   onOpenAdd: () => void;
   onEdit?: (entry: ResolvedAccountEntry) => void;
@@ -33,6 +40,7 @@ export default function DetailEntriesPanel({
   title,
   entries,
   assetEntries,
+  groupedEntries,
   monthlyTracking,
   onOpenAdd,
   onEdit,
@@ -70,6 +78,11 @@ export default function DetailEntriesPanel({
     const leftKey = toCompareKey(left);
     const rightKey = toCompareKey(right);
     return Boolean(leftKey) && Boolean(rightKey) && leftKey === rightKey;
+  };
+
+  const isDateOnlyLabel = (value?: string) => {
+    const normalized = normalizeDisplayText(value);
+    return /^(?:\d{1,2}일(?:\s*[가-힣]+요일)?|일)$/.test(normalized);
   };
 
   const getCondensedRawDetail = (entry: ResolvedAccountEntry) => {
@@ -134,6 +147,7 @@ export default function DetailEntriesPanel({
     const pushLabel = (value?: string) => {
       const normalized = normalizeDisplayText(value);
       if (!normalized) return;
+      if (isDateOnlyLabel(normalized)) return;
       if (labels.some((label) => isSameMeaning(label, normalized))) return;
       if (isSameMeaning(headline, normalized)) return;
       labels.push(normalized);
@@ -141,7 +155,6 @@ export default function DetailEntriesPanel({
 
     pushLabel(categoryLabel);
     pushLabel(entry.merchant);
-    pushLabel(getCondensedRawDetail(entry));
 
     if (shouldShowSupportDate) {
       pushLabel(formatPreviewDate(entry.date));
@@ -254,7 +267,26 @@ export default function DetailEntriesPanel({
         </StDetailAddButton>
       </StDetailHeader>
       <StEntryList>
-        {monthlyTracking ? (
+        {groupedEntries ? (
+          groupedEntries.length === 0 ? (
+            <StEmpty>내역이 없습니다.</StEmpty>
+          ) : (
+            groupedEntries.map((group) => (
+              <StGroupedSection key={group.id}>
+                <StGroupedHeader>
+                  <div>
+                    <strong>{group.title}</strong>
+                    <span>{group.count}건</span>
+                  </div>
+                  <em>{formatAmount(group.amount)}</em>
+                </StGroupedHeader>
+                <StGroupedList>
+                  {group.entries.map((entry) => renderEntryItem(entry))}
+                </StGroupedList>
+              </StGroupedSection>
+            ))
+          )
+        ) : monthlyTracking ? (
           monthlyTracking.length === 0 ? (
             <StEmpty>월별 통계 데이터가 없습니다.</StEmpty>
           ) : (
@@ -553,6 +585,44 @@ const StTrackingFill = styled.div`
 const StTrackingAmount = styled.strong`
   font-size: 0.9rem;
   color: #111827;
+`;
+const StGroupedSection = styled.section`
+  display: grid;
+  gap: 0.6rem;
+`;
+const StGroupedHeader = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  div {
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  strong {
+    font-size: 0.9rem;
+    color: #315e84;
+  }
+
+  span {
+    font-size: 0.74rem;
+    color: #7d8ca0;
+    font-weight: 700;
+  }
+
+  em {
+    font-style: normal;
+    font-size: 0.84rem;
+    font-weight: 900;
+    color: #3f8f8a;
+    white-space: nowrap;
+  }
+`;
+const StGroupedList = styled.div`
+  display: grid;
+  gap: 0.6rem;
 `;
 const StAssetSection = styled.section`
   margin-top: 0.45rem;
