@@ -438,7 +438,9 @@ const StEntryItem = styled.article`
   box-shadow: 0 8px 24px rgba(31, 41, 55, 0.04);
 
   @media (max-width: 720px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: start;
   }
 `;
 const StEntryMain = styled.div`
@@ -452,6 +454,10 @@ const StEntryTop = styled.div`
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.12rem;
+
+  @media (max-width: 720px) {
+    gap: 0.32rem;
+  }
 `;
 const StEntryBadge = styled.span<{
   $tone: "income" | "expense" | "asset";
@@ -504,6 +510,11 @@ const StEntryName = styled.p`
   color: #111827;
   font-weight: 800;
   line-height: 1.35;
+
+  @media (max-width: 720px) {
+    font-size: 0.94rem;
+    line-height: 1.28;
+  }
 `;
 const StEntryMetaList = styled.div`
   display: flex;
@@ -555,8 +566,8 @@ const StEntryAside = styled.div`
   min-width: 6.8rem;
 
   @media (max-width: 720px) {
-    align-items: flex-start;
-    min-width: 0;
+    align-items: flex-end;
+    min-width: 5.8rem;
   }
 `;
 const StEntryAmount = styled.span<{
@@ -573,6 +584,11 @@ const StEntryAmount = styled.span<{
     return "#6b63e8";
   }};
   letter-spacing: -0.01em;
+
+  @media (max-width: 720px) {
+    font-size: 0.9rem;
+    text-align: right;
+  }
 `;
 const StEntryMeta = styled.span`
   font-size: 0.72rem;
@@ -583,6 +599,11 @@ const StEntryControlGroup = styled.div`
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
 `;
 const StEditButton = styled.button`
   border: 1px solid #d7e3ff;

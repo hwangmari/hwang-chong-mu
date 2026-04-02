@@ -337,6 +337,13 @@ const StLeftSplitCard = styled.section`
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
   padding: 0.9rem;
+
+  @media (max-width: 720px) {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
 `;
 
 const StLedgerMemoCard = styled.section`
@@ -434,6 +441,10 @@ const StLeftBody = styled.div`
   @media (max-width: 1080px) {
     padding-bottom: 0;
   }
+
+  @media (max-width: 720px) {
+    padding-bottom: 0;
+  }
 `;
 
 const StRightSplitCard = styled.section`
@@ -447,6 +458,14 @@ const StRightSplitCard = styled.section`
 
   @media (max-width: 1080px) {
     margin: 20px 0;
+  }
+
+  @media (max-width: 720px) {
+    margin: 0.8rem 0 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
   }
 `;
 

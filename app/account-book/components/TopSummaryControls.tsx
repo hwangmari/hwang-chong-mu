@@ -311,8 +311,16 @@ const StCalendarSummaryLine = styled.div`
   }
 
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 0.6rem;
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    margin: 0 -0.1rem 0.65rem;
+    padding: 0 0.1rem 0.2rem;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 const StCalendarSummaryCard = styled.article<{
@@ -352,7 +360,10 @@ const StCalendarSummaryCard = styled.article<{
 
   @media (max-width: 720px) {
     min-height: auto;
-    padding: 0.95rem 1rem;
+    min-width: 10.2rem;
+    border-radius: 18px;
+    padding: 0.8rem 0.88rem;
+    box-shadow: none;
   }
 `;
 const StCalendarSummaryTop = styled.div`
@@ -367,6 +378,11 @@ const StCalendarSummaryLabel = styled.p`
   color: #707988;
   font-weight: 800;
   margin-bottom: 0.45rem;
+
+  @media (max-width: 720px) {
+    font-size: 0.8rem;
+    margin-bottom: 0.32rem;
+  }
 `;
 const StCalendarSummaryToggle = styled.button`
   border: 1px solid #d7e2ef;
@@ -394,7 +410,7 @@ const StCalendarSummaryValue = styled.p<{
   }};
 
   @media (max-width: 720px) {
-    font-size: 1.18rem;
+    font-size: 1.02rem;
   }
 `;
 const StCalendarSummaryDetail = styled.div`

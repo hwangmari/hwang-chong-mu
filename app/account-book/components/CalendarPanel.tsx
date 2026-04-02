@@ -82,18 +82,34 @@ const StCalendarHead = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   margin-bottom: 0.35rem;
+
+  @media (max-width: 720px) {
+    margin-bottom: 0.18rem;
+    padding: 0 0.1rem;
+  }
 `;
 const StWeekName = styled.div`
   text-align: center;
   font-size: 0.78rem;
   color: #8a94a6;
   font-weight: 700;
+
+  @media (max-width: 720px) {
+    font-size: 0.68rem;
+    color: #a1acbc;
+  }
 `;
 const StCalendarGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.35rem;
   margin-bottom: 1rem;
+
+  @media (max-width: 720px) {
+    gap: 0.08rem;
+    margin-bottom: 0.7rem;
+    padding: 0 0.05rem;
+  }
 `;
 const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
   border: 1px solid ${({ $selected }) => ($selected ? "#88a5f4" : "#edf1f5")};
@@ -113,11 +129,28 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
   align-items: center;
   justify-content: flex-start;
   gap: 0.18rem;
+
+  @media (max-width: 720px) {
+    border: none;
+    background: ${({ $selected }) =>
+      $selected ? "linear-gradient(180deg, #f5f8ff, #edf3ff)" : "transparent"};
+    box-shadow: none;
+    border-radius: 14px;
+    min-height: 58px;
+    padding: 0.34rem 0.1rem 0.3rem;
+    align-items: center;
+    gap: 0.08rem;
+  }
 `;
 const StDayNum = styled.span<{ $selected: boolean }>`
   font-size: 0.95rem;
   font-weight: 800;
   color: ${({ $selected }) => ($selected ? "#1f2f4d" : "inherit")};
+
+  @media (max-width: 720px) {
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
 `;
 const StDayMeta = styled.span<{
   $kind: "income" | "expense" | "settlement";
@@ -136,4 +169,14 @@ const StDayMeta = styled.span<{
   }};
   line-height: 1;
   font-weight: ${({ $selected }) => ($selected ? 800 : 700)};
+
+  @media (max-width: 720px) {
+    font-size: ${({ $kind }) => ($kind === "settlement" ? "0.52rem" : "0.56rem")};
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
