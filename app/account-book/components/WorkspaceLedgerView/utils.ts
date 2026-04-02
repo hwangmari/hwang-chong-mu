@@ -14,6 +14,7 @@ import type {
 } from "./types";
 
 export const CARD_COMPANY_DEFAULT = "KB국민카드";
+export const CHECK_CARD_BRAND_DEFAULT = "네이버하나머니";
 export const MEMBER_FALLBACK = "사용자1";
 export const ALL_PARTICIPANTS_ID = "all";
 export const INCOME_CATEGORY_LABEL = "수입";
@@ -29,6 +30,12 @@ export const CARD_COMPANY_OPTIONS = [
   "우리카드",
   "NH농협카드",
   "BC카드",
+] as const;
+export const CHECK_CARD_BRAND_OPTIONS = [
+  "네이버하나머니",
+  "카카오",
+  "토스",
+  "페이코",
 ] as const;
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
@@ -143,7 +150,7 @@ const SHOPPING_GENERAL_KEYWORD_PATTERN =
 const CARD_SETTLEMENT_KEYWORD_PATTERN =
   /카드대금|이용대금|대금결제|결제대금|카드값|청구금액|결제일|자동이체|카드결제/i;
 const CAR_COMPANY_NOISE_PATTERN =
-  /kb\s*국민\s*카드|국민\s*카드|신한\s*카드|삼성\s*카드|네이버\s*현대\s*카드|현대\s*카드|롯데\s*카드|롯데\s*카트|하나\s*카드|우리\s*카드|농협\s*카드|nh\s*농협\s*카드|bc\s*카드|bccard/gi;
+  /kb\s*국민\s*카드|국민\s*카드|신한\s*카드|삼성\s*카드|네이버\s*현대\s*카드|현대\s*카드|롯데\s*카드|롯데\s*카트|하나\s*카드|우리\s*카드|농협\s*카드|nh\s*농협\s*카드|bc\s*카드|bccard|네이버\s*하나\s*머니|카카오\s*페이|토스\s*페이|페이코|payco/gi;
 const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
   생활비: ["식비", "카페", "병원", "약국", "구독", "플랫폼"],
   고정비: FIXED_EXPENSE_SUBCATEGORY_OPTIONS,
@@ -320,6 +327,12 @@ const CARD_COMPANY_PATTERNS = [
   [/nh농협카드|농협카드|nhcard/i, "NH농협카드"],
   [/\bbc카드\b|\bbccard\b/i, "BC카드"],
 ] as const;
+const CHECK_CARD_BRAND_PATTERNS = [
+  [/네이버하나머니|하나머니/i, "네이버하나머니"],
+  [/카카오페이|카카오\s*pay/i, "카카오"],
+  [/토스페이|토스\s*pay|토스결제/i, "토스"],
+  [/페이코|\bpayco\b/i, "페이코"],
+] as const;
 
 const KOREAN_UNIT_AMOUNT_PATTERN =
   "-?(?:(?:\\d[\\d,]*)\\s*(?:만|천|백|십)\\s*)+(?:\\d[\\d,]*)?\\s*원?";
@@ -351,6 +364,19 @@ export function paymentLabel(payment: PaymentType) {
   if (payment === "cash") return "현금";
   if (payment === "check_card") return "체크카드";
   return "카드";
+}
+
+export function getDefaultCardCompany(payment: PaymentType) {
+  if (payment === "cash") return "";
+  return payment === "check_card"
+    ? CHECK_CARD_BRAND_DEFAULT
+    : CARD_COMPANY_DEFAULT;
+}
+
+export function getCardCompanyOptions(payment: PaymentType): string[] {
+  return payment === "check_card"
+    ? [...CHECK_CARD_BRAND_OPTIONS]
+    : [...CARD_COMPANY_OPTIONS];
 }
 
 export function getCategoryDetailOptions(category: string) {
@@ -570,9 +596,18 @@ export function inferSubCategoryFromText(category: string, text: string) {
   );
 }
 
-export function inferCardCompanyFromText(text: string) {
+export function inferCardCompanyFromText(
+  text: string,
+  payment: PaymentType = "card",
+) {
   if (!text) return "";
   const normalized = text.replace(/\s+/g, "").replace(/카트/g, "카드");
+  if (payment === "check_card") {
+    return (
+      CHECK_CARD_BRAND_PATTERNS.find(([pattern]) => pattern.test(normalized))?.[1] ||
+      ""
+    );
+  }
   return (
     CARD_COMPANY_PATTERNS.find(([pattern]) => pattern.test(normalized))?.[1] ||
     ""
@@ -738,6 +773,13 @@ function detectEntryType(text: string): EntryType {
 
 function detectPayment(text: string, type: EntryType): PaymentType {
   if (type === "income") return "cash";
+  if (
+    /네이버하나머니|하나머니|카카오페이|카카오\s*pay|토스페이|토스\s*pay|페이코|payco/i.test(
+      text,
+    )
+  ) {
+    return "check_card";
+  }
   if (/체크카드|체크/.test(text)) return "check_card";
   if (/현금|계좌이체|이체|송금/.test(text)) return "cash";
   if (/카드|네이버페이|카카오페이|토스페이|pay/.test(text.toLowerCase())) {
@@ -836,7 +878,7 @@ export function parseNaturalInputEntry(
   const cardCompany =
     payment === "cash"
       ? ""
-      : inferCardCompanyFromText(text) || CARD_COMPANY_DEFAULT;
+      : inferCardCompanyFromText(text, payment) || getDefaultCardCompany(payment);
 
   return {
     id: createEntryId(),

@@ -106,7 +106,7 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
   box-shadow: ${({ $selected }) =>
     $selected ? "0 10px 22px rgba(99, 126, 212, 0.14)" : "none"};
   border-radius: 16px;
-  min-height: 74px;
+  min-height: 80px;
   padding: 0.45rem 0.3rem;
   display: flex;
   flex-direction: column;

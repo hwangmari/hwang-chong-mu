@@ -28,6 +28,8 @@ type Props = {
   onSelectLedgerCard?: (cardId: string) => void;
   selectedCalendarCardId?: string | null;
   onSelectCalendarCard?: (cardId: string) => void;
+  hiddenCalendarAmountCardIds?: string[];
+  onToggleCalendarAmountCard?: (cardId: string) => void;
 };
 
 export default function TopSummaryControls({
@@ -43,7 +45,14 @@ export default function TopSummaryControls({
   onSelectLedgerCard,
   selectedCalendarCardId = null,
   onSelectCalendarCard,
+  hiddenCalendarAmountCardIds = [],
+  onToggleCalendarAmountCard,
 }: Props) {
+  const isCalendarDetailCard = (cardId: string) =>
+    cardId === "income" || cardId === "asset";
+  const canHideCalendarAmount = (cardId: string) =>
+    cardId === "income" || cardId === "cash_balance" || cardId === "asset";
+
   const calendarCards = [
     {
       id: "income",
@@ -51,6 +60,7 @@ export default function TopSummaryControls({
       value: formatAmount(monthTotals.income),
       detailLines: [],
       tone: "income" as const,
+      hiddenValue: "금액 숨김",
     },
     {
       id: "expense",
@@ -62,6 +72,7 @@ export default function TopSummaryControls({
         `체크카드 ${formatAmount(monthPaymentTotals.check_card)}`,
       ],
       tone: "expense" as const,
+      hiddenValue: "금액 숨김",
     },
     {
       id: "cash_balance",
@@ -72,6 +83,7 @@ export default function TopSummaryControls({
         `카드정산 ${formatAmount(monthSettlementTotal)}`,
       ],
       tone: "income" as const,
+      hiddenValue: "금액 숨김",
     },
     {
       id: "asset",
@@ -79,6 +91,7 @@ export default function TopSummaryControls({
       value: formatAmount(monthAssetTotal),
       detailLines: ["저축 카테고리 합계"],
       tone: "asset" as const,
+      hiddenValue: "금액 숨김",
     },
   ];
 
@@ -113,30 +126,65 @@ export default function TopSummaryControls({
   return (
     <StTopControls>
       <StCalendarSummaryLine>
-        {calendarCards.map((card) => (
-          <StCalendarSummaryCard
-            key={card.label}
-            as={card.id === "asset" ? "button" : "article"}
-            type={card.id === "asset" ? "button" : undefined}
-            $active={selectedCalendarCardId === card.id}
-            $clickable={card.id === "asset"}
-            onClick={
-              card.id === "asset"
-                ? () => onSelectCalendarCard?.(card.id)
-                : undefined
-            }
-          >
-            <StCalendarSummaryLabel>{card.label}</StCalendarSummaryLabel>
-            <StCalendarSummaryValue $tone={card.tone}>
-              {card.value}
-            </StCalendarSummaryValue>
-            <StCalendarSummaryDetail>
-              {card.detailLines.map((line) => (
-                <span key={`${card.label}-${line}`}>{line}</span>
-              ))}
-            </StCalendarSummaryDetail>
-          </StCalendarSummaryCard>
-        ))}
+        {calendarCards.map((card) => {
+          const isHidden =
+            canHideCalendarAmount(card.id) &&
+            hiddenCalendarAmountCardIds.includes(card.id);
+          const renderedDetailLines =
+            isHidden && card.detailLines.length > 0
+              ? card.detailLines.map(() => "금액 숨김")
+              : card.detailLines;
+
+          return (
+            <StCalendarSummaryCard
+              key={card.id}
+              $active={
+                isCalendarDetailCard(card.id) && selectedCalendarCardId === card.id
+              }
+              $clickable={isCalendarDetailCard(card.id)}
+              role={isCalendarDetailCard(card.id) ? "button" : undefined}
+              tabIndex={isCalendarDetailCard(card.id) ? 0 : undefined}
+              onClick={
+                isCalendarDetailCard(card.id)
+                  ? () => onSelectCalendarCard?.(card.id)
+                  : undefined
+              }
+              onKeyDown={
+                isCalendarDetailCard(card.id)
+                  ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onSelectCalendarCard?.(card.id);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <StCalendarSummaryTop>
+                <StCalendarSummaryLabel>{card.label}</StCalendarSummaryLabel>
+                {canHideCalendarAmount(card.id) ? (
+                  <StCalendarSummaryToggle
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onToggleCalendarAmountCard?.(card.id);
+                    }}
+                  >
+                    {isHidden ? "보기" : "숨기기"}
+                  </StCalendarSummaryToggle>
+                ) : null}
+              </StCalendarSummaryTop>
+              <StCalendarSummaryValue $tone={card.tone} $hidden={isHidden}>
+                {isHidden ? card.hiddenValue : card.value}
+              </StCalendarSummaryValue>
+              <StCalendarSummaryDetail>
+                {renderedDetailLines.map((line, index) => (
+                  <span key={`${card.id}-${index}`}>{line}</span>
+                ))}
+              </StCalendarSummaryDetail>
+            </StCalendarSummaryCard>
+          );
+        })}
       </StCalendarSummaryLine>
     </StTopControls>
   );
@@ -307,20 +355,39 @@ const StCalendarSummaryCard = styled.article<{
     padding: 0.95rem 1rem;
   }
 `;
+const StCalendarSummaryTop = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
+`;
 const StCalendarSummaryLabel = styled.p`
   font-size: 0.88rem;
   color: #707988;
   font-weight: 800;
   margin-bottom: 0.45rem;
 `;
+const StCalendarSummaryToggle = styled.button`
+  border: 1px solid #d7e2ef;
+  background: #f8fbff;
+  color: #62748d;
+  border-radius: 999px;
+  padding: 0.22rem 0.54rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+`;
 const StCalendarSummaryValue = styled.p<{
   $tone: "income" | "expense" | "asset";
+  $hidden?: boolean;
 }>`
   font-size: 1.36rem;
   font-weight: 900;
   line-height: 1.12;
   letter-spacing: -0.02em;
-  color: ${({ $tone }) => {
+  color: ${({ $tone, $hidden }) => {
+    if ($hidden) return "#8b95a6";
     if ($tone === "income") return "#4f7cff";
     if ($tone === "asset") return "#3f8f8a";
     return "#6b63e8";

@@ -34,6 +34,9 @@ type Props = {
   paymentLabel: (payment: ResolvedAccountEntry["payment"]) => string;
   showDateMeta?: boolean;
   showSupportDate?: boolean;
+  canToggleAmountVisibility?: boolean;
+  isAmountHidden?: boolean;
+  onToggleAmountVisibility?: () => void;
 };
 
 export default function DetailEntriesPanel({
@@ -50,6 +53,9 @@ export default function DetailEntriesPanel({
   paymentLabel,
   showDateMeta = false,
   showSupportDate,
+  canToggleAmountVisibility = false,
+  isAmountHidden = false,
+  onToggleAmountVisibility,
 }: Props) {
   const shouldShowSupportDate = showSupportDate ?? !showDateMeta;
   const maxTrackingAmount = Math.max(
@@ -60,7 +66,10 @@ export default function DetailEntriesPanel({
   const formatEntryRawText = (entry: ResolvedAccountEntry) => {
     if (!entry.rawText) return "";
     if (!/(오늘|어제|그제)/.test(entry.rawText)) return entry.rawText;
-    return entry.rawText.replace(/오늘|어제|그제/g, formatPreviewDate(entry.date));
+    return entry.rawText.replace(
+      /오늘|어제|그제/g,
+      formatPreviewDate(entry.date),
+    );
   };
 
   const normalizeDisplayText = (value?: string) =>
@@ -112,14 +121,20 @@ export default function DetailEntriesPanel({
           : entry.category),
     );
 
-    if (!categoryDetail || isSameMeaning(categoryDetail, representativeCategory)) {
+    if (
+      !categoryDetail ||
+      isSameMeaning(categoryDetail, representativeCategory)
+    ) {
       return representativeCategory;
     }
 
     return `${representativeCategory} · ${categoryDetail}`;
   };
 
-  const buildHeadline = (entry: ResolvedAccountEntry, categoryLabel: string) => {
+  const buildHeadline = (
+    entry: ResolvedAccountEntry,
+    categoryLabel: string,
+  ) => {
     const candidates = [
       normalizeDisplayText(entry.item),
       normalizeDisplayText(entry.merchant),
@@ -177,12 +192,11 @@ export default function DetailEntriesPanel({
     const headline = buildHeadline(entry, categoryLabel);
     const supportLabels = buildSupportLabels(entry, categoryLabel, headline);
     const memoText = normalizeDisplayText(entry.memo);
-    const accentTone =
-      isSavingsCategory(entry.category)
-        ? "asset"
-        : entry.type === "income"
-          ? "income"
-          : "expense";
+    const accentTone = isSavingsCategory(entry.category)
+      ? "asset"
+      : entry.type === "income"
+        ? "income"
+        : "expense";
 
     return (
       <StEntryItem key={entry.resolvedId}>
@@ -204,7 +218,9 @@ export default function DetailEntriesPanel({
             </StEntryPayment>
             {entry.source !== "direct" ? (
               <StMirrorBadge>
-                {entry.source === "shared_link" ? "공용방에 공유됨" : "공용방 자동반영"}
+                {entry.source === "shared_link"
+                  ? "공용방에 공유됨"
+                  : "공용방 자동반영"}
               </StMirrorBadge>
             ) : null}
           </StEntryTop>
@@ -235,8 +251,8 @@ export default function DetailEntriesPanel({
           ) : null}
         </StEntryMain>
         <StEntryAside>
-          <StEntryAmount $tone={accentTone}>
-            {formatAmount(entry.amount)}
+          <StEntryAmount $tone={accentTone} $hidden={isAmountHidden}>
+            {isAmountHidden ? "금액 숨김" : formatAmount(entry.amount)}
           </StEntryAmount>
           {showDateMeta ? <StEntryMeta>{entry.date}</StEntryMeta> : null}
           {!entry.readonly && (onEdit || onDelete) ? (
@@ -247,7 +263,10 @@ export default function DetailEntriesPanel({
                 </StEditButton>
               ) : null}
               {onDelete ? (
-                <StDeleteButton type="button" onClick={() => onDelete(entry.id)}>
+                <StDeleteButton
+                  type="button"
+                  onClick={() => onDelete(entry.id)}
+                >
                   삭제
                 </StDeleteButton>
               ) : null}
@@ -262,9 +281,23 @@ export default function DetailEntriesPanel({
     <StPanel>
       <StDetailHeader>
         <StBlockTitle>{title}</StBlockTitle>
-        <StDetailAddButton type="button" onClick={onOpenAdd} aria-label="내역 추가">
-          +
-        </StDetailAddButton>
+        <StDetailHeaderActions>
+          {canToggleAmountVisibility ? (
+            <StDetailVisibilityButton
+              type="button"
+              onClick={onToggleAmountVisibility}
+            >
+              {isAmountHidden ? "금액 보기" : "금액 숨기기"}
+            </StDetailVisibilityButton>
+          ) : null}
+          <StDetailAddButton
+            type="button"
+            onClick={onOpenAdd}
+            aria-label="내역 추가"
+          >
+            +
+          </StDetailAddButton>
+        </StDetailHeaderActions>
       </StDetailHeader>
       <StEntryList>
         {groupedEntries ? (
@@ -305,7 +338,9 @@ export default function DetailEntriesPanel({
                   <StTrackingBar>
                     <StTrackingFill style={{ width }} />
                   </StTrackingBar>
-                  <StTrackingAmount>{formatAmount(row.amount)}</StTrackingAmount>
+                  <StTrackingAmount>
+                    {formatAmount(row.amount)}
+                  </StTrackingAmount>
                 </StTrackingRow>
               );
             })
@@ -349,6 +384,20 @@ const StDetailHeader = styled.div`
   gap: 0.5rem;
   flex-shrink: 0;
   padding-bottom: 0.55rem;
+`;
+const StDetailHeaderActions = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+`;
+const StDetailVisibilityButton = styled.button`
+  border: 1px solid #d6e0ee;
+  background: #f8fbff;
+  color: #61738d;
+  border-radius: 999px;
+  padding: 0.48rem 0.78rem;
+  font-size: 0.75rem;
+  font-weight: 800;
 `;
 const StDetailAddButton = styled.button`
   width: 2.25rem;
@@ -466,7 +515,6 @@ const StEntryMetaList = styled.div`
   line-height: 1.45;
 `;
 const StEntryMetaText = styled.span`
-  position: relative;
   display: inline-flex;
   align-items: center;
   font-weight: 700;
@@ -513,10 +561,13 @@ const StEntryAside = styled.div`
 `;
 const StEntryAmount = styled.span<{
   $tone: "income" | "expense" | "asset";
+  $hidden?: boolean;
 }>`
   font-size: 0.98rem;
   font-weight: 900;
-  color: ${({ $tone }) => {
+  text-align: right;
+  color: ${({ $tone, $hidden }) => {
+    if ($hidden) return "#8b95a6";
     if ($tone === "income") return "#4f7cff";
     if ($tone === "asset") return "#3f8f8a";
     return "#6b63e8";

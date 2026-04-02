@@ -74,6 +74,9 @@ export default function EntryFormModal({
   if (!isOpen) return null;
 
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
+  const cardCompanyLabel = payment === "check_card" ? "체크 항목" : "카드사";
+  const cardCompanyPlaceholder =
+    payment === "check_card" ? "예: 네이버하나머니" : "예: 삼성카드";
 
   return (
     <StModalBackdrop onClick={onClose}>
@@ -183,7 +186,7 @@ export default function EntryFormModal({
             </StPaymentSelector>
             {shouldShowCardCompany ? (
               <>
-                <StSubLabel>카드사</StSubLabel>
+                <StSubLabel>{cardCompanyLabel}</StSubLabel>
                 <StSubCategorySelector>
                   {cardCompanyOptions.map((option) => (
                     <StSubCategoryOption
@@ -199,7 +202,7 @@ export default function EntryFormModal({
                 <StInlineSubInput
                   value={cardCompany}
                   onChange={(e) => onSetCardCompany(e.target.value)}
-                  placeholder="예: 삼성카드"
+                  placeholder={cardCompanyPlaceholder}
                 />
               </>
             ) : null}

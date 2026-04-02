@@ -35,11 +35,14 @@ type Props = {
   memberExpenseTotals: Array<[string, number]>;
   monthCategorySummary: Array<[string, number]>;
   cardCompanySummary: Array<{
+    id: string;
     label: string;
+    paymentGroup: PaymentType;
     amount: number;
     count: number;
     cardCount: number;
     checkCardCount: number;
+    cashCount: number;
   }>;
   selectedCardCompany: string | null;
   onSelectCardCompany: (cardCompany: string) => void;
@@ -89,13 +92,6 @@ type Props = {
   calendarDetailTitle: string;
   selectedDateEntries: ResolvedAccountEntry[];
   selectedDateAssetEntries: ResolvedAccountEntry[];
-  monthAssetCategorySections: Array<{
-    id: string;
-    title: string;
-    amount: number;
-    count: number;
-    entries: ResolvedAccountEntry[];
-  }>;
   onOpenAdd: () => void;
   onOpenNaturalRegisterForDate: (date: string) => void;
   onSelectCalendarCard: (cardId: string) => void;
@@ -103,6 +99,10 @@ type Props = {
   onDelete: (id: string) => void;
   entryActions: (entry: ResolvedAccountEntry) => EntryAction[];
   paymentLabel: (payment: PaymentType) => string;
+  isCalendarIncomeAmountHidden: boolean;
+  onToggleCalendarIncomeAmountHidden: () => void;
+  hiddenCalendarAmountCardIds: string[];
+  onToggleCalendarAmountCard: (cardId: string) => void;
 };
 
 export default function WorkspacePanelsSection({
@@ -151,7 +151,6 @@ export default function WorkspacePanelsSection({
   calendarDetailTitle,
   selectedDateEntries,
   selectedDateAssetEntries,
-  monthAssetCategorySections,
   onOpenAdd,
   onOpenNaturalRegisterForDate,
   onSelectCalendarCard,
@@ -159,6 +158,10 @@ export default function WorkspacePanelsSection({
   onDelete,
   entryActions,
   paymentLabel,
+  isCalendarIncomeAmountHidden,
+  onToggleCalendarIncomeAmountHidden,
+  hiddenCalendarAmountCardIds,
+  onToggleCalendarAmountCard,
 }: Props) {
   const hasDetailPanel = viewMode !== "board";
   const isLedgerLayout = viewMode === "ledger";
@@ -166,7 +169,7 @@ export default function WorkspacePanelsSection({
   return (
     <StCalendarSplit $hasDetailPanel={hasDetailPanel}>
       <StLeftSplitCard>
-        {viewMode === "board" ? null : (
+        {viewMode === "calendar" ? (
           <TopSummaryControls
             viewMode={viewMode === "calendar" ? "calendar" : "ledger"}
             monthTotals={monthTotals}
@@ -180,34 +183,14 @@ export default function WorkspacePanelsSection({
             onSelectLedgerCard={onSelectLedgerCard}
             selectedCalendarCardId={selectedCalendarCardId}
             onSelectCalendarCard={onSelectCalendarCard}
+            hiddenCalendarAmountCardIds={hiddenCalendarAmountCardIds}
+            onToggleCalendarAmountCard={onToggleCalendarAmountCard}
           />
-        )}
+        ) : null}
 
         {isLedgerLayout ? (
           <StLeftBody>
             <StLedgerLeftStack>
-              <StLedgerMemoCard>
-                <StLedgerMemoHeader>
-                  <StLedgerMemoTitleWrap>
-                    <strong>이번 달 메모</strong>
-                    <span>리스트 화면에서만 보는 메모</span>
-                  </StLedgerMemoTitleWrap>
-                  <StLedgerMemoActionButton
-                    type="button"
-                    onClick={
-                      isListMemoEditing ? onSaveListMemo : onEditListMemo
-                    }
-                  >
-                    {isListMemoEditing ? "저장" : "수정"}
-                  </StLedgerMemoActionButton>
-                </StLedgerMemoHeader>
-                <StLedgerMemoTextarea
-                  value={listMemo}
-                  onChange={(event) => onChangeListMemo(event.target.value)}
-                  readOnly={!isListMemoEditing}
-                  placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
-                />
-              </StLedgerMemoCard>
               <StLedgerOverviewBlock>
                 <LedgerOverviewSection
                   currentMonth={currentMonth}
@@ -217,6 +200,12 @@ export default function WorkspacePanelsSection({
                   monthEntries={monthEntries}
                   memberExpenseTotals={memberExpenseTotals}
                   monthCategorySummary={monthCategorySummary}
+                  categoryDescriptions={Object.fromEntries(
+                    boardSummaryCards.map((card) => [
+                      card.label,
+                      card.description,
+                    ]),
+                  )}
                   cardCompanySummary={cardCompanySummary}
                   selectedCardCompany={selectedCardCompany}
                   onSelectCardCompany={onSelectCardCompany}
@@ -224,6 +213,27 @@ export default function WorkspacePanelsSection({
                 />
               </StLedgerOverviewBlock>
             </StLedgerLeftStack>
+
+            <StLedgerMemoCard>
+              <StLedgerMemoHeader>
+                <StLedgerMemoTitleWrap>
+                  <strong>이번 달 메모</strong>
+                  <span>리스트 화면에서만 보는 메모</span>
+                </StLedgerMemoTitleWrap>
+                <StLedgerMemoActionButton
+                  type="button"
+                  onClick={isListMemoEditing ? onSaveListMemo : onEditListMemo}
+                >
+                  {isListMemoEditing ? "저장" : "수정"}
+                </StLedgerMemoActionButton>
+              </StLedgerMemoHeader>
+              <StLedgerMemoTextarea
+                value={listMemo}
+                onChange={(event) => onChangeListMemo(event.target.value)}
+                readOnly={!isListMemoEditing}
+                placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
+              />
+            </StLedgerMemoCard>
           </StLeftBody>
         ) : (
           <StLeftBody>
@@ -276,19 +286,16 @@ export default function WorkspacePanelsSection({
           ) : (
             <DetailEntriesPanel
               title={calendarDetailTitle}
-              entries={
-                selectedCalendarCardId === "asset" ? [] : selectedDateEntries
-              }
+              entries={selectedDateEntries}
               assetEntries={
-                selectedCalendarCardId === "asset"
-                  ? undefined
-                  : selectedDateAssetEntries
+                selectedCalendarCardId ? undefined : selectedDateAssetEntries
               }
-              groupedEntries={
-                selectedCalendarCardId === "asset"
-                  ? monthAssetCategorySections
-                  : undefined
+              canToggleAmountVisibility={selectedCalendarCardId === "income"}
+              isAmountHidden={
+                selectedCalendarCardId === "income" &&
+                isCalendarIncomeAmountHidden
               }
+              onToggleAmountVisibility={onToggleCalendarIncomeAmountHidden}
               onOpenAdd={onOpenAdd}
               onEdit={onEdit}
               onDelete={onDelete}
