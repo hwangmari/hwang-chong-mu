@@ -224,17 +224,19 @@ export default function DetailEntriesPanel({
               </StMirrorBadge>
             ) : null}
           </StEntryTop>
-          <StEntryName>{headline}</StEntryName>
-          {supportLabels.length > 0 ? (
-            <StEntryMetaList>
-              {supportLabels.map((label) => (
-                <StEntryMetaText key={`${entry.resolvedId}-${label}`}>
-                  {label}
-                </StEntryMetaText>
-              ))}
-            </StEntryMetaList>
-          ) : null}
-          {memoText ? <StEntryMemo>{memoText}</StEntryMemo> : null}
+          <StEntryBox>
+            <StEntryName>{headline}</StEntryName>
+            {supportLabels.length > 0 ? (
+              <StEntryMetaList>
+                {supportLabels.map((label) => (
+                  <StEntryMetaText key={`${entry.resolvedId}-${label}`}>
+                    {label}
+                  </StEntryMetaText>
+                ))}
+              </StEntryMetaList>
+            ) : null}
+            {memoText ? <StEntryMemo>{memoText}</StEntryMemo> : null}
+          </StEntryBox>
           {actions.length > 0 ? (
             <StEntryActions>
               {actions.map((action) => (
@@ -505,6 +507,14 @@ const StMirrorBadge = styled.span`
   background: #f3f6fa;
   border: 1px solid #e1e7ef;
 `;
+
+const StEntryBox = styled.div`
+  @media (max-width: 720px) {
+    display: flex;
+    gap: 4px;
+  }
+`;
+
 const StEntryName = styled.p`
   font-size: 1rem;
   color: #111827;

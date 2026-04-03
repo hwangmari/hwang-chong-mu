@@ -469,18 +469,43 @@ const StCardCompanyRow = styled.button<{ $active: boolean }>`
   display: grid;
   gap: 0.34rem;
   width: 100%;
-  border: none;
-  background-color: ${({ $active }) => ($active ? "#cfe0ff" : "")};
-  background: transparent;
-  padding: 0.55rem 0;
+  box-sizing: border-box;
+  border: 1px solid ${({ $active }) => ($active ? "#a9c0f5" : "transparent")};
+  border-radius: 16px;
+  background: ${({ $active }) =>
+    $active
+      ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+      : "transparent"};
+  box-shadow: ${({ $active }) =>
+    $active ? "0 8px 18px rgba(99, 126, 212, 0.1)" : "none"};
+  padding: 0.6rem 0.7rem;
   text-align: left;
-
-  &:first-child {
-    border-top: none;
-  }
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 
   &:hover {
-    background: transparent;
+    border-color: ${({ $active }) => ($active ? "#a9c0f5" : "#ccd8eb")};
+    background: ${({ $active }) =>
+      $active
+        ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+        : "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"};
+    box-shadow: 0 10px 20px rgba(109, 127, 162, 0.08);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: #8faaf0;
+    box-shadow:
+      0 0 0 3px rgba(79, 124, 255, 0.12),
+      0 10px 20px rgba(109, 127, 162, 0.1);
+  }
+
+  &:active {
+    transform: translateY(1px);
   }
 `;
 
