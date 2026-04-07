@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { Button, Input } from "@hwangchongmu/ui";
@@ -12,6 +12,7 @@ import {
 } from "@/components/styled/layout.styled";
 import { NaverLocalItem } from "@/types/dinner";
 import { createDinnerRoom, addDinnerPlaces } from "@/services/dinner";
+import NaverMap from "./NaverMap";
 
 export default function DinnerPage() {
   const router = useRouter();
@@ -21,6 +22,12 @@ export default function DinnerPage() {
   const [selected, setSelected] = useState<NaverLocalItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  const stripHtmlCb = useCallback(
+    (str: string) => str.replace(/<[^>]*>/g, ""),
+    [],
+  );
 
   const handleSearch = async () => {
     if (!keyword.trim()) return;
@@ -128,6 +135,15 @@ export default function DinnerPage() {
             </Button>
           </StSearchRow>
 
+          {/* TODO: NCP 인증 해결 후 지도 활성화 */}
+          {/* {results.length > 0 && (
+            <NaverMap
+              items={results}
+              focusedIndex={focusedIndex}
+              stripHtml={stripHtmlCb}
+            />
+          )} */}
+
           {/* 검색 결과 */}
           {results.length > 0 && (
             <StResultList>
@@ -136,12 +152,17 @@ export default function DinnerPage() {
                   key={i}
                   $selected={isSelected(item)}
                   onClick={() => toggleSelect(item)}
+                  onMouseEnter={() => setFocusedIndex(i)}
+                  onMouseLeave={() => setFocusedIndex(null)}
                 >
                   <StCheckbox $checked={isSelected(item)}>
                     {isSelected(item) ? "✓" : ""}
                   </StCheckbox>
                   <StResultInfo>
-                    <StPlaceName>{stripHtml(item.title)}</StPlaceName>
+                    <StPlaceName>
+                      <StPlaceNumber>{i + 1}</StPlaceNumber>
+                      {stripHtml(item.title)}
+                    </StPlaceName>
                     <StPlaceCategory>{item.category}</StPlaceCategory>
                     <StPlaceAddress>{item.roadAddress || item.address}</StPlaceAddress>
                     {item.telephone && (
@@ -220,6 +241,7 @@ const StResultList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: 1rem;
 `;
 
 const StResultItem = styled.div<{ $selected: boolean }>`
@@ -269,6 +291,23 @@ const StPlaceName = styled.div`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray900};
   margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
+const StPlaceNumber = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.colors.blue500};
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  flex-shrink: 0;
 `;
 
 const StPlaceCategory = styled.div`
