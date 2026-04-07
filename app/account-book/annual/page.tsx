@@ -210,15 +210,34 @@ function AccountBookAnnualContent() {
     });
   }, [filteredEntries]);
 
-  const annualPaymentTotals = useMemo(() => {
-    return filteredEntries.reduce<Record<PaymentKey, number>>(
+  const selectedMonthCode = useMemo(() => {
+    if (!selectedMonth) return null;
+    const monthNumber = Number(selectedMonth.replace("월", ""));
+    if (!Number.isFinite(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+      return null;
+    }
+    return String(monthNumber).padStart(2, "0");
+  }, [selectedMonth]);
+
+  const insightEntries = useMemo(() => {
+    if (!selectedMonthCode) return filteredEntries;
+    return filteredEntries.filter((entry) => entry.date.slice(5, 7) === selectedMonthCode);
+  }, [filteredEntries, selectedMonthCode]);
+
+  const insightTotal = useMemo(
+    () => insightEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [insightEntries],
+  );
+
+  const paymentTotals = useMemo(() => {
+    return insightEntries.reduce<Record<PaymentKey, number>>(
       (acc, entry) => {
         acc[entry.payment] += entry.amount;
         return acc;
       },
       { cash: 0, card: 0, check_card: 0 },
     );
-  }, [filteredEntries]);
+  }, [insightEntries]);
 
   const maxMonthlyAmount = Math.max(...monthlyRows.map((row) => row.amount), 0);
 
@@ -239,7 +258,7 @@ function AccountBookAnnualContent() {
   );
 
   const categoryRows = useMemo(() => {
-    const grouped = filteredEntries.reduce<Record<string, number>>((acc, entry) => {
+    const grouped = insightEntries.reduce<Record<string, number>>((acc, entry) => {
       const key =
         kind === "asset"
           ? entry.subCategory?.trim() || entry.item.trim() || entry.category.trim() || "기타"
@@ -254,9 +273,47 @@ function AccountBookAnnualContent() {
       .map(([label, amount]) => ({
         label,
         amount,
-        ratio: total > 0 ? (amount / total) * 100 : 0,
+        ratio: insightTotal > 0 ? (amount / insightTotal) * 100 : 0,
       }));
-  }, [filteredEntries, kind, total]);
+  }, [insightEntries, insightTotal, kind]);
+
+  const incomeSourceRows = useMemo(() => {
+    const grouped = insightEntries.reduce<Record<string, number>>((acc, entry) => {
+      const key =
+        entry.subCategory?.trim() ||
+        entry.item?.trim() ||
+        entry.merchant?.trim() ||
+        getRepresentativeCategory(entry.category, entry.type) ||
+        "기타 수입";
+      acc[key] = (acc[key] || 0) + entry.amount;
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([label, amount]) => ({
+        label,
+        amount,
+        ratio: insightTotal > 0 ? (amount / insightTotal) * 100 : 0,
+      }));
+  }, [insightEntries, insightTotal]);
+
+  const incomeMemberRows = useMemo(() => {
+    const grouped = insightEntries.reduce<Record<string, number>>((acc, entry) => {
+      const key = entry.member?.trim() || "작성자 미상";
+      acc[key] = (acc[key] || 0) + entry.amount;
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, amount]) => ({
+        label,
+        amount,
+        ratio: insightTotal > 0 ? (amount / insightTotal) * 100 : 0,
+      }));
+  }, [insightEntries, insightTotal]);
 
   const latestEntryDate = useMemo(() => {
     if (filteredEntries.length === 0) return null;
@@ -719,18 +776,22 @@ function AccountBookAnnualContent() {
           </StInsightGrid>
         ) : (
           <StInsightGrid>
-            <StCard>
-              <StSectionHeader>
-                <StSectionTitle>월별 흐름</StSectionTitle>
-                {selectedMonth ? (
-                  <StFilterChip
-                    type="button"
-                    onClick={() => setSelectedMonth(null)}
-                  >
-                    {selectedMonth} 필터 해제
-                  </StFilterChip>
-                ) : null}
-              </StSectionHeader>
+              <StCard>
+                <StSectionHeader>
+                  <StSectionTitle>월별 흐름</StSectionTitle>
+                  <StSectionHeaderActions>
+                    {selectedMonth ? (
+                      <StFilterChip
+                        type="button"
+                        onClick={() => setSelectedMonth(null)}
+                      >
+                        {selectedMonth} 필터 해제
+                      </StFilterChip>
+                    ) : (
+                      <StFilterChipPlaceholder aria-hidden="true" />
+                    )}
+                  </StSectionHeaderActions>
+                </StSectionHeader>
               {monthlyRows.every((row) => row.amount === 0) ? (
                 <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
               ) : (
@@ -770,50 +831,114 @@ function AccountBookAnnualContent() {
             </StCard>
 
             <StSideColumn>
-              <StCard>
-                <StSectionTitle>결제 수단 비중</StSectionTitle>
-                <StPaymentLegend>
-                  {PAYMENT_META.map((payment) => {
-                    const value = annualPaymentTotals[payment.key];
-                    const ratio = total > 0 ? (value / total) * 100 : 0;
+              {kind === "income" ? (
+                <>
+                  <StCard>
+                    <StSectionHeader>
+                      <StSectionTitle>들어온 항목</StSectionTitle>
+                      <StSectionMeta>
+                        {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
+                      </StSectionMeta>
+                    </StSectionHeader>
+                    {incomeSourceRows.length === 0 ? (
+                      <StEmpty>수입 항목 데이터가 없습니다.</StEmpty>
+                    ) : (
+                      <StCategoryList>
+                        {incomeSourceRows.map((row) => (
+                          <StCategoryItem key={row.label}>
+                            <div>
+                              <strong>{row.label}</strong>
+                              <span>{formatCompactPercent(row.ratio)}</span>
+                            </div>
+                            <em>{formatAmount(row.amount)}</em>
+                          </StCategoryItem>
+                        ))}
+                      </StCategoryList>
+                    )}
+                  </StCard>
 
-                    return (
-                      <StLegendItem key={payment.key}>
-                        <div className="info">
-                          <span
-                            className="dot"
-                            style={{ background: payment.color }}
-                          />
-                          <strong>{payment.label}</strong>
-                        </div>
-                        <div className="meta">
-                          <em>{formatAmount(value)}</em>
-                          <span>{formatCompactPercent(ratio)}</span>
-                        </div>
-                      </StLegendItem>
-                    );
-                  })}
-                </StPaymentLegend>
-              </StCard>
+                  <StCard>
+                    <StSectionHeader>
+                      <StSectionTitle>기록한 사람</StSectionTitle>
+                      <StSectionMeta>
+                        {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
+                      </StSectionMeta>
+                    </StSectionHeader>
+                    {incomeMemberRows.length === 0 ? (
+                      <StEmpty>작성자 데이터가 없습니다.</StEmpty>
+                    ) : (
+                      <StCategoryList>
+                        {incomeMemberRows.map((row) => (
+                          <StCategoryItem key={row.label}>
+                            <div>
+                              <strong>{row.label}</strong>
+                              <span>{formatCompactPercent(row.ratio)}</span>
+                            </div>
+                            <em>{formatAmount(row.amount)}</em>
+                          </StCategoryItem>
+                        ))}
+                      </StCategoryList>
+                    )}
+                  </StCard>
+                </>
+              ) : (
+                <>
+                  <StCard>
+                    <StSectionHeader>
+                      <StSectionTitle>결제 수단 비중</StSectionTitle>
+                      <StSectionMeta>
+                        {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
+                      </StSectionMeta>
+                    </StSectionHeader>
+                    <StPaymentLegend>
+                      {PAYMENT_META.map((payment) => {
+                        const value = paymentTotals[payment.key];
+                        const ratio = insightTotal > 0 ? (value / insightTotal) * 100 : 0;
 
-              <StCard>
-                <StSectionTitle>많이 나온 분류</StSectionTitle>
-                {categoryRows.length === 0 ? (
-                  <StEmpty>분류할 데이터가 없습니다.</StEmpty>
-                ) : (
-                  <StCategoryList>
-                    {categoryRows.map((row) => (
-                      <StCategoryItem key={row.label}>
-                        <div>
-                          <strong>{row.label}</strong>
-                          <span>{formatCompactPercent(row.ratio)}</span>
-                        </div>
-                        <em>{formatAmount(row.amount)}</em>
-                      </StCategoryItem>
-                    ))}
-                  </StCategoryList>
-                )}
-              </StCard>
+                        return (
+                          <StLegendItem key={payment.key}>
+                            <div className="info">
+                              <span
+                                className="dot"
+                                style={{ background: payment.color }}
+                              />
+                              <strong>{payment.label}</strong>
+                            </div>
+                            <div className="meta">
+                              <em>{formatAmount(value)}</em>
+                              <span>{formatCompactPercent(ratio)}</span>
+                            </div>
+                          </StLegendItem>
+                        );
+                      })}
+                    </StPaymentLegend>
+                  </StCard>
+
+                  <StCard>
+                    <StSectionHeader>
+                      <StSectionTitle>많이 나온 분류</StSectionTitle>
+                      <StSectionMeta>
+                        {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
+                      </StSectionMeta>
+                    </StSectionHeader>
+                    {categoryRows.length === 0 ? (
+                      <StEmpty>분류할 데이터가 없습니다.</StEmpty>
+                    ) : (
+                      <StCategoryList>
+                        {categoryRows.map((row) => (
+                          <StCategoryItem key={row.label}>
+                            <div>
+                              <strong>{row.label}</strong>
+                              <span>{formatCompactPercent(row.ratio)}</span>
+                            </div>
+                            <em>{formatAmount(row.amount)}</em>
+                          </StCategoryItem>
+                        ))}
+                      </StCategoryList>
+                    )}
+                  </StCard>
+                </>
+              )}
             </StSideColumn>
           </StInsightGrid>
         )}
@@ -1131,6 +1256,15 @@ const StSectionHeader = styled.div`
   gap: 0.75rem;
 `;
 
+const StSectionHeaderActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 9.25rem;
+  min-height: 2.25rem;
+  flex-shrink: 0;
+`;
+
 const StSectionTitle = styled.h2`
   font-size: 1rem;
   font-weight: 900;
@@ -1234,6 +1368,13 @@ const StFilterChip = styled.button`
   padding: 0.45rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 800;
+`;
+
+const StFilterChipPlaceholder = styled.span`
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.25rem;
+  visibility: hidden;
 `;
 
 const StMonthlyList = styled.div`

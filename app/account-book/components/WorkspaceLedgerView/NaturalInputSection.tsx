@@ -93,7 +93,7 @@ export default function NaturalInputSection({
                 value={naturalInput}
                 onChange={(event) => onChangeInput(event.target.value)}
                 onKeyDown={handleNaturalKeyDown}
-                placeholder="예: 오늘 스타벅스 네이버현대카드 6000원"
+                placeholder="예: 오늘 스타벅스 카페 네이버현대카드 6000원"
               />
             </StComposerCard>
 

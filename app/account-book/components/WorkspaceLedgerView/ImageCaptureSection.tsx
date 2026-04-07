@@ -163,18 +163,11 @@ export default function ImageCaptureSection({
 
   const content = (
     <>
-      <StCaptureHeader>
-        <div>
-          <StCaptureEyebrow>Image OCR</StCaptureEyebrow>
-          <StCaptureTitle>카드 캡처로 자동 입력</StCaptureTitle>
-        </div>
-        {fileName ? <StCaptureFileName>{fileName}</StCaptureFileName> : null}
-      </StCaptureHeader>
-
-      <StCaptureDescription>
-        카드 승인내역이나 사용내역 캡처를 올리면 브라우저에서 무료 OCR로 거래
-        후보를 추출하고, 확인 후 폼에 바로 채워 넣습니다.
-      </StCaptureDescription>
+      {fileName ? (
+        <StCaptureMetaRow>
+          <StCaptureFileName>{fileName}</StCaptureFileName>
+        </StCaptureMetaRow>
+      ) : null}
 
       <StCaptureActions>
         <StPrimaryButton
@@ -201,9 +194,7 @@ export default function ImageCaptureSection({
       />
 
       <StCaptureHints>
-        <span>카드사 사용내역 캡처</span>
-        <span>승인 문자 캡처</span>
-        <span>거래가 여러 건이어도 추출 가능</span>
+        카드사 사용내역 캡처 · 승인 문자 캡처 · 거래가 여러 건이어도 추출 가능
       </StCaptureHints>
 
       {errorMessage ? <StErrorText>{errorMessage}</StErrorText> : null}
@@ -232,10 +223,9 @@ export default function ImageCaptureSection({
         <StConfirmBackdrop onClick={() => setIsConfirmOpen(false)}>
           <StConfirmCard onClick={(event) => event.stopPropagation()}>
             <StConfirmHeader>
-              <div>
-                <StCaptureEyebrow>Image OCR</StCaptureEyebrow>
+              <StConfirmTitleBlock>
                 <StConfirmTitle>추출 결과 수정</StConfirmTitle>
-              </div>
+              </StConfirmTitleBlock>
               <ModalCloseButton onClick={() => setIsConfirmOpen(false)} />
             </StConfirmHeader>
 
@@ -457,116 +447,92 @@ export default function ImageCaptureSection({
 }
 
 const StCaptureCard = styled.section`
-  border: 1px solid #d6e1ee;
-  border-radius: 24px;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 20px 45px rgba(87, 108, 146, 0.08);
+  padding: 0;
+  background: transparent;
 `;
 
 const StEmbeddedCapture = styled.section`
-  border: 1px solid #dbe7df;
-  border-radius: 22px;
-  padding: 1rem;
-  background: linear-gradient(180deg, rgba(245, 251, 247, 0.95), rgba(255, 255, 255, 0.98));
+  padding: 0;
+  background: transparent;
 `;
 
-const StCaptureHeader = styled.div`
+const StCaptureMetaRow = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.8rem;
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-  }
-`;
-
-const StCaptureEyebrow = styled.p`
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #4a8d72;
-`;
-
-const StCaptureTitle = styled.h2`
-  margin-top: 0.24rem;
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #1f2937;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 0.4rem;
 `;
 
 const StCaptureFileName = styled.span`
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
+  background: #ffffff;
   border: 1px solid #d7e2ef;
-  padding: 0.35rem 0.7rem;
+  padding: 0.42rem 0.75rem;
   font-size: 0.78rem;
   font-weight: 800;
   color: #56708e;
 `;
 
-const StCaptureDescription = styled.p`
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: #617186;
-`;
-
 const StCaptureActions = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.9rem;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
 `;
 
 const StPrimaryButton = styled.button`
-  border: 1px solid #2f7d59;
-  border-radius: 16px;
-  background: #3b9a6f;
+  border: 1px solid #4e67d0;
+  border-radius: 1.6rem;
+  background: #5f73d9;
   color: #fff;
-  font-size: 0.94rem;
+  font-size: 0.95rem;
   font-weight: 900;
-  padding: 0.92rem 1.1rem;
-  box-shadow: 0 8px 20px rgba(52, 125, 95, 0.14);
+  min-width: 10rem;
+  min-height: 4rem;
+  padding: 0.95rem 1.35rem;
+  box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
 
   &:disabled {
     cursor: wait;
     opacity: 0.7;
   }
+
+  @media (max-width: 720px) {
+    min-height: 3.2rem;
+    border-radius: 1.2rem;
+    font-size: 0.9rem;
+  }
 `;
 
 const StSecondaryButton = styled.button`
   border: 1px solid #cedbeb;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1.6rem;
+  background: #ffffff;
   color: #506683;
-  font-size: 0.9rem;
-  font-weight: 800;
-  padding: 0.92rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  min-width: 9rem;
+  min-height: 4rem;
+  padding: 0.95rem 1.2rem;
+
+  @media (max-width: 720px) {
+    min-height: 3.2rem;
+    border-radius: 1.2rem;
+    font-size: 0.9rem;
+  }
 `;
 
 const StHiddenInput = styled.input`
   display: none;
 `;
 
-const StCaptureHints = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+const StCaptureHints = styled.p`
   margin-top: 0.75rem;
-
-  span {
-    border-radius: 999px;
-    background: #edf9f2;
-    color: #357458;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.74rem;
-    font-weight: 700;
-  }
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #7a8798;
 `;
 
 const StErrorText = styled.p`
@@ -581,11 +547,9 @@ const StResultSummary = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 0.95rem;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid #dde6f0;
-  border-radius: 18px;
-  background: #f8fbff;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e7edf6;
 
   span {
     font-size: 0.86rem;
@@ -636,6 +600,10 @@ const StConfirmHeader = styled.div`
   margin-bottom: 0.95rem;
 `;
 
+const StConfirmTitleBlock = styled.div`
+  min-width: 0;
+`;
+
 const StDuplicateNotice = styled.p`
   margin-bottom: 0.9rem;
   border: 1px solid #f0dcc3;
@@ -661,8 +629,7 @@ const StExistingDuplicateNotice = styled.p`
 `;
 
 const StConfirmTitle = styled.h3`
-  margin-top: 0.24rem;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 900;
   color: #1f2937;
 `;
