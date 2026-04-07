@@ -1,6 +1,16 @@
 import React from "react";
 
-type ThemeType = "blue" | "orange" | "lab";
+type ThemeType =
+  | "blue"
+  | "orange"
+  | "lab"
+  | "purple"
+  | "green"
+  | "indigo"
+  | "rose"
+  | "teal"
+  | "amber"
+  | "slate";
 
 interface OgTemplateProps {
   title: string;
@@ -45,6 +55,55 @@ export const OgTemplate = ({
       badgeBg: "#FFFFFF",
       badgeText: "#374151",
     },
+    purple: {
+      bg: "#FAF5FF",
+      textMain: "#581C87",
+      textSub: "#9333EA",
+      badgeBg: "#F3E8FF",
+      badgeText: "#7C3AED",
+    },
+    green: {
+      bg: "#F0FDF4",
+      textMain: "#14532D",
+      textSub: "#16A34A",
+      badgeBg: "#DCFCE7",
+      badgeText: "#15803D",
+    },
+    indigo: {
+      bg: "#EEF2FF",
+      textMain: "#312E81",
+      textSub: "#6366F1",
+      badgeBg: "#E0E7FF",
+      badgeText: "#4F46E5",
+    },
+    rose: {
+      bg: "#FFF1F2",
+      textMain: "#881337",
+      textSub: "#E11D48",
+      badgeBg: "#FFE4E6",
+      badgeText: "#BE123C",
+    },
+    teal: {
+      bg: "#F0FDFA",
+      textMain: "#134E4A",
+      textSub: "#0D9488",
+      badgeBg: "#CCFBF1",
+      badgeText: "#0F766E",
+    },
+    amber: {
+      bg: "#FFFBEB",
+      textMain: "#78350F",
+      textSub: "#D97706",
+      badgeBg: "#FEF3C7",
+      badgeText: "#B45309",
+    },
+    slate: {
+      bg: "#F8FAFC",
+      textMain: "#0F172A",
+      textSub: "#475569",
+      badgeBg: "#E2E8F0",
+      badgeText: "#334155",
+    },
   };
 
   const colors = themeColors[theme];
@@ -68,23 +127,23 @@ export const OgTemplate = ({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "40px",
+          padding: "28px",
         }}
       >
-        {/* 이모지 (토끼) */}
-        <div style={{ fontSize: 100, marginBottom: 30 }}>{emoji}</div>
+        {/* 이모지 */}
+        <div style={{ fontSize: 64, marginBottom: 18 }}>{emoji}</div>
 
         {/* 메인 타이틀 */}
         <div
           style={{
-            fontSize: 70,
+            fontSize: 46,
             fontWeight: 900,
             color: colors.textMain,
             textAlign: "center",
-            marginBottom: 10,
+            marginBottom: 6,
             lineHeight: 1.1,
             letterSpacing: "-0.03em",
-            whiteSpace: "pre-wrap", // 줄바꿈 지원
+            whiteSpace: "pre-wrap",
           }}
         >
           {title}
@@ -93,10 +152,10 @@ export const OgTemplate = ({
         {/* 서브 타이틀 */}
         <div
           style={{
-            fontSize: 32,
+            fontSize: 22,
             color: colors.textSub,
             fontWeight: 500,
-            marginTop: 10,
+            marginTop: 6,
             textAlign: "center",
           }}
         >
@@ -106,14 +165,14 @@ export const OgTemplate = ({
         {/* 하단 브랜드 뱃지 */}
         <div
           style={{
-            marginTop: 60,
-            padding: "12px 30px",
+            marginTop: 36,
+            padding: "8px 22px",
             background: colors.badgeBg,
             borderRadius: 50,
             color: colors.badgeText,
-            fontSize: 22,
+            fontSize: 16,
             fontWeight: 700,
-            display: "flex", // 뱃지 내부 정렬
+            display: "flex",
             alignItems: "center",
             justifyContent: "center",
             boxShadow:

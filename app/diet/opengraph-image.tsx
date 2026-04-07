@@ -7,16 +7,14 @@ export const contentType = "image/png";
 
 export default async function Image() {
   return new ImageResponse(
-    (
-      <OgTemplate
-        title="황총무의 실험실"
-        subtitle="복잡한 건 제가 할게요, 총총총... 🐾"
-        emoji="🐰" // 토끼 이모지 사용!
-        theme="lab" // ✅ 새로 만든 lab 테마 적용
-      />
-    ),
+    <OgTemplate
+      title="체중 관리"
+      subtitle="평생 숙제 다이어트, 기록으로 시작!"
+      emoji="⚖️"
+      theme="rose"
+    />,
     {
       ...size,
-    }
+    },
   );
 }
