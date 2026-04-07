@@ -1,4 +1,5 @@
 import {
+  AccountBookMonthlyMemo,
   AccountBookUser,
   AccountBookWorkspace,
   AccountEntry,
@@ -15,7 +16,12 @@ export type WorkspaceLedgerViewProps = {
   entries: ResolvedAccountEntry[];
   shareTargets: AccountBookWorkspace[];
   isEntryShared: (entryId: string, targetWorkspaceId: string) => boolean;
-  onToggleShare: (entryId: string, targetWorkspaceId: string) => void;
+  onToggleShare: (entryId: string, targetWorkspaceId: string) => Promise<void>;
+  monthlyMemos: AccountBookMonthlyMemo[];
+  onSaveMonthlyMemo: (
+    monthKey: string,
+    memo: string,
+  ) => boolean | Promise<boolean>;
   onSaveEntry: (entry: AccountEntry) => boolean | Promise<boolean>;
   onDeleteEntry: (entryId: string) => void | Promise<void>;
   onChangeAnnualSavingGoal: (value: number) => boolean | Promise<boolean>;

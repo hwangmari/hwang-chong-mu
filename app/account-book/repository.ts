@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import {
+  AccountBookMonthlyMemo,
   AccountBookStore,
   AccountBookUser,
   AccountBookWorkspace,
@@ -11,6 +12,7 @@ import {
   ACCOUNT_BOOK_STORE_KEY,
   LEGACY_ACCOUNT_BOOK_KEY,
   getAccountBookStore,
+  getWorkspaceById,
   normalizeStore,
   saveAccountBookStore,
   toggleShareLink,
@@ -51,6 +53,128 @@ type UserActionResult = {
   userId: string;
   workspaceId: string;
 };
+
+function isLikelyNetworkError(error: unknown) {
+  if (error instanceof TypeError) {
+    return true;
+  }
+
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toLowerCase()
+      : "";
+
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("fetch failed") ||
+    message.includes("network") ||
+    message.includes("load failed")
+  );
+}
+
+function canAccessWorkspaceForWrite(
+  store: AccountBookStore,
+  workspaceId: string,
+  actorUserId: string,
+) {
+  const workspace = getWorkspaceById(store, workspaceId);
+  if (!workspace) return false;
+
+  return (
+    workspace.ownerUserId === actorUserId || workspace.memberIds.includes(actorUserId)
+  );
+}
+
+function assertEntryWritePermission(
+  store: AccountBookStore,
+  entry: AccountEntry,
+  actorUserId: string,
+) {
+  const existingEntry =
+    store.entries.find((currentEntry) => currentEntry.id === entry.id) || null;
+
+  if (!actorUserId || entry.createdByUserId !== actorUserId) {
+    throw new Error("본인이 작성한 내역만 저장할 수 있어요.");
+  }
+
+  if (!canAccessWorkspaceForWrite(store, entry.workspaceId, actorUserId)) {
+    throw new Error("접근 가능한 가계부방의 내역만 저장할 수 있어요.");
+  }
+
+  if (
+    existingEntry &&
+    (existingEntry.createdByUserId !== actorUserId ||
+      existingEntry.workspaceId !== entry.workspaceId)
+  ) {
+    throw new Error("본인이 작성한 기존 내역만 수정할 수 있어요.");
+  }
+}
+
+function assertEntryManagePermission(
+  store: AccountBookStore,
+  entryId: string,
+  actorUserId: string,
+  actionLabel: string,
+) {
+  const targetEntry = store.entries.find((entry) => entry.id === entryId) || null;
+  if (!targetEntry) {
+    throw new Error("대상 내역을 찾지 못했어요.");
+  }
+
+  if (!actorUserId || targetEntry.createdByUserId !== actorUserId) {
+    throw new Error(`본인이 작성한 내역만 ${actionLabel}할 수 있어요.`);
+  }
+
+  return targetEntry;
+}
+
+function assertEntrySharePermission(
+  store: AccountBookStore,
+  sourceEntryId: string,
+  sourceWorkspaceId: string,
+  targetWorkspaceId: string,
+  actorUserId: string,
+) {
+  const sourceEntry = assertEntryManagePermission(
+    store,
+    sourceEntryId,
+    actorUserId,
+    "공유 관리",
+  );
+
+  if (sourceEntry.workspaceId !== sourceWorkspaceId) {
+    throw new Error("공유 원본 내역 정보가 올바르지 않아요.");
+  }
+
+  const targetWorkspace = getWorkspaceById(store, targetWorkspaceId);
+  if (!targetWorkspace || targetWorkspace.type !== "shared") {
+    throw new Error("공유 대상 공용방을 찾지 못했어요.");
+  }
+
+  if (!canAccessWorkspaceForWrite(store, targetWorkspaceId, actorUserId)) {
+    throw new Error("참여 중인 공용방에만 공유할 수 있어요.");
+  }
+
+  return sourceEntry;
+}
+
+function assertMonthlyMemoPermission(
+  store: AccountBookStore,
+  workspaceId: string,
+  actorUserId: string,
+) {
+  if (!actorUserId) {
+    throw new Error("메모를 저장할 사용자 정보를 찾지 못했어요.");
+  }
+
+  if (!canAccessWorkspaceForWrite(store, workspaceId, actorUserId)) {
+    throw new Error("접근 가능한 가계부방 메모만 저장할 수 있어요.");
+  }
+}
 
 async function callStoreRpc<TParams extends Record<string, unknown>>(
   name: string,
@@ -115,18 +239,27 @@ async function callRoomActionRpc<TParams extends Record<string, unknown>>(
   };
 }
 
-export async function upsertAccountBookEntry(entry: AccountEntry) {
+export async function upsertAccountBookEntry(
+  entry: AccountEntry,
+  actorUserId: string,
+) {
   try {
     return await callStoreRpc("account_book_upsert_entry", {
       p_entry: entry,
+      p_actor_user_id: actorUserId,
     });
   } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
     if (typeof window !== "undefined") {
       console.warn(
         "가계부 원격 저장에 실패해 로컬 데이터로 내역을 저장합니다.",
         error,
       );
       const currentStore = getAccountBookStore();
+      assertEntryWritePermission(currentStore, entry, actorUserId);
       const existingEntry = currentStore.entries.find(
         (currentEntry) => currentEntry.id === entry.id,
       );
@@ -146,18 +279,24 @@ export async function upsertAccountBookEntry(entry: AccountEntry) {
   }
 }
 
-export async function deleteAccountBookEntry(entryId: string) {
+export async function deleteAccountBookEntry(entryId: string, actorUserId: string) {
   try {
     return await callStoreRpc("account_book_delete_entry", {
       p_entry_id: entryId,
+      p_actor_user_id: actorUserId,
     });
   } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
     if (typeof window !== "undefined") {
       console.warn(
         "가계부 원격 삭제에 실패해 로컬 데이터에서 내역을 제거합니다.",
         error,
       );
       const currentStore = getAccountBookStore();
+      assertEntryManagePermission(currentStore, entryId, actorUserId, "삭제");
 
       return persistLocalStore({
         ...currentStore,
@@ -176,31 +315,112 @@ export async function toggleAccountBookShareLink(
   sourceEntryId: string,
   sourceWorkspaceId: string,
   targetWorkspaceId: string,
-  sharedByUserId: string,
+  actorUserId: string,
 ) {
   try {
     return await callStoreRpc("account_book_toggle_share_link", {
       p_source_entry_id: sourceEntryId,
       p_source_workspace_id: sourceWorkspaceId,
       p_target_workspace_id: targetWorkspaceId,
-      p_shared_by_user_id: sharedByUserId,
+      p_actor_user_id: actorUserId,
     });
   } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
     if (typeof window !== "undefined") {
       console.warn(
         "가계부 원격 공유 처리에 실패해 로컬 데이터에만 반영합니다.",
         error,
       );
       const currentStore = getAccountBookStore();
+      assertEntrySharePermission(
+        currentStore,
+        sourceEntryId,
+        sourceWorkspaceId,
+        targetWorkspaceId,
+        actorUserId,
+      );
       return persistLocalStore(
         toggleShareLink(
           currentStore,
           sourceEntryId,
           sourceWorkspaceId,
           targetWorkspaceId,
-          sharedByUserId,
+          actorUserId,
         ),
       );
+    }
+
+    throw error;
+  }
+}
+
+export async function upsertAccountBookMonthlyMemo(
+  workspaceId: string,
+  monthKey: string,
+  memo: string,
+  actorUserId: string,
+) {
+  try {
+    return await callStoreRpc("account_book_upsert_monthly_memo", {
+      p_workspace_id: workspaceId,
+      p_month_key: monthKey,
+      p_memo: memo,
+      p_actor_user_id: actorUserId,
+    });
+  } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
+    if (typeof window !== "undefined") {
+      console.warn(
+        "가계부 월 메모 원격 저장에 실패해 로컬 데이터에만 반영합니다.",
+        error,
+      );
+      const currentStore = getAccountBookStore();
+      assertMonthlyMemoPermission(currentStore, workspaceId, actorUserId);
+      const normalizedMonthKey =
+        /^\d{4}-\d{2}$/.test(monthKey)
+          ? monthKey
+          : new Date().toISOString().slice(0, 7);
+      const nextMemo = memo.trim();
+      const existingMemo =
+        currentStore.monthlyMemos.find(
+          (monthlyMemo) =>
+            monthlyMemo.workspaceId === workspaceId &&
+            monthlyMemo.monthKey === normalizedMonthKey,
+        ) || null;
+
+      const nextMonthlyMemos = existingMemo
+        ? currentStore.monthlyMemos.map((monthlyMemo) =>
+            monthlyMemo.id === existingMemo.id
+              ? {
+                  ...monthlyMemo,
+                  memo: nextMemo,
+                  updatedByUserId: actorUserId,
+                  updatedAt: new Date().toISOString(),
+                }
+              : monthlyMemo,
+          )
+        : [
+            {
+              id: createId("monthly-memo"),
+              workspaceId,
+              monthKey: normalizedMonthKey,
+              memo: nextMemo,
+              updatedByUserId: actorUserId,
+              updatedAt: new Date().toISOString(),
+            } satisfies AccountBookMonthlyMemo,
+            ...currentStore.monthlyMemos,
+          ];
+
+      return persistLocalStore({
+        ...currentStore,
+        monthlyMemos: nextMonthlyMemos,
+      });
     }
 
     throw error;
@@ -377,6 +597,7 @@ export async function deleteAccountBookSharedWorkspace(workspaceId: string) {
 export async function replaceWorkspaceEntries(
   currentStore: AccountBookStore,
   workspaceId: string,
+  actorUserId: string,
   nextEntries: AccountEntry[],
 ) {
   let latestStore = currentStore;
@@ -385,11 +606,11 @@ export async function replaceWorkspaceEntries(
   );
 
   for (const entry of directEntries) {
-    latestStore = await deleteAccountBookEntry(entry.id);
+    latestStore = await deleteAccountBookEntry(entry.id, actorUserId);
   }
 
   for (const entry of nextEntries) {
-    latestStore = await upsertAccountBookEntry(entry);
+    latestStore = await upsertAccountBookEntry(entry, actorUserId);
   }
 
   return latestStore;

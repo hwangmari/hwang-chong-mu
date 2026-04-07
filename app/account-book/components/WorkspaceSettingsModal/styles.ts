@@ -42,16 +42,6 @@ export const StDescription = styled.p`
   color: #6e7c90;
 `;
 
-export const StCloseButton = styled.button`
-  border: none;
-  background: #f4f7fb;
-  color: #607086;
-  border-radius: 999px;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.82rem;
-  font-weight: 800;
-`;
-
 export const StSection = styled.section`
   margin-top: 1rem;
 `;

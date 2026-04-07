@@ -30,9 +30,11 @@ type Props = {
   listMemo: string;
   isListMemoEditing: boolean;
   onChangeListMemo: (value: string) => void;
-  onSaveListMemo: () => void;
+  onSaveListMemo: () => void | Promise<void>;
   onEditListMemo: () => void;
   memberExpenseTotals: Array<[string, number]>;
+  selectedExpenseMemberName: string | null;
+  onSelectExpenseMember: (memberName: string) => void;
   monthCategorySummary: Array<[string, number]>;
   cardCompanySummary: Array<{
     id: string;
@@ -124,6 +126,8 @@ export default function WorkspacePanelsSection({
   onSaveListMemo,
   onEditListMemo,
   memberExpenseTotals,
+  selectedExpenseMemberName,
+  onSelectExpenseMember,
   monthCategorySummary,
   cardCompanySummary,
   selectedCardCompany,
@@ -199,6 +203,8 @@ export default function WorkspacePanelsSection({
                   monthAssetTotal={monthAssetTotal}
                   monthEntries={monthEntries}
                   memberExpenseTotals={memberExpenseTotals}
+                  selectedExpenseMemberName={selectedExpenseMemberName}
+                  onSelectExpenseMember={onSelectExpenseMember}
                   monthCategorySummary={monthCategorySummary}
                   categoryDescriptions={Object.fromEntries(
                     boardSummaryCards.map((card) => [
@@ -209,6 +215,7 @@ export default function WorkspacePanelsSection({
                   cardCompanySummary={cardCompanySummary}
                   selectedCardCompany={selectedCardCompany}
                   onSelectCardCompany={onSelectCardCompany}
+                  onEdit={onEdit}
                   formatAmount={formatAmount}
                 />
               </StLedgerOverviewBlock>

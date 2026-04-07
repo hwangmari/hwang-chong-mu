@@ -14,6 +14,7 @@ import {
   joinAccountBookSharedRoom,
   removeAccountBookSharedRoomMember,
   toggleAccountBookShareLink,
+  upsertAccountBookMonthlyMemo,
   updateAccountBookUser,
   upsertAccountBookEntry,
   upsertAccountBookWorkspace,
@@ -189,6 +190,14 @@ function AccountBookPageContent() {
     return resolveWorkspaceEntries(store, selectedWorkspaceId);
   }, [selectedWorkspaceId, store]);
 
+  const selectedWorkspaceMonthlyMemos = useMemo(() => {
+    if (!store || !selectedWorkspaceId) return [];
+
+    return store.monthlyMemos.filter(
+      (monthlyMemo) => monthlyMemo.workspaceId === selectedWorkspaceId,
+    );
+  }, [selectedWorkspaceId, store]);
+
   const manageableSharedWorkspaces = useMemo(
     () =>
       activeUser && store
@@ -259,18 +268,24 @@ function AccountBookPageContent() {
             isEntryShared={(entryId: string, targetWorkspaceId: string) =>
               isEntrySharedToWorkspace(store, entryId, targetWorkspaceId)
             }
+            monthlyMemos={selectedWorkspaceMonthlyMemos}
             onToggleShare={async (entryId: string, targetWorkspaceId: string) => {
+              const actingUserId = effectiveActiveUserId || activeUser?.id || "";
               const sourceEntry = store.entries.find(
                 (entry) => entry.id === entryId,
               );
-              if (!sourceEntry) return;
+              if (!sourceEntry || !actingUserId) return;
+              if (sourceEntry.createdByUserId !== actingUserId) {
+                alert("내가 작성한 내역만 공유 상태를 바꿀 수 있어요.");
+                return;
+              }
               const previousStore = store;
               const optimisticStore = toggleShareLink(
                 store,
                 sourceEntry.id,
                 sourceEntry.workspaceId,
                 targetWorkspaceId,
-                sourceEntry.createdByUserId,
+                actingUserId,
               );
 
               setStore(optimisticStore);
@@ -280,7 +295,7 @@ function AccountBookPageContent() {
                   sourceEntry.id,
                   sourceEntry.workspaceId,
                   targetWorkspaceId,
-                  sourceEntry.createdByUserId,
+                  actingUserId,
                 );
                 setStore(savedStore);
               } catch (error) {
@@ -291,14 +306,44 @@ function AccountBookPageContent() {
                 } catch {
                   setStore(previousStore);
                 }
-                alert("공유 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : "공유 처리에 실패했어요. 잠시 후 다시 시도해주세요.",
+                );
               }
             }}
             onSaveEntry={async (entry: AccountEntry) =>
-              Boolean(await commitStoreChange(() => upsertAccountBookEntry(entry)))
+              Boolean(
+                await commitStoreChange(() =>
+                  upsertAccountBookEntry(
+                    entry,
+                    effectiveActiveUserId || activeUser?.id || "",
+                  ),
+                ),
+              )
+            }
+            onSaveMonthlyMemo={async (monthKey: string, memo: string) =>
+              Boolean(
+                await commitStoreChange(
+                  () =>
+                    upsertAccountBookMonthlyMemo(
+                      selectedWorkspace.id,
+                      monthKey,
+                      memo,
+                      effectiveActiveUserId || activeUser?.id || "",
+                    ),
+                  "이번 달 메모를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
+                ),
+              )
             }
             onDeleteEntry={async (entryId: string) => {
-              await commitStoreChange(() => deleteAccountBookEntry(entryId));
+              await commitStoreChange(() =>
+                deleteAccountBookEntry(
+                  entryId,
+                  effectiveActiveUserId || activeUser?.id || "",
+                ),
+              );
             }}
             onChangeAnnualSavingGoal={async (value: number) =>
               Boolean(

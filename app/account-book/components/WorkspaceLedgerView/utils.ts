@@ -13,7 +13,7 @@ import type {
   NaturalParseContext,
 } from "./types";
 
-export const CARD_COMPANY_DEFAULT = "KB국민카드";
+export const CARD_COMPANY_DEFAULT = "현대카드";
 export const CHECK_CARD_BRAND_DEFAULT = "네이버하나머니";
 export const MEMBER_FALLBACK = "사용자1";
 export const ALL_PARTICIPANTS_ID = "all";
@@ -56,6 +56,12 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     color: "#dbc85a",
     icon: "🚗",
     description: "택시, 주차, 주유, 충전, 교통카드, 통행료",
+  },
+  {
+    label: "운동",
+    color: "#4ea88f",
+    icon: "🎾",
+    description: "테니스, 헬스, 필라테스, 러닝 같은 운동 지출",
   },
   {
     label: "쇼핑/여가",
@@ -141,6 +147,8 @@ const SAVINGS_KEYWORD_PATTERN =
   /적금|예금|cma|isa|청약|비상금|연금저축|퇴직연금|연금|irp|주식|해외주식|etf|펀드|채권|코인|투자/i;
 const CULTURE_SUBSCRIPTION_KEYWORD_PATTERN =
   /구독|넷플릭스|유튜브\s?프리미엄|youtube|티빙|웨이브|디즈니|왓챠|멜론|지니뮤직|spotify|스포티파이|리디북스|밀리의서재|도서|서점|영화|전시|공연/i;
+const EXERCISE_KEYWORD_PATTERN =
+  /테니스|헬스|gym|피티|pt\b|퍼스널트레이닝|필라테스|요가|수영|러닝|런닝|배드민턴|클라이밍|크로스핏|골프|스쿼시|운동|레슨|체육관|짐\b/i;
 const PLATFORM_PAY_KEYWORD_PATTERN =
   /네이버페이|카카오페이|토스페이|페이코|payco|paypal|간편결제|플랫폼/i;
 const FASHION_BEAUTY_KEYWORD_PATTERN =
@@ -152,9 +160,20 @@ const CARD_SETTLEMENT_KEYWORD_PATTERN =
 const CAR_COMPANY_NOISE_PATTERN =
   /kb\s*국민\s*카드|국민\s*카드|신한\s*카드|삼성\s*카드|네이버\s*현대\s*카드|현대\s*카드|롯데\s*카드|롯데\s*카트|하나\s*카드|우리\s*카드|농협\s*카드|nh\s*농협\s*카드|bc\s*카드|bccard|네이버\s*하나\s*머니|카카오\s*페이|토스\s*페이|페이코|payco/gi;
 const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
-  생활비: ["식비", "카페", "병원", "약국", "구독", "플랫폼"],
+  생활비: [
+    "외식",
+    "배달",
+    "카페",
+    "간식",
+    "장보기",
+    "병원",
+    "약국",
+    "구독",
+    "플랫폼",
+  ],
   고정비: FIXED_EXPENSE_SUBCATEGORY_OPTIONS,
   "이동/차량": ["택시", "주유", "주차", "충전", "교통카드", "통행료"],
+  운동: ["테니스", "헬스", "필라테스", "요가", "수영", "러닝", "기타"],
   "쇼핑/여가": ["쇼핑", "패션", "여행", "레저"],
   "특별/기타": ["선물", "경조사", "이벤트", "기타"],
   카드대금: ["카드대금", "이용대금", "결제대금", "자동이체"],
@@ -162,44 +181,127 @@ const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
 };
 const CATEGORY_DETAIL_RULES = [
   {
-    category: "식비/외식",
-    detail: "배민",
-    patterns: [/우아한형제들/i, /배달의민족/i, /\b배민\b/i],
+    category: "생활비",
+    detail: "배달",
+    patterns: [/우아한형제들/i, /배달의민족/i, /\b배민\b/i, /요기요/i, /쿠팡이츠/i],
   },
   {
-    category: "식비/외식",
-    detail: "쿠팡이츠",
-    patterns: [/쿠팡이츠/i],
-  },
-  {
-    category: "식비/외식",
-    detail: "요기요",
-    patterns: [/요기요/i],
-  },
-  {
-    category: "식비/외식",
+    category: "생활비",
     detail: "카페",
-    patterns: [/스타벅스/i, /투썸/i, /메가커피/i, /커피/i, /카페/i],
+    patterns: [
+      /스타벅스/i,
+      /투썸/i,
+      /메가커피/i,
+      /이디야/i,
+      /빽다방/i,
+      /컴포즈/i,
+      /카페/i,
+      /커피/i,
+    ],
   },
   {
-    category: "식비/외식",
-    detail: "편의점",
-    patterns: [/gs25/i, /cu\b/i, /세븐일레븐/i, /편의점/i],
+    category: "생활비",
+    detail: "간식",
+    patterns: [
+      /편의점/i,
+      /연세우유/i,
+      /간식/i,
+      /디저트/i,
+      /베이커리/i,
+      /빵/i,
+      /도넛/i,
+      /과자/i,
+      /아이스크림/i,
+      /우유/i,
+    ],
   },
   {
-    category: "식비/외식",
-    detail: "마트",
-    patterns: [/이마트/i, /홈플러스/i, /롯데마트/i, /마트/i],
+    category: "생활비",
+    detail: "장보기",
+    patterns: [
+      /이마트/i,
+      /홈플러스/i,
+      /롯데마트/i,
+      /마트/i,
+      /쿠팡/i,
+      /네이버쇼핑/i,
+      /컬리/i,
+      /마켓컬리/i,
+      /생필품/i,
+      /생활용품/i,
+      /장보기/i,
+    ],
   },
   {
-    category: "식비/외식",
-    detail: "식당",
-    patterns: [/식당/i, /한식/i, /중식/i, /일식/i, /분식/i, /치킨/i, /피자/i],
+    category: "생활비",
+    detail: "외식",
+    patterns: [
+      /식당/i,
+      /한식/i,
+      /중식/i,
+      /일식/i,
+      /분식/i,
+      /치킨/i,
+      /피자/i,
+      /햄버거/i,
+      /버거/i,
+      /국밥/i,
+      /김밥/i,
+      /샐러드/i,
+      /도시락/i,
+      /오마카세/i,
+      /짜장/i,
+      /짬뽕/i,
+      /순대곱창/i,
+      /족발/i,
+      /보쌈/i,
+      /파파존스/i,
+      /교촌/i,
+      /유니짜장/i,
+      /숙성?회/i,
+      /육회/i,
+      /돈까스/i,
+    ],
+  },
+  {
+    category: "결제/플랫폼",
+    detail: "플랫폼",
+    patterns: [/네이버페이/i, /카카오페이/i, /토스페이/i, /페이코/i, /\bpayco\b/i],
   },
   {
     category: "교통/택시",
     detail: "택시",
     patterns: [/카카오 ?t/i, /우버/i, /택시/i],
+  },
+  {
+    category: "운동",
+    detail: "테니스",
+    patterns: [/테니스/i],
+  },
+  {
+    category: "운동",
+    detail: "헬스",
+    patterns: [/헬스/i, /gym/i, /피티/i, /pt\b/i, /퍼스널트레이닝/i],
+  },
+  {
+    category: "운동",
+    detail: "필라테스",
+    patterns: [/필라테스/i],
+  },
+  {
+    category: "운동",
+    detail: "요가",
+    patterns: [/요가/i],
+  },
+  {
+    category: "운동",
+    detail: "수영",
+    patterns: [/수영/i],
+  },
+  {
+    category: "운동",
+    detail: "러닝",
+    patterns: [/러닝|런닝/i],
   },
   {
     category: "교통/택시",
@@ -235,21 +337,6 @@ const CATEGORY_DETAIL_RULES = [
     category: "주차/교통",
     detail: "대리",
     patterns: [/대리/i],
-  },
-  {
-    category: "결제/플랫폼",
-    detail: "네이버페이",
-    patterns: [/네이버페이/i],
-  },
-  {
-    category: "결제/플랫폼",
-    detail: "카카오페이",
-    patterns: [/카카오페이/i],
-  },
-  {
-    category: "결제/플랫폼",
-    detail: "토스페이",
-    patterns: [/토스페이/i],
   },
   {
     category: "문화/구독",
@@ -413,6 +500,10 @@ export function getRepresentativeExpenseCategory(category: string) {
     return "이동/차량";
   }
 
+  if (["운동", "운동/건강", "스포츠"].includes(normalizedCategory)) {
+    return "운동";
+  }
+
   if (
     ["쇼핑/여가", "쇼핑/패션", "쇼핑/기타", "여행/관광"].includes(
       normalizedCategory,
@@ -484,6 +575,7 @@ export function inferCategoryFromItemText(text: string) {
   if (GIFT_KEYWORD_PATTERN.test(text)) return "특별/기타";
   if (FIXED_EXPENSE_KEYWORD_PATTERN.test(text)) return "고정비";
   if (CULTURE_SUBSCRIPTION_KEYWORD_PATTERN.test(text)) return "생활비";
+  if (EXERCISE_KEYWORD_PATTERN.test(text)) return "운동";
   if (PLATFORM_PAY_KEYWORD_PATTERN.test(text)) return "생활비";
   if (FASHION_BEAUTY_KEYWORD_PATTERN.test(text)) return "쇼핑/여가";
   if (FOOD_KEYWORD_PATTERN.test(text)) return "생활비";
@@ -520,6 +612,12 @@ export function normalizeExpenseCategorySelection(
     { pattern: /^버스$/i, category: "이동/차량", subCategory: "버스" },
     { pattern: /^지하철$/i, category: "이동/차량", subCategory: "지하철" },
     { pattern: /^기차|ktx|srt$/i, category: "이동/차량", subCategory: "기차" },
+    { pattern: /^테니스$/i, category: "운동", subCategory: "테니스" },
+    { pattern: /^헬스|gym|피티|pt$/i, category: "운동", subCategory: "헬스" },
+    { pattern: /^필라테스$/i, category: "운동", subCategory: "필라테스" },
+    { pattern: /^요가$/i, category: "운동", subCategory: "요가" },
+    { pattern: /^수영$/i, category: "운동", subCategory: "수영" },
+    { pattern: /^러닝|런닝$/i, category: "운동", subCategory: "러닝" },
     { pattern: /^교통카드|티머니|캐시비$/i, category: "이동/차량", subCategory: "교통카드" },
     { pattern: /^하이패스|통행료$/i, category: "이동/차량", subCategory: "통행료" },
     { pattern: /^처방약|일반약|영양제$/i, category: "생활비", subCategory: "약국" },

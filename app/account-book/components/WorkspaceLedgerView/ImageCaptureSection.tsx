@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import styled from "styled-components";
+import ModalCloseButton from "../ModalCloseButton";
 import type { PaymentType } from "../../types";
 import type { ExtractedImageEntryCandidate } from "./types";
 import { getExtractedImageCandidateDuplicateKey } from "./utils";
@@ -235,15 +236,7 @@ export default function ImageCaptureSection({
                 <StCaptureEyebrow>Image OCR</StCaptureEyebrow>
                 <StConfirmTitle>추출 결과 수정</StConfirmTitle>
               </div>
-              <StCloseButton
-                type="button"
-                onClick={() => setIsConfirmOpen(false)}
-                aria-label="닫기"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41 6.3 6.3-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.3z" />
-                </svg>
-              </StCloseButton>
+              <ModalCloseButton onClick={() => setIsConfirmOpen(false)} />
             </StConfirmHeader>
 
             {duplicateGroupCount > 0 ? (
@@ -672,24 +665,6 @@ const StConfirmTitle = styled.h3`
   font-size: 1.2rem;
   font-weight: 900;
   color: #1f2937;
-`;
-
-const StCloseButton = styled.button`
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  border-radius: 999px;
-  background: #eef2f7;
-  color: #53657f;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 1.15rem;
-    height: 1.15rem;
-    fill: currentColor;
-  }
 `;
 
 const StResultList = styled.div`

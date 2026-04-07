@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import ModalCloseButton from "../ModalCloseButton";
 import SharedWorkspaceSection from "./SharedWorkspaceSection";
 import {
   StBackdrop,
-  StCloseButton,
   StDescription,
   StHeader,
   StModalCard,
@@ -95,9 +95,7 @@ export default function WorkspaceSettingsModal({
               관리합니다.
             </StDescription>
           </div>
-          <StCloseButton type="button" onClick={onClose}>
-            닫기
-          </StCloseButton>
+          <ModalCloseButton onClick={onClose} />
         </StHeader>
 
         <SharedWorkspaceSection

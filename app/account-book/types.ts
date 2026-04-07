@@ -63,12 +63,22 @@ export type AccountBookShareLink = {
   createdAt: string;
 };
 
+export type AccountBookMonthlyMemo = {
+  id: string;
+  workspaceId: string;
+  monthKey: string;
+  memo: string;
+  updatedByUserId: string;
+  updatedAt: string;
+};
+
 export type AccountBookStore = {
   version: number;
   users: AccountBookUser[];
   workspaces: AccountBookWorkspace[];
   entries: AccountEntry[];
   shareLinks: AccountBookShareLink[];
+  monthlyMemos: AccountBookMonthlyMemo[];
 };
 
 export type CategoryStat = {

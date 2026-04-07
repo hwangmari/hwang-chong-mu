@@ -233,6 +233,8 @@ export default function WorkspaceLedgerView({
   shareTargets,
   isEntryShared,
   onToggleShare,
+  monthlyMemos,
+  onSaveMonthlyMemo,
   onSaveEntry,
   onDeleteEntry,
   onChangeAnnualSavingGoal,
@@ -256,6 +258,9 @@ export default function WorkspaceLedgerView({
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [selectedLedgerCardId, setSelectedLedgerCardId] = useState<
+    string | null
+  >(null);
+  const [selectedExpenseMemberName, setSelectedExpenseMemberName] = useState<
     string | null
   >(null);
   const [selectedCardCompany, setSelectedCardCompany] = useState<string | null>(
@@ -315,6 +320,12 @@ export default function WorkspaceLedgerView({
   const monthLabel = format(currentMonth, "M월", { locale: ko });
   const monthValue = format(currentMonth, "yyyy-MM");
   const currentMonthKey = format(currentMonth, "yyyy-MM");
+  const serverMonthlyMemo = useMemo(
+    () =>
+      monthlyMemos.find((monthlyMemo) => monthlyMemo.monthKey === currentMonthKey)
+        ?.memo || "",
+    [currentMonthKey, monthlyMemos],
+  );
   const monthRangeLabel = `${format(currentMonth, "M.1", { locale: ko })} - ${format(endOfMonth(currentMonth), "M.d", { locale: ko })}`;
   const selectedYear = format(currentMonth, "yyyy");
   const currentYear = currentMonth.getFullYear();
@@ -579,15 +590,17 @@ export default function WorkspaceLedgerView({
   }, [workspace.annualSavingGoal, workspace.id]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storedMemo = window.localStorage.getItem(
-      getListMemoStorageKey(workspace.id, currentMonthKey),
-    );
-    const nextMemo = storedMemo || "";
+    const storedMemo =
+      typeof window === "undefined"
+        ? ""
+        : window.localStorage.getItem(
+            getListMemoStorageKey(workspace.id, currentMonthKey),
+          ) || "";
+    const nextMemo = serverMonthlyMemo || storedMemo || "";
     setListMemo(nextMemo);
     setListMemoDraft(nextMemo);
     setIsListMemoEditing(nextMemo.length === 0);
-  }, [currentMonthKey, workspace.id]);
+  }, [currentMonthKey, serverMonthlyMemo, workspace.id]);
 
   useEffect(() => {
     setFixedExpenseTemplates(readFixedExpenseTemplates(workspace.id));
@@ -601,6 +614,19 @@ export default function WorkspaceLedgerView({
   useEffect(() => {
     setSelectedLedgerCardId(null);
   }, [workspace.id]);
+
+  useEffect(() => {
+    setSelectedExpenseMemberName(null);
+  }, [workspace.id]);
+
+  useEffect(() => {
+    if (
+      selectedExpenseMemberName &&
+      !memberExpenseTotals.some(([name]) => name === selectedExpenseMemberName)
+    ) {
+      setSelectedExpenseMemberName(null);
+    }
+  }, [memberExpenseTotals, selectedExpenseMemberName]);
 
   useEffect(() => {
     if (fixedExpenseTemplates.length === 0) return;
@@ -778,6 +804,15 @@ export default function WorkspaceLedgerView({
           getRepresentativeExpenseCategory(entry.category) === "이동/차량",
       },
       {
+        id: "exercise",
+        title: "운동",
+        description: "테니스, 헬스, 필라테스, 수영",
+        matches: (entry: ResolvedAccountEntry) =>
+          entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
+          getRepresentativeExpenseCategory(entry.category) === "운동",
+      },
+      {
         id: "shopping",
         title: "쇼핑/여가",
         description: "쇼핑, 여행, 취향 소비",
@@ -947,9 +982,19 @@ export default function WorkspaceLedgerView({
     [cardCompanySummary, selectedCardCompany],
   );
 
-  const ledgerDetailSourceEntries = selectedCardCompany
+  const ledgerDetailBaseEntries = selectedCardCompany
     ? selectedCardCompanyEntries
     : selectedLedgerColumn?.entries || sortedMonthDetailEntries;
+
+  const ledgerDetailSourceEntries = useMemo(() => {
+    if (!selectedExpenseMemberName) {
+      return ledgerDetailBaseEntries;
+    }
+
+    return ledgerDetailBaseEntries.filter(
+      (entry) => (entry.member || defaultMember) === selectedExpenseMemberName,
+    );
+  }, [defaultMember, ledgerDetailBaseEntries, selectedExpenseMemberName]);
 
   const ledgerDetailEntries = useMemo(
     () =>
@@ -969,11 +1014,11 @@ export default function WorkspaceLedgerView({
 
   const ledgerDetailTitle = selectedCardCompany
     ? selectedCardCompanySummary?.paymentGroup === "cash"
-      ? `${monthLabel} 현금 내역`
-      : `${monthLabel} ${selectedCardCompanySummary?.label || ""} ${paymentLabel(selectedCardCompanySummary?.paymentGroup || "card")} 내역`
+      ? `${monthLabel} 현금 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`
+      : `${monthLabel} ${selectedCardCompanySummary?.label || ""} ${paymentLabel(selectedCardCompanySummary?.paymentGroup || "card")} 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`
     : selectedLedgerColumn
-      ? `${monthLabel} ${selectedLedgerColumn.title} 내역`
-      : `${monthLabel} 전체 내역`;
+      ? `${monthLabel} ${selectedLedgerColumn.title} 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`
+      : `${monthLabel} 전체 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`;
 
   const naturalPreview = useMemo(
     () =>
@@ -1132,8 +1177,12 @@ export default function WorkspaceLedgerView({
     return onAnnualGoalChange(normalizedGoal * 12);
   };
 
-  const saveListMemo = () => {
+  const saveListMemo = async () => {
     const nextMemo = listMemoDraft.trim();
+    const saved = await Promise.resolve(onSaveMonthlyMemo(currentMonthKey, nextMemo));
+    if (!saved) {
+      return;
+    }
     setListMemo(nextMemo);
     setListMemoDraft(nextMemo);
     setIsListMemoEditing(false);
@@ -1607,6 +1656,10 @@ export default function WorkspaceLedgerView({
     }
 
     if (workspace.type === "shared" && entry.source === "shared_link") {
+      if (entry.createdByUserId !== currentUserId) {
+        return [];
+      }
+
       return [
         {
           label: "공유 해제",
@@ -1695,6 +1748,12 @@ export default function WorkspaceLedgerView({
           onSaveListMemo={saveListMemo}
           onEditListMemo={startListMemoEdit}
           memberExpenseTotals={memberExpenseTotals}
+          selectedExpenseMemberName={selectedExpenseMemberName}
+          onSelectExpenseMember={(memberName) => {
+            setSelectedExpenseMemberName((current) =>
+              current === memberName ? null : memberName,
+            );
+          }}
           monthCategorySummary={monthCategorySummary}
           cardCompanySummary={cardCompanySummary}
           selectedCardCompany={selectedCardCompany}

@@ -406,7 +406,10 @@ const StHeaderRight = styled.div`
   }
 
   @media (max-width: 720px) {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    justify-content: stretch;
     width: 100%;
   }
 `;
@@ -648,9 +651,11 @@ const StActionButtonBase = styled.button`
   font-weight: 900;
 
   @media (max-width: 720px) {
-    flex: 1;
+    width: 100%;
     min-width: 0;
-    padding: 0.76rem 0.8rem;
+    padding: 0.8rem 0.5rem;
+    font-size: 0.82rem;
+    border-radius: 16px;
   }
 `;
 

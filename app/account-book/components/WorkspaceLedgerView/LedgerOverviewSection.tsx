@@ -5,7 +5,12 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
 import type { PaymentType, ResolvedAccountEntry } from "../../types";
-import { getRepresentativeExpenseCategory, isSavingsCategory } from "./utils";
+import {
+  getCategoryDetailOptions,
+  getRepresentativeExpenseCategory,
+  inferSubCategoryFromText,
+  isSavingsCategory,
+} from "./utils";
 
 type CardCompanySummary = {
   id: string;
@@ -25,11 +30,14 @@ type Props = {
   monthAssetTotal: number;
   monthEntries: ResolvedAccountEntry[];
   memberExpenseTotals: Array<[string, number]>;
+  selectedExpenseMemberName: string | null;
+  onSelectExpenseMember: (memberName: string) => void;
   monthCategorySummary: Array<[string, number]>;
   categoryDescriptions: Record<string, string>;
   cardCompanySummary: CardCompanySummary[];
   selectedCardCompany: string | null;
   onSelectCardCompany: (cardCompany: string) => void;
+  onEdit: (entry: ResolvedAccountEntry) => void;
   formatAmount: (value: number) => string;
 };
 
@@ -40,11 +48,14 @@ export default function LedgerOverviewSection({
   monthAssetTotal,
   monthEntries,
   memberExpenseTotals,
+  selectedExpenseMemberName,
+  onSelectExpenseMember,
   monthCategorySummary,
   categoryDescriptions,
   cardCompanySummary,
   selectedCardCompany,
   onSelectCardCompany,
+  onEdit,
   formatAmount,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -125,10 +136,28 @@ export default function LedgerOverviewSection({
             }
           >
         >((acc, entry) => {
+          const savedSubCategory = entry.subCategory?.trim() || "";
+          const allowedDetailOptions = getCategoryDetailOptions(
+            getRepresentativeExpenseCategory(entry.category),
+          );
+          const normalizedDetail = inferSubCategoryFromText(
+            entry.category,
+            [
+              entry.merchant?.trim(),
+              entry.item?.trim(),
+              entry.rawText?.trim(),
+            ]
+              .filter(Boolean)
+              .join(" "),
+          );
           const detailLabel =
-            entry.subCategory?.trim() ||
-            entry.merchant?.trim() ||
+            (savedSubCategory &&
+            allowedDetailOptions.includes(savedSubCategory)
+              ? savedSubCategory
+              : normalizedDetail) ||
+            savedSubCategory ||
             entry.item?.trim() ||
+            entry.merchant?.trim() ||
             "기타";
 
           if (!acc[detailLabel]) {
@@ -169,7 +198,7 @@ export default function LedgerOverviewSection({
         <StCompareCard>
           <StCompareHeader>
             <strong>사용 금액 비교</strong>
-            <span>공용 가계부 참여자별 이번 달 지출을 비교합니다.</span>
+            <span>참여자를 누르면 오른쪽 사용 내역이 해당 사용자 기준으로 필터링됩니다.</span>
           </StCompareHeader>
           <StCompareList>
             {memberExpenseTotals.map(([name, amount], index) => {
@@ -178,9 +207,15 @@ export default function LedgerOverviewSection({
                   ? `${Math.max((amount / maxMemberExpense) * 100, 8)}%`
                   : "0%";
               const color = compareColors[index % compareColors.length];
+              const isActive = selectedExpenseMemberName === name;
 
               return (
-                <StCompareRow key={name}>
+                <StCompareRow
+                  key={name}
+                  type="button"
+                  $active={isActive}
+                  onClick={() => onSelectExpenseMember(name)}
+                >
                   <StCompareMeta>
                     <StCompareName>
                       <span className="dot" style={{ background: color }} />
@@ -331,31 +366,49 @@ export default function LedgerOverviewSection({
                           </StLedgerSubGroupButton>
                           {isDetailExpanded ? (
                             <StLedgerSubGroupList>
-                              {detailGroup.entries.map((entry) => (
-                                <StLedgerDetailItem key={entry.resolvedId}>
-                                  <StLedgerDetailLine>
-                                    <StLedgerDetailInfo>
-                                      <strong>{entry.item}</strong>
-                                      <span>
-                                        {[
-                                          format(
-                                            new Date(entry.date),
-                                            "M월 d일",
-                                            {
-                                              locale: ko,
-                                            },
-                                          ),
-                                          entry.merchant,
-                                          entry.member,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(" · ")}
-                                      </span>
-                                    </StLedgerDetailInfo>
-                                    <em>{formatAmount(entry.amount)}</em>
-                                  </StLedgerDetailLine>
-                                </StLedgerDetailItem>
-                              ))}
+                              {detailGroup.entries.map((entry) => {
+                                const itemLabel = entry.item?.trim() || "";
+                                const merchantLabel = entry.merchant?.trim() || "";
+                                const detailTitle =
+                                  detailGroup.label === itemLabel && merchantLabel
+                                    ? merchantLabel
+                                    : itemLabel || merchantLabel || "내역";
+
+                                const metaLabels = [
+                                  format(new Date(entry.date), "M월 d일", {
+                                    locale: ko,
+                                  }),
+                                  detailTitle === merchantLabel
+                                    ? null
+                                    : merchantLabel,
+                                  entry.member,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ");
+
+                                return (
+                                  <StLedgerDetailItem key={entry.resolvedId}>
+                                    <StLedgerDetailLine
+                                      $editable={!entry.readonly}
+                                      onClick={() => {
+                                        if (entry.readonly) return;
+                                        onEdit(entry);
+                                      }}
+                                      title={
+                                        entry.readonly
+                                          ? undefined
+                                          : "클릭해서 수정"
+                                      }
+                                    >
+                                      <StLedgerDetailInfo>
+                                        <strong>{detailTitle}</strong>
+                                        <span>{metaLabels}</span>
+                                      </StLedgerDetailInfo>
+                                      <em>{formatAmount(entry.amount)}</em>
+                                    </StLedgerDetailLine>
+                                  </StLedgerDetailItem>
+                                );
+                              })}
                             </StLedgerSubGroupList>
                           ) : null}
                         </StLedgerSubGroup>
@@ -558,9 +611,47 @@ const StCardCompanyEmpty = styled.p`
   line-height: 1.5;
 `;
 
-const StCompareRow = styled.div`
+const StCompareRow = styled.button<{ $active: boolean }>`
   display: grid;
   gap: 0.32rem;
+  width: 100%;
+  border: 1px solid ${({ $active }) => ($active ? "#a9c0f5" : "transparent")};
+  border-radius: 16px;
+  background: ${({ $active }) =>
+    $active
+      ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+      : "transparent"};
+  box-shadow: ${({ $active }) =>
+    $active ? "0 8px 18px rgba(99, 126, 212, 0.1)" : "none"};
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    border-color: ${({ $active }) => ($active ? "#a9c0f5" : "#ccd8eb")};
+    background: ${({ $active }) =>
+      $active
+        ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+        : "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"};
+    box-shadow: 0 10px 20px rgba(109, 127, 162, 0.08);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: #8faaf0;
+    box-shadow:
+      0 0 0 3px rgba(79, 124, 255, 0.12),
+      0 10px 20px rgba(109, 127, 162, 0.1);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
 `;
 
 const StCompareMeta = styled.div`
@@ -763,11 +854,12 @@ const StLedgerDetailItem = styled.div`
   }
 `;
 
-const StLedgerDetailLine = styled.div`
+const StLedgerDetailLine = styled.div<{ $editable: boolean }>`
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
   align-items: baseline;
+  cursor: ${({ $editable }) => ($editable ? "pointer" : "default")};
 
   em {
     font-style: normal;

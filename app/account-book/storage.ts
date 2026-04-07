@@ -33,6 +33,10 @@ function mapLegacyCategory(category?: string) {
   return category;
 }
 
+function getCurrentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
 function normalizeLegacyEntry(
   raw: Partial<AccountEntry>,
   fallbackId: string,
@@ -58,7 +62,7 @@ function normalizeLegacyEntry(
           ? "check_card"
           : "card",
     cardCompany:
-      raw.payment === "cash" ? "" : raw.cardCompany || "KB국민카드",
+      raw.payment === "cash" ? "" : raw.cardCompany || "현대카드",
     memo: raw.memo || "",
     rawText: raw.rawText || "",
   };
@@ -71,6 +75,7 @@ function createInitialStore(): AccountBookStore {
     workspaces: [],
     entries: [],
     shareLinks: [],
+    monthlyMemos: [],
   };
 }
 
@@ -133,6 +138,7 @@ function createLegacySeedStore(): AccountBookStore {
     workspaces,
     entries: [],
     shareLinks: [],
+    monthlyMemos: [],
   };
 }
 
@@ -186,6 +192,7 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       : base.workspaces;
   const entries = Array.isArray(raw.entries) ? raw.entries : [];
   const shareLinks = Array.isArray(raw.shareLinks) ? raw.shareLinks : [];
+  const monthlyMemos = Array.isArray(raw.monthlyMemos) ? raw.monthlyMemos : [];
 
   const normalizedStore: AccountBookStore = {
     version: DEFAULT_VERSION,
@@ -243,7 +250,7 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
             ? "check_card"
             : "card",
       cardCompany:
-        entry.payment === "cash" ? "" : entry.cardCompany || "KB국민카드",
+        entry.payment === "cash" ? "" : entry.cardCompany || "현대카드",
       memo: entry.memo || "",
       rawText: entry.rawText || "",
     })),
@@ -254,6 +261,19 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       targetWorkspaceId: link.targetWorkspaceId || "",
       sharedByUserId: link.sharedByUserId || users[0]?.id || base.users[0].id,
       createdAt: link.createdAt || new Date().toISOString(),
+    })),
+    monthlyMemos: monthlyMemos.map((monthlyMemo, index) => ({
+      id: monthlyMemo.id || `monthly-memo-${index + 1}`,
+      workspaceId: monthlyMemo.workspaceId || workspaces[0]?.id || "",
+      monthKey:
+        typeof monthlyMemo.monthKey === "string" &&
+        /^\d{4}-\d{2}$/.test(monthlyMemo.monthKey)
+          ? monthlyMemo.monthKey
+          : getCurrentMonthKey(),
+      memo: monthlyMemo.memo || "",
+      updatedByUserId:
+        monthlyMemo.updatedByUserId || users[0]?.id || base.users[0]?.id || "",
+      updatedAt: monthlyMemo.updatedAt || new Date().toISOString(),
     })),
   };
 
@@ -288,6 +308,11 @@ function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore
       validWorkspaceIds.has(link.targetWorkspaceId) &&
       validEntryIds.has(link.sourceEntryId),
   );
+  const monthlyMemos = store.monthlyMemos.filter(
+    (monthlyMemo) =>
+      validUserIds.has(monthlyMemo.updatedByUserId) &&
+      validWorkspaceIds.has(monthlyMemo.workspaceId),
+  );
 
   return {
     ...store,
@@ -305,6 +330,7 @@ function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore
     workspaces,
     entries,
     shareLinks,
+    monthlyMemos,
   };
 }
 
