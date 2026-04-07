@@ -935,7 +935,7 @@ const StCard = styled.button`
 
 const StCardBody = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.9fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(min(220px, 100%), 0.9fr);
   gap: 1.1rem;
   align-items: stretch;
 

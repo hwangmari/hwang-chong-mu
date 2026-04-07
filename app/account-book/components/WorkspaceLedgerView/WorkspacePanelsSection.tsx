@@ -323,7 +323,7 @@ const StCalendarSplit = styled.div<{ $hasDetailPanel: boolean }>`
   display: grid;
   grid-template-columns: ${({ $hasDetailPanel }) => {
     if (!$hasDetailPanel) return "minmax(0, 1fr)";
-    return "minmax(0, 1.35fr) minmax(320px, 0.78fr)";
+    return "minmax(0, 1.35fr) minmax(min(320px, 100%), 0.78fr)";
   }};
   gap: 0.85rem;
   min-height: 0;

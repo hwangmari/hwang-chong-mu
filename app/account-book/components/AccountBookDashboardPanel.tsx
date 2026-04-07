@@ -386,6 +386,10 @@ const StSummaryGrid = styled.div`
   @media (max-width: 1260px) {
     grid-template-columns: 1fr;
   }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StSummaryRightGrid = styled.div`
@@ -470,6 +474,10 @@ const StMainGrid = styled.div`
   @media (max-width: 1260px) {
     grid-template-columns: 1fr;
   }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StPanel = styled.section`
@@ -550,6 +558,7 @@ const StMetricTable = styled.div`
   border-radius: 14px;
   overflow: hidden;
   background: #fff;
+  max-width: 100%;
 `;
 
 const StMetricHead = styled.div<{
@@ -645,8 +654,7 @@ const StGoalMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 0.42rem;
-  overflow-x: auto;
-  white-space: nowrap;
+  flex-wrap: wrap;
   padding-bottom: 0.1rem;
 
   span {
@@ -657,12 +665,6 @@ const StGoalMeta = styled.div`
     font-size: 0.72rem;
     font-weight: 800;
     color: #5f708b;
-  }
-
-  @media (max-width: 720px) {
-    flex-wrap: wrap;
-    overflow: visible;
-    white-space: normal;
   }
 `;
 
@@ -705,7 +707,7 @@ const StGoalValueText = styled.strong`
 `;
 
 const StGoalValueInput = styled.input`
-  width: 7rem;
+  width: min(7rem, 40%);
   border: none;
   background: transparent;
   font-size: 0.82rem;

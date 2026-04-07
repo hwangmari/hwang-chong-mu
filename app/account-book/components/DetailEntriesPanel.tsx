@@ -509,8 +509,11 @@ const StMirrorBadge = styled.span`
 `;
 
 const StEntryBox = styled.div`
+  min-width: 0;
+
   @media (max-width: 720px) {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
   }
 `;
@@ -520,6 +523,7 @@ const StEntryName = styled.p`
   color: #111827;
   font-weight: 800;
   line-height: 1.35;
+  word-break: break-word;
 
   @media (max-width: 720px) {
     font-size: 0.94rem;
@@ -577,7 +581,7 @@ const StEntryAside = styled.div`
 
   @media (max-width: 720px) {
     align-items: flex-end;
-    min-width: 5.8rem;
+    min-width: 0;
   }
 `;
 const StEntryAmount = styled.span<{

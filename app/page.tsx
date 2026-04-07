@@ -95,6 +95,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* 회식 장소 투표 */}
+        <Link href="/dinner" passHref>
+          <StCard>
+            <StIconBox>🍻</StIconBox>
+            <StCardContent>
+              <StCardTitle>회식 장소 투표</StCardTitle>
+              <StCardDesc>네이버 검색으로 후보를 골라 투표</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 황총무 게임방*/}
         <Link href="/game" passHref>
           <StCard>

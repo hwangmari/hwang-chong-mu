@@ -1014,9 +1014,13 @@ const StPage = styled.main`
   z-index: 200;
   overflow: auto;
   overscroll-behavior: none;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #f5f7fb;
   padding: 1rem;
+
+  @media (max-width: 720px) {
+    padding: 0.75rem;
+  }
 `;
 
 const StHeader = styled.header`
@@ -1057,7 +1061,7 @@ const StHeaderDescription = styled.p`
 
 const StHeroCard = styled.section`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 1.05fr);
+  grid-template-columns: minmax(0, 1fr) minmax(min(320px, 100%), 1.05fr);
   gap: 0.9rem;
   border-radius: 24px;
   border: 1px solid #d7e0f1;
@@ -1078,7 +1082,7 @@ const StHeroDescription = styled.p`
 
 const StInsightGrid = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.82fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(min(280px, 100%), 0.82fr);
   gap: 0.9rem;
   margin-bottom: 0.9rem;
 
@@ -1263,6 +1267,11 @@ const StSectionHeaderActions = styled.div`
   min-width: 9.25rem;
   min-height: 2.25rem;
   flex-shrink: 0;
+
+  @media (max-width: 720px) {
+    min-width: 0;
+    flex-shrink: 1;
+  }
 `;
 
 const StSectionTitle = styled.h2`

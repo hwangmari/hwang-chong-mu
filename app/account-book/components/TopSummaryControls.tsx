@@ -196,7 +196,7 @@ const StTopControls = styled.div`
 
 const StLedgerGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 0.65rem;
 
   @media (max-width: 720px) {
@@ -311,16 +311,9 @@ const StCalendarSummaryLine = styled.div`
   }
 
   @media (max-width: 640px) {
-    display: flex;
-    gap: 0.55rem;
-    overflow-x: auto;
-    margin: 0 -0.1rem 0.65rem;
-    padding: 0 0.1rem 0.2rem;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-bottom: 0.65rem;
   }
 `;
 const StCalendarSummaryCard = styled.article<{
@@ -360,7 +353,6 @@ const StCalendarSummaryCard = styled.article<{
 
   @media (max-width: 720px) {
     min-height: auto;
-    min-width: 10.2rem;
     border-radius: 18px;
     padding: 0.8rem 0.88rem;
     box-shadow: none;

@@ -485,8 +485,7 @@ const StSubCategorySelector = styled.div<{ $mobileWrap?: boolean }>`
   margin-bottom: 0.45rem;
 
   @media (max-width: 720px) {
-    flex-wrap: ${({ $mobileWrap }) => ($mobileWrap ? "wrap" : "nowrap")};
-    overflow-x: ${({ $mobileWrap }) => ($mobileWrap ? "visible" : "auto")};
+    flex-wrap: wrap;
     margin-bottom: 0.35rem;
     padding-bottom: 0.1rem;
   }
