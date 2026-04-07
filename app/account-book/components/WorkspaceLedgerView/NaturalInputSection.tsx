@@ -5,6 +5,17 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
 import ModalCloseButton from "../ModalCloseButton";
+import {
+  StAbModalBackdrop,
+  StAbModalCard,
+  StAbModalHeader,
+  StAbModalTitleBlock,
+  StAbModalTitle,
+  StAbModalDescription,
+  StAbPrimaryButton,
+  StAbSecondaryButton,
+  media,
+} from "../shared";
 import type { AccountEntry } from "../../types";
 import ImageCaptureSection from "./ImageCaptureSection";
 import type { ExtractedImageEntryCandidate } from "./types";
@@ -69,21 +80,21 @@ export default function NaturalInputSection({
   };
 
   return (
-    <StModalBackdrop onClick={onCloseModal}>
-      <StModalCard onClick={(event) => event.stopPropagation()}>
-        <StModalHeader>
-          <StModalTitleBlock>
-            <StModalTitle>
+    <StAbModalBackdrop onClick={onCloseModal}>
+      <StAbModalCard onClick={(event) => event.stopPropagation()}>
+        <StAbModalHeader>
+          <StAbModalTitleBlock>
+            <StAbModalTitle>
               {mode === "natural" ? "문장등록" : "이미지등록"}
-            </StModalTitle>
-            <StModalDescription>
+            </StAbModalTitle>
+            <StAbModalDescription>
               {mode === "natural"
                 ? "언제, 어디서, 무엇을(카테고리), 어떤 결제방법으로, 얼마나 사용했는지 순서로 적어주세요."
                 : "캡처 이미지를 올려 OCR 결과를 수정한 뒤 저장할 수 있어요."}
-            </StModalDescription>
-          </StModalTitleBlock>
+            </StAbModalDescription>
+          </StAbModalTitleBlock>
           <StHeaderCloseButton onClick={onCloseModal} />
-        </StModalHeader>
+        </StAbModalHeader>
 
         {mode === "natural" ? (
           <StContentSection>
@@ -124,12 +135,12 @@ export default function NaturalInputSection({
             ) : null}
 
             <StActions>
-              <StSecondaryButton type="button" onClick={onCloseModal}>
+              <StAbSecondaryButton type="button" onClick={onCloseModal}>
                 닫기
-              </StSecondaryButton>
-              <StPrimaryButton type="button" onClick={onSubmit}>
+              </StAbSecondaryButton>
+              <StAbPrimaryButton type="button" onClick={onSubmit} style={{ minWidth: "9.5rem" }}>
                 기록하기
-              </StPrimaryButton>
+              </StAbPrimaryButton>
             </StActions>
           </StContentSection>
         ) : null}
@@ -152,81 +163,10 @@ export default function NaturalInputSection({
             />
           </StContentSection>
         ) : null}
-      </StModalCard>
-    </StModalBackdrop>
+      </StAbModalCard>
+    </StAbModalBackdrop>
   );
 }
-
-const StModalBackdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.2);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 121;
-
-  @media (max-width: 720px) {
-    align-items: flex-end;
-    padding: 0.75rem;
-  }
-`;
-
-const StModalCard = styled.div`
-  width: min(660px, 100%);
-  max-height: min(84vh, 920px);
-  overflow: auto;
-  border: 1px solid #d9e3ef;
-  border-radius: 26px;
-  background: #ffffff;
-  padding: 1.6rem 1.2rem 1.05rem;
-  box-shadow: 0 24px 48px rgba(45, 62, 100, 0.14);
-
-  @media (max-width: 720px) {
-    width: 100%;
-    max-height: min(92vh, 920px);
-    padding: 1.2rem 0.9rem calc(0.95rem + env(safe-area-inset-bottom));
-    border-radius: 28px 28px 22px 22px;
-  }
-`;
-
-const StModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-`;
-
-const StModalTitleBlock = styled.div`
-  min-width: 0;
-  display: grid;
-  gap: 0.4rem;
-`;
-
-const StModalTitle = styled.h3`
-  font-size: 1.55rem;
-  line-height: 1.15;
-  font-weight: 900;
-  color: #1f2937;
-
-  @media (max-width: 720px) {
-    font-size: 1.35rem;
-  }
-`;
-
-const StModalDescription = styled.p`
-  max-width: 38rem;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  color: #617186;
-
-  @media (max-width: 720px) {
-    font-size: 0.84rem;
-    line-height: 1.45;
-  }
-`;
 
 const StHeaderCloseButton = styled(ModalCloseButton).attrs({
   size: "2.5rem",
@@ -326,41 +266,10 @@ const StActions = styled.div`
   gap: 0.65rem;
   margin-top: 1rem;
 
-  @media (max-width: 720px) {
+  ${media.mobile} {
     position: sticky;
     bottom: calc(-0.95rem - env(safe-area-inset-bottom));
     margin: 0 -0.1rem -0.2rem;
     padding: 0.95rem 0.1rem calc(0.1rem + env(safe-area-inset-bottom));
   }
-`;
-
-const StButtonBase = styled.button`
-  border-radius: 16px;
-  font-size: 0.9rem;
-  font-weight: 900;
-  min-width: 7rem;
-  min-height: 3rem;
-  padding: 0.82rem 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  @media (max-width: 720px) {
-    width: 100%;
-    min-height: 3rem;
-  }
-`;
-
-const StPrimaryButton = styled(StButtonBase)`
-  border: 1px solid #4e67d0;
-  background: #5f73d9;
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
-  min-width: 9.5rem;
-`;
-
-const StSecondaryButton = styled(StButtonBase)`
-  border: 1px solid #cedbeb;
-  background: rgba(255, 255, 255, 0.95);
-  color: #506683;
 `;

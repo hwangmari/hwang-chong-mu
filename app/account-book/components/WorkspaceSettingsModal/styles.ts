@@ -1,24 +1,34 @@
 "use client";
 
 import styled from "styled-components";
+import {
+  StAbModalBackdrop,
+  StAbModalCard as AbModalCard,
+  StAbCard,
+  StAbSettingsInput,
+  StAbApplyButton,
+  StAbDangerButton,
+  StAbBadge,
+  StAbChip,
+  StAbCardGrid,
+  StAbButtonRow,
+  abTokens,
+  media,
+} from "../shared";
 
-export const StBackdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.34);
-  display: grid;
-  place-items: center;
-  padding: 1rem;
+// Re-export shared components with local aliases for backward compatibility
+export const StBackdrop = styled(StAbModalBackdrop)`
   z-index: 60;
+  backdrop-filter: none;
+  background: ${abTokens.color.bgBackdropDark};
+  padding: 1rem;
 `;
 
-export const StModalCard = styled.section`
+export const StModalCard = styled(AbModalCard)`
   width: min(100%, 72rem);
   max-height: min(88vh, 58rem);
   overflow-y: auto;
-  border-radius: 24px;
-  background: #fff;
-  border: 1px solid #d9e4ef;
+  border-radius: ${abTokens.radius.xxl};
   padding: 1.1rem;
 `;
 
@@ -32,7 +42,7 @@ export const StHeader = styled.header`
 export const StTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${abTokens.color.textDark};
 `;
 
 export const StDescription = styled.p`
@@ -53,34 +63,11 @@ export const StSectionTitle = styled.h3`
   margin-bottom: 0.65rem;
 `;
 
-export const StCardList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
+export const StCardList = StAbCardGrid;
 
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`;
+export const StCard = StAbCard;
 
-export const StCard = styled.div`
-  border: 1px solid #dce5f0;
-  border-radius: 18px;
-  background: #f9fbff;
-  padding: 0.85rem;
-  display: grid;
-  gap: 0.55rem;
-`;
-
-export const StInput = styled.input`
-  width: 100%;
-  border: 1px solid #d5deea;
-  border-radius: 12px;
-  background: #fff;
-  padding: 0.75rem 0.85rem;
-  font-size: 0.86rem;
-  color: #1f2937;
-`;
+export const StInput = StAbSettingsInput;
 
 export const StSubTitle = styled.h4`
   font-size: 0.86rem;
@@ -94,30 +81,16 @@ export const StMetaText = styled.p`
   color: #6d7b8f;
 `;
 
-export const StInlineLabel = styled.span`
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  border-radius: 999px;
-  background: #eaf1ff;
-  color: #3657b5;
-  font-size: 0.72rem;
-  font-weight: 900;
-  padding: 0.28rem 0.55rem;
-`;
+export const StInlineLabel = styled(StAbBadge).attrs({ $tone: "blue" as const })``;
 
-export const StButtonRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-`;
+export const StButtonRow = StAbButtonRow;
 
 export const StParticipantList = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
 
-  @media (max-width: 900px) {
+  ${media.tablet} {
     grid-template-columns: 1fr;
   }
 `;
@@ -137,42 +110,8 @@ export const StMemberGrid = styled.div`
   gap: 0.45rem;
 `;
 
-export const StMemberChip = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#8aa7fb" : "#d9e4f1")};
-  background: ${({ $active }) => ($active ? "#eaf1ff" : "#fff")};
-  color: ${({ $active }) => ($active ? "#3657b5" : "#66758b")};
-  border-radius: 999px;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.76rem;
-  font-weight: 800;
-`;
+export const StMemberChip = StAbChip;
 
-export const StApplyButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #607de0, #4b69c8);
-  color: #fff;
-  padding: 0.75rem 0.9rem;
-  font-size: 0.84rem;
-  font-weight: 800;
+export const StApplyButton = StAbApplyButton;
 
-  &:disabled {
-    opacity: 0.52;
-    cursor: not-allowed;
-  }
-`;
-
-export const StDangerButton = styled.button`
-  border: 1px solid #f1c8d6;
-  border-radius: 12px;
-  background: #fff5f8;
-  color: #c44d76;
-  padding: 0.75rem 0.9rem;
-  font-size: 0.84rem;
-  font-weight: 800;
-
-  &:disabled {
-    opacity: 0.52;
-    cursor: not-allowed;
-  }
-`;
+export const StDangerButton = StAbDangerButton;

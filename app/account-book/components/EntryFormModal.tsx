@@ -3,6 +3,21 @@
 import styled from "styled-components";
 import ModalCloseButton from "./ModalCloseButton";
 import { CategoryOption, EntryType, PaymentType } from "../types";
+import {
+  abInputBase,
+  StAbFormRow,
+  StAbLabel,
+  StAbSubLabel,
+  StAbSectionHeader,
+  StAbSectionTitle,
+  StAbSectionDescription,
+  StAbSectionCard,
+  StAbSelectOption,
+  StAbPillOption,
+  StAbPrimaryButton,
+  StAbFooterActionBar,
+  media,
+} from "./shared";
 
 type Props = {
   isOpen: boolean;
@@ -94,20 +109,20 @@ export default function EntryFormModal({
         </StModalHeader>
 
         <StModalScrollBody>
-          <StSectionCard>
-            <StSectionHeader>
+          <StAbSectionCard>
+            <StAbSectionHeader>
               <div>
-                <StSectionTitle>핵심 입력</StSectionTitle>
-                <StSectionDescription>
+                <StAbSectionTitle>핵심 입력</StAbSectionTitle>
+                <StAbSectionDescription>
                   금액, 날짜, 작성자, 결제수단만 먼저 잡으면 등록 흐름이
                   빨라져요.
-                </StSectionDescription>
+                </StAbSectionDescription>
               </div>
-            </StSectionHeader>
+            </StAbSectionHeader>
 
-            <StFormRow $columns={2}>
+            <StAbFormRow $columns={2}>
               <StFormField>
-                <StLabel>금액</StLabel>
+                <StAbLabel>금액</StAbLabel>
                 <StInput
                   type="number"
                   value={amount}
@@ -116,94 +131,94 @@ export default function EntryFormModal({
                 />
               </StFormField>
               <StFormField>
-                <StLabel>날짜</StLabel>
+                <StAbLabel>날짜</StAbLabel>
                 <StInput
                   type="date"
                   value={selectedDate}
                   onChange={(e) => onSetDate(e.target.value)}
                 />
               </StFormField>
-            </StFormRow>
+            </StAbFormRow>
 
-            <StFormRow $columns={2}>
+            <StAbFormRow $columns={2}>
               <StFormField>
-                <StLabel>구분</StLabel>
+                <StAbLabel>구분</StAbLabel>
                 <StTypeSelector>
-                  <StTypeOption
+                  <StAbSelectOption
                     type="button"
                     $active={type === "expense"}
                     onClick={() => onSetType("expense")}
                   >
                     지출
-                  </StTypeOption>
-                  <StTypeOption
+                  </StAbSelectOption>
+                  <StAbSelectOption
                     type="button"
                     $active={type === "income"}
                     onClick={() => onSetType("income")}
                   >
                     수입
-                  </StTypeOption>
+                  </StAbSelectOption>
                 </StTypeSelector>
               </StFormField>
               <StFormField>
-                <StLabel>작성자</StLabel>
+                <StAbLabel>작성자</StAbLabel>
                 <StMemberSelector>
                   {memberOptions.map((option) => (
-                    <StMemberOption
+                    <StAbSelectOption
                       key={option}
                       type="button"
                       $active={member === option}
                       onClick={() => onSetMember(option)}
                     >
                       {option}
-                    </StMemberOption>
+                    </StAbSelectOption>
                   ))}
                 </StMemberSelector>
               </StFormField>
-            </StFormRow>
+            </StAbFormRow>
 
             <StFormField $mobileTopSpace>
-              <StLabel>결제수단</StLabel>
+              <StAbLabel>결제수단</StAbLabel>
               <StPaymentSelector>
-                <StPaymentOption
+                <StAbSelectOption
                   type="button"
                   $active={payment === "cash"}
                   onClick={() => onSetPayment("cash")}
                 >
                   현금
-                </StPaymentOption>
+                </StAbSelectOption>
                 {type === "expense" ? (
                   <>
-                    <StPaymentOption
+                    <StAbSelectOption
                       type="button"
                       $active={payment === "card"}
                       onClick={() => onSetPayment("card")}
                     >
                       카드
-                    </StPaymentOption>
-                    <StPaymentOption
+                    </StAbSelectOption>
+                    <StAbSelectOption
                       type="button"
                       $active={payment === "check_card"}
                       onClick={() => onSetPayment("check_card")}
                     >
                       체크카드
-                    </StPaymentOption>
+                    </StAbSelectOption>
                   </>
                 ) : null}
               </StPaymentSelector>
               {shouldShowCardCompany ? (
                 <>
-                  <StSubLabel>{cardCompanyLabel}</StSubLabel>
+                  <StAbSubLabel>{cardCompanyLabel}</StAbSubLabel>
                   <StSubCategorySelector $mobileWrap>
                     {cardCompanyOptions.map((option) => (
-                      <StSubCategoryOption
+                      <StAbPillOption
                         key={option}
                         type="button"
                         $active={cardCompany === option}
                         onClick={() => onSetCardCompany(option)}
                       >
                         {option}
-                      </StSubCategoryOption>
+                      </StAbPillOption>
                     ))}
                   </StSubCategorySelector>
                   <StInlineSubInput
@@ -214,17 +229,17 @@ export default function EntryFormModal({
                 </>
               ) : null}
             </StFormField>
-          </StSectionCard>
+          </StAbSectionCard>
 
-          <StSectionCard>
-            <StSectionHeader>
+          <StAbSectionCard>
+            <StAbSectionHeader>
               <div>
-                <StSectionTitle>카테고리</StSectionTitle>
-                <StSectionDescription>
+                <StAbSectionTitle>카테고리</StAbSectionTitle>
+                <StAbSectionDescription>
                   지금 소비 성격에 가장 가까운 항목을 먼저 선택해주세요.
-                </StSectionDescription>
+                </StAbSectionDescription>
               </div>
-            </StSectionHeader>
+            </StAbSectionHeader>
             <StFormField>
               <StSelectedCategory>
                 <span
@@ -260,17 +275,17 @@ export default function EntryFormModal({
               </StCategoryPicker>
               {categoryDetailOptions.length > 0 ? (
                 <>
-                  <StSubLabel>세부 태그</StSubLabel>
+                  <StAbSubLabel>세부 태그</StAbSubLabel>
                   <StSubCategorySelector>
                     {categoryDetailOptions.map((option) => (
-                      <StSubCategoryOption
+                      <StAbPillOption
                         key={option}
                         type="button"
                         $active={subCategory === option}
                         onClick={() => onSetSubCategory(option)}
                       >
                         {option}
-                      </StSubCategoryOption>
+                      </StAbPillOption>
                     ))}
                   </StSubCategorySelector>
                   <StInlineSubInput
@@ -281,52 +296,52 @@ export default function EntryFormModal({
                 </>
               ) : null}
             </StFormField>
-          </StSectionCard>
+          </StAbSectionCard>
 
-          <StSectionCard>
-            <StSectionHeader>
+          <StAbSectionCard>
+            <StAbSectionHeader>
               <div>
-                <StSectionTitle>상세 메모</StSectionTitle>
-                <StSectionDescription>
+                <StAbSectionTitle>상세 메모</StAbSectionTitle>
+                <StAbSectionDescription>
                   가맹점, 항목, 메모를 적어두면 나중에 검색하거나 비교하기
                   쉬워져요.
-                </StSectionDescription>
+                </StAbSectionDescription>
               </div>
-            </StSectionHeader>
-            <StFormRow $columns={1}>
+            </StAbSectionHeader>
+            <StAbFormRow $columns={1}>
               <StFormField>
-                <StLabel>가맹점</StLabel>
+                <StAbLabel>가맹점</StAbLabel>
                 <StInput
                   value={merchant}
                   onChange={(e) => onSetMerchant(e.target.value)}
                   placeholder="예: 올리브영 성수점"
                 />
               </StFormField>
-            </StFormRow>
-            <StFormRow $columns={1}>
+            </StAbFormRow>
+            <StAbFormRow $columns={1}>
               <StFormField>
-                <StLabel>항목</StLabel>
+                <StAbLabel>항목</StAbLabel>
                 <StInput
                   value={item}
                   onChange={(e) => onSetItem(e.target.value)}
                   placeholder="예: 샴푸, 영양제, 점심 식사"
                 />
               </StFormField>
-            </StFormRow>
-            <StFormRow $columns={1}>
+            </StAbFormRow>
+            <StAbFormRow $columns={1}>
               <StFormField>
-                <StLabel>메모</StLabel>
+                <StAbLabel>메모</StAbLabel>
                 <StInlineTextarea
                   value={memo}
                   onChange={(e) => onSetMemo(e.target.value)}
                   placeholder="공유 전 확인할 내용이나 메모를 남겨보세요."
                 />
               </StFormField>
-            </StFormRow>
-          </StSectionCard>
+            </StAbFormRow>
+          </StAbSectionCard>
         </StModalScrollBody>
 
-        <StFooterActionBar>
+        <StAbFooterActionBar>
           <StFooterSummary>
             {type === "expense" ? "지출" : "수입"} · {member} ·{" "}
             {amount ? `${amount}원` : "금액 미입력"}
@@ -334,76 +349,11 @@ export default function EntryFormModal({
           <StAddButton type="button" onClick={onSubmit}>
             {isEditing ? "수정 저장" : "내역 추가"}
           </StAddButton>
-        </StFooterActionBar>
+        </StAbFooterActionBar>
       </StModalCard>
     </StModalBackdrop>
   );
 }
-
-const StFormRow = styled.div<{ $columns?: number }>`
-  display: grid;
-  grid-template-columns: ${({ $columns = 2 }) =>
-    `repeat(${$columns}, minmax(0, 1fr))`};
-  gap: 0.65rem;
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-    gap: 0.45rem;
-  }
-`;
-
-const StSectionCard = styled.section`
-  padding: 1.05rem 0 1rem;
-
-  & + & {
-    border-top: 1px solid #ecf1f7;
-  }
-
-  @media (max-width: 720px) {
-    padding: 0.9rem 0.9rem 1rem;
-
-    & + & {
-      border-top: 1px solid #ecf1f7;
-    }
-  }
-`;
-
-const StSectionHeader = styled.div`
-  margin-bottom: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: flex-start;
-
-  @media (max-width: 720px) {
-    margin-bottom: 0.68rem;
-    padding-bottom: 0.48rem;
-    border-bottom: 1px solid #ecf1f7;
-  }
-`;
-
-const StSectionTitle = styled.h4`
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 900;
-  line-height: 1.2;
-  color: #223147;
-
-  @media (max-width: 720px) {
-    font-size: 0.92rem;
-  }
-`;
-
-const StSectionDescription = styled.p`
-  margin: 0.22rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: #7a8798;
-
-  @media (max-width: 720px) {
-    display: none;
-  }
-`;
 
 const StFormField = styled.div<{ $mobileTopSpace?: boolean }>`
   margin-bottom: 0.65rem;
@@ -510,49 +460,10 @@ const StCategoryDescription = styled.p`
   color: #708197;
 `;
 
-const StLabel = styled.label`
-  display: block;
-  margin-bottom: 0.38rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 700;
-
-  @media (max-width: 720px) {
-    margin-bottom: 0.4rem;
-    font-size: 0.72rem;
-    color: #556274;
-  }
-`;
-
-const StSubLabel = styled.label`
-  display: block;
-  margin: 0.65rem 0 0.3rem;
-  font-size: 0.72rem;
-  color: #6b7280;
-  font-weight: 700;
-`;
-
 const StTypeSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
-`;
-
-const StTypeOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b8ccf6" : "#dce3eb")};
-  background: ${({ $active }) =>
-    $active ? "linear-gradient(180deg, #eef4ff 0%, #e7efff 100%)" : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
-  border-radius: 12px;
-  padding: 0.66rem 0.55rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-
-  @media (max-width: 720px) {
-    min-height: 38px;
-    padding: 0.5rem 0.4rem;
-    font-size: 0.78rem;
-  }
 `;
 
 const StMemberSelector = styled.div`
@@ -561,44 +472,10 @@ const StMemberSelector = styled.div`
   gap: 0.4rem;
 `;
 
-const StMemberOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b8ccf6" : "#dce3eb")};
-  background: ${({ $active }) =>
-    $active ? "linear-gradient(180deg, #eef4ff 0%, #e7efff 100%)" : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
-  border-radius: 12px;
-  padding: 0.66rem 0.55rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-
-  @media (max-width: 720px) {
-    min-height: 38px;
-    padding: 0.5rem 0.4rem;
-    font-size: 0.76rem;
-  }
-`;
-
 const StPaymentSelector = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
   gap: 0.4rem;
-`;
-
-const StPaymentOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b8ccf6" : "#dce3eb")};
-  background: ${({ $active }) =>
-    $active ? "linear-gradient(180deg, #eef4ff 0%, #e7efff 100%)" : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
-  border-radius: 12px;
-  padding: 0.62rem 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-
-  @media (max-width: 720px) {
-    min-height: 38px;
-    padding: 0.5rem 0.35rem;
-    font-size: 0.74rem;
-  }
 `;
 
 const StSubCategorySelector = styled.div<{ $mobileWrap?: boolean }>`
@@ -615,41 +492,9 @@ const StSubCategorySelector = styled.div<{ $mobileWrap?: boolean }>`
   }
 `;
 
-const StSubCategoryOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b8ccf6" : "#dce3eb")};
-  background: ${({ $active }) =>
-    $active ? "linear-gradient(180deg, #eef4ff 0%, #e7efff 100%)" : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
-  border-radius: 999px;
-  padding: 0.38rem 0.68rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-
-  @media (max-width: 720px) {
-    flex-shrink: 0;
-    padding: 0.38rem 0.62rem;
-    font-size: 0.72rem;
-  }
-`;
-
-const inputBase = `
-  width: 100%;
-  min-height: 40px;
-  border: 1px solid #dce3eb;
-  border-radius: 10px;
-  padding: 0.62rem 0.7rem;
-  font-size: 0.9rem;
-  background: #fff;
-  color: #111827;
-  &:focus {
-    outline: none;
-    border-color: #6fa6c9;
-    box-shadow: 0 0 0 3px rgba(111, 166, 201, 0.15);
-  }
-`;
 
 const StInput = styled.input<{ $large?: boolean }>`
-  ${inputBase}
+  ${abInputBase}
   ${({ $large }) =>
     $large
       ? `
@@ -675,7 +520,7 @@ const StInput = styled.input<{ $large?: boolean }>`
 `;
 
 const StInlineSubInput = styled.input`
-  ${inputBase}
+  ${abInputBase}
   margin-top: 0.35rem;
 
   @media (max-width: 720px) {
@@ -686,7 +531,7 @@ const StInlineSubInput = styled.input`
 `;
 
 const StInlineTextarea = styled.textarea`
-  ${inputBase}
+  ${abInputBase}
   margin-top: 0.1rem;
   min-height: 92px;
   resize: vertical;
@@ -815,20 +660,6 @@ const StModalDescription = styled.p`
 
   @media (max-width: 720px) {
     display: none;
-  }
-`;
-
-const StFooterActionBar = styled.div`
-  padding: 0.45rem 1rem calc(1rem + env(safe-area-inset-bottom));
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(255, 255, 255, 0.98) 100%
-  );
-  border-top: 1px solid #e5ecf5;
-
-  @media (max-width: 720px) {
-    padding: 0.6rem 0.74rem calc(1rem + env(safe-area-inset-bottom));
   }
 `;
 
