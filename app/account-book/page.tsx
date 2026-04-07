@@ -523,6 +523,7 @@ function AccountBookPageContent() {
         <AccountBookLockGate
           password={activeUser.password}
           accessKey={SETTINGS_ACCESS_KEY}
+          storageType="session"
           title="서버방 설정 비밀번호"
           description={`${activeUser.name} 계정 비밀번호를 입력하면 참여 중인 서버방 참가자 설정을 열 수 있습니다.`}
           backToHome={false}

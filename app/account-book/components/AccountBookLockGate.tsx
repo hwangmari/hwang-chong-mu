@@ -8,6 +8,8 @@ type Props = {
   children: ReactNode;
   password?: string;
   accessKey?: string;
+  storageType?: "local" | "session";
+  rememberDays?: number;
   title?: string;
   description?: string;
   backToHome?: boolean;
@@ -15,9 +17,65 @@ type Props = {
   overlay?: boolean;
 };
 
-function isAccountBookUnlocked(accessKey: string) {
+const ACCESS_FLAG = "true";
+
+function getLocalUnlockExpiry(rememberDays: number) {
+  return Date.now() + rememberDays * 24 * 60 * 60 * 1000;
+}
+
+function readStoredAccess(
+  accessKey: string,
+  storageType: "local" | "session",
+) {
   if (typeof window === "undefined") return false;
-  return window.sessionStorage.getItem(accessKey) === "true";
+
+  if (storageType === "session") {
+    return window.sessionStorage.getItem(accessKey) === ACCESS_FLAG;
+  }
+
+  const raw = window.localStorage.getItem(accessKey);
+  if (!raw) {
+    return window.sessionStorage.getItem(accessKey) === ACCESS_FLAG;
+  }
+
+  if (raw === ACCESS_FLAG) {
+    return true;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as { unlocked?: boolean; expiresAt?: number };
+    if (parsed.unlocked && typeof parsed.expiresAt === "number") {
+      if (parsed.expiresAt > Date.now()) {
+        return true;
+      }
+      window.localStorage.removeItem(accessKey);
+    }
+  } catch {
+    window.localStorage.removeItem(accessKey);
+  }
+
+  return false;
+}
+
+function persistStoredAccess(
+  accessKey: string,
+  storageType: "local" | "session",
+  rememberDays: number,
+) {
+  if (typeof window === "undefined") return;
+
+  if (storageType === "session") {
+    window.sessionStorage.setItem(accessKey, ACCESS_FLAG);
+    return;
+  }
+
+  window.localStorage.setItem(
+    accessKey,
+    JSON.stringify({
+      unlocked: true,
+      expiresAt: getLocalUnlockExpiry(rememberDays),
+    }),
+  );
 }
 
 function subscribeAccountBookAccess(onStoreChange: () => void) {
@@ -40,6 +98,8 @@ export default function AccountBookLockGate({
   children,
   password = "6155",
   accessKey = "hwang-account-book-access-granted",
+  storageType = "local",
+  rememberDays = 30,
   title = "가계부 비밀번호",
   description = "숫자 4자리를 눌러서 가계부에 들어가세요.",
   backToHome = true,
@@ -51,7 +111,7 @@ export default function AccountBookLockGate({
   const [errorMessage, setErrorMessage] = useState("");
   const isUnlocked = useSyncExternalStore(
     subscribeAccountBookAccess,
-    () => isAccountBookUnlocked(accessKey),
+    () => readStoredAccess(accessKey, storageType),
     () => false,
   );
 
@@ -65,7 +125,7 @@ export default function AccountBookLockGate({
       return;
     }
 
-    window.sessionStorage.setItem(accessKey, "true");
+    persistStoredAccess(accessKey, storageType, rememberDays);
     window.dispatchEvent(new Event("account-book-access-change"));
     setErrorMessage("");
     setPasscode(nextValue);
