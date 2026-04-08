@@ -21,6 +21,8 @@ export default function DinnerPage() {
   const [results, setResults] = useState<NaverLocalItem[]>([]);
   const [selected, setSelected] = useState<NaverLocalItem[]>([]);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [creating, setCreating] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
@@ -34,14 +36,41 @@ export default function DinnerPage() {
     setSearching(true);
     try {
       const res = await fetch(
-        `/api/naver-search?query=${encodeURIComponent(keyword)}`,
+        `/api/naver-search?query=${encodeURIComponent(keyword)}&start=1`,
       );
       const data = await res.json();
-      setResults(data.items || []);
+      const items = data.items || [];
+      setResults(items);
+      setHasMore(items.length >= 5);
     } catch {
       alert("검색에 실패했습니다.");
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const start = results.length + 1;
+      const res = await fetch(
+        `/api/naver-search?query=${encodeURIComponent(keyword)}&start=${start}`,
+      );
+      const data = await res.json();
+      const newItems = (data.items || []) as NaverLocalItem[];
+      // 중복 제거: 이미 있는 title은 제외
+      const existingTitles = new Set(results.map((r) => r.title));
+      const unique = newItems.filter((item) => !existingTitles.has(item.title));
+      if (unique.length === 0) {
+        setHasMore(false);
+      } else {
+        setResults((prev) => [...prev, ...unique]);
+        setHasMore(newItems.length >= 5);
+      }
+    } catch {
+      alert("추가 검색에 실패했습니다.");
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -135,14 +164,14 @@ export default function DinnerPage() {
             </Button>
           </StSearchRow>
 
-          {/* TODO: NCP 인증 해결 후 지도 활성화 */}
-          {/* {results.length > 0 && (
+          {/* 네이버 지도 */}
+          {results.length > 0 && (
             <NaverMap
               items={results}
               focusedIndex={focusedIndex}
               stripHtml={stripHtmlCb}
             />
-          )} */}
+          )}
 
           {/* 검색 결과 */}
           {results.length > 0 && (
@@ -164,6 +193,9 @@ export default function DinnerPage() {
                       {stripHtml(item.title)}
                     </StPlaceName>
                     <StPlaceCategory>{item.category}</StPlaceCategory>
+                    {item.description && (
+                      <StPlaceMenu>🍽 {stripHtml(item.description)}</StPlaceMenu>
+                    )}
                     <StPlaceAddress>{item.roadAddress || item.address}</StPlaceAddress>
                     {item.telephone && (
                       <StPlacePhone>{item.telephone}</StPlacePhone>
@@ -179,6 +211,11 @@ export default function DinnerPage() {
                   </StResultInfo>
                 </StResultItem>
               ))}
+              {hasMore && (
+                <StLoadMoreButton onClick={handleLoadMore} disabled={loadingMore}>
+                  {loadingMore ? "불러오는 중..." : "더보기"}
+                </StLoadMoreButton>
+              )}
             </StResultList>
           )}
         </StSection>
@@ -316,6 +353,15 @@ const StPlaceCategory = styled.div`
   margin-bottom: 0.15rem;
 `;
 
+const StPlaceMenu = styled.div`
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.gray600};
+  margin-bottom: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const StPlaceAddress = styled.div`
   font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.gray400};
@@ -374,6 +420,30 @@ const StRemoveButton = styled.button`
 
   &:hover {
     color: ${({ theme }) => theme.colors.rose600};
+  }
+`;
+
+const StLoadMoreButton = styled.button`
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1.5px dashed ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.gray50};
+  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: ${({ theme }) => theme.colors.blue300};
+    color: ${({ theme }) => theme.colors.blue500};
+    background: ${({ theme }) => theme.colors.blue50};
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
   }
 `;
 
