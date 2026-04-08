@@ -95,12 +95,12 @@ export default function Home() {
           </StCard>
         </Link>
 
-        {/* 회식 장소 투표 */}
-        <Link href="/dinner" passHref>
+        {/* 장소잡기 */}
+        <Link href="/place" passHref>
           <StCard>
-            <StIconBox>🍻</StIconBox>
+            <StIconBox>📍</StIconBox>
             <StCardContent>
-              <StCardTitle>회식 장소 투표</StCardTitle>
+              <StCardTitle>장소잡기</StCardTitle>
               <StCardDesc>네이버 검색으로 후보를 골라 투표</StCardDesc>
             </StCardContent>
           </StCard>

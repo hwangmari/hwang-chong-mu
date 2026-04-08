@@ -177,6 +177,12 @@ export default function ProjectList() {
         }}
         historyLogs={[
           {
+            ver: "1.0.3",
+            date: "2026.04.08",
+            content:
+              "투표 마감 후 선호 날짜 투표 기능 추가, 마감 상태 DB 공유, 장소잡기(/place) 연동 및 멤버 자동 연결",
+          },
+          {
             ver: "1.0.2",
             date: "2026.04.08",
             content:

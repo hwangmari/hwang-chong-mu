@@ -110,7 +110,7 @@ export default function DinnerPage() {
         map_y: s.mapy,
       }));
       await addDinnerPlaces(room.id, places);
-      router.push(`/dinner/${room.id}`);
+      router.push(`/place/${room.id}`);
     } catch {
       alert("방 생성에 실패했습니다.");
     } finally {

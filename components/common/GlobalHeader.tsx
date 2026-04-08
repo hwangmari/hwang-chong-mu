@@ -13,6 +13,7 @@ const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
   { path: "/schedule", label: "업무 캘린더" },
   { path: "/meeting", label: "약속 잡기" },
+  { path: "/place", label: "장소잡기" },
   { path: "/calc", label: "N빵 계산기" },
   { path: "/overtime", label: "야근 계산기" },
   { path: "/account-book", label: "가계부" },

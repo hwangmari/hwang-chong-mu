@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=5&sort=comment`;
+  const start = Number(request.nextUrl.searchParams.get("start")) || 1;
+  const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=5&start=${start}&sort=comment`;
 
   try {
     const res = await fetch(url, {

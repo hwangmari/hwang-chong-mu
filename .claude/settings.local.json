@@ -5,7 +5,8 @@
       "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$HOME/.nvm/versions/node/*/bin:$PATH\")",
       "Bash(export PATH=\"/usr/local/bin:$PATH\")",
       "Bash(/bin/mkdir:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

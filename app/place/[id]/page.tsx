@@ -57,7 +57,7 @@ export default function DinnerVotePage() {
         roomData = await fetchDinnerRoom(roomId);
         // UUID 접근 시 slug URL로 리다이렉트
         if (roomData?.slug && roomData?.short_code) {
-          router.replace(`/dinner/${roomData.slug}-${roomData.short_code}`);
+          router.replace(`/place/${roomData.slug}-${roomData.short_code}`);
           return;
         }
       } else {

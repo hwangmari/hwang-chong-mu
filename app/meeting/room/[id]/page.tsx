@@ -153,7 +153,7 @@ export default function RoomDetail() {
       if (existing) {
         const slug = existing.slug || toSlug(room.name);
         const code = existing.short_code;
-        router.push(slug && code ? `/dinner/${slug}-${code}` : `/dinner/${room.dinner_room_id}`);
+        router.push(slug && code ? `/place/${slug}-${code}` : `/place/${room.dinner_room_id}`);
         return;
       }
       // 삭제된 경우 연결 해제 후 새로 생성
@@ -186,7 +186,7 @@ export default function RoomDetail() {
         .eq("id", room.id);
       if (updateError) throw updateError;
 
-      router.push(`/dinner/${dinnerSlug}-${dinnerShortCode}`);
+      router.push(`/place/${dinnerSlug}-${dinnerShortCode}`);
     } catch (error) {
       console.error("장소투표 방 생성 실패:", error);
       alert("장소투표 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");

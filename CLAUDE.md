@@ -27,7 +27,11 @@ Uses npm workspaces (`packages/*`). The internal package `@hwangchongmu/ui` (`pa
 - **styled-components** — primary styling approach. SSR support via `lib/registry.tsx` (StyledComponentsRegistry wrapping `UiProvider`). The styled-components compiler is enabled in `next.config.ts`.
 - **Tailwind CSS** — also available (configured in `tailwind.config.ts`, `postcss.config.mjs`, `app/globals.css`).
 
-Theme tokens are defined in `packages/ui/src/theme.ts` and re-exported from `styles/theme.ts`. Access via `${({ theme }) => theme.colors.xxx}` in styled-components.
+Theme tokens are defined in `packages/ui/src/theme.ts` and re-exported from `styles/theme.ts`. Access via `${({ theme }) => theme.colors.xxx}` in styled-components. Layout tokens include `maxWidth: 1025px`, `narrowWidth: 540px`. Responsive breakpoints: `mobile` (max-width 767px), `desktop` (min-width 1024px).
+
+**MUI is icons-only** — `@mui/icons-material` is used for icons, but no MUI components are used for layout or UI. All UI is styled-components-based.
+
+**Styled component naming convention:** prefix with `St` (e.g., `StCard`, `StButton`, `StIconButton`). Service-local styles are colocated in `.styles.ts` files alongside feature components.
 
 ### Path Aliases
 
@@ -36,11 +40,15 @@ Theme tokens are defined in `packages/ui/src/theme.ts` and re-exported from `sty
 
 ### Data Layer
 
-Supabase is the backend (`lib/supabase.js`). Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` environment variables.
+Supabase is the backend (`lib/supabase.js`). Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` environment variables. The `services/` directory contains data-access modules that encapsulate Supabase queries with type-safe mappers (e.g., `services/schedule.ts`, `services/dinner.ts`).
+
+### API Routes
+
+Server-side API routes live under `app/api/`. Example: `app/api/naver-search/route.ts` proxies to the Naver Local Search API using server-only env vars (`NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`).
 
 ### App Structure
 
-Each service lives under `app/<service>/` with its own `page.tsx` and colocated components. Dynamic routes use `[id]` segments. Shared UI components are in `components/common/`. Custom hooks are in `hooks/`, types in `types/`, and utility functions in `utils/`.
+Each service lives under `app/<service>/` with its own `page.tsx` and colocated components in a local `components/` subdirectory. Dynamic routes use `[id]` segments. Shared UI components are in `components/common/`. Custom hooks are in `hooks/`, types in `types/`, and utility functions in `utils/`.
 
 ### Key Patterns
 
