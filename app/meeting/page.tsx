@@ -20,6 +20,11 @@ export default function CreateRoomPage() {
     createRoom,
     isCustomPeriod,
     setIsCustomPeriod,
+    members,
+    memberInput,
+    setMemberInput,
+    addMember,
+    removeMember,
   } = useCreateRoom();
 
   return (
@@ -45,6 +50,11 @@ export default function CreateRoomPage() {
             onSubmit={createRoom}
             isCustomPeriod={isCustomPeriod}
             setIsCustomPeriod={setIsCustomPeriod}
+            members={members}
+            memberInput={memberInput}
+            setMemberInput={setMemberInput}
+            addMember={addMember}
+            removeMember={removeMember}
           />
         </StSection>
 

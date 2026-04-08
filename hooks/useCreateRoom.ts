@@ -14,6 +14,8 @@ export default function useCreateRoom() {
     endDate: "",
     includeWeekend: false,
   });
+  const [members, setMembers] = useState<string[]>([]);
+  const [memberInput, setMemberInput] = useState("");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (field: string, value: any) => {
@@ -91,6 +93,16 @@ export default function useCreateRoom() {
       }
 
       if (created) {
+        // 미리 설정한 멤버가 있으면 participants에 등록
+        if (members.length > 0) {
+          const rows = members.map((name) => ({
+            room_id: created.id,
+            name,
+            unavailable_dates: [],
+            is_absent: false,
+          }));
+          await supabase.from("participants").insert(rows);
+        }
         router.push(`/meeting/room/${created.slug}-${created.short_code}`);
       } else {
         throw new Error("방 코드 생성에 실패했습니다.");
@@ -103,6 +115,18 @@ export default function useCreateRoom() {
     }
   };
 
+  const addMember = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed && !members.includes(trimmed)) {
+      setMembers((prev) => [...prev, trimmed]);
+    }
+    setMemberInput("");
+  };
+
+  const removeMember = (name: string) => {
+    setMembers((prev) => prev.filter((m) => m !== name));
+  };
+
   return {
     formData,
     loading,
@@ -110,5 +134,10 @@ export default function useCreateRoom() {
     setIsCustomPeriod,
     handleChange,
     createRoom,
+    members,
+    memberInput,
+    setMemberInput,
+    addMember,
+    removeMember,
   };
 }

@@ -54,10 +54,9 @@ export default function ParticipantList({
               <StUserName $isAbsent={user.isAbsent}>{user.name}</StUserName>
             </StUserInfo>
 
-            <div className="flex items-center gap-2">
+            <StActionGroup>
               {onEdit && (
                 <StEditLabel
-                  className="edit-label"
                   onClick={(e) => {
                     e.stopPropagation();
                     onEdit(user);
@@ -74,19 +73,18 @@ export default function ParticipantList({
                   {user.unavailableDates.length}일 불가
                 </StStatusBadge>
               )}
-            </div>
 
-            {onDelete && (
-              <StDeleteButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(user);
-                }}
-                className="delete-btn"
-              >
-                <DeleteOutlineIcon sx={{ fontSize: 20 }} />{" "}
-              </StDeleteButton>
-            )}
+              {onDelete && (
+                <StDeleteButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(user);
+                  }}
+                >
+                  <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+                </StDeleteButton>
+              )}
+            </StActionGroup>
           </StUserCard>
         ))
       )}
@@ -124,7 +122,6 @@ const StUserCard = styled.div<{ $isAbsent: boolean; $isActive?: boolean }>`
   position: relative;
   background-color: ${({ theme }) => theme.colors.white};
   padding: 0.75rem;
-  padding-right: 2rem;
   border-radius: 1rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid;
@@ -158,10 +155,6 @@ const StUserCard = styled.div<{ $isAbsent: boolean; $isActive?: boolean }>`
           }
         `)}
 
-  &:hover .edit-label,
-  &:hover .delete-btn {
-    opacity: 1;
-  }
 `;
 
 const StUserInfo = styled.div`
@@ -212,9 +205,13 @@ const StEditLabel = styled.button`
   font-size: 0.75rem;
   font-weight: 700;
   color: #6366f1;
-  opacity: 0;
-  transition: opacity 0.2s;
-  padding: 0 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #eef2ff;
+  }
 `;
 
 const StStatusBadge = styled.span<{ $status: "absent" | "unavailable" }>`
@@ -238,15 +235,24 @@ const StStatusBadge = styled.span<{ $status: "absent" | "unavailable" }>`
         `}
 `;
 
+const StActionGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+`;
+
 const StDeleteButton = styled.button`
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: ${({ theme }) => theme.colors.gray300};
-  opacity: 0;
   transition: all 0.2s;
   padding: 0.25rem;
+  border-radius: 0.375rem;
+
   &:hover {
     color: #ef4444;
+    background-color: #fef2f2;
   }
 `;
