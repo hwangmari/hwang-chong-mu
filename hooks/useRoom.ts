@@ -38,6 +38,10 @@ export function useRoom(roomId: string) {
   const [currentUnavailable, setCurrentUnavailable] = useState<Date[]>([]);
   const [finalDate, setFinalDate] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmVotes, setConfirmVotes] = useState<
+    { name: string; voted_date: string }[]
+  >([]);
+  const [confirmVoterName, setConfirmVoterName] = useState("");
 
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
@@ -86,6 +90,20 @@ export function useRoom(roomId: string) {
       }));
 
       setParticipants(formattedParticipants);
+
+      // 확정 투표 조회
+      const { data: cvData } = await supabase
+        .from("confirm_votes")
+        .select("name, voted_date")
+        .eq("room_id", roomData?.id ?? roomId);
+
+      setConfirmVotes(
+        (cvData || []).map((v: any) => ({
+          name: v.name,
+          voted_date: v.voted_date,
+        }))
+      );
+
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -288,6 +306,33 @@ export function useRoom(roomId: string) {
     );
   };
 
+  const submitConfirmVote = async (name: string, dates: string[]) => {
+    const targetRoomId = resolvedRoomId ?? roomId;
+    // 기존 투표 삭제 후 재입력
+    await supabase
+      .from("confirm_votes")
+      .delete()
+      .eq("room_id", targetRoomId)
+      .eq("name", name);
+
+    if (dates.length > 0) {
+      const rows = dates.map((d) => ({
+        room_id: targetRoomId,
+        name,
+        voted_date: d,
+      }));
+      const { error } = await supabase.from("confirm_votes").insert(rows);
+      if (error) {
+        showAlert("투표 저장 중 오류가 발생했어요 😢");
+        return;
+      }
+    }
+
+    showAlert(`${name}님의 선호 투표가 저장되었습니다!`);
+    setConfirmVoterName("");
+    fetchData();
+  };
+
   const handleUpdatePeriod = async (newStart: string, newEnd: string) => {
     const targetRoomId = resolvedRoomId ?? roomId;
     const { error } = await supabase
@@ -337,5 +382,10 @@ export function useRoom(roomId: string) {
     handleReset,
     cancelEdit,
     closeModal,
+    confirmVotes,
+    confirmVoterName,
+    setConfirmVoterName,
+    submitConfirmVote,
+    setStep,
   };
 }

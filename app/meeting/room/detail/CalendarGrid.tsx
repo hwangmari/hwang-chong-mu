@@ -16,6 +16,8 @@ interface Props {
   includeWeekend: boolean;
   onToggleDate: (date: Date) => void;
   hoveredUserId: string | number | null;
+  confirmVotes?: { name: string; voted_date: string }[];
+  confirmSelectedDates?: string[];
 }
 
 export default function CalendarGrid({
@@ -28,6 +30,8 @@ export default function CalendarGrid({
   includeWeekend,
   onToggleDate,
   hoveredUserId,
+  confirmVotes = [],
+  confirmSelectedDates = [],
 }: Props) {
   const [openTooltipDate, setOpenTooltipDate] = useState<string | null>(null);
 
@@ -71,9 +75,18 @@ export default function CalendarGrid({
           const intensity =
             totalParticipants > 0 ? unavailableCount / totalParticipants : 0;
 
+          const dateStr = format(date, "yyyy-MM-dd");
           const isMySelection =
             step === "VOTING" &&
             currentUnavailable.some((d) => isSameDay(d, date));
+
+          const isConfirmSelected =
+            step === "CONFIRM" && confirmSelectedDates.includes(dateStr);
+
+          const confirmVoteCount =
+            step === "CONFIRM"
+              ? confirmVotes.filter((v) => v.voted_date === dateStr).length
+              : 0;
 
           const isFinalSelected =
             step === "CONFIRM" && finalDate && isSameDay(finalDate, date);
@@ -99,6 +112,7 @@ export default function CalendarGrid({
               key={dateKey}
               onClick={() => onToggleDate(date)}
               $isMySelection={isMySelection}
+              $isConfirmSelected={isConfirmSelected}
               $isFinalSelected={!!isFinalSelected}
               $isBestDate={isBestDate}
               $dynamicBg={dynamicBg}
@@ -139,6 +153,10 @@ export default function CalendarGrid({
               {step === "CONFIRM" &&
                 unavailableCount === 0 &&
                 !isFinalSelected && <StRecommendBadge>추천👍</StRecommendBadge>}
+
+              {step === "CONFIRM" && confirmVoteCount > 0 && (
+                <StConfirmVoteBadge>{confirmVoteCount}표</StConfirmVoteBadge>
+              )}
             </StDateButton>
           );
         })}
@@ -204,6 +222,7 @@ const StDaysGrid = styled.div<{ $includeWeekend: boolean }>`
 
 const StDateButton = styled.button<{
   $isMySelection: boolean;
+  $isConfirmSelected: boolean;
   $isFinalSelected: boolean;
   $isBestDate: boolean;
   $dynamicBg: string;
@@ -253,6 +272,14 @@ const StDateButton = styled.button<{
     $isMySelection &&
     css`
       border: 2px solid ${theme.colors.black};
+      z-index: 10;
+    `}
+
+  ${({ $isConfirmSelected, theme }) =>
+    $isConfirmSelected &&
+    css`
+      border: 2px solid #f59e0b;
+      background-color: #fffbeb;
       z-index: 10;
     `}
 
@@ -386,6 +413,26 @@ const StTooltip = styled.div<{ $isOpen: boolean }>`
   @media ${({ theme }) => theme.media.desktop} {
     font-size: 0.75rem;
     padding: 0.375rem 0.625rem;
+  }
+`;
+
+const StConfirmVoteBadge = styled.span`
+  position: absolute;
+  bottom: -0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f59e0b;
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.5rem;
+  font-weight: 800;
+  padding: 0.0625rem 0.3rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  z-index: 30;
+  white-space: nowrap;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    font-size: 0.5625rem;
   }
 `;
 

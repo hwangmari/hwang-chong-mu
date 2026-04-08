@@ -16,6 +16,7 @@ import DateControlButtons from "../detail/DateControlButtons";
 import NameInput from "../detail/NameInput";
 import VoteSubmitButtons from "../detail/VoteSubmitButtons";
 import ParticipantList from "../detail/ParticipantList";
+import ConfirmVoteSection from "../detail/ConfirmVoteSection";
 import {
   StWrapper,
   StContainer,
@@ -35,6 +36,7 @@ export default function RoomDetail() {
   const [hoveredUserId, setHoveredUserId] = useState<string | number | null>(
     null,
   );
+  const [confirmSelectedDates, setConfirmSelectedDates] = useState<string[]>([]);
 
   const {
     loading,
@@ -62,6 +64,11 @@ export default function RoomDetail() {
     handleReset,
     cancelEdit,
     closeModal,
+    confirmVotes,
+    confirmVoterName,
+    setConfirmVoterName,
+    submitConfirmVote,
+    setStep,
   } = useRoom(roomId);
 
   useEffect(() => {
@@ -155,6 +162,32 @@ export default function RoomDetail() {
     return sorted.filter((item) => item.availableCount === maxAvailable);
   }, [calendarGrid, participants]);
 
+  // CONFIRM 투표용: 과반수 이상 참석 가능한 날짜 후보
+  const candidateDates = useMemo(() => {
+    const dates = calendarGrid.filter((d): d is Date => d !== null);
+    const activeParticipants = participants.filter((p) => !p.isAbsent);
+    const totalActive = activeParticipants.length;
+    const threshold = Math.ceil(totalActive / 2);
+
+    const items = dates.map((date) => {
+      const unavailableCount = activeParticipants.filter((p) =>
+        p.unavailableDates.some(
+          (ud) => format(ud, "yyyy-MM-dd") === format(date, "yyyy-MM-dd"),
+        ),
+      ).length;
+      const availableCount = Math.max(totalActive - unavailableCount, 0);
+      return { date, availableCount, totalActive };
+    });
+
+    return items
+      .filter((item) => item.availableCount >= threshold)
+      .sort((a, b) => {
+        if (b.availableCount !== a.availableCount)
+          return b.availableCount - a.availableCount;
+        return a.date.getTime() - b.date.getTime();
+      });
+  }, [calendarGrid, participants]);
+
   if (loading) return <StLoadingContainer>로딩중...🐰</StLoadingContainer>;
   if (!room) return <div className="text-center mt-20">방이 없어요 😢</div>;
 
@@ -172,60 +205,52 @@ export default function RoomDetail() {
       </StWrapper>
 
       {/* 1️⃣ 투표 화면 (VOTING) */}
-      {!finalDate && (
+      {!finalDate && step === "VOTING" && (
         <>
           <StWrapper>
             <StGuideTextWrapper>
               <StGuideRow>
                 <Typography
-                  variant={step === "VOTING" ? "body2" : "h2"}
-                  color={step === "VOTING" ? "gray500" : "gray900"}
-                  className={step === "VOTING" ? "fw-700" : "fw-900"}
+                  variant="body2"
+                  color="gray500"
+                  className="fw-700"
                 >
-                  {step === "VOTING" ? (
-                    isEditing ? (
-                      `${currentName}님의 일정을 수정 중입니다 ✏️`
-                    ) : currentName ? (
-                      <>
-                        {currentName}님,{" "}
-                        <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                        선택해주세요!
-                      </>
-                    ) : (
-                      <>
-                        👇 이름을 입력하고{" "}
-                        <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                        선택하세요!
-                      </>
-                    )
+                  {isEditing ? (
+                    `${currentName}님의 일정을 수정 중입니다 ✏️`
+                  ) : currentName ? (
+                    <>
+                      {currentName}님,{" "}
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택해주세요!
+                    </>
                   ) : (
-                    "👑 최종 약속 날짜를 선택해주세요!"
+                    <>
+                      👇 이름을 입력하고{" "}
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택하세요!
+                    </>
                   )}
                 </Typography>
-                {step === "VOTING" && (
-                  <StGuideButton
-                    onClick={() => setShowGuide(true)}
-                    aria-label="가이드"
-                  >
-                    ?
-                  </StGuideButton>
-                )}
+                <StGuideButton
+                  onClick={() => setShowGuide(true)}
+                  aria-label="가이드"
+                >
+                  ?
+                </StGuideButton>
               </StGuideRow>
             </StGuideTextWrapper>
-            {step === "VOTING" && (
-              <StInputRow>
-                <NameInput
-                  currentName={currentName}
-                  isEditing={isEditing}
-                  onChangeName={setCurrentName}
-                  onCancelEdit={cancelEdit}
-                />
-                <DateControlButtons
-                  onReset={handleResetDates}
-                  onSelectAll={handleSelectAllDates}
-                />
-              </StInputRow>
-            )}
+            <StInputRow>
+              <NameInput
+                currentName={currentName}
+                isEditing={isEditing}
+                onChangeName={setCurrentName}
+                onCancelEdit={cancelEdit}
+              />
+              <DateControlButtons
+                onReset={handleResetDates}
+                onSelectAll={handleSelectAllDates}
+              />
+            </StInputRow>
           </StWrapper>
           <StFlexBox>
             <div className="flex-lft-box">
@@ -241,13 +266,11 @@ export default function RoomDetail() {
                 hoveredUserId={hoveredUserId}
               />
 
-              {step === "VOTING" && (
-                <VoteSubmitButtons
-                  isEditing={isEditing}
-                  onSubmitVote={handleSubmitVote}
-                  onSubmitAbsent={handleSubmitAbsent}
-                />
-              )}
+              <VoteSubmitButtons
+                isEditing={isEditing}
+                onSubmitVote={handleSubmitVote}
+                onSubmitAbsent={handleSubmitAbsent}
+              />
             </div>
             <div className="flex-rgt-box">
               <ParticipantList
@@ -258,6 +281,107 @@ export default function RoomDetail() {
                 setHoveredUserId={setHoveredUserId}
               />
 
+            </div>
+          </StFlexBox>
+        </>
+      )}
+
+      {/* 1.5️⃣ 확정 투표 화면 (CONFIRM + 아직 최종 확정 전) */}
+      {!finalDate && step === "CONFIRM" && (
+        <>
+          <StWrapper>
+            <StGuideTextWrapper>
+              <StGuideRow>
+                <Typography variant="h2" color="gray900" className="fw-900">
+                  👑 선호하는 날짜에 투표해주세요!
+                </Typography>
+              </StGuideRow>
+            </StGuideTextWrapper>
+            <StNameChipList>
+              {participants.filter((p) => !p.isAbsent).map((p) => {
+                const isActive = confirmVoterName === p.name;
+                const hasVoted = confirmVotes.some((v) => v.name === p.name);
+                return (
+                  <StNameChip
+                    key={p.id}
+                    $isActive={isActive}
+                    $hasVoted={hasVoted}
+                    onClick={() => {
+                      if (isActive) {
+                        setConfirmVoterName("");
+                        setConfirmSelectedDates([]);
+                      } else {
+                        setConfirmVoterName(p.name);
+                        // 기존 투표 불러오기
+                        const existing = confirmVotes
+                          .filter((v) => v.name === p.name)
+                          .map((v) => v.voted_date);
+                        setConfirmSelectedDates(existing);
+                      }
+                    }}
+                  >
+                    {p.name}
+                    {hasVoted && !isActive && " ✓"}
+                  </StNameChip>
+                );
+              })}
+            </StNameChipList>
+            {confirmVoterName && (
+              <StConfirmVoteRow>
+                <StConfirmGuide>
+                  {confirmVoterName}님, 선호 날짜를 선택하세요!
+                </StConfirmGuide>
+                <StConfirmVoteBtn
+                  onClick={() => {
+                    submitConfirmVote(confirmVoterName, confirmSelectedDates);
+                    setConfirmSelectedDates([]);
+                  }}
+                >
+                  {confirmSelectedDates.length > 0
+                    ? `${confirmSelectedDates.length}개 투표 저장 💾`
+                    : "투표 저장 💾"}
+                </StConfirmVoteBtn>
+              </StConfirmVoteRow>
+            )}
+          </StWrapper>
+          <StFlexBox>
+            <div className="flex-lft-box">
+              <CalendarGrid
+                dates={calendarGrid}
+                participants={participants}
+                currentUnavailable={currentUnavailable}
+                step={step}
+                currentName={confirmVoterName}
+                finalDate={finalDate}
+                includeWeekend={includeWeekend}
+                onToggleDate={(date) => {
+                  if (confirmVoterName.trim()) {
+                    const dateStr = format(date, "yyyy-MM-dd");
+                    setConfirmSelectedDates((prev) =>
+                      prev.includes(dateStr)
+                        ? prev.filter((d) => d !== dateStr)
+                        : [...prev, dateStr],
+                    );
+                  } else {
+                    handleToggleDate(date);
+                  }
+                }}
+                hoveredUserId={hoveredUserId}
+                confirmVotes={confirmVotes}
+                confirmSelectedDates={confirmSelectedDates}
+              />
+              <StBackToVotingButton onClick={() => setStep("VOTING")}>
+                ← 투표 화면으로 돌아가기
+              </StBackToVotingButton>
+            </div>
+            <div className="flex-rgt-box">
+              <ParticipantList
+                participants={participants}
+                onEdit={handleEditUser}
+                onDelete={handleDeleteUser}
+                hoveredUserId={hoveredUserId}
+                setHoveredUserId={setHoveredUserId}
+              />
             </div>
           </StFlexBox>
         </>
@@ -410,4 +534,96 @@ const StPossibleItem = styled.div`
 const StEmptyPossible = styled.div`
   font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.gray500};
+`;
+
+const StNameChipList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+`;
+
+const StNameChip = styled.button<{ $isActive: boolean; $hasVoted: boolean }>`
+  height: 36px;
+  padding: 0 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+
+  ${({ $isActive, $hasVoted, theme }) =>
+    $isActive
+      ? `
+        background-color: ${theme.colors.gray900};
+        color: ${theme.colors.white};
+        border-color: ${theme.colors.gray900};
+      `
+      : $hasVoted
+        ? `
+        background-color: ${theme.colors.white};
+        color: #f59e0b;
+        border-color: #fde68a;
+      `
+        : `
+        background-color: ${theme.colors.white};
+        color: ${theme.colors.gray600};
+        border-color: ${theme.colors.gray200};
+      `}
+
+  &:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+const StConfirmVoteRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+`;
+
+const StConfirmGuide = styled.span`
+  font-size: 0.813rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray600};
+`;
+
+const StConfirmVoteBtn = styled.button`
+  height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 9999px;
+  background-color: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.white};
+  font-weight: 800;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+const StBackToVotingButton = styled.button`
+  width: 100%;
+  padding: 0.75rem 0;
+  margin-top: 1rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 600;
+  font-size: 0.813rem;
+  text-align: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.gray600};
+  }
 `;
