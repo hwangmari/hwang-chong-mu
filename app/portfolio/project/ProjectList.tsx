@@ -177,6 +177,12 @@ export default function ProjectList() {
         }}
         historyLogs={[
           {
+            ver: "1.0.4",
+            date: "2026.04.08",
+            content:
+              "방 생성 시 참여 멤버 사전등록, 참여현황 수정·삭제 버튼 상시 노출로 UX 개선",
+          },
+          {
             ver: "1.0.3",
             date: "2026.04.08",
             content:
@@ -192,6 +198,75 @@ export default function ProjectList() {
             ver: "1.0.1",
             date: "2026.02.06",
             content: "약속 완료 후 N빵 계산 정산하기 방 연동",
+          },
+        ]}
+      />
+
+      {/* 장소잡기 */}
+      <ProjectCard
+        anchorId="toy-place"
+        title="장소잡기"
+        period="2025.12.15 - 진행 중 (1인 개발)"
+        linkUrl="/place"
+        description={
+          <>
+            약속 날짜가 정해진 뒤{" "}
+            <b>네이버 지역 검색 API</b>를 활용해 후보 장소를 등록하고,
+            참여자들이 <b>복수 투표</b>로 선호 장소를 결정하는 서비스입니다.
+            <br />
+            약속잡기에서 확정된 멤버가 <b>자동으로 연동</b>되어 별도 이름 입력 없이
+            바로 투표에 참여할 수 있습니다.
+          </>
+        }
+        details={{
+          problem: (
+            <>
+              약속 날짜를 정한 뒤 장소 선정에서 다시 의견 수렴이 필요했습니다.
+              <StDetailList>
+                <li>단체 채팅방에서 장소 후보를 텍스트로 나열하면 비교가 어려움</li>
+                <li>각 장소의 위치·카테고리 정보를 일일이 검색해야 하는 번거로움</li>
+              </StDetailList>
+            </>
+          ),
+          solution: (
+            <>
+              <b>네이버 지역 검색 연동</b>으로 후보 등록을 간소화하고,
+              투표 기반 의사결정을 지원했습니다.
+              <StDetailList>
+                <li>
+                  검색 결과에서 장소를 선택해 <b>카테고리·주소·지도 링크</b>와 함께 자동 등록
+                </li>
+                <li>
+                  약속잡기 멤버 <b>자동 연동</b>으로 이름 재입력 없이 투표
+                </li>
+                <li>
+                  실시간 투표 현황과 <b>득표율 시각화</b>로 합의 도출 가속
+                </li>
+              </StDetailList>
+            </>
+          ),
+          tech: (
+            <>
+              <StDetailList>
+                <li>
+                  <b>네이버 Local Search API</b> 프록시를 통한 서버사이드 검색
+                </li>
+                <li>
+                  약속잡기 participants 테이블과 <b>meeting_room_id</b>로 멤버 연동
+                </li>
+                <li>
+                  <b>slug + short_code</b> 기반 공유 친화적 URL 구조
+                </li>
+              </StDetailList>
+            </>
+          ),
+        }}
+        historyLogs={[
+          {
+            ver: "1.1.0",
+            date: "2026.04.08",
+            content:
+              "라우트 /dinner → /place 변경, 약속잡기 멤버 자동 연동, slug URL 공유 지원, 공유 버튼 추가",
           },
         ]}
       />

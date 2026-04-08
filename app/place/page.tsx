@@ -436,7 +436,7 @@ const StLoadMoreButton = styled.button`
   transition: all 0.15s;
 
   &:hover:not(:disabled) {
-    border-color: ${({ theme }) => theme.colors.blue300};
+    border-color: ${({ theme }) => theme.colors.blue200};
     color: ${({ theme }) => theme.colors.blue500};
     background: ${({ theme }) => theme.colors.blue50};
   }
