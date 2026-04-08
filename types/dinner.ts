@@ -3,6 +3,9 @@ export interface DinnerRoom {
   title: string;
   area: string; // 검색 지역 키워드 (예: "강남", "홍대")
   created_at: string;
+  meeting_room_id?: string | null;
+  short_code?: string | null;
+  slug?: string | null;
 }
 
 export interface DinnerPlace {

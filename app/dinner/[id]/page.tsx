@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styled from "styled-components";
 import { Button, Input } from "@hwangchongmu/ui";
 import PageIntro from "@/components/common/PageIntro";
@@ -21,10 +21,15 @@ import {
   deleteDinnerPlace,
 } from "@/services/dinner";
 import { DinnerRoom, DinnerPlace, DinnerVote, NaverLocalItem } from "@/types/dinner";
+import { supabase } from "@/lib/supabase";
+import ShareButton from "@/components/common/KakaoCalendarShare";
+import { isUuid, parseShortCode, toSlug } from "@/lib/slug";
 
 export default function DinnerVotePage() {
   const params = useParams();
+  const router = useRouter();
   const roomId = params.id as string;
+  const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
 
   const [room, setRoom] = useState<DinnerRoom | null>(null);
   const [places, setPlaces] = useState<DinnerPlace[]>([]);
@@ -34,6 +39,7 @@ export default function DinnerVotePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
+  const [memberNames, setMemberNames] = useState<string[]>([]);
 
   // 편집 모드
   const [isEditing, setIsEditing] = useState(false);
@@ -43,18 +49,64 @@ export default function DinnerVotePage() {
 
   useEffect(() => {
     const load = async () => {
-      const [roomData, placesData, votesData] = await Promise.all([
-        fetchDinnerRoom(roomId),
-        fetchDinnerPlaces(roomId),
-        fetchVotes(roomId),
-      ]);
+      let roomData: DinnerRoom | null = null;
+      let actualRoomId = roomId;
+
+      // UUID인지 slug-shortcode인지 판별
+      if (isUuid(roomId)) {
+        roomData = await fetchDinnerRoom(roomId);
+        // UUID 접근 시 slug URL로 리다이렉트
+        if (roomData?.slug && roomData?.short_code) {
+          router.replace(`/dinner/${roomData.slug}-${roomData.short_code}`);
+          return;
+        }
+      } else {
+        const parsed = parseShortCode(roomId);
+        if (parsed) {
+          const { data } = await supabase
+            .from("dinner_rooms")
+            .select("*")
+            .eq("short_code", parsed.code)
+            .single();
+          roomData = data;
+          if (roomData) actualRoomId = roomData.id;
+        }
+      }
+
+      if (!roomData) {
+        setLoading(false);
+        return;
+      }
+
       setRoom(roomData);
+      setResolvedRoomId(roomData.id);
+
+      const [placesData, votesData] = await Promise.all([
+        fetchDinnerPlaces(roomData.id),
+        fetchVotes(roomData.id),
+      ]);
       setPlaces(placesData);
       setVotes(votesData);
+
+      // 연결된 meeting room이 있으면 참여자 이름 불러오기
+      if (roomData?.meeting_room_id) {
+        const { data: partData } = await supabase
+          .from("participants")
+          .select("name, is_absent")
+          .eq("room_id", roomData.meeting_room_id);
+        if (partData) {
+          setMemberNames(
+            partData
+              .filter((p: any) => !p.is_absent)
+              .map((p: any) => p.name),
+          );
+        }
+      }
+
       setLoading(false);
     };
     load();
-  }, [roomId]);
+  }, [roomId, router]);
 
   // 장소별 투표 수 집계
   const voteCountMap = useMemo(() => {
@@ -109,7 +161,7 @@ export default function DinnerVotePage() {
 
   const handleAddPlace = async (item: NaverLocalItem) => {
     try {
-      const newPlaces = await addDinnerPlaces(roomId, [
+      const newPlaces = await addDinnerPlaces(resolvedRoomId || roomId, [
         {
           name: stripHtml(item.title),
           category: item.category,
@@ -164,10 +216,10 @@ export default function DinnerVotePage() {
     setSubmitting(true);
     try {
       // 기존 투표 삭제 후 새로 투표
-      await deleteVotesByVoter(roomId, voterName.trim());
+      await deleteVotesByVoter(resolvedRoomId || roomId, voterName.trim());
       const newVotes: DinnerVote[] = [];
       for (const placeId of selectedPlaceIds) {
-        const v = await submitVote(roomId, placeId, voterName.trim());
+        const v = await submitVote(resolvedRoomId || roomId, placeId, voterName.trim());
         newVotes.push(v);
       }
       setVotes((prev) => [
@@ -196,7 +248,13 @@ export default function DinnerVotePage() {
   return (
     <StContainer>
       <StWrapper>
-        <PageIntro icon="🍻" title={room.title} />
+        <StTitleRow>
+          <PageIntro icon="🍻" title={room.title} />
+          <ShareButton
+            title={`[황총무] ${room.title}`}
+            description={`${room.title} 장소 투표에 참여해주세요! 📍`}
+          />
+        </StTitleRow>
 
         {/* 후보 편집 */}
         <StSection>
@@ -370,12 +428,43 @@ export default function DinnerVotePage() {
           ) : (
             <>
               <StVoteForm>
-                <Input
-                  label="이름"
-                  placeholder="이름을 입력하세요"
-                  value={voterName}
-                  onChange={(e) => setVoterName(e.target.value)}
-                />
+                {memberNames.length > 0 ? (
+                  <StMemberChipSection>
+                    <StChipLabel>이름을 선택하세요</StChipLabel>
+                    <StMemberChipList>
+                      {memberNames.map((name) => {
+                        const isActive = voterName === name;
+                        const hasVotedAlready = votes.some(
+                          (v) => v.voter_name === name,
+                        );
+                        return (
+                          <StMemberChip
+                            key={name}
+                            $isActive={isActive}
+                            $hasVoted={hasVotedAlready}
+                            onClick={() => {
+                              setVoterName(isActive ? "" : name);
+                              if (!isActive) {
+                                setHasVoted(false);
+                                setSelectedPlaceIds(new Set());
+                              }
+                            }}
+                          >
+                            {name}
+                            {hasVotedAlready && !isActive && " ✓"}
+                          </StMemberChip>
+                        );
+                      })}
+                    </StMemberChipList>
+                  </StMemberChipSection>
+                ) : (
+                  <Input
+                    label="이름"
+                    placeholder="이름을 입력하세요"
+                    value={voterName}
+                    onChange={(e) => setVoterName(e.target.value)}
+                  />
+                )}
                 <StSelectedInfo>
                   {selectedPlaceIds.size > 0 ? (
                     <>
@@ -554,6 +643,67 @@ const StNaverLink = styled.a`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const StTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+const StMemberChipSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const StChipLabel = styled.span`
+  font-size: 0.813rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray500};
+`;
+
+const StMemberChipList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const StMemberChip = styled.button<{ $isActive: boolean; $hasVoted: boolean }>`
+  height: 36px;
+  padding: 0 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+
+  ${({ $isActive, $hasVoted, theme }) =>
+    $isActive
+      ? `
+        background-color: ${theme.colors.gray900};
+        color: ${theme.colors.white};
+        border-color: ${theme.colors.gray900};
+      `
+      : $hasVoted
+        ? `
+        background-color: ${theme.colors.white};
+        color: #f59e0b;
+        border-color: #fde68a;
+      `
+        : `
+        background-color: ${theme.colors.white};
+        color: ${theme.colors.gray600};
+        border-color: ${theme.colors.gray200};
+      `}
+
+  &:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  &:active {
+    transform: scale(0.95);
   }
 `;
 

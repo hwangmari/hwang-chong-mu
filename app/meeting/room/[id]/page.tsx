@@ -24,7 +24,7 @@ import {
 } from "@/components/styled/layout.styled";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { toSlug } from "@/lib/slug";
+import { toSlug, createShortCode } from "@/lib/slug";
 
 export default function RoomDetail() {
   const params = useParams();
@@ -32,6 +32,7 @@ export default function RoomDetail() {
   const roomId = params.id as string;
   const [showGuide, setShowGuide] = useState(false);
   const [isCreatingSettlement, setIsCreatingSettlement] = useState(false);
+  const [isCreatingDinner, setIsCreatingDinner] = useState(false);
 
   const [hoveredUserId, setHoveredUserId] = useState<string | number | null>(
     null,
@@ -135,6 +136,62 @@ export default function RoomDetail() {
       alert("정산 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsCreatingSettlement(false);
+    }
+  };
+
+  const handleCreateDinnerRoom = async () => {
+    if (isCreatingDinner) return;
+    if (!room) return;
+
+    // 이미 연결된 dinner room이 있으면 존재 확인 후 이동
+    if (room.dinner_room_id) {
+      const { data: existing } = await supabase
+        .from("dinner_rooms")
+        .select("id, slug, short_code")
+        .eq("id", room.dinner_room_id)
+        .single();
+      if (existing) {
+        const slug = existing.slug || toSlug(room.name);
+        const code = existing.short_code;
+        router.push(slug && code ? `/dinner/${slug}-${code}` : `/dinner/${room.dinner_room_id}`);
+        return;
+      }
+      // 삭제된 경우 연결 해제 후 새로 생성
+      await supabase
+        .from("rooms")
+        .update({ dinner_room_id: null })
+        .eq("id", room.id);
+    }
+
+    setIsCreatingDinner(true);
+    try {
+      const dinnerSlug = toSlug(room.name);
+      const dinnerShortCode = createShortCode();
+      const { data: newDinnerRoom, error: dinnerError } = await supabase
+        .from("dinner_rooms")
+        .insert([{
+          title: room.name,
+          area: "",
+          meeting_room_id: room.id,
+          slug: dinnerSlug,
+          short_code: dinnerShortCode,
+        }])
+        .select()
+        .single();
+      if (dinnerError) throw dinnerError;
+
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ dinner_room_id: newDinnerRoom.id })
+        .eq("id", room.id);
+      if (updateError) throw updateError;
+
+      router.push(`/dinner/${dinnerSlug}-${dinnerShortCode}`);
+    } catch (error) {
+      console.error("장소투표 방 생성 실패:", error);
+      alert("장소투표 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsCreatingDinner(false);
     }
   };
 
@@ -398,6 +455,9 @@ export default function RoomDetail() {
             onCreateSettlement={handleCreateSettlement}
             isCreatingSettlement={isCreatingSettlement}
             calcRoomId={room.calc_room_id}
+            onCreateDinnerRoom={handleCreateDinnerRoom}
+            isCreatingDinner={isCreatingDinner}
+            dinnerRoomId={room.dinner_room_id}
           />
           <AddToCalendar
             title={room.name}

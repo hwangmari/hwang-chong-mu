@@ -15,6 +15,9 @@ interface Props {
   onCreateSettlement: (memberNames: string[], finalDate: Date) => void;
   isCreatingSettlement: boolean;
   calcRoomId?: string | number | null;
+  onCreateDinnerRoom?: () => void;
+  isCreatingDinner?: boolean;
+  dinnerRoomId?: string | null;
 }
 
 export default function ConfirmedResultCard({
@@ -26,6 +29,9 @@ export default function ConfirmedResultCard({
   onCreateSettlement,
   isCreatingSettlement,
   calcRoomId,
+  onCreateDinnerRoom,
+  isCreatingDinner,
+  dinnerRoomId,
 }: Props) {
   const getUnavailablePeople = (d: Date) =>
     participants.filter(
@@ -61,16 +67,30 @@ export default function ConfirmedResultCard({
         <StDateDisplay variant="h2">
           {format(finalDate, "M월 d일 (E)", { locale: ko })}
         </StDateDisplay>
-        <StSettleButton
-          onClick={() => onCreateSettlement(availableNames, finalDate)}
-          disabled={isCreatingSettlement || availableNames.length === 0}
-        >
-          {isCreatingSettlement
-            ? "정산 방 만드는 중..."
-            : calcRoomId
-              ? "정산 방으로 이동"
-              : "정산하기"}
-        </StSettleButton>
+        <StActionButtons>
+          <StSettleButton
+            onClick={() => onCreateSettlement(availableNames, finalDate)}
+            disabled={isCreatingSettlement || availableNames.length === 0}
+          >
+            {isCreatingSettlement
+              ? "정산 방 만드는 중..."
+              : calcRoomId
+                ? "정산 방으로 이동"
+                : "정산하기"}
+          </StSettleButton>
+          {onCreateDinnerRoom && (
+            <StDinnerButton
+              onClick={onCreateDinnerRoom}
+              disabled={isCreatingDinner}
+            >
+              {isCreatingDinner
+                ? "장소투표 만드는 중..."
+                : dinnerRoomId
+                  ? "장소투표로 이동"
+                  : "약속장소잡기 📍"}
+            </StDinnerButton>
+          )}
+        </StActionButtons>
       </StDateBox>
 
       {/* 결과 명단 리스트 */}
@@ -167,14 +187,40 @@ const StDateDisplay = styled(Typography)`
   text-align: center;
 `;
 
-const StSettleButton = styled.button`
+const StActionButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
   margin-top: 1rem;
-  width: 100%;
+`;
+
+const StSettleButton = styled.button`
+  flex: 1;
   padding: 0.85rem 1rem;
   border-radius: 0.75rem;
   border: none;
   font-weight: 800;
   background-color: ${({ theme }) => theme.semantic.primary};
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const StDinnerButton = styled.button`
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 800;
+  background-color: ${({ theme }) => theme.colors.gray800};
   color: white;
   cursor: pointer;
   transition: opacity 0.2s ease;
