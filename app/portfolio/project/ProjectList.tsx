@@ -177,6 +177,12 @@ export default function ProjectList() {
         }}
         historyLogs={[
           {
+            ver: "1.0.2",
+            date: "2026.04.08",
+            content:
+              "투표 기간 조정 기능 추가, 헤더 UI 정리(타이틀+공유/기간+마감 2단 구성), 달력에 법정공휴일·근로자의날 표시",
+          },
+          {
             ver: "1.0.1",
             date: "2026.02.06",
             content: "약속 완료 후 N빵 계산 정산하기 방 연동",
