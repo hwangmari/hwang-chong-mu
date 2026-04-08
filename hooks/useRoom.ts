@@ -288,6 +288,20 @@ export function useRoom(roomId: string) {
     );
   };
 
+  const handleUpdatePeriod = async (newStart: string, newEnd: string) => {
+    const targetRoomId = resolvedRoomId ?? roomId;
+    const { error } = await supabase
+      .from("rooms")
+      .update({ start_date: newStart, end_date: newEnd })
+      .eq("id", targetRoomId);
+    if (error) {
+      showAlert("기간 변경 중 오류가 발생했어요 😢");
+      return;
+    }
+    showAlert("투표 기간이 변경되었습니다!");
+    fetchData();
+  };
+
   const handleGoToConfirm = () => {
     if (participants.length < 2)
       return showAlert("최소 2명 이상 참여해야 합니다.");
@@ -316,6 +330,7 @@ export function useRoom(roomId: string) {
     handleResetDates,
     handleSelectAllDates, // ✅ 내보내기 필수
     handleGoToConfirm,
+    handleUpdatePeriod,
     handleEditUser,
     handleDeleteUser,
     handleRescueUser,

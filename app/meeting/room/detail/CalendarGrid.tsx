@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import styled, { css } from "styled-components";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, isSunday } from "date-fns";
 import { UserVote } from "@/types";
+import { getHolidayName } from "@/utils/holidays";
 
 interface Props {
   dates: (Date | null)[];
@@ -90,6 +91,8 @@ export default function CalendarGrid({
           const showMonth = dayString === "1" || index === firstDateIndex;
 
           const isTooltipOpen = openTooltipDate === dateKey;
+          const holidayName = getHolidayName(date);
+          const isSun = isSunday(date);
 
           return (
             <StDateButton
@@ -101,6 +104,7 @@ export default function CalendarGrid({
               $dynamicBg={dynamicBg}
               $unavailableCount={unavailableCount}
               $isHoveredDate={!!isHoveredDate}
+              $isHoliday={!!holidayName || isSun}
             >
               <StDateText>
                 {showMonth && (
@@ -108,6 +112,9 @@ export default function CalendarGrid({
                 )}
                 {dayString}
               </StDateText>
+              {holidayName && (
+                <StHolidayLabel>{holidayName}</StHolidayLabel>
+              )}
 
               {/* 툴팁 및 배지 영역 */}
               {!isFinalSelected && unavailableCount > 0 && (
@@ -202,6 +209,7 @@ const StDateButton = styled.button<{
   $dynamicBg: string;
   $unavailableCount: number;
   $isHoveredDate: boolean;
+  $isHoliday: boolean;
 }>`
   position: relative;
   aspect-ratio: 1 / 1;
@@ -224,10 +232,11 @@ const StDateButton = styled.button<{
     return $dynamicBg;
   }};
 
-  color: ${({ $isFinalSelected, $isMySelection, $unavailableCount, theme }) => {
+  color: ${({ $isFinalSelected, $isMySelection, $unavailableCount, $isHoliday, theme }) => {
     if ($isFinalSelected) return theme.colors.white;
     if ($isMySelection) return theme.colors.black;
     if ($unavailableCount > 0) return theme.colors.white;
+    if ($isHoliday) return "#ef4444";
     return theme.colors.gray500;
   }};
 
@@ -293,6 +302,23 @@ const StMonthLabel = styled.span`
   @media ${({ theme }) => theme.media.desktop} {
     top: -1rem;
     font-size: 0.75rem;
+  }
+`;
+
+const StHolidayLabel = styled.span`
+  position: absolute;
+  bottom: 0.125rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.3125rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray400};
+  line-height: 1;
+  white-space: nowrap;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    bottom: 0.25rem;
+    font-size: 0.4375rem;
   }
 `;
 

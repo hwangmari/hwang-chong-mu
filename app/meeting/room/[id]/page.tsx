@@ -13,7 +13,6 @@ import { Typography } from "@hwangchongmu/ui";
 import { format } from "date-fns";
 import ConfirmedResultCard from "../detail/ConfirmedResultCard";
 import DateControlButtons from "../detail/DateControlButtons";
-import FloatingFinishButton from "../detail/FloatingFinishButton";
 import NameInput from "../detail/NameInput";
 import VoteSubmitButtons from "../detail/VoteSubmitButtons";
 import ParticipantList from "../detail/ParticipantList";
@@ -56,6 +55,7 @@ export default function RoomDetail() {
     handleResetDates,
     handleSelectAllDates,
     handleGoToConfirm,
+    handleUpdatePeriod,
     handleEditUser,
     handleDeleteUser,
     handleRescueUser,
@@ -162,7 +162,13 @@ export default function RoomDetail() {
     <StContainer>
       <StWrapper>
         {/* 헤더 및 가이드 버튼 */}
-        <RoomHeader title={room.name} />
+        <RoomHeader
+          title={room.name}
+          startDate={!finalDate && step === "VOTING" ? room.start_date : undefined}
+          endDate={!finalDate && step === "VOTING" ? room.end_date : undefined}
+          onFinish={!finalDate && step === "VOTING" ? handleGoToConfirm : undefined}
+          onUpdatePeriod={!finalDate && step === "VOTING" ? handleUpdatePeriod : undefined}
+        />
       </StWrapper>
 
       {/* 1️⃣ 투표 화면 (VOTING) */}
@@ -252,9 +258,6 @@ export default function RoomDetail() {
                 setHoveredUserId={setHoveredUserId}
               />
 
-              {step === "VOTING" && (
-                <FloatingFinishButton onFinish={handleGoToConfirm} />
-              )}
             </div>
           </StFlexBox>
         </>

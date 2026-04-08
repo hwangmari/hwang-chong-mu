@@ -13,7 +13,7 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const url = decodeURI(window.location.href);
 
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -64,8 +64,8 @@ const StContainer = styled.div`
 `;
 
 const StShareButton = styled.button<{ $isCopied: boolean }>`
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -74,8 +74,8 @@ const StShareButton = styled.button<{ $isCopied: boolean }>`
   flex-shrink: 0;
 
   svg {
-    width: 1.5rem; /* 24px (Material Default) */
-    height: 1.5rem;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   ${({ $isCopied, theme }) =>
