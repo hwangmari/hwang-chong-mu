@@ -69,6 +69,7 @@ export default function RoomDetail() {
     setConfirmVoterName,
     submitConfirmVote,
     setStep,
+    handleReopenVoting,
   } = useRoom(roomId);
 
   useEffect(() => {
@@ -370,15 +371,13 @@ export default function RoomDetail() {
                 confirmVotes={confirmVotes}
                 confirmSelectedDates={confirmSelectedDates}
               />
-              <StBackToVotingButton onClick={() => setStep("VOTING")}>
+              <StBackToVotingButton onClick={handleReopenVoting}>
                 ← 투표 화면으로 돌아가기
               </StBackToVotingButton>
             </div>
             <div className="flex-rgt-box">
               <ParticipantList
                 participants={participants}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
                 hoveredUserId={hoveredUserId}
                 setHoveredUserId={setHoveredUserId}
               />

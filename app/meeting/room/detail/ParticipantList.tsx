@@ -7,8 +7,8 @@ import { UserVote } from "@/types";
 
 interface Props {
   participants: UserVote[];
-  onEdit: (user: UserVote) => void;
-  onDelete: (user: UserVote) => void;
+  onEdit?: (user: UserVote) => void;
+  onDelete?: (user: UserVote) => void;
   hoveredUserId: string | number | null;
   setHoveredUserId: (id: string | number | null) => void;
 }
@@ -55,15 +55,17 @@ export default function ParticipantList({
             </StUserInfo>
 
             <div className="flex items-center gap-2">
-              <StEditLabel
-                className="edit-label"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(user);
-                }}
-              >
-                수정
-              </StEditLabel>
+              {onEdit && (
+                <StEditLabel
+                  className="edit-label"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(user);
+                  }}
+                >
+                  수정
+                </StEditLabel>
+              )}
 
               {user.isAbsent ? (
                 <StStatusBadge $status="absent">불참 🥲</StStatusBadge>
@@ -74,15 +76,17 @@ export default function ParticipantList({
               )}
             </div>
 
-            <StDeleteButton
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(user);
-              }}
-              className="delete-btn"
-            >
-              <DeleteOutlineIcon sx={{ fontSize: 20 }} />{" "}
-            </StDeleteButton>
+            {onDelete && (
+              <StDeleteButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(user);
+                }}
+                className="delete-btn"
+              >
+                <DeleteOutlineIcon sx={{ fontSize: 20 }} />{" "}
+              </StDeleteButton>
+            )}
           </StUserCard>
         ))
       )}

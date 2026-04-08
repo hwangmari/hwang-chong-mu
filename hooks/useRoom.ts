@@ -72,6 +72,8 @@ export function useRoom(roomId: string) {
         if (roomData.confirmed_date) {
           setFinalDate(parseISO(roomData.confirmed_date));
           setStep("CONFIRM");
+        } else if (roomData.is_voting_closed) {
+          setStep("CONFIRM");
         }
       }
 
@@ -350,9 +352,25 @@ export function useRoom(roomId: string) {
   const handleGoToConfirm = () => {
     if (participants.length < 2)
       return showAlert("최소 2명 이상 참여해야 합니다.");
-    showConfirm("투표를 마감하고\n추천 날짜를 선택하시겠습니까?", () =>
-      setStep("CONFIRM")
-    );
+    showConfirm("투표를 마감하고\n추천 날짜를 선택하시겠습니까?", async () => {
+      const targetRoomId = resolvedRoomId ?? roomId;
+      await supabase
+        .from("rooms")
+        .update({ is_voting_closed: true })
+        .eq("id", targetRoomId);
+      setStep("CONFIRM");
+    });
+  };
+
+  const handleReopenVoting = async () => {
+    showConfirm("투표를 다시 열겠습니까?", async () => {
+      const targetRoomId = resolvedRoomId ?? roomId;
+      await supabase
+        .from("rooms")
+        .update({ is_voting_closed: false })
+        .eq("id", targetRoomId);
+      setStep("VOTING");
+    });
   };
 
   return {
@@ -387,5 +405,6 @@ export function useRoom(roomId: string) {
     setConfirmVoterName,
     submitConfirmVote,
     setStep,
+    handleReopenVoting,
   };
 }
