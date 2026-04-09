@@ -10,10 +10,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Dev server:** `npm run dev` (runs on localhost:3000)
 - **Build:** `npm run build` (uses `next build --webpack`)
-- **Lint:** `npm run lint` (ESLint with next/core-web-vitals + typescript configs)
+- **Lint:** `npm run lint` (ESLint flat config — `eslint.config.mjs` with next/core-web-vitals + typescript)
 - **Start prod:** `npm run start`
 
 No test framework is configured.
+
+### Key Libraries
+
+- **date-fns** — date manipulation (used in calendar/schedule features)
+- **framer-motion** — animations
+- **tesseract.js** — OCR (used in the overtime calculator for receipt scanning)
 
 ## Architecture
 
@@ -27,7 +33,11 @@ Uses npm workspaces (`packages/*`). The internal package `@hwangchongmu/ui` (`pa
 - **styled-components** — primary styling approach. SSR support via `lib/registry.tsx` (StyledComponentsRegistry wrapping `UiProvider`). The styled-components compiler is enabled in `next.config.ts`.
 - **Tailwind CSS** — also available (configured in `tailwind.config.ts`, `postcss.config.mjs`, `app/globals.css`).
 
-Theme tokens are defined in `packages/ui/src/theme.ts` and re-exported from `styles/theme.ts`. Access via `${({ theme }) => theme.colors.xxx}` in styled-components. Layout tokens include `maxWidth: 1025px`, `narrowWidth: 540px`. Responsive breakpoints: `mobile` (max-width 767px), `desktop` (min-width 1024px).
+Theme tokens are defined in `packages/ui/src/theme.ts` and re-exported from `styles/theme.ts`. Access via `${({ theme }) => theme.colors.xxx}` in styled-components. The theme has three layers:
+- `theme.colors.*` — raw color palette (gray, blue, indigo, yellow, green, teal, rose, amber, orange) using oklch
+- `theme.semantic.*` — purpose-mapped tokens: `primary` (blue600), `danger` (rose600), `success` (teal600), `warning` (yellow500), `text` (gray900), `subText` (gray500), `border` (gray200), `bg` (gray50). Prefer semantic tokens over raw colors.
+- `theme.layout.*` — `maxWidth: 1025px`, `narrowWidth: 540px`
+- `theme.media.*` — `mobile` (max-width 767px), `desktop` (min-width 1024px)
 
 **MUI is icons-only** — `@mui/icons-material` is used for icons, but no MUI components are used for layout or UI. All UI is styled-components-based.
 
@@ -54,5 +64,5 @@ Each service lives under `app/<service>/` with its own `page.tsx` and colocated 
 
 - Root layout (`app/layout.tsx`) wraps everything in `StyledComponentsRegistry` > `ModalProvider` > `GlobalHeader`.
 - Pages are predominantly client components (`"use client"`) due to styled-components usage.
-- The `ModalProvider` (`components/common/ModalProvider.tsx`) provides app-wide modal context.
+- The `ModalProvider` (`components/common/ModalProvider.tsx`) provides app-wide modal context. Use the `useModal()` hook to get `openAlert(message)` (returns `Promise<void>`) and `openConfirm(message)` (returns `Promise<boolean>`).
 - Korean language throughout — UI text, comments, and variable naming conventions mix Korean comments with English code identifiers.

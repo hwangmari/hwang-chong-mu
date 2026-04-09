@@ -22,6 +22,8 @@ const ROUTE_CONFIG = [
   { path: "/diet", label: "체중 관리" },
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
+  { path: "/blog", label: "블로그" },
+  { path: "/about", label: "소개/문의" },
   { path: "/ui-kit", label: "UI Kit 모음집" },
 ];
 
@@ -64,6 +66,11 @@ export default function GlobalHeader() {
       }
       const isRoomId = !isNaN(Number(parts[2]));
       setCurrentTitle(isRoomId ? "게임 대기실" : "황총무 게임방");
+      return;
+    }
+
+    if (pathname.startsWith("/blog/") && pathname !== "/blog") {
+      setCurrentTitle("블로그");
       return;
     }
 
@@ -245,6 +252,8 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
 const StMenuContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.white};
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+  overflow-y: auto;
+  max-height: calc(100dvh - 3.5rem);
   .center-box {
     max-width: ${({ theme }) => theme.layout.maxWidth};
     margin: 0 auto;
