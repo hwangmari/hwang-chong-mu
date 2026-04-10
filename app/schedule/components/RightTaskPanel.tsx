@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
 import { startOfDay } from "date-fns";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 import { useSearchParams } from "next/navigation"; // useRouter, useParams 제거 가능
 
 import { useScheduleActions } from "@/hooks/useScheduleActions";
@@ -11,10 +11,10 @@ import TaskList from "./Task/TaskList";
 
 interface Props {
   boardId: string;
-  schedules: ServiceSchedule[];
+  schedules: SchedulePhase[];
   hiddenIds: Set<string>;
   onToggleHide: (id: string) => void;
-  onUpdateAll?: (services: ServiceSchedule[]) => void;
+  onUpdateAll?: (phases: SchedulePhase[]) => void;
 }
 
 export default function RightTaskPanel({
@@ -26,6 +26,7 @@ export default function RightTaskPanel({
 }: Props) {
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     schedules,
@@ -34,6 +35,24 @@ export default function RightTaskPanel({
     handleUpdateService,
     ...actions
   } = useScheduleActions(initialSchedules, boardId, onToggleHide, onUpdateAll);
+
+  const filteredSchedules = useMemo(() => {
+    if (!searchQuery.trim()) return schedules;
+    const q = searchQuery.trim().toLowerCase();
+    return schedules
+      .map((svc) => ({
+        ...svc,
+        tasks: svc.tasks.filter(
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            svc.phaseName.toLowerCase().includes(q),
+        ),
+      }))
+      .filter(
+        (svc) =>
+          svc.phaseName.toLowerCase().includes(q) || svc.tasks.length > 0,
+      );
+  }, [schedules, searchQuery]);
 
   const { scrollAreaRef, collapsedIds, highlightId, toggleCollapse } =
     useCardScroll();
@@ -84,8 +103,20 @@ export default function RightTaskPanel({
         </div>
       </StControlBar>
 
+      <StSearchBar>
+        <StSearchInput
+          type="text"
+          placeholder="프로젝트 또는 일정 검색..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <StClearButton onClick={() => setSearchQuery("")}>✕</StClearButton>
+        )}
+      </StSearchBar>
+
       <TaskList
-        schedules={schedules}
+        schedules={filteredSchedules}
         scrollAreaRef={scrollAreaRef as any}
         collapsedIds={collapsedIds}
         highlightId={highlightId}
@@ -114,6 +145,49 @@ const StContainer = styled.div`
   height: calc(100vh - 60px);
   overflow: hidden;
   position: relative;
+`;
+
+const StSearchBar = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  padding-bottom: 0.5rem;
+  background: white;
+  position: relative;
+`;
+
+const StSearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #374151;
+  background: #f9fafb;
+  transition: all 0.2s;
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  }
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const StClearButton = styled.button`
+  position: absolute;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px;
+  &:hover {
+    color: #374151;
+  }
 `;
 
 const StControlBar = styled.div`

@@ -3,11 +3,20 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+export interface MemberFilter {
+  id: string;
+  name: string;
+  color: string;
+  visible: boolean;
+}
+
 interface ScheduleHeaderProps {
   title: string;
   showWeekend: boolean;
   onToggleWeekend: (checked: boolean) => void;
   boardId: string;
+  memberFilters?: MemberFilter[];
+  onToggleMember?: (memberId: string) => void;
 }
 
 export default function ScheduleHeader({
@@ -15,6 +24,8 @@ export default function ScheduleHeader({
   showWeekend,
   onToggleWeekend,
   boardId,
+  memberFilters,
+  onToggleMember,
 }: ScheduleHeaderProps) {
   return (
     <StTopBar>
@@ -40,6 +51,25 @@ export default function ScheduleHeader({
       </div>
 
       <StControls>
+        {memberFilters && memberFilters.length > 0 && onToggleMember && (
+          <>
+            <StMemberFilters>
+              {memberFilters.map((m) => (
+                <StMemberChip
+                  key={m.id}
+                  $active={m.visible}
+                  $color={m.color}
+                  onClick={() => onToggleMember(m.id)}
+                >
+                  <StMemberDot $color={m.color} $active={m.visible} />
+                  {m.name}
+                </StMemberChip>
+              ))}
+            </StMemberFilters>
+            <StDivider />
+          </>
+        )}
+
         <Link href={`/schedule/${boardId}/kanban`} passHref>
           <StKanbanLink>📊 칸반보드</StKanbanLink>
         </Link>
@@ -60,7 +90,7 @@ export default function ScheduleHeader({
 }
 
 const StTopBar = styled.header`
-  height: 60px;
+  min-height: 60px;
   background-color: white;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
@@ -73,10 +103,12 @@ const StTopBar = styled.header`
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
     .back-link {
       display: inline-flex;
       align-items: center;
       color: #6b7280;
+      flex-shrink: 0;
       &:hover {
         color: #111827;
       }
@@ -85,7 +117,17 @@ const StTopBar = styled.header`
       font-size: 1.15rem;
       font-weight: 800;
       color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+  }
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+    align-items: flex-start;
   }
 `;
 
@@ -93,6 +135,17 @@ const StControls = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 767px) {
+    gap: 0.5rem;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 const StKanbanLink = styled.div`
@@ -119,6 +172,39 @@ const StDivider = styled.div`
   width: 1px;
   height: 24px;
   background-color: #e5e7eb;
+`;
+
+const StMemberFilters = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+`;
+
+const StMemberChip = styled.button<{ $active: boolean; $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid ${({ $active, $color }) => ($active ? $color : "#e5e7eb")};
+  background: ${({ $active, $color }) => ($active ? `${$color}12` : "#f9fafb")};
+  color: ${({ $active, $color }) => ($active ? $color : "#9ca3af")};
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    border-color: ${({ $color }) => $color};
+    opacity: 0.85;
+  }
+`;
+
+const StMemberDot = styled.div<{ $color: string; $active: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${({ $active, $color }) => ($active ? $color : "#d1d5db")};
 `;
 
 const StSwitchLabel = styled.label`

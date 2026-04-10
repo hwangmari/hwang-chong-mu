@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
 import { useRouter, useParams } from "next/navigation";
 import * as API from "@/services/schedule";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 import KanbanColumn from "../../components/Kanban/KanbanColumn";
 
 
@@ -13,7 +13,7 @@ export default function KanbanPage() {
   const params = useParams();
   const boardId = params.id as string;
 
-  const [schedules, setSchedules] = useState<ServiceSchedule[]>([]);
+  const [schedules, setSchedules] = useState<SchedulePhase[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isAdding, setIsAdding] = useState(false);
@@ -21,8 +21,8 @@ export default function KanbanPage() {
 
   const initData = async () => {
     try {
-      const boardData = await API.getBoardData(boardId);
-      if (boardData && boardData.services) setSchedules(boardData.services);
+      const svcData = await API.getServiceData(boardId);
+      if (svcData && svcData.phases) setSchedules(svcData.phases);
     } catch (error) {
       console.error("데이터 로드 실패:", error);
     } finally {
@@ -37,12 +37,12 @@ export default function KanbanPage() {
   const handleAddProject = async () => {
     if (!newProjectName.trim()) return;
     try {
-      await API.createService(boardId, newProjectName, "", "#3b82f6");
+      await API.createPhase(boardId, newProjectName, "", "#3b82f6");
       setNewProjectName("");
       setIsAdding(false);
       initData();
     } catch (err) {
-      alert("프로젝트 생성 실패");
+      alert("단계 생성 실패");
     }
   };
 
@@ -72,8 +72,8 @@ export default function KanbanPage() {
       <header className="kanban-header">
         <div className="header-content">
           <div>
-            <h2>📊 프로젝트 진행 현황</h2>
-            <p>프로젝트명이나 세부 일정을 클릭하여 바로 수정하세요.</p>
+            <h2>📊 단계별 진행 현황</h2>
+            <p>단계명이나 세부 일정을 클릭하여 바로 수정하세요.</p>
           </div>
           <button
             className="back-btn"
@@ -107,7 +107,7 @@ export default function KanbanPage() {
             <StAddForm>
               <input
                 autoFocus
-                placeholder="프로젝트명..."
+                placeholder="단계명..."
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddProject()}

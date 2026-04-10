@@ -23,7 +23,7 @@ const ROUTE_CONFIG = [
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
   { path: "/blog", label: "블로그" },
-  { path: "/about", label: "소개/문의" },
+
   { path: "/ui-kit", label: "UI Kit 모음집" },
 ];
 
@@ -50,8 +50,11 @@ export default function GlobalHeader() {
   const [currentTitle, setCurrentTitle] = useState("황총무의 실험실");
   const isAccountBookHub =
     pathname === "/account-book" && !searchParams.get("workspaceId");
+  const isScheduleHub =
+    pathname === "/schedule" && !searchParams.get("workspaceId");
   const shouldHideHeader =
-    pathname.startsWith("/account-book") && !isAccountBookHub;
+    (pathname.startsWith("/account-book") && !isAccountBookHub) ||
+    (pathname.startsWith("/schedule") && !isScheduleHub);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -110,23 +113,18 @@ export default function GlobalHeader() {
   }
 
   const handleBack = () => {
-    if (pathname.startsWith("/game/") && pathname.split("/").length > 2) {
-      if (pathname.includes("/quick")) {
-        router.back();
-        return;
-      }
-    }
+    // 경로 세그먼트 분리: /a/b/c → ["", "a", "b", "c"]
+    const segments = pathname.split("/").filter(Boolean);
 
-    if (pathname === "/schedule") {
+    // 1단계 경로 (/schedule, /meeting 등) → 홈으로
+    if (segments.length <= 1) {
       router.push("/");
       return;
     }
 
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
+    // 2단계 이상 → 상위 경로로 (/schedule/123 → /schedule)
+    const parentPath = "/" + segments.slice(0, -1).join("/");
+    router.push(parentPath);
   };
 
   return (

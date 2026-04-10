@@ -8,17 +8,19 @@ import {
   isWeekend,
   EachDayOfIntervalResult,
 } from "date-fns";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import CalendarDayCell from "./CalendarDayCell";
 import { useCalendarLayout } from "@/hooks/useCalendarLayout";
 
 interface MonthGridProps {
   targetDate: Date;
-  schedules: ServiceSchedule[];
+  schedules: SchedulePhase[];
   showWeekend: boolean;
-  onDragStart: (e: React.DragEvent, serviceId: string, task: TaskPhase) => void;
+  onDragStart: (e: React.DragEvent, phaseId: string, task: TaskPhase) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, dropDate: Date) => void;
+  onDayClick?: (day: Date) => void;
+  onDayPreview?: (day: Date) => void;
 }
 
 export default function MonthGrid({
@@ -28,6 +30,8 @@ export default function MonthGrid({
   onDragStart,
   onDragOver,
   onDrop,
+  onDayClick,
+  onDayPreview,
 }: MonthGridProps) {
   const monthStart = startOfMonth(targetDate);
   const monthEnd = endOfMonth(monthStart);
@@ -71,6 +75,8 @@ export default function MonthGrid({
             onDragStart={onDragStart}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            onDayClick={onDayClick}
+            onDayPreview={onDayPreview}
           />
         ))}
       </StGridBody>

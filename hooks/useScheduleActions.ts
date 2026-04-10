@@ -1,135 +1,131 @@
 import { useState, useEffect, useCallback } from "react";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
 
 export function useScheduleActions(
-  initialSchedules: ServiceSchedule[],
-  boardId: string,
+  initialPhases: SchedulePhase[],
+  serviceId: string,
   onToggleHide: (id: string) => void,
-  onUpdateAll?: (services: ServiceSchedule[]) => void,
+  onUpdateAll?: (phases: SchedulePhase[]) => void,
 ) {
-  const [schedules, setSchedules] =
-    useState<ServiceSchedule[]>(initialSchedules);
+  const [phases, setPhases] =
+    useState<SchedulePhase[]>(initialPhases);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    setSchedules(initialSchedules);
-  }, [initialSchedules]);
+    setPhases(initialPhases);
+  }, [initialPhases]);
 
   const updateLocalState = useCallback(
-    (newSchedules: ServiceSchedule[]) => {
-      setSchedules(newSchedules);
-      if (onUpdateAll) onUpdateAll(newSchedules);
+    (newPhases: SchedulePhase[]) => {
+      setPhases(newPhases);
+      if (onUpdateAll) onUpdateAll(newPhases);
     },
     [onUpdateAll],
   );
 
-
-
-  const handleAddService = async () => {
+  const handleAddPhase = async () => {
     try {
-      const newService = await API.createService(
-        boardId,
-        "새 프로젝트",
+      const newPhase = await API.createPhase(
+        serviceId,
+        "새 단계",
         "",
         "#3b82f6",
       );
-      const nextSchedules = [...schedules, newService];
-      updateLocalState(nextSchedules);
+      const nextPhases = [...phases, newPhase];
+      updateLocalState(nextPhases);
       setIsEditing(true);
     } catch (e) {
-      console.error("서비스 생성 에러:", e);
-      alert("프로젝트 생성 실패");
+      console.error("단계 생성 에러:", e);
+      alert("단계 생성 실패");
     }
   };
 
-
-  const handleDeleteService = async (svcId: string) => {
+  const handleDeletePhase = async (phaseId: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      await API.deleteService(svcId);
-      const nextSchedules = schedules.filter((s) => s.id !== svcId);
-      updateLocalState(nextSchedules);
+      await API.deletePhase(phaseId);
+      const nextPhases = phases.filter((s) => s.id !== phaseId);
+      updateLocalState(nextPhases);
     } catch (e) {
       console.error(e);
       alert("삭제 실패");
     }
   };
 
-  const handleUpdateService = async (svcId: string, updates: any) => {
+  const handleUpdatePhase = async (phaseId: string, updates: any) => {
     if (updates.isCompleted === true || updates.is_completed === true) {
-      onToggleHide(svcId);
+      onToggleHide(phaseId);
     }
-    const nextSchedules = schedules.map((s) => {
-      if (s.id !== svcId) return s;
+    const nextPhases = phases.map((s) => {
+      if (s.id !== phaseId) return s;
       const nextIsCompleted =
         updates.isCompleted ?? updates.is_completed ?? s.isCompleted;
       return { ...s, ...updates, isCompleted: nextIsCompleted };
     });
-    updateLocalState(nextSchedules);
+    updateLocalState(nextPhases);
 
     try {
-      await API.updateService(svcId, updates);
+      await API.updatePhase(phaseId, updates);
     } catch (e) {
-      console.error("서비스 업데이트 에러:", e);
+      console.error("단계 업데이트 에러:", e);
     }
   };
 
-  const handleColorChange = async (svcId: string, color: string) => {
-    await handleUpdateService(svcId, { color });
+  const handleColorChange = async (phaseId: string, color: string) => {
+    await handleUpdatePhase(phaseId, { color });
   };
 
-  const handleServiceNameChange = (svcId: string, newName: string) => {
-    const nextSchedules = schedules.map((s) =>
-      s.id === svcId ? { ...s, serviceName: newName } : s,
+  const handlePhaseNameChange = (phaseId: string, newName: string) => {
+    const nextPhases = phases.map((s) =>
+      s.id === phaseId ? { ...s, phaseName: newName } : s,
     );
-    setSchedules(nextSchedules);
+    setPhases(nextPhases);
   };
 
-  const handleServiceNameBlur = async (svcId: string, name: string) => {
-    const nextSchedules = schedules.map((s) =>
-      s.id === svcId ? { ...s, serviceName: name } : s,
+  const handlePhaseNameBlur = async (phaseId: string, name: string) => {
+    const nextPhases = phases.map((s) =>
+      s.id === phaseId ? { ...s, phaseName: name } : s,
     );
-    updateLocalState(nextSchedules);
+    updateLocalState(nextPhases);
 
     try {
-      await API.updateService(svcId, { serviceName: name });
+      await API.updatePhase(phaseId, { phaseName: name });
     } catch (e) {
       console.error(e);
     }
   };
 
-
-  const handleAddTask = async (svcId: string) => {
+  const handleAddTask = async (phaseId: string) => {
     try {
       const tempTask = {
         title: "새 업무",
         startDate: new Date(),
         endDate: new Date(),
       };
-      const createdTask = await API.createTask(svcId, tempTask);
+      const createdTask = await API.createTask(phaseId, tempTask);
 
-      const nextSchedules = schedules.map((svc) => {
-        if (svc.id !== svcId) return svc;
-        return { ...svc, tasks: [...svc.tasks, createdTask] };
+      const nextPhases = phases.map((phase) => {
+        if (phase.id !== phaseId) return phase;
+        return { ...phase, tasks: [...phase.tasks, createdTask] };
       });
-      updateLocalState(nextSchedules);
+      updateLocalState(nextPhases);
     } catch (e) {
       console.error("태스크 생성 에러:", e);
     }
   };
 
-  const updateTask = async (svcId: string, updatedTask: TaskPhase) => {
-    const nextSchedules = schedules.map((svc) => {
-      if (svc.id !== svcId) return svc;
+  const updateTask = async (phaseId: string, updatedTask: TaskPhase) => {
+    const nextPhases = phases.map((phase) => {
+      if (phase.id !== phaseId) return phase;
       return {
-        ...svc,
-        tasks: svc.tasks.map((t) =>
+        ...phase,
+        tasks: phase.tasks.map((t) =>
           t.id === updatedTask.id ? updatedTask : t,
         ),
       };
     });
-    updateLocalState(nextSchedules);
+    updateLocalState(nextPhases);
 
     try {
       await API.updateTask(updatedTask.id, {
@@ -144,14 +140,14 @@ export function useScheduleActions(
     }
   };
 
-  const deleteTask = async (svcId: string, taskId: string) => {
+  const deleteTask = async (phaseId: string, taskId: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
 
-    const nextSchedules = schedules.map((svc) => {
-      if (svc.id !== svcId) return svc;
-      return { ...svc, tasks: svc.tasks.filter((t) => t.id !== taskId) };
+    const nextPhases = phases.map((phase) => {
+      if (phase.id !== phaseId) return phase;
+      return { ...phase, tasks: phase.tasks.filter((t) => t.id !== taskId) };
     });
-    updateLocalState(nextSchedules);
+    updateLocalState(nextPhases);
 
     try {
       await API.deleteTask(taskId);
@@ -161,17 +157,17 @@ export function useScheduleActions(
   };
 
   return {
-    schedules,
+    schedules: phases,
     isEditing,
     setIsEditing,
-    handleAddService,
-    handleUpdateService,
-    handleDeleteService,
+    handleAddService: handleAddPhase,
+    handleUpdateService: handleUpdatePhase,
+    handleDeleteService: handleDeletePhase,
     handleAddTask,
     updateTask,
     deleteTask,
     handleColorChange,
-    handleServiceNameChange,
-    handleServiceNameBlur,
+    handleServiceNameChange: handlePhaseNameChange,
+    handleServiceNameBlur: handlePhaseNameBlur,
   };
 }

@@ -8,7 +8,7 @@ interface Props {
   task: CalendarTask;
   day: Date;
   isRedDay: boolean;
-  onDragStart: (e: React.DragEvent, serviceId: string, task: TaskPhase) => void;
+  onDragStart: (e: React.DragEvent, phaseId: string, task: TaskPhase) => void;
 }
 
 export default function CalendarTaskItem({
@@ -29,7 +29,7 @@ export default function CalendarTaskItem({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const event = new CustomEvent("scroll-to-service", { detail: task.svcId });
+    const event = new CustomEvent("scroll-to-service", { detail: task.phaseId });
     window.dispatchEvent(event);
   };
 
@@ -45,9 +45,9 @@ export default function CalendarTaskItem({
   return (
     <StTaskBarWrapper
       draggable={true}
-      onDragStart={(e) => onDragStart(e, task.svcId, originalTaskPhase)}
+      onDragStart={(e) => onDragStart(e, task.phaseId, originalTaskPhase)}
       onClick={handleClick}
-      title={`${task.svcName} - ${task.title}`}
+      title={`${task.phaseName} - ${task.title}`}
     >
       <StTaskContent
         $color={task.color}
@@ -58,7 +58,10 @@ export default function CalendarTaskItem({
       >
         {isStart && (
           <span className="label">
-            <span className="svc-name">[{task.svcName}]</span>
+            <span className="svc-name">
+              [{task.phaseName}]
+              {task.memberName && ` ${task.memberName}`}
+            </span>
             <span className="task-name">{task.title}</span>
           </span>
         )}

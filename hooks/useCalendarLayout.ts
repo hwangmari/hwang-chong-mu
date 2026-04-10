@@ -6,20 +6,21 @@ import {
   isWithinInterval,
   format,
 } from "date-fns";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 
 export interface CalendarTask {
   id: string;
   title: string;
   startDate: Date;
   endDate: Date;
-  svcId: string;
-  svcName: string;
+  phaseId: string;
+  phaseName: string;
   color: string;
   isCompleted: boolean;
+  memberName?: string;
 }
 export function useCalendarLayout(
-  schedules: ServiceSchedule[],
+  phases: SchedulePhase[],
   daysToShow: Date[],
   cols: number,
 ) {
@@ -27,16 +28,17 @@ export function useCalendarLayout(
     const map = new Map<string, number>();
     const maxSlots = new Map<string, number>();
 
-    const allTasks: CalendarTask[] = schedules.flatMap((svc) =>
-      svc.tasks.map((t) => ({
+    const allTasks: CalendarTask[] = phases.flatMap((phase) =>
+      phase.tasks.map((t) => ({
         id: t.id,
         title: t.title,
         startDate: t.startDate,
         endDate: t.endDate,
-        svcId: svc.id,
-        svcName: svc.serviceName,
-        color: svc.color,
+        phaseId: phase.id,
+        phaseName: phase.phaseName,
+        color: phase.color,
         isCompleted: t.isCompleted || false,
+        memberName: phase.memberName,
       })),
     );
 
@@ -52,11 +54,11 @@ export function useCalendarLayout(
           { start: startOfDay(t.startDate), end: endOfDay(t.endDate) },
           { start: rowStart, end: rowEnd },
         );
-        return isOverlapping && !t.isCompleted; // 완료된 태스크는 레이아웃 계산에서 제외
+        return isOverlapping && !t.isCompleted;
       });
 
       tasksInRow.sort((a, b) => {
-        if (a.svcId !== b.svcId) return a.svcId.localeCompare(b.svcId);
+        if (a.phaseId !== b.phaseId) return a.phaseId.localeCompare(b.phaseId);
         return a.startDate.getTime() - b.startDate.getTime();
       });
 
@@ -94,5 +96,5 @@ export function useCalendarLayout(
       });
     }
     return { slotMap: map, maxSlotsPerDay: maxSlots, allTasks };
-  }, [schedules, daysToShow, cols]);
+  }, [phases, daysToShow, cols]);
 }

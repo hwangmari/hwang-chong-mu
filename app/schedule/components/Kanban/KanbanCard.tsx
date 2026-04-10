@@ -4,14 +4,14 @@ import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import * as API from "@/services/schedule";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 
 import TaskItem from "./card/TaskItem";
 import ColorPicker from "./card/ColorPicker";
 import QuickAddForm from "./card/QuickAddForm";
 
 interface KanbanCardProps {
-  svc: ServiceSchedule;
+  svc: SchedulePhase;
   boardId: string;
   refresh: () => void;
 }
@@ -20,7 +20,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   const router = useRouter();
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [editName, setEditName] = useState(svc.serviceName);
+  const [editName, setEditName] = useState(svc.phaseName);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
@@ -33,12 +33,12 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   }, [svc.tasks]);
 
   const handleNameUpdate = async () => {
-    if (!editName.trim() || editName === svc.serviceName) {
+    if (!editName.trim() || editName === svc.phaseName) {
       setIsEditingName(false);
       return;
     }
     try {
-      await API.updateService(svc.id, { serviceName: editName });
+      await API.updatePhase(svc.id, { phaseName: editName });
       setIsEditingName(false);
       refresh();
     } catch (e) {
@@ -48,7 +48,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
 
   const handleColorChange = async (newColor: string) => {
     try {
-      await API.updateService(svc.id, { color: newColor });
+      await API.updatePhase(svc.id, { color: newColor });
       setShowColorPicker(false);
       refresh();
     } catch (e) {
@@ -99,7 +99,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
           />
         ) : (
           <h4 onClick={() => setIsEditingName(true)} title="클릭해서 이름 수정">
-            {svc.serviceName}
+            {svc.phaseName}
           </h4>
         )}
       </div>

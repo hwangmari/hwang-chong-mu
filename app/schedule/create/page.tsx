@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
-import { createBoard } from "@/services/schedule"; // 👈 변경
+import { createService } from "@/services/schedule";
 
 export default function CreateSchedulePage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function CreateSchedulePage() {
 
     setIsSubmitting(true);
     try {
-      const newBoard = await createBoard(formData.title, formData.description);
+      const newBoard = await createService(formData.title, formData.description);
       router.push(`/schedule/${newBoard.id}`);
     } catch (error) {
       console.error(error);

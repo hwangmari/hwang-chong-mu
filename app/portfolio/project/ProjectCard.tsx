@@ -97,8 +97,8 @@ export default function ProjectCard({
 
 const StCardContainer = styled.article`
   background-color: ${({ theme }) => theme.colors.white};
-  padding: 2.5rem;
-  border-radius: 1.5rem;
+  padding: 1.75rem;
+  border-radius: 1.25rem;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -108,7 +108,7 @@ const StCardContainer = styled.article`
   scroll-margin-top: 9rem;
 
   @media (max-width: 768px) {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 `;
 
@@ -116,13 +116,13 @@ const StHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
 
   .title-area {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
 
     .period {
       font-size: 13px;
@@ -157,25 +157,25 @@ const StServiceLink = styled(Link)`
 `;
 
 const StDescriptionBody = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   max-width: 72ch;
-  line-height: 1.75;
+  line-height: 1.7;
 `;
 
 const StDetailGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
+  gap: 0.5rem;
 `;
 
 const StDetailsBox = styled.div`
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 `;
 
 const StDetailRow = styled.div`

@@ -6,16 +6,18 @@ import {
 } from "date-fns";
 import styled from "styled-components";
 import { useState } from "react";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import MonthGrid from "./Calendar/MonthGrid";
 import CalendarHeader from "./Calendar/CalendarHeader";
 
 interface Props {
   currentDate: Date;
-  schedules: ServiceSchedule[];
+  schedules: SchedulePhase[];
   showWeekend: boolean;
   onMonthChange: (date: Date) => void;
   onTaskMove: (serviceId: string, taskId: string, dayDiff: number) => void;
+  onDayClick?: (day: Date) => void;
+  onDayPreview?: (day: Date) => void;
 }
 
 export default function LeftCalendar({
@@ -24,6 +26,8 @@ export default function LeftCalendar({
   showWeekend,
   onMonthChange,
   onTaskMove,
+  onDayClick,
+  onDayPreview,
 }: Props) {
   const [viewMode, setViewMode] = useState<"single" | "double">("single");
 
@@ -31,6 +35,7 @@ export default function LeftCalendar({
 
   const handlePrevMonth = () => onMonthChange(subMonths(currentDate, 1));
   const handleNextMonth = () => onMonthChange(addMonths(currentDate, 1));
+  const handleToday = () => onMonthChange(new Date());
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -72,6 +77,7 @@ export default function LeftCalendar({
         viewMode={viewMode}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
+        onToday={handleToday}
         onChangeViewMode={setViewMode}
       />
 
@@ -84,6 +90,8 @@ export default function LeftCalendar({
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
+          onDayClick={onDayClick}
+          onDayPreview={onDayPreview}
         />
 
         {/* 두 번째 달: visibleSchedules 전달 */}
@@ -106,6 +114,7 @@ export default function LeftCalendar({
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              onDayClick={onDayClick}
             />
           </div>
         )}

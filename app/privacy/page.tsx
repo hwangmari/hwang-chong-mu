@@ -47,7 +47,7 @@ const PRIVACY_SECTIONS = [
   {
     title: "8. 개인정보처리방침 변경",
     content:
-      "이 개인정보처리방침은 2025년 3월 1일부터 적용됩니다. 법령이나 서비스 변경에 따라 내용이 추가, 삭제 또는 수정될 수 있으며, 변경 시 사이트를 통해 공지합니다.",
+      "이 개인정보처리방침은 2026년 4월 9일부터 적용됩니다. 법령이나 서비스 변경에 따라 내용이 추가, 삭제 또는 수정될 수 있으며, 변경 시 사이트를 통해 공지합니다.",
   },
 ];
 
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
         />
 
         <StSection>
-          <StLastUpdated>최종 수정일: 2025년 3월 1일</StLastUpdated>
+          <StLastUpdated>최종 수정일: 2026년 4월 9일</StLastUpdated>
 
           {PRIVACY_SECTIONS.map((section) => (
             <StPrivacyBlock key={section.title}>

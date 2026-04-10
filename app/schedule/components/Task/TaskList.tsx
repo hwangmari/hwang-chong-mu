@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import {
   StScrollArea,
   StAddServiceBlock,
@@ -11,7 +11,7 @@ import {
 import TaskCardItem from "./TaskCardItem";
 
 interface TaskListProps {
-  schedules: ServiceSchedule[];
+  schedules: SchedulePhase[];
   scrollAreaRef: any;
   collapsedIds: Set<string>;
   highlightId: string | null;
@@ -73,7 +73,7 @@ export default function TaskList({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const renderTaskCard = (service: ServiceSchedule) => {
+  const renderTaskCard = (service: SchedulePhase) => {
     const isHidden = hiddenIds.has(service.id) || !!service.isHidden;
     return (
     <TaskCardItem
@@ -120,12 +120,12 @@ export default function TaskList({
             {isCompletedOpen ? (
               <span className="toggle-label">
                 <ExpandLessIcon fontSize="inherit" />
-                완료 프로젝트 접기
+                완료 단계 접기
               </span>
             ) : (
               <span className="toggle-label">
                 <ExpandMoreIcon fontSize="inherit" />
-                완료 프로젝트 더 보기 ({allCompletedSchedules.length})
+                완료 단계 더 보기 ({allCompletedSchedules.length})
               </span>
             )}
           </button>
@@ -141,7 +141,7 @@ export default function TaskList({
       {isEditing && (
         <StAddServiceBlock onClick={onAddService}>
           <span className="plus-icon">+</span>
-          <span>새 프로젝트 카드 추가하기</span>
+          <span>새 단계 카드 추가하기</span>
         </StAddServiceBlock>
       )}
     </StScrollArea>

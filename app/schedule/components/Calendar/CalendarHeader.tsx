@@ -8,6 +8,7 @@ interface CalendarHeaderProps {
   viewMode: "single" | "double";
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  onToday: () => void;
   onChangeViewMode: (mode: "single" | "double") => void;
 }
 
@@ -16,6 +17,7 @@ export default function CalendarHeader({
   viewMode,
   onPrevMonth,
   onNextMonth,
+  onToday,
   onChangeViewMode,
 }: CalendarHeaderProps) {
   return (
@@ -32,6 +34,7 @@ export default function CalendarHeader({
         <button className="nav-btn" onClick={onNextMonth}>
           <ChevronRightIcon fontSize="small" />
         </button>
+        <StTodayButton onClick={onToday}>오늘</StTodayButton>
       </div>
 
       <StViewToggle>
@@ -85,6 +88,24 @@ const StHeaderContainer = styled.div`
         color: #111827;
       }
     }
+  }
+`;
+
+const StTodayButton = styled.button`
+  margin-left: 8px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    color: #111827;
   }
 `;
 

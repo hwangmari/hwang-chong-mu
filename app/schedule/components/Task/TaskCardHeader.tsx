@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components"; // 스타일 보강을 위해 추가
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 import EyeIcon from "./EyeIcon";
 import ColorPicker from "./ColorPicker";
 import { StCardHeader, StColorTrigger } from "./TaskList.styles";
 
 interface TaskCardHeaderProps {
-  service: ServiceSchedule;
+  service: SchedulePhase;
   isCollapsed: boolean;
   isHidden: boolean;
   isEditing: boolean;
@@ -72,10 +72,10 @@ export default function TaskCardHeader({
           {isEditing ? (
             <TitleInput
               type="text"
-              value={service.serviceName}
+              value={service.phaseName}
               onChange={(e) => onServiceNameChange(e.target.value)}
               onBlur={(e) => onServiceNameBlur(e.target.value)}
-              placeholder="프로젝트명"
+              placeholder="단계명"
               autoFocus
             />
           ) : (
@@ -83,8 +83,13 @@ export default function TaskCardHeader({
               $isCompleted={!!service.isCompleted}
               onClick={onToggleCollapse}
             >
-              {service.serviceName}
+              {service.phaseName}
             </TitleText>
+          )}
+          {service.memberName && (
+            <MemberBadge $color={service.memberColor || service.color}>
+              {service.memberName}
+            </MemberBadge>
           )}
         </div>
 
@@ -280,6 +285,17 @@ const ActionGroup = styled.div`
   background-color: rgba(0, 0, 0, 0.03);
   padding: 2px;
   border-radius: 8px;
+`;
+
+const MemberBadge = styled.span<{ $color: string }>`
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: ${(props) => props.$color};
+  background: ${(props) => props.$color}15;
+  border: 1px solid ${(props) => props.$color}30;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  white-space: nowrap;
 `;
 
 const ColorPickerWrapper = styled.div`

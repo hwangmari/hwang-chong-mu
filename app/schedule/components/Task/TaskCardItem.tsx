@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ServiceSchedule, TaskPhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import {
   StCard,
   StCardBody,
@@ -12,7 +12,7 @@ import TaskCardItemRow from "./TaskCardItemRow";
 import TaskCardHeader from "./TaskCardHeader"; // ✨ 추가
 
 interface Props {
-  service: ServiceSchedule;
+  service: SchedulePhase;
   isCollapsed: boolean;
   isHighlighted: boolean;
   isHidden: boolean;

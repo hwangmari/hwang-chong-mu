@@ -1,6 +1,7 @@
 import styled from "styled-components";
 interface BadgeProps {
   $isAi?: boolean;
+  $isClaude?: boolean;
 }
 
 export const StUiKitBanner = styled.a`
@@ -195,6 +196,16 @@ export const StCoreBadge = styled.span<BadgeProps>`
     border: 1px solid transparent;
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(118, 75, 162, 0.3);
+  `}
+
+  ${({ $isClaude }) =>
+    $isClaude &&
+    `
+    background: linear-gradient(135deg, #E8845A 0%, #D97757 40%, #B85C3A 100%);
+    color: white;
+    border: 1px solid transparent;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(217, 119, 87, 0.4), 0 0 0 1px rgba(232, 132, 90, 0.2);
   `}
 `;
 export const StProjectList = styled.div`

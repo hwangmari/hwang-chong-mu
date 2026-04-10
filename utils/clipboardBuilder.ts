@@ -1,18 +1,18 @@
 import { format } from "date-fns";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 
 export const buildScheduleText = (
-  schedules: ServiceSchedule[],
+  phases: SchedulePhase[],
   hiddenIds: Set<string>,
   currentYear: number,
 ): string => {
   let text = "";
 
-  const sortedSchedules = schedules
-    .filter((svc) => !hiddenIds.has(svc.id) && !svc.isCompleted)
-    .map((svc) => ({
-      ...svc,
-      tasks: [...svc.tasks].sort(
+  const sortedPhases = phases
+    .filter((phase) => !hiddenIds.has(phase.id) && !phase.isCompleted)
+    .map((phase) => ({
+      ...phase,
+      tasks: [...phase.tasks].sort(
         (a, b) => a.startDate.getTime() - b.startDate.getTime(),
       ),
     }))
@@ -22,12 +22,12 @@ export const buildScheduleText = (
       return startA - startB;
     });
 
-  sortedSchedules.forEach((svc) => {
-    if (svc.tasks.length === 0) return;
+  sortedPhases.forEach((phase) => {
+    if (phase.tasks.length === 0) return;
 
-    text += `[${svc.serviceName}]\n`;
+    text += `[${phase.phaseName}]\n`;
 
-    svc.tasks.forEach((t) => {
+    phase.tasks.forEach((t) => {
       const sYear = t.startDate.getFullYear();
       const eYear = t.endDate.getFullYear();
 

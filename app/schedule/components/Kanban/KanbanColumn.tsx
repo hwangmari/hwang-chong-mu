@@ -2,13 +2,13 @@
 
 import React from "react";
 import styled from "styled-components";
-import { ServiceSchedule } from "@/types/work-schedule";
+import { SchedulePhase } from "@/types/work-schedule";
 import KanbanCard from "./KanbanCard";
 
 interface KanbanColumnProps {
   title: string;
   count: number;
-  items: ServiceSchedule[];
+  items: SchedulePhase[];
   boardId: string;
   refresh: () => void;
   color: string;

@@ -17,6 +17,7 @@ import {
 import ProjectList from "./ProjectList";
 
 const CORE_STACK = [
+  "Claude Code",
   "Gemini",
   "OpenAI Codex",
   "Next.js 14",
@@ -58,6 +59,7 @@ export default function ProjectSection() {
                   $isAi={
                     tech.includes("Gemini") || tech.includes("OpenAI Codex")
                   }
+                  $isClaude={tech.includes("Claude")}
                 >
                   {tech}
                 </StCoreBadge>
