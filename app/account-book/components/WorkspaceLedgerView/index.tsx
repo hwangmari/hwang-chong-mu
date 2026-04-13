@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addMonths,
@@ -12,218 +12,46 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import styled from "styled-components";
 import {
-  AccountEntry,
-  EntryType,
   PaymentType,
   ResolvedAccountEntry,
   ViewMode,
 } from "../../types";
-import type {
-  ExtractedImageEntryCandidate,
-  WorkspaceLedgerViewProps,
-} from "./types";
+import type { WorkspaceLedgerViewProps } from "./types";
 import EntryFormModal from "../EntryFormModal";
 import WorkspaceHeader from "../WorkspaceHeader";
 import NaturalInputSection from "./NaturalInputSection";
+import ShareConfirmDialog from "./ShareConfirmDialog";
 import ViewModeTabs from "./ViewModeTabs";
 import WorkspacePanelsSection from "./WorkspacePanelsSection";
+import { StContentWrap, StPage } from "./WorkspaceLedgerView.styles";
+import {
+  DEFAULT_ANNUAL_SAVING_GOAL,
+  DEFAULT_HIDDEN_CALENDAR_AMOUNT_CARD_IDS,
+  FIXED_EXPENSE_CATEGORIES,
+  extractFixedExpenseTemplateId,
+} from "./fixedExpense";
+import { compareResolvedEntriesDesc } from "./helpers";
+import { useEntryForm } from "./useEntryForm";
+import { useFixedExpenseTemplates } from "./useFixedExpenseTemplates";
+import { useListMemo } from "./useListMemo";
+import { useRegisterModal } from "./useRegisterModal";
 import {
   ALL_PARTICIPANTS_ID,
-  CATEGORY_OPTIONS,
   INCOME_CATEGORY_LABEL,
-  INCOME_CATEGORY_OPTIONS,
   MEMBER_FALLBACK,
-  createEntryId,
-  extractImageCandidatesFromText,
   formatAmount,
   formatPreviewDate,
   formatSelectedDateTitle,
   getAccountEntryDuplicateKey,
-  getCardCompanyOptions,
-  getCategoryDetailOptions,
-  getDefaultCardCompany,
-  getRepresentativeCategory,
   getRepresentativeExpenseCategory,
-  inferCardCompanyFromText,
-  inferCategoryFromItemText,
-  inferSubCategoryFromText,
   isCardSettlementEntry,
   isFixedExpenseCategory,
   isSavingsCategory,
-  normalizeExpenseCategorySelection,
-  parseAmountValue,
   parseIsoDate,
-  parseNaturalInputEntry,
-  parseQuickDate,
   paymentLabel,
   toIsoDate,
-  toPaymentValue,
 } from "./utils";
-
-const FIXED_EXPENSE_CATEGORIES = ["고정비"] as const;
-const DEFAULT_ANNUAL_SAVING_GOAL = 1_200_000;
-const FIXED_EXPENSE_STORAGE_PREFIX = "hwang-account-book-fixed-expense";
-const DEFAULT_HIDDEN_CALENDAR_AMOUNT_CARD_IDS = [
-  "income",
-  "cash_balance",
-  "asset",
-] as const;
-
-type FixedExpenseTemplate = {
-  id: string;
-  workspaceId: string;
-  createdByUserId: string;
-  member: string;
-  merchant: string;
-  item: string;
-  amount: number;
-  payment: PaymentType;
-  cardCompany: string;
-  memo: string;
-  subCategory: string;
-  dayOfMonth: number;
-  startDate: string;
-};
-
-function getListMemoStorageKey(workspaceId: string, monthKey: string) {
-  return `hwang-account-book-list-memo-${workspaceId}-${monthKey}`;
-}
-
-function getFixedExpenseStorageKey(workspaceId: string) {
-  return `${FIXED_EXPENSE_STORAGE_PREFIX}-${workspaceId}`;
-}
-
-function createFixedExpenseTemplateId() {
-  return `fixed-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function extractFixedExpenseTemplateId(rawText?: string) {
-  const match = rawText?.match(/#fixed-template:([a-z0-9-]+)/i);
-  return match?.[1] || null;
-}
-
-function stripFixedExpenseMeta(rawText?: string) {
-  return (rawText || "")
-    .replace(/\s*#fixed-template:[a-z0-9-]+\s*/gi, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function attachFixedExpenseMeta(rawText: string, templateId: string) {
-  const baseText = stripFixedExpenseMeta(rawText);
-  return [baseText, `#fixed-template:${templateId}`].filter(Boolean).join("\n");
-}
-
-function resolveEntryItemLabel(params: {
-  type: EntryType;
-  category: string;
-  subCategory: string;
-  merchant: string;
-  item: string;
-  memo: string;
-}) {
-  return (
-    params.item.trim() ||
-    params.merchant.trim() ||
-    params.memo.trim() ||
-    params.subCategory.trim() ||
-    params.category.trim() ||
-    (params.type === "income" ? "수입" : "지출")
-  );
-}
-
-function readFixedExpenseTemplates(
-  workspaceId: string,
-): FixedExpenseTemplate[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(
-      getFixedExpenseStorageKey(workspaceId),
-    );
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as FixedExpenseTemplate[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeFixedExpenseTemplates(
-  workspaceId: string,
-  templates: FixedExpenseTemplate[],
-) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    getFixedExpenseStorageKey(workspaceId),
-    JSON.stringify(templates),
-  );
-}
-
-function buildFixedExpenseTemplate(
-  entry: AccountEntry,
-  templateId: string,
-): FixedExpenseTemplate {
-  const parsedDate = parseIsoDate(entry.date) || new Date();
-  return {
-    id: templateId,
-    workspaceId: entry.workspaceId,
-    createdByUserId: entry.createdByUserId,
-    member: entry.member || "",
-    merchant: entry.merchant || "",
-    item: entry.item,
-    amount: entry.amount,
-    payment: entry.payment,
-    cardCompany: entry.cardCompany,
-    memo: entry.memo,
-    subCategory: entry.subCategory || "",
-    dayOfMonth: parsedDate.getDate(),
-    startDate: entry.date,
-  };
-}
-
-function buildFixedExpenseEntry(
-  template: FixedExpenseTemplate,
-  year: number,
-  monthIndex: number,
-): AccountEntry {
-  const monthStart = new Date(year, monthIndex, 1);
-  const maxDay = endOfMonth(monthStart).getDate();
-  const date = new Date(
-    year,
-    monthIndex,
-    Math.min(template.dayOfMonth, maxDay),
-  );
-
-  return {
-    id: createEntryId(),
-    date: toIsoDate(date),
-    member: template.member,
-    workspaceId: template.workspaceId,
-    createdByUserId: template.createdByUserId,
-    type: "expense",
-    category: "고정비",
-    subCategory: template.subCategory,
-    merchant: template.merchant,
-    item: template.item,
-    amount: template.amount,
-    cardCompany: template.payment === "cash" ? "" : template.cardCompany,
-    payment: template.payment,
-    memo: template.memo,
-    rawText: attachFixedExpenseMeta("", template.id),
-  };
-}
-
-function compareResolvedEntriesDesc(
-  a: ResolvedAccountEntry,
-  b: ResolvedAccountEntry,
-) {
-  return `${b.date}-${String(b.amount).padStart(12, "0")}-${b.id}`.localeCompare(
-    `${a.date}-${String(a.amount).padStart(12, "0")}-${a.id}`,
-  );
-}
 
 export default function WorkspaceLedgerView({
   workspace,
@@ -247,15 +75,9 @@ export default function WorkspaceLedgerView({
     startOfMonth(parseIsoDate(initialDate) || new Date()),
   );
   const [selectedDate, setSelectedDate] = useState(initialDate);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [registerMode, setRegisterMode] = useState<"natural" | "image">(
-    "natural",
-  );
   const [selectedCalendarCardId, setSelectedCalendarCardId] = useState<
     string | null
   >(null);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [selectedLedgerCardId, setSelectedLedgerCardId] = useState<
     string | null
@@ -273,13 +95,6 @@ export default function WorkspaceLedgerView({
   const [annualSavingGoal, setAnnualSavingGoal] = useState(
     DEFAULT_ANNUAL_SAVING_GOAL,
   );
-  const [listMemo, setListMemo] = useState("");
-  const [listMemoDraft, setListMemoDraft] = useState("");
-  const [isListMemoEditing, setIsListMemoEditing] = useState(true);
-  const [fixedExpenseTemplates, setFixedExpenseTemplates] = useState<
-    FixedExpenseTemplate[]
-  >([]);
-  const fixedExpenseSyncRef = useRef<Set<string>>(new Set());
 
   const memberUsers = useMemo(
     () => users.filter((user) => workspace.memberIds.includes(user.id)),
@@ -292,30 +107,11 @@ export default function WorkspaceLedgerView({
       ? ALL_PARTICIPANTS_ID
       : memberUsers[0]?.id || ALL_PARTICIPANTS_ID,
   );
-  const [type, setType] = useState<EntryType>("expense");
-  const [member, setMember] = useState(defaultMember);
-  const [category, setCategory] = useState("생활비");
-  const [subCategory, setSubCategory] = useState("");
-  const [merchant, setMerchant] = useState("");
-  const [item, setItem] = useState("");
-  const [amount, setAmount] = useState("");
-  const [payment, setPayment] = useState<PaymentType>("card");
-  const [cardCompany, setCardCompany] = useState(getDefaultCardCompany("card"));
-  const [memo, setMemo] = useState("");
-  const [quickInput, setQuickInput] = useState("");
-  const [naturalInput, setNaturalInput] = useState("");
-  const [draftRawText, setDraftRawText] = useState("");
-  const [ocrFileName, setOcrFileName] = useState("");
-  const [ocrErrorMessage, setOcrErrorMessage] = useState("");
-  const [isExtractingImage, setIsExtractingImage] = useState(false);
   const [shareConfirmState, setShareConfirmState] = useState<{
     entryId: string;
     targetWorkspaceId: string;
     targetWorkspaceName: string;
   } | null>(null);
-  const [extractedImageEntries, setExtractedImageEntries] = useState<
-    ExtractedImageEntryCandidate[]
-  >([]);
 
   const monthLabel = format(currentMonth, "M월", { locale: ko });
   const monthValue = format(currentMonth, "yyyy-MM");
@@ -326,6 +122,27 @@ export default function WorkspaceLedgerView({
         ?.memo || "",
     [currentMonthKey, monthlyMemos],
   );
+  const {
+    listMemoDraft,
+    isListMemoEditing,
+    setListMemoDraft,
+    saveListMemo,
+    startListMemoEdit,
+  } = useListMemo({
+    workspaceId: workspace.id,
+    currentMonthKey,
+    serverMonthlyMemo,
+    onSaveMonthlyMemo,
+  });
+  const {
+    upsertTemplate: upsertFixedExpenseTemplate,
+    removeTemplate: removeFixedExpenseTemplate,
+  } = useFixedExpenseTemplates({
+    workspaceId: workspace.id,
+    entries,
+    currentMonth,
+    onSaveEntry,
+  });
   const monthRangeLabel = `${format(currentMonth, "M.1", { locale: ko })} - ${format(endOfMonth(currentMonth), "M.d", { locale: ko })}`;
   const selectedYear = format(currentMonth, "yyyy");
   const currentYear = currentMonth.getFullYear();
@@ -382,6 +199,36 @@ export default function WorkspaceLedgerView({
       }),
     [currentUserId, entries, workspace.type],
   );
+
+  const entryForm = useEntryForm({
+    workspace,
+    users,
+    memberUsers,
+    defaultMember,
+    selectedParticipant,
+    selectedDate,
+    setSelectedDate,
+    entriesWithPermissions,
+    onSaveEntry,
+    upsertFixedExpenseTemplate,
+    removeFixedExpenseTemplate,
+  });
+  const registerModal = useRegisterModal({
+    workspace,
+    users,
+    memberUsers,
+    defaultMember,
+    selectedParticipant,
+    selectedDate,
+    setSelectedDate,
+    setCurrentMonth,
+    setSelectedCalendarCardId,
+    onSaveEntry,
+  });
+  const openManualEntryModal = () => {
+    registerModal.closeRegisterModal();
+    entryForm.openFormModal({ date: selectedDate });
+  };
 
   const visibleEntries = useMemo(() => {
     if (!isSharedWorkspace || selectedParticipantId === ALL_PARTICIPANTS_ID) {
@@ -590,24 +437,6 @@ export default function WorkspaceLedgerView({
   }, [workspace.annualSavingGoal, workspace.id]);
 
   useEffect(() => {
-    const storedMemo =
-      typeof window === "undefined"
-        ? ""
-        : window.localStorage.getItem(
-            getListMemoStorageKey(workspace.id, currentMonthKey),
-          ) || "";
-    const nextMemo = serverMonthlyMemo || storedMemo || "";
-    setListMemo(nextMemo);
-    setListMemoDraft(nextMemo);
-    setIsListMemoEditing(nextMemo.length === 0);
-  }, [currentMonthKey, serverMonthlyMemo, workspace.id]);
-
-  useEffect(() => {
-    setFixedExpenseTemplates(readFixedExpenseTemplates(workspace.id));
-    fixedExpenseSyncRef.current.clear();
-  }, [workspace.id]);
-
-  useEffect(() => {
     setViewMode(initialViewMode);
   }, [initialViewMode, workspace.id]);
 
@@ -627,64 +456,6 @@ export default function WorkspaceLedgerView({
       setSelectedExpenseMemberName(null);
     }
   }, [memberExpenseTotals, selectedExpenseMemberName]);
-
-  useEffect(() => {
-    if (fixedExpenseTemplates.length === 0) return;
-
-    const directWorkspaceEntries = entries.filter((entry) => !entry.readonly);
-    const targetMonth = startOfMonth(currentMonth);
-    let cancelled = false;
-
-    const syncFixedExpenses = async () => {
-      const pendingEntries: AccountEntry[] = [];
-
-      for (const template of fixedExpenseTemplates) {
-        const startMonth = startOfMonth(
-          parseIsoDate(template.startDate) || targetMonth,
-        );
-
-        if (startMonth > targetMonth) {
-          continue;
-        }
-
-        let cursor = startMonth;
-        while (cursor <= targetMonth) {
-          const monthKey = format(cursor, "yyyy-MM");
-          const syncKey = `${template.id}-${monthKey}`;
-          const alreadyExists = directWorkspaceEntries.some(
-            (entry) =>
-              isFixedExpenseCategory(entry.category) &&
-              entry.date.startsWith(monthKey) &&
-              extractFixedExpenseTemplateId(entry.rawText) === template.id,
-          );
-
-          if (!alreadyExists && !fixedExpenseSyncRef.current.has(syncKey)) {
-            fixedExpenseSyncRef.current.add(syncKey);
-            pendingEntries.push(
-              buildFixedExpenseEntry(
-                template,
-                cursor.getFullYear(),
-                cursor.getMonth(),
-              ),
-            );
-          }
-
-          cursor = startOfMonth(addMonths(cursor, 1));
-        }
-      }
-
-      for (const entry of pendingEntries) {
-        if (cancelled) return;
-        await Promise.resolve(onSaveEntry(entry));
-      }
-    };
-
-    void syncFixedExpenses();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentMonth, entries, fixedExpenseTemplates, onSaveEntry]);
 
   const selectedDateEntries = useMemo(() => {
     return visibleEntries
@@ -1020,30 +791,6 @@ export default function WorkspaceLedgerView({
       ? `${monthLabel} ${selectedLedgerColumn.title} 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`
       : `${monthLabel} 전체 내역${selectedExpenseMemberName ? ` · ${selectedExpenseMemberName}` : ""}`;
 
-  const naturalPreview = useMemo(
-    () =>
-      parseNaturalInputEntry(naturalInput, {
-        fallbackDate: selectedDate,
-        workspaceId: workspace.id,
-        users,
-        memberUsers,
-        defaultMember,
-      }),
-    [
-      defaultMember,
-      memberUsers,
-      naturalInput,
-      selectedDate,
-      users,
-      workspace.id,
-    ],
-  );
-  const editingEntry = useMemo(
-    () =>
-      entriesWithPermissions.find((entry) => entry.id === editingEntryId) ||
-      null,
-    [editingEntryId, entriesWithPermissions],
-  );
   const existingEntryDuplicateKeys = useMemo(
     () =>
       new Set(
@@ -1053,65 +800,6 @@ export default function WorkspaceLedgerView({
       ),
     [entriesWithPermissions],
   );
-  const categoryDetailOptions = useMemo(
-    () => getCategoryDetailOptions(category),
-    [category],
-  );
-  const cardCompanyOptions = useMemo(
-    () => getCardCompanyOptions(payment),
-    [payment],
-  );
-
-  const closeFormModal = () => {
-    setIsFormModalOpen(false);
-    setEditingEntryId(null);
-    setQuickInput("");
-    setDraftRawText("");
-  };
-
-  const openFormModal = ({
-    date,
-    nextType,
-  }: {
-    date?: string;
-    nextType?: EntryType;
-  }) => {
-    if (date) setSelectedDate(date);
-    setSubCategory("");
-    if (nextType) {
-      setType(nextType);
-      setCategory(nextType === "income" ? INCOME_CATEGORY_LABEL : "생활비");
-      setSubCategory("");
-    }
-    setEditingEntryId(null);
-    setMerchant("");
-    setItem("");
-    setAmount("");
-    setMemo("");
-    setDraftRawText("");
-    setMember(selectedParticipant?.name || defaultMember);
-    setPayment(nextType === "income" ? "cash" : "card");
-    setCardCompany(getDefaultCardCompany(nextType === "income" ? "cash" : "card"));
-    setIsFormModalOpen(true);
-  };
-
-  const openEditModal = (entry: ResolvedAccountEntry) => {
-    if (entry.readonly) return;
-    setEditingEntryId(entry.id);
-    setSelectedDate(entry.date);
-    setType(entry.type);
-    setMember(entry.member || defaultMember);
-    setCategory(getRepresentativeCategory(entry.category, entry.type));
-    setSubCategory(entry.subCategory || "");
-    setMerchant(entry.merchant || "");
-    setItem(entry.item);
-    setAmount(String(entry.amount));
-    setPayment(entry.payment);
-    setCardCompany(entry.cardCompany || getDefaultCardCompany(entry.payment));
-    setMemo(entry.memo);
-    setDraftRawText(entry.rawText || "");
-    setIsFormModalOpen(true);
-  };
 
   const onMonthMove = (diff: number) => {
     const next = startOfMonth(addMonths(currentMonth, diff));
@@ -1175,455 +863,6 @@ export default function WorkspaceLedgerView({
   const onMonthlyGoalChange = async (nextGoal: number) => {
     const normalizedGoal = Math.max(0, Math.trunc(nextGoal));
     return onAnnualGoalChange(normalizedGoal * 12);
-  };
-
-  const saveListMemo = async () => {
-    const nextMemo = listMemoDraft.trim();
-    const saved = await Promise.resolve(onSaveMonthlyMemo(currentMonthKey, nextMemo));
-    if (!saved) {
-      return;
-    }
-    setListMemo(nextMemo);
-    setListMemoDraft(nextMemo);
-    setIsListMemoEditing(false);
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      getListMemoStorageKey(workspace.id, currentMonthKey),
-      nextMemo,
-    );
-  };
-
-  const startListMemoEdit = () => {
-    setListMemoDraft(listMemo);
-    setIsListMemoEditing(true);
-  };
-
-  const syncFixedExpenseTemplateState = (
-    updater: (prev: FixedExpenseTemplate[]) => FixedExpenseTemplate[],
-  ) => {
-    setFixedExpenseTemplates((prev) => {
-      const next = updater(prev);
-      writeFixedExpenseTemplates(workspace.id, next);
-      return next;
-    });
-  };
-
-  const upsertFixedExpenseTemplate = (
-    entry: AccountEntry,
-    templateId: string,
-  ) => {
-    const existingTemplate = fixedExpenseTemplates.find(
-      (template) => template.id === templateId,
-    );
-    const nextTemplate = {
-      ...buildFixedExpenseTemplate(entry, templateId),
-      startDate: existingTemplate?.startDate || entry.date,
-    };
-    syncFixedExpenseTemplateState((prev) => {
-      const rest = prev.filter((template) => template.id !== templateId);
-      return [nextTemplate, ...rest];
-    });
-  };
-
-  const removeFixedExpenseTemplate = (templateId: string | null) => {
-    if (!templateId) return;
-    syncFixedExpenseTemplateState((prev) =>
-      prev.filter((template) => template.id !== templateId),
-    );
-  };
-
-  const onSubmitEntry = async () => {
-    const parsedAmount = Number(amount);
-    if (!category.trim()) {
-      alert("카테고리를 입력해주세요.");
-      return;
-    }
-    if (!Number.isFinite(parsedAmount) || parsedAmount === 0) {
-      alert("금액은 0이 아닌 숫자로 입력해주세요.");
-      return;
-    }
-
-    const matchedUser =
-      memberUsers.find((user) => user.name === member) ||
-      memberUsers[0] ||
-      users[0];
-    const normalizedSelection =
-      type === "expense"
-        ? normalizeExpenseCategorySelection(category, subCategory)
-        : { category: category.trim(), subCategory: "" };
-    const normalizedCategory = normalizedSelection.category;
-    const normalizedSubCategory =
-      type === "expense" ? normalizedSelection.subCategory : "";
-    const resolvedPayment =
-      type === "expense" && normalizedCategory === "카드대금" ? "cash" : payment;
-    if (type === "expense" && resolvedPayment !== "cash" && !cardCompany.trim()) {
-      alert("카드 결제 내역은 카드사를 선택해주세요.");
-      return;
-    }
-    const isFixedExpense =
-      type === "expense" && normalizedCategory === "고정비";
-    const existingFixedTemplateId = extractFixedExpenseTemplateId(
-      editingEntry?.rawText,
-    );
-    const nextFixedTemplateId = isFixedExpense
-      ? existingFixedTemplateId || createFixedExpenseTemplateId()
-      : null;
-    const rawTextBase = draftRawText.trim() || editingEntry?.rawText || "";
-    const resolvedItem = resolveEntryItemLabel({
-      type,
-      category: normalizedCategory,
-      subCategory: normalizedSubCategory,
-      merchant,
-      item,
-      memo,
-    });
-
-    const payload: AccountEntry = {
-      id: editingEntryId || createEntryId(),
-      date: selectedDate,
-      member,
-      workspaceId: workspace.id,
-      createdByUserId: matchedUser.id,
-      type,
-      category: normalizedCategory,
-      subCategory: normalizedSubCategory,
-      merchant: merchant.trim(),
-      item: resolvedItem,
-      amount: Math.trunc(parsedAmount),
-      cardCompany:
-        type === "expense" && resolvedPayment !== "cash"
-          ? cardCompany.trim() || getDefaultCardCompany(resolvedPayment)
-          : "",
-      payment: type === "income" ? "cash" : resolvedPayment,
-      memo: memo.trim(),
-      rawText:
-        nextFixedTemplateId && type === "expense"
-          ? attachFixedExpenseMeta(rawTextBase, nextFixedTemplateId)
-          : stripFixedExpenseMeta(rawTextBase),
-    };
-
-    const saved = await Promise.resolve(onSaveEntry(payload));
-    if (!saved) {
-      return;
-    }
-    if (nextFixedTemplateId) {
-      upsertFixedExpenseTemplate(payload, nextFixedTemplateId);
-    } else if (existingFixedTemplateId) {
-      removeFixedExpenseTemplate(existingFixedTemplateId);
-    }
-    closeFormModal();
-  };
-
-  const applyQuickInput = async () => {
-    const text = quickInput.trim();
-    if (!text) {
-      alert("텍스트를 입력해주세요.");
-      return;
-    }
-
-    const defaultType: EntryType = text.includes("수입") ? "income" : "expense";
-    const defaultDate = parseQuickDate(text, selectedDate);
-    const defaultPayment =
-      defaultType === "income" ? "cash" : toPaymentValue(text) || "card";
-    const defaultCategory =
-      CATEGORY_OPTIONS.find((option) => text.includes(option.label))?.label ||
-      (defaultType === "income" ? INCOME_CATEGORY_LABEL : "생활비");
-
-    const segments = text
-      .split(/\r?\n|,(?=\s*[^\d])/)
-      .map((segment) => segment.trim())
-      .filter(Boolean);
-
-    const parsedEntries = segments
-      .map((segment) => {
-        const parsedAmount = parseAmountValue(segment);
-        if (!parsedAmount) return null;
-        const matchedMember =
-          memberUsers.find((user) => segment.includes(user.name)) ||
-          memberUsers[0];
-        const nextCategory =
-          CATEGORY_OPTIONS.find((option) => segment.includes(option.label))
-            ?.label ||
-          inferCategoryFromItemText(segment) ||
-          defaultCategory;
-        const nextPayment =
-          segment.includes("수입") || defaultType === "income"
-            ? "cash"
-            : toPaymentValue(segment) || defaultPayment;
-        const cleanedItem = segment
-          .replace(/(-?\d[\d,]*)\s*원?/g, " ")
-          .replace(/수입|지출/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-
-        return {
-          id: createEntryId(),
-          date: parseQuickDate(segment, defaultDate),
-          member: matchedMember?.name || defaultMember,
-          workspaceId: workspace.id,
-          createdByUserId:
-            matchedMember?.id || memberUsers[0]?.id || users[0].id,
-          type: segment.includes("수입") ? "income" : defaultType,
-          category: nextCategory,
-          subCategory: inferSubCategoryFromText(nextCategory, segment),
-          merchant: "",
-          item: cleanedItem || "미입력",
-          amount: parsedAmount,
-          cardCompany:
-            nextPayment === "cash"
-              ? ""
-              : inferCardCompanyFromText(segment, nextPayment) ||
-                getDefaultCardCompany(nextPayment),
-          payment: nextPayment,
-          memo: "",
-          rawText: segment,
-        } satisfies AccountEntry;
-      })
-      .filter(Boolean) as AccountEntry[];
-
-    if (parsedEntries.length === 0) {
-      alert("입력 포맷을 인식하지 못했어요. 예: 식당 30000, 택시 12000");
-      return;
-    }
-
-    for (const entry of parsedEntries) {
-      const saved = await Promise.resolve(onSaveEntry(entry));
-      if (!saved) {
-        return;
-      }
-    }
-    setQuickInput("");
-    if (parsedEntries.length === 1) {
-      const first = parsedEntries[0];
-      setSelectedDate(first.date);
-      setMember(first.member || defaultMember);
-      setType(first.type);
-      setCategory(getRepresentativeCategory(first.category, first.type));
-      setSubCategory(first.subCategory || "");
-      setMerchant(first.merchant || "");
-      setAmount(String(first.amount));
-      setItem(first.item);
-      setPayment(first.payment);
-      setCardCompany(first.cardCompany || getDefaultCardCompany(first.payment));
-      setDraftRawText(first.rawText || "");
-      return;
-    }
-    alert(`${parsedEntries.length}건을 한 번에 추가했어요.`);
-  };
-
-  const clearExtractedImageEntries = () => {
-    setOcrErrorMessage("");
-    setOcrFileName("");
-    setExtractedImageEntries([]);
-  };
-
-  const closeRegisterModal = () => {
-    setIsRegisterModalOpen(false);
-    clearExtractedImageEntries();
-  };
-
-  const openRegisterModal = (mode: "natural" | "image") => {
-    setRegisterMode(mode);
-    setIsRegisterModalOpen(true);
-  };
-
-  const openNaturalRegisterForDate = (date: string) => {
-    setSelectedCalendarCardId(null);
-    setSelectedDate(date);
-    setCurrentMonth(startOfMonth(parseIsoDate(date) || new Date()));
-    openRegisterModal("natural");
-  };
-
-  const openManualEntryModal = () => {
-    closeRegisterModal();
-    openFormModal({ date: selectedDate });
-  };
-
-  const saveExtractedImageEntries = async (
-    candidates: ExtractedImageEntryCandidate[],
-  ) => {
-    if (candidates.length === 0) {
-      alert("저장할 추출 후보가 없어요.");
-      return;
-    }
-
-    const matchedUser =
-      memberUsers.find(
-        (user) => user.name === (selectedParticipant?.name || defaultMember),
-      ) ||
-      memberUsers[0] ||
-      users[0];
-    const nextEntries = candidates.map((candidate) => {
-      const nextType: EntryType =
-        candidate.type === "income" ? "income" : "expense";
-      const supportText = [
-        candidate.category,
-        candidate.item,
-        candidate.merchant,
-        candidate.memo,
-        candidate.rawText,
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const normalizedCategory =
-        CATEGORY_OPTIONS.find((option) => option.label === candidate.category)
-          ?.label ||
-        inferCategoryFromItemText(supportText) ||
-        (nextType === "income" ? INCOME_CATEGORY_LABEL : "생활비");
-      const nextPayment =
-        nextType === "income" ? "cash" : candidate.payment || "card";
-      const normalizedSelection =
-        nextType === "expense"
-          ? normalizeExpenseCategorySelection(
-              normalizedCategory,
-              candidate.subCategory,
-            )
-          : { category: normalizedCategory, subCategory: "" };
-
-      return {
-        id: createEntryId(),
-        date: parseQuickDate(candidate.date || candidate.rawText, selectedDate),
-        member: selectedParticipant?.name || defaultMember,
-        workspaceId: workspace.id,
-        createdByUserId: matchedUser.id,
-        type: nextType,
-        category: normalizedSelection.category,
-        subCategory:
-          normalizedSelection.subCategory ||
-          inferSubCategoryFromText(normalizedSelection.category, supportText),
-        merchant: candidate.merchant.trim(),
-        item: (candidate.item || candidate.merchant || "미입력").trim(),
-        amount: Math.max(0, Math.trunc(candidate.amount)),
-        cardCompany:
-          nextPayment === "cash"
-            ? ""
-            : inferCardCompanyFromText(supportText, nextPayment) ||
-              getDefaultCardCompany(nextPayment),
-        payment: nextPayment,
-        memo: candidate.memo.trim(),
-        rawText: candidate.rawText.trim(),
-      } satisfies AccountEntry;
-    });
-
-    const validEntries = nextEntries.filter((entry) => entry.amount > 0);
-    if (validEntries.length === 0) {
-      alert("금액이 인식된 후보가 없어서 저장할 수 없어요.");
-      return;
-    }
-
-    for (const entry of validEntries) {
-      const saved = await Promise.resolve(onSaveEntry(entry));
-      if (!saved) {
-        return;
-      }
-    }
-    setSelectedDate(validEntries[0].date);
-    setCurrentMonth(
-      startOfMonth(parseIsoDate(validEntries[0].date) || new Date()),
-    );
-    closeRegisterModal();
-
-    alert(`${validEntries.length}건을 가계부에 저장했어요.`);
-  };
-
-  const extractEntriesFromImage = async (file: File) => {
-    setIsExtractingImage(true);
-    setOcrErrorMessage("");
-    setOcrFileName(file.name);
-    setExtractedImageEntries([]);
-
-    try {
-      const { createWorker, PSM } = await import("tesseract.js");
-      const worker = await createWorker("kor+eng");
-
-      try {
-        await worker.setParameters({
-          preserve_interword_spaces: "1",
-          tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-        });
-        const {
-          data: { text },
-        } = await worker.recognize(file);
-
-        const nextEntries = extractImageCandidatesFromText(text, {
-          fallbackDate: selectedDate,
-          workspaceId: workspace.id,
-          users,
-          memberUsers,
-          defaultMember,
-        });
-
-        if (nextEntries.length === 0) {
-          setExtractedImageEntries([]);
-          setOcrErrorMessage(
-            "이미지에서 읽을 수 있는 거래 문장을 찾지 못했어요. 더 선명한 캡처로 다시 시도해보세요.",
-          );
-          return;
-        }
-
-        setExtractedImageEntries(nextEntries);
-      } finally {
-        await worker.terminate();
-      }
-    } catch (error) {
-      setExtractedImageEntries([]);
-      setOcrErrorMessage(
-        error instanceof Error ? error.message : "무료 OCR 처리에 실패했어요.",
-      );
-    } finally {
-      setIsExtractingImage(false);
-    }
-  };
-
-  const submitNaturalInput = async () => {
-    const lines = naturalInput
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    if (lines.length === 0) {
-      alert("지출 문장을 입력해주세요.");
-      return;
-    }
-
-    const parsedEntries: AccountEntry[] = [];
-
-    for (const line of lines) {
-      const entry = parseNaturalInputEntry(line, {
-        fallbackDate: selectedDate,
-        workspaceId: workspace.id,
-        users,
-        memberUsers,
-        defaultMember,
-      });
-
-      if (!entry) {
-        alert(
-          `문장을 해석하지 못했어요: "${line}"\n예: 3월 17일 네이버쇼핑 마라샹궈 구매 119200원`,
-        );
-        return;
-      }
-
-      parsedEntries.push(entry);
-    }
-
-    for (const entry of parsedEntries) {
-      const saved = await Promise.resolve(onSaveEntry(entry));
-      if (!saved) {
-        return;
-      }
-    }
-
-    const firstEntry = parsedEntries[0];
-    const nextMonth = startOfMonth(parseIsoDate(firstEntry.date) || new Date());
-    setCurrentMonth(nextMonth);
-    setSelectedDate(firstEntry.date);
-    setNaturalInput("");
-    closeRegisterModal();
-
-    if (parsedEntries.length > 1) {
-      alert(`${parsedEntries.length}건을 기록했어요.`);
-    }
   };
 
   const entryActions = (entry: ResolvedAccountEntry) => {
@@ -1695,35 +934,35 @@ export default function WorkspaceLedgerView({
         monthLabel={monthLabel}
         monthRangeLabel={monthRangeLabel}
         monthValue={monthValue}
-        onOpenNaturalRegister={() => openRegisterModal("natural")}
-        onOpenImageRegister={() => openRegisterModal("image")}
+        onOpenNaturalRegister={() => registerModal.openRegisterModal("natural")}
+        onOpenImageRegister={() => registerModal.openRegisterModal("image")}
         onOpenManual={openManualEntryModal}
         onBack={onBack}
         onMonthMove={onMonthMove}
         onMonthSelect={onMonthSelect}
       />
       <StContentWrap>
-        {isRegisterModalOpen ? (
+        {registerModal.isRegisterModalOpen ? (
           <NaturalInputSection
-            mode={registerMode}
+            mode={registerModal.registerMode}
             currentMonth={currentMonth}
             monthEntriesCount={displayMonthEntries.length}
-            naturalInput={naturalInput}
-            naturalPreview={naturalPreview}
-            isExtractingImage={isExtractingImage}
-            ocrErrorMessage={ocrErrorMessage}
-            ocrFileName={ocrFileName}
-            extractedImageEntries={extractedImageEntries}
+            naturalInput={registerModal.naturalInput}
+            naturalPreview={registerModal.naturalPreview}
+            isExtractingImage={registerModal.isExtractingImage}
+            ocrErrorMessage={registerModal.ocrErrorMessage}
+            ocrFileName={registerModal.ocrFileName}
+            extractedImageEntries={registerModal.extractedImageEntries}
             existingEntryDuplicateKeys={existingEntryDuplicateKeys}
             formatAmount={formatAmount}
             formatPreviewDate={formatPreviewDate}
             paymentLabel={paymentLabel}
-            onCloseModal={closeRegisterModal}
-            onChangeInput={setNaturalInput}
-            onSelectImageFile={extractEntriesFromImage}
-            onSaveImageEntries={saveExtractedImageEntries}
-            onClearImageEntries={clearExtractedImageEntries}
-            onSubmit={submitNaturalInput}
+            onCloseModal={registerModal.closeRegisterModal}
+            onChangeInput={registerModal.setNaturalInput}
+            onSelectImageFile={registerModal.extractEntriesFromImage}
+            onSaveImageEntries={registerModal.saveExtractedImageEntries}
+            onClearImageEntries={registerModal.clearExtractedImageEntries}
+            onSubmit={registerModal.submitNaturalInput}
           />
         ) : null}
 
@@ -1810,8 +1049,8 @@ export default function WorkspaceLedgerView({
               : selectedDateEntries
           }
           selectedDateAssetEntries={selectedDateAssetEntries}
-          onOpenAdd={() => openFormModal({ date: selectedDate })}
-          onOpenNaturalRegisterForDate={openNaturalRegisterForDate}
+          onOpenAdd={() => entryForm.openFormModal({ date: selectedDate })}
+          onOpenNaturalRegisterForDate={registerModal.openNaturalRegisterForDate}
           onSelectCalendarCard={(cardId) =>
             setSelectedCalendarCardId((current) =>
               current === cardId ? null : cardId,
@@ -1819,7 +1058,7 @@ export default function WorkspaceLedgerView({
           }
           onEdit={(entry) => {
             setSelectedCalendarCardId(null);
-            openEditModal(entry);
+            entryForm.openEditModal(entry);
           }}
           onDelete={handleDeleteEntry}
           entryActions={entryActions}
@@ -1840,191 +1079,52 @@ export default function WorkspaceLedgerView({
       </StContentWrap>
 
       {shareConfirmState ? (
-        <StShareConfirmBackdrop onClick={() => setShareConfirmState(null)}>
-          <StShareConfirmCard onClick={(event) => event.stopPropagation()}>
-            <StShareConfirmEyebrow>Share</StShareConfirmEyebrow>
-            <StShareConfirmTitle>공유하겠습니까?</StShareConfirmTitle>
-            <StShareConfirmDescription>
-              이 내역을 {shareConfirmState.targetWorkspaceName}에 공유하면
-              공용방에서도 바로 확인할 수 있습니다.
-            </StShareConfirmDescription>
-            <StShareConfirmActions>
-              <StShareGhostButton
-                type="button"
-                onClick={() => setShareConfirmState(null)}
-              >
-                취소
-              </StShareGhostButton>
-              <StSharePrimaryButton
-                type="button"
-                onClick={async () => {
-                  const target = shareConfirmState;
-                  setShareConfirmState(null);
-                  await onToggleShare(target.entryId, target.targetWorkspaceId);
-                }}
-              >
-                공유하기
-              </StSharePrimaryButton>
-            </StShareConfirmActions>
-          </StShareConfirmCard>
-        </StShareConfirmBackdrop>
+        <ShareConfirmDialog
+          targetWorkspaceName={shareConfirmState.targetWorkspaceName}
+          onCancel={() => setShareConfirmState(null)}
+          onConfirm={async () => {
+            const target = shareConfirmState;
+            setShareConfirmState(null);
+            await onToggleShare(target.entryId, target.targetWorkspaceId);
+          }}
+        />
       ) : null}
 
       <EntryFormModal
-        isOpen={isFormModalOpen}
-        isEditing={Boolean(editingEntryId)}
+        isOpen={entryForm.isFormModalOpen}
+        isEditing={Boolean(entryForm.editingEntryId)}
         selectedDate={selectedDate}
-        member={member}
+        member={entryForm.member}
         memberOptions={memberNames.length > 0 ? memberNames : [MEMBER_FALLBACK]}
-        type={type}
-        category={category}
-        subCategory={subCategory}
-        merchant={merchant}
-        item={item}
-        amount={amount}
-        payment={payment}
-        cardCompany={cardCompany}
-        memo={memo}
-        quickInput={quickInput}
-        categoryOptions={
-          type === "income" ? INCOME_CATEGORY_OPTIONS : CATEGORY_OPTIONS
-        }
-        categoryDetailOptions={categoryDetailOptions}
-        cardCompanyOptions={cardCompanyOptions}
-        onClose={closeFormModal}
+        type={entryForm.type}
+        category={entryForm.category}
+        subCategory={entryForm.subCategory}
+        merchant={entryForm.merchant}
+        item={entryForm.item}
+        amount={entryForm.amount}
+        payment={entryForm.payment}
+        cardCompany={entryForm.cardCompany}
+        memo={entryForm.memo}
+        quickInput={entryForm.quickInput}
+        categoryOptions={entryForm.categoryOptions}
+        categoryDetailOptions={entryForm.categoryDetailOptions}
+        cardCompanyOptions={entryForm.cardCompanyOptions}
+        onClose={entryForm.closeFormModal}
         onSetDate={setSelectedDate}
-        onSetType={(nextType) => {
-          setType(nextType);
-          if (nextType === "income") setCategory(INCOME_CATEGORY_LABEL);
-          if (nextType === "expense" && category === INCOME_CATEGORY_LABEL)
-            setCategory("생활비");
-          if (nextType !== "expense") setSubCategory("");
-          if (nextType === "income") setPayment("cash");
-          if (nextType === "income") setCardCompany(getDefaultCardCompany("cash"));
-          if (nextType === "expense" && payment === "cash") {
-            setPayment("card");
-            setCardCompany(getDefaultCardCompany("card"));
-          }
-        }}
-        onSetMember={setMember}
-        onSetCategory={(nextCategory) => {
-          setCategory(nextCategory);
-          setSubCategory("");
-        }}
-        onSetSubCategory={setSubCategory}
-        onSetMerchant={setMerchant}
-        onSetItem={setItem}
-        onSetAmount={setAmount}
-        onSetPayment={(nextPayment) => {
-          setPayment(nextPayment);
-          if (nextPayment === "cash") {
-            setCardCompany(getDefaultCardCompany("cash"));
-            return;
-          }
-          if (nextPayment === "check_card") {
-            setCardCompany(getDefaultCardCompany("check_card"));
-            return;
-          }
-          const nextOptions = getCardCompanyOptions(nextPayment);
-          if (!nextOptions.includes(cardCompany)) {
-            setCardCompany(getDefaultCardCompany(nextPayment));
-          }
-        }}
-        onSetCardCompany={setCardCompany}
-        onSetMemo={setMemo}
-        onSetQuickInput={setQuickInput}
-        onApplyQuickInput={applyQuickInput}
-        onSubmit={onSubmitEntry}
+        onSetType={entryForm.handleTypeChange}
+        onSetMember={entryForm.setMember}
+        onSetCategory={entryForm.handleCategoryChange}
+        onSetSubCategory={entryForm.setSubCategory}
+        onSetMerchant={entryForm.setMerchant}
+        onSetItem={entryForm.setItem}
+        onSetAmount={entryForm.setAmount}
+        onSetPayment={entryForm.handlePaymentChange}
+        onSetCardCompany={entryForm.setCardCompany}
+        onSetMemo={entryForm.setMemo}
+        onSetQuickInput={entryForm.setQuickInput}
+        onApplyQuickInput={entryForm.applyQuickInput}
+        onSubmit={entryForm.onSubmitEntry}
       />
     </StPage>
   );
 }
-
-const StPage = styled.main`
-  overscroll-behavior: none;
-  min-height: 100vh;
-  background: #f3f6fb;
-  display: flex;
-  flex-direction: column;
-`;
-
-const StShareConfirmBackdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: grid;
-  place-items: center;
-  padding: 1.2rem;
-  background: rgba(15, 23, 42, 0.34);
-`;
-
-const StShareConfirmCard = styled.section`
-  width: min(100%, 25rem);
-  border-radius: 24px;
-  border: 1px solid #d7e1ee;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
-  padding: 1.25rem;
-`;
-
-const StShareConfirmEyebrow = styled.p`
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #6e8ab8;
-`;
-
-const StShareConfirmTitle = styled.h3`
-  margin-top: 0.35rem;
-  font-size: 1.28rem;
-  font-weight: 900;
-  color: #1f2937;
-`;
-
-const StShareConfirmDescription = styled.p`
-  margin-top: 0.55rem;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: #5f6e82;
-`;
-
-const StShareConfirmActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.7rem;
-  margin-top: 1rem;
-`;
-
-const StShareGhostButton = styled.button`
-  border: 1px solid #d7e1ee;
-  background: #f8fafc;
-  color: #5f6e82;
-  border-radius: 999px;
-  padding: 0.7rem 1rem;
-  font-size: 0.88rem;
-  font-weight: 800;
-`;
-
-const StSharePrimaryButton = styled.button`
-  border: none;
-  background: linear-gradient(135deg, #6d87ef, #5f73d9);
-  color: #ffffff;
-  border-radius: 999px;
-  padding: 0.7rem 1rem;
-  font-size: 0.88rem;
-  font-weight: 900;
-  box-shadow: 0 12px 28px rgba(95, 115, 217, 0.24);
-`;
-
-const StContentWrap = styled.div`
-  padding: 1rem;
-  display: grid;
-  grid-template-rows: auto auto auto auto;
-  gap: 0.8rem;
-
-  @media (max-width: 1080px) {
-    display: flex;
-    flex-direction: column;
-  }
-`;

@@ -1,4 +1,10 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
+
+const gradientShift = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
 interface BadgeProps {
   $isAi?: boolean;
   $isClaude?: boolean;
@@ -191,7 +197,9 @@ export const StCoreBadge = styled.span<BadgeProps>`
   ${({ $isAi }) =>
     $isAi &&
     `
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea, #764ba2, #667eea, #764ba2);
+    background-size: 300% 300%;
+    animation: ${gradientShift} 3s ease infinite;
     color: white;
     border: 1px solid transparent;
     font-weight: 700;
@@ -201,7 +209,9 @@ export const StCoreBadge = styled.span<BadgeProps>`
   ${({ $isClaude }) =>
     $isClaude &&
     `
-    background: linear-gradient(135deg, #E8845A 0%, #D97757 40%, #B85C3A 100%);
+    background: linear-gradient(135deg, #E8845A, #D97757, #B85C3A, #E8845A);
+    background-size: 300% 300%;
+    animation: ${gradientShift} 3s ease infinite;
     color: white;
     border: 1px solid transparent;
     font-weight: 700;

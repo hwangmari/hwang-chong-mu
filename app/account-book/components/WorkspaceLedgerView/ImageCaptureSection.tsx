@@ -484,14 +484,13 @@ const StCaptureActions = styled.div`
 
 const StPrimaryButton = styled.button`
   border: 1px solid #4e67d0;
-  border-radius: 1.6rem;
+  border-radius: 999px;
   background: #5f73d9;
   color: #fff;
-  font-size: 0.95rem;
-  font-weight: 900;
-  min-width: 10rem;
-  min-height: 4rem;
-  padding: 0.95rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  min-height: 2.6rem;
+  padding: 0.55rem 1.1rem;
   box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
 
   &:disabled {
@@ -500,27 +499,26 @@ const StPrimaryButton = styled.button`
   }
 
   @media (max-width: 720px) {
-    min-height: 3.2rem;
-    border-radius: 1.2rem;
-    font-size: 0.9rem;
+    min-height: 2.5rem;
+    font-size: 0.86rem;
+    padding: 0.5rem 1rem;
   }
 `;
 
 const StSecondaryButton = styled.button`
   border: 1px solid #cedbeb;
-  border-radius: 1.6rem;
+  border-radius: 999px;
   background: #ffffff;
   color: #506683;
-  font-size: 0.95rem;
-  font-weight: 900;
-  min-width: 9rem;
-  min-height: 4rem;
-  padding: 0.95rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  min-height: 2.6rem;
+  padding: 0.55rem 1.1rem;
 
   @media (max-width: 720px) {
-    min-height: 3.2rem;
-    border-radius: 1.2rem;
-    font-size: 0.9rem;
+    min-height: 2.5rem;
+    font-size: 0.86rem;
+    padding: 0.5rem 1rem;
   }
 `;
 

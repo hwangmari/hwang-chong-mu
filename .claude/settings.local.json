@@ -6,7 +6,8 @@
       "Bash(export PATH=\"/usr/local/bin:$PATH\")",
       "Bash(/bin/mkdir:*)",
       "Bash(npx next:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(wc -l app/account-book/components/WorkspaceLedgerView/index.tsx app/account-book/components/WorkspaceLedgerView/*.ts app/account-book/components/WorkspaceLedgerView/*.tsx)"
     ]
   }
 }
