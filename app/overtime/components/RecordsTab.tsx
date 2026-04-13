@@ -7,61 +7,15 @@ import {
   StorageMode,
 } from "@/app/overtime/types";
 import {
-  AccordionHeader,
-  AccordionHint,
-  AccordionSection,
-  AccordionToggleButton,
-  CalendarCellButton,
-  CalendarDayNumber,
-  CalendarDaySummary,
-  CalendarGrid,
-  CalendarMonthLabel,
-  CalendarNavButton,
-  CalendarPlaceholder,
-  CalendarToolbar,
-  CalendarToolbarMain,
-  CompactInput,
   DangerButton,
-  DeleteButton,
-  DurationCard,
-  DurationInputs,
-  EditButton,
-  EditCancelButton,
-  EmptyItem,
-  FieldLabel,
-  PrimaryButton,
-  QuickAddCard,
-  QuickAddHeader,
-  QuickAddTitle,
-  RecordActions,
-  RecordInfo,
-  RecordItem,
-  RecordList,
-  ResultBox,
   SectionDivider,
-  SectionHeader,
-  SectionTitle,
-  SelectedDatePanel,
-  SplitGrid,
-  StatCard,
-  StatsRow,
   TabPanel,
-  TodayButton,
-  UnitText,
-  WeekdayCell,
-  WeekdayRow,
-  WeekendToggleButton,
-  MutedPrefix,
 } from "@/app/overtime/components/styles";
-import {
-  formatCompactDuration,
-  formatDayValue,
-  formatDisplayDate,
-  formatMonthLabel,
-  formatRawDuration,
-} from "@/app/overtime/utils";
+import MonthlyRecordsAccordion from "@/app/overtime/components/MonthlyRecordsAccordion";
+import MonthlySummaryStats from "@/app/overtime/components/MonthlySummaryStats";
+import OvertimeCalendar from "@/app/overtime/components/OvertimeCalendar";
+import SelectedDayPanel from "@/app/overtime/components/SelectedDayPanel";
 import StorageModeCard from "@/app/overtime/components/StorageModeCard";
-import TargetGuideCard from "@/app/overtime/components/TargetGuideCard";
 
 interface RecordsTabProps {
   currentMonth: Date;
@@ -170,287 +124,68 @@ export default function RecordsTab({
 }: RecordsTabProps) {
   return (
     <TabPanel>
-      <StatsRow>
-        <StatCard>
-          <span>{formatMonthLabel(currentMonth)} 기록</span>
-          <strong>{monthlyRecordCount}건</strong>
-        </StatCard>
-        <StatCard>
-          <span>누적 야근시간</span>
-          <strong>{formatRawDuration(recordSummary.totalRawMinutes)}</strong>
-        </StatCard>
-        <StatCard>
-          <span>사용 가능 일수</span>
-          <strong>{formatDayValue(recordSummary.usableDays)}</strong>
-        </StatCard>
-      </StatsRow>
-
-      {recordSummary.totalRawMinutes > 0 && (
-        <TargetGuideCard
-          targetDays={targetUsableDays}
-          before10Minutes={targetDayGuide.before10Minutes}
-          after10Minutes={targetDayGuide.after10Minutes}
-          isReached={targetDayGuide.isReached}
-          onChangeTargetDays={onChangeTargetUsableDays}
-        />
-      )}
-
-      <ResultBox>{recordResult}</ResultBox>
+      <MonthlySummaryStats
+        currentMonth={currentMonth}
+        monthlyRecordCount={monthlyRecordCount}
+        recordSummary={recordSummary}
+        recordResult={recordResult}
+        targetUsableDays={targetUsableDays}
+        targetDayGuide={targetDayGuide}
+        onChangeTargetUsableDays={onChangeTargetUsableDays}
+      />
 
       <SectionDivider />
 
-      <SectionHeader>
-        <SectionTitle>야근 기록 캘린더</SectionTitle>
-        <CalendarToolbar>
-          <CalendarToolbarMain>
-            <CalendarNavButton type="button" onClick={() => onMoveMonth(-1)}>
-              이전
-            </CalendarNavButton>
-            <CalendarMonthLabel>{formatMonthLabel(currentMonth)}</CalendarMonthLabel>
-            <CalendarNavButton type="button" onClick={() => onMoveMonth(1)}>
-              다음
-            </CalendarNavButton>
-            <TodayButton type="button" onClick={onGoToday}>
-              오늘
-            </TodayButton>
-          </CalendarToolbarMain>
-          <WeekendToggleButton
-            type="button"
-            $isActive={showWeekends}
-            onClick={onToggleWeekends}
-          >
-            주말 {showWeekends ? "ON" : "OFF"}
-          </WeekendToggleButton>
-        </CalendarToolbar>
-      </SectionHeader>
+      <OvertimeCalendar
+        currentMonth={currentMonth}
+        visibleWeekdays={visibleWeekdays}
+        calendarWeeks={calendarWeeks}
+        recordsByDate={recordsByDate}
+        showWeekends={showWeekends}
+        selectedDate={selectedDate}
+        onMoveMonth={onMoveMonth}
+        onGoToday={onGoToday}
+        onToggleWeekends={onToggleWeekends}
+        onSelectDate={onSelectDate}
+        onResetQuickAddForm={onResetQuickAddForm}
+      />
 
-      <WeekdayRow $columns={visibleWeekdays.length}>
-        {visibleWeekdays.map((weekday) => (
-          <WeekdayCell key={weekday}>{weekday}</WeekdayCell>
-        ))}
-      </WeekdayRow>
-
-      <CalendarGrid $columns={visibleWeekdays.length}>
-        {calendarWeeks.flatMap((week, weekIndex) =>
-          week
-            .filter(
-              (_, weekdayIndex) =>
-                showWeekends || (weekdayIndex !== 0 && weekdayIndex !== 6),
-            )
-            .map((day, dayIndex) => {
-              if (!day) {
-                return (
-                  <CalendarPlaceholder key={`empty-${weekIndex}-${dayIndex}`} />
-                );
-              }
-
-              const bucket = recordsByDate.get(day.dateKey);
-
-              return (
-                <CalendarCellButton
-                  key={day.dateKey}
-                  type="button"
-                  $isCurrentMonth={true}
-                  $isSelected={selectedDate === day.dateKey}
-                  $isToday={day.isToday}
-                  onClick={() => {
-                    onSelectDate(day.dateKey);
-                    onResetQuickAddForm();
-                  }}
-                >
-                  <CalendarDayNumber>{day.dayNumber}</CalendarDayNumber>
-                  {bucket && (
-                    <CalendarDaySummary>
-                      {bucket.before10Minutes > 0 && (
-                        <span>{formatCompactDuration(bucket.before10Minutes)}</span>
-                      )}
-                      {bucket.after10Minutes > 0 && (
-                        <span>{formatCompactDuration(bucket.after10Minutes)}</span>
-                      )}
-                    </CalendarDaySummary>
-                  )}
-                </CalendarCellButton>
-              );
-            }),
-        )}
-      </CalendarGrid>
-
-      <SelectedDatePanel>
-        <QuickAddHeader>
-          <QuickAddTitle>
-            {formatDisplayDate(selectedDate)} - {editingRecordId ? "수정 중" : "새 기록 추가"}
-          </QuickAddTitle>
-          {editingRecordId && (
-            <EditCancelButton type="button" onClick={onResetQuickAddForm}>
-              수정 취소
-            </EditCancelButton>
-          )}
-        </QuickAddHeader>
-        <QuickAddCard>
-          {selectedDateBucket ? (
-            <RecordList>
-              {selectedDateBucket.records.map((record) => (
-                <RecordItem key={record.id}>
-                  <RecordInfo>
-                    <span>
-                      <MutedPrefix>10시 전</MutedPrefix>
-                      {formatRawDuration(record.before10Minutes)}
-                    </span>
-                    <span>
-                      <MutedPrefix>10시 이후</MutedPrefix>
-                      {formatRawDuration(record.after10Minutes)}
-                    </span>
-                  </RecordInfo>
-                  <RecordActions>
-                    <EditButton
-                      type="button"
-                      onClick={() => onEditRecord(record)}
-                      disabled={isServerLoading}
-                    >
-                      수정
-                    </EditButton>
-                    <DeleteButton
-                      type="button"
-                      onClick={() => onDeleteRecord(record.id)}
-                      disabled={isServerLoading}
-                    >
-                      삭제
-                    </DeleteButton>
-                  </RecordActions>
-                </RecordItem>
-              ))}
-            </RecordList>
-          ) : (
-            <EmptyItem>
-              {storageMode === "server" && !serverRoom
-                ? "먼저 서버 저장 방을 연결해주세요."
-                : "선택한 날짜에 저장된 야근 기록이 없습니다."}
-            </EmptyItem>
-          )}
-
-          <SplitGrid>
-            <DurationCard>
-              <FieldLabel>10시 전 야근</FieldLabel>
-              <DurationInputs>
-                <CompactInput
-                  type="text"
-                  min="0"
-                  placeholder="시간"
-                  value={quickBefore10Hours}
-                  onChange={(event) =>
-                    onChangeQuickBefore10Hours(event.target.value)
-                  }
-                />
-                <UnitText>시간</UnitText>
-                <CompactInput
-                  type="text"
-                  min="0"
-                  placeholder="분"
-                  value={quickBefore10Minutes}
-                  onChange={(event) =>
-                    onChangeQuickBefore10Minutes(event.target.value)
-                  }
-                  onBlur={onNormalizeQuickBefore10}
-                />
-                <UnitText>분</UnitText>
-              </DurationInputs>
-            </DurationCard>
-
-            <DurationCard>
-              <FieldLabel>10시 이후 야근</FieldLabel>
-              <DurationInputs>
-                <CompactInput
-                  type="text"
-                  min="0"
-                  placeholder="시간"
-                  value={quickAfter10Hours}
-                  onChange={(event) =>
-                    onChangeQuickAfter10Hours(event.target.value)
-                  }
-                />
-                <UnitText>시간</UnitText>
-                <CompactInput
-                  type="text"
-                  min="0"
-                  placeholder="분"
-                  value={quickAfter10Minutes}
-                  onChange={(event) =>
-                    onChangeQuickAfter10Minutes(event.target.value)
-                  }
-                  onBlur={onNormalizeQuickAfter10}
-                />
-                <UnitText>분</UnitText>
-              </DurationInputs>
-            </DurationCard>
-          </SplitGrid>
-
-          <PrimaryButton
-            type="button"
-            onClick={onSaveQuickRecord}
-            disabled={isServerLoading || (storageMode === "server" && !serverRoom)}
-          >
-            {editingRecordId
-              ? `${formatDisplayDate(selectedDate)} 수정 저장하기`
-              : `${formatDisplayDate(selectedDate)}에 추가하기`}
-          </PrimaryButton>
-        </QuickAddCard>
-      </SelectedDatePanel>
+      <SelectedDayPanel
+        selectedDate={selectedDate}
+        selectedDateBucket={selectedDateBucket}
+        editingRecordId={editingRecordId}
+        quickBefore10Hours={quickBefore10Hours}
+        quickBefore10Minutes={quickBefore10Minutes}
+        quickAfter10Hours={quickAfter10Hours}
+        quickAfter10Minutes={quickAfter10Minutes}
+        storageMode={storageMode}
+        serverRoom={serverRoom}
+        isServerLoading={isServerLoading}
+        onResetQuickAddForm={onResetQuickAddForm}
+        onEditRecord={onEditRecord}
+        onDeleteRecord={onDeleteRecord}
+        onChangeQuickBefore10Hours={onChangeQuickBefore10Hours}
+        onChangeQuickBefore10Minutes={onChangeQuickBefore10Minutes}
+        onChangeQuickAfter10Hours={onChangeQuickAfter10Hours}
+        onChangeQuickAfter10Minutes={onChangeQuickAfter10Minutes}
+        onNormalizeQuickBefore10={onNormalizeQuickBefore10}
+        onNormalizeQuickAfter10={onNormalizeQuickAfter10}
+        onSaveQuickRecord={onSaveQuickRecord}
+      />
 
       <SectionDivider />
 
-      <AccordionSection>
-        <AccordionHeader>
-          <SectionTitle>{formatMonthLabel(currentMonth)} 저장된 야근 기록</SectionTitle>
-          <AccordionToggleButton type="button" onClick={onToggleRecordsExpanded}>
-            {isRecordsExpanded ? "접기" : "더보기"}
-          </AccordionToggleButton>
-        </AccordionHeader>
-        {isRecordsExpanded ? (
-          <RecordList>
-            {displayedRecords.length === 0 ? (
-              <EmptyItem>
-                {storageMode === "server" && !serverRoom
-                  ? "먼저 서버 저장 방을 연결해주세요."
-                  : "저장된 야근 기록이 없습니다."}
-              </EmptyItem>
-            ) : (
-              displayedRecords.map((record) => (
-                <RecordItem key={record.id}>
-                  <RecordInfo>
-                    <strong>{record.date}</strong>
-                    <span>
-                      <MutedPrefix>10시 전</MutedPrefix>
-                      {formatRawDuration(record.before10Minutes)}
-                    </span>
-                    <span>
-                      <MutedPrefix>10시 이후</MutedPrefix>
-                      {formatRawDuration(record.after10Minutes)}
-                    </span>
-                  </RecordInfo>
-                  <RecordActions>
-                    <EditButton
-                      type="button"
-                      onClick={() => onEditRecord(record)}
-                      disabled={isServerLoading}
-                    >
-                      수정
-                    </EditButton>
-                    <DeleteButton
-                      type="button"
-                      onClick={() => onDeleteRecord(record.id)}
-                      disabled={isServerLoading}
-                    >
-                      삭제
-                    </DeleteButton>
-                  </RecordActions>
-                </RecordItem>
-              ))
-            )}
-          </RecordList>
-        ) : (
-          <AccordionHint>현재 월 기록은 더보기로 펼쳐서 확인할 수 있어요.</AccordionHint>
-        )}
-      </AccordionSection>
+      <MonthlyRecordsAccordion
+        currentMonth={currentMonth}
+        isExpanded={isRecordsExpanded}
+        displayedRecords={displayedRecords}
+        storageMode={storageMode}
+        serverRoom={serverRoom}
+        isServerLoading={isServerLoading}
+        onToggleExpanded={onToggleRecordsExpanded}
+        onEditRecord={onEditRecord}
+        onDeleteRecord={onDeleteRecord}
+      />
 
       <DangerButton
         type="button"

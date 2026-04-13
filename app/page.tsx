@@ -95,6 +95,17 @@ export default function Home() {
           </StCard>
         </Link>
 
+        {/* 운동 기록 */}
+        <Link href="/workout" passHref>
+          <StCard>
+            <StIconBox>🏋️‍♂️</StIconBox>
+            <StCardContent>
+              <StCardTitle>운동 기록</StCardTitle>
+              <StCardDesc>러닝·웨이트 성장 그래프</StCardDesc>
+            </StCardContent>
+          </StCard>
+        </Link>
+
         {/* 장소잡기 */}
         <Link href="/place" passHref>
           <StCard>
