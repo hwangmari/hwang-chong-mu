@@ -81,12 +81,12 @@ export default function GameSelector({
 
 const StGameSection = styled.div`
   padding: 1rem 1.5rem;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: ${({ theme }) => theme.colors.white};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 const StLabel = styled.span`
   font-size: 0.85rem;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: bold;
   display: block;
   margin-bottom: 0.8rem;
@@ -97,7 +97,7 @@ const StGameGrid = styled.div`
   gap: 0.8rem;
 `;
 const StGameCard = styled.div<{ $active: boolean }>`
-  border: 2px solid ${({ $active }) => ($active ? "#3b82f6" : "#e9ecef")};
+  border: 2px solid ${({ $active, theme }) => ($active ? theme.colors.blue500 : "#e9ecef")};
   background: ${({ $active }) => ($active ? "#f8faff" : "white")};
   border-radius: 16px;
   padding: 1rem;
@@ -121,11 +121,11 @@ const StCardContent = styled.div`
 const StCardTitle = styled.h4`
   font-size: 0.95rem;
   font-weight: bold;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 const StCardDesc = styled.p`
   font-size: 0.75rem;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.3;
   word-break: keep-all;
 `;
@@ -133,13 +133,13 @@ const StCheck = styled.div`
   position: absolute;
   top: 10px;
   right: 10px;
-  color: #3b82f6;
+  color: ${({ theme }) => theme.colors.blue500};
   font-weight: bold;
   font-size: 1.2rem;
 `;
 const StSelectedGameBanner = styled.div`
-  background: #fff;
-  border: 2px solid #333;
+  background: ${({ theme }) => theme.colors.white};
+  border: 2px solid ${({ theme }) => theme.colors.gray800};
   border-radius: 16px;
   padding: 1rem;
   display: flex;
@@ -156,10 +156,10 @@ const StBannerText = styled.div`
 const StBannerTitle = styled.h4`
   font-size: 1.1rem;
   font-weight: 900;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 const StBannerDesc = styled.p`
   font-size: 0.85rem;
-  color: #666;
+  color: ${({ theme }) => theme.colors.gray600};
   margin-top: 0.2rem;
 `;

@@ -21,7 +21,7 @@ export default function RoomHeader({ title }: Props) {
 
 const StBoardHeader = styled.div`
   padding: 1.5rem 1.5rem 0.5rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -29,13 +29,13 @@ const StBoardHeader = styled.div`
 const StRoomTitle = styled.h1`
   font-size: 1.4rem;
   font-weight: 900;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   flex: 1;
   word-break: break-all;
   margin-right: 1rem;
 `;
 const StShareButton = styled.button`
-  background: #f1f3f5;
+  background: ${({ theme }) => theme.colors.gray100};
   color: #495057;
   border: none;
   padding: 0.5rem 0.8rem;

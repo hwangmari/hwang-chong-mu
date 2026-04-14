@@ -105,18 +105,18 @@ const StHeader = styled.div`
 const StTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 900;
-  color: #ff4757;
+  color: ${({ theme }) => theme.colors.rose500};
   margin-bottom: 0.2rem;
 `;
 const StSubTitle = styled.p`
   font-size: 0.9rem;
-  color: #666;
+  color: ${({ theme }) => theme.colors.gray600};
 `;
 const StScoreBoard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
   border-radius: 15px;
   max-height: 200px;
@@ -142,13 +142,13 @@ const StName = styled.span`
 const StBarContainer = styled.div`
   flex: 1;
   height: 10px;
-  background: #eee;
+  background: ${({ theme }) => theme.colors.gray200};
   border-radius: 5px;
   overflow: hidden;
 `;
 const StBar = styled.div`
   height: 100%;
-  background: linear-gradient(90deg, #ff6b81, #ff4757);
+  background: linear-gradient(90deg, #ff6b81, ${({ theme }) => theme.colors.rose500});
   transition: width 0.2s;
 `;
 const StScore = styled.span`
@@ -168,8 +168,8 @@ const StBigButton = styled.button`
   height: 200px;
   border-radius: 50%;
   border: none;
-  background: #ff4757;
-  color: white;
+  background: ${({ theme }) => theme.colors.rose500};
+  color: ${({ theme }) => theme.colors.white};
   font-size: 2.5rem;
   font-weight: 900;
   box-shadow: 0 10px 0 #c0392b;

@@ -185,19 +185,19 @@ const StStepBadge = styled.span<{ $color: "blue" | "red" }>`
   ${({ $color }) =>
     $color === "blue"
       ? css`
-          background-color: #dbeafe; /* blue-100 */
-          color: #2563eb; /* blue-600 */
+          background-color: ${({ theme }) => theme.colors.blue100}; /* blue-100 */
+          color: ${({ theme }) => theme.colors.blue600}; /* blue-600 */
         `
       : css`
-          background-color: #fee2e2; /* red-100 */
-          color: #ef4444; /* red-500 */
+          background-color: ${({ theme }) => theme.colors.rose100}; /* red-100 */
+          color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
         `}
 `;
 
 const StRedUnderline = styled.b`
-  color: #ef4444; /* red-500 */
+  color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
   text-decoration: underline;
-  text-decoration-color: #fecaca; /* red-200 */
+  text-decoration-color: ${({ theme }) => theme.colors.rose200}; /* red-200 */
   text-decoration-thickness: 4px;
 `;
 
@@ -220,8 +220,8 @@ const StTipSection = styled.div`
 `;
 
 const StSmallBadge = styled.span`
-  background-color: #fee2e2; /* red-100 */
-  color: #ef4444; /* red-500 */
+  background-color: ${({ theme }) => theme.colors.rose100}; /* red-100 */
+  color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
   padding: 0 0.25rem;
   border-radius: 0.25rem;
   font-weight: 700;
@@ -270,10 +270,10 @@ const StQnACard = styled.div`
   }
 
   .text-blue {
-    color: #3b82f6; /* blue-500 */
+    color: ${({ theme }) => theme.colors.blue500}; /* blue-500 */
   }
   .text-red {
-    color: #ef4444; /* red-500 */
+    color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
   }
   .underline {
     text-decoration: underline;

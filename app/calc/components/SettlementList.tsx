@@ -79,7 +79,7 @@ const StSettlementCardContent = styled.div`
       color: ${({ theme }) => theme.colors.gray700};
     }
     .to {
-      color: #3b82f6; // 받는 사람은 강조!
+      color: ${({ theme }) => theme.colors.blue500}; // 받는 사람은 강조!
     }
   }
 

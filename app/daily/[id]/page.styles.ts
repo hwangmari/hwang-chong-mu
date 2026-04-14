@@ -10,32 +10,32 @@ export const PageContainer = styled.div`
 export const LoadingCard = styled.section`
   max-width: 420px;
   margin: 3.5rem auto 0;
-  border: 1px solid #d9dce3;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 12px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
   text-align: center;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-weight: 700;
 `;
 
 export const LockCard = styled.section`
   max-width: 420px;
   margin: 3.5rem auto 0;
-  border: 1px solid #d9dce3;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 12px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
 `;
 
 export const LockDescription = styled.p`
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
 `;
 
 export const NotebookIdText = styled.p`
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.8rem;
   margin-top: 0.35rem;
   word-break: break-all;
@@ -43,7 +43,7 @@ export const NotebookIdText = styled.p`
 
 export const LockInput = styled.input`
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 8px;
   padding: 0.6rem 0.65rem;
   font-size: 0.95rem;
@@ -51,7 +51,7 @@ export const LockInput = styled.input`
 `;
 
 export const LockError = styled.p`
-  color: #dc2626;
+  color: ${({ theme }) => theme.colors.rose600};
   font-size: 0.8rem;
   margin-top: 0.45rem;
 `;
@@ -67,7 +67,7 @@ export const UnlockButton = styled.button`
   border: 1px solid #7ba7ef;
   border-radius: 8px;
   background: #2f6cc7;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.45rem 0.7rem;
   font-size: 0.85rem;
   font-weight: 700;
@@ -87,21 +87,21 @@ export const TopSection = styled.div`
 `;
 
 export const Subtitle = styled.p`
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   margin-top: 0.25rem;
   font-size: 0.95rem;
 `;
 
 export const SummaryCard = styled.div`
   min-width: 170px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 10px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.75rem 0.9rem;
 `;
 
 export const SummaryTitle = styled.p`
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.8rem;
 `;
 
@@ -133,18 +133,18 @@ export const MonthNavBar = styled.div`
 `;
 
 export const MonthNavButton = styled.button`
-  border: 1px solid #cbd5e1;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 8px;
   padding: 0.45rem 0.65rem;
   font-size: 0.82rem;
-  color: #334155;
-  background: #fff;
+  color: ${({ theme }) => theme.colors.gray700};
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 export const MonthText = styled.strong`
   margin: 0 0.25rem;
   font-size: 0.92rem;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 export const CurrentMonthButton = styled.button<{ $color: string }>`
@@ -172,21 +172,21 @@ export const AccessHeader = styled.div`
 export const AccessTitle = styled.h2`
   font-size: 0.9rem;
   font-weight: 700;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 export const AccessStatus = styled.span<{ $locked: boolean }>`
   font-size: 0.75rem;
   font-weight: 700;
-  color: ${({ $locked }) => ($locked ? "#2563eb" : "#6b7280")};
-  background: ${({ $locked }) => ($locked ? "#eff6ff" : "#f1f5f9")};
+  color: ${({ $locked, theme }) => ($locked ? theme.colors.blue600 : theme.colors.gray500)};
+  background: ${({ $locked, theme }) => ($locked ? theme.colors.blue50 : theme.colors.gray100)};
   border-radius: 9999px;
   padding: 0.2rem 0.45rem;
 `;
 
 export const AccessInput = styled.input`
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 8px;
   padding: 0.5rem 0.55rem;
   font-size: 0.86rem;
@@ -197,7 +197,7 @@ export const AccessButton = styled.button`
   border-radius: 8px;
   border: 1px solid #7ba7ef;
   background: #2f6cc7;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.45rem 0.65rem;
   font-size: 0.8rem;
   font-weight: 700;
@@ -206,7 +206,7 @@ export const AccessButton = styled.button`
 export const AccessNotice = styled.p<{ $type: "success" | "error" | "" }>`
   margin-top: 0.45rem;
   font-size: 0.78rem;
-  color: ${({ $type }) => ($type === "error" ? "#dc2626" : "#16a34a")};
+  color: ${({ $type, theme }) => ($type === "error" ? theme.colors.rose600 : theme.colors.green600)};
 `;
 
 export const AccessModalOverlay = styled.div`
@@ -224,8 +224,8 @@ export const AccessModal = styled.section`
   width: 100%;
   max-width: 920px;
   border-radius: 12px;
-  background: #fff;
-  border: 1px solid #d9dce3;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   padding: 0.9rem;
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
@@ -234,18 +234,18 @@ export const AccessModal = styled.section`
 export const AccessModalTitle = styled.h3`
   font-size: 1rem;
   font-weight: 800;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
   margin-bottom: 0.35rem;
 `;
 
 export const AccessModalDesc = styled.p`
   font-size: 0.85rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   margin-bottom: 0.65rem;
 `;
 
 export const SettingsSection = styled.section`
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 10px;
   padding: 0.75rem;
   margin-top: 0.7rem;
@@ -260,9 +260,9 @@ export const AccessModalActions = styled.div`
 
 export const AccessModalCancel = styled.button`
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray500};
   padding: 0.45rem 0.65rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -279,7 +279,7 @@ export const EditorHeader = styled.div`
 export const EditorTitle = styled.h2`
   font-size: 0.9rem;
   font-weight: 700;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 export const EditorActions = styled.div`
@@ -290,9 +290,9 @@ export const EditorActions = styled.div`
 
 export const AddItemButton = styled.button`
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #334155;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray700};
   padding: 0.35rem 0.6rem;
   font-size: 0.78rem;
   font-weight: 600;
@@ -302,7 +302,7 @@ export const SaveChecklistButton = styled.button<{ $color: string }>`
   border-radius: 8px;
   border: 1px solid ${({ $color }) => `${$color}99`};
   background: ${({ $color }) => $color};
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.35rem 0.6rem;
   font-size: 0.78rem;
   font-weight: 700;
@@ -326,7 +326,7 @@ export const ChecklistEditRow = styled.div`
 
 export const ChecklistInput = styled.input`
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
   font-size: 0.85rem;
@@ -334,10 +334,10 @@ export const ChecklistInput = styled.input`
 `;
 
 export const DeleteItemButton = styled.button`
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 8px;
-  background: #fff;
-  color: #6b7280;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray500};
   padding: 0.4rem 0.55rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -348,17 +348,17 @@ export const DeleteItemButton = styled.button`
 `;
 
 export const NotebookBoard = styled.div`
-  border: 1px solid #d9dce3;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 export const BoardHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(240px, 38%) 1fr ${TREND_COLUMN_WIDTH}px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
+  background: ${({ theme }) => theme.colors.gray100};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -369,12 +369,12 @@ export const LeftHeader = styled.div`
   padding: 0.75rem;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #475569;
-  border-right: 1px solid #e5e7eb;
+  color: ${({ theme }) => theme.colors.gray600};
+  border-right: 1px solid ${({ theme }) => theme.colors.gray200};
 
   @media (max-width: 900px) {
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   }
 `;
 
@@ -391,14 +391,14 @@ export const ChecklistHeader = styled.div<{ $count: number }>`
 
 export const ChecklistLabel = styled.div`
   text-align: center;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.78rem;
   font-weight: 700;
 `;
 
 export const GraphLabel = styled.div`
   text-align: center;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.78rem;
   font-weight: 700;
 `;
@@ -407,7 +407,7 @@ export const TrendHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid #e5e7eb;
+  border-left: 1px solid ${({ theme }) => theme.colors.gray200};
   padding: 0.75rem 0.5rem;
 
   @media (max-width: 900px) {
@@ -437,7 +437,7 @@ export const DiaryCell = styled.div<{
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.75rem;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid ${({ theme }) => theme.colors.gray200};
   border-bottom: ${({ $last }) => ($last ? "none" : "1px dashed #e5e7eb")};
   background: ${({ $isToday }) => ($isToday ? "#f8fff8" : "transparent")};
 
@@ -445,7 +445,7 @@ export const DiaryCell = styled.div<{
     grid-column: 1;
     grid-row: auto;
     border-right: none;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   }
 `;
 
@@ -453,7 +453,7 @@ export const DateLabel = styled.span`
   width: 64px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   text-align: center;
   flex-shrink: 0;
   display: flex;
@@ -466,7 +466,7 @@ export const TodayBadge = styled.span<{ $color: string }>`
   padding: 0.1rem 0.35rem;
   border-radius: 9999px;
   background: ${({ $color }) => $color};
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.63rem;
   font-weight: 700;
 `;
@@ -475,12 +475,12 @@ export const DiaryInput = styled.input`
   width: 100%;
   border: none;
   background: transparent;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
   font-size: 0.95rem;
   outline: none;
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 `;
 
@@ -514,9 +514,9 @@ export const CheckButton = styled.button<{ $checked: boolean; $color: string }>`
   width: 44px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid ${({ $checked, $color }) => ($checked ? $color : "#d1d5db")};
+  border: 1px solid ${({ $checked, $color, theme }) => ($checked ? $color : theme.colors.gray300)};
   background: ${({ $checked, $color }) => ($checked ? `${$color}22` : "#fff")};
-  color: ${({ $checked, $color }) => ($checked ? $color : "#6b7280")};
+  color: ${({ $checked, $color, theme }) => ($checked ? $color : theme.colors.gray500)};
   font-size: 0.9rem;
   font-weight: 700;
 `;
@@ -524,7 +524,7 @@ export const CheckButton = styled.button<{ $checked: boolean; $color: string }>`
 export const MobileScoreText = styled.span`
   display: none;
   font-size: 0.75rem;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-weight: 700;
 
   @media (max-width: 900px) {
@@ -535,14 +535,14 @@ export const MobileScoreText = styled.span`
 
 export const BackButton = styled.button`
   margin-top: 0.75rem;
-  color: #2563eb;
+  color: ${({ theme }) => theme.colors.blue600};
   font-weight: 600;
 `;
 
 export const TrendCell = styled.div<{ $rows: number }>`
   grid-column: 3;
   grid-row: 1 / span ${({ $rows }) => $rows};
-  border-left: 1px solid #e5e7eb;
+  border-left: 1px solid ${({ theme }) => theme.colors.gray200};
   padding: 0;
   display: flex;
   align-items: stretch;
@@ -560,13 +560,13 @@ export const TrendSvg = styled.svg`
 `;
 
 export const TrendGridLine = styled.line`
-  stroke: #e2e8f0;
+  stroke: ${({ theme }) => theme.colors.gray200};
   stroke-width: 1;
   stroke-dasharray: 4 4;
 `;
 
 export const TrendScaleLabel = styled.text`
-  fill: #94a3b8;
+  fill: ${({ theme }) => theme.colors.gray400};
   font-size: 9px;
   font-weight: 600;
   text-anchor: middle;
@@ -581,8 +581,8 @@ export const TrendPath = styled.polyline<{ $color: string }>`
 `;
 
 export const TrendPoint = styled.circle<{ $isToday: boolean }>`
-  fill: ${({ $isToday }) => ($isToday ? "#0ea5e9" : "#22c55e")};
-  stroke: #fff;
+  fill: ${({ $isToday, theme }) => ($isToday ? "#0ea5e9" : theme.colors.green500)};
+  stroke: ${({ theme }) => theme.colors.white};
   stroke-width: 2;
 `;
 

@@ -25,7 +25,7 @@ interface ConfirmVotingSectionProps {
   participants: any[];
   calendarGrid: (Date | null)[];
   currentUnavailable: Date[];
-  step: string;
+  step: "VOTING" | "CONFIRM";
   finalDate: Date | null;
   includeWeekend: boolean;
   hoveredUserId: string | number | null;

@@ -105,7 +105,7 @@ export default function StatsPanel({
 const StStatsSwitch = styled.div`
   width: fit-content;
   border-radius: 999px;
-  background: #f3f5f8;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 0.25rem;
   display: flex;
   gap: 0.25rem;
@@ -117,13 +117,13 @@ const StSwitchButton = styled.button<{ $active: boolean }>`
   border-radius: 999px;
   font-size: 0.86rem;
   font-weight: 700;
-  color: ${({ $active }) => ($active ? "#fff" : "#667085")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#667085")};
   background: ${({ $active }) => ($active ? "#6fa6c9" : "transparent")};
 `;
 const StScopeSwitch = styled.div`
   width: fit-content;
   border-radius: 999px;
-  background: #f3f5f8;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 0.25rem;
   display: flex;
   gap: 0.25rem;
@@ -135,12 +135,12 @@ const StScopeButton = styled.button<{ $active: boolean }>`
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: ${({ $active }) => ($active ? "#fff" : "#667085")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#667085")};
   background: ${({ $active }) => ($active ? "#4c83d8" : "transparent")};
 `;
 const StTotalBoard = styled.div`
   border: 1px solid #dce6f4;
-  background: linear-gradient(135deg, #f2f8ff, #edf4ff);
+  background: linear-gradient(135deg, #f2f8ff, ${({ theme }) => theme.colors.blue50});
   border-radius: 10px;
   padding: 0.55rem 0.7rem;
   margin-bottom: 0.75rem;
@@ -154,7 +154,7 @@ const StTotalBoard = styled.div`
   }
   strong {
     font-size: 0.95rem;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 `;
 const StDonutWrap = styled.div`
@@ -173,7 +173,7 @@ const StDonutHole = styled.div`
   width: 42%;
   height: 42%;
   border-radius: 999px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -183,11 +183,11 @@ const StDonutHole = styled.div`
 `;
 const StDonutTotal = styled.strong`
   font-size: 0.75rem;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
 `;
 const StDonutLabel = styled.span`
   font-size: 0.7rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 const StCategoryList = styled.div`
   display: grid;
@@ -219,7 +219,7 @@ const StColorDot = styled.span`
 `;
 const StCategoryName = styled.span`
   font-size: 0.88rem;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -227,7 +227,7 @@ const StCategoryName = styled.span`
 const StRatioBar = styled.div`
   height: 0.55rem;
   border-radius: 999px;
-  background: #edf1f5;
+  background: ${({ theme }) => theme.colors.gray100};
   overflow: hidden;
 `;
 const StRatioFill = styled.div`
@@ -240,15 +240,15 @@ const StCategoryAmount = styled.div`
   align-items: flex-end;
   span {
     font-size: 0.75rem;
-    color: #8a94a6;
+    color: ${({ theme }) => theme.colors.gray500};
   }
   strong {
     font-size: 0.88rem;
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 `;
 const StEmpty = styled.p`
   font-size: 0.9rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
   padding: 0.25rem 0;
 `;

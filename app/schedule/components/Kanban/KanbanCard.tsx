@@ -138,7 +138,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
 }
 
 const StKanbanCard = styled.div<{ $color: string }>`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
   border-radius: 8px;
   border-left: 5px solid ${(props) => props.$color};
@@ -157,13 +157,13 @@ const StKanbanCard = styled.div<{ $color: string }>`
       cursor: pointer;
       border-bottom: 1px dashed transparent;
       &:hover {
-        border-bottom-color: #ccc;
+        border-bottom-color: ${({ theme }) => theme.colors.gray300};
       }
     }
     .name-edit-input {
       font-size: 0.95rem;
       padding: 2px 4px;
-      border: 1px solid #3b82f6;
+      border: 1px solid ${({ theme }) => theme.colors.blue500};
       border-radius: 4px;
       outline: none;
       width: 100%;
@@ -189,7 +189,7 @@ const StKanbanCard = styled.div<{ $color: string }>`
 
   .task-mini-list {
     font-size: 0.85rem;
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
     margin-bottom: 12px;
   }
 
@@ -204,13 +204,13 @@ const StKanbanCard = styled.div<{ $color: string }>`
       cursor: pointer;
     }
     .main-btn {
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      background: ${({ theme }) => theme.colors.gray100};
+      border: 1px solid ${({ theme }) => theme.colors.gray200};
     }
     .sub-btn {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #3b82f6;
+      background: ${({ theme }) => theme.colors.blue50};
+      border: 1px solid ${({ theme }) => theme.colors.blue200};
+      color: ${({ theme }) => theme.colors.blue500};
       font-weight: 600;
     }
   }

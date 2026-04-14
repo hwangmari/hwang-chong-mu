@@ -110,7 +110,7 @@ const StTitle = styled.h3`
   margin-top: 0.2rem;
   font-size: 1.15rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StDescription = styled.p`
@@ -162,7 +162,7 @@ const StColumnHeader = styled.header`
   strong {
     display: block;
     font-size: 0.98rem;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {

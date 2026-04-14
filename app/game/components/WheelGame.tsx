@@ -211,12 +211,12 @@ const StHeader = styled.div`
 const StTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 900;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 0.2rem;
 `;
 const StSubTitle = styled.p`
   font-size: 0.9rem;
-  color: #666;
+  color: ${({ theme }) => theme.colors.gray600};
 `;
 
 const StWheelWrapper = styled.div`
@@ -240,7 +240,7 @@ const StPointer = styled.div`
   top: -25px;
   left: 50%;
   transform: translateX(-50%);
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   z-index: 10;
   text-shadow: 0px 2px 5px rgba(255, 255, 255, 0.8);
   svg {
@@ -257,9 +257,9 @@ const StResultArea = styled.div`
 const StWinnerBox = styled.div`
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   animation: pop 0.5s;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.5rem 1rem;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -270,7 +270,7 @@ const StWinnerName = styled.span`
   font-weight: 900;
 `;
 const StStatus = styled.p`
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: bold;
   font-size: 1.2rem;
 `;
@@ -285,7 +285,7 @@ const StFooter = styled.div`
 const StSubButton = styled.button`
   background: none;
   border: none;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   padding: 0.5rem;
   text-decoration: underline;
   cursor: pointer;

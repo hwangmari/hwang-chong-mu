@@ -367,7 +367,7 @@ const StPrimaryButton = styled.button`
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.gray900};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   font-size: 0.9rem;
   border: none;
@@ -386,7 +386,7 @@ const StPrimaryButton = styled.button`
 const StSecondaryButton = styled.button`
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray700};
   font-weight: 700;
   font-size: 0.9rem;
@@ -420,7 +420,7 @@ const StLogoutButton = styled.button`
   padding: 0.4rem 0.8rem;
   border-radius: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.8rem;
   font-weight: 600;
@@ -454,7 +454,7 @@ const StSmallButton = styled.button`
   padding: 0.4rem 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.8rem;
   font-weight: 600;
@@ -479,7 +479,7 @@ const StWorkspaceCard = styled.div`
   gap: 1rem;
   padding: 1.25rem;
   border-radius: 1rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   cursor: pointer;
@@ -561,7 +561,7 @@ const StOverlay = styled.div`
 
 const StModal = styled.div`
   width: min(100%, 24rem);
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 1.25rem;
   padding: 1.5rem;
   display: flex;

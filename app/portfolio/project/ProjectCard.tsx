@@ -143,7 +143,7 @@ const StServiceLink = styled(Link)`
   gap: 0.5rem;
   padding: 0.5rem 1rem; /* 패딩도 폰트에 맞춰 살짝 줄임 */
   background-color: ${({ theme }) => theme.colors.black};
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
 
   font-size: 13px;
   font-weight: 600;
@@ -169,8 +169,8 @@ const StDetailGrid = styled.div`
 `;
 
 const StDetailsBox = styled.div`
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background-color: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
   display: flex;

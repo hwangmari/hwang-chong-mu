@@ -48,8 +48,8 @@ const StWrapper = styled.div`
   position: absolute;
   top: 20px;
   left: 0;
-  background: white;
-  border: 1px solid #eee;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 8px;
   padding: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

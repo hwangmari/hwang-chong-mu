@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import styled from "styled-components";
+import ThemeToggleButton from "@/components/common/ThemeToggleButton";
+import { MENU_CATEGORIES } from "@/lib/menuCategories";
 
 export default function Home() {
   return (
     <StMainContainer>
+      <StTopBar>
+        <ThemeToggleButton />
+      </StTopBar>
       {/* 🐰 프로필 영역 */}
       <StProfileSection>
         <StAvatar>🐰</StAvatar>
@@ -16,130 +21,30 @@ export default function Home() {
         </StSubDescription>
       </StProfileSection>
 
-      {/* 📂 프로젝트 목록 그리드 */}
-      <StGridContainer>
-        {/* 약속 잡기 카드 */}
-        <Link href="/meeting" passHref>
-          <StCard>
-            <StIconBox>📅</StIconBox>
-            <StCardContent>
-              <StCardTitle>약속 잡기</StCardTitle>
-              <StCardDesc>친구들과 일정을 잡는 법</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* N빵 계산기 카드*/}
-        <Link href="/calc" passHref>
-          <StCard>
-            <StIconBox>💸</StIconBox>
-            <StCardContent>
-              <StCardTitle>N빵 계산기</StCardTitle>
-              <StCardDesc>복잡한 셈은 덜어내고</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 야근 계산기 카드 */}
-        <Link href="/overtime" passHref>
-          <StCard>
-            <StIconBox>🌙</StIconBox>
-            <StCardContent>
-              <StCardTitle>야근 계산기</StCardTitle>
-              <StCardDesc>보상휴가 기준을 빠르게 계산</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 가계부 카드 */}
-        <Link href="/account-book" passHref>
-          <StCard>
-            <StIconBox>🧾</StIconBox>
-            <StCardContent>
-              <StCardTitle>가계부</StCardTitle>
-              <StCardDesc>수입/지출을 한눈에 관리</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 습관 관리 카드 */}
-        <Link href="/habit" passHref>
-          <StCard>
-            <StIconBox>🥕</StIconBox>
-            <StCardContent>
-              <StCardTitle>습관 관리</StCardTitle>
-              <StCardDesc>매일매일 쌓이는 성실함</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 일일 기록 카드 */}
-        <Link href="/daily" passHref>
-          <StCard>
-            <StIconBox>📓</StIconBox>
-            <StCardContent>
-              <StCardTitle>일일 기록</StCardTitle>
-              <StCardDesc>한 줄 일기 + 체크리스트 그래프</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 체중 관리 */}
-        <Link href="/diet" passHref>
-          <StCard>
-            <StIconBox>⚖️</StIconBox>
-            <StCardContent>
-              <StCardTitle>체중 관리</StCardTitle>
-              <StCardDesc>평생 숙제 다이어트!</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 운동 기록 */}
-        <Link href="/workout" passHref>
-          <StCard>
-            <StIconBox>🏋️‍♂️</StIconBox>
-            <StCardContent>
-              <StCardTitle>운동 기록</StCardTitle>
-              <StCardDesc>러닝·웨이트 성장 그래프</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 장소잡기 */}
-        <Link href="/place" passHref>
-          <StCard>
-            <StIconBox>📍</StIconBox>
-            <StCardContent>
-              <StCardTitle>장소잡기</StCardTitle>
-              <StCardDesc>네이버 검색으로 후보를 골라 투표</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 황총무 게임방*/}
-        <Link href="/game" passHref>
-          <StCard>
-            <StIconBox>🎮</StIconBox>
-            <StCardContent>
-              <StCardTitle>게임방</StCardTitle>
-              <StCardDesc>심심할 땐 랜덤 게임</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-        {/* 업무 캘린더 */}
-        <Link href="/schedule" passHref>
-          <StCard>
-            <StIconBox>🗓️</StIconBox>
-            <StCardContent>
-              <StCardTitle>업무 캘린더</StCardTitle>
-              <StCardDesc>프로젝트 일정 관리</StCardDesc>
-            </StCardContent>
-          </StCard>
-        </Link>
-
-      </StGridContainer>
+      {/* 📂 카테고리별 메뉴 */}
+      <StCategoryWrapper>
+        {MENU_CATEGORIES.map((category) => (
+          <StCategorySection key={category.title}>
+            <StCategoryTitle>
+              <span>{category.emoji}</span>
+              {category.title}
+            </StCategoryTitle>
+            <StGridContainer>
+              {category.items.map((item) => (
+                <Link key={item.href} href={item.href} passHref>
+                  <StCard>
+                    <StIconBox>{item.icon}</StIconBox>
+                    <StCardContent>
+                      <StCardTitle>{item.title}</StCardTitle>
+                      <StCardDesc>{item.desc}</StCardDesc>
+                    </StCardContent>
+                  </StCard>
+                </Link>
+              ))}
+            </StGridContainer>
+          </StCategorySection>
+        ))}
+      </StCategoryWrapper>
 
       {/* 소개 섹션 */}
       <StSectionContainer>
@@ -245,6 +150,14 @@ const StMainContainer = styled.main`
   padding: 2rem 1.5rem;
 `;
 
+const StTopBar = styled.div`
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+`;
+
 const StProfileSection = styled.div`
   text-align: center;
   margin-bottom: 3rem;
@@ -289,9 +202,36 @@ const StSubDescription = styled.p`
   }
 `;
 
+const StCategoryWrapper = styled.div`
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`;
+
+const StCategorySection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+`;
+
+const StCategoryTitle = styled.h2`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray700};
+  padding-left: 0.25rem;
+
+  span {
+    font-size: 1.05rem;
+  }
+`;
+
 const StGridContainer = styled.div`
   width: 100%;
-  max-width: 600px; /* 카드가 2열이라 너비를 좀 더 넓힘 */
   display: grid;
   grid-template-columns: 1fr; /* 모바일: 1열 */
   gap: 1rem;

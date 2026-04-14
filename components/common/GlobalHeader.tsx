@@ -8,6 +8,7 @@ import styled, { css } from "styled-components";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import { EXTRA_MENU, MENU_CATEGORIES } from "@/lib/menuCategories";
 
 const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
@@ -152,21 +153,52 @@ export default function GlobalHeader() {
       <StMenuOverlay $isOpen={isMenuOpen}>
         <StMenuContainer>
           <div className="center-box">
-            {/* ✨ ROUTE_CONFIG를 기반으로 메뉴 자동 생성 */}
-            {ROUTE_CONFIG.map((item) => (
-              <Link key={item.path} href={item.path} passHref>
-                <StMenuItem
-                  $isActive={
-                    item.exact
-                      ? pathname === item.path
-                      : pathname.startsWith(item.path)
-                  }
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.label}
-                </StMenuItem>
-              </Link>
+            <Link href="/" passHref>
+              <StHomeItem
+                $isActive={pathname === "/"}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="icon">🐰</span>
+                <span>황총무의 실험실</span>
+              </StHomeItem>
+            </Link>
+
+            {MENU_CATEGORIES.map((category) => (
+              <StCategoryBlock key={category.title}>
+                <StCategoryLabel>
+                  <span>{category.emoji}</span>
+                  {category.title}
+                </StCategoryLabel>
+                {category.items.map((item) => (
+                  <Link key={item.href} href={item.href} passHref>
+                    <StMenuItem
+                      $isActive={pathname.startsWith(item.href)}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span className="icon">{item.icon}</span>
+                      <span>{item.title}</span>
+                    </StMenuItem>
+                  </Link>
+                ))}
+              </StCategoryBlock>
             ))}
+
+            <StCategoryBlock>
+              <StCategoryLabel>
+                <span>✨</span>그 외
+              </StCategoryLabel>
+              {EXTRA_MENU.map((item) => (
+                <Link key={item.href} href={item.href} passHref>
+                  <StMenuItem
+                    $isActive={pathname.startsWith(item.href)}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span className="icon">{item.icon}</span>
+                    <span>{item.title}</span>
+                  </StMenuItem>
+                </Link>
+              ))}
+            </StCategoryBlock>
           </div>
         </StMenuContainer>
         <StBackdrop onClick={() => setIsMenuOpen(false)} />
@@ -249,22 +281,37 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
 `;
 const StMenuContainer = styled.nav`
   background-color: ${({ theme }) => theme.colors.white};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   overflow-y: auto;
   max-height: calc(100dvh - 3.5rem);
+  padding: 0.75rem 0 1.25rem;
+
   .center-box {
-    max-width: ${({ theme }) => theme.layout.maxWidth};
+    max-width: ${({ theme }) => theme.layout.narrowWidth};
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    gap: 0.35rem;
   }
 `;
-const StMenuItem = styled.div<{ $isActive: boolean }>`
-  padding: 1rem 1.5rem;
-  font-weight: 700;
+
+const StHomeItem = styled.div<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.25rem;
+  margin: 0 0.75rem;
+  border-radius: 0.85rem;
+  font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.gray50};
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  .icon {
+    font-size: 1.1rem;
+  }
 
   ${({ $isActive, theme }) =>
     $isActive
@@ -273,16 +320,71 @@ const StMenuItem = styled.div<{ $isActive: boolean }>`
           color: ${theme.colors.blue600};
         `
       : css`
-          color: ${theme.colors.gray700};
+          color: ${theme.colors.gray900};
           &:hover {
-            background-color: ${theme.colors.gray50};
+            background-color: ${theme.colors.gray100};
+          }
+        `}
+`;
+
+const StCategoryBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.25rem 0.25rem;
+  margin-top: 0.25rem;
+`;
+
+const StCategoryLabel = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 1.25rem 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: ${({ theme }) => theme.colors.gray500};
+  text-transform: none;
+
+  span {
+    font-size: 0.88rem;
+  }
+`;
+
+const StMenuItem = styled.div<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 1.25rem;
+  margin: 0 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  .icon {
+    font-size: 1.05rem;
+    width: 1.4rem;
+    display: inline-flex;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  ${({ $isActive, theme }) =>
+    $isActive
+      ? css`
+          background-color: ${theme.colors.blue50};
+          color: ${theme.colors.blue600};
+        `
+      : css`
+          color: ${theme.colors.gray800};
+          &:hover {
+            background-color: ${theme.colors.gray100};
             color: ${theme.colors.gray900};
           }
         `}
-
-  &:last-child {
-    border-bottom: none;
-  }
 `;
 const StBackdrop = styled.div`
   flex: 1;

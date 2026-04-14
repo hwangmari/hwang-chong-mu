@@ -168,14 +168,14 @@ const StToggleHeader = styled.div`
   align-items: center;
   padding: 0.5rem;
   cursor: pointer;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   transition: all 0.2s;
   border-radius: 6px;
   margin: 0 -0.5rem 1rem;
 
   &:hover {
-    background-color: #f8fafc;
-    color: #334155;
+    background-color: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
@@ -223,15 +223,15 @@ const StHeader = styled.div`
 const StMonthTitle = styled.h2`
   font-size: 1.1rem;
   font-weight: 800;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
   width: 110px;
   text-align: center;
 `;
 const StWeekendToggle = styled.button<{ $active: boolean; $color: string }>`
   background: ${({ $active, $color }) => ($active ? $color : "transparent")};
-  color: ${({ $active, $color }) => ($active ? "white" : "#9ca3af")};
+  color: ${({ $active, $color, theme }) => ($active ? "white" : theme.colors.gray400)};
   border: 1px solid
-    ${({ $active, $color }) => ($active ? "transparent" : "#e5e7eb")};
+    ${({ $active, $color, theme }) => ($active ? "transparent" : theme.colors.gray200)};
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.75rem;
@@ -247,18 +247,18 @@ const StNavButton = styled.button`
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   padding: 0.2rem;
   display: flex; /* 아이콘 수직 정렬용 */
   &:hover {
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
   }
 `;
 
 const StRankingSection = styled.div`
   margin-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
   padding-top: 1rem;
 `;
 
@@ -268,16 +268,16 @@ const StRankingToggleButton = styled.button<{ $isOpen: boolean }>`
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background-color: ${({ $isOpen }) => ($isOpen ? "#f8fafc" : "white")};
-  border: 1px solid #e2e8f0;
+  background-color: ${({ $isOpen, theme }) => ($isOpen ? theme.colors.gray100 : "white")};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   font-weight: 600;
 
   &:hover {
-    background-color: #f1f5f9;
+    background-color: ${({ theme }) => theme.colors.gray100};
     transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   }

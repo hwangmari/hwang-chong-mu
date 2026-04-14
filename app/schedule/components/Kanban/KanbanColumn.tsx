@@ -56,7 +56,7 @@ export default function KanbanColumn({
 }
 
 const StColumn = styled.div`
-  background-color: #f3f4f6;
+  background-color: ${({ theme }) => theme.colors.gray100};
   border-radius: 12px;
 
   min-height: 600px;
@@ -65,7 +65,7 @@ const StColumn = styled.div`
     position: sticky;
     top: 0;
     padding: 1rem;
-    background-color: #f3f4f6;
+    background-color: ${({ theme }) => theme.colors.gray100};
     z-index: 100;
     display: flex;
     justify-content: space-between;
@@ -75,16 +75,16 @@ const StColumn = styled.div`
     h3 {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #1f2937;
+      color: ${({ theme }) => theme.colors.gray800};
       display: flex;
       align-items: center;
       gap: 8px;
 
       span {
-        color: #9ca3af;
+        color: ${({ theme }) => theme.colors.gray400};
         font-size: 0.9rem;
         font-weight: 500;
-        background: #e5e7eb;
+        background: ${({ theme }) => theme.colors.gray200};
         padding: 2px 8px;
         border-radius: 12px;
       }

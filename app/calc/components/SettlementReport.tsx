@@ -93,7 +93,7 @@ const StTotalCard = styled.div`
 
 const StSummarySection = styled.div`
   padding: 1.5rem;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
 
   .row {
     display: flex;
@@ -119,7 +119,7 @@ const StSummarySection = styled.div`
       }
       .value {
         font-size: 1.5rem;
-        color: ${({ theme }) => theme.semantic.primary || "#3b82f6"};
+        color: ${({ theme }) => theme.semantic.primary || theme.colors.blue500};
         font-weight: 800;
       }
     }
@@ -159,7 +159,7 @@ const StDetailsSection = styled.div`
 
   .accordion-content {
     padding: 1rem 1.5rem;
-    background-color: white;
+    background-color: ${({ theme }) => theme.colors.white};
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -174,10 +174,10 @@ const StMemberRow = styled.div`
     margin-bottom: 0.2rem;
 
     .diff.plus {
-      color: #3b82f6;
+      color: ${({ theme }) => theme.colors.blue500};
     }
     .diff.minus {
-      color: #ef4444;
+      color: ${({ theme }) => theme.colors.rose500};
     }
   }
   .member-sub {

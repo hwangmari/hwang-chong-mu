@@ -1,6 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
+import type { UserVote } from "@/types";
 import AddToCalendar from "@/components/common/AddToCalendar";
 import ConfirmedResultCard from "@/app/meeting/room/detail/ConfirmedResultCard";
 import { StWrapper } from "@/components/styled/layout.styled";
@@ -14,7 +15,7 @@ interface FinalConfirmedSectionProps {
   isCreatingSettlement: boolean;
   isCreatingDinner: boolean;
   onReset: () => void;
-  onRescueUser: (userId: string | number) => void;
+  onRescueUser: (user: UserVote) => void;
   onCreateSettlement: (memberNames: string[], date: Date) => void;
   onCreateDinnerRoom: () => void;
 }

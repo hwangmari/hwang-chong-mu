@@ -46,8 +46,8 @@ const StViewModeButton = styled.button<{ $active: boolean }>`
   min-width: 5rem;
   border-radius: 999px;
   border: 1px solid ${({ $active }) => ($active ? "#90abf6" : "#d8e2ee")};
-  background: ${({ $active }) => ($active ? "#eaf1ff" : "#fff")};
-  color: ${({ $active }) => ($active ? "#3d5fbf" : "#6d7b8d")};
+  background: ${({ $active, theme }) => ($active ? theme.colors.blue50 : theme.colors.white)};
+  color: ${({ $active, theme }) => ($active ? "#3d5fbf" : theme.colors.gray500)};
   padding: 0.45rem 0.95rem;
   font-size: 0.84rem;
   font-weight: 800;

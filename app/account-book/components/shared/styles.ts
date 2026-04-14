@@ -99,7 +99,7 @@ export const StAbPrimaryButton = styled.button`
   ${buttonBase}
   border: 1px solid ${abTokens.color.primaryBorder};
   background: ${abTokens.color.primary};
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.82rem 1rem;
   font-size: 0.9rem;
   min-height: 3rem;
@@ -141,7 +141,7 @@ export const StAbApplyButton = styled.button`
   ${buttonBase}
   border: none;
   background: linear-gradient(135deg, #607de0, ${abTokens.color.primaryHover});
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.75rem 0.9rem;
   font-size: 0.84rem;
 `;
@@ -203,8 +203,8 @@ export const abInputBase = css`
   border-radius: ${abTokens.radius.sm};
   padding: 0.62rem 0.7rem;
   font-size: 0.9rem;
-  background: #fff;
-  color: #111827;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray900};
 
   &:focus {
     outline: none;
@@ -238,7 +238,7 @@ export const StAbSettingsInput = styled.input`
   width: 100%;
   border: 1px solid #d5deea;
   border-radius: ${abTokens.radius.md};
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.75rem 0.85rem;
   font-size: 0.86rem;
   color: ${abTokens.color.textDark};
@@ -262,19 +262,19 @@ export const StAbBadge = styled.span<{
   ${({ $tone = "blue" }) => {
     const tones = {
       blue: css`
-        background: #eaf1ff;
+        background: ${({ theme }) => theme.colors.blue50};
         color: #3657b5;
       `,
       neutral: css`
-        background: #f3f6fa;
+        background: ${({ theme }) => theme.colors.gray100};
         color: #5d6e87;
       `,
       purple: css`
-        background: #f2f0ff;
+        background: ${({ theme }) => theme.colors.indigo50};
         color: #6b63e8;
       `,
       teal: css`
-        background: #eef8f7;
+        background: ${({ theme }) => theme.colors.teal50};
         color: #3f8f8a;
       `,
       danger: css`
@@ -292,10 +292,9 @@ export const StAbChip = styled.button<{ $active: boolean }>`
       $active
         ? abTokens.color.badgeBlue.border
         : abTokens.color.badgeNeutral.border};
-  background: ${({ $active }) =>
-    $active
+  background: ${({ $active, theme }) => $active
       ? abTokens.color.badgeBlue.bg
-      : "#fff"};
+      : theme.colors.white};
   color: ${({ $active }) =>
     $active
       ? abTokens.color.badgeBlue.text
@@ -433,7 +432,7 @@ export const StAbSectionDescription = styled.p`
 export const StAbProgressBar = styled.div<{ $height?: string }>`
   width: 100%;
   height: ${({ $height = "0.52rem" }) => $height};
-  background: #edf1f5;
+  background: ${({ theme }) => theme.colors.gray100};
   border-radius: ${abTokens.radius.pill};
   overflow: hidden;
 `;
@@ -525,7 +524,7 @@ export const StAbLabel = styled.label`
   display: block;
   margin-bottom: 0.38rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 700;
 
   ${media.mobile} {
@@ -539,7 +538,7 @@ export const StAbSubLabel = styled.label`
   display: block;
   margin: 0.65rem 0 0.3rem;
   font-size: 0.72rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 700;
 `;
 

@@ -22,10 +22,10 @@ export const StWaitingBox = styled.div`
   margin: 0 auto;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
+  background: ${({ theme }) => theme.colors.gray100};
   border-radius: 12px;
-  color: #aaa;
-  border: 2px dashed #e9ecef;
+  color: ${({ theme }) => theme.colors.gray400};
+  border: 2px dashed ${({ theme }) => theme.colors.gray200};
 `;
 
 export const StSection = styled.div`
@@ -70,6 +70,6 @@ export const StLoadingWrapper = styled.div`
   justify-content: center;
   align-items: center;
   font-size: 1.2rem;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-weight: 600;
 `;

@@ -51,10 +51,10 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 1.8rem;
   font-weight: 800;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 const SubTitle = styled.p`
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   margin-top: 0.5rem;
   font-weight: 600;
 `;

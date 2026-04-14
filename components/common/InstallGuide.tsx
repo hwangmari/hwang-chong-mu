@@ -92,7 +92,7 @@ const Overlay = styled.div`
 `;
 
 const BottomSheet = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   width: 100%;
   max-width: 420px;
   border-radius: 24px 24px 0 0;
@@ -111,20 +111,20 @@ const Header = styled.div`
 const Title = styled.h2`
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   padding: 0.5rem;
 `;
 
 const Content = styled.div`
-  background: #f8fafc;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 1.5rem;
   border-radius: 16px;
 `;
@@ -142,11 +142,11 @@ const StepIcon = styled.div`
 
 const StepText = styled.p`
   font-size: 0.95rem;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
   line-height: 1.6;
 
   strong {
-    color: #2563eb;
+    color: ${({ theme }) => theme.colors.blue600};
     font-weight: 700;
   }
 `;

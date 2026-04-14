@@ -2,12 +2,12 @@ import styled, { css } from "styled-components";
 
 const inputStyles = css`
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 6px;
   padding: 8px;
   font-size: 0.9rem;
   &:focus {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid ${({ theme }) => theme.colors.blue500};
     border-color: transparent;
   }
 `;
@@ -16,8 +16,8 @@ export const StCard = styled.div<{
   $isCompleted?: boolean;
   $isEditing: boolean;
 }>`
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 16px;
   padding: 1.5rem;
   cursor: ${({ $isEditing }) => ($isEditing ? "default" : "pointer")};
@@ -30,21 +30,21 @@ export const StCard = styled.div<{
     !$isEditing &&
     css`
       &:hover {
-        border-color: #111827;
+        border-color: ${({ theme }) => theme.colors.gray900};
         transform: translateY(-4px);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         h3 {
-          color: #111827;
+          color: ${({ theme }) => theme.colors.gray900};
         }
       }
     `}
 
-  background-color: ${(props) => (props.$isCompleted ? "#f9fafb" : "#fff")};
+  background-color: ${(props) => (props.$isCompleted ? props.theme.colors.gray50 : props.theme.colors.white)};
   opacity: ${(props) => (props.$isCompleted ? 0.7 : 1)};
   transition: all 0.3s ease;
 
   .service-title-text {
-    color: ${(props) => (props.$isCompleted ? "#9ca3af" : "inherit")};
+    color: ${(props) => (props.$isCompleted ? props.theme.colors.gray400 : "inherit")};
   }
 
   .card-header {
@@ -52,13 +52,13 @@ export const StCard = styled.div<{
     h3 {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #1f2937;
+      color: ${({ theme }) => theme.colors.gray800};
       transition: color 0.2s;
     }
   }
 
   .desc {
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
     font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: auto;
@@ -82,7 +82,7 @@ export const StCard = styled.div<{
     }
     .arrow {
       font-size: 0.75rem;
-      color: #9ca3af;
+      color: ${({ theme }) => theme.colors.gray400};
     }
     .btn-group {
       display: flex;
@@ -117,19 +117,19 @@ export const StButton = styled.button<{ $variant: "primary" | "secondary" }>`
   ${({ $variant }) =>
     $variant === "primary"
       ? css`
-          background: #111827;
-          color: white;
+          background: ${({ theme }) => theme.colors.gray900};
+          color: ${({ theme }) => theme.colors.white};
           border: none;
           &:hover {
-            background: black;
+            background: ${({ theme }) => theme.colors.black};
           }
         `
       : css`
-          background: #f3f4f6;
-          color: #4b5563;
-          border: 1px solid #e5e7eb;
+          background: ${({ theme }) => theme.colors.gray100};
+          color: ${({ theme }) => theme.colors.gray600};
+          border: 1px solid ${({ theme }) => theme.colors.gray200};
           &:hover {
-            background: #e5e7eb;
+            background: ${({ theme }) => theme.colors.gray200};
           }
         `}
 `;
@@ -138,14 +138,14 @@ export const StIconButton = styled.button<{ $isDelete?: boolean }>`
   background: none;
   border: none;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 4px;
   transition: all 0.2s;
 
   &:hover {
-    background: ${({ $isDelete }) => ($isDelete ? "#fee2e2" : "#f3f4f6")};
-    color: ${({ $isDelete }) => ($isDelete ? "#ef4444" : "#374151")};
+    background: ${({ $isDelete, theme }) => ($isDelete ? theme.colors.rose100 : theme.colors.gray100)};
+    color: ${({ $isDelete, theme }) => ($isDelete ? theme.colors.rose500 : theme.colors.gray700)};
   }
 `;

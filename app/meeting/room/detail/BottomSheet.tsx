@@ -148,8 +148,8 @@ const StBadge = styled.div<{ $variant: "gray" | "red" }>`
           color: ${theme.colors.gray500};
         `
       : css`
-          background-color: #fef2f2; /* red-50 */
-          color: #f87171; /* red-400 */
+          background-color: ${({ theme }) => theme.colors.rose50}; /* red-50 */
+          color: ${({ theme }) => theme.colors.rose500}; /* red-400 */
         `}
 `;
 

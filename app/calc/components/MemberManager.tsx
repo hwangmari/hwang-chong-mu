@@ -100,14 +100,14 @@ const StInput = styled.input`
   font-size: 0.95rem;
   background-color: ${({ theme }) => theme.colors.gray50};
   &:focus {
-    background-color: white;
+    background-color: ${({ theme }) => theme.colors.white};
     border-color: ${({ theme }) => theme.semantic.primary};
   }
 `;
 
 const StAddButton = styled.button`
   background-color: ${({ theme }) => theme.colors.gray800};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0 1.25rem;
   border-radius: 0.75rem;
   font-weight: 600;
@@ -120,7 +120,7 @@ const StTags = styled.div`
 `;
 
 const StTag = styled.span`
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray700};
   padding: 0.4rem 0.7rem;
   border-radius: 0.5rem;

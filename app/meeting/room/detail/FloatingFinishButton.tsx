@@ -32,7 +32,7 @@ const StFloatingContainer = styled.div`
 const StFinishButton = styled.button`
   pointer-events: auto;
   padding: 1rem 1.5rem;
-  background-color: #454545;
+  background-color: ${({ theme }) => theme.colors.gray700};
   color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   font-size: 1.125rem;

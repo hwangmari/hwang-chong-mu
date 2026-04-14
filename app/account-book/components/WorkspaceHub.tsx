@@ -668,7 +668,7 @@ export default function WorkspaceHub({
 const StPage = styled.main`
   min-height: 100vh;
   padding: 1.4rem 1.25rem 2rem;
-  background: #f7f9fc;
+  background: ${({ theme }) => theme.colors.gray100};
 
   @media (max-width: 720px) {
     padding: 1rem 0.9rem 1.4rem;
@@ -711,7 +711,7 @@ const StTitle = styled.h1`
   margin-top: 0.25rem;
   font-size: 2rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 
   @media (max-width: 720px) {
     font-size: 1.55rem;
@@ -744,7 +744,7 @@ const StModeSelector = styled.div`
 const StModeOption = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#9db6ff" : "#d9e2ee")};
   border-radius: 1rem;
-  background: ${({ $active }) => ($active ? "#f4f8ff" : "#fff")};
+  background: ${({ $active, theme }) => ($active ? "#f4f8ff" : theme.colors.white)};
   padding: 0.9rem 1rem;
   text-align: left;
   display: grid;
@@ -754,7 +754,7 @@ const StModeOption = styled.button<{ $active: boolean }>`
   strong {
     font-size: 0.9rem;
     font-weight: 900;
-    color: ${({ $active }) => ($active ? "#3756b7" : "#223147")};
+    color: ${({ $active, theme }) => ($active ? "#3756b7" : theme.colors.gray800)};
   }
 
   span {
@@ -787,7 +787,7 @@ const sharedButtonBase = `
 const StManageButton = styled.button`
   ${sharedButtonBase}
   border: 1px solid #cad8ea;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   color: #49628b;
 
   &:disabled {
@@ -804,7 +804,7 @@ const StPrimaryButton = styled.button`
   ${sharedButtonBase}
   border: 1px solid #5a73d9;
   background: linear-gradient(135deg, #6d87ef, #5f73d9);
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
     width: 100%;
@@ -814,7 +814,7 @@ const StPrimaryButton = styled.button`
 const StSecondaryButton = styled.button`
   ${sharedButtonBase}
   border: 1px solid #cad8ea;
-  background: #f7faff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #49628b;
 
   @media (max-width: 720px) {
@@ -825,7 +825,7 @@ const StSecondaryButton = styled.button`
 const StGhostButton = styled.button`
   ${sharedButtonBase}
   border: 1px solid #d8e1ee;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   color: #63758e;
 
   @media (max-width: 720px) {
@@ -836,7 +836,7 @@ const StGhostButton = styled.button`
 const StHeroPanel = styled.section`
   border: 1px solid #d7e2ef;
   border-radius: 26px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
   display: flex;
   justify-content: space-between;
@@ -855,7 +855,7 @@ const StHeroCopy = styled.div`
 
   strong {
     font-size: 1.05rem;
-    color: #223247;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
@@ -920,7 +920,7 @@ const StCard = styled.button`
   border: 1px solid #d8e1ee;
   border-radius: 22px;
   padding: 1rem;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -997,7 +997,7 @@ const StCardAsideTags = styled.div`
     align-items: center;
     border-radius: 999px;
     border: 1px solid #d7e2ef;
-    background: #f8fbff;
+    background: ${({ theme }) => theme.colors.blue50};
     color: #516785;
     padding: 0.24rem 0.55rem;
     font-size: 0.72rem;
@@ -1008,7 +1008,7 @@ const StCardAsideTags = styled.div`
 const StCardType = styled.span`
   display: inline-flex;
   border-radius: 999px;
-  background: #eef4ff;
+  background: ${({ theme }) => theme.colors.indigo50};
   color: #4b69bb;
   font-size: 0.72rem;
   font-weight: 900;
@@ -1019,7 +1019,7 @@ const StCardTitle = styled.h3`
   margin-top: 0.85rem;
   font-size: 1.2rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StCardMeta = styled.p`
@@ -1045,7 +1045,7 @@ const StInviteCopyAction = styled.span`
   justify-content: center;
   width: fit-content;
   border: 1px solid #cad8ea;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   color: #49628b;
   border-radius: 999px;
   padding: 0.5rem 0.78rem;
@@ -1074,7 +1074,7 @@ const StMemberPreview = styled.div`
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    background: #eef4ff;
+    background: ${({ theme }) => theme.colors.indigo50};
     color: #4d66a7;
     padding: 0.22rem 0.48rem;
     font-size: 0.72rem;
@@ -1086,7 +1086,7 @@ const StEmptyCard = styled.div`
   margin-top: 1rem;
   border-radius: 22px;
   border: 1px dashed #cbd7e7;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   color: #708096;
   font-size: 0.9rem;
   line-height: 1.6;
@@ -1116,7 +1116,7 @@ const StModalCard = styled.div`
 const StModalTitle = styled.h3`
   font-size: 1.15rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StModalDescription = styled.p`
@@ -1142,10 +1142,10 @@ const StField = styled.label`
     width: 100%;
     border: 1px solid #d6e0ec;
     border-radius: 12px;
-    background: #fff;
+    background: ${({ theme }) => theme.colors.white};
     padding: 0.72rem 0.82rem;
     font-size: 0.92rem;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 `;
 

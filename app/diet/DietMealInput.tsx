@@ -70,7 +70,7 @@ const UnitText = styled.span`
   right: 12px;
   bottom: 12px;
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   font-weight: 500;
   pointer-events: none;
 `;

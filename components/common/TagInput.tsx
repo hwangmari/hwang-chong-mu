@@ -82,7 +82,7 @@ const StContainer = styled.div`
 const StLabel = styled.span`
   font-size: 0.8rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors?.gray500 || "#64748b"};
+  color: ${({ theme }) => theme.colors?.gray500 || theme.colors.gray500};
 `;
 
 const StInputWrapper = styled.div`
@@ -90,8 +90,8 @@ const StInputWrapper = styled.div`
   min-height: 48px;
   padding: 0.5rem;
   border-radius: 0.75rem;
-  background-color: white;
-  border: 1px solid ${({ theme }) => theme.colors?.gray200 || "#e2e8f0"};
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors?.gray200 || theme.colors.gray200};
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -100,16 +100,16 @@ const StInputWrapper = styled.div`
   transition: all 0.2s;
 
   &:focus-within {
-    border-color: ${({ theme }) => theme.colors?.gray500 || "#64748b"};
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors?.gray100 || "#f1f5f9"};
+    border-color: ${({ theme }) => theme.colors?.gray500 || theme.colors.gray500};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors?.gray100 || theme.colors.gray100};
   }
 `;
 
 const StTag = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray700};
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -121,14 +121,14 @@ const StRemoveBtn = styled.button`
   border: none;
   background: none;
   cursor: pointer;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 1.1rem;
   line-height: 1;
   display: flex;
   align-items: center;
   padding: 0;
   &:hover {
-    color: #ef4444;
+    color: ${({ theme }) => theme.colors.rose500};
   }
 `;
 
@@ -139,8 +139,8 @@ const StInput = styled.input`
   outline: none;
   font-size: 1rem;
   padding: 4px 0;
-  color: #1e293b;
+  color: ${({ theme }) => theme.colors.gray800};
   &::placeholder {
-    color: #cbd5e1;
+    color: ${({ theme }) => theme.colors.gray300};
   }
 `;

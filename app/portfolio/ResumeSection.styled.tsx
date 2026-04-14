@@ -10,7 +10,9 @@ export const StSectionContainer = styled.section`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 4rem 1.5rem;
-  animation: ${fadeInUp} 0.8s ease-out forwards;
+  ${css`
+    animation: ${fadeInUp} 0.8s ease-out forwards;
+  `}
   animation-delay: 0.1s;
   opacity: 0;
 `;

@@ -366,25 +366,25 @@ const NavBtn = styled.button`
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   &:hover {
-    color: #111;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 `;
 const CurrentDate = styled.h2`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111;
+  color: ${({ theme }) => theme.colors.gray900};
   min-width: 140px;
   text-align: center;
 `;
 const SectionCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 16px;
   padding: 1.25rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
-  border: 1px solid #f3f4f6;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 const ChartHeader = styled.div`
   display: flex;
@@ -394,7 +394,7 @@ const ChartHeader = styled.div`
 `;
 const ToggleWrapper = styled.div`
   display: flex;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 3px;
   border-radius: 10px;
 `;
@@ -407,14 +407,14 @@ const ToggleBtn = styled.button<{ $isActive: boolean }>`
   cursor: pointer;
   transition: all 0.2s;
   background: ${({ $isActive }) => ($isActive ? "white" : "transparent")};
-  color: ${({ $isActive }) => ($isActive ? "#10b981" : "#94a3b8")};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.green500 : theme.colors.gray400)};
   box-shadow: ${({ $isActive }) =>
     $isActive ? "0 1px 3px rgba(0,0,0,0.05)" : "none"};
 `;
 const SectionTitle = styled.h3`
   font-size: 1rem;
   font-weight: 700;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   margin-bottom: 1rem;
 `;
 
@@ -428,12 +428,12 @@ const TextArea = styled.textarea`
   height: 80px;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   resize: none;
   font-size: 0.95rem;
   outline: none;
   &:focus {
-    border-color: #64748b;
+    border-color: ${({ theme }) => theme.colors.gray500};
   }
 `;
 const ButtonWrapper = styled.div`
@@ -445,5 +445,5 @@ const ButtonWrapper = styled.div`
 const GuideWrapper = styled.div`
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
 `;

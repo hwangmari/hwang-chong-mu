@@ -56,7 +56,7 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 900;
-  color: #0f172a;
+  color: ${({ theme }) => theme.colors.gray900};
 `;
 const Loading = styled.div`
   display: flex;
@@ -65,5 +65,5 @@ const Loading = styled.div`
   height: 100vh;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #3b82f6;
+  color: ${({ theme }) => theme.colors.blue500};
 `;

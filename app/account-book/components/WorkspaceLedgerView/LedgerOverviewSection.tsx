@@ -442,7 +442,7 @@ const StLedgerOverviewTitle = styled.h3`
   margin-top: 0.2rem;
   font-size: 1.12rem;
   font-weight: 900;
-  color: #223147;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StLedgerOverviewCount = styled.span`
@@ -596,7 +596,7 @@ const StCardCompanyBar = styled.div`
   width: 100%;
   height: 0.62rem;
   border-radius: 999px;
-  background: #e9eef5;
+  background: ${({ theme }) => theme.colors.gray200};
   overflow: hidden;
 `;
 
@@ -664,7 +664,7 @@ const StCompareMeta = styled.div`
     font-style: normal;
     font-size: 0.8rem;
     font-weight: 800;
-    color: #223147;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 `;
 
@@ -690,7 +690,7 @@ const StCompareBar = styled.div`
   width: 100%;
   height: 0.7rem;
   border-radius: 999px;
-  background: #e9eef5;
+  background: ${({ theme }) => theme.colors.gray200};
   overflow: hidden;
 `;
 

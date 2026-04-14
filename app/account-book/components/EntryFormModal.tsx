@@ -377,7 +377,7 @@ const StSelectedCategory = styled.div`
   }
   strong {
     font-size: 0.82rem;
-    color: #374151;
+    color: ${({ theme }) => theme.colors.gray700};
   }
 
   @media (max-width: 720px) {
@@ -419,7 +419,7 @@ const StCategoryButton = styled.button<{ $active: boolean }>`
   gap: 0.45rem;
   text-align: left;
   font-size: 0.82rem;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 
   .dot {
     width: 0.62rem;
@@ -549,7 +549,7 @@ const StAddButton = styled.button`
   padding: 0.9rem 1rem;
   font-size: 0.95rem;
   font-weight: 800;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   background: #5f73d9;
   box-shadow: 0 16px 30px rgba(95, 115, 217, 0.22);
 
@@ -620,7 +620,7 @@ const StModalHeader = styled.div`
   strong {
     font-size: 1.18rem;
     font-weight: 900;
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 
   @media (max-width: 720px) {

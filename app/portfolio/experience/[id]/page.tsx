@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import ProjectItem from "../ProjectItem"; // (경로 확인 필요)
 import { Typography } from "@hwangchongmu/ui"; // 👈 Typography 활용
 import { experiences } from "@/data/experiences";
@@ -126,7 +126,9 @@ const BodyContent = styled.div`
   margin: 0 auto;
   padding: 3rem 1.25rem;
 
-  animation: ${fadeInUp} 0.8s ease-out forwards;
+  ${css`
+    animation: ${fadeInUp} 0.8s ease-out forwards;
+  `}
 `;
 
 const SectionTitleWrapper = styled.div`

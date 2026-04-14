@@ -188,8 +188,8 @@ export const StMemberChip = styled.button<{
       : $hasVoted
         ? `
         background-color: ${theme.colors.white};
-        color: #f59e0b;
-        border-color: #fde68a;
+        color: ${theme.colors.amber500};
+        border-color: ${theme.colors.amber200};
       `
         : `
         background-color: ${theme.colors.white};

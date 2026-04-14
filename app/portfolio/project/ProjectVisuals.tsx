@@ -140,7 +140,7 @@ const Container = styled.div`
 const Title = styled.h3`
   font-size: 0.875rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors?.gray600 || "#868E96"};
+  color: ${({ theme }) => theme.colors?.gray600 || theme.colors.gray500};
   margin-bottom: 1.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -180,7 +180,7 @@ const NodeGroup = styled.div`
 `;
 
 const Arrow = styled(ArrowForwardIcon)`
-  color: ${({ theme }) => theme.colors?.gray400 || "#ADB5BD"};
+  color: ${({ theme }) => theme.colors?.gray400 || theme.colors.gray400};
   font-size: 1.2rem;
 
   &.down-arrow {
@@ -196,7 +196,7 @@ const NodeBase = styled.div`
   align-items: center;
   justify-content: center;
   padding: 0.8rem 1rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors?.gray300 || "#DEE2E6"};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   font-size: 0.8rem;
@@ -237,7 +237,7 @@ const NodeRect = styled(NodeBase)<NodeProps>`
     `
     border-style: dashed;
     border-width: 1.5px;
-    background-color: #F8F9FA;
+    background-color: ${props.theme.colors.gray100};
   `}
 
   ${(props) =>
@@ -302,7 +302,7 @@ const DiamondShape = styled.div`
   left: 15px;
   width: 70px;
   height: 70px;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 2px solid ${({ theme }) => theme.colors?.gray400 || "#CED4DA"};
   transform: rotate(45deg);
   z-index: 0;
@@ -361,8 +361,8 @@ const LoopLine = styled.div`
 
   span {
     font-size: 0.7rem;
-    color: #adb5bd;
-    border-bottom: 1px dashed #adb5bd;
+    color: ${({ theme }) => theme.colors.gray400};
+    border-bottom: 1px dashed ${({ theme }) => theme.colors.gray400};
     padding-bottom: 2px;
   }
 `;
@@ -372,7 +372,7 @@ const LoopTargetBadge = styled.div`
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  background: #e9ecef;
+  background: ${({ theme }) => theme.colors.gray200};
   color: #868e96;
   font-size: 0.6rem;
   padding: 2px 6px;
@@ -382,13 +382,13 @@ const LoopTargetBadge = styled.div`
 
 const LogWrapper = styled.div`
   margin-top: 1rem;
-  border-top: 1px dashed #eee;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
   padding-top: 1rem;
 
   .log-title {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #666;
+    color: ${({ theme }) => theme.colors.gray600};
     margin-bottom: 0.5rem;
   }
 
@@ -402,7 +402,7 @@ const LogWrapper = styled.div`
       gap: 0.8rem;
       font-size: 0.85rem;
       margin-bottom: 0.4rem;
-      color: #444;
+      color: ${({ theme }) => theme.colors.gray700};
       align-items: baseline;
 
       .version {
@@ -411,7 +411,7 @@ const LogWrapper = styled.div`
         min-width: 40px;
       }
       .date {
-        color: #999;
+        color: ${({ theme }) => theme.colors.gray400};
         font-size: 0.8rem;
         min-width: 60px;
       }

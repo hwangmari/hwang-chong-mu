@@ -96,29 +96,29 @@ const StItem = styled.div`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background-color: #f3f4f6;
-    color: #111827;
+    background-color: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray900};
   }
   .task-title {
     font-weight: 500;
     margin-right: 4px;
   }
   small {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 `;
 
 const StEditForm = styled.div`
-  background: #f9fafb;
+  background: ${({ theme }) => theme.colors.gray50};
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   margin-bottom: 6px;
   .edit-title {
     width: 100%;
     padding: 4px;
     font-size: 0.85rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid ${({ theme }) => theme.colors.gray300};
     border-radius: 4px;
     margin-bottom: 4px;
   }
@@ -130,12 +130,12 @@ const StEditForm = styled.div`
       flex: 1;
       padding: 2px;
       font-size: 0.75rem;
-      border: 1px solid #d1d5db;
+      border: 1px solid ${({ theme }) => theme.colors.gray300};
       border-radius: 4px;
     }
     span {
       font-size: 0.8rem;
-      color: #6b7280;
+      color: ${({ theme }) => theme.colors.gray500};
     }
   }
   .btn-row {
@@ -150,16 +150,16 @@ const StEditForm = styled.div`
       border: 1px solid transparent;
     }
     .save {
-      background: #3b82f6;
-      color: white;
+      background: ${({ theme }) => theme.colors.blue500};
+      color: ${({ theme }) => theme.colors.white};
     }
     .cancel {
-      background: white;
-      border-color: #d1d5db;
+      background: ${({ theme }) => theme.colors.white};
+      border-color: ${({ theme }) => theme.colors.gray300};
     }
     .delete {
-      background: #fee2e2;
-      color: #ef4444;
+      background: ${({ theme }) => theme.colors.rose100};
+      color: ${({ theme }) => theme.colors.rose500};
       margin-left: auto;
     }
   }

@@ -183,7 +183,7 @@ const StInput = styled.input`
   font-size: 0.9rem;
   background-color: ${({ theme }) => theme.colors.gray50};
   &:focus {
-    background-color: white;
+    background-color: ${({ theme }) => theme.colors.white};
     border-color: ${({ theme }) => theme.semantic.primary};
   }
 `;
@@ -215,7 +215,7 @@ const StRadioLabel = styled.label<{ $active: boolean }>`
 
 const StMiniAddButton = styled.button`
   background-color: ${({ theme }) => theme.semantic.primary};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.5rem 1.25rem;
   border-radius: 0.6rem;
   font-weight: 700;

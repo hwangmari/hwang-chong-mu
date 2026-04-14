@@ -31,7 +31,7 @@ const StButton = styled.button<{ $bgColor?: string }>`
   justify-content: center;
   align-items: center;
   font-weight: 700;
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   border: none;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -50,7 +50,7 @@ const StButton = styled.button<{ $bgColor?: string }>`
             transform: translateY(-2px);
           }
           &:disabled {
-            background: #cbd5e1;
+            background: ${({ theme }) => theme.colors.gray300};
             box-shadow: none;
             cursor: not-allowed;
             transform: none;

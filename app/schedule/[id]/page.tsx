@@ -311,7 +311,7 @@ const StFixedContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f8f9fa;
+  background-color: ${({ theme }) => theme.colors.gray100};
   overflow: hidden;
 `;
 
@@ -331,12 +331,12 @@ const StLeftSection = styled.div`
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid ${({ theme }) => theme.colors.gray200};
 
   @media ${({ theme }) => theme.media.mobile} {
     flex: none;
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   }
 `;
 
@@ -345,10 +345,10 @@ const StDayPreview = styled.div`
   bottom: 1.5rem;
   left: 1.5rem;
   width: 320px;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 1rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   z-index: 200;
   overflow: hidden;
 
@@ -365,30 +365,30 @@ const StPreviewHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   font-size: 0.95rem;
   font-weight: 800;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
 `;
 
 const StPreviewClose = styled.button`
   background: none;
   border: none;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   font-size: 0.9rem;
   padding: 2px 6px;
   border-radius: 4px;
   &:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
 const StPreviewEmpty = styled.p`
   padding: 1.25rem 1rem;
   text-align: center;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.85rem;
 `;
 
@@ -417,13 +417,13 @@ const StPreviewDot = styled.div<{ $color: string }>`
 const StPreviewSvc = styled.div`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StPreviewTitle = styled.div`
   font-size: 0.85rem;
   font-weight: 600;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 const StPreviewAction = styled.button`
@@ -431,16 +431,16 @@ const StPreviewAction = styled.button`
   width: 100%;
   padding: 0.7rem;
   text-align: center;
-  background: #f9fafb;
+  background: ${({ theme }) => theme.colors.gray50};
   border: none;
-  border-top: 1px solid #f3f4f6;
-  color: #3b82f6;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.blue500};
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #eff6ff;
+    background: ${({ theme }) => theme.colors.blue50};
   }
 `;
 
@@ -448,7 +448,7 @@ const StRightSection = styled.div`
   flex: 1;
   min-width: 380px;
   max-width: 500px;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   overflow-y: auto;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.02);
 

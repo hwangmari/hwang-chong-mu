@@ -186,13 +186,13 @@ const StBackButton = styled.button`
   justify-content: center;
   padding: 8px;
   border-radius: 50%; // 원형 클릭 효과
-  color: #333; // 기본 아이콘 색상 (필요시 변경)
+  color: ${({ theme }) => theme.colors.gray800}; // 기본 아이콘 색상 (필요시 변경)
   transition: all 0.2s ease-in-out; // 부드러운 전환 효과
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05); // 호버 시 연한 회색 배경
     transform: translateX(-3px); // 왼쪽으로 살짝 이동하는 애니메이션
-    color: #000; // 호버 시 색상 진하게
+    color: ${({ theme }) => theme.colors.black}; // 호버 시 색상 진하게
   }
 
   &:active {
@@ -202,11 +202,11 @@ const StBackButton = styled.button`
 const StTitle = styled.h1`
   font-size: 1.3rem;
   font-weight: bold;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StControlPanel = styled.div`
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 20px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -223,8 +223,8 @@ const StInputRow = styled.div`
 `;
 
 const StAddBtn = styled.button`
-  background-color: #333;
-  color: white;
+  background-color: ${({ theme }) => theme.colors.gray800};
+  color: ${({ theme }) => theme.colors.white};
   border: none;
   border-radius: 8px;
   width: 70px;
@@ -250,21 +250,21 @@ const StPlayerChip = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  background-color: #f1f3f5;
+  background-color: ${({ theme }) => theme.colors.gray100};
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.9rem;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   font-weight: 500;
 
   button {
-    background: #adb5bd;
+    background: ${({ theme }) => theme.colors.gray400};
     border: none;
     border-radius: 50%;
     width: 18px;
     height: 18px;
     font-size: 10px;
-    color: white;
+    color: ${({ theme }) => theme.colors.white};
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -272,13 +272,13 @@ const StPlayerChip = styled.div`
     transition: background 0.2s;
 
     &:hover {
-      background: #ff6b6b;
+      background: ${({ theme }) => theme.colors.rose500};
     }
   }
 `;
 
 const StEmptyMsg = styled.span`
-  color: #aaa;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.9rem;
   padding: 5px;
 `;

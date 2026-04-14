@@ -1,4 +1,4 @@
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 
 const gradientShift = keyframes`
   0% { background-position: 0% 50%; }
@@ -143,16 +143,16 @@ export const StStickyProjectLink = styled.a`
   padding: 0.45rem 0.7rem;
   border-radius: 9999px;
   border: 1px solid #dbe4f0;
-  background: #fff;
-  color: #334155;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray700};
   font-size: 0.8rem;
   font-weight: 700;
   transition: all 0.2s ease;
 
   &:hover {
     border-color: #8bb2eb;
-    color: #1d4ed8;
-    background: #eff6ff;
+    color: ${({ theme }) => theme.colors.blue700};
+    background: ${({ theme }) => theme.colors.blue50};
   }
 `;
 
@@ -189,34 +189,48 @@ export const StCoreBadge = styled.span<BadgeProps>`
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 500;
-  border: 1px solid #e5e7eb;
-  background-color: #fff;
-  color: #4b5563;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background-color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray600};
   white-space: nowrap;
 
-  ${({ $isAi }) =>
+  ${({ $isAi, theme }) =>
     $isAi &&
-    `
-    background: linear-gradient(135deg, #667eea, #764ba2, #667eea, #764ba2);
-    background-size: 300% 300%;
-    animation: ${gradientShift} 3s ease infinite;
-    color: white;
-    border: 1px solid transparent;
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(118, 75, 162, 0.3);
-  `}
+    css`
+      background: linear-gradient(
+        135deg,
+        #667eea,
+        #764ba2,
+        #667eea,
+        #764ba2
+      );
+      background-size: 300% 300%;
+      animation: ${gradientShift} 3s ease infinite;
+      color: ${theme.colors.white};
+      border: 1px solid transparent;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(118, 75, 162, 0.3);
+    `}
 
-  ${({ $isClaude }) =>
+  ${({ $isClaude, theme }) =>
     $isClaude &&
-    `
-    background: linear-gradient(135deg, #E8845A, #D97757, #B85C3A, #E8845A);
-    background-size: 300% 300%;
-    animation: ${gradientShift} 3s ease infinite;
-    color: white;
-    border: 1px solid transparent;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(217, 119, 87, 0.4), 0 0 0 1px rgba(232, 132, 90, 0.2);
-  `}
+    css`
+      background: linear-gradient(
+        135deg,
+        #e8845a,
+        #d97757,
+        #b85c3a,
+        #e8845a
+      );
+      background-size: 300% 300%;
+      animation: ${gradientShift} 3s ease infinite;
+      color: ${theme.colors.white};
+      border: 1px solid transparent;
+      font-weight: 700;
+      box-shadow:
+        0 2px 8px rgba(217, 119, 87, 0.4),
+        0 0 0 1px rgba(232, 132, 90, 0.2);
+    `}
 `;
 export const StProjectList = styled.div`
   display: flex;
@@ -233,13 +247,13 @@ export const StPhilosophyBox = styled.div`
     0,
     0.03
   ); /* 아주 연한 회색 배경 (다크모드면 반대로) */
-  border-left: 4px solid #3b82f6; /* 강조용 포인트 컬러 (파란색 계열) */
+  border-left: 4px solid ${({ theme }) => theme.colors.blue500}; /* 강조용 포인트 컬러 (파란색 계열) */
   border-radius: 8px;
 
   .catchphrase {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #333; /* 제목 색상 */
+    color: ${({ theme }) => theme.colors.gray800}; /* 제목 색상 */
     margin-bottom: 12px;
     font-style: italic;
     font-family: serif; /* 영문 캐치프레이즈 느낌 살리기 */
@@ -248,14 +262,14 @@ export const StPhilosophyBox = styled.div`
   .description {
     font-size: 0.95rem;
     line-height: 1.6;
-    color: #555; /* 본문 색상 */
+    color: ${({ theme }) => theme.colors.gray700}; /* 본문 색상 */
 
     b {
-      color: #111; /* 강조 텍스트 진하게 */
+      color: ${({ theme }) => theme.colors.gray900}; /* 강조 텍스트 진하게 */
       font-weight: 600;
       background: linear-gradient(
         to top,
-        #e0e7ff 40%,
+        ${({ theme }) => theme.colors.indigo100} 40%,
         transparent 40%
       ); /* 형광펜 효과 */
     }
@@ -273,7 +287,7 @@ export const StDetailList = styled.ul`
   padding-left: 20px;
   margin-top: 8px; /* margin: 8px 0 0 0 과 동일 */
   list-style-type: disc;
-  color: #4b5563; /* 본문 텍스트 색상에 맞춤 (선택 사항) */
+  color: ${({ theme }) => theme.colors.gray600}; /* 본문 텍스트 색상에 맞춤 (선택 사항) */
 
   li {
     margin-bottom: 4px; /* 항목 간 간격 추가 */

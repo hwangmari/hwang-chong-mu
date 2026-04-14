@@ -258,7 +258,7 @@ const StToggleContent = styled.div`
   padding: 1.25rem;
   background-color: #fafafa;
   border-radius: 12px;
-  border: 1px solid #eee;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 
   animation: fadeIn 0.3s ease-in-out;
   @keyframes fadeIn {

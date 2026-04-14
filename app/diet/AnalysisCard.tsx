@@ -97,9 +97,9 @@ const CardContainer = styled.div`
   margin-top: 1.5rem;
   padding: 1.5rem;
   border-radius: 16px;
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  color: #374151;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  color: ${({ theme }) => theme.colors.gray700};
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   animation: ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
@@ -110,7 +110,7 @@ const CardContainer = styled.div`
   .title {
     font-weight: 700;
     font-size: 1rem;
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -136,23 +136,23 @@ const CardContainer = styled.div`
   }
 
   .label {
-    color: #6b7280;
+    color: ${({ theme }) => theme.colors.gray500};
   }
 
   .value {
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
     font-family: "Roboto Mono", monospace, sans-serif;
   }
 
   .divider {
     height: 1px;
-    background-color: #e5e7eb;
+    background-color: ${({ theme }) => theme.colors.gray200};
     margin: 0.25rem 0;
     width: 100%;
   }
 
   .calc-row.total .label {
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
     font-weight: 700;
   }
 
@@ -162,37 +162,37 @@ const CardContainer = styled.div`
   }
 
   .calc-row.total .value.loss {
-    color: #10b981; /* 감량 시 초록색 (Green-500) */
+    color: ${({ theme }) => theme.colors.green500}; /* 감량 시 초록색 (Green-500) */
   }
 
   .calc-row.total .value.gain {
-    color: #dc2626; /* 증량 시 빨간색 (Red-600) */
+    color: ${({ theme }) => theme.colors.rose600}; /* 증량 시 빨간색 (Red-600) */
   }
 `;
 
 const MessageBox = styled.div<{ $isLoss: boolean }>`
   margin-top: 0.25rem;
   text-align: left;
-  border: 1px dashed #ddd;
-  background: #fcfcfc;
+  border: 1px dashed ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.gray50};
   padding: 1rem;
   border-radius: 12px;
 
   .msg-title {
     font-weight: 700;
     font-size: 0.95rem;
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
     margin-bottom: 0.25rem;
   }
 
   .msg-desc {
     font-size: 0.85rem;
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
     line-height: 1.4;
   }
 
   b {
     font-weight: 600;
-    color: #111827;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 `;

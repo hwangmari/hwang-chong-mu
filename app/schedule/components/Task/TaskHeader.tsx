@@ -92,7 +92,7 @@ const StHeaderContainer = styled.div`
 const StTitleText = styled.span`
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151; /* gray-700 */
+  color: ${({ theme }) => theme.colors.gray700}; /* gray-700 */
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -105,7 +105,7 @@ const StInput = styled.input`
   flex: 1;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #111827; /* gray-900 */
+  color: ${({ theme }) => theme.colors.gray900}; /* gray-900 */
   border: none;
   background: transparent;
   padding: 4px 0;
@@ -120,11 +120,11 @@ const StInput = styled.input`
 
   &:focus {
     outline: none;
-    border-bottom-color: #111827;
+    border-bottom-color: ${({ theme }) => theme.colors.gray900};
   }
 
   &:hover:not(:focus) {
-    border-bottom-color: #e5e7eb;
+    border-bottom-color: ${({ theme }) => theme.colors.gray200};
   }
 `;
 
@@ -146,7 +146,7 @@ const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
   cursor: pointer;
   transition: all 0.2s ease;
 
-  color: #9ca3af; /* gray-400 */
+  color: ${({ theme }) => theme.colors.gray400}; /* gray-400 */
 
   &:hover {
     transform: scale(1.1);
@@ -156,12 +156,12 @@ const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
     $variant === "memo" &&
     css`
       &:hover {
-        color: #f59e0b; /* amber-500 */
-        background-color: #fffbeb; /* amber-50 */
+        color: ${({ theme }) => theme.colors.amber500}; /* amber-500 */
+        background-color: ${({ theme }) => theme.colors.amber50}; /* amber-50 */
       }
       &.active {
-        color: #d97706; /* amber-600 */
-        background-color: #fef3c7; /* amber-100 */
+        color: ${({ theme }) => theme.colors.amber600}; /* amber-600 */
+        background-color: ${({ theme }) => theme.colors.amber100}; /* amber-100 */
       }
     `}
 
@@ -169,8 +169,8 @@ const StIconButton = styled.button<{ $variant: "memo" | "delete" }>`
     $variant === "delete" &&
     css`
       &:hover {
-        color: #ef4444; /* red-500 */
-        background-color: #fee2e2; /* red-50 */
+        color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
+        background-color: ${({ theme }) => theme.colors.rose100}; /* red-50 */
       }
     `}
 `;

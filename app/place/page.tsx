@@ -309,7 +309,7 @@ const StCheckbox = styled.div<{ $checked: boolean }>`
       $checked ? theme.colors.blue500 : theme.colors.gray300};
   background: ${({ $checked, theme }) =>
     $checked ? theme.colors.blue500 : theme.colors.white};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,7 +341,7 @@ const StPlaceNumber = styled.span`
   height: 1.25rem;
   border-radius: 50%;
   background: ${({ theme }) => theme.colors.blue500};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.7rem;
   font-weight: 800;
   flex-shrink: 0;
@@ -451,7 +451,7 @@ const StBadge = styled.span`
   font-size: 0.8rem;
   font-weight: 700;
   background: ${({ theme }) => theme.colors.blue500};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.15rem 0.5rem;
   border-radius: 9999px;
 `;

@@ -152,27 +152,27 @@ const StSearchBar = styled.div`
   align-items: center;
   padding: 0 1rem;
   padding-bottom: 0.5rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   position: relative;
 `;
 
 const StSearchInput = styled.input`
   width: 100%;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 8px;
   font-size: 0.85rem;
-  color: #374151;
-  background: #f9fafb;
+  color: ${({ theme }) => theme.colors.gray700};
+  background: ${({ theme }) => theme.colors.gray50};
   transition: all 0.2s;
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    background: white;
+    border-color: ${({ theme }) => theme.colors.blue500};
+    background: ${({ theme }) => theme.colors.white};
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
   }
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 `;
 
@@ -181,12 +181,12 @@ const StClearButton = styled.button`
   right: 1.5rem;
   background: none;
   border: none;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   font-size: 0.85rem;
   padding: 4px;
   &:hover {
-    color: #374151;
+    color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
@@ -196,7 +196,7 @@ const StControlBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   z-index: 10;
   height: 60px;
 
@@ -206,14 +206,14 @@ const StControlBar = styled.div`
     font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
-    border: 1px solid #d1d5db;
-    background-color: white;
-    color: #374151;
+    border: 1px solid ${({ theme }) => theme.colors.gray300};
+    background-color: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.gray700};
     transition: all 0.2s;
     &.active {
-      background-color: #111827;
-      color: white;
-      border-color: #111827;
+      background-color: ${({ theme }) => theme.colors.gray900};
+      color: ${({ theme }) => theme.colors.white};
+      border-color: ${({ theme }) => theme.colors.gray900};
     }
     &:hover {
       transform: translateY(-1px);
@@ -222,17 +222,17 @@ const StControlBar = styled.div`
 
   .copy-btn {
     font-size: 0.85rem;
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
     background: none;
-    border: 1px solid #e5e7eb;
+    border: 1px solid ${({ theme }) => theme.colors.gray200};
     padding: 4px 10px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     &:hover {
-      background-color: #f3f4f6;
-      color: #111827;
-      border-color: #d1d5db;
+      background-color: ${({ theme }) => theme.colors.gray100};
+      color: ${({ theme }) => theme.colors.gray900};
+      border-color: ${({ theme }) => theme.colors.gray300};
     }
   }
 `;

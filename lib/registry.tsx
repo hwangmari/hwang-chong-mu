@@ -4,6 +4,12 @@ import React, { useState } from "react";
 import { useServerInsertedHTML } from "next/navigation";
 import { ServerStyleSheet, StyleSheetManager } from "styled-components";
 import { UiProvider } from "@hwangchongmu/ui";
+import { ThemeModeProvider, useThemeMode } from "./themeMode";
+
+function ThemedUiProvider({ children }: { children: React.ReactNode }) {
+  const { mode } = useThemeMode();
+  return <UiProvider mode={mode}>{children}</UiProvider>;
+}
 
 export default function StyledComponentsRegistry({
   children,
@@ -19,12 +25,18 @@ export default function StyledComponentsRegistry({
   });
 
   if (typeof window !== "undefined") {
-    return <UiProvider>{children}</UiProvider>;
+    return (
+      <ThemeModeProvider>
+        <ThemedUiProvider>{children}</ThemedUiProvider>
+      </ThemeModeProvider>
+    );
   }
 
   return (
     <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>
-      <UiProvider>{children}</UiProvider>
+      <ThemeModeProvider>
+        <ThemedUiProvider>{children}</ThemedUiProvider>
+      </ThemeModeProvider>
     </StyleSheetManager>
   );
 }

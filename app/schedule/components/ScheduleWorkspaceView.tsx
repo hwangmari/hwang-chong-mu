@@ -198,17 +198,17 @@ const StBackLink = styled.button`
 `;
 
 const StCalendarButton = styled.button`
-  background: #eff6ff;
-  color: #3b82f6;
+  background: ${({ theme }) => theme.colors.blue50};
+  color: ${({ theme }) => theme.colors.blue500};
   padding: 0.7rem 1.2rem;
   border-radius: 8px;
   font-weight: 700;
   font-size: 0.9rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid ${({ theme }) => theme.colors.blue200};
   cursor: pointer;
   transition: all 0.2s;
   &:hover {
-    background: #dbeafe;
+    background: ${({ theme }) => theme.colors.blue100};
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
@@ -216,7 +216,7 @@ const StCalendarButton = styled.button`
 
 const StCreateButton = styled.button`
   background: ${({ theme }) => theme.colors.gray900};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.7rem 1.2rem;
   border-radius: 8px;
   font-weight: 700;
@@ -258,7 +258,7 @@ const StLink = styled.button`
 `;
 
 const StCreateForm = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 1rem;
   padding: 1.25rem;
@@ -289,7 +289,7 @@ const StPrimaryBtn = styled.button`
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   background: ${({ theme }) => theme.colors.gray900};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   font-size: 0.85rem;
   border: none;
@@ -299,7 +299,7 @@ const StPrimaryBtn = styled.button`
 const StSecondaryBtn = styled.button`
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray600};
   font-weight: 700;
   font-size: 0.85rem;

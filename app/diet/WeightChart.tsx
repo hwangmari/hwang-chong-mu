@@ -264,22 +264,22 @@ const LegendItem = styled.button<{ $color: string; $isActive: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
-  background: ${({ $isActive }) => ($isActive ? "#f8fafc" : "transparent")};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray100 : "transparent")};
   border: 1px solid
-    ${({ $isActive }) => ($isActive ? "#e2e8f0" : "transparent")};
+    ${({ $isActive, theme }) => ($isActive ? theme.colors.gray200 : "transparent")};
   padding: 4px 8px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   opacity: ${({ $isActive }) => ($isActive ? 1 : 0.4)};
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
   font-size: 0.75rem;
   font-weight: 600;
   svg {
     color: ${({ $color }) => $color};
   }
   &:hover {
-    background: #f1f5f9;
+    background: ${({ theme }) => theme.colors.gray100};
   }
 `;
 
@@ -295,7 +295,7 @@ const GridLine = styled.div`
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px dashed #e5e7eb;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
 `;
 const EmptyState = styled.div`
   position: absolute;
@@ -303,7 +303,7 @@ const EmptyState = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   width: 100%;
   text-align: center;
 `;
@@ -324,7 +324,7 @@ const Dot = styled.div<{
   height: ${({ $isSmall }) => ($isSmall ? "6px" : "8px")};
   border-radius: 50%;
   background-color: ${({ $color }) => $color};
-  border: 1px solid white;
+  border: 1px solid ${({ theme }) => theme.colors.white};
   box-shadow: ${({ $isToday }) =>
     $isToday ? "0 0 0 2px rgba(239, 68, 68, 0.4)" : "none"};
   z-index: 2;
@@ -336,8 +336,8 @@ const ValueLabel = styled.span<{ $color: string }>`
   position: absolute;
   bottom: 6px;
   white-space: nowrap;
-  text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff,
-    -1px 1px 0 #fff;
+  text-shadow: 1px 1px 0 ${({ theme }) => theme.colors.white}, -1px -1px 0 ${({ theme }) => theme.colors.white}, 1px -1px 0 ${({ theme }) => theme.colors.white},
+    -1px 1px 0 ${({ theme }) => theme.colors.white};
 `;
 const XAxis = styled.div`
   position: relative;
@@ -348,6 +348,6 @@ const DayLabel = styled.span<{ $isToday: boolean }>`
   font-size: 0.75rem;
   text-align: center;
   white-space: nowrap;
-  color: ${({ $isToday }) => ($isToday ? "#ef4444" : "#9ca3af")};
+  color: ${({ $isToday, theme }) => ($isToday ? theme.colors.rose500 : theme.colors.gray400)};
   font-weight: ${({ $isToday }) => ($isToday ? "700" : "400")};
 `;

@@ -151,13 +151,13 @@ export default function CommentSection({
 const StCommentContainer = styled.div`
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 2px dashed #e2e8f0;
+  border-top: 2px dashed ${({ theme }) => theme.colors.gray200};
 `;
 
 const StTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 700;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
   margin-bottom: 1rem;
 `;
 
@@ -174,13 +174,13 @@ const StNicknameInput = styled.input<{ $focusColor: string }>`
   width: 80px;
   padding: 10px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   font-size: 0.9rem;
   outline: none;
-  background: #f8fafc;
+  background: ${({ theme }) => theme.colors.gray100};
   &:focus {
     border-color: ${({ $focusColor }) => $focusColor};
-    background: white;
+    background: ${({ theme }) => theme.colors.white};
   }
 `;
 
@@ -188,7 +188,7 @@ const StContentInput = styled.input<{ $focusColor: string }>`
   flex: 1;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   font-size: 0.9rem;
   outline: none;
   &:focus {
@@ -199,7 +199,7 @@ const StContentInput = styled.input<{ $focusColor: string }>`
 const StSubmitButton = styled.button<{ $bgColor: string }>`
   width: 40px;
   background: ${({ $bgColor }) => $bgColor};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   border: none;
   border-radius: 12px;
   display: flex;
@@ -211,7 +211,7 @@ const StSubmitButton = styled.button<{ $bgColor: string }>`
     opacity: 0.9;
   }
   &:disabled {
-    background: #cbd5e1;
+    background: ${({ theme }) => theme.colors.gray300};
     cursor: not-allowed;
   }
 `;
@@ -224,7 +224,7 @@ const StCommentList = styled.div`
 
 const StEmptyState = styled.div`
   text-align: center;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   padding: 1rem;
   font-size: 0.9rem;
 `;
@@ -251,7 +251,7 @@ const StAvatar = styled.div<{ $bgColor: string }>`
 
 const StBubbleWrapper = styled.div`
   flex: 1;
-  background: #f1f5f9;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 10px 14px;
   border-radius: 0 16px 16px 16px;
 `;
@@ -266,12 +266,12 @@ const StBubbleHeader = styled.div`
 const StNickname = styled.span`
   font-weight: 700;
   font-size: 0.85rem;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 const StDate = styled.span`
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   flex: 1;
 `;
 
@@ -279,16 +279,16 @@ const StDeleteBtn = styled.button`
   background: none;
   border: none;
   padding: 0;
-  color: #cbd5e1;
+  color: ${({ theme }) => theme.colors.gray300};
   cursor: pointer;
   &:hover {
-    color: #ef4444;
+    color: ${({ theme }) => theme.colors.rose500};
   }
 `;
 
 const StContent = styled.p`
   font-size: 0.95rem;
-  color: #475569;
+  color: ${({ theme }) => theme.colors.gray600};
   line-height: 1.4;
   word-break: break-all;
 `;

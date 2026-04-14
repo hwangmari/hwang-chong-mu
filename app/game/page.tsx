@@ -248,7 +248,7 @@ export default function GameLobbyPage() {
 const StSectionTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: bold;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 1rem;
 `;
 
@@ -263,9 +263,9 @@ const StModeCard = styled.div`
   display: flex;
   align-items: center;
   padding: 1.5rem;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   border-radius: 12px;
-  border: 2px solid #eee;
+  border: 2px solid ${({ theme }) => theme.colors.gray200};
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -288,12 +288,12 @@ const StModeCard = styled.div`
     strong {
       font-size: 1.2rem;
       margin-bottom: 0.3rem;
-      color: #333;
+      color: ${({ theme }) => theme.colors.gray800};
     }
 
     span {
       font-size: 0.9rem;
-      color: #666;
+      color: ${({ theme }) => theme.colors.gray600};
     }
   }
 `;
@@ -310,8 +310,8 @@ const StGameGrid = styled.div`
 `;
 
 const StGameItem = styled.div`
-  background: white;
-  border: 1px solid #eee;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 12px;
   padding: 1.5rem;
   display: flex;
@@ -324,7 +324,7 @@ const StGameItem = styled.div`
 
   &:hover {
     transform: translateY(-3px);
-    border-color: #ff6b6b;
+    border-color: ${({ theme }) => theme.colors.rose500};
     box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
   }
 
@@ -338,11 +338,11 @@ const StGameItem = styled.div`
       display: block;
       font-size: 1.1rem;
       margin-bottom: 0.3rem;
-      color: #333;
+      color: ${({ theme }) => theme.colors.gray800};
     }
     small {
       font-size: 0.85rem;
-      color: #888;
+      color: ${({ theme }) => theme.colors.gray500};
       line-height: 1.3;
     }
   }
@@ -351,7 +351,7 @@ const StGameItem = styled.div`
 const StBackButton = styled.button`
   background: none;
   border: none;
-  color: #666;
+  color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -364,7 +364,7 @@ const StBackButton = styled.button`
   transition: color 0.2s ease;
 
   &:hover {
-    color: #333;
+    color: ${({ theme }) => theme.colors.gray800};
     svg {
       transform: translateX(-4px);
     }
@@ -383,7 +383,7 @@ const StInputGroup = styled.div`
 
 const StDivider = styled.hr`
   border: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
   margin: 2rem 0;
 `;
 

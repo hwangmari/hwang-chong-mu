@@ -255,7 +255,7 @@ const StDateButton = styled.button<{
     if ($isFinalSelected) return theme.colors.white;
     if ($isMySelection) return theme.colors.black;
     if ($unavailableCount > 0) return theme.colors.white;
-    if ($isHoliday) return "#ef4444";
+    if ($isHoliday) return theme.colors.rose500;
     return theme.colors.gray500;
   }};
 
@@ -264,7 +264,7 @@ const StDateButton = styled.button<{
     css`
       transform: scale(1.05);
       z-index: 15;
-      border: 1px solid #000;
+      border: 1px solid ${({ theme }) => theme.colors.black};
       box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
     `}
 
@@ -278,8 +278,8 @@ const StDateButton = styled.button<{
   ${({ $isConfirmSelected, theme }) =>
     $isConfirmSelected &&
     css`
-      border: 2px solid #f59e0b;
-      background-color: #fffbeb;
+      border: 2px solid ${({ theme }) => theme.colors.amber500};
+      background-color: ${({ theme }) => theme.colors.amber50};
       z-index: 10;
     `}
 
@@ -391,7 +391,7 @@ const StTooltip = styled.div<{ $isOpen: boolean }>`
   transform: translateX(-50%);
 
   background-color: rgba(31, 41, 55, 0.95); /* gray-800 */
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
   font-size: 0.65rem;
@@ -421,7 +421,7 @@ const StConfirmVoteBadge = styled.span`
   bottom: -0.25rem;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #f59e0b;
+  background-color: ${({ theme }) => theme.colors.amber500};
   color: ${({ theme }) => theme.colors.white};
   font-size: 0.5rem;
   font-weight: 800;

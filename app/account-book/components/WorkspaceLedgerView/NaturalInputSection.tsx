@@ -199,7 +199,7 @@ const StNaturalInput = styled.input`
   font-size: 1rem;
   line-height: 1.4;
   color: #142132;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
 
   &:focus {
     outline: none;

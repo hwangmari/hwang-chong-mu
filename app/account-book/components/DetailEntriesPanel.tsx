@@ -376,7 +376,7 @@ const StPanel = styled.div`
 const StBlockTitle = styled.h3`
   font-size: 1.08rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 0.2rem;
 `;
 const StDetailHeader = styled.div`
@@ -394,7 +394,7 @@ const StDetailHeaderActions = styled.div`
 `;
 const StDetailVisibilityButton = styled.button`
   border: 1px solid #d6e0ee;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #61738d;
   border-radius: 999px;
   padding: 0.48rem 0.78rem;
@@ -406,7 +406,7 @@ const StDetailAddButton = styled.button`
   height: 2.25rem;
   border: none;
   background: linear-gradient(135deg, #6d87ef, #5f73d9);
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   border-radius: 999px;
   font-size: 1.35rem;
   line-height: 1;
@@ -426,7 +426,7 @@ const StEntryList = styled.div`
 `;
 const StEmpty = styled.p`
   font-size: 0.9rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
   padding: 0.25rem 0;
 `;
 const StEntryItem = styled.article`
@@ -436,7 +436,7 @@ const StEntryItem = styled.article`
   padding: 0.82rem 0.9rem;
   border: 1px solid #e3ebf5;
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white}, #fbfdff);
   box-shadow: 0 8px 24px rgba(31, 41, 55, 0.04);
 
   @media (max-width: 720px) {
@@ -470,15 +470,15 @@ const StEntryBadge = styled.span<{
   padding: 0.2rem 0.56rem;
   font-size: 0.72rem;
   font-weight: 800;
-  color: ${({ $tone }) => {
+  color: ${({ $tone, theme }) => {
     if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return "#3f8f8a";
+    if ($tone === "asset") return theme.colors.teal600;
     return "#6b63e8";
   }};
-  background: ${({ $tone }) => {
-    if ($tone === "income") return "#eef4ff";
-    if ($tone === "asset") return "#eef8f7";
-    return "#f2f0ff";
+  background: ${({ $tone, theme }) => {
+    if ($tone === "income") return theme.colors.blue50;
+    if ($tone === "asset") return theme.colors.teal50;
+    return theme.colors.indigo50;
   }};
 `;
 const StMemberBadge = styled.span`
@@ -489,7 +489,7 @@ const StMemberBadge = styled.span`
   font-size: 0.72rem;
   font-weight: 800;
   color: #335a95;
-  background: #eef4ff;
+  background: ${({ theme }) => theme.colors.indigo50};
 `;
 const StEntryPayment = styled.span`
   font-size: 0.72rem;
@@ -504,7 +504,7 @@ const StMirrorBadge = styled.span`
   font-size: 0.68rem;
   font-weight: 800;
   color: #5d6e87;
-  background: #f3f6fa;
+  background: ${({ theme }) => theme.colors.gray100};
   border: 1px solid #e1e7ef;
 `;
 
@@ -520,7 +520,7 @@ const StEntryBox = styled.div`
 
 const StEntryName = styled.p`
   font-size: 1rem;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
   font-weight: 800;
   line-height: 1.35;
   word-break: break-word;
@@ -535,7 +535,7 @@ const StEntryMetaList = styled.div`
   flex-wrap: wrap;
   align-items: center;
   gap: 0.3rem 0.5rem;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.8rem;
   line-height: 1.45;
 `;
@@ -553,7 +553,7 @@ const StEntryMetaText = styled.span`
 `;
 const StEntryMemo = styled.p`
   font-size: 0.76rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.45;
 `;
 const StEntryActions = styled.div`
@@ -564,7 +564,7 @@ const StEntryActions = styled.div`
 `;
 const StEntryActionButton = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => ($active ? "#99b4ff" : "#d9e4f1")};
-  background: ${({ $active }) => ($active ? "#edf3ff" : "#f7f9fc")};
+  background: ${({ $active, theme }) => ($active ? "#edf3ff" : theme.colors.gray100)};
   color: ${({ $active }) => ($active ? "#3557b6" : "#66758b")};
   border-radius: 999px;
   font-size: 0.72rem;
@@ -591,10 +591,10 @@ const StEntryAmount = styled.span<{
   font-size: 0.98rem;
   font-weight: 900;
   text-align: right;
-  color: ${({ $tone, $hidden }) => {
+  color: ${({ $tone, $hidden, theme }) => {
     if ($hidden) return "#8b95a6";
     if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return "#3f8f8a";
+    if ($tone === "asset") return theme.colors.teal600;
     return "#6b63e8";
   }};
   letter-spacing: -0.01em;
@@ -621,7 +621,7 @@ const StEntryControlGroup = styled.div`
 `;
 const StEditButton = styled.button`
   border: 1px solid #d7e3ff;
-  background: #f3f7ff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #4b76c6;
   border-radius: 999px;
   padding: 0.28rem 0.68rem;
@@ -630,7 +630,7 @@ const StEditButton = styled.button`
 `;
 const StDeleteButton = styled.button`
   border: 1px solid #e3e8ef;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   color: #7e8a9b;
   border-radius: 999px;
   padding: 0.28rem 0.68rem;
@@ -638,7 +638,7 @@ const StDeleteButton = styled.button`
   font-weight: 800;
 `;
 const StTrackingRow = styled.article`
-  border: 1px solid #edf1f5;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 12px;
   padding: 0.65rem 0.7rem;
   display: grid;
@@ -650,7 +650,7 @@ const StTrackingMeta = styled.div`
   justify-content: space-between;
   strong {
     font-size: 0.86rem;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
   span {
     font-size: 0.75rem;
@@ -660,7 +660,7 @@ const StTrackingMeta = styled.div`
 const StTrackingBar = styled.div`
   height: 0.52rem;
   border-radius: 999px;
-  background: #edf1f5;
+  background: ${({ theme }) => theme.colors.gray100};
   overflow: hidden;
 `;
 const StTrackingFill = styled.div`
@@ -670,7 +670,7 @@ const StTrackingFill = styled.div`
 `;
 const StTrackingAmount = styled.strong`
   font-size: 0.9rem;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
 `;
 const StGroupedSection = styled.section`
   display: grid;

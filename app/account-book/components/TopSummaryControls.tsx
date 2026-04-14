@@ -253,7 +253,7 @@ const StLedgerCardHead = styled.div`
   strong {
     font-size: 0.88rem;
     font-weight: 900;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   em {
@@ -326,7 +326,7 @@ const StCalendarSummaryCard = styled.article<{
   align-items: flex-start;
   min-height: 9.6rem;
   border-radius: 22px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+  background: linear-gradient(180deg, #fcfdff 0%, ${({ theme }) => theme.colors.blue50} 100%);
   border: 1px solid ${({ $active }) => ($active ? "#9db8ee" : "#dbe4f1")};
   box-shadow: ${({ $active }) =>
     $active
@@ -378,7 +378,7 @@ const StCalendarSummaryLabel = styled.p`
 `;
 const StCalendarSummaryToggle = styled.button`
   border: 1px solid #d7e2ef;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #62748d;
   border-radius: 999px;
   padding: 0.22rem 0.54rem;
@@ -394,10 +394,10 @@ const StCalendarSummaryValue = styled.p<{
   font-weight: 900;
   line-height: 1.12;
   letter-spacing: -0.02em;
-  color: ${({ $tone, $hidden }) => {
+  color: ${({ $tone, $hidden, theme }) => {
     if ($hidden) return "#8b95a6";
     if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return "#3f8f8a";
+    if ($tone === "asset") return theme.colors.teal600;
     return "#6b63e8";
   }};
 

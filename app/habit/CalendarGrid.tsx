@@ -166,7 +166,7 @@ const StWeekDay = styled.div`
   text-align: center;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   margin-bottom: 0.5rem;
 `;
 
@@ -206,7 +206,7 @@ const StDateCell = styled.div<{
     css`
       transform: scale(1.02);
       z-index: 15;
-      border: 1px solid #000;
+      border: 1px solid ${({ theme }) => theme.colors.black};
       box-shadow: 0 4px 6px rgba(59, 59, 59, 0.4);
     `}
 `;
@@ -214,7 +214,7 @@ const StDateCell = styled.div<{
 const StDateText = styled.span<{ $isToday?: boolean; $isDarkBg: boolean }>`
   font-size: 1rem;
   font-weight: ${({ $isToday }) => ($isToday ? "900" : "600")};
-  color: ${({ $isDarkBg }) => ($isDarkBg ? "white" : "#374151")};
+  color: ${({ $isDarkBg, theme }) => ($isDarkBg ? "white" : theme.colors.gray700)};
   transition: color 0.2s;
   margin-bottom: 2px;
 `;
@@ -222,8 +222,7 @@ const StDateText = styled.span<{ $isToday?: boolean; $isDarkBg: boolean }>`
 const StRateText = styled.span<{ $isDarkBg: boolean }>`
   font-size: 0.5rem;
   font-weight: 500;
-  color: ${({ $isDarkBg }) =>
-    $isDarkBg ? "rgba(255, 255, 255, 0.9)" : "#6b7280"};
+  color: ${({ $isDarkBg, theme }) => $isDarkBg ? "rgba(255, 255, 255, 0.9)" : theme.colors.gray500};
   position: absolute;
   bottom: 10px;
 `;

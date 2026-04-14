@@ -1,6 +1,7 @@
 "use client";
 
 import { Typography } from "@hwangchongmu/ui";
+import type { UserVote } from "@/types";
 import CalendarGrid from "@/app/meeting/room/detail/CalendarGrid";
 import DateControlButtons from "@/app/meeting/room/detail/DateControlButtons";
 import NameInput from "@/app/meeting/room/detail/NameInput";
@@ -21,7 +22,7 @@ interface VotingSectionProps {
   participants: any[];
   calendarGrid: (Date | null)[];
   currentUnavailable: Date[];
-  step: string;
+  step: "VOTING" | "CONFIRM";
   finalDate: Date | null;
   includeWeekend: boolean;
   hoveredUserId: string | number | null;
@@ -33,8 +34,8 @@ interface VotingSectionProps {
   onToggleDate: (date: Date) => void;
   onSubmitVote: () => void;
   onSubmitAbsent: () => void;
-  onEditUser: (userId: string | number) => void;
-  onDeleteUser: (userId: string | number) => void;
+  onEditUser: (user: UserVote) => void;
+  onDeleteUser: (user: UserVote) => void;
   onShowGuide: () => void;
 }
 

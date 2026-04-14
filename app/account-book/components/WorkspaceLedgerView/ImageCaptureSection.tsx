@@ -467,7 +467,7 @@ const StCaptureFileName = styled.span`
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid #d7e2ef;
   padding: 0.42rem 0.75rem;
   font-size: 0.78rem;
@@ -486,7 +486,7 @@ const StPrimaryButton = styled.button`
   border: 1px solid #4e67d0;
   border-radius: 999px;
   background: #5f73d9;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.88rem;
   font-weight: 800;
   min-height: 2.6rem;
@@ -508,7 +508,7 @@ const StPrimaryButton = styled.button`
 const StSecondaryButton = styled.button`
   border: 1px solid #cedbeb;
   border-radius: 999px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   color: #506683;
   font-size: 0.88rem;
   font-weight: 800;
@@ -629,7 +629,7 @@ const StExistingDuplicateNotice = styled.p`
 const StConfirmTitle = styled.h3`
   font-size: 1.4rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StResultList = styled.div`
@@ -702,12 +702,11 @@ const StConfidenceBadge = styled.span<{ $confidence: "high" | "medium" | "low" }
       : $confidence === "low"
         ? "#a6593c"
         : "#4b688f"};
-  background: ${({ $confidence }) =>
-    $confidence === "high"
+  background: ${({ $confidence, theme }) => $confidence === "high"
       ? "#e6f7ee"
       : $confidence === "low"
         ? "#fff1e8"
-        : "#edf4ff"};
+        : theme.colors.blue50};
 `;
 
 const StDeleteButton = styled.button`
@@ -758,7 +757,7 @@ const StDuplicateCheckboxLabel = styled.label`
   gap: 0.35rem;
   border-radius: 999px;
   border: 1px solid #ead7db;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.24rem 0.52rem;
   font-size: 0.72rem;
   font-weight: 800;
@@ -787,11 +786,15 @@ const StRawText = styled.p`
   color: #6d7b8d;
 `;
 
-const inputBase = `
+const inputBase = ({
+  theme,
+}: {
+  theme: { colors: { white: string } };
+}) => `
   width: 100%;
   border: 1px solid #dce5ed;
   border-radius: 10px;
-  background: #fff;
+  background: ${theme.colors.white};
   padding: 0.58rem 0.72rem;
   font-size: 0.82rem;
   color: #1d3340;

@@ -332,14 +332,14 @@ const StFixedContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f8f9fa;
+  background-color: ${({ theme }) => theme.colors.gray100};
   overflow: hidden;
 `;
 
 const StTopBar = styled.header`
   min-height: 60px;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: ${({ theme }) => theme.colors.white};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -353,13 +353,13 @@ const StTopBar = styled.header`
     .back-link {
       display: inline-flex;
       align-items: center;
-      color: #6b7280;
-      &:hover { color: #111827; }
+      color: ${({ theme }) => theme.colors.gray500};
+      &:hover { color: ${({ theme }) => theme.colors.gray900}; }
     }
     .page-title {
       font-size: 1.15rem;
       font-weight: 800;
-      color: #111827;
+      color: ${({ theme }) => theme.colors.gray900};
     }
   }
 
@@ -385,9 +385,9 @@ const StSwitchLabel = styled.label`
   font-size: 0.85rem;
   font-weight: 600;
   user-select: none;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   input {
-    accent-color: #111827;
+    accent-color: ${({ theme }) => theme.colors.gray900};
     width: 16px;
     height: 16px;
   }
@@ -409,12 +409,12 @@ const StLeftSection = styled.div`
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid ${({ theme }) => theme.colors.gray200};
 
   @media (max-width: 767px) {
     flex: none;
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   }
 `;
 
@@ -422,7 +422,7 @@ const StRightPanel = styled.div`
   flex: 1;
   min-width: 300px;
   max-width: 380px;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   overflow-y: auto;
   padding: 1.5rem;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.02);
@@ -438,7 +438,7 @@ const StRightPanel = styled.div`
 const StPanelTitle = styled.h3`
   font-size: 0.85rem;
   font-weight: 800;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
@@ -472,33 +472,33 @@ const StFilterDot = styled.div<{ $color: string; $active: boolean }>`
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${({ $active, $color }) => ($active ? $color : "#d1d5db")};
+  background: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray300)};
   flex-shrink: 0;
 `;
 
 const StFilterName = styled.span<{ $active: boolean }>`
   font-size: 0.9rem;
   font-weight: 700;
-  color: ${({ $active }) => ($active ? "#374151" : "#9ca3af")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.gray700 : theme.colors.gray400)};
   flex: 1;
 `;
 
 const StFilterCount = styled.span`
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-weight: 600;
 `;
 
 const StEmptyFilter = styled.div`
   padding: 1rem;
   text-align: center;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.85rem;
 `;
 
 const StDivider = styled.div`
   height: 1px;
-  background: #f3f4f6;
+  background: ${({ theme }) => theme.colors.gray100};
   margin: 1.25rem 0;
 `;
 
@@ -514,22 +514,22 @@ const StServiceLink = styled.button`
   align-items: center;
   padding: 0.55rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background: white;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   transition: all 0.2s;
 
   span {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 
   &:hover {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    span { color: #3b82f6; }
+    border-color: ${({ theme }) => theme.colors.blue500};
+    color: ${({ theme }) => theme.colors.blue500};
+    span { color: ${({ theme }) => theme.colors.blue500}; }
   }
 `;
 
@@ -538,8 +538,8 @@ const StServiceLink = styled.button`
 const StIssueBadge = styled.span`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #ef4444;
-  background: #fef2f2;
+  color: ${({ theme }) => theme.colors.rose500};
+  background: ${({ theme }) => theme.colors.rose50};
   padding: 1px 7px;
   border-radius: 9999px;
   margin-left: 6px;
@@ -557,10 +557,8 @@ const StIssueItem = styled.div<{ $severity: string }>`
   gap: 0.5rem;
   padding: 0.5rem 0.6rem;
   border-radius: 0.5rem;
-  background: ${({ $severity }) =>
-    $severity === "blocker" ? "#fef2f2" : $severity === "warning" ? "#fffbeb" : "#f9fafb"};
-  border: 1px solid ${({ $severity }) =>
-    $severity === "blocker" ? "#fecaca" : $severity === "warning" ? "#fde68a" : "#e5e7eb"};
+  background: ${({ $severity, theme }) => $severity === "blocker" ? theme.colors.rose50 : $severity === "warning" ? theme.colors.amber50 : theme.colors.gray50};
+  border: 1px solid ${({ $severity, theme }) => $severity === "blocker" ? theme.colors.rose200 : $severity === "warning" ? theme.colors.amber200 : theme.colors.gray200};
 `;
 
 const StIssueSeverityDot = styled.div<{ $severity: string }>`
@@ -569,20 +567,19 @@ const StIssueSeverityDot = styled.div<{ $severity: string }>`
   border-radius: 50%;
   margin-top: 4px;
   flex-shrink: 0;
-  background: ${({ $severity }) =>
-    $severity === "blocker" ? "#ef4444" : $severity === "warning" ? "#f59e0b" : "#10b981"};
+  background: ${({ $severity, theme }) => $severity === "blocker" ? theme.colors.rose500 : $severity === "warning" ? theme.colors.amber500 : theme.colors.green500};
 `;
 
 const StIssueServiceName = styled.div`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StIssueTitle = styled.div`
   font-size: 0.82rem;
   font-weight: 600;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 // ── 미리보기 ──
@@ -592,10 +589,10 @@ const StDayPreview = styled.div`
   bottom: 1.5rem;
   left: 1.5rem;
   width: 340px;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 1rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   z-index: 200;
   overflow: hidden;
 
@@ -612,30 +609,30 @@ const StPreviewHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   font-size: 0.95rem;
   font-weight: 800;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
 `;
 
 const StPreviewClose = styled.button`
   background: none;
   border: none;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   font-size: 0.9rem;
   padding: 2px 6px;
   border-radius: 4px;
   &:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
 const StPreviewEmpty = styled.p`
   padding: 1.25rem 1rem;
   text-align: center;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.85rem;
 `;
 
@@ -664,11 +661,11 @@ const StPreviewDot = styled.div<{ $color: string }>`
 const StPreviewSvc = styled.div`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StPreviewTitle = styled.div`
   font-size: 0.85rem;
   font-weight: 600;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
 `;

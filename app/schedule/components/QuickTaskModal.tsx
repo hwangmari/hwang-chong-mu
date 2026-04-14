@@ -133,7 +133,7 @@ const StOverlay = styled.div`
 
 const StModal = styled.div`
   width: min(100%, 22rem);
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 1.25rem;
   padding: 1.5rem;
   display: flex;
@@ -169,7 +169,7 @@ const StSelect = styled.select`
   border-radius: 0.75rem;
   font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.gray800};
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.blue500};
@@ -228,7 +228,7 @@ const StActions = styled.div`
 const StCancelBtn = styled.button`
   padding: 0.6rem 1rem;
   border-radius: 0.6rem;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray600};
   font-weight: 700;
   font-size: 0.85rem;
@@ -243,7 +243,7 @@ const StSubmitBtn = styled.button`
   padding: 0.6rem 1.25rem;
   border-radius: 0.6rem;
   background: ${({ theme }) => theme.colors.gray900};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   font-size: 0.85rem;
   border: none;

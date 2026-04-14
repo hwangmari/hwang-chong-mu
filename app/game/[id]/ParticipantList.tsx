@@ -83,7 +83,7 @@ const StParticipantHeader = styled.div`
 `;
 const StLabel = styled.span`
   font-size: 0.85rem;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: bold;
 `;
 const StGuestInputWrapper = styled.div`
@@ -95,16 +95,16 @@ const StGuestInput = styled.input`
   flex: 1;
   padding: 0.8rem;
   border-radius: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   font-size: 0.9rem;
   &:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: ${({ theme }) => theme.colors.blue500};
   }
 `;
 const StGuestAddButton = styled.button`
-  background: #333;
-  color: white;
+  background: ${({ theme }) => theme.colors.gray800};
+  color: ${({ theme }) => theme.colors.white};
   border: none;
   width: 40px;
   border-radius: 12px;
@@ -127,7 +127,7 @@ const StAvatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e9ecef;
+  background: ${({ theme }) => theme.colors.gray200};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@ const StAvatar = styled.div`
   flex-shrink: 0;
 `;
 const StBubble = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.8rem 1rem;
   border-radius: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
@@ -146,11 +146,11 @@ const StBubble = styled.div`
 const StName = styled.span`
   font-weight: bold;
   font-size: 0.9rem;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 const StMessage = styled.span`
   font-size: 0.9rem;
-  color: #555;
+  color: ${({ theme }) => theme.colors.gray700};
   margin-top: 0.2rem;
   word-break: break-word;
   line-height: 1.4;
@@ -160,8 +160,8 @@ const StDeleteBtn = styled.button`
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: #ffebeb;
-  color: #ff6b6b;
+  background: ${({ theme }) => theme.colors.rose100};
+  color: ${({ theme }) => theme.colors.rose500};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -171,11 +171,11 @@ const StDeleteBtn = styled.button`
   flex-shrink: 0;
   margin-left: 0.5rem;
   &:hover {
-    background: #ffc9c9;
+    background: ${({ theme }) => theme.colors.rose200};
   }
 `;
 const StEmpty = styled.p`
   text-align: center;
-  color: #aaa;
+  color: ${({ theme }) => theme.colors.gray400};
   margin-top: 2rem;
 `;

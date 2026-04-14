@@ -81,8 +81,8 @@ const StShareButton = styled.button<{ $isCopied: boolean }>`
   ${({ $isCopied, theme }) =>
     $isCopied
       ? css`
-          background-color: #22c55e; /* green-500 */
-          color: white;
+          background-color: ${({ theme }) => theme.colors.green500}; /* green-500 */
+          color: ${({ theme }) => theme.colors.white};
           cursor: default;
           transform: scale(1.1);
         `
@@ -107,7 +107,7 @@ const StTooltip = styled.div<{ $show: boolean }>`
   margin-right: 0.75rem; /* 버튼과 간격 */
   padding: 0.25rem 0.5rem;
   background-color: ${({ theme }) => theme.colors.gray800};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.75rem;
   font-weight: 700;
   border-radius: 0.375rem;

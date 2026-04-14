@@ -145,7 +145,7 @@ const SidebarHomeLink = styled(Link)<{ $active: boolean }>`
   margin-bottom: 0.8rem;
   border-radius: 16px;
   border: 1px solid ${({ $active }) => ($active ? "#a9bdf6" : "#d8e2ee")};
-  background: ${({ $active }) => ($active ? "#eef3ff" : "#f8fbff")};
+  background: ${({ $active, theme }) => ($active ? "#eef3ff" : theme.colors.blue50)};
   color: ${({ $active }) => ($active ? "#395fb7" : "#546b89")};
   padding: 0.78rem 0.9rem;
   font-size: 0.88rem;
@@ -179,7 +179,7 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   display: block;
   border-radius: 18px;
   border: 1px solid ${({ $active }) => ($active ? "#a9bdf6" : "#e2e9f2")};
-  background: ${({ $active }) => ($active ? "#eef3ff" : "#fff")};
+  background: ${({ $active, theme }) => ($active ? "#eef3ff" : theme.colors.white)};
   padding: 0.72rem 0.78rem;
   text-decoration: none;
 

@@ -213,7 +213,7 @@ const StSummaryRow = styled.div`
 `;
 
 const StSummaryCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1rem;
   padding: 1.25rem;
@@ -240,7 +240,7 @@ const StMemberGrid = styled.div`
 `;
 
 const StMemberCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1rem;
   padding: 1.25rem;
@@ -259,7 +259,7 @@ const StAvatar = styled.div`
   height: 40px;
   border-radius: 50%;
   background: ${({ theme }) => theme.colors.gray900};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,8 +295,7 @@ const StProgressBar = styled.div`
 const StProgressFill = styled.div<{ $pct: number }>`
   height: 100%;
   width: ${({ $pct }) => $pct}%;
-  background: ${({ $pct }) =>
-    $pct >= 80 ? "#10b981" : $pct >= 50 ? "#3b82f6" : "#f59e0b"};
+  background: ${({ $pct, theme }) => $pct >= 80 ? theme.colors.green500 : $pct >= 50 ? theme.colors.blue500 : theme.colors.amber500};
   border-radius: 3px;
   transition: width 0.3s;
 `;
@@ -381,8 +380,8 @@ const StPhaseInfo = styled.div`
 const StActiveCount = styled.span`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #3b82f6;
-  background: #eff6ff;
+  color: ${({ theme }) => theme.colors.blue500};
+  background: ${({ theme }) => theme.colors.blue50};
   padding: 1px 6px;
   border-radius: 4px;
 `;
@@ -390,8 +389,8 @@ const StActiveCount = styled.span`
 const StCompletedCount = styled.span`
   font-size: 0.7rem;
   font-weight: 700;
-  color: #10b981;
-  background: #ecfdf5;
+  color: ${({ theme }) => theme.colors.green500};
+  background: ${({ theme }) => theme.colors.green50};
   padding: 1px 6px;
   border-radius: 4px;
 `;

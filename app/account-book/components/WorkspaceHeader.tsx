@@ -315,7 +315,7 @@ const StWorkspaceHeader = styled.header`
   position: sticky;
   top: 0;
   border-bottom: 1px solid #d9dde3;
-  background: #f7f8fa;
+  background: ${({ theme }) => theme.colors.gray100};
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-areas: "left center right";
@@ -434,7 +434,7 @@ const StBackButton = styled.button`
 const StHeaderTitle = styled.h1`
   font-size: 1.05rem;
   font-weight: 800;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -459,7 +459,7 @@ const StHeaderMetaRow = styled.div`
 
 const StHeaderInfoText = styled.p`
   font-size: 0.76rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
 
   @media (max-width: 720px) {
     display: none;
@@ -483,9 +483,9 @@ const StMonthButton = styled.button`
   height: 2.3rem;
   border-radius: 999px;
   border: 1px solid #dce3eb;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   font-size: 1.3rem;
-  color: #4b5563;
+  color: ${({ theme }) => theme.colors.gray600};
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -497,7 +497,7 @@ const StChevronIcon = styled.svg`
 `;
 const StMonthInfoButton = styled.button<{ $open: boolean }>`
   border: none;
-  background: ${({ $open }) => ($open ? "#ffffff" : "transparent")};
+  background: ${({ $open, theme }) => ($open ? theme.colors.white : "transparent")};
   padding: 0.4rem 0.65rem;
   text-align: center;
   border-radius: 18px;
@@ -529,7 +529,7 @@ const StMonthTitleRow = styled.div`
 const StMonthTitle = styled.h2`
   font-size: 1.15rem;
   font-weight: 800;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StMonthCaret = styled.svg`
@@ -542,7 +542,7 @@ const StMonthCaret = styled.svg`
 
 const StMonthRange = styled.p`
   font-size: 0.75rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
 
   @media (max-width: 720px) {
     display: none;
@@ -585,7 +585,7 @@ const StMonthPickerHeader = styled.div`
 const StMonthPickerYear = styled.strong`
   font-size: 0.98rem;
   font-weight: 900;
-  color: #223147;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StMonthPickerYearButton = styled.button`
@@ -593,7 +593,7 @@ const StMonthPickerYearButton = styled.button`
   height: 2rem;
   border-radius: 999px;
   border: 1px solid #d5dfed;
-  background: #f9fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #5b6f90;
   display: inline-flex;
   align-items: center;
@@ -617,7 +617,7 @@ const StMonthPickerGrid = styled.div`
 const StMonthChip = styled.button<{ $active: boolean }>`
   border-radius: 14px;
   border: 1px solid ${({ $active }) => ($active ? "#9eb4ff" : "#e1e8f2")};
-  background: ${({ $active }) => ($active ? "#eef3ff" : "#fff")};
+  background: ${({ $active, theme }) => ($active ? "#eef3ff" : theme.colors.white)};
   color: ${({ $active }) => ($active ? "#4262d8" : "#42536b")};
   padding: 0.7rem 0.25rem;
   font-size: 0.88rem;
@@ -662,7 +662,7 @@ const StActionButtonBase = styled.button`
 const StPrimaryActionButton = styled(StActionButtonBase)`
   border: 1px solid #4e67d0;
   background: #5f73d9;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
 `;
 

@@ -108,14 +108,13 @@ const StSolutionTitle = styled.p`
 `;
 
 const StTipsCard = styled.div<{ $hasStory: boolean }>`
-  background-color: #f0fdf4; /* 약속(노랑) vs 습관(초록) 테마 분리 가능하지만 일단 통일 */
-  background-color: ${({ $hasStory }) =>
-    $hasStory
-      ? "#fefce8"
-      : "#f1f5f9"}; /* 스토리가 있으면 노랑(약속), 없으면 회색(습관) */
+  background-color: ${({ theme }) => theme.colors.green50}; /* 약속(노랑) vs 습관(초록) 테마 분리 가능하지만 일단 통일 */
+  background-color: ${({ $hasStory, theme }) => $hasStory
+      ? theme.colors.yellow50
+      : theme.colors.gray100}; /* 스토리가 있으면 노랑(약속), 없으면 회색(습관) */
   padding: 1.5rem;
   border-radius: 1.25rem;
-  border: 1px solid ${({ $hasStory }) => ($hasStory ? "#fef9c3" : "#e2e8f0")};
+  border: 1px solid ${({ $hasStory, theme }) => ($hasStory ? theme.colors.yellow100 : theme.colors.gray200)};
 `;
 
 const StTipList = styled.ul`
@@ -131,7 +130,7 @@ const StTipItem = styled.li`
 `;
 
 const StTipIconWrapper = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -150,13 +149,13 @@ const StTipText = styled.div`
 
   strong {
     display: block;
-    color: #1e293b;
+    color: ${({ theme }) => theme.colors.gray800};
     margin-bottom: 4px;
     font-weight: 700;
   }
 
   p {
-    color: #64748b;
+    color: ${({ theme }) => theme.colors.gray500};
     font-size: 0.85rem;
   }
 `;

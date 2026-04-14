@@ -70,13 +70,13 @@ const StPageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f9fafb;
+  background-color: ${({ theme }) => theme.colors.gray50};
   padding: 3rem 1rem;
 `;
 const StFormContainer = styled.div`
   width: 100%;
   max-width: 500px;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
   border-radius: 24px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -85,7 +85,7 @@ const StHeader = styled.div`
   margin-bottom: 2rem;
   text-align: center;
   .back-link {
-    color: #6b7280;
+    color: ${({ theme }) => theme.colors.gray500};
     text-decoration: none;
     display: block;
     margin-bottom: 1rem;
@@ -96,7 +96,7 @@ const StHeader = styled.div`
     margin-bottom: 0.5rem;
   }
   p {
-    color: #6b7280;
+    color: ${({ theme }) => theme.colors.gray500};
   }
 `;
 const StForm = styled.form`
@@ -110,16 +110,16 @@ const StFormGroup = styled.div`
   gap: 0.5rem;
   label {
     font-weight: 700;
-    color: #374151;
+    color: ${({ theme }) => theme.colors.gray700};
     .req {
-      color: #ef4444;
+      color: ${({ theme }) => theme.colors.rose500};
     }
   }
   input,
   textarea {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid ${({ theme }) => theme.colors.gray300};
     border-radius: 12px;
   }
   textarea {
@@ -130,13 +130,13 @@ const StFormGroup = styled.div`
 const StSubmitButton = styled.button`
   width: 100%;
   padding: 1rem;
-  background-color: #111827;
-  color: white;
+  background-color: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.white};
   font-weight: 700;
   border-radius: 12px;
   transition: background-color 0.2s;
   &:hover {
-    background-color: #000;
+    background-color: ${({ theme }) => theme.colors.black};
   }
   &:disabled {
     opacity: 0.7;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import Introduction from "./Introduction";
 import ProfileCard from "./ProfileCard";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -60,7 +60,9 @@ const StHeaderContainer = styled.header`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 4rem 1.5rem; /* 상하 여백 조정 */
-  animation: ${fadeInUp} 0.8s ease-out forwards;
+  ${css`
+    animation: ${fadeInUp} 0.8s ease-out forwards;
+  `}
 `;
 
 const StProfileWrapper = styled.div`

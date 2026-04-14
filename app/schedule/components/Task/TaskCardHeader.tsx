@@ -168,8 +168,8 @@ const CheckboxLabel = styled.label`
     left: 0;
     height: 18px;
     width: 18px;
-    background-color: #fff;
-    border: 2px solid #e5e7eb;
+    background-color: ${({ theme }) => theme.colors.white};
+    border: 2px solid ${({ theme }) => theme.colors.gray200};
     border-radius: 4px;
     transition: all 0.2s;
 
@@ -181,15 +181,15 @@ const CheckboxLabel = styled.label`
       top: 1px;
       width: 4px;
       height: 9px;
-      border: solid white;
+      border: solid ${({ theme }) => theme.colors.white};
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
     }
   }
 
   input:checked ~ .checkmark {
-    background-color: #10b981;
-    border-color: #10b981;
+    background-color: ${({ theme }) => theme.colors.green500};
+    border-color: ${({ theme }) => theme.colors.green500};
     &:after {
       display: block;
     }
@@ -202,7 +202,7 @@ const AccordionBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   cursor: pointer;
   transition: transform 0.2s;
   padding: 4px;
@@ -210,7 +210,7 @@ const AccordionBtn = styled.button`
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
-    color: #4b5563;
+    color: ${({ theme }) => theme.colors.gray600};
   }
 
   &.collapsed {
@@ -221,10 +221,10 @@ const AccordionBtn = styled.button`
 const TitleInput = styled.input`
   background: none;
   border: none;
-  border-bottom: 2px solid #3b82f6;
+  border-bottom: 2px solid ${({ theme }) => theme.colors.blue500};
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
   padding: 2px 4px;
   outline: none;
   width: auto;
@@ -234,14 +234,14 @@ const TitleInput = styled.input`
 const TitleText = styled.h3<{ $isCompleted: boolean }>`
   font-size: 1rem;
   font-weight: 600;
-  color: ${(props) => (props.$isCompleted ? "#9ca3af" : "#1f2937")};
+  color: ${(props) => (props.$isCompleted ? props.theme.colors.gray400 : props.theme.colors.gray800)};
   text-decoration: ${(props) => (props.$isCompleted ? "line-through" : "none")};
   cursor: pointer;
   margin: 0;
   transition: color 0.2s;
 
   &:hover {
-    color: #3b82f6;
+    color: ${({ theme }) => theme.colors.blue500};
   }
 `;
 
@@ -251,7 +251,7 @@ const IconButton = styled.button`
   padding: 6px;
   border-radius: 6px;
   cursor: pointer;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -259,12 +259,12 @@ const IconButton = styled.button`
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   &.delete:hover {
-    background-color: #fee2e2;
-    color: #ef4444;
+    background-color: ${({ theme }) => theme.colors.rose100};
+    color: ${({ theme }) => theme.colors.rose500};
   }
 `;
 
@@ -274,7 +274,7 @@ const ColorIndicator = styled.div<{ $color: string }>`
   border-radius: 50%;
   background-color: ${(props) => props.$color};
   box-shadow:
-    0 0 0 2px #fff,
+    0 0 0 2px ${({ theme }) => theme.colors.white},
     0 0 0 3px ${(props) => props.$color}44;
 `;
 

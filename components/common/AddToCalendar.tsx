@@ -84,20 +84,20 @@ const StCalendarButton = styled.button<{ $variant: "google" | "ical" }>`
   font-size: 0.875rem; /* text-sm */
   font-weight: 500; /* font-medium */
   transition: background-color 0.2s;
-  color: ${({ $variant }) => ($variant === "google" ? "#ffffff" : "#000000")};
+  color: ${({ $variant, theme }) => ($variant === "google" ? theme.colors.white : theme.colors.black)};
 
   ${({ $variant }) =>
     $variant === "google"
       ? css`
-          background-color: #3b82f6; /* blue-500 */
+          background-color: ${({ theme }) => theme.colors.blue500}; /* blue-500 */
           &:hover {
-            background-color: #2563eb; /* blue-600 */
+            background-color: ${({ theme }) => theme.colors.blue600}; /* blue-600 */
           }
         `
       : css`
-          background-color: #facc15; /* yellow-400 */
+          background-color: ${({ theme }) => theme.colors.yellow400}; /* yellow-400 */
           &:hover {
-            background-color: #eab308; /* yellow-500 */
+            background-color: ${({ theme }) => theme.colors.yellow500}; /* yellow-500 */
           }
         `}
 `;

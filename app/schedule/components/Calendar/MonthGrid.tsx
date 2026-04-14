@@ -87,23 +87,23 @@ export default function MonthGrid({
 const StGridContainer = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 12px;
   overflow: hidden;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   width: 100%;
 `;
 const StGridHeader = styled.div<{ $cols: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 const StDayHeader = styled.div`
   padding: 0.75rem;
   text-align: center;
   font-weight: 600;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.875rem;
 `;
 const StGridBody = styled.div<{ $cols: number }>`
@@ -111,8 +111,8 @@ const StGridBody = styled.div<{ $cols: number }>`
   grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
   width: 100%;
   & > div {
-    border-right: 1px solid #f3f4f6;
-    border-bottom: 1px solid #f3f4f6;
+    border-right: 1px solid ${({ theme }) => theme.colors.gray100};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
   }
   & > div:nth-child(${({ $cols }) => $cols}n) {
     border-right: none;

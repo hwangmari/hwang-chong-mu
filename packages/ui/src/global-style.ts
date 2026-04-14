@@ -33,39 +33,39 @@ const utilities = css`
   }
 
   .text-white {
-    color: #ffffff;
+    color: var(--color-white);
   }
   .text-black {
-    color: #000000;
+    color: var(--color-black);
   }
   .text-gray-400 {
-    color: #9ca3af;
+    color: var(--color-gray400);
   }
   .text-gray-500 {
-    color: #6b7280;
+    color: var(--color-gray500);
   }
   .text-gray-600 {
-    color: #4b5563;
+    color: var(--color-gray600);
   }
   .text-gray-700 {
-    color: #374151;
+    color: var(--color-gray700);
   }
   .text-gray-900 {
-    color: #111827;
+    color: var(--color-gray900);
   }
 
   .text-blue-600 {
-    color: #2563eb;
+    color: var(--color-blue600);
   }
   .text-blue-700 {
-    color: #1d4ed8;
+    color: var(--color-blue700);
   }
 
   .text-green-700 {
-    color: #15803d;
+    color: var(--color-green600);
   }
   .text-orange-500 {
-    color: #f97316;
+    color: var(--color-orange500);
   }
 
   .mb-0 {
@@ -134,16 +134,43 @@ const utilities = css`
 export const GlobalStyle = createGlobalStyle`
   * { box-sizing: border-box; padding: 0; margin: 0; }
 
+  :root {
+    color-scheme: ${({ theme }) => theme.mode === "dark" ? "dark" : "light"};
+    --color-white: ${({ theme }) => theme.colors.white};
+    --color-black: ${({ theme }) => theme.colors.black};
+    --color-gray50: ${({ theme }) => theme.colors.gray50};
+    --color-gray100: ${({ theme }) => theme.colors.gray100};
+    --color-gray200: ${({ theme }) => theme.colors.gray200};
+    --color-gray300: ${({ theme }) => theme.colors.gray300};
+    --color-gray400: ${({ theme }) => theme.colors.gray400};
+    --color-gray500: ${({ theme }) => theme.colors.gray500};
+    --color-gray600: ${({ theme }) => theme.colors.gray600};
+    --color-gray700: ${({ theme }) => theme.colors.gray700};
+    --color-gray800: ${({ theme }) => theme.colors.gray800};
+    --color-gray900: ${({ theme }) => theme.colors.gray900};
+    --color-gray950: ${({ theme }) => theme.colors.gray950};
+    --color-blue50: ${({ theme }) => theme.colors.blue50};
+    --color-blue100: ${({ theme }) => theme.colors.blue100};
+    --color-blue200: ${({ theme }) => theme.colors.blue200};
+    --color-blue500: ${({ theme }) => theme.colors.blue500};
+    --color-blue600: ${({ theme }) => theme.colors.blue600};
+    --color-blue700: ${({ theme }) => theme.colors.blue700};
+    --color-green600: ${({ theme }) => theme.colors.green600};
+    --color-orange500: ${({ theme }) => theme.colors.orange500};
+    --color-rose500: ${({ theme }) => theme.colors.rose500};
+  }
+
   body {
     font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     color: ${({ theme }) => theme.colors.gray900};
     background-color: ${({ theme }) => theme.colors.gray50};
     line-height: 1.5;
     word-break: keep-all;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   a { color: inherit; text-decoration: none; }
-  button { background: none; border: none; cursor: pointer; font-family: inherit; }
+  button { background: none; border: none; cursor: pointer; font-family: inherit; color: inherit; }
 
   ${utilities}
 `;

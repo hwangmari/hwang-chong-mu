@@ -132,7 +132,7 @@ const ColorSection = styled.div`
 const Label = styled.p`
   font-size: 0.85rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: ${({ theme }) => theme.colors.gray400};
   margin-bottom: 1rem;
   margin-left: 0.5rem;
 `;

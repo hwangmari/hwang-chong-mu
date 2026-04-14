@@ -112,16 +112,16 @@ const StSolutionTitle = styled.p`
 `;
 
 const StRedHighlight = styled.span`
-  color: #ef4444; /* red-500 */
+  color: ${({ theme }) => theme.colors.rose500}; /* red-500 */
   text-decoration: underline;
 `;
 
 
 const StTipsCard = styled.div`
-  background-color: #fefce8; /* yellow-50 (테마에 없으면 hex 사용) */
+  background-color: ${({ theme }) => theme.colors.yellow50}; /* yellow-50 (테마에 없으면 hex 사용) */
   padding: 1rem;
   border-radius: 0.75rem; /* rounded-xl */
-  border: 1px solid #fef9c3; /* yellow-100 */
+  border: 1px solid ${({ theme }) => theme.colors.yellow100}; /* yellow-100 */
   margin-top: 1rem;
   margin-bottom: 2.5rem; /* mb-10 */
 `;

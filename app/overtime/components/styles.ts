@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const SurfaceCard = styled.section`
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white} 0%, ${({ theme }) => theme.colors.blue50} 100%);
   border: 1px solid #dbe7f4;
   border-radius: 28px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
@@ -17,7 +17,7 @@ export const RuleSelectorCard = styled.div`
   margin-bottom: 1rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid #dbe7f4;
 `;
 
@@ -39,7 +39,7 @@ export const RuleSelectorHeader = styled.div`
 
 export const RuleSelectorTitle = styled.strong`
   display: block;
-  color: #123865;
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 0.98rem;
 `;
 
@@ -64,9 +64,9 @@ export const RuleSelectorTabs = styled.div`
 
 export const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
   width: 100%;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
   border-radius: 999px;
   padding: 0.85rem 1rem;
   font-size: 0.96rem;
@@ -83,9 +83,9 @@ export const TabList = styled.div`
 `;
 
 export const TabButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#f8fbff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#4a5d78")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.blue50)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray500)};
   border-radius: 16px;
   padding: 0.85rem 1rem;
   font-size: 0.98rem;
@@ -111,7 +111,7 @@ export const GuideText = styled.p`
   margin: 0;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: #eef5ff;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #39506c;
   line-height: 1.7;
   font-size: 0.95rem;
@@ -129,7 +129,7 @@ export const SplitGrid = styled.div`
 
 export const DurationCard = styled.div`
   border: 1px solid #dbe7f4;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border-radius: 18px;
   padding: 1rem;
 `;
@@ -154,26 +154,26 @@ export const CompactInput = styled.input`
   padding: 0.8rem 0.85rem;
   border: 1px solid #d3deed;
   border-radius: 14px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   font-size: 1rem;
   outline: none;
 
   &:focus {
-    border-color: #3b82f6;
+    border-color: ${({ theme }) => theme.colors.blue500};
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 `;
 
 export const UnitText = styled.span`
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 600;
 `;
 
 export const PrimaryButton = styled.button`
   border: none;
   border-radius: 16px;
-  background: #234f8d;
-  color: #ffffff;
+  background: ${({ theme }) => theme.colors.blue700};
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.95rem 1.15rem;
   font-size: 1rem;
   font-weight: 700;
@@ -221,8 +221,8 @@ export const SecondaryButton = styled.button`
   justify-content: center;
   border: 1px solid #cfe0fb;
   border-radius: 12px;
-  background: #ffffff;
-  color: #234f8d;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.blue700};
   padding: 0.72rem 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -234,7 +234,7 @@ export const SecondaryButton = styled.button`
 `;
 
 export const DangerGhostButton = styled(SecondaryButton)`
-  border-color: #fecaca;
+  border-color: ${({ theme }) => theme.colors.rose200};
   color: #b91c1c;
 `;
 
@@ -242,8 +242,8 @@ export const ResultBox = styled.pre`
   margin: 0;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: #0f172a;
-  color: #f8fafc;
+  background: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.gray100};
   font-family: inherit;
   white-space: pre-wrap;
   line-height: 1.7;
@@ -270,12 +270,12 @@ export const StatCard = styled.div`
   border: 1px solid #dbe7f4;
 
   span {
-    color: #64748b;
+    color: ${({ theme }) => theme.colors.gray500};
     font-size: 0.85rem;
   }
 
   strong {
-    color: #0f172a;
+    color: ${({ theme }) => theme.colors.gray900};
     font-size: 1.05rem;
   }
 `;
@@ -286,7 +286,7 @@ export const StorageCard = styled.div`
   gap: 0.9rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid #dbe7f4;
 `;
 
@@ -308,7 +308,7 @@ export const StorageHeader = styled.div`
 
 export const StorageTitle = styled.strong`
   display: block;
-  color: #123865;
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 0.98rem;
 `;
 
@@ -333,9 +333,9 @@ export const StorageModeTabs = styled.div`
 
 export const StorageModeButton = styled.button<{ $isActive: boolean }>`
   width: 100%;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#475569")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
   border-radius: 999px;
   padding: 0.8rem 0.95rem;
   font-size: 0.95rem;
@@ -362,7 +362,7 @@ export const StorageSetupCard = styled.div`
   padding: 0.9rem;
   border-radius: 16px;
   border: 1px solid #dbe7f4;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 export const StorageLabel = styled.label`
@@ -389,12 +389,12 @@ export const StorageInput = styled.input`
   padding: 0.75rem 0.85rem;
   border: 1px solid #d3deed;
   border-radius: 14px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   font-size: 0.95rem;
   outline: none;
 
   &:focus {
-    border-color: #3b82f6;
+    border-color: ${({ theme }) => theme.colors.blue500};
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 `;
@@ -413,7 +413,7 @@ export const ConnectedRoomCard = styled.div`
   padding: 0.95rem 1rem;
   border-radius: 16px;
   border: 1px solid #dbe7f4;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
@@ -426,18 +426,18 @@ export const ConnectedRoomInfo = styled.div`
   gap: 0.2rem;
 
   span {
-    color: #64748b;
+    color: ${({ theme }) => theme.colors.gray500};
     font-size: 0.82rem;
     font-weight: 700;
   }
 
   strong {
-    color: #0f172a;
+    color: ${({ theme }) => theme.colors.gray900};
     font-size: 1rem;
   }
 
   small {
-    color: #64748b;
+    color: ${({ theme }) => theme.colors.gray500};
     font-size: 0.82rem;
     word-break: break-word;
   }
@@ -473,13 +473,13 @@ export const NoticeCard = styled.div`
   gap: 0.35rem;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: #eef5ff;
+  background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid #cfe0fb;
-  color: #234f8d;
+  color: ${({ theme }) => theme.colors.blue700};
 
   strong {
     font-size: 0.96rem;
-    color: #123865;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
@@ -502,9 +502,9 @@ export const NoticeContent = styled.div`
 `;
 
 export const TargetDayButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#cfe0fb")};
-  background: ${({ $isActive }) => ($isActive ? "#234f8d" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#ffffff" : "#234f8d")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : "#cfe0fb")};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.blue700)};
   border-radius: 999px;
   padding: 0.35rem 0.45rem;
   font-size: 0.85rem;
@@ -515,7 +515,7 @@ export const TargetDayButton = styled.button<{ $isActive: boolean }>`
 export const SectionDivider = styled.hr`
   margin: 1.75rem 0 1.25rem;
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 
 export const SectionHeader = styled.div`
@@ -526,7 +526,7 @@ export const SectionHeader = styled.div`
 
 export const SectionTitle = styled.h2`
   margin: 0;
-  color: #0f172a;
+  color: ${({ theme }) => theme.colors.gray900};
   font-size: 1.08rem;
   font-weight: 800;
 `;
@@ -549,8 +549,8 @@ export const CalendarToolbarMain = styled.div`
 
 export const CalendarNavButton = styled.button`
   border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #334155;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray700};
   border-radius: 12px;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
@@ -558,22 +558,22 @@ export const CalendarNavButton = styled.button`
 `;
 
 export const TodayButton = styled(CalendarNavButton)`
-  background: #eef5ff;
-  color: #234f8d;
+  background: ${({ theme }) => theme.colors.blue50};
+  color: ${({ theme }) => theme.colors.blue700};
   border-color: #cfe0fb;
 `;
 
 export const CalendarMonthLabel = styled.strong`
-  color: #0f172a;
+  color: ${({ theme }) => theme.colors.gray900};
   font-size: 1rem;
   font-weight: 800;
   margin-right: 0.2rem;
 `;
 
 export const WeekendToggleButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#234f8d" : "#d2dceb")};
-  background: ${({ $isActive }) => ($isActive ? "#eef5ff" : "#ffffff")};
-  color: ${({ $isActive }) => ($isActive ? "#234f8d" : "#475569")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue50 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray600)};
   border-radius: 12px;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
@@ -588,7 +588,7 @@ export const WeekdayRow = styled.div<{ $columns: number }>`
 
 export const WeekdayCell = styled.div`
   text-align: center;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.84rem;
   font-weight: 700;
 `;
@@ -612,10 +612,9 @@ export const CalendarCellButton = styled.button<{
   border-radius: 16px;
   padding: 0.7rem;
   border: 1px solid
-    ${({ $isSelected, $isToday }) =>
-      $isSelected ? "#234f8d" : $isToday ? "#60a5fa" : "#dbe7f4"};
-  background: ${({ $isSelected }) => ($isSelected ? "#eef5ff" : "#ffffff")};
-  color: ${({ $isCurrentMonth }) => ($isCurrentMonth ? "#0f172a" : "#94a3b8")};
+    ${({ $isSelected, $isToday, theme }) => $isSelected ? theme.colors.blue700 : $isToday ? "#60a5fa" : "#dbe7f4"};
+  background: ${({ $isSelected, theme }) => ($isSelected ? theme.colors.blue50 : theme.colors.white)};
+  color: ${({ $isCurrentMonth, theme }) => ($isCurrentMonth ? theme.colors.gray900 : theme.colors.gray400)};
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -647,11 +646,11 @@ export const CalendarDaySummary = styled.div`
   gap: 0.25rem;
   font-size: 0.73rem;
   line-height: 1.35;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 
   span {
     display: block;
-    background: #f8fbff;
+    background: ${({ theme }) => theme.colors.blue50};
     border-radius: 10px;
     padding: 0.2rem 0.35rem;
   }
@@ -689,14 +688,14 @@ export const QuickAddHeader = styled.div`
 `;
 
 export const QuickAddTitle = styled.strong`
-  color: #123865;
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 0.96rem;
 `;
 
 export const EditCancelButton = styled.button`
   border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #475569;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray600};
   border-radius: 12px;
   padding: 0.5rem 0.75rem;
   font-weight: 700;
@@ -708,7 +707,7 @@ export const AccordionSection = styled.div`
   flex-direction: column;
   gap: 0.85rem;
   border: 1px solid #dbe7f4;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border-radius: 20px;
   padding: 1rem;
 `;
@@ -722,8 +721,8 @@ export const AccordionHeader = styled.div`
 
 export const AccordionToggleButton = styled.button`
   border: 1px solid #d2dceb;
-  background: #ffffff;
-  color: #234f8d;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.blue700};
   border-radius: 12px;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
@@ -732,14 +731,14 @@ export const AccordionToggleButton = styled.button`
 
 export const AccordionHint = styled.p`
   margin: 0;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.92rem;
   line-height: 1.6;
 `;
 
 export const SubText = styled.p`
   margin: 0.85rem 0 0;
-  color: #64748b;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   line-height: 1.6;
 `;
@@ -760,8 +759,8 @@ export const RecordItem = styled.li`
   gap: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 
   @media (max-width: 640px) {
     align-items: flex-start;
@@ -794,9 +793,9 @@ export const EditButton = styled.button`
 export const EmptyItem = styled.div`
   padding: 1rem;
   border-radius: 16px;
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray500};
+  border: 1px dashed ${({ theme }) => theme.colors.gray300};
 `;
 
 export const RecordInfo = styled.div`
@@ -805,11 +804,11 @@ export const RecordInfo = styled.div`
   gap: 0.2rem;
 
   strong {
-    color: #0f172a;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 
   span {
-    color: #64748b;
+    color: ${({ theme }) => theme.colors.gray500};
 
     ${MutedPrefix} {
       display: inline-block;
@@ -821,7 +820,7 @@ export const RecordInfo = styled.div`
 export const DeleteButton = styled.button`
   border: none;
   border-radius: 12px;
-  background: #fee2e2;
+  background: ${({ theme }) => theme.colors.rose100};
   color: #b91c1c;
   padding: 0.65rem 0.8rem;
   font-weight: 700;
@@ -849,13 +848,13 @@ export const GuidePanel = styled.div`
   margin-top: 1rem;
   padding: 1rem;
   border-radius: 20px;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid #dbe7f4;
 `;
 
 export const GuideTitle = styled.h3`
   margin: 0;
-  color: #123865;
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 1rem;
   font-weight: 800;
 `;
@@ -875,12 +874,12 @@ export const GuideItem = styled.li`
   gap: 1rem;
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid #dbe7f4;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 
   strong {
-    color: #0f172a;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 
   @media (max-width: 640px) {
@@ -895,12 +894,12 @@ export const RuleItem = styled.li`
   gap: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid #dbe7f4;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
 
   strong {
-    color: #0f172a;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 
   @media (max-width: 640px) {

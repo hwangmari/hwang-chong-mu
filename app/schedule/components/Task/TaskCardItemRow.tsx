@@ -80,7 +80,7 @@ const StTaskItem = styled.div`
   display: flex;
   flex-direction: column;
   padding-bottom: 8px;
-  border-bottom: 1px dashed #e5e7eb;
+  border-bottom: 1px dashed ${({ theme }) => theme.colors.gray200};
   transition: all 0.2s;
 
   &:last-child {

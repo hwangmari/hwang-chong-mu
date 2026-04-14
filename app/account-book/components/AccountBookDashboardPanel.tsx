@@ -365,7 +365,7 @@ const StHeader = styled.div`
 const StTitle = styled.h3`
   font-size: 1.2rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StSubTitle = styled.p`
@@ -408,7 +408,7 @@ const StSummaryCard = styled.button`
   text-align: left;
   border-radius: 16px;
   border: 1px solid #e3eaf3;
-  background: linear-gradient(180deg, #fbfdff, #f7faff);
+  background: linear-gradient(180deg, #fbfdff, ${({ theme }) => theme.colors.blue50});
   padding: 0.75rem 0.85rem;
   cursor: pointer;
   transition:
@@ -486,7 +486,7 @@ const StPanel = styled.section`
   gap: 0.6rem;
   border-radius: 18px;
   border: 1px solid #dfe6f0;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.8rem;
 `;
 
@@ -497,20 +497,20 @@ const StSavingsPanel = styled(StPanel)`
 const StPanelTitle = styled.h4`
   font-size: 0.92rem;
   font-weight: 900;
-  color: #223147;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StMonthTable = styled.div`
   border: 1px solid #e2e9f2;
   border-radius: 14px;
   overflow: hidden;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 const StMonthTableHead = styled.div`
   display: grid;
   grid-template-columns: 0.72fr 1fr;
-  background: #eef3fb;
+  background: ${({ theme }) => theme.colors.blue50};
 
   span {
     padding: 0.48rem 0.7rem;
@@ -530,7 +530,7 @@ const StMonthRow = styled.button<{ $active: boolean }>`
   display: grid;
   grid-template-columns: 0.72fr 1fr;
   text-align: left;
-  background: ${({ $active }) => ($active ? "#f1f5ff" : "#fff")};
+  background: ${({ $active, theme }) => ($active ? "#f1f5ff" : theme.colors.white)};
   border: none;
   border-top: 1px solid #e6edf5;
 
@@ -542,7 +542,7 @@ const StMonthRow = styled.button<{ $active: boolean }>`
   }
 
   span {
-    color: #334155;
+    color: ${({ theme }) => theme.colors.gray700};
     font-weight: 800;
     border-left: none;
   }
@@ -557,7 +557,7 @@ const StMetricTable = styled.div`
   border: 1px solid #e2e9f2;
   border-radius: 14px;
   overflow: hidden;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   max-width: 100%;
 `;
 
@@ -567,7 +567,7 @@ const StMetricHead = styled.div<{
 }>`
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
-  background: #eef3fb;
+  background: ${({ theme }) => theme.colors.blue50};
 
   span {
     padding: 0.48rem 0.7rem;
@@ -602,7 +602,7 @@ const StMetricRow = styled.button<{
   width: 100%;
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
-  background: ${({ $active }) => ($active ? "#f1f5ff" : "#fff")};
+  background: ${({ $active, theme }) => ($active ? "#f1f5ff" : theme.colors.white)};
   border: none;
   border-top: 1px solid #e6edf5;
 
@@ -633,10 +633,10 @@ const StCell = styled.div<{
   font-size: 0.79rem;
   font-weight: 800;
   border-left: 1px solid #edf2f8;
-  color: ${({ $tone }) => {
-    if ($tone === "positive") return "#3f8f8a";
+  color: ${({ $tone, theme }) => {
+    if ($tone === "positive") return theme.colors.teal600;
     if ($tone === "negative") return "#6b63e8";
-    return "#334155";
+    return theme.colors.gray700;
   }};
 
   &:first-child {
@@ -660,7 +660,7 @@ const StGoalMeta = styled.div`
   span {
     border-radius: 999px;
     border: 1px solid #e1e8f2;
-    background: #f8fbff;
+    background: ${({ theme }) => theme.colors.blue50};
     padding: 0.28rem 0.6rem;
     font-size: 0.72rem;
     font-weight: 800;
@@ -674,7 +674,7 @@ const StGoalDisplay = styled.form`
   gap: 0.4rem;
   border-radius: 999px;
   border: 1px solid #d7e1ef;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.26rem 0.32rem 0.26rem 0.6rem;
 
   label {
@@ -686,7 +686,7 @@ const StGoalDisplay = styled.form`
   button {
     border-radius: 999px;
     border: 1px solid #d9e2ee;
-    background: #f6f9ff;
+    background: ${({ theme }) => theme.colors.blue50};
     color: #42639f;
     padding: 0.3rem 0.62rem;
     font-size: 0.72rem;
@@ -703,7 +703,7 @@ const StGoalDisplay = styled.form`
 const StGoalValueText = styled.strong`
   font-size: 0.82rem;
   font-weight: 900;
-  color: #223147;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StGoalValueInput = styled.input`
@@ -712,7 +712,7 @@ const StGoalValueInput = styled.input`
   background: transparent;
   font-size: 0.82rem;
   font-weight: 900;
-  color: #223147;
+  color: ${({ theme }) => theme.colors.gray800};
   outline: none;
   text-align: right;
 `;

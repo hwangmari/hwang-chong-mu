@@ -357,7 +357,7 @@ const StLedgerMemoCard = styled.section`
   margin-top: 0.75rem;
   border: 1px solid #dce5f0;
   border-radius: 18px;
-  background: linear-gradient(180deg, #fcfdff, #f8fbff);
+  background: linear-gradient(180deg, #fcfdff, ${({ theme }) => theme.colors.blue50});
   padding: 0.9rem;
 `;
 
@@ -376,7 +376,7 @@ const StLedgerMemoTitleWrap = styled.div`
   strong {
     font-size: 0.9rem;
     font-weight: 900;
-    color: #223147;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
@@ -390,7 +390,7 @@ const StLedgerMemoActionButton = styled.button`
   flex-shrink: 0;
   border: 1px solid #cad8ee;
   border-radius: 999px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.42rem 0.9rem;
   font-size: 0.78rem;
   font-weight: 800;
@@ -403,7 +403,7 @@ const StLedgerMemoActionButton = styled.button`
 
   &:hover {
     border-color: #b5c8ea;
-    background: #f5f8ff;
+    background: ${({ theme }) => theme.colors.blue50};
   }
 `;
 
@@ -412,12 +412,12 @@ const StLedgerMemoTextarea = styled.textarea`
   min-height: 80px;
   border: 1px solid #dbe4f0;
   border-radius: 14px;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.85rem 0.9rem;
   resize: vertical;
   font-size: 0.84rem;
   line-height: 1.55;
-  color: #334155;
+  color: ${({ theme }) => theme.colors.gray700};
   outline: none;
   transition:
     border-color 0.18s ease,
@@ -425,7 +425,7 @@ const StLedgerMemoTextarea = styled.textarea`
     background-color 0.18s ease;
 
   &:read-only {
-    background: #f8fbff;
+    background: ${({ theme }) => theme.colors.blue50};
     color: #516074;
     cursor: default;
   }

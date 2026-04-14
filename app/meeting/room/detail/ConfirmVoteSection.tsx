@@ -443,7 +443,7 @@ const StDateCardRight = styled.div`
 const StVoteCount = styled.span<{ $isTop: boolean }>`
   font-size: 0.85rem;
   font-weight: 800;
-  color: ${({ $isTop }) => ($isTop ? "#f59e0b" : "#9ca3af")};
+  color: ${({ $isTop, theme }) => ($isTop ? theme.colors.amber500 : theme.colors.gray400)};
 `;
 
 const StCheckbox = styled.div<{ $checked: boolean }>`

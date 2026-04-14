@@ -200,7 +200,7 @@ const StSettleButton = styled.button`
   border: none;
   font-weight: 800;
   background-color: ${({ theme }) => theme.semantic.primary};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   transition: opacity 0.2s ease;
 
@@ -221,7 +221,7 @@ const StDinnerButton = styled.button`
   border: none;
   font-weight: 800;
   background-color: ${({ theme }) => theme.colors.gray800};
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   transition: opacity 0.2s ease;
 
@@ -255,8 +255,8 @@ const StResultColumn = styled.div<{ $type: "available" | "unavailable" }>`
           border-color: ${theme.colors.gray100};
         `
       : css`
-          background-color: #fef2f2; /* red-50 */
-          border-color: #fee2e2; /* red-100 */
+          background-color: ${({ theme }) => theme.colors.rose50}; /* red-50 */
+          border-color: ${({ theme }) => theme.colors.rose100}; /* red-100 */
         `}
 `;
 
@@ -266,7 +266,7 @@ const StSectionTitle = styled(Typography)`
 `;
 
 const StUnavailableTitle = styled(Typography)`
-  color: #f87171;
+  color: ${({ theme }) => theme.colors.rose500};
   font-weight: 700;
   margin-bottom: 0.5rem;
 `;
@@ -312,10 +312,10 @@ const StRescueButton = styled.button<{ $isAbsent: boolean }>`
         `
       : css`
           background-color: ${theme.colors.white};
-          color: #f87171;
-          border-color: #fee2e2;
+          color: ${({ theme }) => theme.colors.rose500};
+          border-color: ${({ theme }) => theme.colors.rose100};
           &:hover {
-            background-color: #fef2f2;
+            background-color: ${({ theme }) => theme.colors.rose50};
           }
         `}
 `;

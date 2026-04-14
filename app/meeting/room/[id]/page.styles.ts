@@ -16,9 +16,9 @@ export const StGuideTextWrapper = styled.div`
 `;
 
 export const StHighlightText = styled.b`
-  color: #ef4444;
+  color: ${({ theme }) => theme.colors.rose500};
   text-decoration: underline;
-  text-decoration-color: #fecaca;
+  text-decoration-color: ${({ theme }) => theme.colors.rose200};
   text-decoration-thickness: 4px;
 `;
 
@@ -86,8 +86,8 @@ export const StNameChip = styled.button<{
       : $hasVoted
         ? `
         background-color: ${theme.colors.white};
-        color: #f59e0b;
-        border-color: #fde68a;
+        color: ${theme.colors.amber500};
+        border-color: ${theme.colors.amber200};
       `
         : `
         background-color: ${theme.colors.white};

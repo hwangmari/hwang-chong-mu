@@ -1,6 +1,6 @@
 "use client";
 
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useMemo } from "react";
 import Image from "next/image";
@@ -163,13 +163,13 @@ const StHeader = styled.div`
 const StPageTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 700;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 0.2rem;
 `;
 
 const StDescription = styled.p`
   font-size: 0.85rem;
-  color: #999;
+  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StTimelineContainer = styled.div`
@@ -189,7 +189,7 @@ const StLeftCol = styled.div`
 const StStickyYear = styled.div`
   font-size: 1.1rem;
   font-weight: 800;
-  color: #444;
+  color: ${({ theme }) => theme.colors.gray700};
   text-align: right;
   padding-right: 1rem;
   line-height: 1.2;
@@ -229,17 +229,21 @@ const StDot = styled.div`
   top: 1.2rem;
   width: 6px;
   height: 6px;
-  background-color: #fff;
-  border: 2px solid #ccc;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 2px solid ${({ theme }) => theme.colors.gray300};
   border-radius: 50%;
   z-index: 1;
   transition: all 0.2s;
 `;
 
-const cardStyles = `
+const cardStyles = ({
+  theme,
+}: {
+  theme: { colors: { white: string; gray200: string } };
+}) => `
   padding: .9rem;
-  background-color: #fff;
-  border: 1px solid #eee;
+  background-color: ${theme.colors.white};
+  border: 1px solid ${theme.colors.gray200};
   border-radius: 8px;
   transition: all 0.2s;
 `;
@@ -251,15 +255,15 @@ const StLink = styled.a`
   cursor: pointer;
 
   &:hover {
-    background-color: #fff;
-    border-color: #888;
+    background-color: ${({ theme }) => theme.colors.white};
+    border-color: ${({ theme }) => theme.colors.gray500};
     transform: translateX(2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   &:hover ~ ${StDot}, &:hover ${StDot} {
-    background-color: #555;
-    border-color: #555;
+    background-color: ${({ theme }) => theme.colors.gray700};
+    border-color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
@@ -271,15 +275,15 @@ const StTitleDate = styled.div`
 
 const StDisabledBox = styled.div`
   ${cardStyles}
-  background-color: #fcfcfc;
-  color: #bbb;
+  background-color: ${({ theme }) => theme.colors.gray50};
+  color: ${({ theme }) => theme.colors.gray300};
   cursor: default;
 `;
 
 const StDate = styled.span`
   font-family: monospace;
   font-size: 0.75rem;
-  color: #999;
+  color: ${({ theme }) => theme.colors.gray400};
   margin-right: 1rem;
   min-width: 35px;
   margin-top: 2px;
@@ -295,7 +299,7 @@ const StContent = styled.div`
 const StTitle = styled.span`
   font-size: 0.95rem;
   font-weight: 600;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   line-height: 1.4;
 `;
 
@@ -308,7 +312,7 @@ const StDescList = styled.ul`
 
 const StDescItem = styled.li`
   font-size: 0.85rem;
-  color: #666;
+  color: ${({ theme }) => theme.colors.gray600};
   line-height: 1.5;
   position: relative;
   padding-left: 10px;
@@ -318,13 +322,13 @@ const StDescItem = styled.li`
     content: "-";
     position: absolute;
     left: 0;
-    color: #999;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 `;
 
 const StArrow = styled.span`
   font-size: 0.8rem;
-  color: #ddd;
+  color: ${({ theme }) => theme.colors.gray200};
   margin-left: 0.8rem;
   margin-top: 2px;
 `;
@@ -334,7 +338,9 @@ const StImageGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 1.25rem;
   margin-top: 0.5rem;
-  animation: ${fadeIn} 0.5s ease-out;
+  ${css`
+    animation: ${fadeIn} 0.5s ease-out;
+  `}
 
   /*
   @media ${({ theme }) => theme?.media?.desktop || "min-width: 1024px"} {

@@ -68,11 +68,11 @@ const StActionButton = styled.button<{ $variant: "blue" | "red" }>`
           }
         `
       : css`
-          border-color: #fee2e2;
-          color: #ff6b6b;
+          border-color: ${({ theme }) => theme.colors.rose100};
+          color: ${({ theme }) => theme.colors.rose500};
           &:hover {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            background-color: #fef2f2;
+            background-color: ${({ theme }) => theme.colors.rose50};
           }
         `}
 `;

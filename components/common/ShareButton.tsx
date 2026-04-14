@@ -70,7 +70,7 @@ const StShareButton = styled.button`
   padding: 8px;
   border-radius: 50%;
   transition: background-color 0.2s;
-  color: #333; /* 아이콘 색상 */
+  color: ${({ theme }) => theme.colors.gray800}; /* 아이콘 색상 */
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05); /* 살짝 회색 배경 */
@@ -88,7 +88,7 @@ const StTooltip = styled.span<{ $show: boolean }>`
   transform: translateX(-50%);
 
   background-color: rgba(30, 30, 30, 0.9); /* 진한 회색 배경 */
-  color: white;
+  color: ${({ theme }) => theme.colors.white};
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 12px;

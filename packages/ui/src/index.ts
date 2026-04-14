@@ -24,6 +24,12 @@ export { TYPOGRAPHY_VARIANTS } from "./components/Typography";
 
 export { GlobalStyle } from "./global-style";
 export { UiProvider } from "./providers/UiProvider";
-export { colors } from "./theme";
-export { uiTheme } from "./theme";
-export type { UiTheme } from "./theme";
+export {
+  colors,
+  darkColors,
+  darkTheme,
+  lightColors,
+  lightTheme,
+  uiTheme,
+} from "./theme";
+export type { ThemeMode, UiTheme } from "./theme";

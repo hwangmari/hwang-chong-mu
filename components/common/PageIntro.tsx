@@ -41,7 +41,7 @@ const StIcon = styled.div`
 const StTitle = styled.h1`
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1a1a1a; /* 기본 색상 (테마가 있다면 theme.colors.text 등으로 교체) */
+  color: ${({ theme }) => theme.colors.gray900};
   margin-bottom: 0.75rem;
   line-height: 1.3;
 `;
@@ -50,7 +50,7 @@ const StDescription = styled.div`
   width: 80%;
   margin: 0 auto;
   font-size: 1rem;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.6;
   white-space: pre-wrap; /* 줄바꿈(\n)도 자연스럽게 먹히도록 설정 */
 `;
@@ -58,8 +58,12 @@ const StDescription = styled.div`
 export const StHighlight = styled.strong<{ $color?: "red" | "blue" }>`
   display: inline-block;
   font-weight: 700;
-  color: ${({ $color }) =>
-    $color === "red" ? "#f87171" : $color === "blue" ? "#60a5fa" : "#333"};
+  color: ${({ $color, theme }) =>
+    $color === "red"
+      ? theme.colors.rose500
+      : $color === "blue"
+        ? theme.colors.blue500
+        : theme.colors.gray800};
 `;
 
 const StLogo = styled.div`

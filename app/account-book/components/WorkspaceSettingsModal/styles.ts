@@ -98,7 +98,7 @@ export const StParticipantList = styled.div`
 export const StParticipantCard = styled.div`
   border: 1px solid #dfe7f3;
   border-radius: 14px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0.75rem;
   display: grid;
   gap: 0.5rem;

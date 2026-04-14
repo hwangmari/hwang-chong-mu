@@ -91,7 +91,7 @@ const StCalendarHead = styled.div`
 const StWeekName = styled.div`
   text-align: center;
   font-size: 0.78rem;
-  color: #8a94a6;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 700;
 
   @media (max-width: 720px) {
@@ -117,8 +117,7 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
     $selected
       ? "linear-gradient(180deg, #eef4ff, #e2ebff)"
       : "linear-gradient(180deg, #ffffff, #fbfdff)"};
-  color: ${({ $selected, $muted }) =>
-    $selected ? "#213453" : $muted ? "#c2c8d2" : "#111827"};
+  color: ${({ $selected, $muted, theme }) => $selected ? "#213453" : $muted ? "#c2c8d2" : theme.colors.gray900};
   box-shadow: ${({ $selected }) =>
     $selected ? "0 10px 22px rgba(99, 126, 212, 0.14)" : "none"};
   border-radius: 16px;

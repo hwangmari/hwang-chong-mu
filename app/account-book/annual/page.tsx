@@ -1015,7 +1015,7 @@ const StPage = styled.main`
   overflow: auto;
   overscroll-behavior: none;
   min-height: 100dvh;
-  background: #f5f7fb;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 1rem;
 
   @media (max-width: 720px) {
@@ -1039,7 +1039,7 @@ const StEyebrow = styled.p`
 const StBackButton = styled.button`
   border: none;
   border-radius: 999px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   color: #53647c;
   padding: 0.55rem 0.9rem;
   font-size: 0.82rem;
@@ -1050,7 +1050,7 @@ const StTitle = styled.h1`
   margin-top: 0.2rem;
   font-size: 1.3rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StHeaderDescription = styled.p`
@@ -1113,7 +1113,7 @@ const StGoalList = styled.div`
 const StGoalCard = styled.article`
   border: 1px solid #dce5f1;
   border-radius: 20px;
-  background: linear-gradient(180deg, #fcfdff, #f8fbff);
+  background: linear-gradient(180deg, #fcfdff, ${({ theme }) => theme.colors.blue50});
   padding: 0.9rem;
 `;
 
@@ -1134,7 +1134,7 @@ const StGoalHeader = styled.div`
 
   strong {
     font-size: 0.95rem;
-    color: #223247;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
@@ -1158,11 +1158,11 @@ const StGoalInputWrap = styled.label`
     width: 100%;
     border: 1px solid #d8e2ef;
     border-radius: 12px;
-    background: #fff;
+    background: ${({ theme }) => theme.colors.white};
     padding: 0.5rem 0.65rem;
     font-size: 0.84rem;
     font-weight: 800;
-    color: #223247;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   em {
@@ -1213,7 +1213,7 @@ const StGoalBar = styled.div`
   margin-top: 0.8rem;
   height: 0.72rem;
   border-radius: 999px;
-  background: #e8eef7;
+  background: ${({ theme }) => theme.colors.gray200};
   overflow: hidden;
 `;
 
@@ -1247,7 +1247,7 @@ const StGoalSummaryItem = styled.div`
 
   strong {
     font-size: 0.92rem;
-    color: #223247;
+    color: ${({ theme }) => theme.colors.gray800};
     font-weight: 900;
     text-align: right;
   }
@@ -1277,7 +1277,7 @@ const StSectionHeaderActions = styled.div`
 const StSectionTitle = styled.h2`
   font-size: 1rem;
   font-weight: 900;
-  color: #223247;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StSectionMeta = styled.span`
@@ -1427,7 +1427,7 @@ const StMonthLine = styled.button<{ $active: boolean }>`
     width: 100%;
     height: 0.5rem;
     border-radius: 999px;
-    background: #edf2fb;
+    background: ${({ theme }) => theme.colors.blue50};
     overflow: hidden;
   }
 
@@ -1468,7 +1468,7 @@ const StCategoryItem = styled.div`
 
   strong {
     font-size: 0.84rem;
-    color: #223247;
+    color: ${({ theme }) => theme.colors.gray800};
     font-weight: 900;
   }
 
@@ -1501,7 +1501,7 @@ const StAccordion = styled.article`
 const StAccordionButton = styled.button`
   width: 100%;
   border: none;
-  background: #f8fbff;
+  background: ${({ theme }) => theme.colors.blue50};
   padding: 0.8rem 0.9rem;
   display: flex;
   justify-content: space-between;
@@ -1536,7 +1536,7 @@ const StEntryItem = styled.div`
 
   strong {
     font-size: 0.88rem;
-    color: #1f2937;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   p {

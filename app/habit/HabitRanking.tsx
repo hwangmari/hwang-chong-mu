@@ -53,7 +53,7 @@ export default function HabitRanking({ items, rawLogs, themeColor }: Props) {
 const StContainer = styled.div`
   margin-top: 1rem;
   padding: 1.5rem;
-  background-color: #ffffff;
+  background-color: ${({ theme }) => theme.colors.white};
   border-radius: 12px;
 `;
 
@@ -73,8 +73,7 @@ const StRank = styled.div<{ $isTop: boolean }>`
   width: 36px;
   font-size: 0.9rem;
   font-weight: 800;
-  color: ${({ $isTop }) =>
-    $isTop ? "#f59e0b" : "#94a3b8"}; // 1~3위는 금색 계열
+  color: ${({ $isTop, theme }) => $isTop ? theme.colors.amber500 : theme.colors.gray400}; // 1~3위는 금색 계열
 `;
 
 const StContent = styled.div`
@@ -89,7 +88,7 @@ const StInfo = styled.div`
 
   .title {
     font-weight: 600;
-    color: #475569;
+    color: ${({ theme }) => theme.colors.gray600};
   }
   .count {
     font-weight: 700;
@@ -99,7 +98,7 @@ const StInfo = styled.div`
 const StProgressBarBg = styled.div`
   width: 100%;
   height: 6px;
-  background-color: #e2e8f0;
+  background-color: ${({ theme }) => theme.colors.gray200};
   border-radius: 3px;
   overflow: hidden;
 `;

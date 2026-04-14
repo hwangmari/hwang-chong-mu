@@ -39,7 +39,7 @@ export const StShareConfirmTitle = styled.h3`
   margin-top: 0.35rem;
   font-size: 1.28rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 export const StShareConfirmDescription = styled.p`
@@ -58,7 +58,7 @@ export const StShareConfirmActions = styled.div`
 
 export const StShareGhostButton = styled.button`
   border: 1px solid #d7e1ee;
-  background: #f8fafc;
+  background: ${({ theme }) => theme.colors.gray100};
   color: #5f6e82;
   border-radius: 999px;
   padding: 0.7rem 1rem;
@@ -69,7 +69,7 @@ export const StShareGhostButton = styled.button`
 export const StSharePrimaryButton = styled.button`
   border: none;
   background: linear-gradient(135deg, #6d87ef, #5f73d9);
-  color: #ffffff;
+  color: ${({ theme }) => theme.colors.white};
   border-radius: 999px;
   padding: 0.7rem 1rem;
   font-size: 0.88rem;

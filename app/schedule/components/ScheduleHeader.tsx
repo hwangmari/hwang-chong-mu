@@ -91,8 +91,8 @@ export default function ScheduleHeader({
 
 const StTopBar = styled.header`
   min-height: 60px;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: ${({ theme }) => theme.colors.white};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -107,16 +107,16 @@ const StTopBar = styled.header`
     .back-link {
       display: inline-flex;
       align-items: center;
-      color: #6b7280;
+      color: ${({ theme }) => theme.colors.gray500};
       flex-shrink: 0;
       &:hover {
-        color: #111827;
+        color: ${({ theme }) => theme.colors.gray900};
       }
     }
     .page-title {
       font-size: 1.15rem;
       font-weight: 800;
-      color: #111827;
+      color: ${({ theme }) => theme.colors.gray900};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -154,16 +154,16 @@ const StKanbanLink = styled.div`
   justify-content: center;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #3b82f6;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: ${({ theme }) => theme.colors.blue500};
+  background-color: ${({ theme }) => theme.colors.blue50};
+  border: 1px solid ${({ theme }) => theme.colors.blue200};
   padding: 6px 12px;
   border-radius: 6px;
   text-decoration: none;
   transition: all 0.2s;
 
   &:hover {
-    background-color: #dbeafe;
+    background-color: ${({ theme }) => theme.colors.blue100};
     transform: translateY(-1px);
   }
 `;
@@ -171,7 +171,7 @@ const StKanbanLink = styled.div`
 const StDivider = styled.div`
   width: 1px;
   height: 24px;
-  background-color: #e5e7eb;
+  background-color: ${({ theme }) => theme.colors.gray200};
 `;
 
 const StMemberFilters = styled.div`
@@ -189,9 +189,9 @@ const StMemberChip = styled.button<{ $active: boolean; $color: string }>`
   border-radius: 9999px;
   font-size: 0.78rem;
   font-weight: 700;
-  border: 1px solid ${({ $active, $color }) => ($active ? $color : "#e5e7eb")};
+  border: 1px solid ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray200)};
   background: ${({ $active, $color }) => ($active ? `${$color}12` : "#f9fafb")};
-  color: ${({ $active, $color }) => ($active ? $color : "#9ca3af")};
+  color: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray400)};
   cursor: pointer;
   transition: all 0.2s;
   &:hover {
@@ -204,7 +204,7 @@ const StMemberDot = styled.div<{ $color: string; $active: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ $active, $color }) => ($active ? $color : "#d1d5db")};
+  background: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray300)};
 `;
 
 const StSwitchLabel = styled.label`
@@ -215,9 +215,9 @@ const StSwitchLabel = styled.label`
   font-size: 0.85rem;
   font-weight: 600;
   user-select: none;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   input {
-    accent-color: #111827;
+    accent-color: ${({ theme }) => theme.colors.gray900};
     width: 16px;
     height: 16px;
   }

@@ -49,7 +49,7 @@ export default function QuickAddForm({ onConfirm }: QuickAddFormProps) {
 const StWrapper = styled.div`
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed #eee;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -57,7 +57,7 @@ const StWrapper = styled.div`
     width: 100%;
     font-size: 0.85rem;
     padding: 6px;
-    border: 1px solid #ddd;
+    border: 1px solid ${({ theme }) => theme.colors.gray200};
     border-radius: 4px;
   }
   .date-row {
@@ -68,11 +68,11 @@ const StWrapper = styled.div`
       flex: 1;
       font-size: 0.75rem;
       padding: 4px;
-      border: 1px solid #ddd;
+      border: 1px solid ${({ theme }) => theme.colors.gray200};
       border-radius: 4px;
     }
     span {
-      color: #888;
+      color: ${({ theme }) => theme.colors.gray500};
       font-size: 0.8rem;
     }
   }
@@ -80,8 +80,8 @@ const StWrapper = styled.div`
     width: 100%;
     padding: 6px;
     font-size: 0.8rem;
-    background: #3b82f6;
-    color: white;
+    background: ${({ theme }) => theme.colors.blue500};
+    color: ${({ theme }) => theme.colors.white};
     border: none;
     border-radius: 4px;
     cursor: pointer;

@@ -106,7 +106,7 @@ const StDateCell = styled.div<{ $isRedDay?: boolean }>`
   overflow: hidden;
   background-color: ${({ $isRedDay }) => ($isRedDay ? "#fafafa" : "white")};
   &:hover {
-    background-color: ${({ $isRedDay }) => ($isRedDay ? "#f3f4f6" : "#fcfcfc")};
+    background-color: ${({ $isRedDay, theme }) => ($isRedDay ? theme.colors.gray100 : theme.colors.gray50)};
   }
 `;
 
@@ -117,7 +117,7 @@ const StDateHeader = styled.div`
   padding: 6px 8px;
   .holiday-name {
     font-size: 0.7rem;
-    color: #ef4444;
+    color: ${({ theme }) => theme.colors.rose500};
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -132,13 +132,12 @@ const StDateNumber = styled.div<{
 }>`
   font-size: 0.85rem;
   font-weight: ${({ $isToday }) => ($isToday ? 800 : 600)};
-  color: ${({ $isCurrentMonth, $isRedDay, $isToday }) =>
-    $isToday ? "white" : $isRedDay ? "#ef4444" : $isCurrentMonth ? "#374151" : "#d1d5db"};
+  color: ${({ $isCurrentMonth, $isRedDay, $isToday, theme }) => $isToday ? "white" : $isRedDay ? theme.colors.rose500 : $isCurrentMonth ? theme.colors.gray700 : theme.colors.gray300};
   opacity: ${({ $isCurrentMonth }) => ($isCurrentMonth ? 1 : 0.5)};
-  ${({ $isToday }) =>
+  ${({ $isToday, theme }) =>
     $isToday &&
     `
-    background-color: #111827;
+    background-color: ${theme.colors.gray900};
     border-radius: 50%;
     width: 24px;
     height: 24px;

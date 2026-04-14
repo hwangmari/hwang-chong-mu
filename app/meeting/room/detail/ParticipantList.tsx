@@ -134,8 +134,8 @@ const StUserCard = styled.div<{ $isAbsent: boolean; $isActive?: boolean }>`
   ${({ $isActive, theme }) =>
     $isActive &&
     css`
-      border-color: #6366f1; /* Indigo Color */
-      background-color: #eef2ff; /* 연한 Indigo 배경 */
+      border-color: ${({ theme }) => theme.colors.indigo500}; /* Indigo Color */
+      background-color: ${({ theme }) => theme.colors.indigo50}; /* 연한 Indigo 배경 */
       transform: translateY(-2px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     `}
@@ -204,13 +204,13 @@ const StUserName = styled.span<{ $isAbsent: boolean }>`
 const StEditLabel = styled.button`
   font-size: 0.75rem;
   font-weight: 700;
-  color: #6366f1;
+  color: ${({ theme }) => theme.colors.indigo500};
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
   transition: all 0.2s;
 
   &:hover {
-    background-color: #eef2ff;
+    background-color: ${({ theme }) => theme.colors.indigo50};
   }
 `;
 
@@ -252,7 +252,7 @@ const StDeleteButton = styled.button`
   border-radius: 0.375rem;
 
   &:hover {
-    color: #ef4444;
-    background-color: #fef2f2;
+    color: ${({ theme }) => theme.colors.rose500};
+    background-color: ${({ theme }) => theme.colors.rose50};
   }
 `;

@@ -201,7 +201,7 @@ const CreateContainer = styled.div`
   max-width: 700px;
   margin: 2rem auto;
   padding: 2rem;
-  background: #fffdfa;
+  background: ${({ theme }) => theme.colors.gray50};
   border: 1px solid #e9e1d4;
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
@@ -229,7 +229,7 @@ const InputField = styled.input`
   padding: 0.7rem 0.75rem;
   border: 1px solid #d9d7d2;
   border-radius: 8px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
   font-size: 1rem;
   outline: none;
 
@@ -242,7 +242,7 @@ const InputField = styled.input`
 const HelperText = styled.p`
   margin-top: 0.55rem;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 
 const ChecklistItem = styled.div`
@@ -267,7 +267,7 @@ const TextButton = styled.button`
 `;
 
 const DeleteButton = styled.button`
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.8rem;
   padding: 0.35rem 0.45rem;
 
@@ -290,9 +290,9 @@ const OpenGrid = styled.div`
 const OpenButton = styled.button`
   margin-top: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #1f2937;
+  border: 1px solid ${({ theme }) => theme.colors.gray300};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray800};
   padding: 0.65rem 0.9rem;
   font-size: 0.92rem;
   font-weight: 700;

@@ -152,7 +152,7 @@ const StKanbanWrapper = styled.div`
   bottom: 0;
   left: 0;
   z-index: 100;
-  background: #f9fafb;
+  background: ${({ theme }) => theme.colors.gray50};
   min-height: 100vh;
   overflow: auto;
   .kanban-header {
@@ -165,14 +165,14 @@ const StKanbanWrapper = styled.div`
   }
   .back-btn {
     padding: 8px 16px;
-    background: white;
-    border: 1px solid #ddd;
+    background: ${({ theme }) => theme.colors.white};
+    border: 1px solid ${({ theme }) => theme.colors.gray200};
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     transition: 0.2s;
     &:hover {
-      background: #f3f4f6;
+      background: ${({ theme }) => theme.colors.gray100};
     }
   }
 `;
@@ -190,8 +190,8 @@ const StAddButton = styled.button`
   height: 26px;
   border-radius: 50%;
   border: none;
-  background: #3b82f6;
-  color: white;
+  background: ${({ theme }) => theme.colors.blue500};
+  color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   font-size: 1.2rem;
   line-height: 1;
@@ -200,13 +200,13 @@ const StAddButton = styled.button`
   justify-content: center;
   transition: 0.2s;
   &:hover {
-    background: #2563eb;
+    background: ${({ theme }) => theme.colors.blue600};
     transform: scale(1.1);
   }
 `;
 
 const StAddForm = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 10px;
   border-radius: 8px;
   margin-bottom: 1rem;
@@ -215,7 +215,7 @@ const StAddForm = styled.div`
   input {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid ${({ theme }) => theme.colors.gray200};
     border-radius: 4px;
     margin-bottom: 8px;
     font-size: 0.9rem;
@@ -228,18 +228,18 @@ const StAddForm = styled.div`
       padding: 6px;
       cursor: pointer;
       border-radius: 4px;
-      border: 1px solid #ddd;
-      background: white;
+      border: 1px solid ${({ theme }) => theme.colors.gray200};
+      background: ${({ theme }) => theme.colors.white};
       font-size: 0.85rem;
       &:hover {
-        background: #f9fafb;
+        background: ${({ theme }) => theme.colors.gray50};
       }
       &:first-child {
-        background: #3b82f6;
-        color: white;
-        border-color: #3b82f6;
+        background: ${({ theme }) => theme.colors.blue500};
+        color: ${({ theme }) => theme.colors.white};
+        border-color: ${({ theme }) => theme.colors.blue500};
         &:hover {
-          background: #2563eb;
+          background: ${({ theme }) => theme.colors.blue600};
         }
       }
     }

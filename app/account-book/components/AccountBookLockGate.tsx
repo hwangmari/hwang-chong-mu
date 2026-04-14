@@ -216,12 +216,12 @@ const StGateTitle = styled.h1`
   margin-top: 0.65rem;
   font-size: 1.4rem;
   font-weight: 900;
-  color: #1f2937;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StGateDescription = styled.p`
   margin-top: 0.35rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.92rem;
   line-height: 1.5;
 `;
@@ -243,8 +243,8 @@ const StPasswordInput = styled.input`
   min-height: 3.4rem;
   border: 1px solid #d9e2ee;
   border-radius: 1rem;
-  background: #fff;
-  color: #1f2937;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 1rem;
   font-weight: 700;
   padding: 0 1rem;
@@ -266,7 +266,7 @@ const StSubmitButton = styled.button`
   border: none;
   border-radius: 1rem;
   background: linear-gradient(135deg, #607de0, #4b69c8);
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.95rem;
   font-weight: 800;
 `;

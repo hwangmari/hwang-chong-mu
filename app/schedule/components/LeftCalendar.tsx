@@ -142,10 +142,10 @@ const StScrollArea = styled.div`
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: ${({ theme }) => theme.colors.gray300};
     border-radius: 3px;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: ${({ theme }) => theme.colors.gray400};
   }
 `;

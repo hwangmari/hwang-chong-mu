@@ -75,29 +75,29 @@ const StContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f9fafb;
+  background-color: ${({ theme }) => theme.colors.gray50};
   padding: 1.5rem;
 `;
 
 const StCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   width: 100%;
   max-width: 400px;
   padding: 2.5rem;
   border-radius: 24px;
   text-align: center;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 
   .back-home {
     display: inline-block;
     margin-top: 1.5rem;
     font-size: 0.85rem;
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
     text-decoration: none;
     &:hover {
       text-decoration: underline;
-      color: #6b7280;
+      color: ${({ theme }) => theme.colors.gray500};
     }
   }
 
@@ -116,12 +116,12 @@ const StIcon = styled.div`
 const StTitle = styled.h1`
   font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: ${({ theme }) => theme.colors.gray900};
   margin-bottom: 0.5rem;
 `;
 
 const StDesc = styled.p`
-  color: #6b7280;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.95rem;
   line-height: 1.5;
   margin-bottom: 2rem;
@@ -135,13 +135,13 @@ const StForm = styled.form`
   input {
     width: 100%;
     padding: 0.85rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid ${({ theme }) => theme.colors.gray300};
     border-radius: 12px;
     font-size: 1rem;
     outline: none;
     transition: all 0.2s;
     &:focus {
-      border-color: #3b82f6;
+      border-color: ${({ theme }) => theme.colors.blue500};
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   }
@@ -149,19 +149,19 @@ const StForm = styled.form`
   button {
     width: 100%;
     padding: 0.85rem;
-    background-color: #111827;
-    color: white;
+    background-color: ${({ theme }) => theme.colors.gray900};
+    color: ${({ theme }) => theme.colors.white};
     font-weight: 700;
     border-radius: 12px;
     font-size: 1rem;
     transition: background 0.2s;
     &:hover {
-      background-color: #000;
+      background-color: ${({ theme }) => theme.colors.black};
     }
   }
 
   .error-msg {
-    color: #ef4444;
+    color: ${({ theme }) => theme.colors.rose500};
     font-size: 0.85rem;
     font-weight: 500;
     animation: shake 0.3s ease-in-out;

@@ -125,6 +125,6 @@ const StCountNumber = styled.div`
 const StCountText = styled.p`
   font-size: 1.5rem;
   margin-top: 1rem;
-  color: #fff;
+  color: ${({ theme }) => theme.colors.white};
   font-weight: 600;
 `;

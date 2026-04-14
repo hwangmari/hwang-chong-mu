@@ -80,10 +80,10 @@ const StControlButton = styled.button<{ $variant: "blue" | "gray" }>`
   ${({ $variant, theme }) =>
     $variant === "blue"
       ? css`
-          background-color: #dbeafe; /* blue-100 */
-          color: #1d4ed8; /* blue-700 */
+          background-color: ${({ theme }) => theme.colors.blue100}; /* blue-100 */
+          color: ${({ theme }) => theme.colors.blue700}; /* blue-700 */
           &:hover {
-            background-color: #bfdbfe; /* blue-200 */
+            background-color: ${({ theme }) => theme.colors.blue200}; /* blue-200 */
           }
         `
       : css`
@@ -110,7 +110,7 @@ const StDateButton = styled.button<{ $isSelected: boolean }>`
   ${({ $isSelected, theme }) =>
     $isSelected
       ? css`
-          background-color: #3b82f6; /* blue-500 */
+          background-color: ${({ theme }) => theme.colors.blue500}; /* blue-500 */
           color: ${theme.colors.white};
         `
       : css`

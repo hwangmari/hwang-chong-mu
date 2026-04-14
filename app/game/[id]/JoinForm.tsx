@@ -71,13 +71,13 @@ export default function JoinForm({
 const StFooterAction = styled.div`
   padding: 1.5rem;
   z-index: 10;
-  background: white;
-  border-top: 1px solid #eee;
+  background: ${({ theme }) => theme.colors.white};
+  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
 `;
 const StWaitingMsg = styled.p`
   text-align: center;
-  color: #888;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 500;
   animation: blink 2s infinite;
   @keyframes blink {

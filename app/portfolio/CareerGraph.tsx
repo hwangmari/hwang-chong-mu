@@ -508,7 +508,7 @@ const StSectionDesc = styled.p`
 `;
 
 const StGraphContainer = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   padding: 0;
   overflow: visible;
 `;
@@ -525,7 +525,7 @@ const StSvg = styled.svg`
 
 const StTooltip = styled.div`
   position: absolute;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.75rem;
   padding: 0.6rem 0.85rem;
@@ -632,13 +632,13 @@ const StExpandedContent = styled.div<{ $color: string }>`
   .period {
     font-size: 0.7rem;
     font-weight: 600;
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.gray400};
   }
 
   .role {
     font-size: 0.78rem;
     font-weight: 700;
-    color: #6b7280;
+    color: ${({ theme }) => theme.colors.gray500};
   }
 
   .highlights {

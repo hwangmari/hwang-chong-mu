@@ -118,8 +118,7 @@ const StTaskContent = styled.div<{
     padding: 0 6px;
     max-width: 100%;
     color: ${({ $isSingleDay, $color }) => ($isSingleDay ? "white" : $color)};
-    background-color: ${({ $isSingleDay }) =>
-      $isSingleDay ? "transparent" : "#fff"};
+    background-color: ${({ $isSingleDay, theme }) => $isSingleDay ? "transparent" : theme.colors.white};
     border-radius: 4px;
     margin-left: ${({ $isSingleDay }) => ($isSingleDay ? "0" : "12px")};
     display: flex;

@@ -178,7 +178,7 @@ export default function IssuePanel({ serviceId, issues, onReload }: Props) {
 // ── Styled Components ──
 
 const StContainer = styled.div`
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
   padding-top: 1rem;
 `;
 
@@ -193,7 +193,7 @@ const StPanelHeader = styled.div`
 const StPanelTitle = styled.h3`
   font-size: 0.95rem;
   font-weight: 800;
-  color: #374151;
+  color: ${({ theme }) => theme.colors.gray700};
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -202,8 +202,8 @@ const StPanelTitle = styled.h3`
 const StIssueCount = styled.span`
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ef4444;
-  background: #fef2f2;
+  color: ${({ theme }) => theme.colors.rose500};
+  background: ${({ theme }) => theme.colors.rose50};
   padding: 1px 8px;
   border-radius: 9999px;
 `;
@@ -213,22 +213,22 @@ const StAddBtn = styled.button`
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #3b82f6;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: ${({ theme }) => theme.colors.blue500};
+  background: ${({ theme }) => theme.colors.blue50};
+  border: 1px solid ${({ theme }) => theme.colors.blue200};
   cursor: pointer;
   transition: all 0.2s;
   &:hover {
-    background: #dbeafe;
+    background: ${({ theme }) => theme.colors.blue100};
   }
 `;
 
 const StForm = styled.div`
   margin: 0 1rem 0.75rem;
   padding: 0.75rem;
-  background: #f9fafb;
+  background: ${({ theme }) => theme.colors.gray50};
   border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -236,24 +236,24 @@ const StForm = styled.div`
 
 const StFormInput = styled.input`
   padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 6px;
   font-size: 0.9rem;
   &:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: ${({ theme }) => theme.colors.blue500};
   }
 `;
 
 const StFormTextarea = styled.textarea`
   padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 6px;
   font-size: 0.85rem;
   resize: none;
   &:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: ${({ theme }) => theme.colors.blue500};
   }
 `;
 
@@ -275,17 +275,17 @@ const StSeverityOption = styled.button<{ $active: boolean; $color: string }>`
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  border: 1px solid ${({ $active, $color }) => ($active ? $color : "#e5e7eb")};
+  border: 1px solid ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray200)};
   background: ${({ $active, $color }) => ($active ? `${$color}15` : "white")};
-  color: ${({ $active, $color }) => ($active ? $color : "#9ca3af")};
+  color: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray400)};
   transition: all 0.15s;
 `;
 
 const StSubmitBtn = styled.button`
   padding: 5px 14px;
   border-radius: 6px;
-  background: #111827;
-  color: white;
+  background: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.white};
   font-size: 0.8rem;
   font-weight: 700;
   border: none;
@@ -306,11 +306,9 @@ const StIssueList = styled.div`
 const StIssueItem = styled.div<{ $severity: string }>`
   padding: 0.6rem 0.75rem;
   border-radius: 0.6rem;
-  background: white;
-  border: 1px solid ${({ $severity }) =>
-    $severity === "blocker" ? "#fecaca" : $severity === "warning" ? "#fde68a" : "#e5e7eb"};
-  border-left: 3px solid ${({ $severity }) =>
-    SEVERITY_CONFIG[$severity as IssueSeverity]?.color || "#e5e7eb"};
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ $severity, theme }) => $severity === "blocker" ? theme.colors.rose200 : $severity === "warning" ? theme.colors.amber200 : theme.colors.gray200};
+  border-left: 3px solid ${({ $severity, theme }) => SEVERITY_CONFIG[$severity as IssueSeverity]?.color || theme.colors.gray200};
 `;
 
 const StIssueHeader = styled.div`
@@ -339,10 +337,10 @@ const StStatusSelect = styled.select<{ $color: string }>`
   font-size: 0.7rem;
   font-weight: 700;
   padding: 1px 4px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 4px;
   color: ${({ $color }) => $color};
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   &:focus {
     outline: none;
@@ -352,34 +350,34 @@ const StStatusSelect = styled.select<{ $color: string }>`
 const StDeleteBtn = styled.button`
   background: none;
   border: none;
-  color: #d1d5db;
+  color: ${({ theme }) => theme.colors.gray300};
   cursor: pointer;
   font-size: 0.8rem;
   padding: 2px 4px;
   border-radius: 3px;
   &:hover {
-    color: #ef4444;
-    background: #fef2f2;
+    color: ${({ theme }) => theme.colors.rose500};
+    background: ${({ theme }) => theme.colors.rose50};
   }
 `;
 
 const StIssueTitle = styled.div<{ $resolved: boolean }>`
   font-size: 0.85rem;
   font-weight: 700;
-  color: ${({ $resolved }) => ($resolved ? "#9ca3af" : "#374151")};
+  color: ${({ $resolved, theme }) => ($resolved ? theme.colors.gray400 : theme.colors.gray700)};
   text-decoration: ${({ $resolved }) => ($resolved ? "line-through" : "none")};
 `;
 
 const StIssueDesc = styled.div`
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   margin-top: 2px;
   line-height: 1.4;
 `;
 
 const StEmpty = styled.div`
   text-align: center;
-  color: #d1d5db;
+  color: ${({ theme }) => theme.colors.gray300};
   font-size: 0.85rem;
   padding: 1rem 0;
 `;
@@ -392,13 +390,13 @@ const StResolvedSection = styled.div`
 const StResolvedToggle = styled.button`
   background: none;
   border: none;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.colors.gray400};
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
   margin-bottom: 0.5rem;
   &:hover {
-    color: #6b7280;
+    color: ${({ theme }) => theme.colors.gray500};
   }
 `;

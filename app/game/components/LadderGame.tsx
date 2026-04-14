@@ -442,7 +442,7 @@ const StHeader = styled.div`
 const StTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 800;
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 5px;
 `;
 
@@ -450,7 +450,7 @@ const StToolbar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8f9fa;
+  background: ${({ theme }) => theme.colors.gray100};
   padding: 10px 15px;
   border-radius: 12px;
   margin-bottom: 15px;
@@ -462,18 +462,18 @@ const StToolbar = styled.div`
     align-items: center;
     gap: 8px;
     font-weight: bold;
-    color: #333;
+    color: ${({ theme }) => theme.colors.gray800};
     font-size: 0.9rem;
     button {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      border: 1px solid #ddd;
-      background: white;
+      border: 1px solid ${({ theme }) => theme.colors.gray200};
+      background: ${({ theme }) => theme.colors.white};
       cursor: pointer;
       font-weight: bold;
       &:active {
-        background: #eee;
+        background: ${({ theme }) => theme.colors.gray200};
       }
       &:disabled {
         opacity: 0.5;
@@ -483,7 +483,7 @@ const StToolbar = styled.div`
     .count {
       min-width: 20px;
       text-align: center;
-      color: #ff6b6b;
+      color: ${({ theme }) => theme.colors.rose500};
       font-size: 1.1rem;
     }
   }
@@ -491,11 +491,11 @@ const StToolbar = styled.div`
     background: none;
     border: none;
     font-size: 0.8rem;
-    color: #666;
+    color: ${({ theme }) => theme.colors.gray600};
     text-decoration: underline;
     cursor: pointer;
     &:hover {
-      color: #333;
+      color: ${({ theme }) => theme.colors.gray800};
     }
   }
 `;
@@ -503,7 +503,7 @@ const StToolbar = styled.div`
 const StScrollContainer = styled.div`
   width: 100%;
   overflow-x: auto;
-  background: white;
+  background: ${({ theme }) => theme.colors.white};
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   padding: 20px 0;
@@ -511,7 +511,7 @@ const StScrollContainer = styled.div`
     height: 8px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: ${({ theme }) => theme.colors.gray300};
     border-radius: 4px;
   }
 `;
@@ -572,21 +572,21 @@ const StResultInput = styled.input<{ $isTarget: boolean; $color: string }>`
   text-align: center;
   border: none;
   border-bottom: 2px solid
-    ${({ $isTarget, $color }) => ($isTarget ? $color : "#eee")};
+    ${({ $isTarget, $color, theme }) => ($isTarget ? $color : theme.colors.gray200)};
   background: ${({ $isTarget, $color }) =>
     $isTarget ? `${$color}20` : "transparent"};
-  color: #333;
+  color: ${({ theme }) => theme.colors.gray800};
   font-weight: bold;
   font-size: 0.9rem;
   border-radius: 4px 4px 0 0;
   transition: all 0.2s;
   &:focus {
     outline: none;
-    border-bottom-color: #333;
-    background: #f8f9fa;
+    border-bottom-color: ${({ theme }) => theme.colors.gray800};
+    background: ${({ theme }) => theme.colors.gray100};
   }
   &::placeholder {
-    color: #ddd;
+    color: ${({ theme }) => theme.colors.gray200};
     font-weight: normal;
   }
 `;
@@ -623,11 +623,11 @@ const StControls = styled.div`
     }
   }
   .secondary {
-    background: #f1f3f5;
-    color: #333;
+    background: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray800};
   }
   .primary {
-    background: #333;
-    color: white;
+    background: ${({ theme }) => theme.colors.gray800};
+    color: ${({ theme }) => theme.colors.white};
   }
 `;

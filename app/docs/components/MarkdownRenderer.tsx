@@ -449,7 +449,7 @@ const CodeBlock = styled.section`
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid #d8e2ef;
-  background: #0f1724;
+  background: ${({ theme }) => theme.colors.gray900};
 
   pre {
     margin: 0;
@@ -486,7 +486,7 @@ const TableWrap = styled.div`
   overflow-x: auto;
   border: 1px solid #dce5f0;
   border-radius: 20px;
-  background: #fff;
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 const Table = styled.table`
@@ -504,7 +504,7 @@ const Table = styled.table`
   }
 
   th {
-    background: #f6f9fd;
+    background: ${({ theme }) => theme.colors.gray100};
     color: #213248;
     font-weight: 900;
   }
@@ -528,7 +528,7 @@ const InlineCode = styled.code`
   display: inline-flex;
   align-items: center;
   border-radius: 8px;
-  background: #eef4fb;
+  background: ${({ theme }) => theme.colors.blue50};
   color: #2d5a8b;
   padding: 0.05rem 0.38rem;
   font-size: 0.9em;
