@@ -2,8 +2,10 @@
 
 import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import styled from "styled-components";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
 import AccountBookLockGate from "@/app/account-book/components/AccountBookLockGate";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import { useScheduleStore } from "@/hooks/useScheduleStore";
 import { useSchedulePartActions } from "@/hooks/useSchedulePartActions";
 import { fetchPartServices } from "@/services/schedule";
@@ -48,19 +50,24 @@ function SchedulePageInner() {
   // 파트 미선택 → 허브
   if (!selectedPartId) {
     return (
-      <ScheduleHub
-        activeUser={activeUser}
-        personalParts={personalParts}
-        sharedParts={sharedParts}
-        onSelectPart={(partId) =>
-          router.push(`/schedule?workspaceId=${partId}`)
-        }
-        onCreatePersonal={handleCreatePersonal}
-        onLogin={handleLogin}
-        onCreateSharedPart={handleCreateSharedPart}
-        onJoinPart={handleJoinPart}
-        onLogout={handleLogout}
-      />
+      <>
+        <ScheduleHub
+          activeUser={activeUser}
+          personalParts={personalParts}
+          sharedParts={sharedParts}
+          onSelectPart={(partId) =>
+            router.push(`/schedule?workspaceId=${partId}`)
+          }
+          onCreatePersonal={handleCreatePersonal}
+          onLogin={handleLogin}
+          onCreateSharedPart={handleCreateSharedPart}
+          onJoinPart={handleJoinPart}
+          onLogout={handleLogout}
+        />
+        {/* <ScheduleGuideWrap>
+          <BlogGuideLink guideId="schedule-guide" />
+        </ScheduleGuideWrap> */}
+      </>
     );
   }
 
@@ -100,3 +107,9 @@ export default function ScheduleListPage() {
     </Suspense>
   );
 }
+
+const ScheduleGuideWrap = styled.div`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
+  margin: 1.5rem auto 2rem;
+  padding: 0 1rem;
+`;

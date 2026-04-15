@@ -53,6 +53,47 @@ export function computePaceSec(distanceKm: number, durationSec: number) {
   return Math.round(durationSec / distanceKm);
 }
 
+// 60분 이상이면 "시간 분" 형식, 미만이면 "N분"
+export function formatDurationMin(min?: number | null): string {
+  if (!min || min <= 0) return "";
+  if (min < 60) return `${min}분`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (m === 0) return `${h}시간`;
+  return `${h}시간 ${m}분`;
+}
+
+// 입력칸 포맷 — 분 숫자를 "h:mm" 혹은 단순 "N" 문자열로 표시
+export function formatMinInput(min?: number | null): string {
+  if (!min || min <= 0) return "";
+  if (min < 60) return String(min);
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}:${String(m).padStart(2, "0")}`;
+}
+
+// "45" | "1:30" | "4:08:22" 같은 입력을 분 단위 정수로 파싱
+// 2-part는 h:mm (시간:분), 3-part는 h:mm:ss (시간:분:초)
+export function parseMinutesInput(input: string): number {
+  const trimmed = (input || "").trim();
+  if (!trimmed) return 0;
+  if (!trimmed.includes(":")) {
+    const n = Number(trimmed);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
+  }
+  const parts = trimmed.split(":").map((p) => Number(p.trim()));
+  if (parts.some((n) => !Number.isFinite(n) || n < 0)) return 0;
+  if (parts.length === 2) {
+    const [h, m] = parts;
+    return h * 60 + m;
+  }
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return h * 60 + m + Math.round(s / 60);
+  }
+  return 0;
+}
+
 // =========================
 // 날짜 / 주간
 // =========================
@@ -132,26 +173,21 @@ export function gymRecordVolumeKg(record: GymRecord) {
   );
 }
 
-// Epley 1RM
-export function estimateOneRepMax(weight: number, reps: number) {
-  if (!weight || !reps) return 0;
-  if (reps === 1) return weight;
-  return Math.round(weight * (1 + reps / 30) * 10) / 10;
-}
-
 export function computeExercisePRs(records: GymRecord[]): ExercisePR[] {
   const bestByName = new Map<string, ExercisePR>();
   for (const r of records) {
     for (const ex of r.exercises) {
       for (const set of ex.sets) {
         if (set.type === "warmup") continue;
-        const orm = estimateOneRepMax(set.weight, set.reps);
-        if (!orm) continue;
+        if (!set.weight || !set.reps) continue;
         const prev = bestByName.get(ex.name);
-        if (!prev || orm > prev.oneRepMaxKg) {
+        if (
+          !prev ||
+          set.weight > prev.weight ||
+          (set.weight === prev.weight && set.reps > prev.reps)
+        ) {
           bestByName.set(ex.name, {
             exerciseName: ex.name,
-            oneRepMaxKg: orm,
             achievedAt: r.date,
             weight: set.weight,
             reps: set.reps,
@@ -161,7 +197,7 @@ export function computeExercisePRs(records: GymRecord[]): ExercisePR[] {
     }
   }
   return Array.from(bestByName.values()).sort(
-    (a, b) => b.oneRepMaxKg - a.oneRepMaxKg,
+    (a, b) => b.weight - a.weight || b.reps - a.reps,
   );
 }
 

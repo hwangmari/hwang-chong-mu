@@ -116,13 +116,19 @@ export type GymSet = {
   note?: string;
 };
 
-export type GymEquipment = "dumbbell" | "barbell" | "kettlebell" | "plate";
+export type GymEquipment =
+  | "dumbbell"
+  | "barbell"
+  | "kettlebell"
+  | "plate"
+  | "cable";
 
 export const GYM_EQUIPMENT_LABEL: Record<GymEquipment, string> = {
   dumbbell: "덤벨",
   barbell: "바벨",
   kettlebell: "케틀벨",
   plate: "원판",
+  cable: "케이블",
 };
 
 export type GymExercise = {
@@ -158,6 +164,45 @@ export type WorkoutRoutine = {
 };
 
 // =========================
+// 활동 (자전거·테니스·등산 등 기타 스포츠)
+// =========================
+export type ActivityRecord = {
+  id: string;
+  roomId: string;
+  date: string;
+  activityName: string;
+  durationMin?: number;
+  calories?: number;
+  avgHeartRate?: number;
+  memo?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 프리셋 종목 목록 (폼에서 빠르게 고를 수 있게)
+export const ACTIVITY_PRESETS: string[] = [
+  "자전거",
+  "등산",
+  "테니스",
+  "배드민턴",
+  "수영",
+  "요가",
+  "필라테스",
+  "클라이밍",
+  "골프",
+  "탁구",
+  "볼링",
+  "스키",
+  "서핑",
+  "축구",
+  "농구",
+  "스쿼시",
+  "복싱",
+  "크로스핏",
+  "스피닝",
+];
+
+// =========================
 // 파생 통계 타입
 // =========================
 export type WeeklySummary = {
@@ -171,7 +216,6 @@ export type WeeklySummary = {
 
 export type ExercisePR = {
   exerciseName: string;
-  oneRepMaxKg: number;
   achievedAt: string;
   weight: number;
   reps: number;

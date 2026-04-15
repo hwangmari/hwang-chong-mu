@@ -2,7 +2,9 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import styled from "styled-components";
 import AccountBookLockGate from "./components/AccountBookLockGate";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import WorkspaceHub from "./components/WorkspaceHub";
 import WorkspaceLedgerView from "./components/WorkspaceLedgerView";
 import WorkspaceSettingsModal from "./components/WorkspaceSettingsModal";
@@ -107,29 +109,34 @@ function AccountBookPageContent() {
           />
         </AccountBookLockGate>
       ) : (
-        <WorkspaceHub
-          activeUser={activeUser}
-          users={store.users}
-          workspaces={store.workspaces}
-          onSelectWorkspace={(workspaceId) =>
-            router.push(`/account-book?workspaceId=${workspaceId}`)
-          }
-          onCreateServerRoom={actions.handleCreateServerRoom}
-          onCreatePersonalWorkspace={actions.handleCreatePersonalWorkspace}
-          onCreateSharedWorkspaceForActiveUser={
-            actions.handleCreateSharedWorkspaceForActiveUser
-          }
-          onJoinServerRoom={actions.handleJoinServerRoom}
-          onLoginPersonalWorkspace={actions.handleLoginPersonalWorkspace}
-          onResetActiveUser={actions.handleResetActiveUser}
-          onOpenManage={() => {
-            if (!activeUser) {
-              window.alert("먼저 서버방에 참여한 뒤 설정을 열어주세요.");
-              return;
+        <>
+          <WorkspaceHub
+            activeUser={activeUser}
+            users={store.users}
+            workspaces={store.workspaces}
+            onSelectWorkspace={(workspaceId) =>
+              router.push(`/account-book?workspaceId=${workspaceId}`)
             }
-            setIsSettingsOpen(true);
-          }}
-        />
+            onCreateServerRoom={actions.handleCreateServerRoom}
+            onCreatePersonalWorkspace={actions.handleCreatePersonalWorkspace}
+            onCreateSharedWorkspaceForActiveUser={
+              actions.handleCreateSharedWorkspaceForActiveUser
+            }
+            onJoinServerRoom={actions.handleJoinServerRoom}
+            onLoginPersonalWorkspace={actions.handleLoginPersonalWorkspace}
+            onResetActiveUser={actions.handleResetActiveUser}
+            onOpenManage={() => {
+              if (!activeUser) {
+                window.alert("먼저 서버방에 참여한 뒤 설정을 열어주세요.");
+                return;
+              }
+              setIsSettingsOpen(true);
+            }}
+          />
+          {/* <StHubGuideWrap>
+            <BlogGuideLink guideId="account-book-guide" />
+          </StHubGuideWrap> */}
+        </>
       )}
 
       {isSettingsOpen && activeUser ? (
@@ -175,3 +182,9 @@ export default function AccountBookPage() {
     </Suspense>
   );
 }
+
+const StHubGuideWrap = styled.div`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
+  margin: 1.5rem auto 2rem;
+  padding: 0 1rem;
+`;

@@ -86,6 +86,35 @@ create trigger workout_routines_touch
   before update on public.workout_routines
   for each row execute function public.workout_touch_updated_at();
 
+-- 활동 기록 (자전거·테니스·등산 등 기타 스포츠)
+create table if not exists public.workout_activity_records (
+  id uuid primary key default gen_random_uuid(),
+  room_id uuid not null references public.workout_rooms(id) on delete cascade,
+  date date not null,
+  activity_name text not null,
+  duration_min integer,
+  calories integer,
+  avg_heart_rate integer,
+  memo text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists workout_activity_records_room_date_idx
+  on public.workout_activity_records (room_id, date desc);
+
+alter table public.workout_activity_records enable row level security;
+
+drop policy if exists "workout_activity anon all" on public.workout_activity_records;
+create policy "workout_activity anon all"
+  on public.workout_activity_records for all
+  using (true) with check (true);
+
+drop trigger if exists workout_activity_touch on public.workout_activity_records;
+create trigger workout_activity_touch
+  before update on public.workout_activity_records
+  for each row execute function public.workout_touch_updated_at();
+
 -- RLS : 익명 키로 접근하되 room_id 와 password 를 같이 확인하는 클라이언트 로직에 의존
 -- (가계부와 동일 철학 — 서버 RPC 없이 단순화)
 alter table public.workout_rooms enable row level security;

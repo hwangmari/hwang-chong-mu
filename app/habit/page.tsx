@@ -108,6 +108,7 @@ export default function CreateHabitPage() {
         <FooterGuide
           title={HABIT_GUIDE_DATA.title}
           tips={HABIT_GUIDE_DATA.tips}
+          blogGuideId="habit-guide"
         />
       </StWrapper>
     </StContainer>

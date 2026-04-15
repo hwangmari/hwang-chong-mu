@@ -1,6 +1,7 @@
 "use client";
 
 import styled from "styled-components";
+import BlogGuideLink from "./BlogGuideLink";
 import { ReactNode } from "react";
 
 interface TipItem {
@@ -20,9 +21,15 @@ interface FooterGuideProps {
     };
   };
   tips: TipItem[]; // 팁 리스트
+  blogGuideId?: string; // 블로그 사용 가이드 포스트 id
 }
 
-export default function FooterGuide({ title, story, tips }: FooterGuideProps) {
+export default function FooterGuide({
+  title,
+  story,
+  tips,
+  blogGuideId,
+}: FooterGuideProps) {
   return (
     <StFooterContainer>
       {/* 1. 브랜드 스토리 (있을 때만 렌더링) */}
@@ -56,6 +63,9 @@ export default function FooterGuide({ title, story, tips }: FooterGuideProps) {
           ))}
         </StTipList>
       </StTipsCard>
+
+      {/* 3. 블로그 상세 가이드 링크 (선택) */}
+      {blogGuideId && <BlogGuideLink guideId={blogGuideId} />}
     </StFooterContainer>
   );
 }
@@ -159,3 +169,4 @@ const StTipText = styled.div`
     font-size: 0.85rem;
   }
 `;
+

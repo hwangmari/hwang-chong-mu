@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { Button, Input } from "@hwangchongmu/ui";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import {
   StContainer,
   StWrapper,
@@ -248,6 +249,8 @@ export default function DinnerPage() {
             </Button>
           </StSection>
         )}
+
+        {/* <BlogGuideLink guideId="place-guide" /> */}
       </StWrapper>
     </StContainer>
   );

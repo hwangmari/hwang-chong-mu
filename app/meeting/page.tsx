@@ -63,6 +63,7 @@ export default function CreateRoomPage() {
           title={MEETING_GUIDE_DATA.title}
           story={MEETING_GUIDE_DATA.story}
           tips={MEETING_GUIDE_DATA.tips}
+          blogGuideId="meeting-guide"
         />
         {/* <AdBanner /> */}
       </StWrapper>

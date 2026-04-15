@@ -9,6 +9,7 @@ import {
   StWrapper,
 } from "@/components/styled/layout.styled";
 import PageIntro from "@/components/common/PageIntro";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Input } from "@hwangchongmu/ui";
@@ -90,6 +91,8 @@ export default function CreateDietPage() {
             </span>
           </CreateButton>
         </StSection>
+
+        {/* <BlogGuideLink guideId="diet-guide" /> */}
       </StWrapper>
     </StContainer>
   );

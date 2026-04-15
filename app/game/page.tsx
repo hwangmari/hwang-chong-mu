@@ -238,6 +238,7 @@ export default function GameLobbyPage() {
           title={GAME_GUIDE_DATA.title}
           story={GAME_GUIDE_DATA.story}
           tips={GAME_GUIDE_DATA.tips}
+          blogGuideId="game-guide"
         />
       </StWrapper>
     </StContainer>

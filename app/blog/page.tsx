@@ -10,7 +10,7 @@ import {
 } from "@/components/styled/layout.styled";
 import { BLOG_POSTS } from "./data";
 
-const CATEGORIES = ["전체", "서비스 소개", "개발 일지", "기술 이야기"];
+const CATEGORIES = ["전체", "사용 가이드", "서비스 소개", "개발 일지", "기술 이야기"];
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState("전체");
@@ -22,7 +22,7 @@ export default function BlogPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StWideWrapper>
         <PageIntro
           icon="📝"
           title="블로그"
@@ -60,10 +60,14 @@ export default function BlogPage() {
             </Link>
           ))}
         </StPostList>
-      </StWrapper>
+      </StWideWrapper>
     </StContainer>
   );
 }
+
+const StWideWrapper = styled(StWrapper)`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
+`;
 
 const StCategoryList = styled.div`
   display: flex;

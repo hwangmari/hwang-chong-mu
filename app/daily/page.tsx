@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import { Typography } from "@hwangchongmu/ui";
 import CreateButton from "@/components/common/CreateButton";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import { createDailyNotebook } from "./repository";
 import {
   clearLegacyDailyLocalData,
@@ -193,9 +194,17 @@ export default function DailyCreatePage() {
           기록장 열기
         </OpenButton>
       </OpenSection>
+
+      {/* <GuideLinkWrap>
+        <BlogGuideLink guideId="daily-guide" />
+      </GuideLinkWrap> */}
     </CreateContainer>
   );
 }
+
+const GuideLinkWrap = styled.div`
+  margin-top: 2rem;
+`;
 
 const CreateContainer = styled.div`
   max-width: 700px;

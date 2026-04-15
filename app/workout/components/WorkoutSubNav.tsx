@@ -10,6 +10,7 @@ const TABS = [
   { href: "/workout", label: "홈", match: (p: string) => p === "/workout" },
   { href: "/workout/run", label: "러닝", match: (p: string) => p.startsWith("/workout/run") },
   { href: "/workout/weight", label: "웨이트", match: (p: string) => p.startsWith("/workout/weight") },
+  { href: "/workout/activity", label: "활동", match: (p: string) => p.startsWith("/workout/activity") },
 ];
 
 export default function WorkoutSubNav() {

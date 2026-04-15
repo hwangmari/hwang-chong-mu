@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import PageIntro from "@/components/common/PageIntro";
+// import BlogGuideLink from "@/components/common/BlogGuideLink";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import CalculatorTab from "@/app/overtime/components/CalculatorTab";
 import RecordsTab from "@/app/overtime/components/RecordsTab";
@@ -299,6 +300,8 @@ export default function OvertimePage() {
             onToggle={() => setIsRuleGuideExpanded((prev) => !prev)}
           />
         </SurfaceCard>
+
+        {/* <BlogGuideLink guideId="overtime-guide" /> */}
       </StWrapper>
     </StContainer>
   );

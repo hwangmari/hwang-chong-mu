@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import type {
+  ActivityRecord,
   GymExercise,
   GymRecord,
   RunningEnvironment,
@@ -327,6 +328,88 @@ export async function upsertWorkoutRoutine(
 export async function deleteWorkoutRoutine(id: string) {
   const { error } = await supabase
     .from("workout_routines")
+    .delete()
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// =========================
+// 활동 기록 CRUD (자전거·테니스·등산 등)
+// =========================
+type ActivityRow = {
+  id: string;
+  room_id: string;
+  date: string;
+  activity_name: string;
+  duration_min: number | null;
+  calories: number | null;
+  avg_heart_rate: number | null;
+  memo: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function mapActivity(row: ActivityRow): ActivityRecord {
+  return {
+    id: row.id,
+    roomId: row.room_id,
+    date: row.date,
+    activityName: row.activity_name,
+    durationMin: row.duration_min ?? undefined,
+    calories: row.calories ?? undefined,
+    avgHeartRate: row.avg_heart_rate ?? undefined,
+    memo: row.memo ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function fetchActivityRecords(
+  roomId: string,
+): Promise<ActivityRecord[]> {
+  const { data, error } = await supabase
+    .from("workout_activity_records")
+    .select("*")
+    .eq("room_id", roomId)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return ((data || []) as ActivityRow[]).map(mapActivity);
+}
+
+export async function upsertActivityRecord(
+  record: Omit<ActivityRecord, "createdAt" | "updatedAt"> & {
+    createdAt?: string;
+    updatedAt?: string;
+  },
+): Promise<ActivityRecord> {
+  const payload = {
+    id: record.id,
+    room_id: record.roomId,
+    date: record.date,
+    activity_name: record.activityName,
+    duration_min: record.durationMin ?? null,
+    calories: record.calories ?? null,
+    avg_heart_rate: record.avgHeartRate ?? null,
+    memo: record.memo ?? null,
+  };
+
+  const { data, error } = await supabase
+    .from("workout_activity_records")
+    .upsert(payload, { onConflict: "id" })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "활동 기록 저장에 실패했어요.");
+  }
+  return mapActivity(data as ActivityRow);
+}
+
+export async function deleteActivityRecord(id: string) {
+  const { error } = await supabase
+    .from("workout_activity_records")
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);

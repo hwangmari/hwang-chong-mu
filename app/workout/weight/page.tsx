@@ -15,8 +15,10 @@ import {
 import { parseGymFromText, runWorkoutOcr, type ParsedGym } from "../ocr";
 import {
   computeExercisePRs,
-  estimateOneRepMax,
+  formatDurationMin,
+  formatMinInput,
   gymRecordVolumeKg,
+  parseMinutesInput,
   setVolumeKg,
   todayISO,
 } from "../helpers";
@@ -136,7 +138,7 @@ export default function WeightPage() {
   const prs = useMemo(() => computeExercisePRs(records), [records]);
   const prMap = useMemo(() => {
     const m = new Map<string, number>();
-    prs.forEach((pr) => m.set(pr.exerciseName, pr.oneRepMaxKg));
+    prs.forEach((pr) => m.set(pr.exerciseName, pr.weight));
     return m;
   }, [prs]);
 
@@ -155,11 +157,12 @@ export default function WeightPage() {
 
   async function submit() {
     if (!session) return;
+    // 맨몸운동은 무게 0 허용, 횟수(시간 플랭크 등)는 reps로 기록
     const filled = form.exercises.filter(
-      (ex) => ex.name.trim() && ex.sets.some((s) => s.weight > 0 && s.reps > 0),
+      (ex) => ex.name.trim() && ex.sets.some((s) => s.reps > 0),
     );
     if (filled.length === 0) {
-      setError("최소 1개 운동 · 1세트 이상을 입력해 주세요.");
+      setError("운동 이름과 횟수가 입력된 세트를 최소 1개 이상 넣어주세요.");
       return;
     }
     setBusy(true);
@@ -170,7 +173,7 @@ export default function WeightPage() {
         roomId: session.roomId,
         date: form.date,
         bodyPart: form.bodyPart,
-        durationMin: Number(form.durationMin) || undefined,
+        durationMin: parseMinutesInput(form.durationMin) || undefined,
         calories: Number(form.calories) || undefined,
         avgHeartRate: Number(form.avgHeartRate) || undefined,
         exercises: filled,
@@ -190,7 +193,7 @@ export default function WeightPage() {
       id: record.id,
       date: record.date,
       bodyPart: (record.bodyPart ?? "chest") as GymBodyPart,
-      durationMin: record.durationMin ? String(record.durationMin) : "",
+      durationMin: formatMinInput(record.durationMin),
       calories: record.calories ? String(record.calories) : "",
       avgHeartRate: record.avgHeartRate ? String(record.avgHeartRate) : "",
       exercises: record.exercises.length
@@ -633,10 +636,11 @@ export default function WeightPage() {
             </StSelect>
           </StLabel>
           <StLabel>
-            운동 시간 (분)
+            운동 시간
             <StInput
-              type="number"
-              placeholder="예) 60"
+              type="text"
+              inputMode="text"
+              placeholder="예) 60 또는 1:30"
               value={form.durationMin}
               onChange={(e) =>
                 setForm({ ...form, durationMin: e.target.value })
@@ -943,7 +947,7 @@ export default function WeightPage() {
                         <b>{Math.round(volume).toLocaleString()}</b> kg
                       </span>
                       {record.durationMin ? (
-                        <span>{record.durationMin}분</span>
+                        <span>{formatDurationMin(record.durationMin)}</span>
                       ) : null}
                       {record.calories ? (
                         <span>{record.calories} kcal</span>
@@ -957,14 +961,15 @@ export default function WeightPage() {
                   {expanded ? (
                     <StExpanded>
                       {record.exercises.map((ex) => {
-                        const bestOrm = Math.max(
+                        const bestWeight = Math.max(
                           0,
                           ...ex.sets
                             .filter((s) => s.type !== "warmup")
-                            .map((s) => estimateOneRepMax(s.weight, s.reps)),
+                            .map((s) => s.weight || 0),
                         );
                         const isPR =
-                          bestOrm > 0 && prMap.get(ex.name) === bestOrm;
+                          bestWeight > 0 &&
+                          prMap.get(ex.name) === bestWeight;
                         return (
                           <StExRow key={ex.id}>
                             <StExName>

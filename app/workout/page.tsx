@@ -5,30 +5,35 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import {
+  deleteActivityRecord,
   deleteGymRecord,
   deleteRunningRecord,
+  fetchActivityRecords,
   fetchGymRecords,
   fetchRunningRecords,
 } from "./repository";
 import {
-  aggregateGymVolume,
-  aggregateRunKm,
   buildWorkoutCalendar,
   computeExercisePRs,
   computeRunningBest,
   formatDuration,
+  formatDurationMin,
   formatPace,
   gymRecordVolumeKg,
-  lastNMonths,
-  lastNWeeks,
   weeklyGymVolume,
   weeklyRunDistance,
 } from "./helpers";
 import {
   WorkoutCalendarHeatmap,
-  WorkoutWeeklyBarChart,
+  WorkoutMonthlyCalendar,
 } from "./components/WorkoutCharts";
-import type { GymRecord, RunningRecord } from "./types";
+import BlogGuideLink from "@/components/common/BlogGuideLink";
+import {
+  GYM_BODY_PART_LABEL,
+  type ActivityRecord,
+  type GymRecord,
+  type RunningRecord,
+} from "./types";
 import { useWorkoutSession } from "./useWorkoutSession";
 
 export default function WorkoutHomePage() {
@@ -36,21 +41,23 @@ export default function WorkoutHomePage() {
   const session = useWorkoutSession();
   const [runs, setRuns] = useState<RunningRecord[]>([]);
   const [gyms, setGyms] = useState<GymRecord[]>([]);
+  const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [chartMode, setChartMode] = useState<"week" | "month">("week");
 
   const load = useCallback(async () => {
     if (!session) return;
     setLoading(true);
     try {
-      const [r, g] = await Promise.all([
+      const [r, g, a] = await Promise.all([
         fetchRunningRecords(session.roomId),
         fetchGymRecords(session.roomId),
+        fetchActivityRecords(session.roomId),
       ]);
       setRuns(r);
       setGyms(g);
+      setActivities(a);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "기록을 불러오지 못했어요.");
@@ -64,12 +71,16 @@ export default function WorkoutHomePage() {
     load();
   }, [session, load]);
 
-  async function handleDelete(kind: "run" | "gym", id: string) {
+  async function handleDelete(
+    kind: "run" | "gym" | "activity",
+    id: string,
+  ) {
     if (!confirm("이 기록을 삭제할까요?")) return;
     setBusy(true);
     try {
       if (kind === "run") await deleteRunningRecord(id);
-      else await deleteGymRecord(id);
+      else if (kind === "gym") await deleteGymRecord(id);
+      else await deleteActivityRecord(id);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "삭제에 실패했어요.");
@@ -78,8 +89,13 @@ export default function WorkoutHomePage() {
     }
   }
 
-  function handleEdit(kind: "run" | "gym", id: string) {
-    const path = kind === "run" ? "/workout/run" : "/workout/weight";
+  function handleEdit(kind: "run" | "gym" | "activity", id: string) {
+    const path =
+      kind === "run"
+        ? "/workout/run"
+        : kind === "gym"
+          ? "/workout/weight"
+          : "/workout/activity";
     router.push(`${path}?edit=${id}`);
   }
 
@@ -89,26 +105,21 @@ export default function WorkoutHomePage() {
   const weeklyGymVol = weeklyGymVolume(gyms);
   const runBest = computeRunningBest(runs);
   const prs = computeExercisePRs(gyms).slice(0, 3);
-  const totalSessions = runs.length + gyms.length;
-
-  const barBuckets =
-    chartMode === "week" ? lastNWeeks(12) : lastNMonths(12);
-  const runBarValues = aggregateRunKm(runs, barBuckets);
-  const gymBarValues = aggregateGymVolume(gyms, barBuckets);
-  const barRangeLabel = chartMode === "week" ? "최근 12주" : "최근 12개월";
-  const barTotalLabel = chartMode === "week" ? "12주 합계" : "12개월 합계";
+  const totalSessions = runs.length + gyms.length + activities.length;
 
   const calendarColumns = buildWorkoutCalendar(
     runs.map((r) => r.date),
-    gyms.map((g) => g.date),
+    [...gyms.map((g) => g.date), ...activities.map((a) => a.date)],
     52,
   );
   const recentItems: Array<
     | { kind: "run"; data: RunningRecord }
     | { kind: "gym"; data: GymRecord }
+    | { kind: "activity"; data: ActivityRecord }
   > = [
     ...runs.map((r) => ({ kind: "run" as const, data: r })),
     ...gyms.map((g) => ({ kind: "gym" as const, data: g })),
+    ...activities.map((a) => ({ kind: "activity" as const, data: a })),
   ]
     .sort((a, b) => (a.data.date < b.data.date ? 1 : -1))
     .slice(0, 5);
@@ -144,7 +155,9 @@ export default function WorkoutHomePage() {
           <StStatValue>
             {totalSessions} <StStatUnit>회</StStatUnit>
           </StStatValue>
-          <StStatSub>러닝 {runs.length} · 헬스 {gyms.length}</StStatSub>
+          <StStatSub>
+            러닝 {runs.length} · 헬스 {gyms.length} · 활동 {activities.length}
+          </StStatSub>
         </StStatCard>
       </StGrid>
 
@@ -157,6 +170,9 @@ export default function WorkoutHomePage() {
           <StCTAEmoji>🏋️‍♂️</StCTAEmoji>
           <StCTAText>웨이트 기록하기</StCTAText>
         </StCTA>
+        <StCTAPlus href="/workout/activity" aria-label="활동 기록하기">
+          +
+        </StCTAPlus>
       </StCTAGrid>
 
       <StSection>
@@ -166,7 +182,11 @@ export default function WorkoutHomePage() {
             {recentItems.map((item) => (
               <StRecentRow key={`${item.kind}-${item.data.id}`}>
                 <StRecentBadge $kind={item.kind}>
-                  {item.kind === "run" ? "러닝" : "헬스"}
+                  {item.kind === "run"
+                    ? "러닝"
+                    : item.kind === "gym"
+                      ? "헬스"
+                      : "활동"}
                 </StRecentBadge>
                 <StRecentBody>
                   <StRecentTitle>
@@ -174,9 +194,32 @@ export default function WorkoutHomePage() {
                       ? `${item.data.distanceKm.toFixed(1)}km · ${formatDuration(
                           item.data.durationSec,
                         )}`
-                      : `${item.data.exercises.length}개 운동 · ${Math.round(
-                          gymRecordVolumeKg(item.data),
-                        ).toLocaleString()}kg`}
+                      : item.kind === "gym"
+                        ? [
+                            item.data.bodyPart
+                              ? GYM_BODY_PART_LABEL[item.data.bodyPart]
+                              : null,
+                            `${item.data.exercises.length}개 운동`,
+                            `${Math.round(
+                              gymRecordVolumeKg(item.data),
+                            ).toLocaleString()}kg`,
+                            item.data.durationMin
+                              ? formatDurationMin(item.data.durationMin)
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : [
+                            item.data.activityName,
+                            item.data.durationMin
+                              ? formatDurationMin(item.data.durationMin)
+                              : null,
+                            item.data.calories
+                              ? `${item.data.calories}kcal`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
                   </StRecentTitle>
                   <StRecentDate>{item.data.date}</StRecentDate>
                 </StRecentBody>
@@ -243,7 +286,7 @@ export default function WorkoutHomePage() {
               <StPRRow key={pr.exerciseName}>
                 <StPRName>{pr.exerciseName}</StPRName>
                 <StPRValue>
-                  {pr.oneRepMaxKg} kg <StPRSmall>(1RM 추정)</StPRSmall>
+                  {pr.weight} kg <StPRSmall>(최대 무게)</StPRSmall>
                   <StPRDate>
                     {pr.weight}×{pr.reps} · {pr.achievedAt}
                   </StPRDate>
@@ -256,60 +299,11 @@ export default function WorkoutHomePage() {
         )}
       </StSection>
 
-      {(() => {
-        const toggle = (
-          <StRangeToggle>
-            <StRangeButton
-              type="button"
-              $active={chartMode === "week"}
-              onClick={() => setChartMode("week")}
-            >
-              주간
-            </StRangeButton>
-            <StRangeButton
-              type="button"
-              $active={chartMode === "month"}
-              onClick={() => setChartMode("month")}
-            >
-              월간
-            </StRangeButton>
-          </StRangeToggle>
-        );
-        return (
-          <>
-            <WorkoutWeeklyBarChart
-              title={
-                chartMode === "week" ? "🏃‍♀️ 주간 러닝 거리" : "🏃‍♀️ 월간 러닝 거리"
-              }
-              subtitle={barRangeLabel}
-              buckets={barBuckets}
-              values={runBarValues}
-              unit="km"
-              color="#3aa675"
-              formatValue={(v) => v.toFixed(1)}
-              totalLabel={barTotalLabel}
-              rightSlot={toggle}
-            />
-
-            <WorkoutWeeklyBarChart
-              title={
-                chartMode === "week"
-                  ? "🏋️‍♂️ 주간 웨이트 볼륨"
-                  : "🏋️‍♂️ 월간 웨이트 볼륨"
-              }
-              subtitle={`${barRangeLabel} · 총 kg`}
-              buckets={barBuckets}
-              values={gymBarValues}
-              unit="kg"
-              color="#e07a3a"
-              formatValue={(v) => Math.round(v).toLocaleString()}
-              totalLabel={barTotalLabel}
-            />
-          </>
-        );
-      })()}
+      <WorkoutMonthlyCalendar runs={runs} gyms={gyms} activities={activities} />
 
       <WorkoutCalendarHeatmap columns={calendarColumns} />
+
+      <BlogGuideLink guideId="workout-guide" />
     </StPage>
   );
 }
@@ -464,7 +458,7 @@ const StRecentRow = styled.div`
   gap: 0.75rem;
 `;
 
-const StRecentBadge = styled.span<{ $kind: "run" | "gym" }>`
+const StRecentBadge = styled.span<{ $kind: "run" | "gym" | "activity" }>`
   width: 2.2rem;
   height: 2.2rem;
   border-radius: 0.6rem;
@@ -474,7 +468,8 @@ const StRecentBadge = styled.span<{ $kind: "run" | "gym" }>`
   font-weight: 800;
   color: ${({ theme }) => theme.colors.white};
   flex-shrink: 0;
-  background: ${({ $kind }) => ($kind === "run" ? "#3aa675" : "#e07a3a")};
+  background: ${({ $kind }) =>
+    $kind === "run" ? "#3aa675" : $kind === "gym" ? "#e07a3a" : "#7c6ae0"};
 `;
 
 const StRecentBody = styled.div`
@@ -495,30 +490,6 @@ const StRecentDate = styled.p`
   margin-top: 0.15rem;
   font-size: 0.72rem;
   color: ${({ theme }) => theme.colors.gray400};
-`;
-
-const StRangeToggle = styled.div`
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.22rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.65rem;
-  align-self: flex-start;
-`;
-
-const StRangeButton = styled.button<{ $active: boolean }>`
-  border: none;
-  padding: 0.4rem 0.7rem;
-  border-radius: 0.45rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  cursor: pointer;
-  background: ${({ $active, theme }) =>
-    $active ? theme.colors.white : "transparent"};
-  color: ${({ $active, theme }) =>
-    $active ? theme.colors.blue600 : theme.colors.gray500};
-  box-shadow: ${({ $active }) =>
-    $active ? "0 1px 4px rgba(41, 58, 92, 0.08)" : "none"};
 `;
 
 const StRecentActions = styled.div`
@@ -548,7 +519,7 @@ const StRowBtn = styled.button<{ $danger?: boolean }>`
 
 const StCTAGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr auto;
   gap: 0.7rem;
 `;
 
@@ -577,4 +548,26 @@ const StCTAText = styled.span`
   font-size: 0.9rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray800};
+`;
+
+const StCTAPlus = styled(Link)`
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 1rem;
+  aspect-ratio: 1 / 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray600};
+  text-decoration: none;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.blue200};
+    color: ${({ theme }) => theme.colors.blue600};
+    transform: translateY(-2px);
+  }
 `;
