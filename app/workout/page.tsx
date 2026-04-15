@@ -521,9 +521,14 @@ const StCTAGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 0.7rem;
+
+  @media (max-width: 500px) {
+    gap: 0.5rem;
+  }
 `;
 
 const StCTA = styled(Link)`
+  min-width: 0;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1rem;
@@ -538,16 +543,34 @@ const StCTA = styled(Link)`
     border-color: ${({ theme }) => theme.colors.blue200};
     transform: translateY(-2px);
   }
+
+  @media (max-width: 500px) {
+    padding: 0.85rem 0.7rem;
+    gap: 0.5rem;
+  }
 `;
 
 const StCTAEmoji = styled.span`
   font-size: 1.5rem;
+  flex-shrink: 0;
+
+  @media (max-width: 500px) {
+    font-size: 1.2rem;
+  }
 `;
 
 const StCTAText = styled.span`
   font-size: 0.9rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray800};
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 500px) {
+    font-size: 0.8rem;
+  }
 `;
 
 const StCTAPlus = styled(Link)`

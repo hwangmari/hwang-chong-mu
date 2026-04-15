@@ -677,6 +677,8 @@ const StLabel = styled.label`
 `;
 
 const StInput = styled.input`
+  width: 100%;
+  min-width: 0;
   min-height: 2.8rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
@@ -694,6 +696,8 @@ const StInput = styled.input`
 `;
 
 const StSelect = styled.select`
+  width: 100%;
+  min-width: 0;
   min-height: 2.8rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
@@ -705,6 +709,8 @@ const StSelect = styled.select`
 `;
 
 const StTextarea = styled.textarea`
+  width: 100%;
+  min-width: 0;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   padding: 0.6rem 0.75rem;
@@ -845,6 +851,8 @@ const StIntervalIndex = styled.span`
 `;
 
 const StMiniInput = styled.input`
+  width: 100%;
+  min-width: 0;
   min-height: 2.4rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.55rem;
