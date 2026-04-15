@@ -54,7 +54,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_1.png",
+      src: "/images/workout_guide/blog_workout_1.png",
       alt: "운동 방 입장 화면",
       caption: "방 만들기와 입장하기 두 가지 모드 중에 선택할 수 있어요.",
     },
@@ -80,7 +80,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_2.png",
+      src: "/images/workout_guide/blog_workout_2.png",
       alt: "운동 일지 홈 대시보드",
       caption: "주간 통계와 함께 러닝/헬스 기록 버튼이 한눈에 보여요.",
     },
@@ -106,7 +106,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_3.png",
+      src: "/images/workout_guide/blog_workout_3.png",
       alt: "러닝 기록 입력 화면",
       caption:
         "러닝 종류, 거리, 시간, 페이스, 심박수까지 자세하게 기록할 수 있어요.",
@@ -129,7 +129,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_4.png",
+      src: "/images/workout_guide/blog_workout_4.png",
       alt: "웨이트 기록 입력 화면",
       caption:
         "부위 → 운동 → 세트별 무게/횟수까지 디테일하게 기록하고, 반복 루틴은 저장해 재사용해요.",
@@ -152,7 +152,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_5.png",
+      src: "/images/workout_guide/blog_workout_5.png",
       alt: "활동 기록 입력 화면",
       caption:
         "프리셋에서 종목을 고르거나 직접 입력해서 다양한 운동을 기록해요.",
@@ -179,7 +179,7 @@ export const workoutGuide: BlogPost = {
     },
     {
       type: "image",
-      src: "/images/workout_home/blog_workout_6.png",
+      src: "/images/workout_guide/blog_workout_6.png",
       alt: "운동 캘린더 히트맵",
       caption: "운동한 날들이 캘린더에 색으로 채워져 한눈에 확인돼요.",
     },

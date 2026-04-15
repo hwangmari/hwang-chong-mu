@@ -1,6 +1,6 @@
 import type { BlogPost } from "./types";
 // 이미지 등록 전까지 임시 비공개 (운동일지 제외)
-// import { meetingGuide } from "./meeting-guide";
+import { meetingGuide } from "./meeting-guide";
 // import { calcGuide } from "./calc-guide";
 // import { overtimeGuide } from "./overtime-guide";
 // import { placeGuide } from "./place-guide";
@@ -33,7 +33,7 @@ export const BLOG_POSTS: BlogPost[] = [
   // placeGuide,
   // overtimeGuide,
   // calcGuide,
-  // meetingGuide,
+  meetingGuide,
   hwangChongmuIntro,
   meetingScheduler,
   calcSplitBill,
