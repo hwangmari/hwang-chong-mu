@@ -23,7 +23,7 @@ export type RunningType =
   | "other";
 
 export const RUNNING_TYPE_LABEL: Record<RunningType, string> = {
-  zone2: "Zone2 (유산소)",
+  zone2: "zone2런",
   interval: "인터벌",
   lsd: "LSD (장거리)",
   tempo: "템포런",

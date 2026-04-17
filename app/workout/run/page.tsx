@@ -18,8 +18,8 @@ import {
   todayISO,
 } from "../helpers";
 import {
-  WorkoutPaceTrendChart,
-  type PaceTrendPoint,
+  WorkoutIntervalDetailChart,
+  WorkoutPaceTrendByTypeChart,
 } from "../components/WorkoutCharts";
 import {
   RUNNING_ENVIRONMENT_LABEL,
@@ -75,6 +75,9 @@ export default function RunPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ocrProgress, setOcrProgress] = useState<number | null>(null);
   const [ocrSummary, setOcrSummary] = useState<string>("");
+  const [expandedIntervalId, setExpandedIntervalId] = useState<string | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -112,19 +115,6 @@ export default function RunPage() {
     if (!km || !sec) return undefined;
     return computePaceSec(km, sec);
   }, [form.distanceKm, form.durationInput]);
-
-  const paceTrendPoints: PaceTrendPoint[] = useMemo(() => {
-    // 최근 20회, 페이스가 산출되는 기록만, 시간순(오래된→최신)
-    return records
-      .map((r) => ({
-        date: r.date,
-        distanceKm: r.distanceKm,
-        paceSec: r.avgPaceSec ?? computePaceSec(r.distanceKm, r.durationSec) ?? 0,
-      }))
-      .filter((p) => p.paceSec > 0 && p.distanceKm > 0)
-      .slice(0, 20)
-      .reverse();
-  }, [records]);
 
   function resetForm() {
     setForm({ ...EMPTY_FORM, date: todayISO() });
@@ -542,7 +532,7 @@ export default function RunPage() {
         </StActions>
       </StCard>
 
-      <WorkoutPaceTrendChart points={paceTrendPoints} />
+      <WorkoutPaceTrendByTypeChart records={records} />
 
       <StCard>
         <StCardTitle>최근 기록</StCardTitle>
@@ -590,6 +580,29 @@ export default function RunPage() {
                     </StRecordStats>
                     {record.memo ? (
                       <StRecordMemo>{record.memo}</StRecordMemo>
+                    ) : null}
+                    {record.intervals && record.intervals.length > 0 ? (
+                      <>
+                        <StIntervalToggle
+                          type="button"
+                          onClick={() =>
+                            setExpandedIntervalId((id) =>
+                              id === record.id ? null : record.id,
+                            )
+                          }
+                          aria-expanded={expandedIntervalId === record.id}
+                        >
+                          {expandedIntervalId === record.id
+                            ? "▾ 구간 차트 닫기"
+                            : `▸ 구간 차트 보기 (${record.intervals.length}구간)`}
+                        </StIntervalToggle>
+                        {expandedIntervalId === record.id ? (
+                          <WorkoutIntervalDetailChart
+                            intervals={record.intervals}
+                            environment={record.environment ?? "outdoor"}
+                          />
+                        ) : null}
+                      </>
                     ) : null}
                   </StRecordMain>
                   <StRecordActions>
@@ -1009,6 +1022,22 @@ const StRecordMemo = styled.p`
   font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.45;
+`;
+
+const StIntervalToggle = styled.button`
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.blue600};
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const StRecordActions = styled.div`

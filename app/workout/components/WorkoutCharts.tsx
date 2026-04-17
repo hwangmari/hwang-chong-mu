@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import {
+  computePaceSec,
   formatDuration,
   formatDurationMin,
   formatPace,
@@ -14,8 +15,21 @@ import {
   RUNNING_TYPE_LABEL,
   type ActivityRecord,
   type GymRecord,
+  type RunningEnvironment,
+  type RunningInterval,
   type RunningRecord,
+  type RunningType,
 } from "../types";
+
+const RUNNING_TYPE_COLOR: Record<RunningType, string> = {
+  zone2: "#1f8a54",
+  interval: "#d04a73",
+  tempo: "#607de0",
+  lsd: "#7c6ae0",
+  easy: "#3aa6c4",
+  race: "#f59e0b",
+  other: "#9aa3b2",
+};
 
 // =========================
 // 공통 스타일
@@ -393,32 +407,45 @@ const StLegendSpacer = styled.div`
 `;
 
 // =========================
-// 러닝 페이스 추이 선그래프
+// 종류별 러닝 페이스 추이 선그래프 (zone2 / interval / tempo …)
 // =========================
-export type PaceTrendPoint = {
-  date: string;
+type PaceTrendByTypeProps = {
+  records: RunningRecord[];
+};
+
+type PacePoint = {
+  type: RunningType;
   paceSec: number;
+  time: number;
+  date: string;
   distanceKm: number;
 };
 
-type PaceTrendProps = {
-  points: PaceTrendPoint[]; // oldest → newest
-};
-
-export function WorkoutPaceTrendChart({ points }: PaceTrendProps) {
-  const viewW = 320;
-  const viewH = 160;
-  const padL = 34;
-  const padR = 10;
-  const padT = 18;
-  const padB = 26;
-  const innerW = viewW - padL - padR;
-  const innerH = viewH - padT - padB;
+export function WorkoutPaceTrendByTypeChart({ records }: PaceTrendByTypeProps) {
+  const points = useMemo<PacePoint[]>(() => {
+    return records
+      .map<PacePoint | null>((r) => {
+        const paceSec =
+          r.avgPaceSec ?? computePaceSec(r.distanceKm, r.durationSec) ?? 0;
+        const time = new Date(r.date).getTime();
+        if (paceSec <= 0 || !Number.isFinite(time)) return null;
+        return {
+          type: r.runType,
+          paceSec,
+          time,
+          date: r.date,
+          distanceKm: r.distanceKm,
+        };
+      })
+      .filter((p): p is PacePoint => p !== null)
+      .sort((a, b) => a.time - b.time)
+      .slice(-20);
+  }, [records]);
 
   if (points.length === 0) {
     return (
       <StWrap>
-        <StTitle>📈 러닝 페이스 추이</StTitle>
+        <StTitle>📈 종류별 페이스 추이</StTitle>
         <StSub>페이스가 포함된 러닝 기록이 쌓이면 선이 그려져요.</StSub>
         <StEmpty>아직 기록이 부족해요.</StEmpty>
       </StWrap>
@@ -428,43 +455,57 @@ export function WorkoutPaceTrendChart({ points }: PaceTrendProps) {
   const paces = points.map((p) => p.paceSec);
   const minPace = Math.min(...paces);
   const maxPace = Math.max(...paces);
-  const range = Math.max(1, maxPace - minPace);
+  // y축에 약간의 여유를 둬서 점이 가장자리에 붙지 않도록
+  const yPad = Math.max(5, (maxPace - minPace) * 0.12);
+  const yMin = Math.max(0, minPace - yPad);
+  const yMax = maxPace + yPad;
+  const yRange = Math.max(1, yMax - yMin);
 
-  // 포인트가 1개면 중앙에 한 점
-  const xFor = (i: number) =>
-    points.length === 1
+  const minTime = points[0].time;
+  const maxTime = points[points.length - 1].time;
+  const timeRange = Math.max(1, maxTime - minTime);
+
+  // 종류별 그룹 (count 많은 순으로 범례 정렬)
+  const grouped = new Map<RunningType, PacePoint[]>();
+  points.forEach((p) => {
+    const arr = grouped.get(p.type) ?? [];
+    arr.push(p);
+    grouped.set(p.type, arr);
+  });
+  const groups = Array.from(grouped.entries()).sort(
+    (a, b) => b[1].length - a[1].length,
+  );
+
+  const viewW = 320;
+  const viewH = 170;
+  const padL = 38;
+  const padR = 10;
+  const padT = 16;
+  const padB = 26;
+  const innerW = viewW - padL - padR;
+  const innerH = viewH - padT - padB;
+
+  const xFor = (time: number) =>
+    minTime === maxTime
       ? padL + innerW / 2
-      : padL + (i / (points.length - 1)) * innerW;
+      : padL + ((time - minTime) / timeRange) * innerW;
+  const yFor = (pace: number) => padT + ((pace - yMin) / yRange) * innerH;
 
-  // y 반전: 낮은 페이스(빠름) = 위쪽
-  const yFor = (pace: number) => padT + ((pace - minPace) / range) * innerH;
-
-  const pathD = points
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(i).toFixed(1)} ${yFor(p.paceSec).toFixed(1)}`)
-    .join(" ");
-
-  // 최빠/최느
-  const fastestIdx = paces.indexOf(minPace);
-  const slowestIdx = paces.indexOf(maxPace);
-
-  // y축 눈금 (min/max 라벨만)
   const labelMin = formatPace(minPace).replace("/km", "");
   const labelMax = formatPace(maxPace).replace("/km", "");
-
-  const first = points[0];
-  const last = points[points.length - 1];
-  const delta = last.paceSec - first.paceSec; // 음수 = 빨라짐
+  const firstDate = points[0].date;
+  const lastDate = points[points.length - 1].date;
 
   return (
     <StWrap>
-      <StTitle>📈 러닝 페이스 추이</StTitle>
+      <StTitle>📈 종류별 페이스 추이</StTitle>
       <StSub>
-        최근 {points.length}회 · 위로 갈수록 빠른 페이스
+        최근 {points.length}회 · 종류별 색상 · 위로 갈수록 빠른 페이스
       </StSub>
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         role="img"
-        aria-label="러닝 페이스 추이"
+        aria-label="종류별 러닝 페이스 추이"
         style={{ width: "100%", height: "auto" }}
       >
         {/* 격자선 + y축 라벨 */}
@@ -484,12 +525,19 @@ export function WorkoutPaceTrendChart({ points }: PaceTrendProps) {
           stroke="#e5e7eb"
           strokeWidth={1}
         />
-        <text x={padL - 4} y={padT + 4} fontSize={9} fill="#9aa3b2" textAnchor="end" fontWeight={700}>
+        <text
+          x={padL - 4}
+          y={yFor(minPace) + 3}
+          fontSize={9}
+          fill="#9aa3b2"
+          textAnchor="end"
+          fontWeight={700}
+        >
           {labelMin}
         </text>
         <text
           x={padL - 4}
-          y={padT + innerH}
+          y={yFor(maxPace) + 3}
           fontSize={9}
           fill="#9aa3b2"
           textAnchor="end"
@@ -498,34 +546,54 @@ export function WorkoutPaceTrendChart({ points }: PaceTrendProps) {
           {labelMax}
         </text>
 
-        {/* 추세선 */}
-        <path d={pathD} fill="none" stroke="#607de0" strokeWidth={2} strokeLinejoin="round" />
-
-        {/* 포인트 */}
-        {points.map((p, i) => {
-          const isFast = i === fastestIdx;
-          const isSlow = i === slowestIdx;
+        {/* 종류별 라인 + 점 */}
+        {groups.map(([type, pts]) => {
+          const color = RUNNING_TYPE_COLOR[type];
+          const sorted = [...pts].sort((a, b) => a.time - b.time);
+          const path =
+            sorted.length >= 2
+              ? sorted
+                  .map(
+                    (p, i) =>
+                      `${i === 0 ? "M" : "L"} ${xFor(p.time).toFixed(1)} ${yFor(p.paceSec).toFixed(1)}`,
+                  )
+                  .join(" ")
+              : null;
           return (
-            <g key={`${p.date}-${i}`}>
-              <circle
-                cx={xFor(i)}
-                cy={yFor(p.paceSec)}
-                r={isFast ? 4.5 : 3.2}
-                fill={isFast ? "#1f8a54" : isSlow ? "#d04a73" : "#607de0"}
-                stroke="#ffffff"
-                strokeWidth={1.2}
-              >
-                <title>
-                  {p.date} · {formatPace(p.paceSec)} · {p.distanceKm.toFixed(1)}km
-                </title>
-              </circle>
+            <g key={type}>
+              {path ? (
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={1.8}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              ) : null}
+              {sorted.map((p, i) => (
+                <circle
+                  key={`${type}-${i}`}
+                  cx={xFor(p.time)}
+                  cy={yFor(p.paceSec)}
+                  r={path ? 3 : 3.8}
+                  fill={color}
+                  stroke="#ffffff"
+                  strokeWidth={1.2}
+                >
+                  <title>
+                    {p.date} · {RUNNING_TYPE_LABEL[type]} · {formatPace(p.paceSec)} ·{" "}
+                    {p.distanceKm.toFixed(1)}km
+                  </title>
+                </circle>
+              ))}
             </g>
           );
         })}
 
         {/* x축 라벨: 첫 · 마지막 */}
         <text x={padL} y={viewH - 8} fontSize={8} fill="#9aa3b2" fontWeight={700}>
-          {first.date.slice(5)}
+          {firstDate.slice(5)}
         </text>
         <text
           x={padL + innerW}
@@ -535,54 +603,256 @@ export function WorkoutPaceTrendChart({ points }: PaceTrendProps) {
           fontWeight={700}
           textAnchor="end"
         >
-          {last.date.slice(5)}
+          {lastDate.slice(5)}
         </text>
       </svg>
-      <StTrendFooter>
-        <span>
-          최빠{" "}
-          <b style={{ color: "#1f8a54" }}>
-            {formatPace(minPace).replace("/km", "")}
-          </b>
-        </span>
-        <span>
-          최느{" "}
-          <b style={{ color: "#d04a73" }}>
-            {formatPace(maxPace).replace("/km", "")}
-          </b>
-        </span>
-        {points.length > 1 ? (
-          <StDeltaBadge $faster={delta < 0}>
-            {delta < 0 ? "▼" : "▲"} 처음 대비 {Math.abs(delta)}초
-          </StDeltaBadge>
-        ) : null}
-      </StTrendFooter>
+      <StTypeLegend>
+        {groups.map(([type, pts]) => (
+          <StTypeLegendItem key={type}>
+            <StTypeDot $color={RUNNING_TYPE_COLOR[type]} />
+            {RUNNING_TYPE_LABEL[type]}
+            <StTypeCount>·{pts.length}회</StTypeCount>
+          </StTypeLegendItem>
+        ))}
+      </StTypeLegend>
     </StWrap>
   );
 }
 
-const StTrendFooter = styled.div`
+const StTypeLegend = styled.div`
   display: flex;
-  gap: 0.6rem;
+  gap: 0.55rem 0.85rem;
   align-items: center;
   margin-top: 0.5rem;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
+  color: ${({ theme }) => theme.colors.gray600};
+  flex-wrap: wrap;
+`;
+
+const StTypeLegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+`;
+
+const StTypeDot = styled.span<{ $color: string }>`
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: ${({ $color }) => $color};
+  display: inline-block;
+`;
+
+const StTypeCount = styled.span`
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 700;
+  margin-left: 0.1rem;
+`;
+
+// =========================
+// 인터벌 구간별 페이스 막대 차트
+// =========================
+type IntervalDetailProps = {
+  intervals: RunningInterval[];
+  environment: RunningEnvironment;
+};
+
+type IntervalPoint = {
+  idx: number;
+  paceSec: number;
+  durationSec: number;
+  distanceKm?: number;
+  speedKmh?: number;
+  inclineLevel?: number;
+};
+
+function intervalPaceSec(
+  it: RunningInterval,
+  environment: RunningEnvironment,
+): number | undefined {
+  if (it.paceSec && it.paceSec > 0) return it.paceSec;
+  if (it.distanceKm && it.distanceKm > 0 && it.durationSec > 0) {
+    return Math.round(it.durationSec / it.distanceKm);
+  }
+  if (environment === "indoor" && it.speedKmh && it.speedKmh > 0) {
+    return Math.round(3600 / it.speedKmh);
+  }
+  return undefined;
+}
+
+export function WorkoutIntervalDetailChart({
+  intervals,
+  environment,
+}: IntervalDetailProps) {
+  const points: IntervalPoint[] = [];
+  intervals.forEach((it, idx) => {
+    const paceSec = intervalPaceSec(it, environment);
+    if (!paceSec) return;
+    points.push({
+      idx,
+      paceSec,
+      durationSec: it.durationSec,
+      distanceKm: it.distanceKm,
+      speedKmh: it.speedKmh,
+      inclineLevel: it.inclineLevel,
+    });
+  });
+
+  if (points.length === 0) {
+    return (
+      <StIntervalWrap>
+        <StIntervalEmpty>
+          페이스를 계산할 수 있는 구간이 없어요. 거리 또는 속도/시간을 입력해 주세요.
+        </StIntervalEmpty>
+      </StIntervalWrap>
+    );
+  }
+
+  const paces = points.map((p) => p.paceSec);
+  const minPace = Math.min(...paces);
+  const maxPace = Math.max(...paces);
+  const yPad = Math.max(5, (maxPace - minPace) * 0.18);
+  const yMin = Math.max(0, minPace - yPad);
+  const yMax = maxPace + yPad;
+  const range = Math.max(1, yMax - yMin);
+
+  const viewW = 320;
+  const viewH = 130;
+  const padL = 14;
+  const padR = 12;
+  const padT = 22;
+  const padB = 28;
+  const innerW = viewW - padL - padR;
+  const innerH = viewH - padT - padB;
+  const baselineY = padT + innerH;
+  const slot = innerW / points.length;
+  const barWidth = Math.min(22, Math.max(6, slot * 0.55));
+
+  return (
+    <StIntervalWrap>
+      <svg
+        viewBox={`0 0 ${viewW} ${viewH}`}
+        role="img"
+        aria-label="구간별 페이스"
+        style={{ width: "100%", height: "auto" }}
+      >
+        <line
+          x1={padL}
+          y1={baselineY}
+          x2={padL + innerW}
+          y2={baselineY}
+          stroke="#e5e7eb"
+          strokeWidth={0.8}
+        />
+        {points.map((p, i) => {
+          const ratio = (yMax - p.paceSec) / range;
+          const h = Math.max(4, ratio * innerH);
+          const cx = padL + slot * (i + 0.5);
+          const x = cx - barWidth / 2;
+          const y = baselineY - h;
+          const isFastest = p.paceSec === minPace && minPace !== maxPace;
+          const isSlowest = p.paceSec === maxPace && minPace !== maxPace;
+          const color = isFastest
+            ? "#1f8a54"
+            : isSlowest
+              ? "#d04a73"
+              : "#607de0";
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={h}
+                rx={Math.min(4, barWidth / 2)}
+                fill={color}
+              >
+                <title>
+                  {i + 1}구간 · {formatPace(p.paceSec)} ·{" "}
+                  {formatDuration(p.durationSec)}
+                  {p.distanceKm ? ` · ${p.distanceKm}km` : ""}
+                  {p.speedKmh ? ` · ${p.speedKmh}km/h` : ""}
+                  {p.inclineLevel ? ` · 경사 ${p.inclineLevel}%` : ""}
+                </title>
+              </rect>
+              <text
+                x={cx}
+                y={y - 4}
+                fontSize={8}
+                fontWeight={800}
+                fill={color}
+                textAnchor="middle"
+              >
+                {formatPace(p.paceSec).replace("/km", "")}
+              </text>
+              <text
+                x={cx}
+                y={baselineY + 11}
+                fontSize={8}
+                fill="#7d8593"
+                fontWeight={800}
+                textAnchor="middle"
+              >
+                {i + 1}구간
+              </text>
+              <text
+                x={cx}
+                y={baselineY + 21}
+                fontSize={7.2}
+                fill="#b1b8c4"
+                fontWeight={600}
+                textAnchor="middle"
+              >
+                {p.durationSec ? formatDuration(p.durationSec) : ""}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <StIntervalLegend>
+        <span>
+          최빠 <b style={{ color: "#1f8a54" }}>{formatPace(minPace).replace("/km", "")}</b>
+        </span>
+        <span>
+          최느 <b style={{ color: "#d04a73" }}>{formatPace(maxPace).replace("/km", "")}</b>
+        </span>
+        <span>
+          편차{" "}
+          <b style={{ color: "#4b69c8" }}>
+            {Math.max(0, maxPace - minPace)}초
+          </b>
+        </span>
+      </StIntervalLegend>
+    </StIntervalWrap>
+  );
+}
+
+const StIntervalWrap = styled.div`
+  background: ${({ theme }) => theme.colors.gray50};
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.6rem 0.4rem;
+  margin-top: 0.4rem;
+`;
+
+const StIntervalEmpty = styled.p`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  text-align: center;
+  padding: 0.6rem 0;
+`;
+
+const StIntervalLegend = styled.div`
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
   color: ${({ theme }) => theme.colors.gray500};
   flex-wrap: wrap;
 
   b {
     font-weight: 900;
   }
-`;
-
-const StDeltaBadge = styled.span<{ $faster: boolean }>`
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.45rem;
-  background: ${({ $faster }) => ($faster ? "#e6f7ee" : "#fee")};
-  color: ${({ $faster }) => ($faster ? "#1f8a54" : "#c0304f")};
-  margin-left: auto;
 `;
 
 // =========================
