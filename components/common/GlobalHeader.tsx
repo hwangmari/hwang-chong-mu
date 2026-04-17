@@ -21,6 +21,7 @@ const ROUTE_CONFIG = [
   { path: "/daily", label: "일일 기록" },
   { path: "/habit", label: "습관 관리" },
   { path: "/diet", label: "체중 관리" },
+  { path: "/inbody", label: "인바디 기록" },
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
   { path: "/blog", label: "블로그" },

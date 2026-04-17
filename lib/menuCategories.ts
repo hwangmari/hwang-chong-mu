@@ -94,6 +94,12 @@ export const MENU_CATEGORIES: MenuCategory[] = [
         title: "운동 기록",
         desc: "러닝·웨이트 성장 그래프",
       },
+      {
+        href: "/inbody",
+        icon: "🧬",
+        title: "인바디 기록",
+        desc: "원하는 지표만 골라 추이 보기",
+      },
     ],
   },
 ];
