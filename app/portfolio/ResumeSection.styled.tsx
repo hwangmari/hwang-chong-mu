@@ -93,7 +93,7 @@ export const StSkillTag = styled.span<{ $variant: "black" | "gray" | "blue" }>`
 `;
 
 export const StTimelineList = styled.div`
-  border-left: 2px solid ${({ theme }) => theme.colors.gray100};
+  border-left: 2px solid ${({ theme }) => theme.colors.gray300};
   margin-left: 0.75rem;
   padding-left: 2rem;
   position: relative;

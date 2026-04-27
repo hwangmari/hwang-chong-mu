@@ -692,12 +692,12 @@ const StLabel = styled.label`
 const StInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 0 0.75rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
 
@@ -711,12 +711,12 @@ const StInput = styled.input`
 const StSelect = styled.select`
   width: 100%;
   min-width: 0;
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 0 0.75rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
 `;
@@ -727,7 +727,7 @@ const StTextarea = styled.textarea`
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   padding: 0.6rem 0.75rem;
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-family: inherit;
   resize: vertical;
   color: ${({ theme }) => theme.colors.gray900};
@@ -827,6 +827,11 @@ const StIntervals = styled.div`
   padding: 0.75rem;
   background: ${({ theme }) => theme.colors.gray50};
   border-radius: 0.8rem;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    padding: 0.55rem;
+  }
 `;
 
 const StIntervalsHead = styled.div`
@@ -836,6 +841,8 @@ const StIntervalsHead = styled.div`
   font-size: 0.78rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray700};
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const StAddButton = styled.button`
@@ -855,24 +862,35 @@ const StIntervalRow = styled.div<{ $indoor: boolean }>`
     $indoor ? "1.2rem 1fr 1fr 1fr 1.4rem" : "1.2rem 1fr 1fr 1.4rem"};
   gap: 0.4rem;
   align-items: center;
+
+  @media (max-width: 480px) {
+    grid-template-columns: ${({ $indoor }) =>
+      $indoor ? "1rem 1fr 1fr 1fr 1.4rem" : "1rem 1fr 1fr 1.4rem"};
+    gap: 0.25rem;
+  }
 `;
 
 const StIntervalIndex = styled.span`
   font-size: 0.75rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray500};
+  text-align: center;
 `;
 
 const StMiniInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.4rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.55rem;
   padding: 0 0.55rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   background: ${({ theme }) => theme.colors.white};
+
+  @media (max-width: 480px) {
+    padding: 0 0.3rem;
+  }
 `;
 
 const StRemoveInterval = styled.button`
@@ -881,6 +899,10 @@ const StRemoveInterval = styled.button`
   color: ${({ theme }) => theme.colors.rose600};
   font-size: 0.9rem;
   cursor: pointer;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 `;
 
 const StIntervalEmpty = styled.p`

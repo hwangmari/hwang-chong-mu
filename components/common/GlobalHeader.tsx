@@ -124,6 +124,12 @@ export default function GlobalHeader() {
       return;
     }
 
+    // /portfolio/experience/:id → /portfolio (experience 목록 페이지가 없음)
+    if (segments[0] === "portfolio" && segments[1] === "experience") {
+      router.push("/portfolio");
+      return;
+    }
+
     // 2단계 이상 → 상위 경로로 (/schedule/123 → /schedule)
     const parentPath = "/" + segments.slice(0, -1).join("/");
     router.push(parentPath);

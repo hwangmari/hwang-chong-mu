@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import styled from "styled-components";
 import {
   computePaceSec,
@@ -39,6 +40,11 @@ const StWrap = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1rem;
   padding: 0.95rem 1.05rem 0.85rem;
+
+  @media (max-width: 540px) {
+    border: none;
+    border-radius: 0;
+  }
 `;
 
 const StTitle = styled.h2`
@@ -259,11 +265,18 @@ const LEFT_GUTTER = 20;
 const TOP_GUTTER = 14;
 
 export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const colCount = columns.length;
   const workoutCount = columns.reduce(
     (sum, col) => sum + col.filter((c) => c.intensity > 0).length,
     0,
   );
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = el.scrollWidth;
+  }, [colCount]);
   const width = LEFT_GUTTER + (CELL_SIZE + CELL_GAP) * colCount;
   const height = TOP_GUTTER + (CELL_SIZE + CELL_GAP) * 7;
 
@@ -287,7 +300,7 @@ export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
     <StWrap>
       <StTitle>운동 잔디 🌱</StTitle>
       <StSub>최근 1년 · 짙을수록 더 많이 운동한 날</StSub>
-      <StCalendarScroll>
+      <StCalendarScroll ref={scrollRef}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
           role="img"
@@ -885,6 +898,10 @@ export function WorkoutMonthlyCalendar({
   }, []);
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [pinnedIso, setPinnedIso] = useState<string | null>(null);
+  const [pinnedShift, setPinnedShift] = useState(0);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cellRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const popoverRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
   const todayISO = isoFromDate(today);
 
@@ -1008,6 +1025,37 @@ export function WorkoutMonthlyCalendar({
     setCursor(new Date(today.getFullYear(), today.getMonth(), 1));
   }
 
+  function handleCellPin(iso: string) {
+    if (pinnedIso === iso) {
+      setPinnedIso(null);
+      setPinnedShift(0);
+      return;
+    }
+    const gridEl = gridRef.current;
+    const cellEl = cellRefs.current.get(iso);
+    const popEl = popoverRefs.current.get(iso);
+    if (!gridEl || !cellEl || !popEl) {
+      setPinnedShift(0);
+      setPinnedIso(iso);
+      return;
+    }
+    const gridRect = gridEl.getBoundingClientRect();
+    const cellRect = cellEl.getBoundingClientRect();
+    const popWidth = popEl.offsetWidth;
+    const cellCenter = cellRect.left + cellRect.width / 2;
+    const idealLeft = cellCenter - popWidth / 2;
+    const idealRight = cellCenter + popWidth / 2;
+    const padding = 8;
+    let shift = 0;
+    if (idealLeft < gridRect.left + padding) {
+      shift = gridRect.left + padding - idealLeft;
+    } else if (idealRight > gridRect.right - padding) {
+      shift = gridRect.right - padding - idealRight;
+    }
+    setPinnedShift(shift);
+    setPinnedIso(iso);
+  }
+
   return (
     <StWrap>
       <StCalHeader>
@@ -1033,7 +1081,7 @@ export function WorkoutMonthlyCalendar({
         ))}
       </StCalDayHeaderRow>
 
-      <StCalGrid>
+      <StCalGrid ref={gridRef}>
         {grid.flat().map((cell) => {
           const isToday = cell.iso === todayISO;
           const hasAny = Boolean(
@@ -1043,13 +1091,17 @@ export function WorkoutMonthlyCalendar({
           return (
             <StCalCell
               key={cell.iso}
+              ref={(el) => {
+                if (el) cellRefs.current.set(cell.iso, el);
+                else cellRefs.current.delete(cell.iso);
+              }}
               $inMonth={cell.inMonth}
               $today={isToday}
               $active={hasAny}
               $pinned={isPinned}
               onClick={() => {
                 if (!hasAny) return;
-                setPinnedIso(isPinned ? null : cell.iso);
+                handleCellPin(cell.iso);
               }}
             >
               <StCalDayNum $today={isToday}>{cell.date.getDate()}</StCalDayNum>
@@ -1065,7 +1117,20 @@ export function WorkoutMonthlyCalendar({
                 ) : null}
               </StCalTags>
               {hasAny ? (
-                <StCalPopover $pinned={isPinned}>
+                <StCalPopover
+                  $pinned={isPinned}
+                  ref={(el) => {
+                    if (el) popoverRefs.current.set(cell.iso, el);
+                    else popoverRefs.current.delete(cell.iso);
+                  }}
+                  style={
+                    isPinned
+                      ? ({
+                          "--shift": `${pinnedShift}px`,
+                        } as CSSProperties)
+                      : undefined
+                  }
+                >
                   <StPopoverDate>{cell.iso}</StPopoverDate>
                   {cell.runRecords.map((r) => (
                     <StPopoverLine key={`r-${r.id}`} $kind="run">
@@ -1313,8 +1378,7 @@ const StCalPopover = styled.div<{ $pinned: boolean }>`
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
-  transform: translateX(-50%)
-    translateY(${({ $pinned }) => ($pinned ? "0" : "4px")});
+  transform: translateX(calc(-50% + var(--shift, 0px)));
   min-width: 180px;
   max-width: 240px;
   padding: 0.6rem 0.75rem;
@@ -1324,7 +1388,7 @@ const StCalPopover = styled.div<{ $pinned: boolean }>`
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.28);
   opacity: ${({ $pinned }) => ($pinned ? 1 : 0)};
   pointer-events: ${({ $pinned }) => ($pinned ? "auto" : "none")};
-  transition: all 0.15s;
+  visibility: ${({ $pinned }) => ($pinned ? "visible" : "hidden")};
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -1335,7 +1399,7 @@ const StCalPopover = styled.div<{ $pinned: boolean }>`
     content: "";
     position: absolute;
     top: 100%;
-    left: 50%;
+    left: calc(50% - var(--shift, 0px));
     transform: translateX(-50%);
     border: 5px solid transparent;
     border-top-color: ${({ theme }) => theme.colors.gray900};

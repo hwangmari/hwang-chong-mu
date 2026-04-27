@@ -64,6 +64,7 @@ const StShareButton = styled.button`
   width: 100%;
   padding: 1rem;
   background-color: #fee500;
+  color: #191919;
   border: none;
   border-radius: 1rem;
   font-weight: 700;

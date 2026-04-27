@@ -67,6 +67,13 @@ export default function ScheduleHub({
     resetForm();
   };
 
+  const handleKeyDownSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.nativeEvent.isComposing && !loading) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   const handleSubmit = async () => {
     setError("");
     setLoading(true);
@@ -134,6 +141,7 @@ export default function ScheduleHub({
                 placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDownSubmit}
               />
               {error && <StError>{error}</StError>}
               <StModalActions>
@@ -162,6 +170,7 @@ export default function ScheduleHub({
                 placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDownSubmit}
               />
               {error && <StError>{error}</StError>}
               <StModalActions>
@@ -276,6 +285,7 @@ export default function ScheduleHub({
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDownSubmit}
             />
             {error && <StError>{error}</StError>}
             <StModalActions>
@@ -310,6 +320,7 @@ export default function ScheduleHub({
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDownSubmit}
             />
             {error && <StError>{error}</StError>}
             <StModalActions>

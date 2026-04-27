@@ -1089,24 +1089,24 @@ const StLabel = styled.label`
 const StInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 0 0.75rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
 `;
 
 const StSelect = styled.select`
   width: 100%;
   min-width: 0;
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 0 0.75rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
 `;
 
@@ -1116,7 +1116,7 @@ const StTextarea = styled.textarea`
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   padding: 0.6rem 0.75rem;
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-family: inherit;
   resize: vertical;
 `;
@@ -1280,12 +1280,22 @@ const StExerciseCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    padding: 0.65rem;
+  }
 `;
 
 const StExerciseHead = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    gap: 0.35rem;
+  }
 `;
 
 const StExerciseIndex = styled.span`
@@ -1298,11 +1308,11 @@ const StExerciseIndex = styled.span`
 const StExerciseName = styled.input`
   flex: 1;
   min-width: 0;
-  min-height: 2.6rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   padding: 0 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   background: ${({ theme }) => theme.colors.white};
 `;
@@ -1316,6 +1326,10 @@ const StRemoveButton = styled.button`
   height: 1.8rem;
   border-radius: 0.5rem;
   cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
 
   &:hover {
     background: ${({ theme }) => theme.colors.rose50};
@@ -1352,7 +1366,7 @@ const StEquipmentChip = styled.button<{ $active: boolean }>`
 
 const StSetHead = styled.div`
   display: grid;
-  grid-template-columns: 1.6rem 1fr 1fr 1fr 1.8rem;
+  grid-template-columns: 1.6rem 1fr 1fr 1.2fr 1.8rem;
   gap: 0.4rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -1361,38 +1375,51 @@ const StSetHead = styled.div`
 
   span {
     text-align: center;
+    min-width: 0;
   }
 
   span:nth-child(2) {
     text-align: left;
   }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1.3rem 1fr 1fr 1.4fr 1.8rem;
+    gap: 0.25rem;
+  }
 `;
 
 const StSetRow = styled.div`
   display: grid;
-  grid-template-columns: 1.6rem 1fr 1fr 1fr 1.8rem;
+  grid-template-columns: 1.6rem 1fr 1fr 1.2fr 1.8rem;
   gap: 0.4rem;
   align-items: center;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1.3rem 1fr 1fr 1.4fr 1.8rem;
+    gap: 0.25rem;
+  }
 `;
 
 const StMoveGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex-shrink: 0;
 `;
 
 const StMoveBtn = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray500};
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 800;
   padding: 0;
-  width: 1.3rem;
-  height: 1.05rem;
+  width: 1.6rem;
+  height: 1.3rem;
   border-radius: 0.25rem;
   cursor: pointer;
   line-height: 1;
+  touch-action: manipulation;
 
   &:hover:not(:disabled) {
     color: ${({ theme }) => theme.colors.blue600};
@@ -1402,6 +1429,11 @@ const StMoveBtn = styled.button`
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    width: 1.8rem;
+    height: 1.5rem;
   }
 `;
 
@@ -1423,12 +1455,12 @@ const StCloneRow = styled.div`
 `;
 
 const StCloneInput = styled.input`
-  width: 2.6rem;
-  min-height: 2.1rem;
+  width: 3.4rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.45rem;
   padding: 0 0.4rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 700;
   text-align: center;
   background: ${({ theme }) => theme.colors.white};
@@ -1459,26 +1491,40 @@ const StSetIndex = styled.span`
 const StMiniInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.4rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.55rem;
   padding: 0 0.55rem;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 700;
   background: ${({ theme }) => theme.colors.white};
   text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 0 0.3rem;
+  }
 `;
 
 const StTypeSelect = styled.select`
   width: 100%;
   min-width: 0;
-  min-height: 2.4rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.55rem;
-  padding: 0 0.3rem;
-  font-size: 0.78rem;
+  padding: 0 1.4rem 0 0.45rem;
+  font-size: 1rem;
   font-weight: 700;
   background: ${({ theme }) => theme.colors.white};
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath d='M1 1l4 4 4-4' stroke='%237d8593' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.45rem center;
+
+  @media (max-width: 480px) {
+    padding: 0 1.1rem 0 0.3rem;
+    background-position: right 0.3rem center;
+  }
 `;
 
 const StDropWrap = styled.div`

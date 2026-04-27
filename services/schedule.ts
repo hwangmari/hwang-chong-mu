@@ -1,5 +1,7 @@
+// 업무 캘린더 클라이언트 서비스 레이어.
+// 모든 접근은 /api/schedule/* 서버 라우트를 경유한다.
+// 응답 매퍼는 그대로 유지해 기존 타입을 깨지 않는다.
 
-import { supabase } from "@/lib/supabase";
 import {
   SchedulePhase,
   TaskPhase,
@@ -7,76 +9,108 @@ import {
   SchedulePart,
   ScheduleServiceData,
   ScheduleStore,
+  MemberWorkload,
+  ScheduleIssue,
+  IssueSeverity,
+  IssueStatus,
 } from "@/types/work-schedule";
-import { format } from "date-fns";
 
+// ─────────────────────────────────────────────────
+// fetch 래퍼
+// ─────────────────────────────────────────────────
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    credentials: "same-origin",
+    headers: {
+      "content-type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(payload?.error ?? "요청이 실패했습니다.");
+  }
+  return payload as T;
+}
+
+// ─────────────────────────────────────────────────
+// 매퍼 (서버 페이로드 → 앱 도메인)
+// ─────────────────────────────────────────────────
 const mapTaskFromDB = (task: any): TaskPhase => ({
   id: task.id,
   title: task.title,
-  startDate: new Date(task.start_date),
-  endDate: new Date(task.end_date),
+  startDate: new Date(task.startDate ?? task.start_date),
+  endDate: new Date(task.endDate ?? task.end_date),
   memo: task.memo || "",
-  isCompleted: task.is_completed ?? false,
+  isCompleted: task.isCompleted ?? task.is_completed ?? false,
 });
+
 const mapPhaseFromDB = (svc: any, tasks: any[] = []): SchedulePhase => ({
   id: svc.id,
-  phaseName: svc.name,
+  phaseName: svc.phaseName ?? svc.name,
   color: svc.color,
-  isCompleted: svc.is_completed ?? false,
-  isHidden: svc.is_hidden ?? false,
-  tasks: tasks.map(mapTaskFromDB),
-  memberId: svc.member_id ?? undefined,
-  memberName: svc.member_name ?? undefined,
-  memberColor: svc.member_color ?? undefined,
+  isCompleted: svc.isCompleted ?? svc.is_completed ?? false,
+  isHidden: svc.isHidden ?? svc.is_hidden ?? false,
+  tasks: (svc.tasks ?? tasks).map(mapTaskFromDB),
+  memberId: svc.memberId ?? svc.member_id ?? undefined,
+  memberName: svc.memberName ?? svc.member_name ?? undefined,
+  memberColor: svc.memberColor ?? svc.member_color ?? undefined,
 });
 
-// ── ID 생성 유틸 ──
-function createId(prefix: string) {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return `${prefix}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
-  }
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function generateInviteCode() {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
-}
-
-// ── 파트 매퍼 ──
-const mapUserFromDB = (row: any): ScheduleUser => ({
+const mapUserFromPayload = (row: any): ScheduleUser => ({
   id: row.id,
   name: row.name,
-  password: row.password,
-  personalPartId: row.personal_workspace_id,
+  password: "",
+  personalPartId: row.personalPartId ?? row.personal_workspace_id ?? "",
 });
 
-const mapPartFromDB = (row: any): SchedulePart => ({
+const mapPartFromPayload = (row: any): SchedulePart => ({
   id: row.id,
   name: row.name,
   type: row.type,
-  password: row.password,
-  ownerUserId: row.owner_user_id ?? undefined,
-  memberIds: row.member_ids ?? [],
-  inviteCode: row.invite_code ?? undefined,
+  password: "",
+  ownerUserId: row.ownerUserId ?? row.owner_user_id ?? undefined,
+  memberIds: row.memberIds ?? row.member_ids ?? [],
+  inviteCode: row.inviteCode ?? row.invite_code ?? undefined,
 });
 
-// ── 스토어 조회 ──
+const ACTIVE_USER_KEY = "hwang-schedule-active-user";
+function readClientUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_USER_KEY);
+}
 
-export const fetchScheduleStore = async (): Promise<ScheduleStore> => {
-  const { data: users, error: uErr } = await supabase
-    .from("schedule_users")
-    .select("*");
-  if (uErr) throw uErr;
-
-  const { data: parts, error: wErr } = await supabase
-    .from("schedule_workspaces")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (wErr) throw wErr;
+// ─────────────────────────────────────────────────
+// 계정/워크스페이스 입장
+// ─────────────────────────────────────────────────
+export const fetchScheduleStore = async (
+  userId?: string | null,
+): Promise<ScheduleStore> => {
+  const effectiveUserId = userId ?? readClientUserId();
+  if (!effectiveUserId) return { users: [], parts: [] };
+  const data = await api<{
+    user: { id: string; name: string; personalWorkspaceId: string | null };
+    parts: Array<{
+      id: string;
+      name: string;
+      type: "personal" | "shared";
+      ownerUserId: string | null;
+      memberIds: string[];
+      inviteCode: string | null;
+    }>;
+  }>(`/api/schedule/store?userId=${encodeURIComponent(effectiveUserId)}`);
 
   return {
-    users: (users || []).map(mapUserFromDB),
-    parts: (parts || []).map(mapPartFromDB),
+    users: [
+      {
+        id: data.user.id,
+        name: data.user.name,
+        password: "",
+        personalPartId: data.user.personalWorkspaceId ?? "",
+      },
+    ],
+    parts: data.parts.map(mapPartFromPayload),
   };
 };
 
@@ -84,46 +118,29 @@ export const createScheduleUser = async (
   name: string,
   password: string,
 ): Promise<{ user: ScheduleUser; part: SchedulePart }> => {
-  // 이름 중복 체크
-  const { data: existing } = await supabase
-    .from("schedule_users")
-    .select("id")
-    .eq("name", name)
-    .maybeSingle();
-  if (existing) throw new Error("이미 사용 중인 이름입니다. 로그인해 주세요.");
-
-  const userId = createId("su");
-  const partId = createId("sw");
-
-  const { data: ws, error: wsErr } = await supabase
-    .from("schedule_workspaces")
-    .insert({
-      id: partId,
-      name: `${name}의 캘린더`,
-      type: "personal",
-      password,
-      owner_user_id: userId,
-      member_ids: [userId],
-    })
-    .select()
-    .single();
-  if (wsErr) throw wsErr;
-
-  const { data: user, error: uErr } = await supabase
-    .from("schedule_users")
-    .insert({
-      id: userId,
-      name,
-      password,
-      personal_workspace_id: partId,
-    })
-    .select()
-    .single();
-  if (uErr) throw uErr;
+  const { user } = await api<{
+    user: { id: string; name: string; personalWorkspaceId: string | null };
+  }>("/api/schedule/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, password }),
+  });
 
   return {
-    user: mapUserFromDB(user),
-    part: mapPartFromDB(ws),
+    user: {
+      id: user.id,
+      name: user.name,
+      password: "",
+      personalPartId: user.personalWorkspaceId ?? "",
+    },
+    // 생성된 개인 워크스페이스의 세부 정보는 hub reload 시 채워진다.
+    part: {
+      id: user.personalWorkspaceId ?? "",
+      name: `${name}의 캘린더`,
+      type: "personal",
+      password: "",
+      ownerUserId: user.id,
+      memberIds: [user.id],
+    },
   };
 };
 
@@ -131,15 +148,18 @@ export const loginScheduleUser = async (
   name: string,
   password: string,
 ): Promise<ScheduleUser> => {
-  const { data: user } = await supabase
-    .from("schedule_users")
-    .select("*")
-    .eq("name", name)
-    .maybeSingle();
-  if (!user) throw new Error("존재하지 않는 이름입니다.");
-  if (user.password !== password)
-    throw new Error("비밀번호가 일치하지 않습니다.");
-  return mapUserFromDB(user);
+  const { user } = await api<{
+    user: { id: string; name: string; personalWorkspaceId: string | null };
+  }>("/api/schedule/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ name, password }),
+  });
+  return {
+    id: user.id,
+    name: user.name,
+    password: "",
+    personalPartId: user.personalWorkspaceId ?? "",
+  };
 };
 
 export const createSharedPart = async (
@@ -147,92 +167,156 @@ export const createSharedPart = async (
   partPassword: string,
   ownerName: string,
   ownerPassword: string,
-): Promise<{
-  user: ScheduleUser;
-  part: SchedulePart;
-}> => {
-  const { user } = await createScheduleUser(ownerName, ownerPassword);
+): Promise<{ user: ScheduleUser; part: SchedulePart }> => {
+  // 1) 소유자 사용자 등록 (이미 존재하면 register가 409 리턴 → 로그인 플로우 유도)
+  const registered = await api<{
+    user: { id: string; name: string; personalWorkspaceId: string | null };
+  }>("/api/schedule/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name: ownerName, password: ownerPassword }),
+  });
 
-  const roomId = createId("sw");
-  const inviteCode = generateInviteCode();
+  // 2) 공유 워크스페이스 생성
+  const { workspace } = await api<{ workspace: any }>(
+    "/api/schedule/workspace",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        ownerUserId: registered.user.id,
+        name: partName,
+        password: partPassword,
+      }),
+    },
+  );
 
-  const { data: ws, error: wsErr } = await supabase
-    .from("schedule_workspaces")
-    .insert({
-      id: roomId,
-      name: partName,
-      type: "shared",
-      password: partPassword,
-      owner_user_id: user.id,
-      member_ids: [user.id],
-      invite_code: inviteCode,
-    })
-    .select()
-    .single();
-  if (wsErr) throw wsErr;
-
-  return { user, part: mapPartFromDB(ws) };
+  return {
+    user: mapUserFromPayload(registered.user),
+    part: mapPartFromPayload(workspace),
+  };
 };
 
 export const joinSharedPart = async (
   inviteCode: string,
   userName: string,
   userPassword: string,
-): Promise<{
-  user: ScheduleUser;
-  part: SchedulePart;
-}> => {
-  const { data: ws, error: wsErr } = await supabase
-    .from("schedule_workspaces")
-    .select("*")
-    .eq("invite_code", inviteCode)
-    .single();
-  if (wsErr || !ws) throw new Error("유효하지 않은 초대코드입니다.");
+): Promise<{ user: ScheduleUser; part: SchedulePart }> => {
+  // 새 계정 등록 후 auth/join 으로 세션 발급 + 멤버 추가
+  const registered = await api<{
+    user: { id: string; name: string; personalWorkspaceId: string | null };
+  }>("/api/schedule/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name: userName, password: userPassword }),
+  });
 
-  const { user } = await createScheduleUser(userName, userPassword);
+  const { session } = await api<{
+    session: {
+      workspaceId: string;
+      workspaceName: string;
+      workspaceType: "personal" | "shared";
+    };
+  }>("/api/schedule/auth/join", {
+    method: "POST",
+    body: JSON.stringify({
+      userId: registered.user.id,
+      inviteCode,
+    }),
+  });
 
-  const updatedMemberIds = [...(ws.member_ids || []), user.id];
-  const { data: updatedWs, error: updateErr } = await supabase
-    .from("schedule_workspaces")
-    .update({ member_ids: updatedMemberIds })
-    .eq("id", ws.id)
-    .select()
-    .single();
-  if (updateErr) throw updateErr;
-
-  return { user, part: mapPartFromDB(updatedWs) };
+  return {
+    user: mapUserFromPayload(registered.user),
+    part: {
+      id: session.workspaceId,
+      name: session.workspaceName,
+      type: session.workspaceType,
+      password: "",
+      ownerUserId: undefined,
+      memberIds: [registered.user.id],
+      inviteCode,
+    },
+  };
 };
 
+// ─────────────────────────────────────────────────
+// 서비스(보드) CRUD
+// ─────────────────────────────────────────────────
 export const fetchPartServices = async (
   partId: string,
 ): Promise<ScheduleServiceData[]> => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .select("*")
-    .eq("workspace_id", partId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map((b: any) => ({
-    id: b.id,
-    title: b.title,
-    description: b.description,
-    partId: b.workspace_id,
-    createdAt: b.created_at,
-  }));
+  const { services } = await api<{
+    services: ScheduleServiceData[];
+  }>(`/api/schedule/workspace/${encodeURIComponent(partId)}/services`);
+  return services;
 };
 
 export const createServiceInPart = async (
   partId: string,
   title: string,
   description: string,
+): Promise<ScheduleServiceData> => {
+  const { service } = await api<{ service: any }>(
+    `/api/schedule/workspace/${encodeURIComponent(partId)}/services`,
+    {
+      method: "POST",
+      body: JSON.stringify({ title, description }),
+    },
+  );
+  return {
+    id: service.id,
+    title: service.title,
+    description: service.description,
+    partId: service.workspace_id,
+    createdAt: service.created_at,
+  };
+};
+
+export const updateService = async (serviceId: string, updates: any) => {
+  const { service } = await api<{ service: any }>(
+    `/api/schedule/service/${encodeURIComponent(serviceId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    },
+  );
+  return service;
+};
+
+export const deleteService = async (serviceId: string) => {
+  await api(`/api/schedule/service/${encodeURIComponent(serviceId)}`, {
+    method: "DELETE",
+  });
+};
+
+export const fetchServiceWithData = async (serviceId: string) => {
+  const data = await api<{
+    service: any;
+    phases: any[];
+  }>(`/api/schedule/service/${encodeURIComponent(serviceId)}`);
+  return {
+    service: data.service,
+    phases: data.phases.map((p) => mapPhaseFromDB(p)),
+  };
+};
+
+// 기존 getServiceData는 fetchServiceWithData와 동일하게 동작하도록 래핑
+export const getServiceData = fetchServiceWithData;
+
+// ─────────────────────────────────────────────────
+// 페이즈 CRUD
+// ─────────────────────────────────────────────────
+export const createPhase = async (
+  serviceId: string,
+  name: string,
+  description: string,
+  color: string,
 ) => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .insert({ title, description, workspace_id: partId })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  const { phase } = await api<{ phase: any }>(
+    `/api/schedule/service/${encodeURIComponent(serviceId)}/phases`,
+    {
+      method: "POST",
+      body: JSON.stringify({ name, description, color }),
+    },
+  );
+  return mapPhaseFromDB(phase);
 };
 
 export const createPhaseWithMember = async (
@@ -244,98 +328,295 @@ export const createPhaseWithMember = async (
   memberName: string,
   memberColor: string,
 ) => {
-  const { data, error } = await supabase
-    .from("schedule_services")
-    .insert({
-      board_id: serviceId,
-      name,
-      description,
-      color,
-      member_id: memberId,
-      member_name: memberName,
-      member_color: memberColor,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapPhaseFromDB(data);
+  const { phase } = await api<{ phase: any }>(
+    `/api/schedule/service/${encodeURIComponent(serviceId)}/phases`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        description,
+        color,
+        memberId,
+        memberName,
+        memberColor,
+      }),
+    },
+  );
+  return mapPhaseFromDB(phase);
 };
 
-// 공용 캘린더: 모든 멤버의 개인 파트 일정을 합쳐서 조회
+export const updatePhase = async (id: string, updates: any) => {
+  const patch: Record<string, unknown> = {};
+  if (updates.phaseName !== undefined) patch.phaseName = updates.phaseName;
+  if (updates.color !== undefined) patch.color = updates.color;
+  const completedVal = updates.isCompleted ?? updates.is_completed;
+  if (completedVal !== undefined) patch.isCompleted = completedVal;
+  const hiddenVal = updates.isHidden ?? updates.is_hidden;
+  if (hiddenVal !== undefined) patch.isHidden = hiddenVal;
+  if (Object.keys(patch).length === 0) return;
+
+  const { phase } = await api<{ phase: any }>(
+    `/api/schedule/phase/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    },
+  );
+  return mapPhaseFromDB(phase, phase.tasks ?? []);
+};
+
+export const deletePhase = async (id: string) => {
+  await api(`/api/schedule/phase/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+};
+
+// ─────────────────────────────────────────────────
+// 태스크 CRUD
+// ─────────────────────────────────────────────────
+export const createTask = async (phaseId: string, task: any) => {
+  const startDate = task.startDate?.toISOString?.() ?? task.startDate;
+  const endDate = task.endDate?.toISOString?.() ?? task.endDate;
+  const { task: data } = await api<{ task: any }>(
+    `/api/schedule/phase/${encodeURIComponent(phaseId)}/tasks`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        title: task.title,
+        startDate,
+        endDate,
+        memo: task.memo ?? "",
+      }),
+    },
+  );
+  return mapTaskFromDB(data);
+};
+
+export const updateTask = async (taskId: string, updates: any) => {
+  const patch: Record<string, unknown> = {};
+  if (updates.title !== undefined) patch.title = updates.title;
+  if (updates.memo !== undefined) patch.memo = updates.memo;
+  if (updates.startDate !== undefined) {
+    const iso = new Date(updates.startDate);
+    if (!isNaN(iso.getTime())) patch.startDate = iso.toISOString();
+  }
+  if (updates.endDate !== undefined) {
+    const iso = new Date(updates.endDate);
+    if (!isNaN(iso.getTime())) patch.endDate = iso.toISOString();
+  }
+  const completedVal = updates.isCompleted ?? updates.is_completed;
+  if (completedVal !== undefined) patch.isCompleted = completedVal;
+  if (Object.keys(patch).length === 0) return;
+
+  const { task } = await api<{ task: any }>(
+    `/api/schedule/task/${encodeURIComponent(taskId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    },
+  );
+  return mapTaskFromDB(task);
+};
+
+export const deleteTask = async (taskId: string) => {
+  await api(`/api/schedule/task/${encodeURIComponent(taskId)}`, {
+    method: "DELETE",
+  });
+};
+
+// ─────────────────────────────────────────────────
+// 공유 캘린더 / 멤버 / 워크로드
+// ─────────────────────────────────────────────────
 export const fetchSharedCalendarPhases = async (
   partId: string,
 ): Promise<SchedulePhase[]> => {
-  const members = await fetchPartMembers(partId);
-  if (members.length === 0) return [];
-
-  const allPhases: SchedulePhase[] = [];
-
-  for (const member of members) {
-    if (!member.personalPartId) continue;
-
-    const services = await fetchPartServices(member.personalPartId);
-
-    for (const svc of services) {
-      try {
-        const { phases } = await fetchServiceWithData(svc.id);
-        const tagged = phases.map((phase) => ({
-          ...phase,
-          memberId: member.id,
-          memberName: member.name,
-          memberColor: phase.color,
-        }));
-        allPhases.push(...tagged);
-      } catch {
-        // 서비스 로딩 실패 시 건너뜀
-      }
-    }
-  }
-
   const sharedServices = await fetchPartServices(partId);
+  if (sharedServices.length === 0) return [];
+  const allPhases: SchedulePhase[] = [];
   for (const svc of sharedServices) {
     try {
       const { phases } = await fetchServiceWithData(svc.id);
       allPhases.push(...phases);
     } catch {
-      // 무시
+      // 단일 서비스 로딩 실패는 무시
     }
   }
-
   return allPhases;
 };
 
 export const fetchPartMembers = async (
   partId: string,
 ): Promise<ScheduleUser[]> => {
-  const { data: ws, error: wsErr } = await supabase
-    .from("schedule_workspaces")
-    .select("member_ids")
-    .eq("id", partId)
-    .single();
-  if (wsErr || !ws) return [];
+  const { members } = await api<{
+    members: Array<{
+      id: string;
+      name: string;
+      personalPartId: string | null;
+      role: string;
+    }>;
+  }>(`/api/schedule/workspace/${encodeURIComponent(partId)}/members`);
 
-  const memberIds = ws.member_ids || [];
-  if (memberIds.length === 0) return [];
-
-  const { data: users, error: uErr } = await supabase
-    .from("schedule_users")
-    .select("*")
-    .in("id", memberIds);
-  if (uErr) return [];
-
-  return (users || []).map(mapUserFromDB);
+  return members.map((m) => ({
+    id: m.id,
+    name: m.name,
+    password: "",
+    personalPartId: m.personalPartId ?? "",
+  }));
 };
 
+export const fetchMemberWorkloads = async (
+  partId: string,
+): Promise<MemberWorkload[]> => {
+  const members = await fetchPartMembers(partId);
+  const services = await fetchPartServices(partId);
 
-// 파트 캘린더: 파트 내 모든 서비스의 단계를 합산 조회
+  const servicePhaseMap = new Map<
+    string,
+    { title: string; phases: SchedulePhase[] }
+  >();
+  for (const svc of services) {
+    try {
+      const { phases } = await fetchServiceWithData(svc.id);
+      servicePhaseMap.set(svc.id, { title: svc.title, phases });
+    } catch {
+      // 무시
+    }
+  }
+
+  return members.map((member) => {
+    const memberServices: MemberWorkload["services"] = [];
+    let totalTasks = 0;
+    let activeTasks = 0;
+    let completedTasks = 0;
+
+    for (const [serviceId, { title, phases }] of servicePhaseMap) {
+      const memberPhases = phases.filter((p) => p.memberId === member.id);
+      if (memberPhases.length === 0) continue;
+
+      const phaseData = memberPhases.map((p) => {
+        const total = p.tasks.length;
+        const completed = p.tasks.filter((t) => t.isCompleted).length;
+        const active = total - completed;
+        totalTasks += total;
+        activeTasks += active;
+        completedTasks += completed;
+        return {
+          phaseId: p.id,
+          phaseName: p.phaseName,
+          color: p.color,
+          totalTasks: total,
+          activeTasks: active,
+          completedTasks: completed,
+        };
+      });
+
+      memberServices.push({ serviceId, serviceTitle: title, phases: phaseData });
+    }
+
+    return {
+      user: member,
+      services: memberServices,
+      totalTasks,
+      activeTasks,
+      completedTasks,
+    };
+  });
+};
+
+// ─────────────────────────────────────────────────
+// 이슈 트래킹
+// ─────────────────────────────────────────────────
+const mapIssueFromDB = (row: any): ScheduleIssue => ({
+  id: row.id,
+  serviceId: row.board_id ?? row.boardId,
+  title: row.title,
+  description: row.description || "",
+  severity: row.severity || "normal",
+  status: row.status || "open",
+  createdAt: row.created_at ?? row.createdAt,
+  resolvedAt: row.resolved_at ?? row.resolvedAt ?? null,
+});
+
+export const fetchServiceIssues = async (
+  serviceId: string,
+): Promise<ScheduleIssue[]> => {
+  const { issues } = await api<{ issues: any[] }>(
+    `/api/schedule/service/${encodeURIComponent(serviceId)}/issues`,
+  );
+  return issues.map(mapIssueFromDB);
+};
+
+export const fetchPartIssues = async (
+  partId: string,
+): Promise<ScheduleIssue[]> => {
+  const services = await fetchPartServices(partId);
+  if (services.length === 0) return [];
+  const all: ScheduleIssue[] = [];
+  for (const svc of services) {
+    try {
+      const list = await fetchServiceIssues(svc.id);
+      all.push(...list);
+    } catch {
+      // 무시
+    }
+  }
+  return all;
+};
+
+export const createIssue = async (
+  serviceId: string,
+  title: string,
+  description: string,
+  severity: IssueSeverity,
+): Promise<ScheduleIssue> => {
+  const { issue } = await api<{ issue: any }>(
+    `/api/schedule/service/${encodeURIComponent(serviceId)}/issues`,
+    {
+      method: "POST",
+      body: JSON.stringify({ title, description, severity }),
+    },
+  );
+  return mapIssueFromDB(issue);
+};
+
+export const updateIssue = async (
+  issueId: string,
+  updates: {
+    title?: string;
+    description?: string;
+    severity?: IssueSeverity;
+    status?: IssueStatus;
+  },
+): Promise<ScheduleIssue> => {
+  const { issue } = await api<{ issue: any }>(
+    `/api/schedule/issue/${encodeURIComponent(issueId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    },
+  );
+  return mapIssueFromDB(issue);
+};
+
+export const deleteIssue = async (issueId: string) => {
+  await api(`/api/schedule/issue/${encodeURIComponent(issueId)}`, {
+    method: "DELETE",
+  });
+};
+
+// 파트 캘린더 뷰 전용 집계 타입
 export type PartCalendarPhase = SchedulePhase & {
   serviceId: string;
   serviceTitle: string;
 };
 
+// 파트에 속한 모든 서비스의 페이즈를 합산해 반환한다.
 export const fetchPartAllPhases = async (
   partId: string,
-): Promise<{ phases: PartCalendarPhase[]; services: ScheduleServiceData[] }> => {
+): Promise<{
+  phases: PartCalendarPhase[];
+  services: ScheduleServiceData[];
+}> => {
   const services = await fetchPartServices(partId);
   const allPhases: PartCalendarPhase[] = [];
 
@@ -356,434 +637,20 @@ export const fetchPartAllPhases = async (
   return { phases: allPhases, services };
 };
 
-export const createService = async (title: string, description: string) => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .insert({ title, description })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const fetchServiceWithData = async (serviceId: string) => {
-  const { data: service, error: svcError } = await supabase
-    .from("schedule_boards")
-    .select("*")
-    .eq("id", serviceId)
-    .single();
-  if (svcError) throw svcError;
-
-  const { data: phases, error: phaseError } = await supabase
-    .from("schedule_services")
-    .select("*")
-    .eq("board_id", serviceId)
-    .order("created_at", { ascending: true });
-  if (phaseError) throw phaseError;
-
-  const phaseIds = phases.map((s) => s.id);
-  let allTasks: any[] = [];
-
-  if (phaseIds.length > 0) {
-    const { data: tasks, error: taskError } = await supabase
-      .from("schedule_tasks")
-      .select("*")
-      .in("service_id", phaseIds)
-      .order("start_date", { ascending: true });
-    if (taskError) throw taskError;
-    allTasks = tasks;
-  }
-
-  const phasesWithTasks = phases.map((p) => {
-    const myTasks = allTasks.filter((t) => t.service_id === p.id);
-    return mapPhaseFromDB(p, myTasks);
-  });
-
-  return { service, phases: phasesWithTasks };
-};
-
-export const getServiceData = async (serviceId: string) => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .select(
-      `
-      *,
-      services:schedule_services(
-        *,
-        tasks:schedule_tasks(*)
-      )
-    `,
-    )
-    .eq("id", serviceId)
-    .single();
-
-  if (error) throw error;
-  if (!data) throw new Error("데이터를 찾을 수 없습니다.");
-
-  const phasesWithTasks = (data.services || []).map((svc: any) => {
-    return mapPhaseFromDB(svc, svc.tasks || []);
-  });
-
-  return {
-    service: data,
-    phases: phasesWithTasks,
-  };
-};
-
+// 다른 파일에서 fetchServices 또는 그 외 supabase export에 의존하는 경우를 위한 호환 스텁.
 export const fetchServices = async () => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data;
+  throw new Error(
+    "fetchServices는 더 이상 지원하지 않습니다. fetchPartServices를 사용하세요.",
+  );
 };
 
-export const updateService = async (serviceId: string, updates: any) => {
-  const { data, error } = await supabase
-    .from("schedule_boards")
-    .update(updates)
-    .eq("id", serviceId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const deleteService = async (serviceId: string) => {
-  const { error } = await supabase
-    .from("schedule_boards")
-    .delete()
-    .eq("id", serviceId);
-  if (error) throw error;
-};
-
-
-export const createPhase = async (
-  serviceId: string,
-  name: string,
-  description: string,
-  color: string,
-) => {
-  const { data, error } = await supabase
-    .from("schedule_services")
-    .insert({ board_id: serviceId, name, description, color })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return mapPhaseFromDB(data);
-};
-
-export const updatePhase = async (id: string, updates: any) => {
-  try {
-    const dbUpdates: any = {};
-
-    if (updates.phaseName) dbUpdates.name = updates.phaseName;
-    if (updates.color) dbUpdates.color = updates.color;
-
-    const completedVal = updates.isCompleted ?? updates.is_completed;
-    if (completedVal !== undefined) {
-      dbUpdates.is_completed = completedVal;
-    }
-
-    const hiddenVal = updates.isHidden ?? updates.is_hidden;
-    if (hiddenVal !== undefined) {
-      dbUpdates.is_hidden = hiddenVal;
-    }
-
-    console.log("Phase DB Update Payload:", dbUpdates);
-
-    if (Object.keys(dbUpdates).length === 0) {
-      console.warn("업데이트할 데이터가 없습니다.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("schedule_services")
-      .update(dbUpdates)
-      .eq("id", id)
-      .select(`*, tasks:schedule_tasks(*)`)
-      .single();
-
-    if (error) {
-      console.error("Supabase 상세 에러:", JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return mapPhaseFromDB(data, data.tasks || []);
-  } catch (err: any) {
-    console.error("updatePhase 내부 에러:", err.message);
-    throw err;
-  }
-};
-
-export const deletePhase = async (id: string) => {
-  const { error } = await supabase
-    .from("schedule_services")
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
-};
-
-
-export const createTask = async (phaseId: string, task: any) => {
-  const { data, error } = await supabase
-    .from("schedule_tasks")
-    .insert({
-      service_id: phaseId,
-      title: task.title,
-      start_date: task.startDate.toISOString(),
-      end_date: task.endDate.toISOString(),
-      memo: task.memo || "",
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return mapTaskFromDB(data);
-};
-
-export const updateTask = async (taskId: string, updates: any) => {
-  try {
-    const dbUpdates: any = {};
-
-    if (updates.title) dbUpdates.title = updates.title;
-
-    const ensureISOString = (dateInput: any) => {
-      if (!dateInput) return null;
-      const date = new Date(dateInput);
-      return !isNaN(date.getTime()) ? date.toISOString() : null;
-    };
-
-    if (updates.startDate) {
-      const iso = ensureISOString(updates.startDate);
-      if (iso) dbUpdates.start_date = iso;
-    }
-    if (updates.endDate) {
-      const iso = ensureISOString(updates.endDate);
-      if (iso) dbUpdates.end_date = iso;
-    }
-    if (updates.memo !== undefined) dbUpdates.memo = updates.memo;
-
-    const completedVal = updates.isCompleted ?? updates.is_completed;
-    if (completedVal !== undefined) {
-      dbUpdates.is_completed = completedVal;
-    }
-
-    console.log("Task DB Payload:", dbUpdates);
-
-    if (Object.keys(dbUpdates).length === 0) {
-      console.warn("Task 업데이트 데이터가 비어있습니다.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("schedule_tasks")
-      .update(dbUpdates)
-      .eq("id", taskId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase Error String:", JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    return mapTaskFromDB(data);
-  } catch (err: any) {
-    console.error("UpdateTask 에러:", err.message);
-    throw err;
-  }
-};
-
-export const deleteTask = async (taskId: string) => {
-  const { error } = await supabase
-    .from("schedule_tasks")
-    .delete()
-    .eq("id", taskId);
-  if (error) throw error;
-};
-
-// ── 멤버 리소스 관리 ──
-
-import type {
-  MemberWorkload,
-  ScheduleIssue,
-  IssueSeverity,
-  IssueStatus,
-} from "@/types/work-schedule";
-
-export const fetchMemberWorkloads = async (
-  partId: string,
-): Promise<MemberWorkload[]> => {
-  const members = await fetchPartMembers(partId);
-  const services = await fetchPartServices(partId);
-
-  // 모든 서비스의 단계 데이터를 한번에 로딩
-  const servicePhaseMap = new Map<string, { title: string; phases: SchedulePhase[] }>();
-  for (const svc of services) {
-    try {
-      const { phases } = await fetchServiceWithData(svc.id);
-      servicePhaseMap.set(svc.id, { title: svc.title, phases });
-    } catch {
-      // 무시
-    }
-  }
-
-  return members.map((member) => {
-    const memberServices: MemberWorkload["services"] = [];
-    let totalTasks = 0;
-    let activeTasks = 0;
-    let completedTasks = 0;
-
-    // 1. 멤버의 개인 파트 서비스
-    if (member.personalPartId) {
-      // personalPartId의 서비스는 별도 로딩이 필요하지만,
-      // 공용 파트 내 서비스에서 memberId로 매칭된 단계를 찾는다
-    }
-
-    // 2. 공용 파트 서비스에서 멤버가 할당된 단계 찾기
-    for (const [serviceId, { title, phases }] of servicePhaseMap) {
-      const memberPhases = phases.filter((p) => p.memberId === member.id);
-      if (memberPhases.length === 0) continue;
-
-      const phaseData = memberPhases.map((p) => {
-        const total = p.tasks.length;
-        const completed = p.tasks.filter((t) => t.isCompleted).length;
-        const active = total - completed;
-        totalTasks += total;
-        activeTasks += active;
-        completedTasks += completed;
-
-        return {
-          phaseId: p.id,
-          phaseName: p.phaseName,
-          color: p.color,
-          totalTasks: total,
-          activeTasks: active,
-          completedTasks: completed,
-        };
-      });
-
-      memberServices.push({
-        serviceId,
-        serviceTitle: title,
-        phases: phaseData,
-      });
-    }
-
-    return {
-      user: member,
-      services: memberServices,
-      totalTasks,
-      activeTasks,
-      completedTasks,
-    };
-  });
-};
-
-// ── 이슈 트래킹 ──
-
-const mapIssueFromDB = (row: any): ScheduleIssue => ({
-  id: row.id,
-  serviceId: row.board_id,
-  title: row.title,
-  description: row.description || "",
-  severity: row.severity || "normal",
-  status: row.status || "open",
-  createdAt: row.created_at,
-  resolvedAt: row.resolved_at ?? null,
-});
-
-export const fetchServiceIssues = async (
-  serviceId: string,
-): Promise<ScheduleIssue[]> => {
-  const { data, error } = await supabase
-    .from("schedule_issues")
-    .select("*")
-    .eq("board_id", serviceId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapIssueFromDB);
-};
-
-export const fetchPartIssues = async (
-  partId: string,
-): Promise<ScheduleIssue[]> => {
-  const services = await fetchPartServices(partId);
-  const serviceIds = services.map((s) => s.id);
-  if (serviceIds.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("schedule_issues")
-    .select("*")
-    .in("board_id", serviceIds)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapIssueFromDB);
-};
-
-export const createIssue = async (
-  serviceId: string,
-  title: string,
-  description: string,
-  severity: IssueSeverity,
-): Promise<ScheduleIssue> => {
-  const { data, error } = await supabase
-    .from("schedule_issues")
-    .insert({
-      board_id: serviceId,
-      title,
-      description,
-      severity,
-      status: "open",
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapIssueFromDB(data);
-};
-
-export const updateIssue = async (
-  issueId: string,
-  updates: {
-    title?: string;
-    description?: string;
-    severity?: IssueSeverity;
-    status?: IssueStatus;
-  },
-): Promise<ScheduleIssue> => {
-  const dbUpdates: any = {};
-  if (updates.title !== undefined) dbUpdates.title = updates.title;
-  if (updates.description !== undefined) dbUpdates.description = updates.description;
-  if (updates.severity !== undefined) dbUpdates.severity = updates.severity;
-  if (updates.status !== undefined) {
-    dbUpdates.status = updates.status;
-    if (updates.status === "resolved") {
-      dbUpdates.resolved_at = new Date().toISOString();
-    } else {
-      dbUpdates.resolved_at = null;
-    }
-  }
-
-  const { data, error } = await supabase
-    .from("schedule_issues")
-    .update(dbUpdates)
-    .eq("id", issueId)
-    .select()
-    .single();
-  if (error) throw error;
-  return mapIssueFromDB(data);
-};
-
-export const deleteIssue = async (issueId: string) => {
-  const { error } = await supabase
-    .from("schedule_issues")
-    .delete()
-    .eq("id", issueId);
-  if (error) throw error;
+// 레거시: 워크스페이스 스코프 없이 서비스를 만드는 경로는 이제 지원하지 않는다.
+// /schedule/create 등 구 경로가 참조하면 명확히 에러를 유도한다.
+export const createService = async (
+  _title: string,
+  _description: string,
+): Promise<{ id: string }> => {
+  throw new Error(
+    "서비스는 워크스페이스 안에서만 생성할 수 있습니다. 허브에서 파트를 먼저 선택하세요.",
+  );
 };

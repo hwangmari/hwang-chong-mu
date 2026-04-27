@@ -1,8 +1,8 @@
 import styled from "styled-components";
 
 export const SurfaceCard = styled.section`
-  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white} 0%, ${({ theme }) => theme.colors.blue50} 100%);
-  border: 1px solid #dbe7f4;
+  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white} 0%, ${({ theme }) => theme.colors.gray100} 100%);
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 28px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
   padding: 1.5rem;
@@ -17,8 +17,8 @@ export const RuleSelectorCard = styled.div`
   margin-bottom: 1rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid #dbe7f4;
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 
 export const RuleSelectorHeader = styled.div`
@@ -45,7 +45,7 @@ export const RuleSelectorTitle = styled.strong`
 
 export const RuleSelectorDescription = styled.p`
   margin: 0.35rem 0 0;
-  color: #5a718d;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   line-height: 1.55;
 `;
@@ -64,8 +64,8 @@ export const RuleSelectorTabs = styled.div`
 
 export const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
   width: 100%;
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
   border-radius: 999px;
   padding: 0.85rem 1rem;
@@ -83,8 +83,8 @@ export const TabList = styled.div`
 `;
 
 export const TabButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.blue50)};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray100)};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray500)};
   border-radius: 16px;
   padding: 0.85rem 1rem;
@@ -111,8 +111,8 @@ export const GuideText = styled.p`
   margin: 0;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: ${({ theme }) => theme.colors.blue50};
-  color: #39506c;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray700};
   line-height: 1.7;
   font-size: 0.95rem;
 `;
@@ -128,8 +128,8 @@ export const SplitGrid = styled.div`
 `;
 
 export const DurationCard = styled.div`
-  border: 1px solid #dbe7f4;
-  background: ${({ theme }) => theme.colors.blue50};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.gray100};
   border-radius: 18px;
   padding: 1rem;
 `;
@@ -145,21 +145,22 @@ export const DurationInputs = styled.div`
 export const FieldLabel = styled.label`
   font-size: 0.92rem;
   font-weight: 700;
-  color: #2d3b4f;
+  color: ${({ theme }) => theme.colors.gray800};
 `;
 
 export const CompactInput = styled.input`
   width: 64px;
   min-height: 48px;
   padding: 0.8rem 0.85rem;
-  border: 1px solid #d3deed;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 14px;
   background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray900};
   font-size: 1rem;
   outline: none;
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.blue500};
+    border-color: ${({ theme }) => theme.colors.gray500};
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 `;
@@ -170,25 +171,24 @@ export const UnitText = styled.span`
 `;
 
 export const PrimaryButton = styled.button`
-  border: none;
   border-radius: 16px;
-  background: ${({ theme }) => theme.colors.blue700};
-  color: ${({ theme }) => theme.colors.white};
+  background: ${({ theme }) => theme.colors.gray700};
+  color: ${({ theme }) => theme.colors.gray50};
   padding: 0.95rem 1.15rem;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  border: 1px solid #1c4277;
-  box-shadow: 0 8px 18px rgba(35, 79, 141, 0.14);
+  border: 1px solid ${({ theme }) => theme.colors.gray700};
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
   transition:
     background-color 0.18s ease,
     transform 0.18s ease,
     box-shadow 0.18s ease;
 
   &:hover {
-    background: #1d457d;
+    background: ${({ theme }) => theme.colors.gray600};
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(35, 79, 141, 0.18);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   }
 
   &:disabled {
@@ -200,12 +200,13 @@ export const PrimaryButton = styled.button`
 `;
 
 export const DangerButton = styled(PrimaryButton)`
-  background: #c53b3b;
-  border-color: #b43333;
+  background: ${({ theme }) => theme.colors.rose600};
+  border-color: ${({ theme }) => theme.colors.rose600};
   box-shadow: 0 8px 16px rgba(197, 59, 59, 0.12);
 
   &:hover {
-    background: #b43333;
+    background: ${({ theme }) => theme.colors.rose500};
+    border-color: ${({ theme }) => theme.colors.rose500};
     box-shadow: 0 10px 18px rgba(197, 59, 59, 0.16);
   }
 
@@ -219,10 +220,10 @@ export const SecondaryButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #cfe0fb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 12px;
   background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.blue700};
+  color: ${({ theme }) => theme.colors.gray700};
   padding: 0.72rem 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -235,15 +236,16 @@ export const SecondaryButton = styled.button`
 
 export const DangerGhostButton = styled(SecondaryButton)`
   border-color: ${({ theme }) => theme.colors.rose200};
-  color: #b91c1c;
+  color: ${({ theme }) => theme.colors.rose600};
 `;
 
 export const ResultBox = styled.pre`
   margin: 0;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.gray100};
+  background: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray800};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   font-family: inherit;
   white-space: pre-wrap;
   line-height: 1.7;
@@ -266,8 +268,8 @@ export const StatCard = styled.div`
   gap: 0.35rem;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: #f7fbff;
-  border: 1px solid #dbe7f4;
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 
   span {
     color: ${({ theme }) => theme.colors.gray500};
@@ -286,8 +288,8 @@ export const StorageCard = styled.div`
   gap: 0.9rem;
   padding: 1rem 1.1rem;
   border-radius: 20px;
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid #dbe7f4;
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 
 export const StorageHeader = styled.div`
@@ -314,7 +316,7 @@ export const StorageTitle = styled.strong`
 
 export const StorageDescription = styled.p`
   margin: 0.35rem 0 0;
-  color: #5a718d;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   line-height: 1.55;
 `;
@@ -333,8 +335,8 @@ export const StorageModeTabs = styled.div`
 
 export const StorageModeButton = styled.button<{ $isActive: boolean }>`
   width: 100%;
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
   border-radius: 999px;
   padding: 0.8rem 0.95rem;
@@ -361,12 +363,12 @@ export const StorageSetupCard = styled.div`
   min-width: 0;
   padding: 0.9rem;
   border-radius: 16px;
-  border: 1px solid #dbe7f4;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
 `;
 
 export const StorageLabel = styled.label`
-  color: #2d3b4f;
+  color: ${({ theme }) => theme.colors.gray800};
   font-size: 0.88rem;
   font-weight: 700;
 `;
@@ -387,21 +389,22 @@ export const StorageInput = styled.input`
   min-width: 0;
   min-height: 44px;
   padding: 0.75rem 0.85rem;
-  border: 1px solid #d3deed;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 14px;
   background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray900};
   font-size: 0.95rem;
   outline: none;
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.blue500};
+    border-color: ${({ theme }) => theme.colors.gray500};
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 `;
 
 export const StorageHint = styled.p`
   margin: 0;
-  color: #5a718d;
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   line-height: 1.6;
 `;
@@ -412,7 +415,7 @@ export const ConnectedRoomCard = styled.div`
   gap: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  border: 1px solid #dbe7f4;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
@@ -473,9 +476,9 @@ export const NoticeCard = styled.div`
   gap: 0.35rem;
   padding: 1rem 1.1rem;
   border-radius: 18px;
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid #cfe0fb;
-  color: ${({ theme }) => theme.colors.blue700};
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  color: ${({ theme }) => theme.colors.gray900};
 
   strong {
     font-size: 0.96rem;
@@ -484,7 +487,7 @@ export const NoticeCard = styled.div`
 
   span {
     font-size: 0.9rem;
-    color: #31567d;
+    color: ${({ theme }) => theme.colors.gray700};
   }
 `;
 
@@ -502,9 +505,9 @@ export const NoticeContent = styled.div`
 `;
 
 export const TargetDayButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : "#cfe0fb")};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.blue700)};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray200)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray900)};
   border-radius: 999px;
   padding: 0.35rem 0.45rem;
   font-size: 0.85rem;
@@ -548,7 +551,7 @@ export const CalendarToolbarMain = styled.div`
 `;
 
 export const CalendarNavButton = styled.button`
-  border: 1px solid #d2dceb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray700};
   border-radius: 12px;
@@ -558,9 +561,9 @@ export const CalendarNavButton = styled.button`
 `;
 
 export const TodayButton = styled(CalendarNavButton)`
-  background: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.blue700};
-  border-color: #cfe0fb;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray700};
+  border-color: ${({ theme }) => theme.colors.gray200};
 `;
 
 export const CalendarMonthLabel = styled.strong`
@@ -571,9 +574,9 @@ export const CalendarMonthLabel = styled.strong`
 `;
 
 export const WeekendToggleButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue50 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.blue700 : theme.colors.gray600)};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray100 : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray600)};
   border-radius: 12px;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
@@ -612,8 +615,8 @@ export const CalendarCellButton = styled.button<{
   border-radius: 16px;
   padding: 0.7rem;
   border: 1px solid
-    ${({ $isSelected, $isToday, theme }) => $isSelected ? theme.colors.blue700 : $isToday ? "#60a5fa" : "#dbe7f4"};
-  background: ${({ $isSelected, theme }) => ($isSelected ? theme.colors.blue50 : theme.colors.white)};
+    ${({ $isSelected, $isToday, theme }) => ($isSelected ? theme.colors.gray700 : $isToday ? theme.colors.gray500 : theme.colors.blue100)};
+  background: ${({ $isSelected, theme }) => ($isSelected ? theme.colors.gray100 : theme.colors.white)};
   color: ${({ $isCurrentMonth, theme }) => ($isCurrentMonth ? theme.colors.gray900 : theme.colors.gray400)};
   text-align: left;
   display: flex;
@@ -650,14 +653,14 @@ export const CalendarDaySummary = styled.div`
 
   span {
     display: block;
-    background: ${({ theme }) => theme.colors.blue50};
+    background: ${({ theme }) => theme.colors.gray100};
     border-radius: 10px;
     padding: 0.2rem 0.35rem;
   }
 `;
 
 export const MutedPrefix = styled.span`
-  color: #8a99b2;
+  color: ${({ theme }) => theme.colors.gray500};
   font-weight: 600;
   margin-right: 0.3rem;
 `;
@@ -693,7 +696,7 @@ export const QuickAddTitle = styled.strong`
 `;
 
 export const EditCancelButton = styled.button`
-  border: 1px solid #d2dceb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray600};
   border-radius: 12px;
@@ -706,8 +709,8 @@ export const AccordionSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  border: 1px solid #dbe7f4;
-  background: ${({ theme }) => theme.colors.blue50};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.gray100};
   border-radius: 20px;
   padding: 1rem;
 `;
@@ -720,9 +723,9 @@ export const AccordionHeader = styled.div`
 `;
 
 export const AccordionToggleButton = styled.button`
-  border: 1px solid #d2dceb;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.blue700};
+  color: ${({ theme }) => theme.colors.gray900};
   border-radius: 12px;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
@@ -778,8 +781,8 @@ export const RecordActions = styled.div`
 export const EditButton = styled.button`
   border: none;
   border-radius: 12px;
-  background: #e0ecff;
-  color: #1d4f91;
+  background: ${({ theme }) => theme.colors.gray200};
+  color: ${({ theme }) => theme.colors.gray900};
   padding: 0.65rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -821,7 +824,7 @@ export const DeleteButton = styled.button`
   border: none;
   border-radius: 12px;
   background: ${({ theme }) => theme.colors.rose100};
-  color: #b91c1c;
+  color: ${({ theme }) => theme.colors.rose600};
   padding: 0.65rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -848,8 +851,8 @@ export const GuidePanel = styled.div`
   margin-top: 1rem;
   padding: 1rem;
   border-radius: 20px;
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid #dbe7f4;
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
 `;
 
 export const GuideTitle = styled.h3`
@@ -875,7 +878,7 @@ export const GuideItem = styled.li`
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid #dbe7f4;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   color: ${({ theme }) => theme.colors.gray700};
 
   strong {
@@ -894,8 +897,8 @@ export const RuleItem = styled.li`
   gap: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid #dbe7f4;
+  background: ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
   color: ${({ theme }) => theme.colors.gray700};
 
   strong {

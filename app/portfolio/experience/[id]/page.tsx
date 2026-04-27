@@ -76,7 +76,7 @@ const fadeInUp = keyframes`
 const StPageContainer = styled.div`
   z-index: 200;
   min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.gray100};
+  background-color: ${({ theme }) => theme.colors.gray50};
   color: ${({ theme }) => theme.colors.gray900};
   font-family: ui-sans-serif, system-ui, sans-serif;
 `;

@@ -271,6 +271,7 @@ export default function AccountBookDashboardPanel({
                   onClick={() => setEditingTarget("monthly")}
                 >
                   설정
+                  
                 </button>
               </StGoalDisplay>
             )}

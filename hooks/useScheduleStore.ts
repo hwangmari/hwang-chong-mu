@@ -42,7 +42,7 @@ export function useScheduleStore(selectedPartId: string | null) {
   const loadStore = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchScheduleStore();
+      const data = await fetchScheduleStore(activeUserId);
       setStore(data);
       setError(null);
     } catch (err: any) {
@@ -50,7 +50,7 @@ export function useScheduleStore(selectedPartId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeUserId]);
 
   useEffect(() => {
     loadStore();

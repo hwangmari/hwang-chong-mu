@@ -15,28 +15,32 @@ const HIGHLIGHTS = [
     title: "견고한 마크업",
     desc: "IE6부터 최신 브라우저까지, 테이블 레이아웃에서 Flexbox·Grid까지 직접 경험하며 쌓은 크로스브라우징 노하우. 어떤 디바이스, 어떤 해상도에서도 흔들리지 않는 UI를 만듭니다.",
     accent: "#3b82f6",
-    bg: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    bgLight: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    bgDark: "linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.08) 100%)",
   },
   {
     icon: "⚛️",
     title: "프론트엔드 전문성",
     desc: "React, Next.js, TypeScript를 주력으로 설계부터 배포·운영까지 실서비스 전 과정을 경험해왔습니다. Svelte, Angular 등 다양한 프레임워크를 넘나든 경험 덕분에 트렌드에 휘둘리지 않고, 프로젝트에 맞는 최적의 구조를 판단할 수 있습니다.",
     accent: "#8b5cf6",
-    bg: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+    bgLight: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+    bgDark: "linear-gradient(135deg, rgba(139, 92, 246, 0.18) 0%, rgba(139, 92, 246, 0.08) 100%)",
   },
   {
     icon: "🎨",
     title: "디자인을 넘어, 디테일이 만드는 경험",
     desc: "서양화를 전공하며 훈련한 시각적 감각으로 디자이너의 의도를 정확하게 구현합니다. 여백, 정렬, 타이포그래피는 물론 인터랙션과 사용자 흐름까지 — 보이는 것 너머의 경험을 설계하며, 픽셀 단위의 디테일에서 완성도가 결정된다고 믿습니다.",
     accent: "#ec4899",
-    bg: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
+    bgLight: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
+    bgDark: "linear-gradient(135deg, rgba(236, 72, 153, 0.18) 0%, rgba(236, 72, 153, 0.08) 100%)",
   },
   {
     icon: "🤝",
     title: "팀 시너지",
     desc: "'왜 이걸 해야 하는지'에서 출발해 '우리가 무엇을 할 수 있는지'까지 함께 고민합니다. 주어진 일을 넘어 방향을 제안하고, PM의 시야로 전체 흐름을 챙기며 — 같이 일할수록 속도와 방향이 맞아가는 시너지를 만들어내는 동료입니다.",
     accent: "#10b981",
-    bg: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+    bgLight: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+    bgDark: "linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%)",
   },
 ];
 
@@ -97,7 +101,8 @@ function HighlightCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       $accent={item.accent}
-      $bg={item.bg}
+      $bgLight={item.bgLight}
+      $bgDark={item.bgDark}
     >
       {isHovered && (
         <StGlow
@@ -198,10 +203,14 @@ const StHighlightGrid = styled.div`
   }
 `;
 
-const StHighlightCard = styled.div<{ $accent: string; $bg: string }>`
+const StHighlightCard = styled.div<{
+  $accent: string;
+  $bgLight: string;
+  $bgDark: string;
+}>`
   padding: 1.75rem;
   border-radius: 1.25rem;
-  background: ${({ $bg }) => $bg};
+  background: ${({ $bgLight, $bgDark, theme }) => (theme.mode === "dark" ? $bgDark : $bgLight)};
   border: 1px solid transparent;
   transition: border-color 0.3s;
   cursor: default;

@@ -8,7 +8,15 @@
       "Bash(npx next:*)",
       "Bash(npm run:*)",
       "Bash(wc -l app/account-book/components/WorkspaceLedgerView/index.tsx app/account-book/components/WorkspaceLedgerView/*.ts app/account-book/components/WorkspaceLedgerView/*.tsx)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find *)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(cp /tmp/hcm_header_backup.tsx components/common/GlobalHeader.tsx)",
+      "Bash(cp /tmp/hcm_run_backup.tsx app/workout/run/page.tsx)",
+      "Bash(git push *)",
+      "Bash(grep -rn '\"/meeting/room\"\\\\|`/meeting/room`\\\\|/meeting/room[\"/]\\\\|\"/meeting/room/\"' /Users/hwangmari/toy-project/hwang-chong-mu/app /Users/hwangmari/toy-project/hwang-chong-mu/components /Users/hwangmari/toy-project/hwang-chong-mu/hooks /Users/hwangmari/toy-project/hwang-chong-mu/services)",
+      "Bash(curl *)"
     ]
   }
 }

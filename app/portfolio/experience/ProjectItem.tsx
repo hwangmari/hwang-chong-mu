@@ -127,7 +127,7 @@ const StContainer = styled.div`
     padding: 2.5rem;
     margin: 0;
     border-radius: 1.5rem;
-    border: 1px solid ${({ theme }) => theme.colors.gray100};
+    border: 1px solid ${({ theme }) => theme.colors.gray200};
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.3s;
     &:hover {

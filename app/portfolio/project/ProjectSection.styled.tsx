@@ -129,7 +129,7 @@ export const StStickyProjectNav = styled.nav`
   margin-bottom: 1.25rem;
   border-radius: 0.9rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: rgba(255, 255, 255, 0.96);
+  background: ${({ theme }) => theme.colors.white};
   backdrop-filter: blur(6px);
   box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
 
@@ -142,7 +142,7 @@ export const StStickyProjectLink = styled.a`
   flex: 0 0 auto;
   padding: 0.45rem 0.7rem;
   border-radius: 9999px;
-  border: 1px solid #dbe4f0;
+  border: 1px solid ${({ theme }) => theme.colors.blue100};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray700};
   font-size: 0.8rem;
@@ -150,7 +150,7 @@ export const StStickyProjectLink = styled.a`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #8bb2eb;
+    border-color: ${({ theme }) => theme.colors.blue500};
     color: ${({ theme }) => theme.colors.blue700};
     background: ${({ theme }) => theme.colors.blue50};
   }

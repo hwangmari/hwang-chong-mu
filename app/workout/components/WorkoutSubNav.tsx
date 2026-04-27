@@ -61,6 +61,12 @@ const StInner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-width: 0;
+
+  @media (max-width: 540px) {
+    padding: 0.6rem 0.75rem;
+    gap: 0.4rem;
+  }
 `;
 
 const StTabs = styled.div`
@@ -69,6 +75,12 @@ const StTabs = styled.div`
   padding: 0.25rem;
   background: ${({ theme }) => theme.colors.gray100};
   border-radius: 0.8rem;
+  min-width: 0;
+
+  @media (max-width: 540px) {
+    gap: 0.15rem;
+    padding: 0.2rem;
+  }
 `;
 
 const StTabLink = styled(Link)<{ $active: boolean }>`
@@ -77,6 +89,12 @@ const StTabLink = styled(Link)<{ $active: boolean }>`
   font-size: 0.85rem;
   font-weight: 800;
   text-decoration: none;
+  white-space: nowrap;
+
+  @media (max-width: 540px) {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.78rem;
+  }
   background: ${({ $active, theme }) =>
     $active ? theme.colors.white : "transparent"};
   color: ${({ $active, theme }) =>
@@ -115,6 +133,13 @@ const StLogout = styled.button`
   padding: 0.4rem 0.7rem;
   border-radius: 0.6rem;
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  @media (max-width: 540px) {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.55rem;
+  }
 
   &:hover {
     color: ${({ theme }) => theme.colors.rose600};

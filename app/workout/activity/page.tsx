@@ -364,12 +364,12 @@ const StLabel = styled.label`
 const StInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 0 0.75rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
 
@@ -386,7 +386,7 @@ const StTextarea = styled.textarea`
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   padding: 0.6rem 0.75rem;
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-family: inherit;
   resize: vertical;
   color: ${({ theme }) => theme.colors.gray900};

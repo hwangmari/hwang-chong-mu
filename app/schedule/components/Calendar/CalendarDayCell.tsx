@@ -104,7 +104,7 @@ const StDateCell = styled.div<{ $isRedDay?: boolean }>`
   position: relative;
   min-width: 0;
   overflow: hidden;
-  background-color: ${({ $isRedDay }) => ($isRedDay ? "#fafafa" : "white")};
+  background-color: ${({ $isRedDay, theme }) => ($isRedDay ? theme.colors.gray50 : theme.colors.white)};
   &:hover {
     background-color: ${({ $isRedDay, theme }) => ($isRedDay ? theme.colors.gray100 : theme.colors.gray50)};
   }

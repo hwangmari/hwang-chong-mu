@@ -19,10 +19,16 @@ export default function WorkoutShell({ children }: { children: ReactNode }) {
 const StWrap = styled.div`
   min-height: calc(100vh - 64px);
   background: ${({ theme }) => theme.colors.gray50};
+  overflow-x: clip;
 `;
 
 const StContent = styled.div`
   max-width: 720px;
   margin: 0 auto;
   padding: 1.25rem 1rem 4rem;
+  min-width: 0;
+
+  @media (max-width: 540px) {
+    padding: 1rem 0 3rem;
+  }
 `;

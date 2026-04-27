@@ -156,7 +156,7 @@ export default function WorkoutHomePage() {
             {totalSessions} <StStatUnit>회</StStatUnit>
           </StStatValue>
           <StStatSub>
-            러닝 {runs.length} · 헬스 {gyms.length} · 활동 {activities.length}
+            {`러닝 ${runs.length} · 헬스 ${gyms.length} · 활동 ${activities.length}`}
           </StStatSub>
         </StStatCard>
       </StGrid>
@@ -303,7 +303,9 @@ export default function WorkoutHomePage() {
 
       <WorkoutCalendarHeatmap columns={calendarColumns} />
 
-      <BlogGuideLink guideId="workout-guide" />
+      <StBlogWrap>
+        <BlogGuideLink guideId="workout-guide" />
+      </StBlogWrap>
     </StPage>
   );
 }
@@ -316,6 +318,10 @@ const StPage = styled.div`
 
 const StHeader = styled.header`
   padding: 0.5rem 0.25rem;
+
+  @media (max-width: 540px) {
+    padding: 0.5rem 1rem;
+  }
 `;
 
 const StHello = styled.h1`
@@ -345,7 +351,13 @@ const StGrid = styled.div`
   gap: 0.6rem;
 
   @media (max-width: 540px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    padding: 0 1rem;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 `;
 
@@ -354,12 +366,29 @@ const StStatCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1rem;
   padding: 0.95rem 1rem;
+  min-width: 0;
+
+  @media (max-width: 540px) {
+    padding: 0.55rem 0.6rem;
+  }
 `;
 
 const StStatLabel = styled.p`
   font-size: 0.75rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray500};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 540px) {
+    font-size: 0.66rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: keep-all;
+    line-height: 1.3;
+  }
 `;
 
 const StStatValue = styled.p`
@@ -367,18 +396,40 @@ const StStatValue = styled.p`
   font-size: 1.45rem;
   font-weight: 900;
   color: ${({ theme }) => theme.colors.gray900};
+
+  @media (max-width: 540px) {
+    font-size: 1.05rem;
+    margin-top: 0.15rem;
+  }
 `;
 
 const StStatUnit = styled.span`
   font-size: 0.85rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray500};
+
+  @media (max-width: 540px) {
+    font-size: 0.7rem;
+  }
 `;
 
 const StStatSub = styled.p`
   margin-top: 0.25rem;
   font-size: 0.72rem;
   color: ${({ theme }) => theme.colors.gray400};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 540px) {
+    font-size: 0.62rem;
+    margin-top: 0.1rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: keep-all;
+    line-height: 1.35;
+  }
 `;
 
 const StSection = styled.section`
@@ -386,6 +437,11 @@ const StSection = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 1.1rem;
   padding: 1rem 1.1rem;
+
+  @media (max-width: 540px) {
+    border: none;
+    border-radius: 0;
+  }
 `;
 
 const StSectionTitle = styled.h2`
@@ -522,6 +578,10 @@ const StCTAGrid = styled.div`
   grid-template-columns: 1fr 1fr auto;
   gap: 0.7rem;
 
+  @media (max-width: 540px) {
+    padding: 0 1rem;
+  }
+
   @media (max-width: 500px) {
     gap: 0.5rem;
   }
@@ -570,6 +630,12 @@ const StCTAText = styled.span`
 
   @media (max-width: 500px) {
     font-size: 0.8rem;
+  }
+`;
+
+const StBlogWrap = styled.div`
+  @media (max-width: 540px) {
+    padding: 0 1rem;
   }
 `;
 

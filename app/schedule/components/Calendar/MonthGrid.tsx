@@ -111,8 +111,8 @@ const StGridBody = styled.div<{ $cols: number }>`
   grid-template-columns: repeat(${({ $cols }) => $cols}, 1fr);
   width: 100%;
   & > div {
-    border-right: 1px solid ${({ theme }) => theme.colors.gray100};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+    border-right: 1px solid ${({ theme }) => theme.colors.gray200};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray200};
   }
   & > div:nth-child(${({ $cols }) => $cols}n) {
     border-right: none;

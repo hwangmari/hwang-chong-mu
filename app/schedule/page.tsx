@@ -4,12 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import styled from "styled-components";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
-import AccountBookLockGate from "@/app/account-book/components/AccountBookLockGate";
 // import BlogGuideLink from "@/components/common/BlogGuideLink";
 import { useScheduleStore } from "@/hooks/useScheduleStore";
 import { useSchedulePartActions } from "@/hooks/useSchedulePartActions";
 import { fetchPartServices } from "@/services/schedule";
 import ScheduleHub from "./components/ScheduleHub";
+import ScheduleSessionGate from "./components/ScheduleSessionGate";
 import ScheduleWorkspaceView from "./components/ScheduleWorkspaceView";
 
 function SchedulePageInner() {
@@ -35,9 +35,11 @@ function SchedulePageInner() {
     handleLogin,
     handleCreateSharedPart,
     handleJoinPart,
+    handleEnterPart,
     handleLogout,
     handleCreateService,
   } = useSchedulePartActions({
+    activeUserId,
     updateActiveUserId,
     reload,
     setServices,
@@ -81,12 +83,10 @@ function SchedulePageInner() {
   };
 
   return (
-    <AccountBookLockGate
-      password={selectedPart.password}
-      accessKey={`hwang-schedule-access-${selectedPartId}`}
-      title="캘린더 비밀번호"
-      description="비밀번호를 입력하세요."
-      backToHome={false}
+    <ScheduleSessionGate
+      workspaceId={selectedPart.id}
+      workspaceName={selectedPart.name}
+      onEnter={(password) => handleEnterPart(selectedPart.id, password)}
       onBack={() => router.push("/schedule")}
     >
       <ScheduleWorkspaceView
@@ -96,7 +96,7 @@ function SchedulePageInner() {
         onCreateService={handleCreateService}
         onReloadServices={reloadServices}
       />
-    </AccountBookLockGate>
+    </ScheduleSessionGate>
   );
 }
 
