@@ -1,14 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import type { InBodyRecord, InBodySession } from "./types";
-
-type RoomRow = {
-  id: string;
-  name: string;
-  password: string;
-  created_at: string;
-};
+import type { InBodyRecord } from "./types";
 
 type RecordRow = {
   id: string;
@@ -48,66 +41,6 @@ function mapRow(row: RecordRow): InBodyRecord {
     visceralFatLevel: row.visceral_fat_level ?? undefined,
     memo: row.memo ?? undefined,
     createdAt: row.created_at,
-  };
-}
-
-// =========================
-// 방 (room)
-// =========================
-export async function createInBodyRoom(
-  name: string,
-  password: string,
-): Promise<InBodySession> {
-  if (!name.trim() || !password.trim()) {
-    throw new Error("방 이름과 비밀번호를 입력해 주세요.");
-  }
-
-  const { data, error } = await supabase
-    .from("inbody_rooms")
-    .insert({ name: name.trim(), password: password.trim() })
-    .select("*")
-    .single();
-
-  if (error || !data) {
-    throw new Error(error?.message || "방 생성에 실패했어요.");
-  }
-
-  const row = data as RoomRow;
-  return {
-    roomId: row.id,
-    roomName: row.name,
-    password: row.password,
-  };
-}
-
-export async function joinInBodyRoom(
-  roomName: string,
-  password: string,
-): Promise<InBodySession> {
-  if (!roomName.trim() || !password.trim()) {
-    throw new Error("방 이름과 비밀번호를 입력해 주세요.");
-  }
-
-  const { data, error } = await supabase
-    .from("inbody_rooms")
-    .select("*")
-    .eq("name", roomName.trim())
-    .eq("password", password.trim())
-    .limit(1);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const row = (data?.[0] as RoomRow | undefined) ?? null;
-  if (!row) {
-    throw new Error("방 이름 또는 비밀번호가 맞지 않아요.");
-  }
-
-  return {
-    roomId: row.id,
-    roomName: row.name,
-    password: row.password,
   };
 }
 

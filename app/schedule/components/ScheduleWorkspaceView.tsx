@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
+import { Button } from "@hwangchongmu/ui";
 import { ScheduleServiceData, SchedulePart } from "@/types/work-schedule";
 import { updateService, deleteService } from "@/services/schedule";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
@@ -90,21 +91,32 @@ export default function ScheduleWorkspaceView({
           </p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <StCalendarButton
+          <Button
+            color="primary"
+            variant="weak"
+            size="medium"
             onClick={() => router.push(`/schedule/part-calendar?partId=${part.id}`)}
           >
             🗓️ 파트 캘린더
-          </StCalendarButton>
+          </Button>
           {part.type === "shared" && (
-            <StCalendarButton
+            <Button
+              color="primary"
+              variant="weak"
+              size="medium"
               onClick={() => router.push(`/schedule/members?partId=${part.id}`)}
             >
               👥 멤버 리소스
-            </StCalendarButton>
+            </Button>
           )}
-          <StCreateButton onClick={() => setShowCreateForm(true)}>
+          <Button
+            color="dark"
+            variant="fill"
+            size="medium"
+            onClick={() => setShowCreateForm(true)}
+          >
             + 새 서비스 만들기
-          </StCreateButton>
+          </Button>
         </div>
       </StHeader>
 
@@ -122,10 +134,10 @@ export default function ScheduleWorkspaceView({
             onChange={(e) => setNewDesc(e.target.value)}
           />
           <StFormActions>
-            <StSecondaryBtn onClick={() => setShowCreateForm(false)}>
+            <Button color="light" variant="fill" size="small" onClick={() => setShowCreateForm(false)}>
               취소
-            </StSecondaryBtn>
-            <StPrimaryBtn onClick={handleCreate}>만들기</StPrimaryBtn>
+            </Button>
+            <Button color="dark" variant="fill" size="small" onClick={handleCreate}>만들기</Button>
           </StFormActions>
         </StCreateForm>
       )}
@@ -197,38 +209,6 @@ const StBackLink = styled.button`
   }
 `;
 
-const StCalendarButton = styled.button`
-  background: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.blue500};
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: 1px solid ${({ theme }) => theme.colors.blue200};
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    background: ${({ theme }) => theme.colors.blue100};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const StCreateButton = styled.button`
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-`;
 
 const StGrid = styled.div`
   display: grid;
@@ -285,24 +265,3 @@ const StFormActions = styled.div`
   justify-content: flex-end;
 `;
 
-const StPrimaryBtn = styled.button`
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  font-size: 0.85rem;
-  border: none;
-  cursor: pointer;
-`;
-
-const StSecondaryBtn = styled.button`
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  font-weight: 700;
-  font-size: 0.85rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  cursor: pointer;
-`;

@@ -2,6 +2,7 @@
 
 import React from "react";
 import styled, { css, keyframes } from "styled-components";
+import type { UiTheme } from "../theme";
 
 export const BUTTON_AS = ["button", "a"] as const;
 export const BUTTON_COLORS = ["primary", "danger", "light", "dark"] as const;
@@ -36,96 +37,97 @@ export interface ButtonProps
   children?: React.ReactNode;
 }
 
-const colorVariants = {
+type ColorStyleBuilder = (theme: UiTheme) => ReturnType<typeof css>;
+
+const colorVariants: Record<ButtonColor, Record<ButtonVariant, ColorStyleBuilder>> = {
   primary: {
-    fill: css`
-      background: #ff6f0f;
-      border-color: #ff6f0f;
-      color: #ffffff;
+    fill: (theme) => css`
+      background: ${theme.semantic.primary};
+      border-color: ${theme.semantic.primary};
+      color: ${theme.colors.white};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #ef6700;
-        border-color: #ef6700;
+        background: ${theme.colors.blue700};
+        border-color: ${theme.colors.blue700};
       }
     `,
-    weak: css`
-      background: #fff4eb;
-      border-color: #ffd7b8;
-      color: #ef6700;
+    weak: (theme) => css`
+      background: ${theme.semantic.primaryLight};
+      border-color: ${theme.colors.blue100};
+      color: ${theme.semantic.primary};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #ffe8d2;
-        border-color: #ffc798;
+        background: ${theme.colors.blue100};
+        border-color: ${theme.colors.blue200};
       }
     `,
   },
   danger: {
-    fill: css`
-      background: #e5484d;
-      border-color: #e5484d;
-      color: #ffffff;
+    fill: (theme) => css`
+      background: ${theme.semantic.danger};
+      border-color: ${theme.semantic.danger};
+      color: ${theme.colors.white};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #d63d43;
-        border-color: #d63d43;
+        filter: brightness(0.92);
       }
     `,
-    weak: css`
-      background: #fff1f2;
-      border-color: #fecdd3;
-      color: #e5484d;
+    weak: (theme) => css`
+      background: ${theme.semantic.dangerBg};
+      border-color: ${theme.colors.rose100};
+      color: ${theme.semantic.danger};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #ffe4e6;
-        border-color: #fda4af;
+        background: ${theme.colors.rose100};
+        border-color: ${theme.colors.rose200};
       }
     `,
   },
   light: {
-    fill: css`
-      background: #ffffff;
-      border-color: #ececec;
-      color: #333333;
+    fill: (theme) => css`
+      background: ${theme.colors.white};
+      border-color: ${theme.colors.gray200};
+      color: ${theme.colors.gray800};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #fafafa;
-        border-color: #dddddd;
+        background: ${theme.colors.gray50};
+        border-color: ${theme.colors.gray300};
       }
     `,
-    weak: css`
-      background: #f7f7f8;
-      border-color: #ededee;
-      color: #555555;
+    weak: (theme) => css`
+      background: ${theme.colors.gray50};
+      border-color: ${theme.colors.gray100};
+      color: ${theme.colors.gray700};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #efeff1;
-        border-color: #e0e0e2;
+        background: ${theme.colors.gray100};
+        border-color: ${theme.colors.gray200};
       }
     `,
   },
   dark: {
-    fill: css`
-      background: #4a4a4a;
-      border-color: #4a4a4a;
-      color: #ffffff;
+    fill: (theme) => css`
+      background: ${theme.colors.gray800};
+      border-color: ${theme.colors.gray800};
+      color: ${theme.colors.white};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #3d3d3d;
-        border-color: #3d3d3d;
+        background: ${theme.colors.gray900};
+        border-color: ${theme.colors.gray900};
       }
     `,
-    weak: css`
-      background: #f4f4f5;
-      border-color: #d6d6d8;
-      color: #4a4a4a;
+    weak: (theme) => css`
+      background: ${theme.colors.gray100};
+      border-color: ${theme.colors.gray200};
+      color: ${theme.colors.gray800};
 
       &:hover:not(:disabled, [aria-disabled="true"]) {
-        background: #eaeaed;
-        border-color: #c7c7cb;
+        background: ${theme.colors.gray200};
+        border-color: ${theme.colors.gray300};
       }
     `,
   },
-} as const;
+};
 
 const sizeStyles = {
   small: css`
@@ -206,7 +208,7 @@ const StyledButton = styled.button<{
     opacity 0.2s ease,
     transform 0.2s ease;
 
-  ${({ $color, $variant }) => colorVariants[$color][$variant]}
+  ${({ theme, $color, $variant }) => colorVariants[$color][$variant](theme)}
   ${({ $display }) => displayStyles[$display]}
   ${({ $size }) => sizeStyles[$size]}
   ${({ $iconOnly }) =>

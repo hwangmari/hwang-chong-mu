@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@hwangchongmu/ui";
 import { useState } from "react";
 import styled from "styled-components";
 import { format } from "date-fns";
@@ -106,13 +107,18 @@ export default function QuickTaskModal({
             </StDateRow>
 
             <StActions>
-              <StCancelBtn onClick={onClose}>취소</StCancelBtn>
-              <StSubmitBtn
+              <Button color="light" variant="fill" size="small" onClick={onClose}>
+                취소
+              </Button>
+              <Button
+                color="dark"
+                variant="fill"
+                size="small"
                 onClick={handleSubmit}
                 disabled={!title.trim() || loading}
               >
                 {loading ? "생성 중..." : "등록"}
-              </StSubmitBtn>
+              </Button>
             </StActions>
           </>
         )}
@@ -225,34 +231,3 @@ const StActions = styled.div`
   margin-top: 0.25rem;
 `;
 
-const StCancelBtn = styled.button`
-  padding: 0.6rem 1rem;
-  border-radius: 0.6rem;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  font-weight: 700;
-  font-size: 0.85rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  cursor: pointer;
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray50};
-  }
-`;
-
-const StSubmitBtn = styled.button`
-  padding: 0.6rem 1.25rem;
-  border-radius: 0.6rem;
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  font-size: 0.85rem;
-  border: none;
-  cursor: pointer;
-  &:hover {
-    opacity: 0.9;
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;

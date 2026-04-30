@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@hwangchongmu/ui";
 import React, { useState, useEffect } from "react";
 import styled, { useTheme } from "styled-components";
 import Card from "./ui/Card";
@@ -112,7 +113,9 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
               개인
             </StRadioLabel>
           </StToggleGroup>
-          <StMiniAddButton onClick={handleSubmit}>등록</StMiniAddButton>
+          <Button color="primary" variant="fill" size="small" onClick={handleSubmit}>
+            등록
+          </Button>
         </StBottomRow>
       </Card>
     </StInputWrapper>
@@ -213,11 +216,3 @@ const StRadioLabel = styled.label<{ $active: boolean }>`
   }
 `;
 
-const StMiniAddButton = styled.button`
-  background-color: ${({ theme }) => theme.semantic.primary};
-  color: ${({ theme }) => theme.colors.white};
-  padding: 0.5rem 1.25rem;
-  border-radius: 0.6rem;
-  font-weight: 700;
-  font-size: 0.9rem;
-`;

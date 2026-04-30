@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@hwangchongmu/ui";
 import styled, { keyframes, css } from "styled-components";
 import { format, isSameDay } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -53,12 +54,26 @@ export default function BottomSheet({
         </StContentWrapper>
 
         <StButtonGroup>
-          <StActionButton onClick={onClose} $variant="cancel">
+          <Button
+            color="light"
+            variant="weak"
+            size="xlarge"
+            display="block"
+            htmlStyle={{ flex: 1 }}
+            onClick={onClose}
+          >
             취소
-          </StActionButton>
-          <StActionButton onClick={onConfirm} $variant="confirm">
+          </Button>
+          <Button
+            color="dark"
+            variant="fill"
+            size="xlarge"
+            display="block"
+            htmlStyle={{ flex: 1 }}
+            onClick={onConfirm}
+          >
             확정하기 🔨
-          </StActionButton>
+          </Button>
         </StButtonGroup>
       </StSheetContainer>
     </>
@@ -158,28 +173,3 @@ const StButtonGroup = styled.div`
   gap: 0.75rem; /* gap-3 */
 `;
 
-const StActionButton = styled.button<{ $variant: "cancel" | "confirm" }>`
-  flex: 1;
-  padding: 1rem 0; /* py-4 */
-  font-weight: 700;
-  border-radius: 1rem; /* rounded-2xl */
-  transition: all 0.2s;
-
-  ${({ $variant, theme }) =>
-    $variant === "cancel"
-      ? css`
-          background-color: ${theme.colors.gray100};
-          color: ${theme.colors.gray600};
-          &:hover {
-            background-color: ${theme.colors.gray200};
-          }
-        `
-      : css`
-          background-color: ${theme.colors.gray900};
-          color: ${theme.colors.white};
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* shadow-lg */
-          &:hover {
-            background-color: ${theme.colors.black};
-          }
-        `}
-`;

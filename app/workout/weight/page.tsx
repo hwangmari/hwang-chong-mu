@@ -943,9 +943,11 @@ export default function WeightPage() {
                       <span>
                         <b>{record.exercises.length}</b>개 운동
                       </span>
-                      <span>
-                        <b>{Math.round(volume).toLocaleString()}</b> kg
-                      </span>
+                      {volume > 0 ? (
+                        <span>
+                          <b>{Math.round(volume).toLocaleString()}</b> kg
+                        </span>
+                      ) : null}
                       {record.durationMin ? (
                         <span>{formatDurationMin(record.durationMin)}</span>
                       ) : null}

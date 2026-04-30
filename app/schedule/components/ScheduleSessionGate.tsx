@@ -4,6 +4,7 @@
 // 기존 AccountBookLockGate의 localStorage 기반 해제 방식을 대체하며,
 // 서버 API(/api/schedule/auth/enter)로 세션 쿠키를 발급받아야 통과된다.
 
+import { Button } from "@hwangchongmu/ui";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import styled from "styled-components";
 import { fetchScheduleSessionApi } from "@/services/schedule-auth";
@@ -109,9 +110,16 @@ export default function ScheduleSessionGate({
             autoComplete="current-password"
           />
           {errorMessage && <StError>{errorMessage}</StError>}
-          <StSubmit type="submit" disabled={submitting}>
+          <Button
+            type="submit"
+            color="dark"
+            variant="fill"
+            size="medium"
+            display="block"
+            disabled={submitting}
+          >
             {submitting ? "확인 중..." : "입장"}
-          </StSubmit>
+          </Button>
         </StForm>
       </StGateCard>
     </StGatePage>
@@ -207,23 +215,3 @@ const StError = styled.p`
   font-weight: 600;
 `;
 
-const StSubmit = styled.button`
-  min-height: 2.75rem;
-  border-radius: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.gray700};
-  background: ${({ theme }) => theme.colors.gray700};
-  color: ${({ theme }) => theme.colors.gray50};
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.gray600};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;

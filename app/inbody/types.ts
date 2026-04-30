@@ -8,18 +8,6 @@ export type InBodyMetricKey =
   | "abdominalFatRatio"
   | "visceralFatLevel";
 
-export type InBodyRoom = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
-
-export type InBodySession = {
-  roomId: string;
-  roomName: string;
-  password: string;
-};
-
 export type InBodyRecord = {
   id: string;
   roomId: string;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styled from "styled-components";
+import { Button } from "@hwangchongmu/ui";
 import { ScheduleIssue, IssueSeverity, IssueStatus } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
 
@@ -115,9 +116,9 @@ export default function IssuePanel({ serviceId, issues, onReload }: Props) {
             <StIssueCount>{openIssues.length}</StIssueCount>
           )}
         </StPanelTitle>
-        <StAddBtn onClick={() => setShowForm(!showForm)}>
+        <Button color="primary" variant="weak" size="small" onClick={() => setShowForm(!showForm)}>
           {showForm ? "취소" : "+ 이슈"}
-        </StAddBtn>
+        </Button>
       </StPanelHeader>
 
       {showForm && (
@@ -147,9 +148,9 @@ export default function IssuePanel({ serviceId, issues, onReload }: Props) {
                 </StSeverityOption>
               ))}
             </StSeverityGroup>
-            <StSubmitBtn onClick={handleCreate} disabled={!title.trim() || loading}>
+            <Button color="dark" variant="fill" size="small" onClick={handleCreate} disabled={!title.trim() || loading}>
               {loading ? "..." : "등록"}
-            </StSubmitBtn>
+            </Button>
           </StFormRow>
         </StForm>
       )}
@@ -208,20 +209,6 @@ const StIssueCount = styled.span`
   border-radius: 9999px;
 `;
 
-const StAddBtn = styled.button`
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.blue500};
-  background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid ${({ theme }) => theme.colors.blue200};
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    background: ${({ theme }) => theme.colors.blue100};
-  }
-`;
 
 const StForm = styled.div`
   margin: 0 1rem 0.75rem;
@@ -281,20 +268,6 @@ const StSeverityOption = styled.button<{ $active: boolean; $color: string }>`
   transition: all 0.15s;
 `;
 
-const StSubmitBtn = styled.button`
-  padding: 5px 14px;
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 0.8rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
 
 const StIssueList = styled.div`
   display: flex;

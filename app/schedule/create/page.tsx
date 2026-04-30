@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@hwangchongmu/ui";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
@@ -57,9 +58,16 @@ export default function CreateSchedulePage() {
               }
             />
           </StFormGroup>
-          <StSubmitButton type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            color="dark"
+            variant="fill"
+            size="large"
+            display="block"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "생성 중..." : "생성하기"}
-          </StSubmitButton>
+          </Button>
         </StForm>
       </StFormContainer>
     </StPageContainer>
@@ -125,20 +133,5 @@ const StFormGroup = styled.div`
   textarea {
     min-height: 100px;
     resize: none;
-  }
-`;
-const StSubmitButton = styled.button`
-  width: 100%;
-  padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  border-radius: 12px;
-  transition: background-color 0.2s;
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.black};
-  }
-  &:disabled {
-    opacity: 0.7;
   }
 `;

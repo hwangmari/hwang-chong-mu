@@ -1,68 +1,13 @@
 import {
   DEFAULT_VISIBLE,
   METRIC_KEYS,
-  type InBodySession,
   type VisibleMap,
 } from "./types";
 
 const VISIBLE_KEY = "hcm:inbody:visible";
-const SESSION_KEY = "hwang-inbody-session";
 
 function isBrowser() {
   return typeof window !== "undefined";
-}
-
-// useSyncExternalStore의 getSnapshot 결과 동일성을 위해 캐시
-let cachedRaw: string | null = null;
-let cachedSession: InBodySession | null = null;
-
-export function readInBodySession(): InBodySession | null {
-  if (!isBrowser()) return null;
-  const raw = window.localStorage.getItem(SESSION_KEY);
-  if (raw === cachedRaw) return cachedSession;
-
-  cachedRaw = raw;
-  if (!raw) {
-    cachedSession = null;
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(raw) as InBodySession;
-    if (!parsed?.roomId || !parsed?.password) {
-      cachedSession = null;
-      return null;
-    }
-    cachedSession = parsed;
-    return parsed;
-  } catch {
-    window.localStorage.removeItem(SESSION_KEY);
-    cachedRaw = null;
-    cachedSession = null;
-    return null;
-  }
-}
-
-export function writeInBodySession(session: InBodySession) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  window.dispatchEvent(new Event("inbody-session-change"));
-}
-
-export function clearInBodySession() {
-  if (!isBrowser()) return;
-  window.localStorage.removeItem(SESSION_KEY);
-  window.dispatchEvent(new Event("inbody-session-change"));
-}
-
-export function subscribeInBodySession(onChange: () => void) {
-  if (!isBrowser()) return () => undefined;
-  const handler = () => onChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener("inbody-session-change", handler);
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener("inbody-session-change", handler);
-  };
 }
 
 export function loadVisible(): VisibleMap {

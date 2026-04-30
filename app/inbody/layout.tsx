@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import InBodyAuthGate from "./components/InBodyAuthGate";
+import WorkoutAuthGate from "../workout/components/WorkoutAuthGate";
 
 export const metadata: Metadata = {
   title: "황총무 인바디 기록",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 export default function InBodyLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <InBodyAuthGate>{children}</InBodyAuthGate>;
+  return <WorkoutAuthGate>{children}</WorkoutAuthGate>;
 }

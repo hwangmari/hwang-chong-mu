@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@hwangchongmu/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import InBodySparkline from "./components/InBodySparkline";
@@ -14,7 +15,8 @@ import {
   fetchInBodyRecords,
   upsertInBodyRecord,
 } from "./repository";
-import { useInBodySession } from "./useInBodySession";
+import { clearWorkoutSession } from "../workout/storage";
+import { useWorkoutSession } from "../workout/useWorkoutSession";
 import {
   DEFAULT_VISIBLE,
   METRIC_COLOR,
@@ -79,7 +81,7 @@ function formatDelta(v: number, key: InBodyMetricKey): string {
 }
 
 export default function InBodyPage() {
-  const session = useInBodySession();
+  const session = useWorkoutSession();
   const [records, setRecords] = useState<InBodyRecord[]>([]);
   const [visible, setVisible] = useState<VisibleMap>(DEFAULT_VISIBLE);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -220,6 +222,12 @@ export default function InBodyPage() {
   return (
     <StPage>
       <StHeader>
+        <StRoomBar>
+          <StRoomName>🏠 {session.roomName}</StRoomName>
+          <StLogout type="button" onClick={() => clearWorkoutSession()}>
+            나가기
+          </StLogout>
+        </StRoomBar>
         <StTitle>🧬 인바디 기록</StTitle>
         <StSubtitle>
           측정값을 저장하고 원하는 지표만 골라서 추이를 봐요.
@@ -305,13 +313,24 @@ export default function InBodyPage() {
 
         <StActions>
           {form.id ? (
-            <StGhost type="button" onClick={resetForm}>
+            <Button
+              color="light"
+              variant="fill"
+              size="medium"
+              onClick={resetForm}
+            >
               취소
-            </StGhost>
+            </Button>
           ) : null}
-          <StPrimary type="button" onClick={submit} disabled={busy}>
+          <Button
+            color="primary"
+            variant="fill"
+            size="medium"
+            onClick={submit}
+            disabled={busy}
+          >
             {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
-          </StPrimary>
+          </Button>
         </StActions>
       </StCard>
 
@@ -473,6 +492,40 @@ const StPage = styled.div`
 
 const StHeader = styled.header`
   padding: 0.5rem 0.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+`;
+
+const StRoomBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+const StRoomName = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray600};
+`;
+
+const StLogout = styled.button`
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.rose600};
+    border-color: ${({ theme }) => theme.colors.rose200};
+  }
 `;
 
 const StTitle = styled.h1`
@@ -649,35 +702,6 @@ const StActions = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-`;
-
-const StPrimary = styled.button`
-  min-height: 2.9rem;
-  padding: 0 1.4rem;
-  border: none;
-  border-radius: 0.8rem;
-  background: linear-gradient(135deg, #607de0, #4b69c8);
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const StGhost = styled.button`
-  min-height: 2.9rem;
-  padding: 0 1.1rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  border-radius: 0.8rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
 `;
 
 const StEmpty = styled.p`

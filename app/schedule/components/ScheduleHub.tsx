@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styled from "styled-components";
+import { Button } from "@hwangchongmu/ui";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { SchedulePart, ScheduleUser } from "@/types/work-schedule";
 
@@ -117,12 +118,12 @@ export default function ScheduleHub({
         </StHeroSection>
 
         <StButtonGroup>
-          <StPrimaryButton onClick={() => setModalMode("create-personal")}>
+          <Button color="dark" variant="fill" size="large" onClick={() => setModalMode("create-personal")}>
             새 계정 만들기
-          </StPrimaryButton>
-          <StSecondaryButton onClick={() => setLoginMode(true)}>
+          </Button>
+          <Button color="light" variant="fill" size="large" onClick={() => setLoginMode(true)}>
             기존 계정 로그인
-          </StSecondaryButton>
+          </Button>
         </StButtonGroup>
 
         {/* 로그인 모달 */}
@@ -145,10 +146,10 @@ export default function ScheduleHub({
               />
               {error && <StError>{error}</StError>}
               <StModalActions>
-                <StSecondaryButton onClick={closeModal}>취소</StSecondaryButton>
-                <StPrimaryButton onClick={handleSubmit} disabled={loading}>
+                <Button color="light" variant="fill" size="medium" onClick={closeModal}>취소</Button>
+                <Button color="dark" variant="fill" size="medium" onClick={handleSubmit} disabled={loading}>
                   {loading ? "처리 중..." : "로그인"}
-                </StPrimaryButton>
+                </Button>
               </StModalActions>
             </StModal>
           </StOverlay>
@@ -174,10 +175,10 @@ export default function ScheduleHub({
               />
               {error && <StError>{error}</StError>}
               <StModalActions>
-                <StSecondaryButton onClick={closeModal}>취소</StSecondaryButton>
-                <StPrimaryButton onClick={handleSubmit} disabled={loading}>
+                <Button color="light" variant="fill" size="medium" onClick={closeModal}>취소</Button>
+                <Button color="dark" variant="fill" size="medium" onClick={handleSubmit} disabled={loading}>
                   {loading ? "처리 중..." : "만들기"}
-                </StPrimaryButton>
+                </Button>
               </StModalActions>
             </StModal>
           </StOverlay>
@@ -195,7 +196,7 @@ export default function ScheduleHub({
             <b>{activeUser.name}</b>님, 안녕하세요!
           </StWelcome>
         </div>
-        <StLogoutButton onClick={onLogout}>로그아웃</StLogoutButton>
+        <Button color="light" variant="weak" size="small" onClick={onLogout}>로그아웃</Button>
       </StUserHeader>
 
       {/* 개인 캘린더 */}
@@ -218,12 +219,12 @@ export default function ScheduleHub({
       <StSectionHeader>
         <StSectionTitle>파트 캘린더</StSectionTitle>
         <StSectionActions>
-          <StSmallButton onClick={() => setModalMode("create-shared")}>
+          <Button color="light" variant="fill" size="small" onClick={() => setModalMode("create-shared")}>
             + 파트 만들기
-          </StSmallButton>
-          <StSmallButton onClick={() => setModalMode("join")}>
+          </Button>
+          <Button color="light" variant="fill" size="small" onClick={() => setModalMode("join")}>
             초대코드 입장
-          </StSmallButton>
+          </Button>
         </StSectionActions>
       </StSectionHeader>
       <StWorkspaceGrid>
@@ -289,10 +290,10 @@ export default function ScheduleHub({
             />
             {error && <StError>{error}</StError>}
             <StModalActions>
-              <StSecondaryButton onClick={closeModal}>취소</StSecondaryButton>
-              <StPrimaryButton onClick={handleSubmit} disabled={loading}>
+              <Button color="light" variant="fill" size="medium" onClick={closeModal}>취소</Button>
+              <Button color="dark" variant="fill" size="medium" onClick={handleSubmit} disabled={loading}>
                 {loading ? "처리 중..." : "만들기"}
-              </StPrimaryButton>
+              </Button>
             </StModalActions>
           </StModal>
         </StOverlay>
@@ -324,10 +325,10 @@ export default function ScheduleHub({
             />
             {error && <StError>{error}</StError>}
             <StModalActions>
-              <StSecondaryButton onClick={closeModal}>취소</StSecondaryButton>
-              <StPrimaryButton onClick={handleSubmit} disabled={loading}>
+              <Button color="light" variant="fill" size="medium" onClick={closeModal}>취소</Button>
+              <Button color="dark" variant="fill" size="medium" onClick={handleSubmit} disabled={loading}>
                 {loading ? "처리 중..." : "참여하기"}
-              </StPrimaryButton>
+              </Button>
             </StModalActions>
           </StModal>
         </StOverlay>

@@ -9,6 +9,7 @@ import {
 } from "@hwangchongmu/ui";
 import { importExample, providerExample } from "../content";
 import { ButtonDocSection } from "./ButtonDocSection";
+import { AppCommonDocSection } from "./AppCommonDocSection";
 
 interface UiKitMainContentProps {
   copiedCode: string | null;
@@ -189,6 +190,8 @@ export function UiKitMainContent({
           </PreviewStack>
         </PreviewCard>
       </DocSection>
+
+      <AppCommonDocSection copiedCode={copiedCode} onCopy={onCopy} />
     </MainColumn>
   );
 }

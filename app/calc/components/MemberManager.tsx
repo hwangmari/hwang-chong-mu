@@ -1,6 +1,7 @@
 "use client";
 import ShareButton from "@/components/common/KakaoCalendarShare";
 import { StSection } from "@/components/styled/layout.styled";
+import { Button } from "@hwangchongmu/ui";
 import React, { useState } from "react";
 import styled from "styled-components";
 import SectionTitle from "./ui/SectionTitle";
@@ -46,7 +47,9 @@ export default function MemberManager({
               if (e.key === "Enter") handleAdd();
             }}
           />
-          <StAddButton onClick={handleAdd}>추가</StAddButton>
+          <Button color="dark" variant="fill" size="medium" onClick={handleAdd}>
+            추가
+          </Button>
         </StInputGroup>
 
         {/* 멤버 태그 리스트 */}
@@ -103,14 +106,6 @@ const StInput = styled.input`
     background-color: ${({ theme }) => theme.colors.white};
     border-color: ${({ theme }) => theme.semantic.primary};
   }
-`;
-
-const StAddButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.gray800};
-  color: ${({ theme }) => theme.colors.white};
-  padding: 0 1.25rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
 `;
 
 const StTags = styled.div`

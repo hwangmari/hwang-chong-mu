@@ -1152,6 +1152,7 @@ export function WorkoutMonthlyCalendar({
                       g.exercises.length > 3
                         ? ` 외 ${g.exercises.length - 3}개`
                         : "";
+                    const volumeKg = Math.round(gymRecordVolumeKg(g));
                     return (
                       <StPopoverLine key={`g-${g.id}`} $kind="gym">
                         <b>
@@ -1163,8 +1164,10 @@ export function WorkoutMonthlyCalendar({
                         </b>
                         <span>
                           {topNames}
-                          {more} ·{" "}
-                          {Math.round(gymRecordVolumeKg(g)).toLocaleString()}kg
+                          {more}
+                          {volumeKg > 0
+                            ? ` · ${volumeKg.toLocaleString()}kg`
+                            : ""}
                         </span>
                       </StPopoverLine>
                     );

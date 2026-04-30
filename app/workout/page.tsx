@@ -195,20 +195,25 @@ export default function WorkoutHomePage() {
                           item.data.durationSec,
                         )}`
                       : item.kind === "gym"
-                        ? [
-                            item.data.bodyPart
-                              ? GYM_BODY_PART_LABEL[item.data.bodyPart]
-                              : null,
-                            `${item.data.exercises.length}개 운동`,
-                            `${Math.round(
+                        ? (() => {
+                            const volumeKg = Math.round(
                               gymRecordVolumeKg(item.data),
-                            ).toLocaleString()}kg`,
-                            item.data.durationMin
-                              ? formatDurationMin(item.data.durationMin)
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")
+                            );
+                            return [
+                              item.data.bodyPart
+                                ? GYM_BODY_PART_LABEL[item.data.bodyPart]
+                                : null,
+                              `${item.data.exercises.length}개 운동`,
+                              volumeKg > 0
+                                ? `${volumeKg.toLocaleString()}kg`
+                                : null,
+                              item.data.durationMin
+                                ? formatDurationMin(item.data.durationMin)
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ");
+                          })()
                         : [
                             item.data.activityName,
                             item.data.durationMin
