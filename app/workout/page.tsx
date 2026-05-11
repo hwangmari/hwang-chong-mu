@@ -20,8 +20,6 @@ import {
   formatDurationMin,
   formatPace,
   gymRecordVolumeKg,
-  weeklyGymVolume,
-  weeklyRunDistance,
 } from "./helpers";
 import {
   WorkoutCalendarHeatmap,
@@ -101,11 +99,8 @@ export default function WorkoutHomePage() {
 
   if (!session) return null;
 
-  const weeklyRunKm = weeklyRunDistance(runs);
-  const weeklyGymVol = weeklyGymVolume(gyms);
   const runBest = computeRunningBest(runs);
   const prs = computeExercisePRs(gyms).slice(0, 3);
-  const totalSessions = runs.length + gyms.length + activities.length;
 
   const calendarColumns = buildWorkoutCalendar(
     runs.map((r) => r.date),
@@ -133,34 +128,6 @@ export default function WorkoutHomePage() {
 
       {error ? <StError>{error}</StError> : null}
 
-      <StGrid>
-        <StStatCard>
-          <StStatLabel>이번 주 러닝</StStatLabel>
-          <StStatValue>
-            {weeklyRunKm.toFixed(1)} <StStatUnit>km</StStatUnit>
-          </StStatValue>
-          <StStatSub>누적 {runs.length}회</StStatSub>
-        </StStatCard>
-
-        <StStatCard>
-          <StStatLabel>이번 주 볼륨</StStatLabel>
-          <StStatValue>
-            {Math.round(weeklyGymVol).toLocaleString()} <StStatUnit>kg</StStatUnit>
-          </StStatValue>
-          <StStatSub>누적 {gyms.length}회</StStatSub>
-        </StStatCard>
-
-        <StStatCard>
-          <StStatLabel>전체 운동 일수</StStatLabel>
-          <StStatValue>
-            {totalSessions} <StStatUnit>회</StStatUnit>
-          </StStatValue>
-          <StStatSub>
-            {`러닝 ${runs.length} · 헬스 ${gyms.length} · 활동 ${activities.length}`}
-          </StStatSub>
-        </StStatCard>
-      </StGrid>
-
       <StCTAGrid>
         <StCTA href="/workout/run">
           <StCTAEmoji>🏃‍♀️</StCTAEmoji>
@@ -174,6 +141,8 @@ export default function WorkoutHomePage() {
           +
         </StCTAPlus>
       </StCTAGrid>
+
+      <WorkoutMonthlyCalendar runs={runs} gyms={gyms} activities={activities} />
 
       <StSection>
         <StSectionTitle>📝 최근 기록</StSectionTitle>
@@ -304,8 +273,6 @@ export default function WorkoutHomePage() {
         )}
       </StSection>
 
-      <WorkoutMonthlyCalendar runs={runs} gyms={gyms} activities={activities} />
-
       <WorkoutCalendarHeatmap columns={calendarColumns} />
 
       <StBlogWrap>
@@ -348,93 +315,6 @@ const StError = styled.p`
   border-radius: 0.8rem;
   font-size: 0.85rem;
   font-weight: 700;
-`;
-
-const StGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.6rem;
-
-  @media (max-width: 540px) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.4rem;
-    padding: 0 1rem;
-  }
-
-  @media (max-width: 360px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-`;
-
-const StStatCard = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1rem;
-  padding: 0.95rem 1rem;
-  min-width: 0;
-
-  @media (max-width: 540px) {
-    padding: 0.55rem 0.6rem;
-  }
-`;
-
-const StStatLabel = styled.p`
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray500};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  @media (max-width: 540px) {
-    font-size: 0.66rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    word-break: keep-all;
-    line-height: 1.3;
-  }
-`;
-
-const StStatValue = styled.p`
-  margin-top: 0.4rem;
-  font-size: 1.45rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
-
-  @media (max-width: 540px) {
-    font-size: 1.05rem;
-    margin-top: 0.15rem;
-  }
-`;
-
-const StStatUnit = styled.span`
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray500};
-
-  @media (max-width: 540px) {
-    font-size: 0.7rem;
-  }
-`;
-
-const StStatSub = styled.p`
-  margin-top: 0.25rem;
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  @media (max-width: 540px) {
-    font-size: 0.62rem;
-    margin-top: 0.1rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    word-break: keep-all;
-    line-height: 1.35;
-  }
 `;
 
 const StSection = styled.section`

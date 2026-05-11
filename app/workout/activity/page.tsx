@@ -317,6 +317,10 @@ const StPage = styled.div`
 
 const StHeader = styled.header`
   padding: 0.5rem 0.25rem;
+
+  @media (max-width: 540px) {
+    padding: 0.5rem 1rem;
+  }
 `;
 
 const StTitle = styled.h1`
@@ -339,6 +343,11 @@ const StCard = styled.section`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+
+  @media (max-width: 540px) {
+    border: none;
+    border-radius: 0;
+  }
 `;
 
 const StCardTitle = styled.h2`

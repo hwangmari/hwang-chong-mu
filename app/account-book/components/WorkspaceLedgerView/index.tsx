@@ -20,6 +20,9 @@ import {
 import type { WorkspaceLedgerViewProps } from "./types";
 import EntryFormModal from "../EntryFormModal";
 import WorkspaceHeader from "../WorkspaceHeader";
+import EntrySearchBar, {
+  type EntryCategoryFilter,
+} from "./EntrySearchBar";
 import NaturalInputSection from "./NaturalInputSection";
 import ShareConfirmDialog from "./ShareConfirmDialog";
 import ViewModeTabs from "./ViewModeTabs";
@@ -95,6 +98,9 @@ export default function WorkspaceLedgerView({
   const [annualSavingGoal, setAnnualSavingGoal] = useState(
     DEFAULT_ANNUAL_SAVING_GOAL,
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] =
+    useState<EntryCategoryFilter>("all");
 
   const memberUsers = useMemo(
     () => users.filter((user) => workspace.memberIds.includes(user.id)),
@@ -248,13 +254,87 @@ export default function WorkspaceLedgerView({
     selectedParticipantId,
   ]);
 
+  const normalizedSearchQuery = useMemo(
+    () => searchQuery.trim().toLowerCase(),
+    [searchQuery],
+  );
+  const isFiltering =
+    normalizedSearchQuery.length > 0 || categoryFilter !== "all";
+
+  const matchesEntryFilter = useMemo(() => {
+    return (entry: ResolvedAccountEntry) => {
+      if (categoryFilter !== "all") {
+        const isExpenseEntry =
+          entry.type === "expense" && !isCardSettlementEntry(entry);
+        if (categoryFilter === "income") {
+          if (entry.type !== "income") return false;
+        } else if (categoryFilter === "asset") {
+          if (!isExpenseEntry || !isSavingsCategory(entry.category))
+            return false;
+        } else if (categoryFilter === "fixed") {
+          if (
+            !isExpenseEntry ||
+            isSavingsCategory(entry.category) ||
+            !isFixedExpenseCategory(entry.category)
+          )
+            return false;
+        } else {
+          if (!isExpenseEntry || isSavingsCategory(entry.category)) return false;
+          const repr = getRepresentativeExpenseCategory(entry.category);
+          const target =
+            categoryFilter === "living"
+              ? "생활비"
+              : categoryFilter === "move"
+                ? "이동/차량"
+                : categoryFilter === "exercise"
+                  ? "운동"
+                  : categoryFilter === "shopping"
+                    ? "쇼핑/여가"
+                    : "특별/기타";
+          if (repr !== target) return false;
+        }
+      }
+      if (normalizedSearchQuery) {
+        const haystack = [
+          entry.merchant,
+          entry.item,
+          entry.category,
+          entry.subCategory,
+          entry.memo,
+          entry.cardCompany,
+          entry.member,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(normalizedSearchQuery)) return false;
+      }
+      return true;
+    };
+  }, [categoryFilter, normalizedSearchQuery]);
+
   const monthEntries = useMemo(() => {
     const ym = format(currentMonth, "yyyy-MM");
-    return visibleEntries.filter((entry) => entry.date.startsWith(ym));
-  }, [currentMonth, visibleEntries]);
+    return visibleEntries
+      .filter((entry) => entry.date.startsWith(ym))
+      .filter(matchesEntryFilter);
+  }, [currentMonth, matchesEntryFilter, visibleEntries]);
   const displayMonthEntries = useMemo(
     () => monthEntries.filter((entry) => !isCardSettlementEntry(entry)),
     [monthEntries],
+  );
+
+  const filterMatchTotal = useMemo(
+    () =>
+      displayMonthEntries.reduce(
+        (acc, entry) => {
+          acc.count += 1;
+          acc.totalAmount += entry.amount;
+          return acc;
+        },
+        { count: 0, totalAmount: 0 },
+      ),
+    [displayMonthEntries],
   );
 
   const monthTotals = useMemo(() => {
@@ -446,6 +526,11 @@ export default function WorkspaceLedgerView({
 
   useEffect(() => {
     setSelectedExpenseMemberName(null);
+  }, [workspace.id]);
+
+  useEffect(() => {
+    setSearchQuery("");
+    setCategoryFilter("all");
   }, [workspace.id]);
 
   useEffect(() => {
@@ -965,6 +1050,21 @@ export default function WorkspaceLedgerView({
             onSubmit={registerModal.submitNaturalInput}
           />
         ) : null}
+
+        <EntrySearchBar
+          query={searchQuery}
+          onChangeQuery={setSearchQuery}
+          category={categoryFilter}
+          onChangeCategory={setCategoryFilter}
+          matchCount={filterMatchTotal.count}
+          totalAmount={filterMatchTotal.totalAmount}
+          isFiltering={isFiltering}
+          onClear={() => {
+            setSearchQuery("");
+            setCategoryFilter("all");
+          }}
+          formatAmount={formatAmount}
+        />
 
         <ViewModeTabs viewMode={viewMode} onChangeViewMode={setViewMode} />
 

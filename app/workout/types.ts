@@ -121,7 +121,8 @@ export type GymEquipment =
   | "barbell"
   | "kettlebell"
   | "plate"
-  | "cable";
+  | "cable"
+  | "medicineball";
 
 export const GYM_EQUIPMENT_LABEL: Record<GymEquipment, string> = {
   dumbbell: "덤벨",
@@ -129,12 +130,16 @@ export const GYM_EQUIPMENT_LABEL: Record<GymEquipment, string> = {
   kettlebell: "케틀벨",
   plate: "원판",
   cable: "케이블",
+  medicineball: "메디신볼",
 };
 
 export type GymExercise = {
   id: string;
   name: string;
   equipment?: GymEquipment;
+  // 양쪽 합산 계수 — 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리는 운동은 2.
+  // 미지정 시 1로 간주 (이전 기록 호환).
+  sideCount?: number;
   sets: GymSet[];
 };
 
@@ -201,6 +206,73 @@ export const ACTIVITY_PRESETS: string[] = [
   "크로스핏",
   "스피닝",
 ];
+
+// 종목별 이모지 매핑 — 직접 입력한 종목도 부분 매칭으로 잡아냄
+const ACTIVITY_EMOJI_MAP: Record<string, string> = {
+  자전거: "🚴",
+  사이클: "🚴",
+  라이딩: "🚴",
+  등산: "🥾",
+  하이킹: "🥾",
+  트레킹: "🥾",
+  러닝: "🏃",
+  걷기: "🚶",
+  산책: "🚶",
+  테니스: "🎾",
+  배드민턴: "🏸",
+  스쿼시: "🥎",
+  탁구: "🏓",
+  수영: "🏊",
+  다이빙: "🤿",
+  서핑: "🏄",
+  요가: "🧘",
+  필라테스: "🤸",
+  스트레칭: "🤸",
+  클라이밍: "🧗",
+  볼더링: "🧗",
+  골프: "⛳",
+  볼링: "🎳",
+  스키: "⛷️",
+  스노보드: "🏂",
+  보드: "🏂",
+  스케이트: "⛸️",
+  축구: "⚽",
+  농구: "🏀",
+  야구: "⚾",
+  배구: "🏐",
+  럭비: "🏉",
+  하키: "🏒",
+  복싱: "🥊",
+  주짓수: "🥋",
+  태권도: "🥋",
+  유도: "🥋",
+  무에타이: "🥋",
+  크로스핏: "🏋️",
+  스피닝: "🚴",
+  헬스: "🏋️",
+  웨이트: "🏋️",
+  카약: "🛶",
+  카누: "🛶",
+  조정: "🚣",
+  말타기: "🐎",
+  승마: "🐎",
+  댄스: "💃",
+  발레: "🩰",
+  줄넘기: "🪢",
+};
+
+const DEFAULT_ACTIVITY_EMOJI = "🤸";
+
+export function getActivityEmoji(activityName: string): string {
+  const name = activityName?.trim();
+  if (!name) return DEFAULT_ACTIVITY_EMOJI;
+  if (ACTIVITY_EMOJI_MAP[name]) return ACTIVITY_EMOJI_MAP[name];
+  // 부분 매칭 — "산악자전거" → 자전거, "실내클라이밍" → 클라이밍
+  for (const key of Object.keys(ACTIVITY_EMOJI_MAP)) {
+    if (name.includes(key)) return ACTIVITY_EMOJI_MAP[key];
+  }
+  return DEFAULT_ACTIVITY_EMOJI;
+}
 
 // =========================
 // 파생 통계 타입

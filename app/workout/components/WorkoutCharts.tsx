@@ -14,6 +14,7 @@ import type { CalendarCell, TimeBucket } from "../helpers";
 import {
   GYM_BODY_PART_LABEL,
   RUNNING_TYPE_LABEL,
+  getActivityEmoji,
   type ActivityRecord,
   type GymRecord,
   type RunningEnvironment,
@@ -725,31 +726,85 @@ export function WorkoutIntervalDetailChart({
   const paces = points.map((p) => p.paceSec);
   const minPace = Math.min(...paces);
   const maxPace = Math.max(...paces);
-  const yPad = Math.max(5, (maxPace - minPace) * 0.18);
+  const yPad = Math.max(5, (maxPace - minPace) * 0.22);
   const yMin = Math.max(0, minPace - yPad);
   const yMax = maxPace + yPad;
   const range = Math.max(1, yMax - yMin);
 
+  const totalDuration =
+    points.reduce((s, p) => s + (p.durationSec || 0), 0) || 1;
+  // 모든 구간에 거리가 있으면 거리(km)를, 없으면 시간(초)을 x축 기준으로 사용
+  const useDistanceAxis = points.every(
+    (p) => typeof p.distanceKm === "number" && p.distanceKm > 0,
+  );
+  const totalMetric = useDistanceAxis
+    ? points.reduce((s, p) => s + (p.distanceKm ?? 0), 0)
+    : totalDuration;
+  const formatAxis = (val: number) =>
+    useDistanceAxis ? `${Number(val.toFixed(2))}km` : formatDuration(val);
+
   const viewW = 320;
-  const viewH = 130;
-  const padL = 14;
-  const padR = 12;
+  const viewH = 150;
+  const padL = 28;
+  const padR = 14;
   const padT = 22;
   const padB = 28;
   const innerW = viewW - padL - padR;
   const innerH = viewH - padT - padB;
   const baselineY = padT + innerH;
-  const slot = innerW / points.length;
-  const barWidth = Math.min(22, Math.max(6, slot * 0.55));
+
+  // 빠를수록(낮은 paceSec) 위로 — 사용자가 직관적으로 인식
+  const paceToY = (paceSec: number) =>
+    baselineY - ((yMax - paceSec) / range) * innerH;
+
+  // 누적 (거리 또는 시간) 기준 x 위치
+  let cursor = 0;
+  let timeCursor = 0;
+  const segments = points.map((p) => {
+    const step = useDistanceAxis ? (p.distanceKm ?? 0) : p.durationSec;
+    const start = cursor;
+    const end = cursor + step;
+    cursor = end;
+    const startSec = timeCursor;
+    timeCursor += p.durationSec;
+    return {
+      p,
+      start,
+      end,
+      startSec,
+      endSec: timeCursor,
+      x0: padL + (start / totalMetric) * innerW,
+      x1: padL + (end / totalMetric) * innerW,
+      y: paceToY(p.paceSec),
+    };
+  });
+
+  // 스텝 라인 path
+  let linePath = "";
+  let fillPath = "";
+  segments.forEach((s, i) => {
+    if (i === 0) {
+      linePath = `M ${s.x0} ${s.y} L ${s.x1} ${s.y}`;
+      fillPath = `M ${s.x0} ${baselineY} L ${s.x0} ${s.y} L ${s.x1} ${s.y}`;
+    } else {
+      linePath += ` L ${s.x0} ${s.y} L ${s.x1} ${s.y}`;
+      fillPath += ` L ${s.x0} ${s.y} L ${s.x1} ${s.y}`;
+    }
+  });
+  fillPath += ` L ${padL + innerW} ${baselineY} Z`;
+
+  const accent = "#7d8593"; // 그레이톤 라인
+  const accentLight = "rgba(125, 133, 147, 0.14)"; // 채움 영역
 
   return (
     <StIntervalWrap>
       <svg
         viewBox={`0 0 ${viewW} ${viewH}`}
         role="img"
-        aria-label="구간별 페이스"
+        aria-label="구간별 페이스 (시간 비례)"
         style={{ width: "100%", height: "auto" }}
       >
+        {/* baseline */}
         <line
           x1={padL}
           y1={baselineY}
@@ -758,81 +813,152 @@ export function WorkoutIntervalDetailChart({
           stroke="#e5e7eb"
           strokeWidth={0.8}
         />
-        {points.map((p, i) => {
-          const ratio = (yMax - p.paceSec) / range;
-          const h = Math.max(4, ratio * innerH);
-          const cx = padL + slot * (i + 0.5);
-          const x = cx - barWidth / 2;
-          const y = baselineY - h;
-          const isFastest = p.paceSec === minPace && minPace !== maxPace;
-          const isSlowest = p.paceSec === maxPace && minPace !== maxPace;
-          const color = isFastest
-            ? "#1f8a54"
-            : isSlowest
-              ? "#d04a73"
-              : "#607de0";
+        {/* y축 페이스 눈금 (빠른/느린) */}
+        <text
+          x={padL - 4}
+          y={paceToY(minPace) + 3}
+          fontSize={7}
+          fill={accent}
+          fontWeight={800}
+          textAnchor="end"
+        >
+          {formatPace(minPace).replace("/km", "")}
+        </text>
+        {minPace !== maxPace ? (
+          <text
+            x={padL - 4}
+            y={paceToY(maxPace) + 3}
+            fontSize={7}
+            fill={accent}
+            fontWeight={800}
+            textAnchor="end"
+          >
+            {formatPace(maxPace).replace("/km", "")}
+          </text>
+        ) : null}
+        {/* 채움 영역 */}
+        <path d={fillPath} fill={accentLight} stroke="none" />
+        {/* 스텝 라인 */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={accent}
+          strokeWidth={1.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* 구간별 라벨 + 경계선 */}
+        {segments.map((s, i) => {
+          const cx = (s.x0 + s.x1) / 2;
+          const xWidth = s.x1 - s.x0;
+          const showLabel = xWidth >= 22;
+          const labelColor = accent;
           return (
             <g key={i}>
+              {/* 호버용 투명 rect */}
               <rect
-                x={x}
-                y={y}
-                width={barWidth}
-                height={h}
-                rx={Math.min(4, barWidth / 2)}
-                fill={color}
+                x={s.x0}
+                y={padT}
+                width={xWidth}
+                height={innerH}
+                fill="transparent"
               >
                 <title>
-                  {i + 1}구간 · {formatPace(p.paceSec)} ·{" "}
-                  {formatDuration(p.durationSec)}
-                  {p.distanceKm ? ` · ${p.distanceKm}km` : ""}
-                  {p.speedKmh ? ` · ${p.speedKmh}km/h` : ""}
-                  {p.inclineLevel ? ` · 경사 ${p.inclineLevel}%` : ""}
+                  {i + 1}구간 · {formatPace(s.p.paceSec)} ·{" "}
+                  {formatDuration(s.p.durationSec)}
+                  {s.p.distanceKm ? ` · ${s.p.distanceKm}km` : ""}
+                  {s.p.speedKmh ? ` · ${s.p.speedKmh}km/h` : ""}
+                  {s.p.inclineLevel ? ` · 경사 ${s.p.inclineLevel}%` : ""}
+                  {" · 누적 "}
+                  {formatDuration(s.startSec)}
                 </title>
               </rect>
-              <text
-                x={cx}
-                y={y - 4}
-                fontSize={8}
-                fontWeight={800}
-                fill={color}
-                textAnchor="middle"
-              >
-                {formatPace(p.paceSec).replace("/km", "")}
-              </text>
-              <text
-                x={cx}
-                y={baselineY + 11}
-                fontSize={8}
-                fill="#7d8593"
-                fontWeight={800}
-                textAnchor="middle"
-              >
-                {i + 1}구간
-              </text>
-              <text
-                x={cx}
-                y={baselineY + 21}
-                fontSize={7.2}
-                fill="#b1b8c4"
-                fontWeight={600}
-                textAnchor="middle"
-              >
-                {p.durationSec ? formatDuration(p.durationSec) : ""}
-              </text>
+              {/* 구간 끝점 동그라미 */}
+              <circle cx={s.x1} cy={s.y} r={1.8} fill={accent} />
+              {showLabel ? (
+                <>
+                  <text
+                    x={cx}
+                    y={s.y - 5}
+                    fontSize={8}
+                    fontWeight={800}
+                    fill={labelColor}
+                    textAnchor="middle"
+                  >
+                    {formatPace(s.p.paceSec).replace("/km", "")}
+                  </text>
+                  <text
+                    x={cx}
+                    y={baselineY + 11}
+                    fontSize={7.5}
+                    fill="#7d8593"
+                    fontWeight={800}
+                    textAnchor="middle"
+                  >
+                    {s.p.distanceKm
+                      ? `${s.p.distanceKm}km`
+                      : `${i + 1}구간`}
+                  </text>
+                  <text
+                    x={cx}
+                    y={baselineY + 20}
+                    fontSize={6.8}
+                    fill="#b1b8c4"
+                    fontWeight={600}
+                    textAnchor="middle"
+                  >
+                    {formatDuration(s.p.durationSec)}
+                  </text>
+                </>
+              ) : null}
+              {/* 구간 경계 누적 표시 */}
+              {i < segments.length - 1 ? (
+                <text
+                  x={s.x1}
+                  y={padT - 6}
+                  fontSize={6.5}
+                  fill="#b1b8c4"
+                  fontWeight={700}
+                  textAnchor="middle"
+                >
+                  {formatAxis(s.end)}
+                </text>
+              ) : null}
             </g>
           );
         })}
+        {/* 시작 / 끝 누적 */}
+        <text
+          x={padL}
+          y={padT - 6}
+          fontSize={6.5}
+          fill="#b1b8c4"
+          fontWeight={700}
+          textAnchor="middle"
+        >
+          {useDistanceAxis ? "0km" : "0:00"}
+        </text>
+        <text
+          x={padL + innerW}
+          y={padT - 6}
+          fontSize={6.5}
+          fill="#b1b8c4"
+          fontWeight={700}
+          textAnchor="middle"
+        >
+          {formatAxis(totalMetric)}
+        </text>
       </svg>
       <StIntervalLegend>
         <span>
-          최빠 <b style={{ color: "#1f8a54" }}>{formatPace(minPace).replace("/km", "")}</b>
+          최빠 <b style={{ color: accent }}>{formatPace(minPace).replace("/km", "")}</b>
         </span>
         <span>
-          최느 <b style={{ color: "#d04a73" }}>{formatPace(maxPace).replace("/km", "")}</b>
+          최느 <b style={{ color: accent }}>{formatPace(maxPace).replace("/km", "")}</b>
         </span>
         <span>
           편차{" "}
-          <b style={{ color: "#4b69c8" }}>
+          <b style={{ color: accent }}>
             {Math.max(0, maxPace - minPace)}초
           </b>
         </span>
@@ -899,6 +1025,7 @@ export function WorkoutMonthlyCalendar({
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [pinnedIso, setPinnedIso] = useState<string | null>(null);
   const [pinnedShift, setPinnedShift] = useState(0);
+  const [filter, setFilter] = useState<"run" | "gym" | "activity" | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const popoverRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -1005,15 +1132,19 @@ export function WorkoutMonthlyCalendar({
   }, [cursor, runByDate, gymByDate, activityByDate]);
 
   const monthLabel = `${cursor.getFullYear()}년 ${cursor.getMonth() + 1}월`;
-  const workoutDays = grid
-    .flat()
-    .filter(
-      (c) =>
-        c.inMonth &&
-        (c.runRecords.length > 0 ||
-          c.gymRecords.length > 0 ||
-          c.activityRecords.length > 0),
-    ).length;
+  const monthCells = grid.flat().filter((c) => c.inMonth);
+  const workoutDays = monthCells.filter(
+    (c) =>
+      c.runRecords.length > 0 ||
+      c.gymRecords.length > 0 ||
+      c.activityRecords.length > 0,
+  ).length;
+  const runSessions = monthCells.reduce((s, c) => s + c.runRecords.length, 0);
+  const gymSessions = monthCells.reduce((s, c) => s + c.gymRecords.length, 0);
+  const activitySessions = monthCells.reduce(
+    (s, c) => s + c.activityRecords.length,
+    0,
+  );
 
   function goPrev() {
     setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1));
@@ -1073,6 +1204,40 @@ export function WorkoutMonthlyCalendar({
         </StCalTodayBtn>
       </StCalHeader>
 
+      <StCalSummary>
+        <StCalSummaryDays>
+          <b>{workoutDays}</b>일 운동
+        </StCalSummaryDays>
+        <StCalSummaryBreakdown>
+          <StCalSummaryChip
+            type="button"
+            $color="#3aa675"
+            $active={filter === "run"}
+            onClick={() => setFilter((f) => (f === "run" ? null : "run"))}
+          >
+            🏃 {runSessions}
+          </StCalSummaryChip>
+          <StCalSummaryChip
+            type="button"
+            $color="#e07a3a"
+            $active={filter === "gym"}
+            onClick={() => setFilter((f) => (f === "gym" ? null : "gym"))}
+          >
+            🏋️ {gymSessions}
+          </StCalSummaryChip>
+          <StCalSummaryChip
+            type="button"
+            $color="#7c6ae0"
+            $active={filter === "activity"}
+            onClick={() =>
+              setFilter((f) => (f === "activity" ? null : "activity"))
+            }
+          >
+            🤸 {activitySessions}
+          </StCalSummaryChip>
+        </StCalSummaryBreakdown>
+      </StCalSummary>
+
       <StCalDayHeaderRow>
         {DAY_HEADERS.map((label, i) => (
           <StCalDayHeader key={label} $weekend={i >= 5}>
@@ -1084,9 +1249,14 @@ export function WorkoutMonthlyCalendar({
       <StCalGrid ref={gridRef}>
         {grid.flat().map((cell) => {
           const isToday = cell.iso === todayISO;
-          const hasAny = Boolean(
-            cell.runSummary || cell.gymSummary || cell.activitySummary,
-          );
+          const showRun =
+            (filter === null || filter === "run") && Boolean(cell.runSummary);
+          const showGym =
+            (filter === null || filter === "gym") && Boolean(cell.gymSummary);
+          const showActivity =
+            (filter === null || filter === "activity") &&
+            Boolean(cell.activitySummary);
+          const hasAny = showRun || showGym || showActivity;
           const isPinned = pinnedIso === cell.iso;
           return (
             <StCalCell
@@ -1106,13 +1276,13 @@ export function WorkoutMonthlyCalendar({
             >
               <StCalDayNum $today={isToday}>{cell.date.getDate()}</StCalDayNum>
               <StCalTags>
-                {cell.runSummary ? (
+                {showRun ? (
                   <StCalTag $kind="run">{cell.runSummary}</StCalTag>
                 ) : null}
-                {cell.gymSummary ? (
+                {showGym ? (
                   <StCalTag $kind="gym">{cell.gymSummary}</StCalTag>
                 ) : null}
-                {cell.activitySummary ? (
+                {showActivity ? (
                   <StCalTag $kind="activity">{cell.activitySummary}</StCalTag>
                 ) : null}
               </StCalTags>
@@ -1174,7 +1344,7 @@ export function WorkoutMonthlyCalendar({
                   })}
                   {cell.activityRecords.map((a) => (
                     <StPopoverLine key={`a-${a.id}`} $kind="activity">
-                      <b>🎾 {a.activityName}</b>
+                      <b>{getActivityEmoji(a.activityName)} {a.activityName}</b>
                       <span>
                         {[
                           a.durationMin ? formatDurationMin(a.durationMin) : null,
@@ -1208,9 +1378,6 @@ export function WorkoutMonthlyCalendar({
             활동
           </StCalLegendItem>
         </StCalLegend>
-        <StCalCount>
-          이번 달 <b>{workoutDays}</b>일 운동
-        </StCalCount>
       </StCalFooter>
     </StWrap>
   );
@@ -1270,6 +1437,63 @@ const StCalTodayBtn = styled.button`
   &:hover {
     color: ${({ theme }) => theme.colors.blue600};
     border-color: ${({ theme }) => theme.colors.blue200};
+  }
+`;
+
+const StCalSummary = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.7rem;
+  background: ${({ theme }) => theme.colors.gray50};
+  border-radius: 0.7rem;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+  }
+`;
+
+const StCalSummaryDays = styled.span`
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray600};
+
+  b {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: ${({ theme }) => theme.colors.gray900};
+    margin-right: 0.15rem;
+  }
+`;
+
+const StCalSummaryBreakdown = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+`;
+
+const StCalSummaryChip = styled.button<{ $color: string; $active: boolean }>`
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: ${({ $active, $color, theme }) =>
+    $active ? theme.colors.white : $color};
+  background: ${({ $active, $color, theme }) =>
+    $active ? $color : theme.colors.white};
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid
+    ${({ $active, $color, theme }) =>
+      $active ? $color : theme.colors.gray100};
+  cursor: pointer;
+  transition: all 0.12s;
+  line-height: 1;
+
+  &:hover {
+    border-color: ${({ $color }) => $color};
   }
 `;
 
@@ -1463,14 +1687,3 @@ const StCalLegendItem = styled.span`
   font-weight: 700;
 `;
 
-const StCalCount = styled.span`
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  font-weight: 700;
-
-  b {
-    color: ${({ theme }) => theme.colors.gray800};
-    font-weight: 900;
-    font-size: 0.82rem;
-  }
-`;

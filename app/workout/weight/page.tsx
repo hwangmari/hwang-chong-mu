@@ -15,8 +15,10 @@ import {
 import { parseGymFromText, runWorkoutOcr, type ParsedGym } from "../ocr";
 import {
   computeExercisePRs,
+  currentMonthKey,
   formatDurationMin,
   formatMinInput,
+  groupRecordsByMonth,
   gymRecordVolumeKg,
   parseMinutesInput,
   setVolumeKg,
@@ -93,6 +95,18 @@ export default function WeightPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(
+    () => new Set([currentMonthKey()]),
+  );
+
+  function toggleMonth(key: string) {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ocrProgress, setOcrProgress] = useState<number | null>(null);
@@ -142,10 +156,17 @@ export default function WeightPage() {
     return m;
   }, [prs]);
 
+  const monthGroups = useMemo(
+    () => groupRecordsByMonth(records),
+    [records],
+  );
+
   const formVolume = useMemo(
     () =>
       form.exercises.reduce(
-        (s, ex) => s + ex.sets.reduce((t, set) => t + setVolumeKg(set), 0),
+        (s, ex) =>
+          s +
+          ex.sets.reduce((t, set) => t + setVolumeKg(set, ex.sideCount), 0),
         0,
       ),
     [form.exercises],
@@ -731,6 +752,18 @@ export default function WeightPage() {
                     {label}
                   </StEquipmentChip>
                 ))}
+                <StSideChip
+                  type="button"
+                  $active={(ex.sideCount ?? 1) === 2}
+                  onClick={() =>
+                    updateExercise(ex.id, {
+                      sideCount: (ex.sideCount ?? 1) === 2 ? 1 : 2,
+                    })
+                  }
+                  title="레그프레스·덤벨처럼 양쪽에 같은 무게가 걸리는 운동이면 켜세요 (볼륨 ×2)"
+                >
+                  양쪽 ×2
+                </StSideChip>
               </StEquipmentRow>
 
               <StSetHead>
@@ -894,6 +927,10 @@ export default function WeightPage() {
             💡 <b>총 볼륨 = 무게 × 횟수</b>를 모든 세트에 대해 합한 값이에요.
             무게를 못 올리더라도 세트·횟수를 늘리면 총 볼륨이 올라가서 성장
             지표로 쓸 수 있어요. 워밍업·드랍셋도 전부 포함돼요.
+            <br />
+            🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
+            <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
+            자동으로 두 배 계산돼요.
           </StVolumeHelp>
         </StVolumeBox>
 
@@ -920,11 +957,39 @@ export default function WeightPage() {
             아직 기록이 없어요. 오늘 운동을 기록해 보세요!
           </StEmpty>
         ) : (
-          <StRecordList>
-            {records.map((record) => {
-              const volume = gymRecordVolumeKg(record);
-              const expanded = expandedId === record.id;
+          <StMonthList>
+            {monthGroups.map((group) => {
+              const isOpen = expandedMonths.has(group.key);
               return (
+                <StMonthGroup key={group.key}>
+                  <StMonthHeader
+                    type="button"
+                    onClick={() => toggleMonth(group.key)}
+                    aria-expanded={isOpen}
+                  >
+                    <StMonthLabel>{group.label}</StMonthLabel>
+                    <StMonthCount>{group.items.length}회</StMonthCount>
+                    <StMonthCaret $open={isOpen} aria-hidden>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="9 6 15 12 9 18" />
+                      </svg>
+                    </StMonthCaret>
+                  </StMonthHeader>
+                  {isOpen ? (
+                    <StRecordList>
+                      {group.items.map((record) => {
+                        const volume = gymRecordVolumeKg(record);
+                        const expanded = expandedId === record.id;
+                        return (
                 <StRecordCard key={record.id}>
                   <StRecordTop
                     onClick={() =>
@@ -980,6 +1045,9 @@ export default function WeightPage() {
                                   {GYM_EQUIPMENT_LABEL[ex.equipment]}
                                 </StExEquipTag>
                               ) : null}
+                              {(ex.sideCount ?? 1) === 2 ? (
+                                <StExSideTag>×2</StExSideTag>
+                              ) : null}
                               {ex.name || "(이름 없음)"}
                               {isPR ? <StPRBadge>PR 🎉</StPRBadge> : null}
                             </StExName>
@@ -1025,8 +1093,13 @@ export default function WeightPage() {
                   ) : null}
                 </StRecordCard>
               );
+                      })}
+                    </StRecordList>
+                  ) : null}
+                </StMonthGroup>
+              );
             })}
-          </StRecordList>
+          </StMonthList>
         )}
       </StCard>
     </StPage>
@@ -1044,6 +1117,10 @@ const StPage = styled.div`
 
 const StHeader = styled.header`
   padding: 0.5rem 0.25rem;
+
+  @media (max-width: 540px) {
+    padding: 0.5rem 1rem;
+  }
 `;
 
 const StTitle = styled.h1`
@@ -1066,6 +1143,11 @@ const StCard = styled.section`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+
+  @media (max-width: 540px) {
+    border: none;
+    border-radius: 0;
+  }
 `;
 
 const StCardTitle = styled.h2`
@@ -1366,6 +1448,28 @@ const StEquipmentChip = styled.button<{ $active: boolean }>`
   }
 `;
 
+const StSideChip = styled.button<{ $active: boolean }>`
+  border: 1px solid
+    ${({ $active, theme }) =>
+      $active ? theme.colors.indigo500 : theme.colors.gray200};
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.indigo50 : theme.colors.white};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.indigo600 : theme.colors.gray500};
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-left: auto;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.indigo100};
+    color: ${({ theme }) => theme.colors.indigo600};
+  }
+`;
+
 const StSetHead = styled.div`
   display: grid;
   grid-template-columns: 1.6rem 1fr 1fr 1.2fr 1.8rem;
@@ -1450,29 +1554,31 @@ const StSetActions = styled.div`
 const StCloneRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
+  gap: 0.4rem;
+  font-size: 0.78rem;
   color: ${({ theme }) => theme.colors.gray500};
   font-weight: 700;
 `;
 
 const StCloneInput = styled.input`
-  width: 3.4rem;
-  min-height: 2.75rem;
+  width: 3.2rem;
+  height: 2.2rem;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.45rem;
   padding: 0 0.4rem;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-align: center;
   background: ${({ theme }) => theme.colors.white};
+  box-sizing: border-box;
 `;
 
 const StCloneBtn = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.blue200};
   background: ${({ theme }) => theme.colors.blue50};
   color: ${({ theme }) => theme.colors.blue600};
-  padding: 0.35rem 0.7rem;
+  height: 2.2rem;
+  padding: 0 0.8rem;
   border-radius: 0.45rem;
   font-size: 0.74rem;
   font-weight: 800;
@@ -1562,11 +1668,11 @@ const StAddDrop = styled.button`
 `;
 
 const StAddSet = styled.button`
-  align-self: flex-start;
   border: 1px dashed ${({ theme }) => theme.colors.gray300};
   background: transparent;
   color: ${({ theme }) => theme.colors.gray600};
-  padding: 0.4rem 0.8rem;
+  height: 2.2rem;
+  padding: 0 0.9rem;
   border-radius: 0.55rem;
   font-size: 0.78rem;
   font-weight: 700;
@@ -1676,6 +1782,61 @@ const StEmpty = styled.p`
   color: ${({ theme }) => theme.colors.gray400};
 `;
 
+const StMonthList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+`;
+
+const StMonthGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+`;
+
+const StMonthHeader = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: ${({ theme }) => theme.colors.gray50};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray100};
+  }
+`;
+
+const StMonthLabel = styled.span`
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray800};
+`;
+
+const StMonthCount = styled.span`
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray500};
+  background: ${({ theme }) => theme.colors.white};
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+`;
+
+const StMonthCaret = styled.span<{ $open: boolean }>`
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.gray500};
+  transition: transform 0.15s;
+  transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
+`;
+
 const StRecordList = styled.div`
   display: flex;
   flex-direction: column;
@@ -1762,6 +1923,15 @@ const StExEquipTag = styled.span`
   font-weight: 800;
   color: ${({ theme }) => theme.colors.blue600};
   background: ${({ theme }) => theme.colors.blue50};
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.35rem;
+`;
+
+const StExSideTag = styled.span`
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.indigo600};
+  background: ${({ theme }) => theme.colors.indigo50};
   padding: 0.12rem 0.4rem;
   border-radius: 0.35rem;
 `;

@@ -157,18 +157,20 @@ export function weeklyRunDistance(records: RunningRecord[]): number {
 // =========================
 // 헬스 통계
 // =========================
-export function setVolumeKg(set: GymSet) {
+export function setVolumeKg(set: GymSet, sideCount: number = 1) {
   const main = (set.weight || 0) * (set.reps || 0);
   const drops = (set.dropSets || []).reduce(
     (s, d) => s + (d.weight || 0) * (d.reps || 0),
     0,
   );
-  return main + drops;
+  const multiplier = sideCount && sideCount > 0 ? sideCount : 1;
+  return (main + drops) * multiplier;
 }
 
 export function gymRecordVolumeKg(record: GymRecord) {
   return record.exercises.reduce(
-    (sum, ex) => sum + ex.sets.reduce((s, set) => s + setVolumeKg(set), 0),
+    (sum, ex) =>
+      sum + ex.sets.reduce((s, set) => s + setVolumeKg(set, ex.sideCount), 0),
     0,
   );
 }
@@ -206,6 +208,105 @@ export function weeklyGymVolume(records: GymRecord[]): number {
   return records
     .filter((r) => new Date(r.date).getTime() >= weekStart.getTime())
     .reduce((sum, r) => sum + gymRecordVolumeKg(r), 0);
+}
+
+// =========================
+// 월별 그룹핑 (아코디언 등 목록 정리용)
+// =========================
+export type MonthGroup<T> = {
+  key: string; // "YYYY-MM"
+  year: number;
+  month: number;
+  label: string; // "2026년 5월"
+  items: T[];
+};
+
+export function groupRecordsByMonth<T extends { date: string }>(
+  records: T[],
+): MonthGroup<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const r of records) {
+    const key = r.date?.slice(0, 7);
+    if (!key) continue;
+    const arr = groups.get(key) ?? [];
+    arr.push(r);
+    groups.set(key, arr);
+  }
+  return Array.from(groups.entries())
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([key, items]) => {
+      const [y, m] = key.split("-");
+      return {
+        key,
+        year: Number(y),
+        month: Number(m),
+        label: `${y}년 ${Number(m)}월`,
+        items,
+      };
+    });
+}
+
+export function currentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// =========================
+// 운동 일수 (날짜 dedupe)
+// =========================
+export function monthlyWorkoutDays(
+  ...buckets: Array<Array<{ date: string }>>
+): number {
+  const now = new Date();
+  const ymPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const days = new Set<string>();
+  for (const arr of buckets) {
+    for (const r of arr) {
+      if (r.date && r.date.startsWith(ymPrefix)) days.add(r.date);
+    }
+  }
+  return days.size;
+}
+
+export function weeklyWorkoutDays(
+  ...buckets: Array<Array<{ date: string }>>
+): number {
+  const weekStart = startOfWeek();
+  const days = new Set<string>();
+  for (const arr of buckets) {
+    for (const r of arr) {
+      if (!r.date) continue;
+      if (new Date(r.date).getTime() >= weekStart.getTime()) {
+        days.add(r.date);
+      }
+    }
+  }
+  return days.size;
+}
+
+// 오늘부터 거꾸로 세는 연속 운동 일수.
+// 오늘 기록이 없어도 어제까지 이어졌다면 streak 유지(=오늘 안 빠뜨려도 됨).
+export function currentWorkoutStreak(
+  ...buckets: Array<Array<{ date: string }>>
+): number {
+  const days = new Set<string>();
+  for (const arr of buckets) {
+    for (const r of arr) {
+      if (r.date) days.add(r.date);
+    }
+  }
+  if (days.size === 0) return 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  if (!days.has(toISO(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  let streak = 0;
+  while (days.has(toISO(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
 }
 
 // =========================
