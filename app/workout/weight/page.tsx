@@ -656,6 +656,9 @@ export default function WeightPage() {
               ))}
             </StSelect>
           </StLabel>
+        </StRow>
+
+        <StRow $cols={3}>
           <StLabel>
             운동 시간
             <StInput
@@ -668,23 +671,20 @@ export default function WeightPage() {
               }
             />
           </StLabel>
-        </StRow>
-
-        <StRow>
           <StLabel>
-            총 칼로리 (kcal)
+            칼로리 (kcal)
             <StInput
               type="number"
-              placeholder="알면 입력, 몰라도 OK"
+              placeholder="선택"
               value={form.calories}
               onChange={(e) => setForm({ ...form, calories: e.target.value })}
             />
           </StLabel>
           <StLabel>
-            평균 심박 (bpm)
+            심박 (bpm)
             <StInput
               type="number"
-              placeholder="알면 입력, 몰라도 OK"
+              placeholder="선택"
               value={form.avgHeartRate}
               onChange={(e) =>
                 setForm({ ...form, avgHeartRate: e.target.value })
@@ -1156,10 +1156,17 @@ const StCardTitle = styled.h2`
   color: ${({ theme }) => theme.colors.gray900};
 `;
 
-const StRow = styled.div`
+const StRow = styled.div<{ $cols?: number }>`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(
+    ${({ $cols = 2 }) => $cols},
+    minmax(0, 1fr)
+  );
   gap: 0.7rem;
+
+  @media (max-width: 360px) {
+    gap: 0.5rem;
+  }
 `;
 
 const StLabel = styled.label`
