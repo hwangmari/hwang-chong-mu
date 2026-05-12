@@ -840,6 +840,9 @@ const StInput = styled.input`
   font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
+  text-align: left;
+  box-sizing: border-box;
+  font-family: inherit;
 
   &:focus {
     outline: none;
@@ -850,11 +853,22 @@ const StInput = styled.input`
   &[type="date"] {
     -webkit-appearance: none;
     appearance: none;
+    display: block;
+  }
+
+  &[type="date"]::-webkit-datetime-edit {
     text-align: left;
+    padding: 0;
+  }
+
+  &[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
   }
 
   &[type="date"]::-webkit-date-and-time-value {
     text-align: left;
+    min-width: 100%;
+    margin: 0;
   }
 `;
 
@@ -865,13 +879,23 @@ const StSelect = styled.select`
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
-  padding: 0 0.75rem;
+  padding: 0 2rem 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
+  text-align: left;
+  text-align-last: left;
+  box-sizing: border-box;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.blue500};
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+  }
 
   @media (max-width: 360px) {
-    padding: 0 0.5rem;
+    padding: 0 1.75rem 0 0.5rem;
   }
 `;
 
