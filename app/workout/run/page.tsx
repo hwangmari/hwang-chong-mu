@@ -12,7 +12,6 @@ import {
 import { parseRunFromText, runWorkoutOcr, type ParsedRun } from "../ocr";
 import {
   computePaceSec,
-  currentMonthKey,
   formatDuration,
   formatPace,
   groupRecordsByMonth,
@@ -32,6 +31,20 @@ import {
   type RunningType,
 } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
+import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import {
+  StActions,
+  StCard,
+  StCardTitle,
+  StEmpty,
+  StError,
+  StGhostButton,
+  StHeader,
+  StPage,
+  StRecordMemo,
+  StSubtitle,
+  StTitle,
+} from "../components/WorkoutSharedStyles";
 
 type FormState = {
   id: string | null;
@@ -80,18 +93,7 @@ export default function RunPage() {
   const [expandedIntervalId, setExpandedIntervalId] = useState<string | null>(
     null,
   );
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(
-    () => new Set([currentMonthKey()]),
-  );
-
-  function toggleMonth(key: string) {
-    setExpandedMonths((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
+  const { expandedMonths, toggleMonth } = useExpandedMonths();
 
   const paceDeltaMap = useMemo(() => {
     const m = new Map<string, number>();
@@ -605,148 +607,117 @@ export default function RunPage() {
         ) : records.length === 0 ? (
           <StEmpty>아직 기록이 없어요. 오늘의 첫 런을 남겨보세요!</StEmpty>
         ) : (
-          <StMonthList>
-            {monthGroups.map((group) => {
-              const isOpen = expandedMonths.has(group.key);
-              return (
-                <StMonthGroup key={group.key}>
-                  <StMonthHeader
-                    type="button"
-                    onClick={() => toggleMonth(group.key)}
-                    aria-expanded={isOpen}
-                  >
-                    <StMonthLabel>{group.label}</StMonthLabel>
-                    <StMonthCount>{group.items.length}회</StMonthCount>
-                    <StMonthCaret $open={isOpen} aria-hidden>
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="9 6 15 12 9 18" />
-                      </svg>
-                    </StMonthCaret>
-                  </StMonthHeader>
-                  {isOpen ? (
-                    <StRecordList>
-                      {group.items.map((record) => {
-                        const pace =
-                          record.avgPaceSec ??
-                          computePaceSec(
-                            record.distanceKm,
-                            record.durationSec,
-                          );
-                        const paceDelta = paceDeltaMap.get(record.id);
-                        return (
-                          <StRecordRow key={record.id}>
-                            <StRecordMain>
-                              <StRecordTop>
-                                <StRecordTag>
-                                  {RUNNING_TYPE_LABEL[record.runType]}
-                                </StRecordTag>
-                                <StEnvTag
-                                  $indoor={record.environment === "indoor"}
+          <MonthAccordion
+            groups={monthGroups}
+            expandedMonths={expandedMonths}
+            onToggle={toggleMonth}
+            renderItems={(items) => (
+              <StRecordList>
+                {items.map((record) => {
+                  const pace =
+                    record.avgPaceSec ??
+                    computePaceSec(record.distanceKm, record.durationSec);
+                  const paceDelta = paceDeltaMap.get(record.id);
+                  return (
+                    <StRecordRow key={record.id}>
+                      <StRecordMain>
+                        <StRecordTop>
+                          <StRecordTag>
+                            {RUNNING_TYPE_LABEL[record.runType]}
+                          </StRecordTag>
+                          <StEnvTag
+                            $indoor={record.environment === "indoor"}
+                          >
+                            {record.environment === "indoor"
+                              ? "🏃‍♂️ 실내"
+                              : "🌳 실외"}
+                          </StEnvTag>
+                          <StRecordDate>{record.date}</StRecordDate>
+                        </StRecordTop>
+                        <StRecordStats>
+                          <StStat>
+                            <b>{record.distanceKm.toFixed(1)}</b> km
+                          </StStat>
+                          <StStat>
+                            {formatDuration(record.durationSec)}
+                          </StStat>
+                          <StStat>{formatPace(pace)}</StStat>
+                          {paceDelta ? (
+                            <StDelta $up={paceDelta > 0}>
+                              {paceDelta > 0 ? "▲" : "▼"}{" "}
+                              {Math.abs(paceDelta)}초 vs 직전
+                            </StDelta>
+                          ) : null}
+                        </StRecordStats>
+                        {record.memo ? (
+                          <StRecordMemo>{record.memo}</StRecordMemo>
+                        ) : null}
+                        {record.intervals &&
+                        record.intervals.length > 0 ? (
+                          <>
+                            <StIntervalToggle
+                              type="button"
+                              onClick={() =>
+                                setExpandedIntervalId((id) =>
+                                  id === record.id ? null : record.id,
+                                )
+                              }
+                              aria-expanded={
+                                expandedIntervalId === record.id
+                              }
+                            >
+                              <StIntervalToggleIcon
+                                $open={expandedIntervalId === record.id}
+                                aria-hidden
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
                                 >
-                                  {record.environment === "indoor"
-                                    ? "🏃‍♂️ 실내"
-                                    : "🌳 실외"}
-                                </StEnvTag>
-                                <StRecordDate>{record.date}</StRecordDate>
-                              </StRecordTop>
-                              <StRecordStats>
-                                <StStat>
-                                  <b>{record.distanceKm.toFixed(1)}</b> km
-                                </StStat>
-                                <StStat>
-                                  {formatDuration(record.durationSec)}
-                                </StStat>
-                                <StStat>{formatPace(pace)}</StStat>
-                                {paceDelta ? (
-                                  <StDelta $up={paceDelta > 0}>
-                                    {paceDelta > 0 ? "▲" : "▼"}{" "}
-                                    {Math.abs(paceDelta)}초 vs 직전
-                                  </StDelta>
-                                ) : null}
-                              </StRecordStats>
-                              {record.memo ? (
-                                <StRecordMemo>{record.memo}</StRecordMemo>
-                              ) : null}
-                              {record.intervals &&
-                              record.intervals.length > 0 ? (
-                                <>
-                                  <StIntervalToggle
-                                    type="button"
-                                    onClick={() =>
-                                      setExpandedIntervalId((id) =>
-                                        id === record.id ? null : record.id,
-                                      )
-                                    }
-                                    aria-expanded={
-                                      expandedIntervalId === record.id
-                                    }
-                                  >
-                                    <StIntervalToggleIcon
-                                      $open={
-                                        expandedIntervalId === record.id
-                                      }
-                                      aria-hidden
-                                    >
-                                      <svg
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <polyline points="9 6 15 12 9 18" />
-                                      </svg>
-                                    </StIntervalToggleIcon>
-                                    {expandedIntervalId === record.id
-                                      ? "구간 차트 닫기"
-                                      : `구간 차트 보기 (${record.intervals.length}구간)`}
-                                  </StIntervalToggle>
-                                  {expandedIntervalId === record.id ? (
-                                    <WorkoutIntervalDetailChart
-                                      intervals={record.intervals}
-                                      environment={
-                                        record.environment ?? "outdoor"
-                                      }
-                                    />
-                                  ) : null}
-                                </>
-                              ) : null}
-                            </StRecordMain>
-                            <StRecordActions>
-                              <StEditBtn
-                                type="button"
-                                onClick={() => editRecord(record)}
-                              >
-                                수정
-                              </StEditBtn>
-                              <StDelBtn
-                                type="button"
-                                onClick={() => removeRecord(record.id)}
-                              >
-                                삭제
-                              </StDelBtn>
-                            </StRecordActions>
-                          </StRecordRow>
-                        );
-                      })}
-                    </StRecordList>
-                  ) : null}
-                </StMonthGroup>
-              );
-            })}
-          </StMonthList>
+                                  <polyline points="9 6 15 12 9 18" />
+                                </svg>
+                              </StIntervalToggleIcon>
+                              {expandedIntervalId === record.id
+                                ? "구간 차트 닫기"
+                                : `구간 차트 보기 (${record.intervals.length}구간)`}
+                            </StIntervalToggle>
+                            {expandedIntervalId === record.id ? (
+                              <WorkoutIntervalDetailChart
+                                intervals={record.intervals}
+                                environment={
+                                  record.environment ?? "outdoor"
+                                }
+                              />
+                            ) : null}
+                          </>
+                        ) : null}
+                      </StRecordMain>
+                      <StRecordActions>
+                        <StEditBtn
+                          type="button"
+                          onClick={() => editRecord(record)}
+                        >
+                          수정
+                        </StEditBtn>
+                        <StDelBtn
+                          type="button"
+                          onClick={() => removeRecord(record.id)}
+                        >
+                          삭제
+                        </StDelBtn>
+                      </StRecordActions>
+                    </StRecordRow>
+                  );
+                })}
+              </StRecordList>
+            )}
+          />
         )}
       </StCard>
     </StPage>
@@ -761,53 +732,6 @@ function toNumberOrUndefined(v: string): number | undefined {
 // =========================
 // styles
 // =========================
-const StPage = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-`;
-
-const StHeader = styled.header`
-  padding: 0.5rem 0.25rem;
-
-  @media (max-width: 540px) {
-    padding: 0.5rem 1rem;
-  }
-`;
-
-const StTitle = styled.h1`
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
-`;
-
-const StSubtitle = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray500};
-`;
-
-const StCard = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1.1rem;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-
-  @media (max-width: 540px) {
-    border: none;
-    border-radius: 0;
-  }
-`;
-
-const StCardTitle = styled.h2`
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray900};
-`;
-
 const StRow = styled.div<{ $cols?: number }>`
   display: grid;
   grid-template-columns: repeat(
@@ -1072,21 +996,6 @@ const StIntervalEmpty = styled.p`
   color: ${({ theme }) => theme.colors.gray400};
 `;
 
-const StError = styled.p`
-  color: ${({ theme }) => theme.colors.rose600};
-  background: ${({ theme }) => theme.colors.rose50};
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.6rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-`;
-
-const StActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-`;
-
 const StPrimary = styled.button`
   min-height: 2.9rem;
   padding: 0 1.4rem;
@@ -1104,77 +1013,6 @@ const StPrimary = styled.button`
   }
 `;
 
-const StGhostButton = styled.button`
-  min-height: 2.9rem;
-  padding: 0 1.1rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  border-radius: 0.8rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const StEmpty = styled.p`
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray400};
-`;
-
-const StMonthList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-`;
-
-const StMonthGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-`;
-
-const StMonthHeader = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: ${({ theme }) => theme.colors.gray50};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.6rem;
-  padding: 0.6rem 0.8rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray100};
-  }
-`;
-
-const StMonthLabel = styled.span`
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray800};
-`;
-
-const StMonthCount = styled.span`
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray500};
-  background: ${({ theme }) => theme.colors.white};
-  padding: 0.15rem 0.45rem;
-  border-radius: 0.35rem;
-`;
-
-const StMonthCaret = styled.span<{ $open: boolean }>`
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.gray500};
-  transition: transform 0.15s;
-  transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
-`;
 
 const StRecordList = styled.div`
   display: flex;
@@ -1255,12 +1093,6 @@ const StDelta = styled.span<{ $up: boolean }>`
   border-radius: 0.45rem;
   background: ${({ $up }) => ($up ? "#fee" : "#e6f7ee")};
   color: ${({ $up }) => ($up ? "#c0304f" : "#1f8a54")};
-`;
-
-const StRecordMemo = styled.p`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray500};
-  line-height: 1.45;
 `;
 
 const StIntervalToggle = styled.button`

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   createWorkoutId,
@@ -12,11 +12,26 @@ import {
 import {
   formatDurationMin,
   formatMinInput,
+  groupRecordsByMonth,
   parseMinutesInput,
   todayISO,
 } from "../helpers";
 import { ACTIVITY_PRESETS, type ActivityRecord } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
+import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import {
+  StActions,
+  StCard,
+  StCardTitle,
+  StEmpty,
+  StError,
+  StGhostButton,
+  StHeader,
+  StPage,
+  StRecordMemo,
+  StSubtitle,
+  StTitle,
+} from "../components/WorkoutSharedStyles";
 
 type FormState = {
   id: string | null;
@@ -51,6 +66,12 @@ export default function ActivityPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const { expandedMonths, toggleMonth } = useExpandedMonths();
+
+  const monthGroups = useMemo(
+    () => groupRecordsByMonth(records),
+    [records],
+  );
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -271,90 +292,62 @@ export default function ActivityPage() {
             아직 활동 기록이 없어요. 오늘 뭐 했는지 남겨보세요!
           </StEmpty>
         ) : (
-          <StRecordList>
-            {records.map((record) => (
-              <StRecordRow key={record.id}>
-                <StRecordMain>
-                  <StRecordTop>
-                    <StRecordTag>{record.activityName}</StRecordTag>
-                    <StRecordDate>{record.date}</StRecordDate>
-                  </StRecordTop>
-                  <StRecordMeta>
-                    {record.durationMin ? (
-                      <span>{formatDurationMin(record.durationMin)}</span>
-                    ) : null}
-                    {record.calories ? (
-                      <span>{record.calories.toLocaleString()} kcal</span>
-                    ) : null}
-                    {record.avgHeartRate ? (
-                      <span>{record.avgHeartRate} bpm</span>
-                    ) : null}
-                  </StRecordMeta>
-                  {record.memo ? <StRecordMemo>{record.memo}</StRecordMemo> : null}
-                </StRecordMain>
-                <StRecordActions>
-                  <StEditBtn type="button" onClick={() => editRecord(record)}>
-                    수정
-                  </StEditBtn>
-                  <StDelBtn type="button" onClick={() => removeRecord(record.id)}>
-                    삭제
-                  </StDelBtn>
-                </StRecordActions>
-              </StRecordRow>
-            ))}
-          </StRecordList>
+          <MonthAccordion
+            groups={monthGroups}
+            expandedMonths={expandedMonths}
+            onToggle={toggleMonth}
+            renderItems={(items) => (
+              <StRecordList>
+                {items.map((record) => (
+                  <StRecordRow key={record.id}>
+                    <StRecordMain>
+                      <StRecordTop>
+                        <StRecordTag>{record.activityName}</StRecordTag>
+                        <StRecordDate>{record.date}</StRecordDate>
+                      </StRecordTop>
+                      <StRecordMeta>
+                        {record.durationMin ? (
+                          <span>
+                            {formatDurationMin(record.durationMin)}
+                          </span>
+                        ) : null}
+                        {record.calories ? (
+                          <span>
+                            {record.calories.toLocaleString()} kcal
+                          </span>
+                        ) : null}
+                        {record.avgHeartRate ? (
+                          <span>{record.avgHeartRate} bpm</span>
+                        ) : null}
+                      </StRecordMeta>
+                      {record.memo ? (
+                        <StRecordMemo>{record.memo}</StRecordMemo>
+                      ) : null}
+                    </StRecordMain>
+                    <StRecordActions>
+                      <StEditBtn
+                        type="button"
+                        onClick={() => editRecord(record)}
+                      >
+                        수정
+                      </StEditBtn>
+                      <StDelBtn
+                        type="button"
+                        onClick={() => removeRecord(record.id)}
+                      >
+                        삭제
+                      </StDelBtn>
+                    </StRecordActions>
+                  </StRecordRow>
+                ))}
+              </StRecordList>
+            )}
+          />
         )}
       </StCard>
     </StPage>
   );
 }
-
-const StPage = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-`;
-
-const StHeader = styled.header`
-  padding: 0.5rem 0.25rem;
-
-  @media (max-width: 540px) {
-    padding: 0.5rem 1rem;
-  }
-`;
-
-const StTitle = styled.h1`
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
-`;
-
-const StSubtitle = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray500};
-`;
-
-const StCard = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1.1rem;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-
-  @media (max-width: 540px) {
-    border: none;
-    border-radius: 0;
-  }
-`;
-
-const StCardTitle = styled.h2`
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray900};
-`;
 
 const StRow = styled.div`
   display: grid;
@@ -434,21 +427,6 @@ const StCustomHint = styled.p`
   margin-top: -0.4rem;
 `;
 
-const StError = styled.p`
-  color: ${({ theme }) => theme.colors.rose600};
-  background: ${({ theme }) => theme.colors.rose50};
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.6rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-`;
-
-const StActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-`;
-
 const StPrimary = styled.button`
   min-height: 2.9rem;
   padding: 0 1.4rem;
@@ -464,23 +442,6 @@ const StPrimary = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
-`;
-
-const StGhostButton = styled.button`
-  min-height: 2.9rem;
-  padding: 0 1.1rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  border-radius: 0.8rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const StEmpty = styled.p`
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray400};
 `;
 
 const StRecordList = styled.div`
@@ -533,12 +494,6 @@ const StRecordMeta = styled.div`
   font-size: 0.84rem;
   color: ${({ theme }) => theme.colors.gray700};
   font-weight: 700;
-`;
-
-const StRecordMemo = styled.p`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray500};
-  line-height: 1.45;
 `;
 
 const StRecordActions = styled.div`

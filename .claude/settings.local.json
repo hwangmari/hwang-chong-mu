@@ -19,7 +19,9 @@
       "Bash(curl *)",
       "Bash(kill bdlm2xr8n *)",
       "Bash(lsof -ti:3000)",
-      "Bash(xargs kill *)"
+      "Bash(xargs kill *)",
+      "Bash(awk -F'[: ]' '{print $1\":\"$2\": \"$5}')",
+      "Bash(sort -t':' -k3)"
     ]
   }
 }
