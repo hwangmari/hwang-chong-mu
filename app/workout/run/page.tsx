@@ -832,7 +832,8 @@ const StLabel = styled.label`
 const StInput = styled.input`
   width: 100%;
   min-width: 0;
-  min-height: 2.75rem;
+  height: 2.75rem;
+  box-sizing: border-box;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
@@ -861,17 +862,24 @@ const StInput = styled.input`
 const StSelect = styled.select`
   width: 100%;
   min-width: 0;
-  min-height: 2.75rem;
+  height: 2.75rem;
+  box-sizing: border-box;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
-  padding: 0 0.75rem;
+  padding: 0 2rem 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath d='M1 1l4 4 4-4' stroke='%237d8593' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
 
   @media (max-width: 360px) {
-    padding: 0 0.5rem;
+    padding: 0 1.8rem 0 0.5rem;
+    background-position: right 0.5rem center;
   }
 `;
 
