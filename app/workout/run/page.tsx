@@ -429,7 +429,7 @@ export default function RunPage() {
             />
           </StLabel>
           <StLabel>
-            시간 (mm:ss 또는 h:mm:ss)
+            시간 (mm:ss)
             <StInput
               type="text"
               placeholder="예) 32:40"
@@ -445,7 +445,7 @@ export default function RunPage() {
           평균 페이스: <b>{formatPace(computedPace)}</b>
         </StPaceHint>
 
-        <StRow>
+        <StRow $cols={3}>
           <StLabel>
             평균 심박 (bpm)
             <StInput
@@ -808,10 +808,17 @@ const StCardTitle = styled.h2`
   color: ${({ theme }) => theme.colors.gray900};
 `;
 
-const StRow = styled.div`
+const StRow = styled.div<{ $cols?: number }>`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(
+    ${({ $cols = 2 }) => $cols},
+    minmax(0, 1fr)
+  );
   gap: 0.7rem;
+
+  @media (max-width: 360px) {
+    gap: 0.5rem;
+  }
 `;
 
 const StLabel = styled.label`
@@ -839,6 +846,16 @@ const StInput = styled.input`
     border-color: ${({ theme }) => theme.colors.blue500};
     box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
   }
+
+  &[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+  }
+
+  &[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
 `;
 
 const StSelect = styled.select`
@@ -852,6 +869,10 @@ const StSelect = styled.select`
   font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray900};
+
+  @media (max-width: 360px) {
+    padding: 0 0.5rem;
+  }
 `;
 
 const StTextarea = styled.textarea`
