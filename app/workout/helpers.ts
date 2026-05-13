@@ -157,20 +157,36 @@ export function weeklyRunDistance(records: RunningRecord[]): number {
 // =========================
 // 헬스 통계
 // =========================
-export function setVolumeKg(set: GymSet, sideCount: number = 1) {
-  const main = (set.weight || 0) * (set.reps || 0);
+// 빈 바벨 기본 무게 (kg). 토글이 켜진 운동은 입력 원판 무게에 이 값을 더해 계산.
+export const DEFAULT_BARBELL_WEIGHT_KG = 20;
+
+export function setVolumeKg(
+  set: GymSet,
+  sideCount: number = 1,
+  barWeight: number = 0,
+) {
+  const bar = barWeight > 0 ? barWeight : 0;
+  const multiplier = sideCount && sideCount > 0 ? sideCount : 1;
+  // 원판은 양쪽(×sideCount) 합산 후 빈 바를 한 번만 더함.
+  // 빈 바는 1개라서 sideCount 영향을 받지 않음.
+  // 원판이 0이어도 빈 바로 운동한 거니까 빈 바 무게는 합산.
+  const effective = (plate: number) => plate * multiplier + bar;
+  const main = effective(set.weight || 0) * (set.reps || 0);
   const drops = (set.dropSets || []).reduce(
-    (s, d) => s + (d.weight || 0) * (d.reps || 0),
+    (s, d) => s + effective(d.weight || 0) * (d.reps || 0),
     0,
   );
-  const multiplier = sideCount && sideCount > 0 ? sideCount : 1;
-  return (main + drops) * multiplier;
+  return main + drops;
 }
 
 export function gymRecordVolumeKg(record: GymRecord) {
   return record.exercises.reduce(
     (sum, ex) =>
-      sum + ex.sets.reduce((s, set) => s + setVolumeKg(set, ex.sideCount), 0),
+      sum +
+      ex.sets.reduce(
+        (s, set) => s + setVolumeKg(set, ex.sideCount, ex.barWeight),
+        0,
+      ),
     0,
   );
 }
@@ -179,20 +195,28 @@ export function computeExercisePRs(records: GymRecord[]): ExercisePR[] {
   const bestByName = new Map<string, ExercisePR>();
   for (const r of records) {
     for (const ex of r.exercises) {
+      const bar = ex.barWeight && ex.barWeight > 0 ? ex.barWeight : 0;
+      const multiplier =
+        ex.sideCount && ex.sideCount > 0 ? ex.sideCount : 1;
       for (const set of ex.sets) {
         if (set.type === "warmup") continue;
-        if (!set.weight || !set.reps) continue;
+        if (!set.reps) continue;
+        const plate = set.weight || 0;
+        // 원판은 양쪽 합산 후 빈 바를 한 번만 더함. 원판 0이면 PR 기록 안 함.
+        const effective = plate > 0 ? plate * multiplier + bar : 0;
+        if (effective <= 0) continue;
         const prev = bestByName.get(ex.name);
         if (
           !prev ||
-          set.weight > prev.weight ||
-          (set.weight === prev.weight && set.reps > prev.reps)
+          effective > prev.weight ||
+          (effective === prev.weight && set.reps > prev.reps)
         ) {
           bestByName.set(ex.name, {
             exerciseName: ex.name,
             achievedAt: r.date,
-            weight: set.weight,
+            weight: effective,
             reps: set.reps,
+            bodyPart: r.bodyPart,
           });
         }
       }

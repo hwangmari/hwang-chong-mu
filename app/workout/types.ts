@@ -140,6 +140,8 @@ export type GymExercise = {
   // 양쪽 합산 계수 — 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리는 운동은 2.
   // 미지정 시 1로 간주 (이전 기록 호환).
   sideCount?: number;
+  // 빈 바벨 무게(kg). 양수면 입력 무게(원판)에 합산해서 볼륨·PR을 계산.
+  barWeight?: number;
   sets: GymSet[];
 };
 
@@ -291,6 +293,7 @@ export type ExercisePR = {
   achievedAt: string;
   weight: number;
   reps: number;
+  bodyPart?: GymBodyPart;
 };
 
 export type RunningBest = {

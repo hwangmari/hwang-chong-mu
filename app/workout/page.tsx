@@ -29,6 +29,7 @@ import BlogGuideLink from "@/components/common/BlogGuideLink";
 import {
   GYM_BODY_PART_LABEL,
   type ActivityRecord,
+  type GymBodyPart,
   type GymRecord,
   type RunningRecord,
 } from "./types";
@@ -43,6 +44,8 @@ export default function WorkoutHomePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [showAllPRs, setShowAllPRs] = useState(false);
+  const [prBodyFilter, setPrBodyFilter] = useState<GymBodyPart | "all">("all");
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -100,7 +103,17 @@ export default function WorkoutHomePage() {
   if (!session) return null;
 
   const runBest = computeRunningBest(runs);
-  const prs = computeExercisePRs(gyms).slice(0, 3);
+  const allPRsUnfiltered = computeExercisePRs(gyms);
+  const allPRs =
+    prBodyFilter === "all"
+      ? allPRsUnfiltered
+      : allPRsUnfiltered.filter((pr) => pr.bodyPart === prBodyFilter);
+  const prs = showAllPRs
+    ? [...allPRs].sort((a, b) =>
+        a.exerciseName.localeCompare(b.exerciseName, "ko"),
+      )
+    : allPRs.slice(0, 3);
+  const hasMorePRs = allPRs.length > 3;
 
   const calendarColumns = buildWorkoutCalendar(
     runs.map((r) => r.date),
@@ -254,20 +267,60 @@ export default function WorkoutHomePage() {
 
       <StSection>
         <StSectionTitle>💪 헬스 Top PR</StSectionTitle>
-        {prs.length ? (
-          <StPRList>
-            {prs.map((pr) => (
-              <StPRRow key={pr.exerciseName}>
-                <StPRName>{pr.exerciseName}</StPRName>
-                <StPRValue>
-                  {pr.weight} kg <StPRSmall>(최대 무게)</StPRSmall>
-                  <StPRDate>
-                    {pr.weight}×{pr.reps} · {pr.achievedAt}
-                  </StPRDate>
-                </StPRValue>
-              </StPRRow>
+        {allPRsUnfiltered.length ? (
+          <StPRFilterRow>
+            <StPRFilterChip
+              type="button"
+              $active={prBodyFilter === "all"}
+              onClick={() => setPrBodyFilter("all")}
+            >
+              전체
+            </StPRFilterChip>
+            {(
+              Object.entries(GYM_BODY_PART_LABEL) as [GymBodyPart, string][]
+            ).map(([value, label]) => (
+              <StPRFilterChip
+                key={value}
+                type="button"
+                $active={prBodyFilter === value}
+                onClick={() => setPrBodyFilter(value)}
+              >
+                {label}
+              </StPRFilterChip>
             ))}
-          </StPRList>
+          </StPRFilterRow>
+        ) : null}
+        {prs.length ? (
+          <>
+            <StPRList>
+              {prs.map((pr) => (
+                <StPRRow key={pr.exerciseName}>
+                  <StPRName>{pr.exerciseName}</StPRName>
+                  <StPRValue>
+                    {pr.weight} kg <StPRSmall>(최대 무게)</StPRSmall>
+                    <StPRDate>
+                      {pr.weight}×{pr.reps} · {pr.achievedAt}
+                    </StPRDate>
+                  </StPRValue>
+                </StPRRow>
+              ))}
+            </StPRList>
+            {hasMorePRs ? (
+              <StPRMoreBtn
+                type="button"
+                onClick={() => setShowAllPRs((v) => !v)}
+              >
+                {showAllPRs
+                  ? "접기 ▲"
+                  : `더보기 (전체 ${allPRs.length}개, 운동명 순) ▼`}
+              </StPRMoreBtn>
+            ) : null}
+          </>
+        ) : allPRsUnfiltered.length ? (
+          <StEmpty>
+            {GYM_BODY_PART_LABEL[prBodyFilter as GymBodyPart] ?? ""} 부위로 기록된
+            PR이 아직 없어요.
+          </StEmpty>
         ) : (
           <StEmpty>아직 헬스 기록이 없어요.</StEmpty>
         )}
@@ -375,6 +428,53 @@ const StPRDate = styled.span`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray400};
   margin-top: 0.15rem;
+`;
+
+const StPRFilterRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+`;
+
+const StPRFilterChip = styled.button<{ $active: boolean }>`
+  border: 1px solid
+    ${({ $active, theme }) =>
+      $active ? theme.colors.blue500 : theme.colors.gray200};
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.blue50 : theme.colors.white};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.blue600 : theme.colors.gray500};
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.32rem 0.6rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.blue200};
+    color: ${({ theme }) => theme.colors.blue600};
+  }
+`;
+
+const StPRMoreBtn = styled.button`
+  margin-top: 0.7rem;
+  width: 100%;
+  border: 1px dashed ${({ theme }) => theme.colors.gray200};
+  background: transparent;
+  color: ${({ theme }) => theme.colors.blue600};
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.55rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.blue50};
+    border-color: ${({ theme }) => theme.colors.blue200};
+  }
 `;
 
 const StEmpty = styled.p`

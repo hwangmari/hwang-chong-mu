@@ -15,6 +15,7 @@ import {
 import { parseGymFromText, runWorkoutOcr, type ParsedGym } from "../ocr";
 import {
   computeExercisePRs,
+  DEFAULT_BARBELL_WEIGHT_KG,
   formatDurationMin,
   formatMinInput,
   groupRecordsByMonth,
@@ -168,7 +169,10 @@ export default function WeightPage() {
       form.exercises.reduce(
         (s, ex) =>
           s +
-          ex.sets.reduce((t, set) => t + setVolumeKg(set, ex.sideCount), 0),
+          ex.sets.reduce(
+            (t, set) => t + setVolumeKg(set, ex.sideCount, ex.barWeight),
+            0,
+          ),
         0,
       ),
     [form.exercises],
@@ -754,6 +758,21 @@ export default function WeightPage() {
                     {label}
                   </StEquipmentChip>
                 ))}
+                <StBarChip
+                  type="button"
+                  $active={(ex.barWeight ?? 0) > 0}
+                  onClick={() =>
+                    updateExercise(ex.id, {
+                      barWeight:
+                        (ex.barWeight ?? 0) > 0
+                          ? undefined
+                          : DEFAULT_BARBELL_WEIGHT_KG,
+                    })
+                  }
+                  title={`빈 바벨 ${DEFAULT_BARBELL_WEIGHT_KG}kg를 자동으로 합산해요. 입력은 원판 무게만!`}
+                >
+                  🏋️ 빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg
+                </StBarChip>
                 <StSideChip
                   type="button"
                   $active={(ex.sideCount ?? 1) === 2}
@@ -933,6 +952,13 @@ export default function WeightPage() {
             🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
             <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
             자동으로 두 배 계산돼요.
+            <br />
+            🏋️ 바벨 운동은 <b>빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg</b> 토글을
+            켜면 원판 무게만 입력해도 빈 바벨{" "}
+            {DEFAULT_BARBELL_WEIGHT_KG}kg가 자동 합산돼요. <b>양쪽 ×2</b>와
+            같이 쓰면 한쪽 원판 무게만 입력해도 <b>원판 × 2 + 빈 바</b>로
+            계산돼요. (예: 원판 10kg × 2 + 빈 바 20kg ={" "}
+            <b>40kg</b>)
           </StVolumeHelp>
         </StVolumeBox>
 
@@ -1007,11 +1033,27 @@ export default function WeightPage() {
                   {expanded ? (
                     <StExpanded>
                       {record.exercises.map((ex) => {
+                        const bar =
+                          ex.barWeight && ex.barWeight > 0
+                            ? ex.barWeight
+                            : 0;
+                        const sideMul =
+                          ex.sideCount && ex.sideCount > 0 ? ex.sideCount : 1;
+                        // 빈 바가 켜지면 plate=0(빈 바 워밍업)에도 빈 바 무게 합산해서 표시.
+                        // 빈 바가 없는 ×2 운동(덤벨 등)은 기존처럼 입력값 그대로 표시.
+                        const displayWeight = (plate: number) => {
+                          if (bar > 0) return plate * sideMul + bar;
+                          return plate;
+                        };
+                        // PR은 원판이 실제로 들어간 세트만 비교 (빈 바 워밍업 제외).
                         const bestWeight = Math.max(
                           0,
                           ...ex.sets
                             .filter((s) => s.type !== "warmup")
-                            .map((s) => s.weight || 0),
+                            .map((s) => {
+                              const plate = s.weight || 0;
+                              return plate > 0 ? plate * sideMul + bar : 0;
+                            }),
                         );
                         const isPR =
                           bestWeight > 0 &&
@@ -1027,26 +1069,38 @@ export default function WeightPage() {
                               {(ex.sideCount ?? 1) === 2 ? (
                                 <StExSideTag>×2</StExSideTag>
                               ) : null}
+                              {bar > 0 ? (
+                                <StExBarTag>🏋️ +{bar}kg</StExBarTag>
+                              ) : null}
                               {ex.name || "(이름 없음)"}
                               {isPR ? <StPRBadge>PR 🎉</StPRBadge> : null}
                             </StExName>
                             <StSetList>
-                              {ex.sets.map((s, i) => (
-                                <StSetChip key={s.id} $warm={s.type === "warmup"}>
-                                  {i + 1}: {s.weight}×{s.reps}
-                                  {s.type === "drop" && s.dropSets?.length
-                                    ? ` → ${s.dropSets
-                                        .map((d) => `${d.weight}×${d.reps}`)
-                                        .join(" → ")}`
-                                    : ""}
-                                  {s.type !== "normal" && s.type !== "drop" ? (
-                                    <StSetType>
-                                      {" "}
-                                      ({GYM_SET_TYPE_LABEL[s.type]})
-                                    </StSetType>
-                                  ) : null}
-                                </StSetChip>
-                              ))}
+                              {ex.sets.map((s, i) => {
+                                const mainW = displayWeight(s.weight || 0);
+                                return (
+                                  <StSetChip
+                                    key={s.id}
+                                    $warm={s.type === "warmup"}
+                                  >
+                                    {i + 1}: {mainW}×{s.reps}
+                                    {s.type === "drop" && s.dropSets?.length
+                                      ? ` → ${s.dropSets
+                                          .map(
+                                            (d) =>
+                                              `${displayWeight(d.weight || 0)}×${d.reps}`,
+                                          )
+                                          .join(" → ")}`
+                                      : ""}
+                                    {s.type !== "normal" && s.type !== "drop" ? (
+                                      <StSetType>
+                                        {" "}
+                                        ({GYM_SET_TYPE_LABEL[s.type]})
+                                      </StSetType>
+                                    ) : null}
+                                  </StSetChip>
+                                );
+                              })}
                             </StSetList>
                           </StExRow>
                         );
@@ -1392,6 +1446,28 @@ const StEquipmentChip = styled.button<{ $active: boolean }>`
   }
 `;
 
+const StBarChip = styled.button<{ $active: boolean }>`
+  border: 1px solid
+    ${({ $active, theme }) =>
+      $active ? theme.colors.amber500 : theme.colors.gray200};
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.amber50 : theme.colors.white};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.amber600 : theme.colors.gray500};
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-left: auto;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.amber200};
+    color: ${({ theme }) => theme.colors.amber600};
+  }
+`;
+
 const StSideChip = styled.button<{ $active: boolean }>`
   border: 1px solid
     ${({ $active, theme }) =>
@@ -1406,7 +1482,6 @@ const StSideChip = styled.button<{ $active: boolean }>`
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.12s;
-  margin-left: auto;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.indigo100};
@@ -1790,6 +1865,15 @@ const StExSideTag = styled.span`
   font-weight: 800;
   color: ${({ theme }) => theme.colors.indigo600};
   background: ${({ theme }) => theme.colors.indigo50};
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.35rem;
+`;
+
+const StExBarTag = styled.span`
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.amber600};
+  background: ${({ theme }) => theme.colors.amber50};
   padding: 0.12rem 0.4rem;
   border-radius: 0.35rem;
 `;
