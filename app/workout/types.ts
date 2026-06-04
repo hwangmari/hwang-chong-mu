@@ -142,6 +142,8 @@ export type GymExercise = {
   sideCount?: number;
   // 빈 바벨 무게(kg). 양수면 입력 무게(원판)에 합산해서 볼륨·PR을 계산.
   barWeight?: number;
+  // 전신/유산소처럼 무게·세트가 없는 항목의 간단 메모 (예: 스텝 20분, 폼롤러).
+  note?: string;
   sets: GymSet[];
 };
 

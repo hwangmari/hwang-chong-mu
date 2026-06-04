@@ -27,6 +27,7 @@ create index if not exists inbody_records_room_date_idx
 create or replace function public.set_inbody_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -40,5 +41,12 @@ before update on public.inbody_records
 for each row
 execute function public.set_inbody_updated_at();
 
--- RLS는 비활성화 (운동 일지와 동일하게 방 비밀번호로 접근 통제).
-alter table public.inbody_records disable row level security;
+-- RLS : 운동 일지(workout) 테이블과 동일하게 RLS를 켜고
+-- 익명(anon) 키가 모든 행에 접근 가능한 permissive 정책을 둔다.
+-- 실제 접근 통제는 방 비밀번호로 클라이언트에서 처리한다.
+alter table public.inbody_records enable row level security;
+
+drop policy if exists "inbody_records anon all" on public.inbody_records;
+create policy "inbody_records anon all"
+  on public.inbody_records for all
+  using (true) with check (true);

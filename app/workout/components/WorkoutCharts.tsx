@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import styled from "styled-components";
@@ -1017,6 +1018,7 @@ export function WorkoutMonthlyCalendar({
   gyms,
   activities,
 }: MonthlyCalendarProps) {
+  const router = useRouter();
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -1026,6 +1028,9 @@ export function WorkoutMonthlyCalendar({
   const [pinnedIso, setPinnedIso] = useState<string | null>(null);
   const [pinnedShift, setPinnedShift] = useState(0);
   const [filter, setFilter] = useState<"run" | "gym" | "activity" | null>(null);
+  const [menu, setMenu] = useState<{ iso: string; x: number; y: number } | null>(
+    null,
+  );
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const popoverRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -1187,6 +1192,53 @@ export function WorkoutMonthlyCalendar({
     setPinnedIso(iso);
   }
 
+  // 우클릭 → 해당 날짜로 기록 추가 메뉴
+  function handleCellContextMenu(e: React.MouseEvent, iso: string) {
+    e.preventDefault();
+    setPinnedIso(null);
+    const MENU_W = 150;
+    const MENU_H = 150;
+    const x = Math.max(
+      8,
+      Math.min(e.clientX, window.innerWidth - MENU_W - 8),
+    );
+    const y = Math.max(
+      8,
+      Math.min(e.clientY, window.innerHeight - MENU_H - 8),
+    );
+    setMenu({ iso, x, y });
+  }
+
+  function goCreate(kind: "run" | "gym" | "activity") {
+    if (!menu) return;
+    const path =
+      kind === "run"
+        ? "/workout/run"
+        : kind === "gym"
+          ? "/workout/weight"
+          : "/workout/activity";
+    router.push(`${path}?date=${menu.iso}`);
+    setMenu(null);
+  }
+
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenu(null);
+    };
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
   return (
     <StWrap>
       <StCalHeader>
@@ -1273,6 +1325,8 @@ export function WorkoutMonthlyCalendar({
                 if (!hasAny) return;
                 handleCellPin(cell.iso);
               }}
+              onContextMenu={(e) => handleCellContextMenu(e, cell.iso)}
+              title="우클릭하여 기록 추가"
             >
               <StCalDayNum $today={isToday}>{cell.date.getDate()}</StCalDayNum>
               <StCalTags>
@@ -1378,7 +1432,38 @@ export function WorkoutMonthlyCalendar({
             활동
           </StCalLegendItem>
         </StCalLegend>
+        <StCalHint>날짜를 우클릭하면 기록을 추가할 수 있어요</StCalHint>
       </StCalFooter>
+
+      {menu ? (
+        <StContextMenu
+          style={{ top: menu.y, left: menu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <StContextMenuHead>{menu.iso} 기록 추가</StContextMenuHead>
+          <StContextMenuItem
+            type="button"
+            $kind="run"
+            onClick={() => goCreate("run")}
+          >
+            🏃‍♀️ 러닝
+          </StContextMenuItem>
+          <StContextMenuItem
+            type="button"
+            $kind="gym"
+            onClick={() => goCreate("gym")}
+          >
+            🏋️‍♂️ 웨이트
+          </StContextMenuItem>
+          <StContextMenuItem
+            type="button"
+            $kind="activity"
+            onClick={() => goCreate("activity")}
+          >
+            🤸 활동
+          </StContextMenuItem>
+        </StContextMenu>
+      ) : null}
     </StWrap>
   );
 }
@@ -1685,5 +1770,63 @@ const StCalLegendItem = styled.span`
   font-size: 0.72rem;
   color: ${({ theme }) => theme.colors.gray500};
   font-weight: 700;
+`;
+
+const StCalHint = styled.span`
+  font-size: 0.66rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 600;
+
+  @media (max-width: 480px) {
+    display: none;
+  }
+`;
+
+const StContextMenu = styled.div`
+  position: fixed;
+  z-index: 100;
+  min-width: 140px;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.7rem;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+`;
+
+const StContextMenuHead = styled.div`
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray400};
+  padding: 0.3rem 0.5rem 0.35rem;
+  letter-spacing: 0.01em;
+`;
+
+const StContextMenuItem = styled.button<{
+  $kind: "run" | "gym" | "activity";
+}>`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.55rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray700};
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+
+  &:hover {
+    background: ${({ $kind }) =>
+      $kind === "run" ? "#e6f4ed" : $kind === "gym" ? "#fce9d8" : "#e9e6fb"};
+    color: ${({ $kind }) =>
+      $kind === "run" ? "#1f7a55" : $kind === "gym" ? "#b05a23" : "#4e3dc4"};
+  }
 `;
 

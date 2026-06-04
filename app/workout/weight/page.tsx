@@ -85,6 +85,16 @@ function createExercise(): GymExercise {
   };
 }
 
+// 전신/유산소처럼 무게·세트 없이 이름과 간단 메모만 적는 항목
+function createFullbodyItem(): GymExercise {
+  return {
+    id: createWorkoutId("ex"),
+    name: "",
+    note: "",
+    sets: [],
+  };
+}
+
 function createSet(type: GymSetType = "normal"): GymSet {
   return {
     id: createWorkoutId("set"),
@@ -100,7 +110,9 @@ export default function WeightPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editParam = searchParams?.get("edit") ?? null;
+  const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
+  const appliedDateRef = useRef(false);
 
   const session = useWorkoutSession();
   const [records, setRecords] = useState<GymRecord[]>([]);
@@ -152,6 +164,16 @@ export default function WeightPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editParam, records]);
 
+  // 캘린더에서 우클릭으로 넘어온 날짜 prefill
+  useEffect(() => {
+    if (!dateParam || appliedDateRef.current) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    appliedDateRef.current = true;
+    setForm((f) => ({ ...f, date: dateParam }));
+    router.replace("/workout/weight");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateParam]);
+
   const prs = useMemo(() => computeExercisePRs(records), [records]);
   const prMap = useMemo(() => {
     const m = new Map<string, number>();
@@ -178,20 +200,38 @@ export default function WeightPage() {
     [form.exercises],
   );
 
+  // 전신: 무게·세트 없이 이름·메모만 적는 간단 입력 모드
+  const isFullbody = form.bodyPart === "fullbody";
+
   function resetForm() {
     setForm(emptyForm());
   }
 
   async function submit() {
     if (!session) return;
-    // 맨몸운동은 무게 0 허용, 횟수(시간 플랭크 등)는 reps로 기록
-    const filled = form.exercises.filter(
-      (ex) => ex.name.trim() && ex.sets.some((s) => s.reps > 0),
+    // 전신은 무게·세트 없이 이름만 있어도 저장 (스텝·폼롤러 등).
+    // 그 외엔 맨몸운동도 무게 0 허용, 횟수(시간 플랭크 등)는 reps로 기록.
+    const filled = form.exercises.filter((ex) =>
+      isFullbody
+        ? ex.name.trim()
+        : ex.name.trim() && ex.sets.some((s) => s.reps > 0),
     );
     if (filled.length === 0) {
-      setError("운동 이름과 횟수가 입력된 세트를 최소 1개 이상 넣어주세요.");
+      setError(
+        isFullbody
+          ? "운동/활동 이름을 최소 1개 이상 입력해 주세요."
+          : "운동 이름과 횟수가 입력된 세트를 최소 1개 이상 넣어주세요.",
+      );
       return;
     }
+    // 전신 항목은 0×0 빈 세트를 제거하고 메모를 정리해서 저장
+    const cleaned = isFullbody
+      ? filled.map((ex) => ({
+          ...ex,
+          note: ex.note?.trim() ? ex.note.trim() : undefined,
+          sets: ex.sets.filter((s) => s.weight > 0 || s.reps > 0),
+        }))
+      : filled;
     setBusy(true);
     setError("");
     try {
@@ -203,7 +243,7 @@ export default function WeightPage() {
         durationMin: parseMinutesInput(form.durationMin) || undefined,
         calories: Number(form.calories) || undefined,
         avgHeartRate: Number(form.avgHeartRate) || undefined,
-        exercises: filled,
+        exercises: cleaned,
         memo: form.memo || undefined,
       });
       resetForm();
@@ -372,11 +412,33 @@ export default function WeightPage() {
     }
   }
 
+  // 부위 변경: 전신↔일반 전환 시 항목 구조를 모드에 맞게 정리
+  function handleBodyPartChange(bodyPart: GymBodyPart) {
+    setForm((prev) => {
+      // 일반 부위로 전환: 세트가 없는(전신용) 항목은 기본 세트 1개를 채워줌
+      if (bodyPart !== "fullbody") {
+        return {
+          ...prev,
+          bodyPart,
+          exercises: prev.exercises.map((ex) =>
+            ex.sets.length === 0
+              ? { ...ex, sets: [createSet("normal")] }
+              : ex,
+          ),
+        };
+      }
+      return { ...prev, bodyPart };
+    });
+  }
+
   // 운동/세트 조작
   function addExercise() {
     setForm((prev) => ({
       ...prev,
-      exercises: [...prev.exercises, createExercise()],
+      exercises: [
+        ...prev.exercises,
+        prev.bodyPart === "fullbody" ? createFullbodyItem() : createExercise(),
+      ],
     }));
   }
 
@@ -652,7 +714,7 @@ export default function WeightPage() {
             <StSelect
               value={form.bodyPart}
               onChange={(e) =>
-                setForm({ ...form, bodyPart: e.target.value as GymBodyPart })
+                handleBodyPartChange(e.target.value as GymBodyPart)
               }
             >
               {Object.entries(GYM_BODY_PART_LABEL).map(([v, l]) => (
@@ -699,8 +761,62 @@ export default function WeightPage() {
           </StLabel>
         </StRow>
 
+        {isFullbody ? (
+          <StFullbodyHint>
+            전신은 무게·세트 없이 한 운동을 적어요. 스텝·폼롤러처럼 분할이
+            아닌 활동을 자유롭게 추가하세요.
+          </StFullbodyHint>
+        ) : null}
+
         <StExercisesWrap>
-          {form.exercises.map((ex, exIdx) => (
+          {form.exercises.map((ex, exIdx) =>
+            isFullbody ? (
+              <StExerciseCard key={ex.id}>
+                <StExerciseHead>
+                  <StExerciseIndex>#{exIdx + 1}</StExerciseIndex>
+                  <StExerciseName
+                    placeholder="운동/활동 (예: 스텝, 폼롤러)"
+                    value={ex.name}
+                    onChange={(e) =>
+                      updateExercise(ex.id, { name: e.target.value })
+                    }
+                  />
+                  <StRemoveButton
+                    type="button"
+                    onClick={() => removeExercise(ex.id)}
+                    aria-label="항목 삭제"
+                  >
+                    ✕
+                  </StRemoveButton>
+                  <StMoveGroup>
+                    <StMoveBtn
+                      type="button"
+                      onClick={() => moveExercise(ex.id, -1)}
+                      disabled={exIdx === 0}
+                      aria-label="위로 이동"
+                    >
+                      ▲
+                    </StMoveBtn>
+                    <StMoveBtn
+                      type="button"
+                      onClick={() => moveExercise(ex.id, 1)}
+                      disabled={exIdx === form.exercises.length - 1}
+                      aria-label="아래로 이동"
+                    >
+                      ▼
+                    </StMoveBtn>
+                  </StMoveGroup>
+                </StExerciseHead>
+                <StFullbodyNote
+                  type="text"
+                  placeholder="간단 메모 (예: 20분, 가볍게, 3바퀴)"
+                  value={ex.note ?? ""}
+                  onChange={(e) =>
+                    updateExercise(ex.id, { note: e.target.value })
+                  }
+                />
+              </StExerciseCard>
+            ) : (
             <StExerciseCard key={ex.id}>
               <StExerciseHead>
                 <StExerciseIndex>#{exIdx + 1}</StExerciseIndex>
@@ -926,7 +1042,7 @@ export default function WeightPage() {
             </StExerciseCard>
           ))}
           <StAddExercise type="button" onClick={addExercise}>
-            + 운동 추가
+            {isFullbody ? "+ 운동/활동 추가" : "+ 운동 추가"}
           </StAddExercise>
         </StExercisesWrap>
 
@@ -940,6 +1056,7 @@ export default function WeightPage() {
           />
         </StLabel>
 
+        {isFullbody ? null : (
         <StVolumeBox>
           <StVolumeHint>
             총 볼륨 <b>{Math.round(formVolume).toLocaleString()} kg</b>
@@ -961,6 +1078,7 @@ export default function WeightPage() {
             <b>40kg</b>)
           </StVolumeHelp>
         </StVolumeBox>
+        )}
 
         {error ? <StError>{error}</StError> : null}
 
@@ -1101,6 +1219,7 @@ export default function WeightPage() {
                                   </StSetChip>
                                 );
                               })}
+                              {ex.note ? <StExNote>{ex.note}</StExNote> : null}
                             </StSetList>
                           </StExRow>
                         );
@@ -1397,6 +1516,35 @@ const StExerciseName = styled.input`
   font-size: 1rem;
   font-weight: 700;
   background: ${({ theme }) => theme.colors.white};
+`;
+
+const StFullbodyHint = styled.p`
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray500};
+  background: ${({ theme }) => theme.colors.gray50};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  word-break: keep-all;
+`;
+
+const StFullbodyNote = styled.input`
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.7rem;
+  padding: 0 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray700};
+`;
+
+const StExNote = styled.span`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 
 const StRemoveButton = styled.button`

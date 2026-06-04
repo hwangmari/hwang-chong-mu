@@ -57,7 +57,9 @@ export default function ActivityPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editParam = searchParams?.get("edit") ?? null;
+  const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
+  const appliedDateRef = useRef(false);
 
   const session = useWorkoutSession();
   const [records, setRecords] = useState<ActivityRecord[]>([]);
@@ -102,6 +104,16 @@ export default function ActivityPage() {
     router.replace("/workout/activity");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editParam, records]);
+
+  // 캘린더에서 우클릭으로 넘어온 날짜 prefill
+  useEffect(() => {
+    if (!dateParam || appliedDateRef.current) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    appliedDateRef.current = true;
+    setForm((f) => ({ ...f, date: dateParam }));
+    router.replace("/workout/activity");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateParam]);
 
   function resetForm() {
     setForm({ ...EMPTY_FORM, date: todayISO() });

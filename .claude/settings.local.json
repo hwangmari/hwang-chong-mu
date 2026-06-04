@@ -21,7 +21,11 @@
       "Bash(lsof -ti:3000)",
       "Bash(xargs kill *)",
       "Bash(awk -F'[: ]' '{print $1\":\"$2\": \"$5}')",
-      "Bash(sort -t':' -k3)"
+      "Bash(sort -t':' -k3)",
+      "Read(//Users/hwangmari/.claude/plugins/**)",
+      "Bash(npm ls *)",
+      "Bash(npx --no-install omc --version)",
+      "Bash(npm view *)"
     ]
   }
 }
