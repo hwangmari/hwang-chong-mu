@@ -34,6 +34,8 @@ const TOY_PROJECT_MENU = [
   { id: "toy-habit", label: "습관 관리" },
   { id: "toy-daily", label: "일일 기록" },
   { id: "toy-diet", label: "체중 관리" },
+  { id: "toy-workout", label: "운동 기록" },
+  { id: "toy-inbody", label: "인바디 기록" },
   { id: "toy-game", label: "게임방" },
 ];
 
