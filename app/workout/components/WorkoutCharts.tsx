@@ -1024,7 +1024,9 @@ export function WorkoutMonthlyCalendar({
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
-  const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [cursor, setCursor] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
   const [pinnedIso, setPinnedIso] = useState<string | null>(null);
   const [pinnedShift, setPinnedShift] = useState(0);
   const [filter, setFilter] = useState<"run" | "gym" | "activity" | null>(null);
@@ -1150,6 +1152,27 @@ export function WorkoutMonthlyCalendar({
     (s, c) => s + c.activityRecords.length,
     0,
   );
+  const runKm = monthCells.reduce(
+    (s, c) => s + c.runRecords.reduce((a, r) => a + (r.distanceKm || 0), 0),
+    0,
+  );
+  const gymVolume = monthCells.reduce(
+    (s, c) => s + c.gymRecords.reduce((a, g) => a + gymRecordVolumeKg(g), 0),
+    0,
+  );
+  // 활동을 종목별로 그룹핑해서 횟수 집계 (많은 순)
+  const activityGroups = (() => {
+    const counts = new Map<string, number>();
+    monthCells.forEach((c) =>
+      c.activityRecords.forEach((a) => {
+        const name = a.activityName?.trim();
+        if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+      }),
+    );
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  })();
 
   function goPrev() {
     setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1));
@@ -1257,37 +1280,58 @@ export function WorkoutMonthlyCalendar({
       </StCalHeader>
 
       <StCalSummary>
-        <StCalSummaryDays>
-          <b>{workoutDays}</b>일 운동
-        </StCalSummaryDays>
-        <StCalSummaryBreakdown>
-          <StCalSummaryChip
-            type="button"
-            $color="#3aa675"
-            $active={filter === "run"}
-            onClick={() => setFilter((f) => (f === "run" ? null : "run"))}
-          >
-            🏃 {runSessions}
-          </StCalSummaryChip>
-          <StCalSummaryChip
-            type="button"
-            $color="#e07a3a"
-            $active={filter === "gym"}
-            onClick={() => setFilter((f) => (f === "gym" ? null : "gym"))}
-          >
-            🏋️ {gymSessions}
-          </StCalSummaryChip>
-          <StCalSummaryChip
-            type="button"
-            $color="#7c6ae0"
-            $active={filter === "activity"}
-            onClick={() =>
-              setFilter((f) => (f === "activity" ? null : "activity"))
-            }
-          >
-            🤸 {activitySessions}
-          </StCalSummaryChip>
-        </StCalSummaryBreakdown>
+        <StCalSummaryTop>
+          <StCalSummaryDays>
+            <b>{workoutDays}</b>일 운동
+          </StCalSummaryDays>
+          <StCalSummaryBreakdown>
+            <StCalSummaryChip
+              type="button"
+              $color="#3aa675"
+              $active={filter === "run"}
+              onClick={() => setFilter((f) => (f === "run" ? null : "run"))}
+            >
+              🏃 {runSessions}
+            </StCalSummaryChip>
+            <StCalSummaryChip
+              type="button"
+              $color="#e07a3a"
+              $active={filter === "gym"}
+              onClick={() => setFilter((f) => (f === "gym" ? null : "gym"))}
+            >
+              🏋️ {gymSessions}
+            </StCalSummaryChip>
+            <StCalSummaryChip
+              type="button"
+              $color="#7c6ae0"
+              $active={filter === "activity"}
+              onClick={() =>
+                setFilter((f) => (f === "activity" ? null : "activity"))
+              }
+            >
+              🤸 {activitySessions}
+            </StCalSummaryChip>
+          </StCalSummaryBreakdown>
+        </StCalSummaryTop>
+        {runKm > 0 || gymVolume > 0 || activityGroups.length > 0 ? (
+          <StCalSummaryMetrics>
+            {runKm > 0 ? (
+              <span>
+                러닝 <b>{runKm.toFixed(1)}km</b>
+              </span>
+            ) : null}
+            {gymVolume > 0 ? (
+              <span>
+                볼륨 <b>{Math.round(gymVolume).toLocaleString()}kg</b>
+              </span>
+            ) : null}
+            {activityGroups.map((g) => (
+              <span key={g.name}>
+                {getActivityEmoji(g.name)} {g.name} <b>{g.count}</b>
+              </span>
+            ))}
+          </StCalSummaryMetrics>
+        ) : null}
       </StCalSummary>
 
       <StCalDayHeaderRow>
@@ -1527,18 +1571,43 @@ const StCalTodayBtn = styled.button`
 
 const StCalSummary = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  flex-direction: column;
+  gap: 0.45rem;
   padding: 0.55rem 0.75rem;
   margin-bottom: 0.7rem;
   background: ${({ theme }) => theme.colors.gray50};
   border-radius: 0.7rem;
 
   @media (max-width: 480px) {
+    padding: 0.5rem 0.6rem;
+  }
+`;
+
+const StCalSummaryTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+
+  @media (max-width: 480px) {
     flex-wrap: wrap;
     gap: 0.4rem;
-    padding: 0.5rem 0.6rem;
+  }
+`;
+
+const StCalSummaryMetrics = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray500};
+  padding-top: 0.4rem;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
+
+  b {
+    font-weight: 900;
+    color: ${({ theme }) => theme.colors.gray900};
   }
 `;
 

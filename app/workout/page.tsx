@@ -46,7 +46,6 @@ export default function WorkoutHomePage() {
   const [error, setError] = useState("");
   const [showAllPRs, setShowAllPRs] = useState(false);
   const [prBodyFilter, setPrBodyFilter] = useState<GymBodyPart | "all">("all");
-
   const load = useCallback(async () => {
     if (!session) return;
     setLoading(true);
