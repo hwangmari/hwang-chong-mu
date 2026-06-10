@@ -1148,16 +1148,8 @@ export function WorkoutMonthlyCalendar({
   ).length;
   const runSessions = monthCells.reduce((s, c) => s + c.runRecords.length, 0);
   const gymSessions = monthCells.reduce((s, c) => s + c.gymRecords.length, 0);
-  const activitySessions = monthCells.reduce(
-    (s, c) => s + c.activityRecords.length,
-    0,
-  );
   const runKm = monthCells.reduce(
     (s, c) => s + c.runRecords.reduce((a, r) => a + (r.distanceKm || 0), 0),
-    0,
-  );
-  const gymVolume = monthCells.reduce(
-    (s, c) => s + c.gymRecords.reduce((a, g) => a + gymRecordVolumeKg(g), 0),
     0,
   );
   // 활동을 종목별로 그룹핑해서 횟수 집계 (많은 순)
@@ -1265,69 +1257,81 @@ export function WorkoutMonthlyCalendar({
   return (
     <StWrap>
       <StCalHeader>
-        <StCalNav>
-          <StCalNavBtn type="button" onClick={goPrev} aria-label="이전 달">
-            ‹
-          </StCalNavBtn>
-          <StCalMonth>{monthLabel}</StCalMonth>
-          <StCalNavBtn type="button" onClick={goNext} aria-label="다음 달">
-            ›
-          </StCalNavBtn>
-        </StCalNav>
-        <StCalTodayBtn type="button" onClick={goToday}>
-          오늘
-        </StCalTodayBtn>
+        <StCalNavGroup>
+          <StCalNav>
+            <StCalNavBtn type="button" onClick={goPrev} aria-label="이전 달">
+              ‹
+            </StCalNavBtn>
+            <StCalMonth>{monthLabel}</StCalMonth>
+            <StCalNavBtn type="button" onClick={goNext} aria-label="다음 달">
+              ›
+            </StCalNavBtn>
+          </StCalNav>
+          <StCalTodayBtn type="button" onClick={goToday}>
+            오늘
+          </StCalTodayBtn>
+        </StCalNavGroup>
+        <StCalSummaryBreakdown>
+          <StCalSummaryChip
+            type="button"
+            $color="#3aa675"
+            $active={filter === "run"}
+            aria-pressed={filter === "run"}
+            onClick={() => setFilter((f) => (f === "run" ? null : "run"))}
+          >
+            <StChipDot $color="#3aa675" $active={filter === "run"} />
+            러닝
+          </StCalSummaryChip>
+          <StCalSummaryChip
+            type="button"
+            $color="#e07a3a"
+            $active={filter === "gym"}
+            aria-pressed={filter === "gym"}
+            onClick={() => setFilter((f) => (f === "gym" ? null : "gym"))}
+          >
+            <StChipDot $color="#e07a3a" $active={filter === "gym"} />
+            헬스
+          </StCalSummaryChip>
+          <StCalSummaryChip
+            type="button"
+            $color="#7c6ae0"
+            $active={filter === "activity"}
+            aria-pressed={filter === "activity"}
+            onClick={() =>
+              setFilter((f) => (f === "activity" ? null : "activity"))
+            }
+          >
+            <StChipDot $color="#7c6ae0" $active={filter === "activity"} />
+            활동
+          </StCalSummaryChip>
+        </StCalSummaryBreakdown>
       </StCalHeader>
 
       <StCalSummary>
-        <StCalSummaryTop>
-          <StCalSummaryDays>
-            <b>{workoutDays}</b>일 운동
-          </StCalSummaryDays>
-          <StCalSummaryBreakdown>
-            <StCalSummaryChip
-              type="button"
-              $color="#3aa675"
-              $active={filter === "run"}
-              onClick={() => setFilter((f) => (f === "run" ? null : "run"))}
-            >
-              🏃 {runSessions}
-            </StCalSummaryChip>
-            <StCalSummaryChip
-              type="button"
-              $color="#e07a3a"
-              $active={filter === "gym"}
-              onClick={() => setFilter((f) => (f === "gym" ? null : "gym"))}
-            >
-              🏋️ {gymSessions}
-            </StCalSummaryChip>
-            <StCalSummaryChip
-              type="button"
-              $color="#7c6ae0"
-              $active={filter === "activity"}
-              onClick={() =>
-                setFilter((f) => (f === "activity" ? null : "activity"))
-              }
-            >
-              🤸 {activitySessions}
-            </StCalSummaryChip>
-          </StCalSummaryBreakdown>
-        </StCalSummaryTop>
-        {runKm > 0 || gymVolume > 0 || activityGroups.length > 0 ? (
+        <StCalSummaryDays>
+          <b>{workoutDays}</b>일 운동
+        </StCalSummaryDays>
+        {runSessions > 0 || gymSessions > 0 || activityGroups.length > 0 ? (
           <StCalSummaryMetrics>
-            {runKm > 0 ? (
+            {runSessions > 0 ? (
               <span>
-                러닝 <b>{runKm.toFixed(1)}km</b>
+                🏃 러닝 <b>{runSessions}회</b>
+                {runKm > 0 ? (
+                  <>
+                    {" · "}
+                    <b>{runKm.toFixed(1)}km</b>
+                  </>
+                ) : null}
               </span>
             ) : null}
-            {gymVolume > 0 ? (
+            {gymSessions > 0 ? (
               <span>
-                볼륨 <b>{Math.round(gymVolume).toLocaleString()}kg</b>
+                🏋️ 헬스 <b>{gymSessions}회</b>
               </span>
             ) : null}
             {activityGroups.map((g) => (
               <span key={g.name}>
-                {getActivityEmoji(g.name)} {g.name} <b>{g.count}</b>
+                {getActivityEmoji(g.name)} {g.name} <b>{g.count}회</b>
               </span>
             ))}
           </StCalSummaryMetrics>
@@ -1462,20 +1466,6 @@ export function WorkoutMonthlyCalendar({
       </StCalGrid>
 
       <StCalFooter>
-        <StCalLegend>
-          <StCalLegendItem>
-            <StCalDot $color="#3aa675" />
-            러닝
-          </StCalLegendItem>
-          <StCalLegendItem>
-            <StCalDot $color="#e07a3a" />
-            헬스
-          </StCalLegendItem>
-          <StCalLegendItem>
-            <StCalDot $color="#7c6ae0" />
-            활동
-          </StCalLegendItem>
-        </StCalLegend>
         <StCalHint>날짜를 우클릭하면 기록을 추가할 수 있어요</StCalHint>
       </StCalFooter>
 
@@ -1516,8 +1506,15 @@ const StCalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
   margin-bottom: 0.6rem;
+`;
+
+const StCalNavGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const StCalNav = styled.div`
@@ -1571,47 +1568,49 @@ const StCalTodayBtn = styled.button`
 
 const StCalSummary = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.55rem 0.75rem;
-  margin-bottom: 0.7rem;
-  background: ${({ theme }) => theme.colors.gray50};
-  border-radius: 0.7rem;
-
-  @media (max-width: 480px) {
-    padding: 0.5rem 0.6rem;
-  }
-`;
-
-const StCalSummaryTop = styled.div`
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  padding-top: 0.75rem;
+  margin-bottom: 0.9rem;
+  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
 
-  @media (max-width: 480px) {
-    flex-wrap: wrap;
-    gap: 0.4rem;
+  /* 좁은 화면: N일 운동 윗줄 + 리스트 아랫줄(전체 폭) 영역 확보 */
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
   }
 `;
 
 const StCalSummaryMetrics = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 0.8rem;
-  font-size: 0.8rem;
-  font-weight: 700;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  gap: 0.5rem 1.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
   color: ${({ theme }) => theme.colors.gray500};
-  padding-top: 0.4rem;
-  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
 
   b {
-    font-weight: 900;
-    color: ${({ theme }) => theme.colors.gray900};
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+
+  /* 좁은 화면: 우측 정렬 대신 좌측 정렬로 N일 운동과 줄맞춤 */
+  @media (max-width: 767px) {
+    justify-content: flex-start;
+    margin-left: 0;
+    width: 100%;
+    gap: 0.45rem 1.1rem;
   }
 `;
 
 const StCalSummaryDays = styled.span`
+  flex-shrink: 0;
   font-size: 0.82rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray600};
@@ -1631,17 +1630,20 @@ const StCalSummaryBreakdown = styled.div`
 `;
 
 const StCalSummaryChip = styled.button<{ $color: string; $active: boolean }>`
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  color: ${({ $active, $color, theme }) =>
-    $active ? theme.colors.white : $color};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.white : theme.colors.gray700};
   background: ${({ $active, $color, theme }) =>
     $active ? $color : theme.colors.white};
-  padding: 0.28rem 0.55rem;
-  border-radius: 0.45rem;
+  padding: 0.3rem 0.62rem;
+  border-radius: 0.5rem;
   border: 1px solid
     ${({ $active, $color, theme }) =>
-      $active ? $color : theme.colors.gray100};
+      $active ? $color : theme.colors.gray200};
   cursor: pointer;
   transition: all 0.12s;
   line-height: 1;
@@ -1649,6 +1651,15 @@ const StCalSummaryChip = styled.button<{ $color: string; $active: boolean }>`
   &:hover {
     border-color: ${({ $color }) => $color};
   }
+`;
+
+const StChipDot = styled.span<{ $color: string; $active: boolean }>`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${({ $active, $color, theme }) =>
+    $active ? theme.colors.white : $color};
 `;
 
 const StCalDayHeaderRow = styled.div`
@@ -1747,14 +1758,6 @@ const StCalTag = styled.span<{ $kind: "run" | "gym" | "activity" }>`
   }
 `;
 
-const StCalDot = styled.span<{ $color: string }>`
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: ${({ $color }) => $color};
-  display: inline-block;
-`;
-
 const StCalPopover = styled.div<{ $pinned: boolean }>`
   position: absolute;
   bottom: calc(100% + 6px);
@@ -1821,24 +1824,15 @@ const StPopoverLine = styled.div<{ $kind: "run" | "gym" | "activity" }>`
 const StCalFooter = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 0.65rem;
   padding-top: 0.6rem;
   border-top: 1px dashed ${({ theme }) => theme.colors.gray100};
-`;
 
-const StCalLegend = styled.div`
-  display: flex;
-  gap: 0.8rem;
-`;
-
-const StCalLegendItem = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.colors.gray500};
-  font-weight: 700;
+  /* 모바일에선 우클릭 힌트가 숨겨져 내용이 비므로 푸터 자체를 접음 */
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const StCalHint = styled.span`
