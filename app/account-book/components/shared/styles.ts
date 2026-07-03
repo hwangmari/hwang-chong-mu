@@ -8,38 +8,38 @@ import styled, { css } from "styled-components";
 
 export const abTokens = {
   color: {
-    primary: "#5f73d9",
-    primaryBorder: "#4e67d0",
-    primaryHover: "#4b69c8",
-    primaryLight: "#eef4ff",
-    primaryLightEnd: "#e7efff",
-    primaryBorderLight: "#b8ccf6",
+    primary: "#888c94",
+    primaryBorder: "#7c8088",
+    primaryHover: "#72777f",
+    primaryLight: "#f6f6f7",
+    primaryLightEnd: "#f2f3f4",
+    primaryBorderLight: "#ced0d3",
 
     danger: "#c44d76",
     dangerBg: "#fff5f8",
     dangerBorder: "#f1c8d6",
 
-    textDark: "#1f2937",
-    textHeading: "#223147",
-    textBody: "#334155",
-    textMuted: "#66758b",
-    textCaption: "#7a8799",
-    textPlaceholder: "#8a99ad",
+    textDark: "#132038",
+    textHeading: "#172646",
+    textBody: "#1d335a",
+    textMuted: "#72777f",
+    textCaption: "#84888f",
+    textPlaceholder: "#979aa0",
 
-    borderDefault: "#dce5f0",
-    borderLight: "#e5eaf0",
-    borderInput: "#d5dfec",
-    borderSection: "#ecf1f7",
+    borderDefault: "#e5e6e7",
+    borderLight: "#e9eaec",
+    borderInput: "#dfe0e2",
+    borderSection: "#f1f1f2",
 
-    bgPage: "linear-gradient(180deg, #f6f8fc 0%, #edf2f8 100%)",
-    bgCard: "#f9fbff",
+    bgPage: "#f6f6f6",
+    bgCard: "#fcfcfc",
     bgWhite: "#ffffff",
     bgModal: "rgba(255, 255, 255, 0.97)",
-    bgBackdrop: "rgba(17, 24, 39, 0.2)",
-    bgBackdropDark: "rgba(15, 23, 42, 0.34)",
+    bgBackdrop: "rgba(23, 24, 26, 0.2)",
+    bgBackdropDark: "rgba(24, 25, 26, 0.34)",
 
-    badgeBlue: { bg: "#eaf1ff", text: "#3657b5", border: "#8aa7fb" },
-    badgeNeutral: { bg: "#f3f6fa", text: "#5d6e87", border: "#d9e4f1" },
+    badgeBlue: { bg: "#f4f4f5", text: "#70747b", border: "#bfc2c6" },
+    badgeNeutral: { bg: "#f6f6f7", text: "#305698", border: "#e4e5e6" },
   },
 
   radius: {
@@ -53,9 +53,9 @@ export const abTokens = {
   },
 
   shadow: {
-    modal: "0 24px 48px rgba(45, 62, 100, 0.14)",
-    button: "0 8px 20px rgba(74, 103, 204, 0.14)",
-    card: "0 1px 4px rgba(49, 67, 110, 0.06)",
+    modal: "0 24px 48px rgba(60, 63, 67, 0.14)",
+    button: "0 8px 20px rgba(133, 137, 145, 0.14)",
+    card: "0 1px 4px rgba(66, 69, 74, 0.06)",
   },
 
   breakpoint: {
@@ -114,9 +114,9 @@ export const StAbPrimaryButton = styled.button`
 
 export const StAbSecondaryButton = styled.button`
   ${buttonBase}
-  border: 1px solid #cedbeb;
+  border: 1px solid #dbdcde;
   background: rgba(255, 255, 255, 0.95);
-  color: #506683;
+  color: #2d4f8d;
   padding: 0.82rem 1rem;
   font-size: 0.9rem;
   min-height: 3rem;
@@ -140,7 +140,7 @@ export const StAbDangerButton = styled.button`
 export const StAbApplyButton = styled.button`
   ${buttonBase}
   border: none;
-  background: linear-gradient(135deg, #607de0, ${abTokens.color.primaryHover});
+  background: #888c94;
   color: ${({ theme }) => theme.colors.white};
   padding: 0.75rem 0.9rem;
   font-size: 0.84rem;
@@ -153,12 +153,12 @@ export const StAbApplyButton = styled.button`
 export const StAbSelectOption = styled.button<{ $active: boolean }>`
   border: 1px solid
     ${({ $active }) =>
-      $active ? abTokens.color.primaryBorderLight : "#dce3eb"};
+      $active ? abTokens.color.primaryBorderLight : "#e2e3e5"};
   background: ${({ $active }) =>
     $active
-      ? `linear-gradient(180deg, ${abTokens.color.primaryLight} 0%, ${abTokens.color.primaryLightEnd} 100%)`
+      ? `${abTokens.color.primaryLight}`
       : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
+  color: ${({ $active }) => ($active ? "#6d7179" : "#335384")};
   border-radius: ${abTokens.radius.md};
   padding: 0.66rem 0.55rem;
   font-size: 0.82rem;
@@ -174,12 +174,12 @@ export const StAbSelectOption = styled.button<{ $active: boolean }>`
 export const StAbPillOption = styled.button<{ $active: boolean }>`
   border: 1px solid
     ${({ $active }) =>
-      $active ? abTokens.color.primaryBorderLight : "#dce3eb"};
+      $active ? abTokens.color.primaryBorderLight : "#e2e3e5"};
   background: ${({ $active }) =>
     $active
-      ? `linear-gradient(180deg, ${abTokens.color.primaryLight} 0%, ${abTokens.color.primaryLightEnd} 100%)`
+      ? `${abTokens.color.primaryLight}`
       : "#fff"};
-  color: ${({ $active }) => ($active ? "#355cb1" : "#5b6475")};
+  color: ${({ $active }) => ($active ? "#6d7179" : "#335384")};
   border-radius: ${abTokens.radius.pill};
   padding: 0.38rem 0.68rem;
   font-size: 0.76rem;
@@ -199,7 +199,7 @@ export const StAbPillOption = styled.button<{ $active: boolean }>`
 export const abInputBase = css`
   width: 100%;
   min-height: 40px;
-  border: 1px solid #dce3eb;
+  border: 1px solid #e2e3e5;
   border-radius: ${abTokens.radius.sm};
   padding: 0.62rem 0.7rem;
   font-size: 0.9rem;
@@ -208,8 +208,8 @@ export const abInputBase = css`
 
   &:focus {
     outline: none;
-    border-color: #6fa6c9;
-    box-shadow: 0 0 0 3px rgba(111, 166, 201, 0.15);
+    border-color: #979ba1;
+    box-shadow: 0 0 0 3px rgba(151, 155, 161, 0.15);
   }
 `;
 
@@ -236,7 +236,7 @@ export const StAbTextarea = styled.textarea`
 
 export const StAbSettingsInput = styled.input`
   width: 100%;
-  border: 1px solid #d5deea;
+  border: 1px solid #dedfe1;
   border-radius: ${abTokens.radius.md};
   background: ${({ theme }) => theme.colors.white};
   padding: 0.75rem 0.85rem;
@@ -263,15 +263,15 @@ export const StAbBadge = styled.span<{
     const tones = {
       blue: css`
         background: ${({ theme }) => theme.colors.blue50};
-        color: #3657b5;
+        color: #70747b;
       `,
       neutral: css`
         background: ${({ theme }) => theme.colors.gray100};
-        color: #5d6e87;
+        color: #305698;
       `,
       purple: css`
         background: ${({ theme }) => theme.colors.indigo50};
-        color: #6b63e8;
+        color: #888c94;
       `,
       teal: css`
         background: ${({ theme }) => theme.colors.teal50};
@@ -334,7 +334,7 @@ export const StAbModalCard = styled.div<{ $width?: string }>`
   width: min(${({ $width = "660px" }) => $width}, 100%);
   max-height: min(84vh, 920px);
   overflow: auto;
-  border: 1px solid #d9e3ef;
+  border: 1px solid #e3e4e5;
   border-radius: ${abTokens.radius.card};
   background: ${abTokens.color.bgWhite};
   padding: 1.6rem 1.2rem 1.05rem;
@@ -376,7 +376,7 @@ export const StAbModalDescription = styled.p`
   max-width: 38rem;
   font-size: 0.88rem;
   line-height: 1.5;
-  color: #617186;
+  color: #6e7279;
 
   ${media.mobile} {
     font-size: 0.84rem;
@@ -507,9 +507,9 @@ export const StAbLoadingPage = styled.main`
 export const StAbLoadingCard = styled.section`
   width: min(100%, 18rem);
   border-radius: ${abTokens.radius.xxl};
-  border: 1px solid #d7e2ef;
+  border: 1px solid #e2e3e4;
   background: rgba(255, 255, 255, 0.94);
-  color: #4f6077;
+  color: #2a4b84;
   font-size: 0.95rem;
   font-weight: 800;
   padding: 1.2rem 1.3rem;
@@ -530,7 +530,7 @@ export const StAbLabel = styled.label`
   ${media.mobile} {
     margin-bottom: 0.4rem;
     font-size: 0.72rem;
-    color: #556274;
+    color: #2a4c86;
   }
 `;
 
@@ -568,12 +568,8 @@ export const StAbSectionCard = styled.section`
 
 export const StAbFooterActionBar = styled.div`
   padding: 0.45rem 1rem calc(1rem + env(safe-area-inset-bottom));
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(255, 255, 255, 0.98) 100%
-  );
-  border-top: 1px solid #e5ecf5;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid #ecedee;
 
   ${media.mobile} {
     padding: 0.6rem 0.74rem calc(1rem + env(safe-area-inset-bottom));

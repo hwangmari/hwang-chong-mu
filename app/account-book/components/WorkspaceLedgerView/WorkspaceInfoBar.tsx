@@ -30,6 +30,6 @@ const StInfoBar = styled.div`
 
 const StInfoText = styled.p`
   font-size: 0.8rem;
-  color: #7a8798;
+  color: #83878f;
   line-height: 1.45;
 `;

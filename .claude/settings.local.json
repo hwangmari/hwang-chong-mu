@@ -25,7 +25,8 @@
       "Read(//Users/hwangmari/.claude/plugins/**)",
       "Bash(npm ls *)",
       "Bash(npx --no-install omc --version)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(python3 tone2.py --apply)"
     ]
   }
 }

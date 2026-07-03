@@ -43,13 +43,13 @@ const StViewModeSwitch = styled.div`
 `;
 
 const StViewModeButton = styled.button<{ $active: boolean }>`
-  min-width: 5rem;
+  min-width: 6rem;
   border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? "#90abf6" : "#d8e2ee")};
-  background: ${({ $active, theme }) => ($active ? theme.colors.blue50 : theme.colors.white)};
-  color: ${({ $active, theme }) => ($active ? "#3d5fbf" : theme.colors.gray500)};
-  padding: 0.45rem 0.95rem;
-  font-size: 0.84rem;
+  border: 1px solid ${({ $active }) => ($active ? "#3182f6" : "#e2e3e4")};
+  background: ${({ $active, theme }) => ($active ? "#e8f2fe" : theme.colors.white)};
+  color: ${({ $active, theme }) => ($active ? "#3182f6" : theme.colors.gray500)};
+  padding: 0.62rem 1.35rem;
+  font-size: 0.95rem;
   font-weight: 800;
 
   @media (max-width: 720px) {

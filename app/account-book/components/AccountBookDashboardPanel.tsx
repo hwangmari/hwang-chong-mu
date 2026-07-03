@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import MonthlyIssueMemo from "./MonthlyIssueMemo";
 
 type DashboardRow = {
   monthNumber: number;
@@ -31,6 +32,9 @@ type Props = {
   onOpenIncomeYearly: () => void;
   onOpenExpenseYearly: () => void;
   onOpenAssetYearly: () => void;
+  monthlyMemo: string;
+  onChangeMonthlyMemo: (value: string) => void;
+  onSaveMonthlyMemo: () => void;
 };
 
 function formatNumber(value: number) {
@@ -66,6 +70,9 @@ export default function AccountBookDashboardPanel({
   onOpenIncomeYearly,
   onOpenExpenseYearly,
   onOpenAssetYearly,
+  monthlyMemo,
+  onChangeMonthlyMemo,
+  onSaveMonthlyMemo,
 }: Props) {
   const [editingTarget, setEditingTarget] = useState<
     "annual" | "monthly" | null
@@ -128,6 +135,11 @@ export default function AccountBookDashboardPanel({
             {currentYear}년 흐름을 한 화면에서 보고 월을 눌러 바로 이동합니다.
           </StSubTitle>
         </div>
+        <MonthlyIssueMemo
+          memo={monthlyMemo}
+          onChangeMemo={onChangeMonthlyMemo}
+          onSaveMemo={onSaveMonthlyMemo}
+        />
       </StHeader>
 
       <StSummaryGrid>
@@ -372,7 +384,7 @@ const StTitle = styled.h3`
 const StSubTitle = styled.p`
   margin-top: 0.18rem;
   font-size: 0.8rem;
-  color: #78859a;
+  color: #83878f;
 
   @media (max-width: 720px) {
     display: none;
@@ -408,8 +420,8 @@ const StSummaryCard = styled.button`
   display: block;
   text-align: left;
   border-radius: 16px;
-  border: 1px solid #e3eaf3;
-  background: linear-gradient(180deg, #fbfdff, ${({ theme }) => theme.colors.blue50});
+  border: 1px solid #eaebec;
+  background: #fdfdfd;
   padding: 0.75rem 0.85rem;
   cursor: pointer;
   transition:
@@ -419,12 +431,12 @@ const StSummaryCard = styled.button`
 
   &:hover {
     transform: translateY(-1px);
-    border-color: #cfd9ea;
-    box-shadow: 0 10px 24px rgba(148, 163, 184, 0.12);
+    border-color: #dbdcde;
+    box-shadow: 0 10px 24px rgba(162, 165, 170, 0.12);
   }
 
   &:focus-visible {
-    outline: 2px solid rgba(88, 110, 229, 0.34);
+    outline: 2px solid rgba(154, 157, 163, 0.34);
     outline-offset: 2px;
   }
 
@@ -433,7 +445,7 @@ const StSummaryCard = styled.button`
     font-size: 0.68rem;
     font-weight: 900;
     letter-spacing: 0.08em;
-    color: #8a96aa;
+    color: #95999f;
   }
 
   span {
@@ -441,14 +453,14 @@ const StSummaryCard = styled.button`
     margin-top: 0.2rem;
     font-size: 0.8rem;
     font-weight: 800;
-    color: #5f6e86;
+    color: #30579a;
   }
 
   strong {
     display: block;
     margin-top: 0.22rem;
     font-size: 1.02rem;
-    color: #253247;
+    color: #172a48;
   }
 
   em {
@@ -456,7 +468,7 @@ const StSummaryCard = styled.button`
     margin-top: 0.2rem;
     font-style: normal;
     font-size: 0.72rem;
-    color: #8390a2;
+    color: #8d9198;
   }
 
   @media (max-width: 720px) {
@@ -486,7 +498,7 @@ const StPanel = styled.section`
   flex-direction: column;
   gap: 0.6rem;
   border-radius: 18px;
-  border: 1px solid #dfe6f0;
+  border: 1px solid #e6e7e9;
   background: ${({ theme }) => theme.colors.white};
   padding: 0.8rem;
 `;
@@ -502,7 +514,7 @@ const StPanelTitle = styled.h4`
 `;
 
 const StMonthTable = styled.div`
-  border: 1px solid #e2e9f2;
+  border: 1px solid #e9eaeb;
   border-radius: 14px;
   overflow: hidden;
   background: ${({ theme }) => theme.colors.white};
@@ -517,8 +529,8 @@ const StMonthTableHead = styled.div`
     padding: 0.48rem 0.7rem;
     font-size: 0.74rem;
     font-weight: 900;
-    color: #60708c;
-    border-left: 1px solid #dde5f0;
+    color: #70747c;
+    border-left: 1px solid #e5e6e8;
   }
 
   span:first-child {
@@ -531,15 +543,15 @@ const StMonthRow = styled.button<{ $active: boolean }>`
   display: grid;
   grid-template-columns: 0.72fr 1fr;
   text-align: left;
-  background: ${({ $active, theme }) => ($active ? "#f1f5ff" : theme.colors.white)};
+  background: ${({ $active, theme }) => ($active ? "#f8f8f8" : theme.colors.white)};
   border: none;
-  border-top: 1px solid #e6edf5;
+  border-top: 1px solid #ededee;
 
   span,
   strong {
     padding: 0.58rem 0.7rem;
     font-size: 0.8rem;
-    border-left: 1px solid #edf2f8;
+    border-left: 1px solid #f2f2f3;
   }
 
   span {
@@ -550,12 +562,12 @@ const StMonthRow = styled.button<{ $active: boolean }>`
 
   strong {
     text-align: right;
-    color: #2a467f;
+    color: #244071;
   }
 `;
 
 const StMetricTable = styled.div`
-  border: 1px solid #e2e9f2;
+  border: 1px solid #e9eaeb;
   border-radius: 14px;
   overflow: hidden;
   background: ${({ theme }) => theme.colors.white};
@@ -574,9 +586,9 @@ const StMetricHead = styled.div<{
     padding: 0.48rem 0.7rem;
     font-size: 0.73rem;
     font-weight: 900;
-    color: #60708c;
+    color: #70747c;
     text-align: right;
-    border-left: 1px solid #dde5f0;
+    border-left: 1px solid #e5e6e8;
   }
 
   span:first-child {
@@ -603,9 +615,9 @@ const StMetricRow = styled.button<{
   width: 100%;
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
-  background: ${({ $active, theme }) => ($active ? "#f1f5ff" : theme.colors.white)};
+  background: ${({ $active, theme }) => ($active ? "#f8f8f8" : theme.colors.white)};
   border: none;
-  border-top: 1px solid #e6edf5;
+  border-top: 1px solid #ededee;
 
   @media (max-width: 720px) {
     grid-template-columns: ${({ $mobileColumns, $columns }) =>
@@ -633,10 +645,10 @@ const StCell = styled.div<{
   text-align: ${({ $align = "right" }) => $align};
   font-size: 0.79rem;
   font-weight: 800;
-  border-left: 1px solid #edf2f8;
+  border-left: 1px solid #f2f2f3;
   color: ${({ $tone, theme }) => {
     if ($tone === "positive") return theme.colors.teal600;
-    if ($tone === "negative") return "#6b63e8";
+    if ($tone === "negative") return "#888c94";
     return theme.colors.gray700;
   }};
 
@@ -660,12 +672,12 @@ const StGoalMeta = styled.div`
 
   span {
     border-radius: 999px;
-    border: 1px solid #e1e8f2;
+    border: 1px solid #e8e9eb;
     background: ${({ theme }) => theme.colors.blue50};
     padding: 0.28rem 0.6rem;
     font-size: 0.72rem;
     font-weight: 800;
-    color: #5f708b;
+    color: #6f737b;
   }
 `;
 
@@ -674,21 +686,21 @@ const StGoalDisplay = styled.form`
   align-items: center;
   gap: 0.4rem;
   border-radius: 999px;
-  border: 1px solid #d7e1ef;
+  border: 1px solid #e2e3e4;
   background: ${({ theme }) => theme.colors.white};
   padding: 0.26rem 0.32rem 0.26rem 0.6rem;
 
   label {
     font-size: 0.72rem;
     font-weight: 800;
-    color: #5f708b;
+    color: #6f737b;
   }
 
   button {
     border-radius: 999px;
-    border: 1px solid #d9e2ee;
+    border: 1px solid #e2e3e5;
     background: ${({ theme }) => theme.colors.blue50};
-    color: #42639f;
+    color: #305596;
     padding: 0.3rem 0.62rem;
     font-size: 0.72rem;
     font-weight: 900;
@@ -721,5 +733,6 @@ const StGoalValueInput = styled.input`
 const StGoalUnitText = styled.span`
   font-size: 0.74rem;
   font-weight: 800;
-  color: #6b7d98;
+  color: #7b8088;
 `;
+

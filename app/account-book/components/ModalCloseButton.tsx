@@ -50,7 +50,7 @@ const StButton = styled.button<{
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: #53657f;
+  color: #2c518c;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,14 +60,14 @@ const StButton = styled.button<{
     color 0.18s ease;
 
   &:hover {
-    background: #eef2f7;
-    color: #344257;
+    background: #f2f2f3;
+    color: #1d355d;
   }
 
   &:focus-visible {
     outline: none;
-    background: #eef2f7;
-    box-shadow: 0 0 0 0.1875rem rgba(124, 156, 243, 0.2);
+    background: #f2f2f3;
+    box-shadow: 0 0 0 0.1875rem rgba(180, 183, 187, 0.2);
   }
 
   svg {

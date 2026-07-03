@@ -117,8 +117,8 @@ const StSwitchButton = styled.button<{ $active: boolean }>`
   border-radius: 999px;
   font-size: 0.86rem;
   font-weight: 700;
-  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#667085")};
-  background: ${({ $active }) => ($active ? "#6fa6c9" : "transparent")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#70747b")};
+  background: ${({ $active }) => ($active ? "#979ba1" : "transparent")};
 `;
 const StScopeSwitch = styled.div`
   width: fit-content;
@@ -135,12 +135,12 @@ const StScopeButton = styled.button<{ $active: boolean }>`
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#667085")};
-  background: ${({ $active }) => ($active ? "#4c83d8" : "transparent")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.white : "#70747b")};
+  background: ${({ $active }) => ($active ? "#8d9197" : "transparent")};
 `;
 const StTotalBoard = styled.div`
-  border: 1px solid #dce6f4;
-  background: linear-gradient(135deg, #f2f8ff, ${({ theme }) => theme.colors.blue50});
+  border: 1px solid #e7e8e9;
+  background: #f6f6f7;
   border-radius: 10px;
   padding: 0.55rem 0.7rem;
   margin-bottom: 0.75rem;
@@ -149,7 +149,7 @@ const StTotalBoard = styled.div`
   justify-content: space-between;
   span {
     font-size: 0.78rem;
-    color: #667085;
+    color: #70747b;
     font-weight: 700;
   }
   strong {
@@ -199,8 +199,8 @@ const StCategoryItem = styled.button<{ $active: boolean }>`
   align-items: center;
   gap: 0.7rem;
   width: 100%;
-  border: 1px solid ${({ $active }) => ($active ? "#c9dced" : "transparent")};
-  background: ${({ $active }) => ($active ? "#f3f8fd" : "transparent")};
+  border: 1px solid ${({ $active }) => ($active ? "#d9dbdd" : "transparent")};
+  background: ${({ $active }) => ($active ? "#f8f8f8" : "transparent")};
   border-radius: 10px;
   padding: 0.45rem 0.5rem;
   text-align: left;

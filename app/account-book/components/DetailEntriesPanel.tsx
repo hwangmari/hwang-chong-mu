@@ -36,6 +36,7 @@ type Props = {
   showSupportDate?: boolean;
   canToggleAmountVisibility?: boolean;
   isAmountHidden?: boolean;
+  hideIncomeAmount?: boolean;
   onToggleAmountVisibility?: () => void;
 };
 
@@ -55,6 +56,7 @@ export default function DetailEntriesPanel({
   showSupportDate,
   canToggleAmountVisibility = false,
   isAmountHidden = false,
+  hideIncomeAmount = false,
   onToggleAmountVisibility,
 }: Props) {
   const shouldShowSupportDate = showSupportDate ?? !showDateMeta;
@@ -190,26 +192,32 @@ export default function DetailEntriesPanel({
     );
     const categoryLabel = buildCategoryLabel(entry, representativeCategory);
     const headline = buildHeadline(entry, categoryLabel);
-    const supportLabels = buildSupportLabels(entry, categoryLabel, headline);
+    const badgeLabel = isSavingsCategory(entry.category)
+      ? "저축"
+      : entry.type === "income"
+        ? "수입"
+        : "지출";
+    // 타입 배지(수입/지출/저축)와 겹치는 카테고리 메모는 중복이라 숨긴다.
+    const supportLabels = buildSupportLabels(
+      entry,
+      categoryLabel,
+      headline,
+    ).filter((label) => !isSameMeaning(label, badgeLabel));
     const memoText = normalizeDisplayText(entry.memo);
     const accentTone = isSavingsCategory(entry.category)
       ? "asset"
       : entry.type === "income"
         ? "income"
         : "expense";
+    const amountMasked =
+      isAmountHidden || (hideIncomeAmount && entry.type === "income");
 
     return (
       <StEntryItem key={entry.resolvedId}>
         <StEntryMain>
           <StEntryTop>
             <StMemberBadge>{entry.member || "나"}</StMemberBadge>
-            <StEntryBadge $tone={accentTone}>
-              {isSavingsCategory(entry.category)
-                ? "저축"
-                : entry.type === "income"
-                  ? "수입"
-                  : "지출"}
-            </StEntryBadge>
+            <StEntryBadge $tone={accentTone}>{badgeLabel}</StEntryBadge>
             <StEntryPayment>
               {paymentLabel(entry.payment)}
               {entry.payment !== "cash" && entry.cardCompany
@@ -235,7 +243,9 @@ export default function DetailEntriesPanel({
                 ))}
               </StEntryMetaList>
             ) : null}
-            {memoText ? <StEntryMemo>{memoText}</StEntryMemo> : null}
+            {memoText && !isSameMeaning(memoText, headline) ? (
+              <StEntryMemo>{memoText}</StEntryMemo>
+            ) : null}
           </StEntryBox>
           {actions.length > 0 ? (
             <StEntryActions>
@@ -253,8 +263,8 @@ export default function DetailEntriesPanel({
           ) : null}
         </StEntryMain>
         <StEntryAside>
-          <StEntryAmount $tone={accentTone} $hidden={isAmountHidden}>
-            {isAmountHidden ? "금액 숨김" : formatAmount(entry.amount)}
+          <StEntryAmount $tone={accentTone} $hidden={amountMasked}>
+            {amountMasked ? "금액 숨김" : formatAmount(entry.amount)}
           </StEntryAmount>
           {showDateMeta ? <StEntryMeta>{entry.date}</StEntryMeta> : null}
           {!entry.readonly && (onEdit || onDelete) ? (
@@ -393,9 +403,9 @@ const StDetailHeaderActions = styled.div`
   gap: 0.45rem;
 `;
 const StDetailVisibilityButton = styled.button`
-  border: 1px solid #d6e0ee;
+  border: 1px solid #e1e2e3;
   background: ${({ theme }) => theme.colors.blue50};
-  color: #61738d;
+  color: #71757d;
   border-radius: 999px;
   padding: 0.48rem 0.78rem;
   font-size: 0.75rem;
@@ -405,7 +415,7 @@ const StDetailAddButton = styled.button`
   width: 2.25rem;
   height: 2.25rem;
   border: none;
-  background: linear-gradient(135deg, #6d87ef, #5f73d9);
+  background: #3182f6;
   color: ${({ theme }) => theme.colors.white};
   border-radius: 999px;
   font-size: 1.35rem;
@@ -414,7 +424,7 @@ const StDetailAddButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 22px rgba(95, 115, 217, 0.2);
+  box-shadow: 0 10px 22px rgba(49, 130, 246, 0.24);
 `;
 const StEntryList = styled.div`
   flex: 1;
@@ -432,33 +442,32 @@ const StEmpty = styled.p`
 const StEntryItem = styled.article`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.85rem;
-  padding: 0.82rem 0.9rem;
-  border: 1px solid #e3ebf5;
-  border-radius: 18px;
-  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white}, #fbfdff);
-  box-shadow: 0 8px 24px rgba(31, 41, 55, 0.04);
+  gap: 0.7rem;
+  padding: 0.58rem 0.72rem;
+  border: 1px solid #ebeced;
+  border-radius: 13px;
+  background: ${({ theme }) => theme.colors.white};
+  box-shadow: 0 2px 8px rgba(36, 37, 39, 0.03);
 
   @media (max-width: 720px) {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.65rem;
+    gap: 0.55rem;
     align-items: start;
   }
 `;
 const StEntryMain = styled.div`
   min-width: 0;
   display: grid;
-  gap: 0.32rem;
+  gap: 0.18rem;
 `;
 const StEntryTop = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.12rem;
+  gap: 0.4rem;
 
   @media (max-width: 720px) {
-    gap: 0.32rem;
+    gap: 0.3rem;
   }
 `;
 const StEntryBadge = styled.span<{
@@ -470,15 +479,15 @@ const StEntryBadge = styled.span<{
   padding: 0.2rem 0.56rem;
   font-size: 0.72rem;
   font-weight: 800;
-  color: ${({ $tone, theme }) => {
-    if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return theme.colors.teal600;
-    return "#6b63e8";
+  color: ${({ $tone }) => {
+    if ($tone === "income") return "#3182f6";
+    if ($tone === "asset") return "#3182f6";
+    return "#4e5968";
   }};
   background: ${({ $tone, theme }) => {
-    if ($tone === "income") return theme.colors.blue50;
-    if ($tone === "asset") return theme.colors.teal50;
-    return theme.colors.indigo50;
+    if ($tone === "income") return "#e8f2fe";
+    if ($tone === "asset") return "#e8f2fe";
+    return theme.colors.gray100;
   }};
 `;
 const StMemberBadge = styled.span`
@@ -488,12 +497,12 @@ const StMemberBadge = styled.span`
   padding: 0.2rem 0.56rem;
   font-size: 0.72rem;
   font-weight: 800;
-  color: #335a95;
-  background: ${({ theme }) => theme.colors.indigo50};
+  color: ${({ theme }) => theme.colors.gray700};
+  background: ${({ theme }) => theme.colors.gray100};
 `;
 const StEntryPayment = styled.span`
   font-size: 0.72rem;
-  color: #7a8495;
+  color: #82868d;
   font-weight: 700;
 `;
 const StMirrorBadge = styled.span`
@@ -503,9 +512,9 @@ const StMirrorBadge = styled.span`
   padding: 0.18rem 0.5rem;
   font-size: 0.68rem;
   font-weight: 800;
-  color: #5d6e87;
+  color: ${({ theme }) => theme.colors.gray600};
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid #e1e7ef;
+  border: 1px solid #e7e8e9;
 `;
 
 const StEntryBox = styled.div`
@@ -519,14 +528,14 @@ const StEntryBox = styled.div`
 `;
 
 const StEntryName = styled.p`
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: ${({ theme }) => theme.colors.gray900};
-  font-weight: 800;
+  font-weight: 500;
   line-height: 1.35;
   word-break: break-word;
 
   @media (max-width: 720px) {
-    font-size: 0.94rem;
+    font-size: 0.86rem;
     line-height: 1.28;
   }
 `;
@@ -542,13 +551,13 @@ const StEntryMetaList = styled.div`
 const StEntryMetaText = styled.span`
   display: inline-flex;
   align-items: center;
-  font-weight: 700;
+  font-weight: 400;
 
   &:not(:first-child)::before {
     content: "·";
     margin-right: 0.5rem;
-    color: #a1afc2;
-    font-weight: 700;
+    color: #aeb0b5;
+    font-weight: 400;
   }
 `;
 const StEntryMemo = styled.p`
@@ -560,12 +569,12 @@ const StEntryActions = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.18rem;
+  margin-top: 0.08rem;
 `;
 const StEntryActionButton = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#99b4ff" : "#d9e4f1")};
-  background: ${({ $active, theme }) => ($active ? "#edf3ff" : theme.colors.gray100)};
-  color: ${({ $active }) => ($active ? "#3557b6" : "#66758b")};
+  border: 1px solid ${({ $active }) => ($active ? "#b9bcc0" : "#e4e5e6")};
+  background: ${({ $active, theme }) => ($active ? "#f6f6f6" : theme.colors.gray100)};
+  color: ${({ $active, theme }) => ($active ? theme.colors.gray700 : "#72777f")};
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 800;
@@ -591,11 +600,11 @@ const StEntryAmount = styled.span<{
   font-size: 0.98rem;
   font-weight: 900;
   text-align: right;
-  color: ${({ $tone, $hidden, theme }) => {
-    if ($hidden) return "#8b95a6";
-    if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return theme.colors.teal600;
-    return "#6b63e8";
+  color: ${({ $tone, $hidden }) => {
+    if ($hidden) return "#8b95a1";
+    if ($tone === "income") return "#3182f6";
+    if ($tone === "asset") return "#3182f6";
+    return "#333d4b";
   }};
   letter-spacing: -0.01em;
 
@@ -606,7 +615,7 @@ const StEntryAmount = styled.span<{
 `;
 const StEntryMeta = styled.span`
   font-size: 0.72rem;
-  color: #7a8495;
+  color: #82868d;
 `;
 const StEntryControlGroup = styled.div`
   display: flex;
@@ -620,18 +629,18 @@ const StEntryControlGroup = styled.div`
   }
 `;
 const StEditButton = styled.button`
-  border: 1px solid #d7e3ff;
-  background: ${({ theme }) => theme.colors.blue50};
-  color: #4b76c6;
+  border: 1px solid #eaebec;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: #83878e;
   border-radius: 999px;
   padding: 0.28rem 0.68rem;
   font-size: 0.76rem;
   font-weight: 800;
 `;
 const StDeleteButton = styled.button`
-  border: 1px solid #e3e8ef;
+  border: 1px solid #e8e9ea;
   background: ${({ theme }) => theme.colors.white};
-  color: #7e8a9b;
+  color: #878b92;
   border-radius: 999px;
   padding: 0.28rem 0.68rem;
   font-size: 0.76rem;
@@ -654,7 +663,7 @@ const StTrackingMeta = styled.div`
   }
   span {
     font-size: 0.75rem;
-    color: #7a8495;
+    color: #82868d;
   }
 `;
 const StTrackingBar = styled.div`
@@ -666,7 +675,7 @@ const StTrackingBar = styled.div`
 const StTrackingFill = styled.div`
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #78a8e9, #5f86da);
+  background: #9a9ea4;
 `;
 const StTrackingAmount = styled.strong`
   font-size: 0.9rem;
@@ -689,12 +698,12 @@ const StGroupedHeader = styled.div`
 
   strong {
     font-size: 0.9rem;
-    color: #315e84;
+    color: #26457a;
   }
 
   span {
     font-size: 0.74rem;
-    color: #7d8ca0;
+    color: #898d94;
     font-weight: 700;
   }
 
@@ -713,7 +722,7 @@ const StGroupedList = styled.div`
 const StAssetSection = styled.section`
   margin-top: 0.45rem;
   padding-top: 0.7rem;
-  border-top: 1px dashed #d8dee8;
+  border-top: 1px dashed #dee0e2;
 `;
 const StAssetTitle = styled.h4`
   font-size: 0.86rem;

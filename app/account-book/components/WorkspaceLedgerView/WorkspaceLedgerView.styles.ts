@@ -3,7 +3,7 @@ import styled from "styled-components";
 export const StPage = styled.main`
   overscroll-behavior: none;
   min-height: 100vh;
-  background: #f3f6fb;
+  background: #f7f7f7;
   display: flex;
   flex-direction: column;
 `;
@@ -15,15 +15,15 @@ export const StShareConfirmBackdrop = styled.div`
   display: grid;
   place-items: center;
   padding: 1.2rem;
-  background: rgba(15, 23, 42, 0.34);
+  background: rgba(24, 25, 26, 0.34);
 `;
 
 export const StShareConfirmCard = styled.section`
   width: min(100%, 25rem);
   border-radius: 24px;
-  border: 1px solid #d7e1ee;
+  border: 1px solid #e1e2e4;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 24px 60px rgba(24, 25, 26, 0.18);
   padding: 1.25rem;
 `;
 
@@ -32,7 +32,7 @@ export const StShareConfirmEyebrow = styled.p`
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #6e8ab8;
+  color: #8e9298;
 `;
 
 export const StShareConfirmTitle = styled.h3`
@@ -46,7 +46,7 @@ export const StShareConfirmDescription = styled.p`
   margin-top: 0.55rem;
   font-size: 0.92rem;
   line-height: 1.6;
-  color: #5f6e82;
+  color: #305596;
 `;
 
 export const StShareConfirmActions = styled.div`
@@ -57,9 +57,9 @@ export const StShareConfirmActions = styled.div`
 `;
 
 export const StShareGhostButton = styled.button`
-  border: 1px solid #d7e1ee;
+  border: 1px solid #e1e2e4;
   background: ${({ theme }) => theme.colors.gray100};
-  color: #5f6e82;
+  color: #305596;
   border-radius: 999px;
   padding: 0.7rem 1rem;
   font-size: 0.88rem;
@@ -68,13 +68,13 @@ export const StShareGhostButton = styled.button`
 
 export const StSharePrimaryButton = styled.button`
   border: none;
-  background: linear-gradient(135deg, #6d87ef, #5f73d9);
+  background: #888c94;
   color: ${({ theme }) => theme.colors.white};
   border-radius: 999px;
   padding: 0.7rem 1rem;
   font-size: 0.88rem;
   font-weight: 900;
-  box-shadow: 0 12px 28px rgba(95, 115, 217, 0.24);
+  box-shadow: 0 12px 28px rgba(151, 155, 161, 0.24);
 `;
 
 export const StContentWrap = styled.div`

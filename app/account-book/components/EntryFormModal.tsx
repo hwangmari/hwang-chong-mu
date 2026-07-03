@@ -1,8 +1,10 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import styled from "styled-components";
 import ModalCloseButton from "./ModalCloseButton";
 import { CategoryOption, EntryType, PaymentType } from "../types";
+import { evaluateAmountExpression } from "./WorkspaceLedgerView/utils";
 import {
   abInputBase,
   StAbFormRow,
@@ -28,8 +30,6 @@ type Props = {
   type: EntryType;
   category: string;
   subCategory: string;
-  merchant: string;
-  item: string;
   amount: string;
   payment: PaymentType;
   cardCompany: string;
@@ -44,8 +44,6 @@ type Props = {
   onSetMember: (member: string) => void;
   onSetCategory: (category: string) => void;
   onSetSubCategory: (value: string) => void;
-  onSetMerchant: (value: string) => void;
-  onSetItem: (value: string) => void;
   onSetAmount: (value: string) => void;
   onSetPayment: (payment: PaymentType) => void;
   onSetCardCompany: (value: string) => void;
@@ -64,8 +62,6 @@ export default function EntryFormModal({
   type,
   category,
   subCategory,
-  merchant,
-  item,
   amount,
   payment,
   cardCompany,
@@ -79,8 +75,6 @@ export default function EntryFormModal({
   onSetMember,
   onSetCategory,
   onSetSubCategory,
-  onSetMerchant,
-  onSetItem,
   onSetAmount,
   onSetPayment,
   onSetCardCompany,
@@ -88,6 +82,16 @@ export default function EntryFormModal({
   onSubmit,
 }: Props) {
   if (!isOpen) return null;
+
+  const amountValue = evaluateAmountExpression(amount);
+  const amountHasExpression = /[+*/]/.test(amount) || /\d\s*-/.test(amount);
+  const handleAmountKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "=" && event.key !== "Enter") return;
+    event.preventDefault();
+    if (amountValue !== null) {
+      onSetAmount(String(Math.trunc(amountValue)));
+    }
+  };
 
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
   const cardCompanyLabel = payment === "check_card" ? "체크 항목" : "카드사";
@@ -124,11 +128,20 @@ export default function EntryFormModal({
               <StFormField>
                 <StAbLabel>금액</StAbLabel>
                 <StInput
-                  type="number"
+                  type="text"
+                  inputMode="text"
                   value={amount}
                   onChange={(e) => onSetAmount(e.target.value)}
-                  placeholder="예: 15000"
+                  onKeyDown={handleAmountKeyDown}
+                  placeholder="예: 15000 또는 15000+3000"
                 />
+                {amountHasExpression ? (
+                  <StAmountPreview $invalid={amountValue === null}>
+                    {amountValue === null
+                      ? "계산식을 확인해주세요"
+                      : `= ${Math.trunc(amountValue).toLocaleString()}원`}
+                  </StAmountPreview>
+                ) : null}
               </StFormField>
               <StFormField>
                 <StAbLabel>날짜</StAbLabel>
@@ -247,7 +260,7 @@ export default function EntryFormModal({
                   style={{
                     background:
                       categoryOptions.find((o) => o.label === category)
-                        ?.color || "#94a3b8",
+                        ?.color || "#a2a5aa",
                   }}
                 />
                 <strong>{category || "카테고리를 선택하세요"}</strong>
@@ -303,31 +316,10 @@ export default function EntryFormModal({
               <div>
                 <StAbSectionTitle>상세 메모</StAbSectionTitle>
                 <StAbSectionDescription>
-                  가맹점, 항목, 메모를 적어두면 나중에 검색하거나 비교하기
-                  쉬워져요.
+                  메모를 적어두면 나중에 검색하거나 비교하기 쉬워져요.
                 </StAbSectionDescription>
               </div>
             </StAbSectionHeader>
-            <StAbFormRow $columns={1}>
-              <StFormField>
-                <StAbLabel>가맹점</StAbLabel>
-                <StInput
-                  value={merchant}
-                  onChange={(e) => onSetMerchant(e.target.value)}
-                  placeholder="예: 올리브영 성수점"
-                />
-              </StFormField>
-            </StAbFormRow>
-            <StAbFormRow $columns={1}>
-              <StFormField>
-                <StAbLabel>항목</StAbLabel>
-                <StInput
-                  value={item}
-                  onChange={(e) => onSetItem(e.target.value)}
-                  placeholder="예: 샴푸, 영양제, 점심 식사"
-                />
-              </StFormField>
-            </StAbFormRow>
             <StAbFormRow $columns={1}>
               <StFormField>
                 <StAbLabel>메모</StAbLabel>
@@ -344,7 +336,9 @@ export default function EntryFormModal({
         <StAbFooterActionBar>
           <StFooterSummary>
             {type === "expense" ? "지출" : "수입"} · {member} ·{" "}
-            {amount ? `${amount}원` : "금액 미입력"}
+            {amountValue !== null
+              ? `${Math.trunc(amountValue).toLocaleString()}원`
+              : "금액 미입력"}
           </StFooterSummary>
           <StAddButton type="button" onClick={onSubmit}>
             {isEditing ? "수정 저장" : "내역 추가"}
@@ -407,11 +401,11 @@ const StCategoryPicker = styled.div`
 `;
 
 const StCategoryButton = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b8ccf6" : "#e5eaf0")};
+  border: 1px solid ${({ $active }) => ($active ? "#ced0d3" : "#e9eaec")};
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(180deg, #eef4ff 0%, #e8f0ff 100%)"
-      : "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)"};
+      ? "#f6f6f7"
+      : "#ffffff"};
   border-radius: 12px;
   padding: 0.52rem 0.6rem;
   display: flex;
@@ -457,7 +451,7 @@ const StCategoryDescription = styled.p`
   margin: 0;
   font-size: 0.75rem;
   line-height: 1.4;
-  color: #708197;
+  color: #7d828a;
 `;
 
 const StTypeSelector = styled.div`
@@ -518,6 +512,17 @@ const StInput = styled.input<{ $large?: boolean }>`
   }
 `;
 
+const StAmountPreview = styled.p<{ $invalid?: boolean }>`
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: ${({ $invalid }) => ($invalid ? "#e0554f" : "#7c8088")};
+
+  @media (max-width: 720px) {
+    font-size: 0.76rem;
+  }
+`;
+
 const StInlineSubInput = styled.input`
   ${abInputBase}
   margin-top: 0.35rem;
@@ -544,14 +549,14 @@ const StInlineTextarea = styled.textarea`
 
 const StAddButton = styled.button`
   width: 100%;
-  border: 1px solid #4e67d0;
+  border: 1px solid #7c8088;
   border-radius: 16px;
   padding: 0.9rem 1rem;
   font-size: 0.95rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.white};
-  background: #5f73d9;
-  box-shadow: 0 16px 30px rgba(95, 115, 217, 0.22);
+  background: #888c94;
+  box-shadow: 0 16px 30px rgba(151, 155, 161, 0.22);
 
   @media (max-width: 720px) {
     border-radius: 14px;
@@ -563,7 +568,7 @@ const StAddButton = styled.button`
 const StModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.2);
+  background: rgba(23, 24, 26, 0.2);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: stretch;
@@ -586,8 +591,8 @@ const StModalCard = styled.div`
   flex-direction: column;
   background: rgba(255, 255, 255, 0.97);
   border-radius: 28px;
-  border: 1px solid #dde5f0;
-  box-shadow: -18px 0 40px rgba(49, 67, 110, 0.14);
+  border: 1px solid #e5e6e8;
+  box-shadow: -18px 0 40px rgba(66, 69, 74, 0.14);
 
   @media (max-width: 720px) {
     width: 100vw;
@@ -614,7 +619,7 @@ const StModalHeader = styled.div`
   gap: 0.75rem;
   margin-bottom: 0;
   padding: 0.92rem 1.05rem 0.8rem;
-  border-bottom: 1px solid #edf2f8;
+  border-bottom: 1px solid #f2f2f3;
   background: rgba(255, 255, 255, 0.96);
 
   strong {
@@ -655,7 +660,7 @@ const StModalDescription = styled.p`
   margin: 0;
   font-size: 0.78rem;
   line-height: 1.45;
-  color: #7b8798;
+  color: #84888f;
 
   @media (max-width: 720px) {
     display: none;
@@ -666,7 +671,7 @@ const StFooterSummary = styled.p`
   margin-bottom: 0.45rem;
   font-size: 0.78rem;
   font-weight: 800;
-  color: #627389;
+  color: #70747b;
 
   @media (max-width: 720px) {
     display: none;

@@ -185,23 +185,23 @@ const StGatePage = styled.main<{ $overlay: boolean }>`
   padding: 1.25rem;
   background: ${({ $overlay }) =>
     $overlay
-      ? "rgba(15, 23, 42, 0.34)"
-      : "radial-gradient(circle at top, rgba(109, 135, 239, 0.16), transparent 32%), linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%)"};
+      ? "rgba(24, 25, 26, 0.34)"
+      : "#f6f6f6"};
 `;
 
 const StGateCard = styled.section`
   width: min(100%, 24rem);
   padding: 1.35rem;
   border-radius: 1.5rem;
-  border: 1px solid #dbe4ef;
+  border: 1px solid #e4e5e6;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 22px 60px rgba(41, 58, 92, 0.14);
+  box-shadow: 0 22px 60px rgba(56, 58, 61, 0.14);
 `;
 
 const StBackButton = styled.button`
   border: none;
   background: transparent;
-  color: #5d6c82;
+  color: #2f5495;
   font-size: 0.84rem;
   font-weight: 700;
   padding: 0;
@@ -241,7 +241,7 @@ const StForm = styled.form`
 
 const StPasswordInput = styled.input`
   min-height: 3.4rem;
-  border: 1px solid #d9e2ee;
+  border: 1px solid #e2e3e5;
   border-radius: 1rem;
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray800};
@@ -252,12 +252,12 @@ const StPasswordInput = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #9db6ff;
-    box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.12);
+    border-color: #cccdd0;
+    box-shadow: 0 0 0 4px rgba(163, 166, 171, 0.12);
   }
 
   &::placeholder {
-    color: #9aa7ba;
+    color: #a6a9ae;
   }
 `;
 
@@ -265,7 +265,7 @@ const StSubmitButton = styled.button`
   min-height: 3.4rem;
   border: none;
   border-radius: 1rem;
-  background: linear-gradient(135deg, #607de0, #4b69c8);
+  background: #888c94;
   color: ${({ theme }) => theme.colors.white};
   font-size: 0.95rem;
   font-weight: 800;

@@ -21,8 +21,8 @@ type PaymentKey = "cash" | "card" | "check_card";
 type AssetGoalCategory = "IRP" | "연금저축" | "퇴직연금" | "ISA";
 
 const PAYMENT_META: Array<{ key: PaymentKey; label: string; color: string }> = [
-  { key: "cash", label: "현금", color: "#4f7cff" },
-  { key: "card", label: "카드", color: "#6b63e8" },
+  { key: "cash", label: "현금", color: "#868a92" },
+  { key: "card", label: "카드", color: "#888c94" },
   { key: "check_card", label: "체크카드", color: "#3f8f8a" },
 ];
 const ASSET_GOAL_CATEGORIES: AssetGoalCategory[] = [
@@ -1033,14 +1033,14 @@ const StHeader = styled.header`
 const StEyebrow = styled.p`
   font-size: 0.78rem;
   font-weight: 800;
-  color: #6075b7;
+  color: #868a91;
 `;
 
 const StBackButton = styled.button`
   border: none;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.white};
-  color: #53647c;
+  color: #2c4d8a;
   padding: 0.55rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 800;
@@ -1056,7 +1056,7 @@ const StTitle = styled.h1`
 const StHeaderDescription = styled.p`
   margin-top: 0.3rem;
   font-size: 0.84rem;
-  color: #6f7e92;
+  color: #7a7f87;
 `;
 
 const StHeroCard = styled.section`
@@ -1064,8 +1064,8 @@ const StHeroCard = styled.section`
   grid-template-columns: minmax(0, 1fr) minmax(min(320px, 100%), 1.05fr);
   gap: 0.9rem;
   border-radius: 24px;
-  border: 1px solid #d7e0f1;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96));
+  border: 1px solid #e3e4e5;
+  background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
   margin-bottom: 0.9rem;
 
@@ -1077,7 +1077,7 @@ const StHeroCard = styled.section`
 const StHeroDescription = styled.p`
   margin-top: 0.55rem;
   font-size: 0.84rem;
-  color: #6f7f95;
+  color: #7c8088;
 `;
 
 const StInsightGrid = styled.div`
@@ -1093,7 +1093,7 @@ const StInsightGrid = styled.div`
 
 const StCard = styled.section`
   border-radius: 24px;
-  border: 1px solid #dbe4ef;
+  border: 1px solid #e4e5e6;
   background: rgba(255, 255, 255, 0.94);
   padding: 1rem;
 `;
@@ -1111,9 +1111,9 @@ const StGoalList = styled.div`
 `;
 
 const StGoalCard = styled.article`
-  border: 1px solid #dce5f1;
+  border: 1px solid #e5e6e8;
   border-radius: 20px;
-  background: linear-gradient(180deg, #fcfdff, ${({ theme }) => theme.colors.blue50});
+  background: #fdfdfe;
   padding: 0.9rem;
 `;
 
@@ -1139,7 +1139,7 @@ const StGoalHeader = styled.div`
 
   span {
     font-size: 0.78rem;
-    color: #74839a;
+    color: #81858d;
     font-weight: 700;
   }
 `;
@@ -1151,12 +1151,12 @@ const StGoalInputWrap = styled.label`
   gap: 0.45rem;
   min-width: 250px;
   font-size: 0.76rem;
-  color: #708099;
+  color: #7e838b;
   font-weight: 800;
 
   input {
     width: 100%;
-    border: 1px solid #d8e2ef;
+    border: 1px solid #e2e3e5;
     border-radius: 12px;
     background: ${({ theme }) => theme.colors.white};
     padding: 0.5rem 0.65rem;
@@ -1167,7 +1167,7 @@ const StGoalInputWrap = styled.label`
 
   em {
     font-style: normal;
-    color: #7d8ca0;
+    color: #898d94;
   }
 
   @media (max-width: 820px) {
@@ -1190,13 +1190,13 @@ const StGoalMetaGrid = styled.div`
 const StGoalMetaCard = styled.div`
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e1e9f4;
+  border: 1px solid #e9eaec;
   padding: 0.75rem 0.8rem;
 
   span {
     display: block;
     font-size: 0.74rem;
-    color: #7a899d;
+    color: #868a91;
     font-weight: 700;
   }
 
@@ -1204,7 +1204,7 @@ const StGoalMetaCard = styled.div`
     display: block;
     margin-top: 0.24rem;
     font-size: 0.96rem;
-    color: #213454;
+    color: #192c4e;
     font-weight: 900;
   }
 `;
@@ -1220,7 +1220,7 @@ const StGoalBar = styled.div`
 const StGoalFill = styled.div`
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #4eb3a6, #3f8f8a);
+  background: #3f8f8a;
 `;
 
 const StGoalSummaryList = styled.div`
@@ -1235,13 +1235,13 @@ const StGoalSummaryItem = styled.div`
   gap: 0.8rem;
   align-items: center;
   border-radius: 16px;
-  border: 1px solid #dfe7f3;
+  border: 1px solid #e8e9ea;
   background: rgba(255, 255, 255, 0.92);
   padding: 0.8rem 0.9rem;
 
   span {
     font-size: 0.78rem;
-    color: #74839a;
+    color: #81858d;
     font-weight: 700;
   }
 
@@ -1282,7 +1282,7 @@ const StSectionTitle = styled.h2`
 
 const StSectionMeta = styled.span`
   font-size: 0.78rem;
-  color: #74839a;
+  color: #81858d;
   font-weight: 700;
 `;
 
@@ -1291,7 +1291,7 @@ const StTotal = styled.strong`
   margin-top: 0.8rem;
   font-size: 2rem;
   font-weight: 900;
-  color: #304e95;
+  color: #2a4c84;
 `;
 
 const StStatGrid = styled.div`
@@ -1301,7 +1301,7 @@ const StStatGrid = styled.div`
 `;
 
 const StStatCard = styled.div`
-  border: 1px solid #dfe7f3;
+  border: 1px solid #e8e9ea;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.9);
   padding: 0.9rem;
@@ -1309,7 +1309,7 @@ const StStatCard = styled.div`
   span {
     display: block;
     font-size: 0.78rem;
-    color: #75849a;
+    color: #82868d;
     font-weight: 700;
   }
 
@@ -1318,7 +1318,7 @@ const StStatCard = styled.div`
     margin-top: 0.32rem;
     font-size: 1rem;
     font-weight: 900;
-    color: #213454;
+    color: #192c4e;
     line-height: 1.4;
   }
 `;
@@ -1334,7 +1334,7 @@ const StLegendItem = styled.div`
   justify-content: space-between;
   gap: 0.75rem;
   font-size: 0.82rem;
-  color: #55657d;
+  color: #2c518c;
 
   .info {
     display: flex;
@@ -1364,16 +1364,16 @@ const StLegendItem = styled.div`
   }
 
   span {
-    color: #8592a4;
+    color: #8f939a;
     font-weight: 700;
   }
 `;
 
 const StFilterChip = styled.button`
-  border: 1px solid #d6e2ff;
+  border: 1px solid #e9eaec;
   border-radius: 999px;
-  background: #eff4ff;
-  color: #5067a6;
+  background: #f7f7f7;
+  color: #757981;
   padding: 0.45rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 800;
@@ -1393,9 +1393,9 @@ const StMonthlyList = styled.div`
 `;
 
 const StMonthLine = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#9db4f7" : "#dbe4ef")};
+  border: 1px solid ${({ $active }) => ($active ? "#c7c9cd" : "#e4e5e6")};
   border-radius: 18px;
-  background: ${({ $active }) => ($active ? "#eef3ff" : "#fbfdff")};
+  background: ${({ $active }) => ($active ? "#f6f6f7" : "#fdfdfd")};
   padding: 0.8rem 0.9rem;
   display: grid;
   grid-template-columns: 0.62fr 0.42fr 0.9fr minmax(120px, 1fr);
@@ -1405,13 +1405,13 @@ const StMonthLine = styled.button<{ $active: boolean }>`
   strong {
     font-size: 0.9rem;
     font-weight: 900;
-    color: #213454;
+    color: #192c4e;
     text-align: left;
   }
 
   span {
     font-size: 0.76rem;
-    color: #7a8799;
+    color: #84888f;
     font-weight: 700;
     text-align: left;
   }
@@ -1419,7 +1419,7 @@ const StMonthLine = styled.button<{ $active: boolean }>`
   em {
     font-style: normal;
     font-weight: 900;
-    color: #325099;
+    color: #2b4d87;
     text-align: right;
   }
 
@@ -1434,7 +1434,7 @@ const StMonthLine = styled.button<{ $active: boolean }>`
   .fill {
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(180deg, #7ea4f2, #5c7fdd);
+    background: #9a9ea4;
   }
 
   @media (max-width: 760px) {
@@ -1457,7 +1457,7 @@ const StCategoryItem = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid #e5ebf4;
+  border: 1px solid #ececed;
   border-radius: 16px;
   padding: 0.75rem 0.85rem;
 
@@ -1474,14 +1474,14 @@ const StCategoryItem = styled.div`
 
   span {
     font-size: 0.74rem;
-    color: #7b899b;
+    color: #858a91;
     font-weight: 700;
   }
 
   em {
     font-style: normal;
     white-space: nowrap;
-    color: #325099;
+    color: #2b4d87;
     font-weight: 900;
   }
 `;
@@ -1493,7 +1493,7 @@ const StAccordionList = styled.div`
 `;
 
 const StAccordion = styled.article`
-  border: 1px solid #e2e9f2;
+  border: 1px solid #e9eaeb;
   border-radius: 18px;
   overflow: hidden;
 `;
@@ -1506,7 +1506,7 @@ const StAccordionButton = styled.button`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #24364d;
+  color: #182a4b;
 
   strong {
     font-size: 0.9rem;
@@ -1515,7 +1515,7 @@ const StAccordionButton = styled.button`
 
   span {
     font-size: 0.76rem;
-    color: #728197;
+    color: #7e838b;
     font-weight: 800;
   }
 `;
@@ -1530,7 +1530,7 @@ const StEntryItem = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
-  border: 1px solid #edf2f7;
+  border: 1px solid #f1f2f3;
   border-radius: 14px;
   padding: 0.7rem 0.8rem;
 
@@ -1542,13 +1542,13 @@ const StEntryItem = styled.div`
   p {
     margin-top: 0.2rem;
     font-size: 0.76rem;
-    color: #78879b;
+    color: #84888f;
   }
 
   em {
     font-style: normal;
     font-weight: 800;
-    color: #304e95;
+    color: #2a4c84;
     white-space: nowrap;
   }
 `;
@@ -1556,5 +1556,5 @@ const StEntryItem = styled.div`
 const StEmpty = styled.p`
   margin-top: 0.85rem;
   font-size: 0.84rem;
-  color: #8693a5;
+  color: #90949b;
 `;
