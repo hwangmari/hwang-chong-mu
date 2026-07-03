@@ -26,7 +26,8 @@
       "Bash(npm ls *)",
       "Bash(npx --no-install omc --version)",
       "Bash(npm view *)",
-      "Bash(python3 tone2.py --apply)"
+      "Bash(python3 tone2.py --apply)",
+      "Bash(echo \"TSC:$?\")"
     ]
   }
 }

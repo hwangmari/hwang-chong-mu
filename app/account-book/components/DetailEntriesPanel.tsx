@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import styled from "styled-components";
 import { ResolvedAccountEntry } from "../types";
 import {
@@ -64,6 +65,7 @@ export default function DetailEntriesPanel({
     ...(monthlyTracking?.map((row) => row.amount) || [0]),
   );
   const hasAssetEntries = (assetEntries?.length || 0) > 0;
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const formatEntryRawText = (entry: ResolvedAccountEntry) => {
     if (!entry.rawText) return "";
@@ -212,28 +214,60 @@ export default function DetailEntriesPanel({
     const amountMasked =
       isAmountHidden || (hideIncomeAmount && entry.type === "income");
 
+    const menuItems: Array<{
+      key: string;
+      label: string;
+      onClick: () => void;
+      active?: boolean;
+      danger?: boolean;
+    }> = [
+      ...actions.map((action) => ({
+        key: `action-${action.label}`,
+        label: action.label,
+        onClick: action.onClick,
+        active: action.active,
+      })),
+    ];
+    if (!entry.readonly && onEdit) {
+      menuItems.push({ key: "edit", label: "수정", onClick: () => onEdit(entry) });
+    }
+    if (!entry.readonly && onDelete) {
+      menuItems.push({
+        key: "delete",
+        label: "삭제",
+        onClick: () => onDelete(entry.id),
+        danger: true,
+      });
+    }
+    const isMenuOpen = openMenuId === entry.resolvedId;
+    const isShared = actions.some(
+      (action) => action.active && action.label.includes("공유"),
+    );
+
     return (
-      <StEntryItem key={entry.resolvedId}>
-        <StEntryMain>
-          <StEntryTop>
+      <StEntryItem key={entry.resolvedId} $shared={isShared}>
+        <StEntryTop>
+          {entry.source !== "direct" ? (
             <StMemberBadge>{entry.member || "나"}</StMemberBadge>
-            <StEntryBadge $tone={accentTone}>{badgeLabel}</StEntryBadge>
-            <StEntryPayment>
-              {paymentLabel(entry.payment)}
-              {entry.payment !== "cash" && entry.cardCompany
-                ? ` · ${entry.cardCompany}`
-                : ""}
-            </StEntryPayment>
-            {entry.source !== "direct" ? (
-              <StMirrorBadge>
-                {entry.source === "shared_link"
-                  ? "공용방에 공유됨"
-                  : "공용방 자동반영"}
-              </StMirrorBadge>
-            ) : null}
-          </StEntryTop>
-          <StEntryBox>
-            <StEntryName>{headline}</StEntryName>
+          ) : null}
+          <StEntryBadge $tone={accentTone}>{badgeLabel}</StEntryBadge>
+          <StEntryPayment>
+            {paymentLabel(entry.payment)}
+            {entry.payment !== "cash" && entry.cardCompany
+              ? ` · ${entry.cardCompany}`
+              : ""}
+          </StEntryPayment>
+          {isShared ? <StSharedTag>공유중</StSharedTag> : null}
+          {entry.source !== "direct" ? (
+            <StMirrorBadge>
+              {entry.source === "shared_link"
+                ? "공용방에 공유됨"
+                : "공용방 자동반영"}
+            </StMirrorBadge>
+          ) : null}
+        </StEntryTop>
+        <StEntryBox>
+          <StEntryName>{headline}</StEntryName>
             {supportLabels.length > 0 ? (
               <StEntryMetaList>
                 {supportLabels.map((label) => (
@@ -243,48 +277,57 @@ export default function DetailEntriesPanel({
                 ))}
               </StEntryMetaList>
             ) : null}
-            {memoText && !isSameMeaning(memoText, headline) ? (
-              <StEntryMemo>{memoText}</StEntryMemo>
+          {memoText && !isSameMeaning(memoText, headline) ? (
+            <StEntryMemo>{memoText}</StEntryMemo>
+          ) : null}
+        </StEntryBox>
+        <StEntryAmount $tone={accentTone} $hidden={amountMasked}>
+          {amountMasked ? "금액 숨김" : formatAmount(entry.amount)}
+        </StEntryAmount>
+        <StEntryDateRow>
+            {showDateMeta ? <StEntryMeta>{entry.date}</StEntryMeta> : null}
+            {menuItems.length > 0 ? (
+            <StEntryMenuAnchor>
+              <StKebabButton
+                type="button"
+                aria-label="더보기"
+                aria-expanded={isMenuOpen}
+                onClick={() =>
+                  setOpenMenuId(isMenuOpen ? null : entry.resolvedId)
+                }
+              >
+                ⋯
+              </StKebabButton>
+              {isMenuOpen ? (
+                <>
+                  <StMenuBackdrop
+                    type="button"
+                    aria-label="메뉴 닫기"
+                    onClick={() => setOpenMenuId(null)}
+                  />
+                  <StMenuPopover role="menu">
+                    {menuItems.map((item) => (
+                      <StMenuItem
+                        key={`${entry.resolvedId}-${item.key}`}
+                        type="button"
+                        role="menuitem"
+                        $danger={item.danger}
+                        $active={item.active}
+                        onClick={() => {
+                          item.onClick();
+                          setOpenMenuId(null);
+                        }}
+                      >
+                        <span>{item.label}</span>
+                        {item.active ? <StMenuCheck aria-hidden>✓</StMenuCheck> : null}
+                      </StMenuItem>
+                    ))}
+                  </StMenuPopover>
+                </>
+              ) : null}
+            </StEntryMenuAnchor>
             ) : null}
-          </StEntryBox>
-          {actions.length > 0 ? (
-            <StEntryActions>
-              {actions.map((action) => (
-                <StEntryActionButton
-                  key={`${entry.resolvedId}-${action.label}`}
-                  type="button"
-                  $active={Boolean(action.active)}
-                  onClick={action.onClick}
-                >
-                  {action.label}
-                </StEntryActionButton>
-              ))}
-            </StEntryActions>
-          ) : null}
-        </StEntryMain>
-        <StEntryAside>
-          <StEntryAmount $tone={accentTone} $hidden={amountMasked}>
-            {amountMasked ? "금액 숨김" : formatAmount(entry.amount)}
-          </StEntryAmount>
-          {showDateMeta ? <StEntryMeta>{entry.date}</StEntryMeta> : null}
-          {!entry.readonly && (onEdit || onDelete) ? (
-            <StEntryControlGroup>
-              {onEdit ? (
-                <StEditButton type="button" onClick={() => onEdit(entry)}>
-                  수정
-                </StEditButton>
-              ) : null}
-              {onDelete ? (
-                <StDeleteButton
-                  type="button"
-                  onClick={() => onDelete(entry.id)}
-                >
-                  삭제
-                </StDeleteButton>
-              ) : null}
-            </StEntryControlGroup>
-          ) : null}
-        </StEntryAside>
+          </StEntryDateRow>
       </StEntryItem>
     );
   };
@@ -439,28 +482,28 @@ const StEmpty = styled.p`
   color: ${({ theme }) => theme.colors.gray500};
   padding: 0.25rem 0;
 `;
-const StEntryItem = styled.article`
+const StEntryItem = styled.article<{ $shared?: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.7rem;
+  grid-template-areas:
+    "top amount"
+    "box date";
+  column-gap: 0.7rem;
+  row-gap: 0.2rem;
+  align-items: center;
   padding: 0.58rem 0.72rem;
-  border: 1px solid #ebeced;
+  border: 1px solid ${({ $shared }) => ($shared ? "#d5e4fb" : "#ebeced")};
   border-radius: 13px;
   background: ${({ theme }) => theme.colors.white};
   box-shadow: 0 2px 8px rgba(36, 37, 39, 0.03);
 
   @media (max-width: 720px) {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.55rem;
-    align-items: start;
+    column-gap: 0.55rem;
   }
 `;
-const StEntryMain = styled.div`
-  min-width: 0;
-  display: grid;
-  gap: 0.18rem;
-`;
 const StEntryTop = styled.div`
+  grid-area: top;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -468,6 +511,22 @@ const StEntryTop = styled.div`
 
   @media (max-width: 720px) {
     gap: 0.3rem;
+  }
+`;
+const StSharedTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #7f9bc9;
+
+  &::before {
+    content: "";
+    width: 0.34rem;
+    height: 0.34rem;
+    border-radius: 999px;
+    background: #9db8e6;
   }
 `;
 const StEntryBadge = styled.span<{
@@ -518,13 +577,12 @@ const StMirrorBadge = styled.span`
 `;
 
 const StEntryBox = styled.div`
+  grid-area: box;
   min-width: 0;
-
-  @media (max-width: 720px) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.45rem;
 `;
 
 const StEntryName = styled.p`
@@ -561,42 +619,17 @@ const StEntryMetaText = styled.span`
   }
 `;
 const StEntryMemo = styled.p`
+  width: 100%;
   font-size: 0.76rem;
   color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.45;
-`;
-const StEntryActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.08rem;
-`;
-const StEntryActionButton = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#b9bcc0" : "#e4e5e6")};
-  background: ${({ $active, theme }) => ($active ? "#f6f6f6" : theme.colors.gray100)};
-  color: ${({ $active, theme }) => ($active ? theme.colors.gray700 : "#72777f")};
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.2rem 0.5rem;
-`;
-const StEntryAside = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.4rem;
-  min-width: 6.8rem;
-
-  @media (max-width: 720px) {
-    align-items: flex-end;
-    min-width: 0;
-  }
 `;
 const StEntryAmount = styled.span<{
   $tone: "income" | "expense" | "asset";
   $hidden?: boolean;
 }>`
+  grid-area: amount;
+  justify-self: end;
   font-size: 0.98rem;
   font-weight: 900;
   text-align: right;
@@ -617,34 +650,90 @@ const StEntryMeta = styled.span`
   font-size: 0.72rem;
   color: #82868d;
 `;
-const StEntryControlGroup = styled.div`
+const StEntryDateRow = styled.div`
+  grid-area: date;
+  justify-self: end;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.45rem;
-  flex-wrap: wrap;
+`;
+const StEntryMenuAnchor = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+`;
+const StKebabButton = styled.button`
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid #e6e7e9;
+  background: ${({ theme }) => theme.colors.white};
+  color: #6b6f77;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  line-height: 1;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
-  @media (max-width: 720px) {
-    justify-content: flex-end;
-    gap: 0.35rem;
+  &:hover {
+    border-color: #d3d5d9;
+    background: ${({ theme }) => theme.colors.gray100};
   }
 `;
-const StEditButton = styled.button`
-  border: 1px solid #eaebec;
-  background: ${({ theme }) => theme.colors.gray100};
-  color: #83878e;
-  border-radius: 999px;
-  padding: 0.28rem 0.68rem;
-  font-size: 0.76rem;
-  font-weight: 800;
+const StMenuBackdrop = styled.button`
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: none;
+  background: transparent;
+  cursor: default;
 `;
-const StDeleteButton = styled.button`
-  border: 1px solid #e8e9ea;
+const StMenuPopover = styled.div`
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 41;
+  min-width: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  border: 1px solid #e9eaec;
+  border-radius: 12px;
   background: ${({ theme }) => theme.colors.white};
-  color: #878b92;
-  border-radius: 999px;
-  padding: 0.28rem 0.68rem;
-  font-size: 0.76rem;
-  font-weight: 800;
+  box-shadow: 0 12px 28px rgba(26, 34, 49, 0.14);
+`;
+const StMenuItem = styled.button<{ $danger?: boolean; $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  border: none;
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.gray100 : "transparent"};
+  color: ${({ $danger }) => ($danger ? "#f04452" : "#3a3f47")};
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${({ $danger }) => ($danger ? "#fef2f3" : "#f4f5f7")};
+  }
+`;
+const StMenuCheck = styled.span`
+  color: #3182f6;
+  font-size: 0.78rem;
+  font-weight: 900;
 `;
 const StTrackingRow = styled.article`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
