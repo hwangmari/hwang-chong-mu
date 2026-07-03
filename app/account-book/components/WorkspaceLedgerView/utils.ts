@@ -38,6 +38,35 @@ export const CHECK_CARD_BRAND_OPTIONS = [
   "페이코",
 ] as const;
 
+// 카드사별 혜택 실적 기준액(원). 이 금액 이상 써야 혜택을 받는다. 필요 시 여기서 추가/수정.
+export const CARD_BENEFIT_THRESHOLDS: Record<string, number> = {
+  네이버현대카드: 300000,
+  KB국민카드: 300000,
+  롯데카드: 400000,
+};
+
+export type CardBenefitStatus = {
+  threshold: number;
+  achieved: boolean;
+  remaining: number;
+  progress: number;
+};
+
+/** 카드사 라벨과 이번 달 사용액으로 혜택 실적 달성 상태를 계산한다. 기준이 없으면 null. */
+export function getCardBenefitStatus(
+  cardLabel: string,
+  amount: number,
+): CardBenefitStatus | null {
+  const threshold = CARD_BENEFIT_THRESHOLDS[cardLabel.trim()];
+  if (!threshold) return null;
+  return {
+    threshold,
+    achieved: amount >= threshold,
+    remaining: Math.max(threshold - amount, 0),
+    progress: threshold > 0 ? Math.min(amount / threshold, 1) : 1,
+  };
+}
+
 export const CATEGORY_OPTIONS: CategoryOption[] = [
   {
     label: "생활비",
@@ -46,8 +75,14 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
     description: "식비, 의료, 약국, 구독, 플랫폼 결제",
   },
   {
+    label: "모임비",
+    color: "#d76d8f",
+    icon: "👥",
+    description: "모임, 회식, 회비, 친목 지출",
+  },
+  {
     label: "고정비",
-    color: "#5f73d9",
+    color: "#888c94",
     icon: "📌",
     description: "공과금, 통신비, 보험료 같은 반복 지출",
   },
@@ -65,25 +100,25 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
   },
   {
     label: "쇼핑/여가",
-    color: "#818bd7",
+    color: "#a8abb0",
     icon: "🛍️",
     description: "쇼핑, 패션, 여행, 여가 소비",
   },
   {
     label: "특별/기타",
-    color: "#3c3d41",
+    color: "#34353a",
     icon: "🎁",
     description: "선물, 경조사, 이벤트 같은 특별 지출",
   },
   {
     label: "카드대금",
-    color: "#5d6f8d",
+    color: "#6f737b",
     icon: "💳",
     description: "카드 청구액, 이용대금, 결제대금 같은 정산 내역",
   },
   {
     label: SAVINGS_CATEGORY_LABEL,
-    color: "#5d9cec",
+    color: "#a0a3a9",
     icon: "💰",
     description: "예금, 연금, 투자처럼 자산을 쌓는 항목",
   },
@@ -92,7 +127,7 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
 export const INCOME_CATEGORY_OPTIONS: CategoryOption[] = [
   {
     label: INCOME_CATEGORY_LABEL,
-    color: "#4f7cff",
+    color: "#868a92",
     icon: "💼",
     description: "월급, 입금, 환급 등 들어온 금액",
   },
@@ -149,6 +184,8 @@ const CULTURE_SUBSCRIPTION_KEYWORD_PATTERN =
   /구독|넷플릭스|유튜브\s?프리미엄|youtube|티빙|웨이브|디즈니|왓챠|멜론|지니뮤직|spotify|스포티파이|리디북스|밀리의서재|도서|서점|영화|전시|공연/i;
 const EXERCISE_KEYWORD_PATTERN =
   /테니스|헬스|gym|피티|pt\b|퍼스널트레이닝|필라테스|요가|수영|러닝|런닝|배드민턴|클라이밍|크로스핏|골프|스쿼시|운동|레슨|체육관|짐\b/i;
+const GATHERING_KEYWORD_PATTERN =
+  /모임비|모임|회식|회비|친목|동호회|정모|계모임|번개모임|송년회|신년회|동창회/i;
 const PLATFORM_PAY_KEYWORD_PATTERN =
   /네이버페이|카카오페이|토스페이|페이코|payco|paypal|간편결제|플랫폼/i;
 const FASHION_BEAUTY_KEYWORD_PATTERN =
@@ -160,6 +197,15 @@ const CARD_SETTLEMENT_KEYWORD_PATTERN =
 const CAR_COMPANY_NOISE_PATTERN =
   /kb\s*국민\s*카드|국민\s*카드|신한\s*카드|삼성\s*카드|네이버\s*현대\s*카드|현대\s*카드|롯데\s*카드|롯데\s*카트|하나\s*카드|우리\s*카드|농협\s*카드|nh\s*농협\s*카드|bc\s*카드|bccard|네이버\s*하나\s*머니|카카오\s*페이|토스\s*페이|페이코|payco/gi;
 const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
+  [INCOME_CATEGORY_LABEL]: [
+    "급여",
+    "용돈",
+    "증여",
+    "상여/보너스",
+    "환급",
+    "이자",
+    "기타",
+  ],
   생활비: [
     "외식",
     "배달",
@@ -171,6 +217,7 @@ const CATEGORY_DETAIL_OPTIONS: Record<string, readonly string[]> = {
     "구독",
     "플랫폼",
   ],
+  모임비: ["회식", "회비", "정기모임", "친목", "선물", "기타"],
   고정비: FIXED_EXPENSE_SUBCATEGORY_OPTIONS,
   "이동/차량": ["택시", "주유", "주차", "충전", "교통카드", "통행료"],
   운동: ["테니스", "헬스", "필라테스", "요가", "수영", "러닝", "기타"],
@@ -488,6 +535,10 @@ export function getRepresentativeExpenseCategory(category: string) {
     return "생활비";
   }
 
+  if (["모임비", "모임/회식", "회비"].includes(normalizedCategory)) {
+    return "모임비";
+  }
+
   if (
     [
       "이동/차량",
@@ -559,6 +610,7 @@ export function inferCategoryFromItemText(text: string) {
   if (!text) return null;
   if (CARD_SETTLEMENT_KEYWORD_PATTERN.test(text)) return "카드대금";
   if (SAVINGS_KEYWORD_PATTERN.test(text)) return SAVINGS_CATEGORY_LABEL;
+  if (GATHERING_KEYWORD_PATTERN.test(text)) return "모임비";
   if (PHARMACY_KEYWORD_PATTERN.test(text)) return "생활비";
   if (MEDICAL_KEYWORD_PATTERN.test(text)) return "생활비";
   if (TRANSIT_CARD_KEYWORD_PATTERN.test(text)) return "이동/차량";
@@ -861,6 +913,104 @@ export function parseAmountValue(text: string) {
   if (numericMatches.length === 0) return 0;
   const value = numericMatches.at(-1)?.[1] || "0";
   return Number(value.replace(/,/g, ""));
+}
+
+/**
+ * "15000+3000" 같은 사칙연산 계산식을 안전하게 평가합니다.
+ * 숫자(콤마·소수점 허용), + - * / 와 괄호만 허용하며, 그 외 문자가 섞이거나
+ * 식이 올바르지 않으면 null을 반환합니다. eval을 쓰지 않고 재귀 하강 파서로 계산합니다.
+ */
+export function evaluateAmountExpression(input: string): number | null {
+  const sanitized = input.replace(/[,\s원=]/g, "");
+  if (!sanitized) return null;
+  if (!/^[0-9+\-*/().]+$/.test(sanitized)) return null;
+
+  let pos = 0;
+  const peek = () => sanitized[pos];
+
+  const parseExpression = (): number | null => {
+    let value = parseTerm();
+    if (value === null) return null;
+    while (peek() === "+" || peek() === "-") {
+      const op = sanitized[pos++];
+      const right = parseTerm();
+      if (right === null) return null;
+      value = op === "+" ? value + right : value - right;
+    }
+    return value;
+  };
+
+  const parseTerm = (): number | null => {
+    let value = parseFactor();
+    if (value === null) return null;
+    while (peek() === "*" || peek() === "/") {
+      const op = sanitized[pos++];
+      const right = parseFactor();
+      if (right === null) return null;
+      if (op === "/" && right === 0) return null;
+      value = op === "*" ? value * right : value / right;
+    }
+    return value;
+  };
+
+  const parseFactor = (): number | null => {
+    if (peek() === "+" || peek() === "-") {
+      const op = sanitized[pos++];
+      const factor = parseFactor();
+      if (factor === null) return null;
+      return op === "-" ? -factor : factor;
+    }
+    if (peek() === "(") {
+      pos++;
+      const value = parseExpression();
+      if (value === null || peek() !== ")") return null;
+      pos++;
+      return value;
+    }
+    const start = pos;
+    while (pos < sanitized.length && /[0-9.]/.test(sanitized[pos])) pos++;
+    if (pos === start) return null;
+    const num = Number(sanitized.slice(start, pos));
+    return Number.isFinite(num) ? num : null;
+  };
+
+  const result = parseExpression();
+  if (result === null || pos !== sanitized.length || !Number.isFinite(result)) {
+    return null;
+  }
+  return result;
+}
+
+// 그룹 묶음용 동의어 사전: 변형어를 대표어로 통일한다.
+const GROUPING_SYNONYM_GROUPS: Array<{ canonical: string; variants: string[] }> =
+  [
+    { canonical: "엄마", variants: ["어머니", "어머님", "모친"] },
+    { canonical: "아빠", variants: ["아버지", "아버님", "부친"] },
+    { canonical: "할머니", variants: ["할머님"] },
+    { canonical: "할아버지", variants: ["할아버님"] },
+    { canonical: "누나", variants: ["누님"] },
+    { canonical: "형", variants: ["형님"] },
+    { canonical: "아내", variants: ["와이프", "집사람", "마누라"] },
+    { canonical: "남편", variants: ["신랑"] },
+  ];
+
+/**
+ * "생일용돈 - 어머님" / "생일용돈 - 엄마"처럼 동의어만 다른 라벨을 대표어로 통일한다.
+ * 경계(시작/끝/공백/하이픈/·//) 사이의 변형어만 치환해 부분일치 오치환을 막는다.
+ */
+export function normalizeGroupingLabel(label: string): string {
+  let result = (label || "").trim();
+  if (!result) return result;
+  for (const { canonical, variants } of GROUPING_SYNONYM_GROUPS) {
+    for (const variant of variants) {
+      const pattern = new RegExp(
+        `(^|[\\s\\-·/])${variant}(?=$|[\\s\\-·/])`,
+        "g",
+      );
+      result = result.replace(pattern, `$1${canonical}`);
+    }
+  }
+  return result.replace(/\s+/g, " ").trim();
 }
 
 function detectEntryType(text: string): EntryType {

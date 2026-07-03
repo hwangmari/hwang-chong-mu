@@ -49,7 +49,7 @@ export const StDescription = styled.p`
   margin-top: 0.25rem;
   font-size: 0.84rem;
   line-height: 1.5;
-  color: #6e7c90;
+  color: #797d85;
 `;
 
 export const StSection = styled.section`
@@ -59,7 +59,7 @@ export const StSection = styled.section`
 export const StSectionTitle = styled.h3`
   font-size: 0.95rem;
   font-weight: 900;
-  color: #314157;
+  color: #1d335a;
   margin-bottom: 0.65rem;
 `;
 
@@ -72,13 +72,13 @@ export const StInput = StAbSettingsInput;
 export const StSubTitle = styled.h4`
   font-size: 0.86rem;
   font-weight: 900;
-  color: #314157;
+  color: #1d335a;
 `;
 
 export const StMetaText = styled.p`
   font-size: 0.78rem;
   line-height: 1.5;
-  color: #6d7b8f;
+  color: #787c84;
 `;
 
 export const StInlineLabel = styled(StAbBadge).attrs({ $tone: "blue" as const })``;
@@ -96,7 +96,7 @@ export const StParticipantList = styled.div`
 `;
 
 export const StParticipantCard = styled.div`
-  border: 1px solid #dfe7f3;
+  border: 1px solid #e8e9ea;
   border-radius: 14px;
   background: ${({ theme }) => theme.colors.white};
   padding: 0.75rem;

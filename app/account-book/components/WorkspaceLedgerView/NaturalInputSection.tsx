@@ -192,23 +192,23 @@ const StComposerCard = styled.section`
 
 const StNaturalInput = styled.input`
   width: 100%;
-  border: 1px solid #d5dfec;
+  border: 1px solid #dfe0e2;
   border-radius: 1.1rem;
   height: 3.5rem;
   padding: 0 1rem;
   font-size: 1rem;
   line-height: 1.4;
-  color: #142132;
+  color: #0f1c2e;
   background: ${({ theme }) => theme.colors.white};
 
   &:focus {
     outline: none;
-    border-color: #7c9cf3;
-    box-shadow: 0 0 0 4px rgba(124, 156, 243, 0.16);
+    border-color: #b4b7bb;
+    box-shadow: 0 0 0 4px rgba(180, 183, 187, 0.16);
   }
 
   &::placeholder {
-    color: #8a99ad;
+    color: #979aa0;
   }
 
   @media (max-width: 720px) {
@@ -242,12 +242,12 @@ const StPreview = styled.div<{ $valid: boolean }>`
   }
 
   span {
-    color: #607186;
+    color: #6d7179;
     font-weight: 700;
   }
 
   em {
-    color: #274e9a;
+    color: #294a81;
     font-weight: 900;
   }
 

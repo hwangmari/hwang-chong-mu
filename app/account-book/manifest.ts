@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/account-book",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#5f73d9",
+    theme_color: "#888c94",
     icons: [
       {
         src: "/favicon.ico",

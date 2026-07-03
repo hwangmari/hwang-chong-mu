@@ -103,7 +103,7 @@ const StEyebrow = styled.p`
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7083a1;
+  color: #83878e;
 `;
 
 const StTitle = styled.h3`
@@ -117,7 +117,7 @@ const StDescription = styled.p`
   max-width: 30rem;
   font-size: 0.84rem;
   line-height: 1.45;
-  color: #728095;
+  color: #7d828a;
 `;
 
 const StColumns = styled.div`
@@ -141,14 +141,13 @@ const StColumns = styled.div`
 
 const StColumn = styled.button<{ $active: boolean }>`
   text-align: left;
-  border: 1px solid #dce4ef;
+  border: 1px solid #e4e5e7;
   border-radius: 18px;
-  background:
-    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(242, 247, 253, 0.98));
+  background: rgba(251, 251, 252, 0.98);
   min-height: 100%;
   box-shadow: ${({ $active }) =>
-    $active ? "0 14px 28px rgba(84, 111, 194, 0.16)" : "none"};
-  border-color: ${({ $active }) => ($active ? "#9cb5f6" : "#dce4ef")};
+    $active ? "0 14px 28px rgba(133, 137, 145, 0.16)" : "none"};
+  border-color: ${({ $active }) => ($active ? "#c6c8cc" : "#e4e5e7")};
 `;
 
 const StColumnHeader = styled.header`
@@ -157,7 +156,7 @@ const StColumnHeader = styled.header`
   gap: 0.5rem;
   align-items: flex-start;
   padding: 0.9rem 0.95rem 0.75rem;
-  border-bottom: 1px solid #e5ebf3;
+  border-bottom: 1px solid #ebeced;
 
   strong {
     display: block;
@@ -169,14 +168,14 @@ const StColumnHeader = styled.header`
     display: block;
     margin-top: 0.18rem;
     font-size: 0.75rem;
-    color: #8190a5;
+    color: #8e9298;
   }
 
   em {
     font-style: normal;
     font-size: 0.75rem;
     font-weight: 800;
-    color: #5172bf;
+    color: #82868e;
     white-space: nowrap;
   }
 `;
@@ -191,22 +190,22 @@ const StColumnBody = styled.div`
 const StColumnEmpty = styled.p`
   padding: 0.2rem 0.1rem;
   font-size: 0.78rem;
-  color: #8d99ab;
+  color: #979ba1;
 `;
 
 const StTotalValue = styled.strong`
   font-size: 1.8rem;
   font-weight: 900;
-  color: #2b4d96;
+  color: #294a81;
   line-height: 1.1;
 `;
 
 const StColumnMeta = styled.p`
   font-size: 0.78rem;
-  color: #6f7f96;
+  color: #7c8189;
 `;
 
 const StColumnHint = styled.p`
   font-size: 0.72rem;
-  color: #9aa6b7;
+  color: #a4a7ad;
 `;

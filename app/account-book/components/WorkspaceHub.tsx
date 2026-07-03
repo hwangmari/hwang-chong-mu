@@ -704,7 +704,7 @@ const StEyebrow = styled.p`
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7083a1;
+  color: #83878e;
 `;
 
 const StTitle = styled.h1`
@@ -723,7 +723,7 @@ const StDescription = styled.p`
   max-width: 42rem;
   font-size: 0.92rem;
   line-height: 1.6;
-  color: #66758b;
+  color: #72777f;
 
   @media (max-width: 720px) {
     display: none;
@@ -742,9 +742,9 @@ const StModeSelector = styled.div`
 `;
 
 const StModeOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#9db6ff" : "#d9e2ee")};
+  border: 1px solid ${({ $active }) => ($active ? "#cccdd0" : "#e2e3e5")};
   border-radius: 1rem;
-  background: ${({ $active, theme }) => ($active ? "#f4f8ff" : theme.colors.white)};
+  background: ${({ $active, theme }) => ($active ? "#f9f9fa" : theme.colors.white)};
   padding: 0.9rem 1rem;
   text-align: left;
   display: grid;
@@ -754,13 +754,13 @@ const StModeOption = styled.button<{ $active: boolean }>`
   strong {
     font-size: 0.9rem;
     font-weight: 900;
-    color: ${({ $active, theme }) => ($active ? "#3756b7" : theme.colors.gray800)};
+    color: ${({ $active, theme }) => ($active ? "#71757d" : theme.colors.gray800)};
   }
 
   span {
     font-size: 0.8rem;
     line-height: 1.45;
-    color: ${({ $active }) => ($active ? "#5f73a5" : "#6f7f95")};
+    color: ${({ $active }) => ($active ? "#7c8088" : "#7c8088")};
   }
 `;
 
@@ -769,10 +769,10 @@ const StActiveUserNote = styled.p`
   margin-bottom: 0.35rem;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: #66758b;
+  color: #72777f;
 
   strong {
-    color: #314157;
+    color: #1d335a;
     font-weight: 900;
   }
 `;
@@ -786,9 +786,9 @@ const sharedButtonBase = `
 
 const StManageButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #cad8ea;
+  border: 1px solid #d8dadc;
   background: ${({ theme }) => theme.colors.white};
-  color: #49628b;
+  color: #2d528d;
 
   &:disabled {
     opacity: 0.48;
@@ -802,8 +802,8 @@ const StManageButton = styled.button`
 
 const StPrimaryButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #5a73d9;
-  background: linear-gradient(135deg, #6d87ef, #5f73d9);
+  border: 1px solid #94989f;
+  background: #888c94;
   color: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
@@ -813,9 +813,9 @@ const StPrimaryButton = styled.button`
 
 const StSecondaryButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #cad8ea;
+  border: 1px solid #d8dadc;
   background: ${({ theme }) => theme.colors.blue50};
-  color: #49628b;
+  color: #2d528d;
 
   @media (max-width: 720px) {
     width: 100%;
@@ -824,9 +824,9 @@ const StSecondaryButton = styled.button`
 
 const StGhostButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #d8e1ee;
+  border: 1px solid #e2e3e4;
   background: ${({ theme }) => theme.colors.white};
-  color: #63758e;
+  color: #72777f;
 
   @media (max-width: 720px) {
     width: 100%;
@@ -834,7 +834,7 @@ const StGhostButton = styled.button`
 `;
 
 const StHeroPanel = styled.section`
-  border: 1px solid #d7e2ef;
+  border: 1px solid #e2e3e4;
   border-radius: 26px;
   background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
@@ -861,7 +861,7 @@ const StHeroCopy = styled.div`
   span {
     font-size: 0.84rem;
     line-height: 1.55;
-    color: #6f8097;
+    color: #7d8189;
   }
 
   @media (max-width: 720px) {
@@ -895,14 +895,14 @@ const StSection = styled.section`
 const StSectionTitle = styled.h2`
   font-size: 1.05rem;
   font-weight: 900;
-  color: #253348;
+  color: #172849;
   margin-bottom: 0.7rem;
 `;
 
 const StSectionDescription = styled.p`
   margin-bottom: 0.7rem;
   font-size: 0.82rem;
-  color: #748297;
+  color: #7f848c;
 
   @media (max-width: 720px) {
     display: none;
@@ -917,7 +917,7 @@ const StGrid = styled.div`
 
 const StCard = styled.button`
   text-align: left;
-  border: 1px solid #d8e1ee;
+  border: 1px solid #e2e3e4;
   border-radius: 22px;
   padding: 1rem;
   background: ${({ theme }) => theme.colors.white};
@@ -927,8 +927,8 @@ const StCard = styled.button`
     transform 0.18s ease;
 
   &:hover {
-    border-color: #c7d5ea;
-    box-shadow: 0 16px 36px rgba(76, 96, 135, 0.08);
+    border-color: #d7d8da;
+    box-shadow: 0 16px 36px rgba(88, 92, 98, 0.08);
     transform: translateY(-1px);
   }
 `;
@@ -953,13 +953,13 @@ const StCardAside = styled.div`
   align-content: start;
   gap: 0.55rem;
   padding-left: 1.05rem;
-  border-left: 1px dashed #cfd9e8;
+  border-left: 1px dashed #dadbdd;
 
   @media (max-width: 760px) {
     padding-left: 0;
     padding-top: 0.95rem;
     border-left: 0;
-    border-top: 1px dashed #cfd9e8;
+    border-top: 1px dashed #dadbdd;
   }
 `;
 
@@ -968,19 +968,19 @@ const StCardAsideLabel = styled.span`
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #7485a1;
+  color: #858990;
 `;
 
 const StCardAsideValue = styled.strong`
   font-size: 1rem;
   font-weight: 900;
-  color: #233248;
+  color: #172748;
 `;
 
 const StCardAsideDescription = styled.p`
   font-size: 0.8rem;
   line-height: 1.6;
-  color: #6f8097;
+  color: #7d8189;
 
   @media (max-width: 720px) {
     display: none;
@@ -996,9 +996,9 @@ const StCardAsideTags = styled.div`
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    border: 1px solid #d7e2ef;
+    border: 1px solid #e2e3e4;
     background: ${({ theme }) => theme.colors.blue50};
-    color: #516785;
+    color: #2d518f;
     padding: 0.24rem 0.55rem;
     font-size: 0.72rem;
     font-weight: 800;
@@ -1009,7 +1009,7 @@ const StCardType = styled.span`
   display: inline-flex;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.indigo50};
-  color: #4b69bb;
+  color: #7d8189;
   font-size: 0.72rem;
   font-weight: 900;
   padding: 0.28rem 0.55rem;
@@ -1025,7 +1025,7 @@ const StCardTitle = styled.h3`
 const StCardMeta = styled.p`
   margin-top: 0.4rem;
   font-size: 0.85rem;
-  color: #5f718b;
+  color: #6f737b;
   font-weight: 700;
 `;
 
@@ -1035,7 +1035,7 @@ const StInviteRow = styled.div`
   span {
     font-size: 0.78rem;
     font-weight: 800;
-    color: #4f67a0;
+    color: #72767d;
   }
 `;
 
@@ -1044,9 +1044,9 @@ const StInviteCopyAction = styled.span`
   align-items: center;
   justify-content: center;
   width: fit-content;
-  border: 1px solid #cad8ea;
+  border: 1px solid #d8dadc;
   background: ${({ theme }) => theme.colors.white};
-  color: #49628b;
+  color: #2d528d;
   border-radius: 999px;
   padding: 0.5rem 0.78rem;
   font-size: 0.74rem;
@@ -1057,7 +1057,7 @@ const StCardHint = styled.p`
   margin-top: 1rem;
   font-size: 0.82rem;
   line-height: 1.55;
-  color: #7b899d;
+  color: #868a92;
 
   @media (max-width: 720px) {
     display: none;
@@ -1075,7 +1075,7 @@ const StMemberPreview = styled.div`
     align-items: center;
     border-radius: 999px;
     background: ${({ theme }) => theme.colors.indigo50};
-    color: #4d66a7;
+    color: #747880;
     padding: 0.22rem 0.48rem;
     font-size: 0.72rem;
     font-weight: 800;
@@ -1085,9 +1085,9 @@ const StMemberPreview = styled.div`
 const StEmptyCard = styled.div`
   margin-top: 1rem;
   border-radius: 22px;
-  border: 1px dashed #cbd7e7;
+  border: 1px dashed #d7d8db;
   background: ${({ theme }) => theme.colors.white};
-  color: #708096;
+  color: #7d8189;
   font-size: 0.9rem;
   line-height: 1.6;
   padding: 1rem 1.1rem;
@@ -1096,7 +1096,7 @@ const StEmptyCard = styled.div`
 const StModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.28);
+  background: rgba(23, 24, 26, 0.28);
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
@@ -1107,10 +1107,10 @@ const StModalBackdrop = styled.div`
 const StModalCard = styled.div`
   width: min(460px, 100%);
   border-radius: 26px;
-  border: 1px solid #d7e2ef;
+  border: 1px solid #e2e3e4;
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
-  box-shadow: 0 28px 64px rgba(55, 72, 111, 0.18);
+  box-shadow: 0 28px 64px rgba(69, 72, 77, 0.18);
 `;
 
 const StModalTitle = styled.h3`
@@ -1123,7 +1123,7 @@ const StModalDescription = styled.p`
   margin-top: 0.45rem;
   font-size: 0.84rem;
   line-height: 1.55;
-  color: #6c7c93;
+  color: #797e86;
 `;
 
 const StField = styled.label`
@@ -1135,12 +1135,12 @@ const StField = styled.label`
   span {
     font-size: 0.78rem;
     font-weight: 800;
-    color: #5d6e86;
+    color: #305698;
   }
 
   input {
     width: 100%;
-    border: 1px solid #d6e0ec;
+    border: 1px solid #dfe0e2;
     border-radius: 12px;
     background: ${({ theme }) => theme.colors.white};
     padding: 0.72rem 0.82rem;

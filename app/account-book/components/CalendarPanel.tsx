@@ -13,6 +13,7 @@ type Props = {
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
   onOpenNaturalRegisterForDate: (date: string) => void;
+  hideIncomeAmount?: boolean;
 };
 
 function formatCalendarAmount(value?: number) {
@@ -28,6 +29,7 @@ export default function CalendarPanel({
   toIsoDate,
   onSelectDate,
   onOpenNaturalRegisterForDate,
+  hideIncomeAmount = false,
 }: Props) {
   return (
     <>
@@ -60,7 +62,11 @@ export default function CalendarPanel({
             >
               <StDayNum $selected={isSelected}>{format(day, "d")}</StDayNum>
               <StDayMeta $kind="income" $selected={isSelected}>
-                {info?.income ? `+${formatCalendarAmount(info.income)}` : ""}
+                {info?.income
+                  ? hideIncomeAmount
+                    ? "＋•••"
+                    : `+${formatCalendarAmount(info.income)}`
+                  : ""}
               </StDayMeta>
               <StDayMeta $kind="expense" $selected={isSelected}>
                 {info?.expense ? `-${formatCalendarAmount(info.expense)}` : ""}
@@ -96,7 +102,7 @@ const StWeekName = styled.div`
 
   @media (max-width: 720px) {
     font-size: 0.68rem;
-    color: #a1acbc;
+    color: #aaadb3;
   }
 `;
 const StCalendarGrid = styled.div`
@@ -112,14 +118,14 @@ const StCalendarGrid = styled.div`
   }
 `;
 const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
-  border: 1px solid ${({ $selected }) => ($selected ? "#88a5f4" : "#edf1f5")};
+  border: 1px solid ${({ $selected }) => ($selected ? "#acaeb3" : "#f0f1f2")};
   background: ${({ $selected }) =>
     $selected
-      ? "linear-gradient(180deg, #eef4ff, #e2ebff)"
-      : "linear-gradient(180deg, #ffffff, #fbfdff)"};
-  color: ${({ $selected, $muted, theme }) => $selected ? "#213453" : $muted ? "#c2c8d2" : theme.colors.gray900};
+      ? "#f6f6f7"
+      : "#ffffff"};
+  color: ${({ $selected, $muted, theme }) => $selected ? "#182d4e" : $muted ? "#c7c9cd" : theme.colors.gray900};
   box-shadow: ${({ $selected }) =>
-    $selected ? "0 10px 22px rgba(99, 126, 212, 0.14)" : "none"};
+    $selected ? "0 10px 22px rgba(151, 154, 160, 0.14)" : "none"};
   border-radius: 16px;
   min-height: 80px;
   padding: 0.45rem 0.3rem;
@@ -132,7 +138,7 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
   @media (max-width: 720px) {
     border: none;
     background: ${({ $selected }) =>
-      $selected ? "linear-gradient(180deg, #f5f8ff, #edf3ff)" : "transparent"};
+      $selected ? "#f6f6f7" : "transparent"};
     box-shadow: none;
     border-radius: 14px;
     min-height: 58px;
@@ -144,7 +150,7 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
 const StDayNum = styled.span<{ $selected: boolean }>`
   font-size: 0.95rem;
   font-weight: 800;
-  color: ${({ $selected }) => ($selected ? "#1f2f4d" : "inherit")};
+  color: ${({ $selected }) => ($selected ? "#172a48" : "inherit")};
 
   @media (max-width: 720px) {
     font-size: 0.82rem;
@@ -158,13 +164,13 @@ const StDayMeta = styled.span<{
   font-size: 0.65rem;
   color: ${({ $kind, $selected }) => {
     if ($selected) {
-      if ($kind === "income") return "#3e67d8";
-      if ($kind === "settlement") return "#8d6328";
-      return "#655ae0";
+      if ($kind === "income") return "#2b6fd6";
+      if ($kind === "settlement") return "#e03d49";
+      return "#7f848c";
     }
-    if ($kind === "income") return "#4f7cff";
-    if ($kind === "settlement") return "#a7752f";
-    return "#6b63e8";
+    if ($kind === "income") return "#3182f6";
+    if ($kind === "settlement") return "#f04452";
+    return "#888c94";
   }};
   line-height: 1;
   font-weight: ${({ $selected }) => ($selected ? 800 : 700)};

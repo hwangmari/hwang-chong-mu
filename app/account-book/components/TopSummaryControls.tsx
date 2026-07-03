@@ -211,13 +211,13 @@ const StLedgerCard = styled.button<{ $active: boolean }>`
   min-height: 8.3rem;
   width: 100%;
   border-radius: 22px;
-  border: 1px solid ${({ $active }) => ($active ? "#9bb7ff" : "#d9e3f0")};
+  border: 1px solid ${({ $active }) => ($active ? "#caccd0" : "#e3e4e6")};
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(180deg, #f2f6ff 0%, #eef4ff 100%)"
-      : "linear-gradient(180deg, #fcfdff 0%, #f7faff 100%)"};
+      ? "#f6f6f7"
+      : "#fdfdfe"};
   overflow: hidden;
-  box-shadow: 0 6px 16px rgba(102, 120, 160, 0.05);
+  box-shadow: 0 6px 16px rgba(125, 129, 137, 0.05);
   padding: 0;
   text-align: left;
   cursor: pointer;
@@ -227,15 +227,15 @@ const StLedgerCard = styled.button<{ $active: boolean }>`
     background 0.18s ease;
 
   &:hover {
-    border-color: #b7caef;
-    box-shadow: 0 10px 22px rgba(102, 120, 160, 0.1);
+    border-color: #d1d2d5;
+    box-shadow: 0 10px 22px rgba(125, 129, 137, 0.1);
   }
 
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 3px rgba(79, 124, 255, 0.14),
-      0 10px 22px rgba(102, 120, 160, 0.1);
+      0 0 0 3px rgba(163, 166, 171, 0.14),
+      0 10px 22px rgba(125, 129, 137, 0.1);
   }
 
   @media (max-width: 720px) {
@@ -260,7 +260,7 @@ const StLedgerCardHead = styled.div`
     font-style: normal;
     font-size: 0.84rem;
     font-weight: 900;
-    color: #5973c1;
+    color: #878b93;
     white-space: nowrap;
   }
 
@@ -275,7 +275,7 @@ const StLedgerCardDescription = styled.p`
   font-size: 0.72rem;
   line-height: 1.35;
   font-weight: 700;
-  color: #8a97aa;
+  color: #95999f;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -288,12 +288,12 @@ const StLedgerCardDescription = styled.p`
 
 const StLedgerCardFooter = styled.div`
   margin-top: auto;
-  border-top: 1px solid #e5edf7;
-  background: rgba(243, 247, 253, 0.78);
+  border-top: 1px solid #edeeef;
+  background: rgba(248, 248, 248, 0.78);
   padding: 0.72rem 1rem 0.8rem;
   font-size: 0.76rem;
   font-weight: 800;
-  color: #8d99ab;
+  color: #979ba1;
 
   @media (max-width: 720px) {
     padding: 0.62rem 0.9rem 0.72rem;
@@ -326,12 +326,12 @@ const StCalendarSummaryCard = styled.article<{
   align-items: flex-start;
   min-height: 9.6rem;
   border-radius: 22px;
-  background: linear-gradient(180deg, #fcfdff 0%, ${({ theme }) => theme.colors.blue50} 100%);
-  border: 1px solid ${({ $active }) => ($active ? "#9db8ee" : "#dbe4f1")};
+  background: #fdfdfe;
+  border: 1px solid ${({ $active }) => ($active ? "#c3c5c8" : "#e5e6e7")};
   box-shadow: ${({ $active }) =>
     $active
-      ? "0 10px 24px rgba(95, 115, 217, 0.12)"
-      : "0 8px 20px rgba(102, 120, 160, 0.05)"};
+      ? "0 10px 24px rgba(151, 155, 161, 0.12)"
+      : "0 8px 20px rgba(125, 129, 137, 0.05)"};
   padding: 1.12rem 1.18rem;
   text-align: left;
   cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
@@ -344,8 +344,8 @@ const StCalendarSummaryCard = styled.article<{
     ${({ $clickable }) =>
       $clickable
         ? `
-      border-color: #bfd0ef;
-      box-shadow: 0 12px 24px rgba(102, 120, 160, 0.1);
+      border-color: #d5d6d9;
+      box-shadow: 0 12px 24px rgba(125, 129, 137, 0.1);
       transform: translateY(-1px);
     `
         : ""}
@@ -367,7 +367,7 @@ const StCalendarSummaryTop = styled.div`
 `;
 const StCalendarSummaryLabel = styled.p`
   font-size: 0.88rem;
-  color: #707988;
+  color: #767a82;
   font-weight: 800;
   margin-bottom: 0.45rem;
 
@@ -377,9 +377,9 @@ const StCalendarSummaryLabel = styled.p`
   }
 `;
 const StCalendarSummaryToggle = styled.button`
-  border: 1px solid #d7e2ef;
+  border: 1px solid #e2e3e4;
   background: ${({ theme }) => theme.colors.blue50};
-  color: #62748d;
+  color: #72767d;
   border-radius: 999px;
   padding: 0.22rem 0.54rem;
   font-size: 0.68rem;
@@ -394,11 +394,11 @@ const StCalendarSummaryValue = styled.p<{
   font-weight: 900;
   line-height: 1.12;
   letter-spacing: -0.02em;
-  color: ${({ $tone, $hidden, theme }) => {
-    if ($hidden) return "#8b95a6";
-    if ($tone === "income") return "#4f7cff";
-    if ($tone === "asset") return theme.colors.teal600;
-    return "#6b63e8";
+  color: ${({ $tone, $hidden }) => {
+    if ($hidden) return "#8b95a1";
+    if ($tone === "income") return "#3182f6";
+    if ($tone === "asset") return "#3182f6";
+    return "#333d4b";
   }};
 
   @media (max-width: 720px) {
@@ -412,7 +412,7 @@ const StCalendarSummaryDetail = styled.div`
 
   span {
     font-size: 0.75rem;
-    color: #8892a3;
+    color: #90949b;
     line-height: 1.35;
     font-weight: 700;
   }

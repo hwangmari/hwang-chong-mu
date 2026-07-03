@@ -128,13 +128,7 @@ export default function WorkspaceLedgerView({
         ?.memo || "",
     [currentMonthKey, monthlyMemos],
   );
-  const {
-    listMemoDraft,
-    isListMemoEditing,
-    setListMemoDraft,
-    saveListMemo,
-    startListMemoEdit,
-  } = useListMemo({
+  const { listMemoDraft, setListMemoDraft, saveListMemo } = useListMemo({
     workspaceId: workspace.id,
     currentMonthKey,
     serverMonthlyMemo,
@@ -231,10 +225,6 @@ export default function WorkspaceLedgerView({
     setSelectedCalendarCardId,
     onSaveEntry,
   });
-  const openManualEntryModal = () => {
-    registerModal.closeRegisterModal();
-    entryForm.openFormModal({ date: selectedDate });
-  };
 
   const visibleEntries = useMemo(() => {
     if (!isSharedWorkspace || selectedParticipantId === ALL_PARTICIPANTS_ID) {
@@ -284,13 +274,15 @@ export default function WorkspaceLedgerView({
           const target =
             categoryFilter === "living"
               ? "생활비"
-              : categoryFilter === "move"
-                ? "이동/차량"
-                : categoryFilter === "exercise"
-                  ? "운동"
-                  : categoryFilter === "shopping"
-                    ? "쇼핑/여가"
-                    : "특별/기타";
+              : categoryFilter === "gathering"
+                ? "모임비"
+                : categoryFilter === "move"
+                  ? "이동/차량"
+                  : categoryFilter === "exercise"
+                    ? "운동"
+                    : categoryFilter === "shopping"
+                      ? "쇼핑/여가"
+                      : "특별/기타";
           if (repr !== target) return false;
         }
       }
@@ -433,8 +425,7 @@ export default function WorkspaceLedgerView({
         return acc;
       }, {}),
     )
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .sort((a, b) => b[1] - a[1]);
   }, [monthEntries]);
 
   const dashboardRows = useMemo(() => {
@@ -548,16 +539,18 @@ export default function WorkspaceLedgerView({
         (entry) => !(entry.type === "expense" && isSavingsCategory(entry.category)),
       )
       .filter((entry) => entry.date === selectedDate)
+      .filter(matchesEntryFilter)
       .sort((a, b) => b.amount - a.amount);
-  }, [selectedDate, visibleEntries]);
+  }, [matchesEntryFilter, selectedDate, visibleEntries]);
 
   const selectedDateAssetEntries = useMemo(() => {
     return visibleEntries
       .filter((entry) => entry.date === selectedDate)
       .filter((entry) => entry.type === "expense")
       .filter((entry) => isSavingsCategory(entry.category))
+      .filter(matchesEntryFilter)
       .sort((a, b) => b.amount - a.amount);
-  }, [selectedDate, visibleEntries]);
+  }, [matchesEntryFilter, selectedDate, visibleEntries]);
 
   const selectedCalendarSummaryEntries = useMemo(() => {
     const sortedEntries = monthEntries.slice().sort(compareResolvedEntriesDesc);
@@ -640,6 +633,15 @@ export default function WorkspaceLedgerView({
           entry.type === "expense" &&
           !isCardSettlementEntry(entry) &&
           getRepresentativeExpenseCategory(entry.category) === "생활비",
+      },
+      {
+        id: "gathering",
+        title: "모임비",
+        description: "모임, 회식, 회비, 친목",
+        matches: (entry: ResolvedAccountEntry) =>
+          entry.type === "expense" &&
+          !isCardSettlementEntry(entry) &&
+          getRepresentativeExpenseCategory(entry.category) === "모임비",
       },
       {
         id: "fixed",
@@ -1019,12 +1021,12 @@ export default function WorkspaceLedgerView({
         monthLabel={monthLabel}
         monthRangeLabel={monthRangeLabel}
         monthValue={monthValue}
-        onOpenNaturalRegister={() => registerModal.openRegisterModal("natural")}
-        onOpenImageRegister={() => registerModal.openRegisterModal("image")}
-        onOpenManual={openManualEntryModal}
         onBack={onBack}
         onMonthMove={onMonthMove}
         onMonthSelect={onMonthSelect}
+        rightSlot={
+          <ViewModeTabs viewMode={viewMode} onChangeViewMode={setViewMode} />
+        }
       />
       <StContentWrap>
         {registerModal.isRegisterModalOpen ? (
@@ -1051,22 +1053,22 @@ export default function WorkspaceLedgerView({
           />
         ) : null}
 
-        <EntrySearchBar
-          query={searchQuery}
-          onChangeQuery={setSearchQuery}
-          category={categoryFilter}
-          onChangeCategory={setCategoryFilter}
-          matchCount={filterMatchTotal.count}
-          totalAmount={filterMatchTotal.totalAmount}
-          isFiltering={isFiltering}
-          onClear={() => {
-            setSearchQuery("");
-            setCategoryFilter("all");
-          }}
-          formatAmount={formatAmount}
-        />
-
-        <ViewModeTabs viewMode={viewMode} onChangeViewMode={setViewMode} />
+        {viewMode !== "board" ? (
+          <EntrySearchBar
+            query={searchQuery}
+            onChangeQuery={setSearchQuery}
+            category={categoryFilter}
+            onChangeCategory={setCategoryFilter}
+            matchCount={filterMatchTotal.count}
+            totalAmount={filterMatchTotal.totalAmount}
+            isFiltering={isFiltering}
+            onClear={() => {
+              setSearchQuery("");
+              setCategoryFilter("all");
+            }}
+            formatAmount={formatAmount}
+          />
+        ) : null}
 
         <WorkspacePanelsSection
           viewMode={viewMode}
@@ -1082,10 +1084,8 @@ export default function WorkspaceLedgerView({
           monthAssetTotal={monthAssetTotal}
           selectedCalendarCardId={selectedCalendarCardId}
           listMemo={listMemoDraft}
-          isListMemoEditing={isListMemoEditing}
           onChangeListMemo={setListMemoDraft}
           onSaveListMemo={saveListMemo}
-          onEditListMemo={startListMemoEdit}
           memberExpenseTotals={memberExpenseTotals}
           selectedExpenseMemberName={selectedExpenseMemberName}
           onSelectExpenseMember={(memberName) => {
@@ -1199,8 +1199,6 @@ export default function WorkspaceLedgerView({
         type={entryForm.type}
         category={entryForm.category}
         subCategory={entryForm.subCategory}
-        merchant={entryForm.merchant}
-        item={entryForm.item}
         amount={entryForm.amount}
         payment={entryForm.payment}
         cardCompany={entryForm.cardCompany}
@@ -1215,8 +1213,6 @@ export default function WorkspaceLedgerView({
         onSetMember={entryForm.setMember}
         onSetCategory={entryForm.handleCategoryChange}
         onSetSubCategory={entryForm.setSubCategory}
-        onSetMerchant={entryForm.setMerchant}
-        onSetItem={entryForm.setItem}
         onSetAmount={entryForm.setAmount}
         onSetPayment={entryForm.handlePaymentChange}
         onSetCardCompany={entryForm.setCardCompany}

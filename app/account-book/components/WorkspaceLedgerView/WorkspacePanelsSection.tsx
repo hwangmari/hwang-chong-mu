@@ -3,6 +3,7 @@
 import styled from "styled-components";
 import type { PaymentType, ResolvedAccountEntry, ViewMode } from "../../types";
 import AccountBookDashboardPanel from "../AccountBookDashboardPanel";
+import MonthlyIssueMemo from "../MonthlyIssueMemo";
 import CalendarPanel from "../CalendarPanel";
 import DetailEntriesPanel from "../DetailEntriesPanel";
 import TopSummaryControls from "../TopSummaryControls";
@@ -28,10 +29,8 @@ type Props = {
   monthAssetTotal: number;
   selectedCalendarCardId: string | null;
   listMemo: string;
-  isListMemoEditing: boolean;
   onChangeListMemo: (value: string) => void;
   onSaveListMemo: () => void | Promise<void>;
-  onEditListMemo: () => void;
   memberExpenseTotals: Array<[string, number]>;
   selectedExpenseMemberName: string | null;
   onSelectExpenseMember: (memberName: string) => void;
@@ -121,10 +120,8 @@ export default function WorkspacePanelsSection({
   monthAssetTotal,
   selectedCalendarCardId,
   listMemo,
-  isListMemoEditing,
   onChangeListMemo,
   onSaveListMemo,
-  onEditListMemo,
   memberExpenseTotals,
   selectedExpenseMemberName,
   onSelectExpenseMember,
@@ -169,6 +166,9 @@ export default function WorkspacePanelsSection({
 }: Props) {
   const hasDetailPanel = viewMode !== "board";
   const isLedgerLayout = viewMode === "ledger";
+  const hideIncomeAmount =
+    isCalendarIncomeAmountHidden ||
+    hiddenCalendarAmountCardIds.includes("income");
 
   return (
     <StCalendarSplit $hasDetailPanel={hasDetailPanel}>
@@ -217,30 +217,19 @@ export default function WorkspacePanelsSection({
                   onSelectCardCompany={onSelectCardCompany}
                   onEdit={onEdit}
                   formatAmount={formatAmount}
+                  cardColumnFooter={
+                    <StLedgerMemoBar>
+                      <MonthlyIssueMemo
+                        memo={listMemo}
+                        onChangeMemo={onChangeListMemo}
+                        onSaveMemo={onSaveListMemo}
+                        placement="top"
+                      />
+                    </StLedgerMemoBar>
+                  }
                 />
               </StLedgerOverviewBlock>
             </StLedgerLeftStack>
-
-            <StLedgerMemoCard>
-              <StLedgerMemoHeader>
-                <StLedgerMemoTitleWrap>
-                  <strong>이번 달 메모</strong>
-                  <span>리스트 화면에서만 보는 메모</span>
-                </StLedgerMemoTitleWrap>
-                <StLedgerMemoActionButton
-                  type="button"
-                  onClick={isListMemoEditing ? onSaveListMemo : onEditListMemo}
-                >
-                  {isListMemoEditing ? "저장" : "수정"}
-                </StLedgerMemoActionButton>
-              </StLedgerMemoHeader>
-              <StLedgerMemoTextarea
-                value={listMemo}
-                onChange={(event) => onChangeListMemo(event.target.value)}
-                readOnly={!isListMemoEditing}
-                placeholder="이번 달 체크할 내용, 예산 메모, 공유 전 확인할 항목을 적어두세요."
-              />
-            </StLedgerMemoCard>
           </StLeftBody>
         ) : (
           <StLeftBody>
@@ -257,6 +246,9 @@ export default function WorkspacePanelsSection({
                 onOpenIncomeYearly={onOpenIncomeYearly}
                 onOpenExpenseYearly={onOpenExpenseYearly}
                 onOpenAssetYearly={onOpenAssetYearly}
+                monthlyMemo={listMemo}
+                onChangeMonthlyMemo={onChangeListMemo}
+                onSaveMonthlyMemo={onSaveListMemo}
               />
             ) : (
               <CalendarPanel
@@ -267,6 +259,10 @@ export default function WorkspacePanelsSection({
                 toIsoDate={toIsoDate}
                 onSelectDate={onSelectDate}
                 onOpenNaturalRegisterForDate={onOpenNaturalRegisterForDate}
+                hideIncomeAmount={
+                  isCalendarIncomeAmountHidden ||
+                  hiddenCalendarAmountCardIds.includes("income")
+                }
               />
             )}
           </StLeftBody>
@@ -288,6 +284,7 @@ export default function WorkspacePanelsSection({
                 formatAmount={formatAmount}
                 paymentLabel={paymentLabel}
                 showDateMeta
+                hideIncomeAmount={hideIncomeAmount}
               />
             </StLedgerDetailBlock>
           ) : (
@@ -298,6 +295,7 @@ export default function WorkspacePanelsSection({
                 selectedCalendarCardId ? undefined : selectedDateAssetEntries
               }
               canToggleAmountVisibility={selectedCalendarCardId === "income"}
+              hideIncomeAmount={hideIncomeAmount}
               isAmountHidden={
                 selectedCalendarCardId === "income" &&
                 isCalendarIncomeAmountHidden
@@ -340,7 +338,7 @@ const StCalendarSplit = styled.div<{ $hasDetailPanel: boolean }>`
 const StLeftSplitCard = styled.section`
   display: flex;
   flex-direction: column;
-  border: 1px solid #dce5f0;
+  border: 1px solid #e5e6e7;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
   padding: 0.9rem;
@@ -353,91 +351,9 @@ const StLeftSplitCard = styled.section`
   }
 `;
 
-const StLedgerMemoCard = styled.section`
-  margin-top: 0.75rem;
-  border: 1px solid #dce5f0;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fcfdff, ${({ theme }) => theme.colors.blue50});
-  padding: 0.9rem;
-`;
-
-const StLedgerMemoHeader = styled.div`
+const StLedgerMemoBar = styled.div`
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 0.6rem;
-`;
-
-const StLedgerMemoTitleWrap = styled.div`
-  display: grid;
-  gap: 0.18rem;
-
-  strong {
-    font-size: 0.9rem;
-    font-weight: 900;
-    color: ${({ theme }) => theme.colors.gray800};
-  }
-
-  span {
-    font-size: 0.74rem;
-    color: #7a8799;
-    font-weight: 700;
-  }
-`;
-
-const StLedgerMemoActionButton = styled.button`
-  flex-shrink: 0;
-  border: 1px solid #cad8ee;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.white};
-  padding: 0.42rem 0.9rem;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #4f7cff;
-  cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    color 0.18s ease,
-    background-color 0.18s ease;
-
-  &:hover {
-    border-color: #b5c8ea;
-    background: ${({ theme }) => theme.colors.blue50};
-  }
-`;
-
-const StLedgerMemoTextarea = styled.textarea`
-  width: 100%;
-  min-height: 80px;
-  border: 1px solid #dbe4f0;
-  border-radius: 14px;
-  background: ${({ theme }) => theme.colors.white};
-  padding: 0.85rem 0.9rem;
-  resize: vertical;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: ${({ theme }) => theme.colors.gray700};
-  outline: none;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background-color 0.18s ease;
-
-  &:read-only {
-    background: ${({ theme }) => theme.colors.blue50};
-    color: #516074;
-    cursor: default;
-  }
-
-  &::placeholder {
-    color: #99a5b6;
-  }
-
-  &:focus {
-    border-color: #b9cdf8;
-    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.08);
-  }
+  justify-content: flex-end;
 `;
 
 const StLeftBody = styled.div`
@@ -456,7 +372,7 @@ const StLeftBody = styled.div`
 
 const StRightSplitCard = styled.section`
   min-height: 0;
-  border: 1px solid #dce5f0;
+  border: 1px solid #e5e6e7;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
   padding: 0.9rem;

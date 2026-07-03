@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
@@ -12,9 +12,7 @@ type Props = {
   monthLabel: string;
   monthRangeLabel: string;
   monthValue: string;
-  onOpenNaturalRegister?: () => void;
-  onOpenImageRegister?: () => void;
-  onOpenManual?: () => void;
+  rightSlot?: ReactNode;
   onBack?: () => void;
   onMonthMove?: (diff: number) => void;
   onMonthSelect?: (value: string) => void;
@@ -27,9 +25,7 @@ export default function WorkspaceHeader({
   monthLabel,
   monthRangeLabel,
   monthValue,
-  onOpenNaturalRegister,
-  onOpenImageRegister,
-  onOpenManual,
+  rightSlot,
   onBack,
   onMonthMove,
   onMonthSelect,
@@ -220,23 +216,8 @@ export default function WorkspaceHeader({
         </StHeaderCenter>
       </StHeaderMoWrap>
 
-      <StHeaderRight>
-        {onOpenNaturalRegister ? (
-          <StPrimaryActionButton type="button" onClick={onOpenNaturalRegister}>
-            문장등록
-          </StPrimaryActionButton>
-        ) : null}
-        {onOpenImageRegister ? (
-          <StSecondaryActionButton type="button" onClick={onOpenImageRegister}>
-            이미지등록
-          </StSecondaryActionButton>
-        ) : null}
-        {onOpenManual ? (
-          <StSecondaryActionButton type="button" onClick={onOpenManual}>
-            직접등록
-          </StSecondaryActionButton>
-        ) : null}
-      </StHeaderRight>
+      <StHeaderRight>{rightSlot}</StHeaderRight>
+
       {isMonthPickerOpen &&
       monthPickerPosition &&
       typeof document !== "undefined"
@@ -314,7 +295,8 @@ export default function WorkspaceHeader({
 const StWorkspaceHeader = styled.header`
   position: sticky;
   top: 0;
-  border-bottom: 1px solid #d9dde3;
+  z-index: 100;
+  border-bottom: 1px solid #dcdee0;
   background: ${({ theme }) => theme.colors.gray100};
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -340,6 +322,18 @@ const StWorkspaceHeader = styled.header`
       "right";
     padding: 0.75rem 0.7rem;
     gap: 0.55rem;
+  }
+`;
+
+const StHeaderRight = styled.div`
+  grid-area: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  @media (max-width: 980px) {
+    justify-content: stretch;
+    width: 100%;
   }
 `;
 
@@ -394,33 +388,13 @@ const StHeaderCenter = styled.div`
   }
 `;
 
-const StHeaderRight = styled.div`
-  grid-area: right;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-
-  @media (max-width: 980px) {
-    justify-content: flex-start;
-  }
-
-  @media (max-width: 720px) {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
-    justify-content: stretch;
-    width: 100%;
-  }
-`;
-
 const StBackButton = styled.button`
   width: 2rem;
   height: 2rem;
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: #5f6675;
+  color: #595c62;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -442,7 +416,7 @@ const StHeaderTitle = styled.h1`
 
 const StHeaderSubtitle = styled.p`
   font-size: 0.76rem;
-  color: #7b8798;
+  color: #84888f;
 
   @media (max-width: 720px) {
     font-size: 0.72rem;
@@ -482,7 +456,7 @@ const StMonthButton = styled.button`
   width: 2.3rem;
   height: 2.3rem;
   border-radius: 999px;
-  border: 1px solid #dce3eb;
+  border: 1px solid #e2e3e5;
   background: ${({ theme }) => theme.colors.white};
   font-size: 1.3rem;
   color: ${({ theme }) => theme.colors.gray600};
@@ -504,7 +478,7 @@ const StMonthInfoButton = styled.button<{ $open: boolean }>`
   cursor: pointer;
   min-width: 0;
   box-shadow: ${({ $open }) =>
-    $open ? "0 12px 28px rgba(73, 93, 132, 0.1)" : "none"};
+    $open ? "0 12px 28px rgba(86, 89, 94, 0.1)" : "none"};
 
   &:disabled {
     cursor: default;
@@ -535,7 +509,7 @@ const StMonthTitle = styled.h2`
 const StMonthCaret = styled.svg`
   width: 0.95rem;
   height: 0.95rem;
-  stroke: #7384a0;
+  stroke: #84888f;
   stroke-width: 1.8;
   fill: none;
 `;
@@ -565,10 +539,10 @@ const StMonthPickerPopover = styled.div<{
   top: ${({ $top }) => `${$top}px`};
   left: ${({ $left }) => `${$left}px`};
   width: ${({ $width }) => `${$width}px`};
-  border: 1px solid #d9e2ef;
+  border: 1px solid #e3e4e5;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 20px 40px rgba(72, 90, 126, 0.14);
+  box-shadow: 0 20px 40px rgba(83, 86, 91, 0.14);
   padding: 0.9rem;
   backdrop-filter: blur(12px);
   pointer-events: auto;
@@ -592,9 +566,9 @@ const StMonthPickerYearButton = styled.button`
   width: 2rem;
   height: 2rem;
   border-radius: 999px;
-  border: 1px solid #d5dfed;
+  border: 1px solid #dfe0e2;
   background: ${({ theme }) => theme.colors.blue50};
-  color: #5b6f90;
+  color: #70747b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -616,9 +590,9 @@ const StMonthPickerGrid = styled.div`
 
 const StMonthChip = styled.button<{ $active: boolean }>`
   border-radius: 14px;
-  border: 1px solid ${({ $active }) => ($active ? "#9eb4ff" : "#e1e8f2")};
-  background: ${({ $active, theme }) => ($active ? "#eef3ff" : theme.colors.white)};
-  color: ${({ $active }) => ($active ? "#4262d8" : "#42536b")};
+  border: 1px solid ${({ $active }) => ($active ? "#bcbec2" : "#e8e9eb")};
+  background: ${({ $active, theme }) => ($active ? "#f6f6f7" : theme.colors.white)};
+  color: ${({ $active }) => ($active ? "#878b93" : "#264172")};
   padding: 0.7rem 0.25rem;
   font-size: 0.88rem;
   font-weight: ${({ $active }) => ($active ? 900 : 700)};
@@ -629,45 +603,15 @@ const StMonthPickerFooter = styled.div`
   justify-content: flex-end;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px dashed #d9e1ec;
+  border-top: 1px dashed #e1e2e4;
 `;
 
 const StMonthPickerTextButton = styled.button`
   border: none;
   background: transparent;
-  color: #4c67c4;
+  color: #82868e;
   font-size: 0.82rem;
   font-weight: 900;
   padding: 0.15rem 0;
 `;
 
-const StActionButtonBase = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  padding: 0.8rem 1.05rem;
-  font-size: 0.88rem;
-  font-weight: 900;
-
-  @media (max-width: 720px) {
-    width: 100%;
-    min-width: 0;
-    padding: 0.8rem 0.5rem;
-    font-size: 0.82rem;
-    border-radius: 16px;
-  }
-`;
-
-const StPrimaryActionButton = styled(StActionButtonBase)`
-  border: 1px solid #4e67d0;
-  background: #5f73d9;
-  color: ${({ theme }) => theme.colors.white};
-  box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
-`;
-
-const StSecondaryActionButton = styled(StActionButtonBase)`
-  border: 1px solid #cedbeb;
-  background: rgba(255, 255, 255, 0.96);
-  color: #506683;
-`;

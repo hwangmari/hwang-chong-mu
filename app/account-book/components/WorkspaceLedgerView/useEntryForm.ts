@@ -21,6 +21,7 @@ import {
   INCOME_CATEGORY_LABEL,
   INCOME_CATEGORY_OPTIONS,
   createEntryId,
+  evaluateAmountExpression,
   getCardCompanyOptions,
   getCategoryDetailOptions,
   getDefaultCardCompany,
@@ -179,8 +180,10 @@ export function useEntryForm({
       setMember(entry.member || defaultMember);
       setCategory(getRepresentativeCategory(entry.category, entry.type));
       setSubCategory(entry.subCategory || "");
-      setMerchant(entry.merchant || "");
-      setItem(entry.item);
+      // 가맹점·항목 입력란을 제거했으므로 편집 시 자동 파싱값(예: "배달"/"배민")을
+      // 유지하지 않고, 저장 시 카테고리·메모 기준으로 항목명을 다시 계산한다.
+      setMerchant("");
+      setItem("");
       setAmount(String(entry.amount));
       setPayment(entry.payment);
       setCardCompany(entry.cardCompany || getDefaultCardCompany(entry.payment));
@@ -192,13 +195,13 @@ export function useEntryForm({
   );
 
   const onSubmitEntry = useCallback(async () => {
-    const parsedAmount = Number(amount);
+    const parsedAmount = evaluateAmountExpression(amount);
     if (!category.trim()) {
       alert("카테고리를 입력해주세요.");
       return;
     }
-    if (!Number.isFinite(parsedAmount) || parsedAmount === 0) {
-      alert("금액은 0이 아닌 숫자로 입력해주세요.");
+    if (parsedAmount === null || parsedAmount === 0) {
+      alert("금액은 0이 아닌 숫자 또는 계산식(예: 15000+3000)으로 입력해주세요.");
       return;
     }
 
@@ -209,10 +212,9 @@ export function useEntryForm({
     const normalizedSelection =
       type === "expense"
         ? normalizeExpenseCategorySelection(category, subCategory)
-        : { category: category.trim(), subCategory: "" };
+        : { category: category.trim(), subCategory: subCategory.trim() };
     const normalizedCategory = normalizedSelection.category;
-    const normalizedSubCategory =
-      type === "expense" ? normalizedSelection.subCategory : "";
+    const normalizedSubCategory = normalizedSelection.subCategory;
     const resolvedPayment =
       type === "expense" && normalizedCategory === "카드대금" ? "cash" : payment;
     if (

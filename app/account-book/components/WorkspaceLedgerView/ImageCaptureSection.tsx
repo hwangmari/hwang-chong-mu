@@ -468,11 +468,11 @@ const StCaptureFileName = styled.span`
   align-items: center;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid #d7e2ef;
+  border: 1px solid #e2e3e4;
   padding: 0.42rem 0.75rem;
   font-size: 0.78rem;
   font-weight: 800;
-  color: #56708e;
+  color: #305698;
 `;
 
 const StCaptureActions = styled.div`
@@ -483,15 +483,15 @@ const StCaptureActions = styled.div`
 `;
 
 const StPrimaryButton = styled.button`
-  border: 1px solid #4e67d0;
+  border: 1px solid #7c8088;
   border-radius: 999px;
-  background: #5f73d9;
+  background: #888c94;
   color: ${({ theme }) => theme.colors.white};
   font-size: 0.88rem;
   font-weight: 800;
   min-height: 2.6rem;
   padding: 0.55rem 1.1rem;
-  box-shadow: 0 8px 20px rgba(74, 103, 204, 0.14);
+  box-shadow: 0 8px 20px rgba(133, 137, 145, 0.14);
 
   &:disabled {
     cursor: wait;
@@ -506,10 +506,10 @@ const StPrimaryButton = styled.button`
 `;
 
 const StSecondaryButton = styled.button`
-  border: 1px solid #cedbeb;
+  border: 1px solid #dbdcde;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.white};
-  color: #506683;
+  color: #2d4f8d;
   font-size: 0.88rem;
   font-weight: 800;
   min-height: 2.6rem;
@@ -530,7 +530,7 @@ const StCaptureHints = styled.p`
   margin-top: 0.75rem;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: #7a8798;
+  color: #83878f;
 `;
 
 const StErrorText = styled.p`
@@ -547,12 +547,12 @@ const StResultSummary = styled.div`
   gap: 0.75rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e7edf6;
+  border-top: 1px solid #eeeeef;
 
   span {
     font-size: 0.86rem;
     font-weight: 800;
-    color: #4f627d;
+    color: #2c4d88;
   }
 
   @media (max-width: 720px) {
@@ -570,7 +570,7 @@ const StSummaryActions = styled.div`
 const StConfirmBackdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.22);
+  background: rgba(23, 24, 26, 0.22);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -583,11 +583,11 @@ const StConfirmCard = styled.div`
   width: min(720px, 100%);
   max-height: min(82vh, 880px);
   overflow: auto;
-  border: 1px solid #d9e3ef;
+  border: 1px solid #e3e4e5;
   border-radius: 26px;
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
-  box-shadow: 0 24px 48px rgba(45, 62, 100, 0.14);
+  box-shadow: 0 24px 48px rgba(60, 63, 67, 0.14);
 `;
 
 const StConfirmHeader = styled.div`
@@ -666,7 +666,7 @@ const StResultMeta = styled.div`
   strong {
     font-size: 1rem;
     font-weight: 900;
-    color: #1d3340;
+    color: #14243e;
   }
 `;
 
@@ -701,7 +701,7 @@ const StConfidenceBadge = styled.span<{ $confidence: "high" | "medium" | "low" }
       ? "#24604a"
       : $confidence === "low"
         ? "#a6593c"
-        : "#4b688f"};
+        : "#2e5392"};
   background: ${({ $confidence, theme }) => $confidence === "high"
       ? "#e6f7ee"
       : $confidence === "low"
@@ -783,7 +783,7 @@ const StRawText = styled.p`
   margin-top: 0.7rem;
   font-size: 0.82rem;
   line-height: 1.55;
-  color: #6d7b8d;
+  color: #777b83;
 `;
 
 const inputBase = ({
@@ -792,18 +792,18 @@ const inputBase = ({
   theme: { colors: { white: string } };
 }) => `
   width: 100%;
-  border: 1px solid #dce5ed;
+  border: 1px solid #e3e4e6;
   border-radius: 10px;
   background: ${theme.colors.white};
   padding: 0.58rem 0.72rem;
   font-size: 0.82rem;
-  color: #1d3340;
+  color: #14243e;
   min-height: 40px;
 
   &:focus {
     outline: none;
-    border-color: #7a9ed6;
-    box-shadow: 0 0 0 3px rgba(122, 158, 214, 0.14);
+    border-color: #a4a7ac;
+    box-shadow: 0 0 0 3px rgba(164, 167, 172, 0.14);
   }
 `;
 

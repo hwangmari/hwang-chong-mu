@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import styled from "styled-components";
 import type { PaymentType, ResolvedAccountEntry } from "../../types";
 import {
-  getCategoryDetailOptions,
+  getCardBenefitStatus,
   getRepresentativeExpenseCategory,
   inferSubCategoryFromText,
   isSavingsCategory,
+  normalizeGroupingLabel,
 } from "./utils";
 
 type CardCompanySummary = {
@@ -39,6 +40,7 @@ type Props = {
   onSelectCardCompany: (cardCompany: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
   formatAmount: (value: number) => string;
+  cardColumnFooter?: ReactNode;
 };
 
 export default function LedgerOverviewSection({
@@ -57,12 +59,13 @@ export default function LedgerOverviewSection({
   onSelectCardCompany,
   onEdit,
   formatAmount,
+  cardColumnFooter,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedDetailGroups, setExpandedDetailGroups] = useState<
     Record<string, boolean>
   >({});
-  const compareColors = ["#4f7cff", "#6b63e8", "#3f8f8a", "#7f91ac"];
+  const compareColors = ["#3182f6", "#5b9cf9", "#8fbffe", "#b8d6fe"];
   const maxMemberExpense = Math.max(
     ...memberExpenseTotals.map(([, amount]) => amount),
     0,
@@ -137,9 +140,6 @@ export default function LedgerOverviewSection({
           >
         >((acc, entry) => {
           const savedSubCategory = entry.subCategory?.trim() || "";
-          const allowedDetailOptions = getCategoryDetailOptions(
-            getRepresentativeExpenseCategory(entry.category),
-          );
           const normalizedDetail = inferSubCategoryFromText(
             entry.category,
             [
@@ -150,15 +150,16 @@ export default function LedgerOverviewSection({
               .filter(Boolean)
               .join(" "),
           );
-          const detailLabel =
-            (savedSubCategory &&
-            allowedDetailOptions.includes(savedSubCategory)
-              ? savedSubCategory
-              : normalizedDetail) ||
+          // 사용자가 직접 지정한 세부태그를 최우선으로 존중한다.
+          // (교차 카테고리 태그(예: 생활비 항목의 "영양제")가 자동추론으로
+          //  덮여 "장보기" 등으로 합쳐지던 문제 방지)
+          const rawDetailLabel =
             savedSubCategory ||
+            normalizedDetail ||
             entry.item?.trim() ||
             entry.merchant?.trim() ||
             "기타";
+          const detailLabel = normalizeGroupingLabel(rawDetailLabel);
 
           if (!acc[detailLabel]) {
             acc[detailLabel] = {
@@ -232,6 +233,8 @@ export default function LedgerOverviewSection({
           </StCompareList>
         </StCompareCard>
       ) : null}
+      <StOverviewColumns>
+      <StOverviewLeftColumn>
       <StCardCompanyCard>
         <StCardCompanyHeader>
           <strong>
@@ -259,6 +262,10 @@ export default function LedgerOverviewSection({
                       : entry.checkCardCount > 0
                         ? `총 ${entry.count}건 · 체크카드`
                         : `총 ${entry.count}건 · 카드`;
+                  const benefit = getCardBenefitStatus(
+                    entry.label,
+                    entry.amount,
+                  );
 
                   return (
                     <StCardCompanyRow
@@ -268,12 +275,17 @@ export default function LedgerOverviewSection({
                       onClick={() => onSelectCardCompany(entry.id)}
                     >
                       <StCardCompanyMeta>
-                        <div>
-                          <strong>{entry.label}</strong>
-                          <span>{paymentMeta}</span>
-                        </div>
+                        <strong>{entry.label}</strong>
                         <em>{formatAmount(entry.amount)}</em>
                       </StCardCompanyMeta>
+                      <StMetaLine>
+                        <span>{paymentMeta}</span>
+                        {benefit && !benefit.achieved ? (
+                          <StBenefitStatus>
+                            {`${benefit.threshold / 10000}만원까지 ${formatAmount(benefit.remaining)}`}
+                          </StBenefitStatus>
+                        ) : null}
+                      </StMetaLine>
                       <StCardCompanyBar>
                         <StCardCompanyFill
                           style={{ width, background: color }}
@@ -287,6 +299,8 @@ export default function LedgerOverviewSection({
           </StCardCompanyList>
         )}
       </StCardCompanyCard>
+      {cardColumnFooter}
+      </StOverviewLeftColumn>
       <StLedgerCategoryList>
         {monthCategorySummary.length === 0 ? (
           <StLedgerEmpty>이번 달 기록이 아직 없습니다.</StLedgerEmpty>
@@ -421,6 +435,7 @@ export default function LedgerOverviewSection({
           })
         )}
       </StLedgerCategoryList>
+      </StOverviewColumns>
     </StLedgerOverview>
   );
 }
@@ -429,6 +444,24 @@ const StLedgerOverview = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+`;
+
+const StOverviewColumns = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StOverviewLeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
 `;
 
 const StLedgerOverviewHeader = styled.div`
@@ -448,7 +481,7 @@ const StLedgerOverviewTitle = styled.h3`
 const StLedgerOverviewCount = styled.span`
   font-size: 0.78rem;
   font-weight: 800;
-  color: #59708c;
+  color: #30579a;
 `;
 
 const StLedgerOverviewSummary = styled.div`
@@ -459,7 +492,7 @@ const StLedgerOverviewSummary = styled.div`
   span {
     font-size: 0.8rem;
     font-weight: 800;
-    color: #506680;
+    color: #2c508b;
   }
 `;
 
@@ -479,12 +512,12 @@ const StCompareHeader = styled.div`
 
   strong {
     font-size: 0.9rem;
-    color: #213247;
+    color: #162845;
   }
 
   span {
     font-size: 0.75rem;
-    color: #74849a;
+    color: #81858d;
   }
 `;
 
@@ -504,12 +537,12 @@ const StCardCompanyHeader = styled.div`
 
   strong {
     font-size: 0.9rem;
-    color: #213247;
+    color: #162845;
   }
 
   span {
     font-size: 0.75rem;
-    color: #74849a;
+    color: #81858d;
   }
 `;
 
@@ -518,19 +551,48 @@ const StCardCompanyList = styled.div`
   gap: 0;
 `;
 
+const StMetaLine = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.72rem;
+    color: #888c94;
+  }
+`;
+
+const StBenefitStatus = styled.span`
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 400;
+  white-space: nowrap;
+
+  && {
+    color: #3182f6;
+  }
+`;
+
 const StCardCompanyRow = styled.button<{ $active: boolean }>`
   display: grid;
   gap: 0.34rem;
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid ${({ $active }) => ($active ? "#a9c0f5" : "transparent")};
+  border: 1px solid ${({ $active }) => ($active ? "#cdced1" : "transparent")};
   border-radius: 16px;
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+      ? "#f6f6f7"
       : "transparent"};
   box-shadow: ${({ $active }) =>
-    $active ? "0 8px 18px rgba(99, 126, 212, 0.1)" : "none"};
+    $active ? "0 8px 18px rgba(151, 154, 160, 0.1)" : "none"};
   padding: 0.6rem 0.7rem;
   text-align: left;
   cursor: pointer;
@@ -541,20 +603,20 @@ const StCardCompanyRow = styled.button<{ $active: boolean }>`
     transform 0.18s ease;
 
   &:hover {
-    border-color: ${({ $active }) => ($active ? "#a9c0f5" : "#ccd8eb")};
+    border-color: ${({ $active }) => ($active ? "#cdced1" : "#dadbdd")};
     background: ${({ $active }) =>
       $active
-        ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
-        : "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"};
-    box-shadow: 0 10px 20px rgba(109, 127, 162, 0.08);
+        ? "#f6f6f7"
+        : "#ffffff"};
+    box-shadow: 0 10px 20px rgba(130, 134, 141, 0.08);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: #8faaf0;
+    border-color: #bcbfc3;
     box-shadow:
-      0 0 0 3px rgba(79, 124, 255, 0.12),
-      0 10px 20px rgba(109, 127, 162, 0.1);
+      0 0 0 3px rgba(163, 166, 171, 0.12),
+      0 10px 20px rgba(130, 134, 141, 0.1);
   }
 
   &:active {
@@ -564,30 +626,22 @@ const StCardCompanyRow = styled.button<{ $active: boolean }>`
 
 const StCardCompanyMeta = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
 
-  div {
-    display: grid;
-    gap: 0.12rem;
-  }
-
   strong {
+    flex: 1;
+    min-width: 0;
     font-size: 0.84rem;
-    color: #33465c;
-  }
-
-  span {
-    font-size: 0.72rem;
-    color: #7c8ca0;
+    color: #1f375f;
   }
 
   em {
     font-style: normal;
     font-size: 0.82rem;
     font-weight: 900;
-    color: #2c4d97;
+    color: #333d4b;
     white-space: nowrap;
   }
 `;
@@ -607,7 +661,7 @@ const StCardCompanyFill = styled.div`
 
 const StCardCompanyEmpty = styled.p`
   font-size: 0.8rem;
-  color: #8592a5;
+  color: #90949a;
   line-height: 1.5;
 `;
 
@@ -615,14 +669,14 @@ const StCompareRow = styled.button<{ $active: boolean }>`
   display: grid;
   gap: 0.32rem;
   width: 100%;
-  border: 1px solid ${({ $active }) => ($active ? "#a9c0f5" : "transparent")};
+  border: 1px solid ${({ $active }) => ($active ? "#cdced1" : "transparent")};
   border-radius: 16px;
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
+      ? "#f6f6f7"
       : "transparent"};
   box-shadow: ${({ $active }) =>
-    $active ? "0 8px 18px rgba(99, 126, 212, 0.1)" : "none"};
+    $active ? "0 8px 18px rgba(151, 154, 160, 0.1)" : "none"};
   padding: 0.45rem 0.55rem;
   text-align: left;
   cursor: pointer;
@@ -633,20 +687,20 @@ const StCompareRow = styled.button<{ $active: boolean }>`
     transform 0.18s ease;
 
   &:hover {
-    border-color: ${({ $active }) => ($active ? "#a9c0f5" : "#ccd8eb")};
+    border-color: ${({ $active }) => ($active ? "#cdced1" : "#dadbdd")};
     background: ${({ $active }) =>
       $active
-        ? "linear-gradient(180deg, #f5f8ff 0%, #edf3ff 100%)"
-        : "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"};
-    box-shadow: 0 10px 20px rgba(109, 127, 162, 0.08);
+        ? "#f6f6f7"
+        : "#ffffff"};
+    box-shadow: 0 10px 20px rgba(130, 134, 141, 0.08);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: #8faaf0;
+    border-color: #bcbfc3;
     box-shadow:
-      0 0 0 3px rgba(79, 124, 255, 0.12),
-      0 10px 20px rgba(109, 127, 162, 0.1);
+      0 0 0 3px rgba(163, 166, 171, 0.12),
+      0 10px 20px rgba(130, 134, 141, 0.1);
   }
 
   &:active {
@@ -682,7 +736,7 @@ const StCompareName = styled.div`
 
   strong {
     font-size: 0.82rem;
-    color: #42546a;
+    color: #244374;
   }
 `;
 
@@ -700,16 +754,16 @@ const StCompareFill = styled.div`
 `;
 
 const StLedgerCategoryCard = styled.div`
-  border: 1px solid #e3eaf2;
+  border: 1px solid #e9eaec;
   border-radius: 16px;
-  background: #fbfdff;
+  background: #fdfdfd;
   overflow: hidden;
 `;
 
 const StLedgerCategoryButton = styled.button<{ $expanded: boolean }>`
   width: 100%;
   border: none;
-  background: ${({ $expanded }) => ($expanded ? "#f4f8ff" : "#fbfdff")};
+  background: ${({ $expanded }) => ($expanded ? "#f9f9fa" : "#fdfdfd")};
   padding: 0.72rem 0.82rem;
 `;
 
@@ -730,14 +784,14 @@ const StLedgerCategoryText = styled.div`
   strong {
     font-size: 0.86rem;
     font-weight: 900;
-    color: #34465d;
+    color: #1f3860;
     white-space: nowrap;
   }
 
   span {
     font-size: 0.73rem;
-    font-weight: 700;
-    color: #8494aa;
+    font-weight: 400;
+    color: #92969c;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -753,13 +807,13 @@ const StLedgerCategoryMeta = styled.div`
   strong {
     font-size: 0.84rem;
     font-weight: 900;
-    color: #2c4d97;
+    color: #333d4b;
   }
 
   small {
     font-size: 0.72rem;
-    font-weight: 800;
-    color: #7a8aa0;
+    font-weight: 400;
+    color: #878b93;
   }
 `;
 
@@ -777,7 +831,7 @@ const StLedgerSubGroup = styled.div`
 const StLedgerSubGroupButton = styled.button<{ $expanded: boolean }>`
   width: 100%;
   border: none;
-  border-top: 1px solid #e7edf6;
+  border-top: 1px solid #eeeeef;
   background: transparent;
   padding: 0.52rem 0.1rem;
   text-align: left;
@@ -806,13 +860,13 @@ const StLedgerSubGroupHeader = styled.div`
   strong {
     font-size: 0.8rem;
     font-weight: 900;
-    color: #34465d;
+    color: #1f3860;
   }
 
   span {
     font-size: 0.72rem;
-    font-weight: 700;
-    color: #8494aa;
+    font-weight: 400;
+    color: #92969c;
   }
 `;
 
@@ -825,7 +879,7 @@ const StLedgerSubGroupHeaderMeta = styled.div`
     font-style: normal;
     font-size: 0.8rem;
     font-weight: 900;
-    color: #4e6cac;
+    color: #777b83;
     white-space: nowrap;
   }
 `;
@@ -834,7 +888,7 @@ const StLedgerChevron = styled.svg<{ $expanded: boolean }>`
   width: 0.82rem;
   height: 0.82rem;
   flex-shrink: 0;
-  color: #8a99ad;
+  color: #979aa0;
   transform: rotate(${({ $expanded }) => ($expanded ? "180deg" : "0deg")});
   transition: transform 0.18s ease;
 `;
@@ -846,7 +900,7 @@ const StLedgerSubGroupList = styled.div`
 `;
 
 const StLedgerDetailItem = styled.div`
-  border-top: 1px solid #e7edf6;
+  border-top: 1px solid #eeeeef;
   padding: 0.42rem 0.1rem;
 
   &:first-child {
@@ -865,7 +919,7 @@ const StLedgerDetailLine = styled.div<{ $editable: boolean }>`
     font-style: normal;
     font-size: 0.78rem;
     font-weight: 900;
-    color: #3557b6;
+    color: #2e5290;
     white-space: nowrap;
   }
 `;
@@ -879,18 +933,18 @@ const StLedgerDetailInfo = styled.div`
   strong {
     font-size: 0.8rem;
     font-weight: 800;
-    color: #243447;
+    color: #172748;
   }
 
   span {
     font-size: 0.72rem;
-    font-weight: 700;
-    color: #74859a;
+    font-weight: 400;
+    color: #81858d;
   }
 `;
 
 const StLedgerEmpty = styled.p`
   font-size: 0.84rem;
   line-height: 1.6;
-  color: #8592a5;
+  color: #90949a;
 `;
