@@ -76,6 +76,8 @@ function createInitialStore(): AccountBookStore {
     entries: [],
     shareLinks: [],
     monthlyMemos: [],
+    assetAccounts: [],
+    assetChanges: [],
   };
 }
 
@@ -139,6 +141,8 @@ function createLegacySeedStore(): AccountBookStore {
     entries: [],
     shareLinks: [],
     monthlyMemos: [],
+    assetAccounts: [],
+    assetChanges: [],
   };
 }
 
@@ -193,6 +197,8 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
   const entries = Array.isArray(raw.entries) ? raw.entries : [];
   const shareLinks = Array.isArray(raw.shareLinks) ? raw.shareLinks : [];
   const monthlyMemos = Array.isArray(raw.monthlyMemos) ? raw.monthlyMemos : [];
+  const assetAccounts = Array.isArray(raw.assetAccounts) ? raw.assetAccounts : [];
+  const assetChanges = Array.isArray(raw.assetChanges) ? raw.assetChanges : [];
 
   const normalizedStore: AccountBookStore = {
     version: DEFAULT_VERSION,
@@ -275,6 +281,34 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
         monthlyMemo.updatedByUserId || users[0]?.id || base.users[0]?.id || "",
       updatedAt: monthlyMemo.updatedAt || new Date().toISOString(),
     })),
+    assetAccounts: assetAccounts.map((account, index) => ({
+      id: account.id || `asset-account-${index + 1}`,
+      workspaceId: account.workspaceId || workspaces[0]?.id || "",
+      name: account.name || `통장 ${index + 1}`,
+      kind: account.kind || "기타",
+      goalAmount: Number(account.goalAmount) || 0,
+      createdByUserId: account.createdByUserId,
+      archived: Boolean(account.archived),
+      sortOrder: Number.isFinite(Number(account.sortOrder))
+        ? Number(account.sortOrder)
+        : index,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    })),
+    assetChanges: assetChanges.map((change, index) => ({
+      id: change.id || `asset-change-${index + 1}`,
+      workspaceId: change.workspaceId || workspaces[0]?.id || "",
+      accountId: change.accountId || "",
+      date: change.date || getCurrentMonthKey() + "-01",
+      amount: Number(change.amount) || 0,
+      changeType: change.changeType || "adjust",
+      counterpartAccountId: change.counterpartAccountId,
+      transferGroupId: change.transferGroupId,
+      linkedEntryId: change.linkedEntryId,
+      memo: change.memo || "",
+      createdByUserId: change.createdByUserId,
+      createdAt: change.createdAt,
+    })),
   };
 
   return removeSeedDataIfActualExists(normalizedStore);
@@ -313,6 +347,17 @@ function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore
       validUserIds.has(monthlyMemo.updatedByUserId) &&
       validWorkspaceIds.has(monthlyMemo.workspaceId),
   );
+  const assetAccounts = store.assetAccounts.filter((account) =>
+    validWorkspaceIds.has(account.workspaceId),
+  );
+  const validAssetAccountIds = new Set(
+    assetAccounts.map((account) => account.id),
+  );
+  const assetChanges = store.assetChanges.filter(
+    (change) =>
+      validWorkspaceIds.has(change.workspaceId) &&
+      validAssetAccountIds.has(change.accountId),
+  );
 
   return {
     ...store,
@@ -331,6 +376,8 @@ function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore
     entries,
     shareLinks,
     monthlyMemos,
+    assetAccounts,
+    assetChanges,
   };
 }
 

@@ -12,6 +12,8 @@ import {
   fetchAccountBookStore,
   joinAccountBookSharedRoom,
   removeAccountBookSharedRoomMember,
+  removeLedgerAssetLink,
+  syncLedgerSavingToAsset,
   toggleAccountBookShareLink,
   updateAccountBookUser,
   upsertAccountBookEntry,
@@ -137,12 +139,18 @@ export function useAccountBookActions(helpers: StoreHelpers) {
   );
 
   const handleSaveEntry = useCallback(
-    async (entry: AccountEntry) =>
-      Boolean(
+    async (entry: AccountEntry) => {
+      const saved = Boolean(
         await commitStoreChange(() =>
           upsertAccountBookEntry(entry, getActingUserId()),
         ),
-      ),
+      );
+      if (saved) {
+        // 가계부 자산/저축 저축 → 동명 통장 자동 입금(반영 실패해도 저장은 유지)
+        void syncLedgerSavingToAsset(entry, getActingUserId());
+      }
+      return saved;
+    },
     [commitStoreChange, getActingUserId],
   );
 
@@ -167,11 +175,20 @@ export function useAccountBookActions(helpers: StoreHelpers) {
 
   const handleDeleteEntry = useCallback(
     async (entryId: string) => {
-      await commitStoreChange(() =>
+      const targetEntry = store.entries.find((entry) => entry.id === entryId);
+      const result = await commitStoreChange(() =>
         deleteAccountBookEntry(entryId, getActingUserId()),
       );
+      if (result && targetEntry) {
+        // 연동된 통장 변동도 함께 제거(실패해도 삭제는 유지)
+        void removeLedgerAssetLink(
+          entryId,
+          targetEntry.workspaceId,
+          getActingUserId(),
+        );
+      }
     },
-    [commitStoreChange, getActingUserId],
+    [store.entries, commitStoreChange, getActingUserId],
   );
 
   const handleChangeAnnualSavingGoal = useCallback(

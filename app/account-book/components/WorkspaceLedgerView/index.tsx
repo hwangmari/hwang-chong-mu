@@ -35,6 +35,7 @@ import {
   extractFixedExpenseTemplateId,
 } from "./fixedExpense";
 import { compareResolvedEntriesDesc } from "./helpers";
+import { useAssetData } from "../../hooks/useAssetData";
 import { useEntryForm } from "./useEntryForm";
 import { useFixedExpenseTemplates } from "./useFixedExpenseTemplates";
 import { useListMemo } from "./useListMemo";
@@ -213,6 +214,18 @@ export default function WorkspaceLedgerView({
     upsertFixedExpenseTemplate,
     removeFixedExpenseTemplate,
   });
+  // 자산/저축 저축 시 세부 태그를 실제 통장 목록으로 노출(선택 → 그 통장에 자동 입금)
+  const assetData = useAssetData(workspace.id, currentUserId);
+  const savingsAccountNames = useMemo(
+    () => assetData.activeAccounts.map((account) => account.name),
+    [assetData.activeAccounts],
+  );
+  const entryDetailOptions = isSavingsCategory(entryForm.category)
+    ? savingsAccountNames.length > 0
+      ? savingsAccountNames
+      : entryForm.categoryDetailOptions
+    : entryForm.categoryDetailOptions;
+
   const registerModal = useRegisterModal({
     workspace,
     users,
@@ -1205,7 +1218,7 @@ export default function WorkspaceLedgerView({
         memo={entryForm.memo}
         quickInput={entryForm.quickInput}
         categoryOptions={entryForm.categoryOptions}
-        categoryDetailOptions={entryForm.categoryDetailOptions}
+        categoryDetailOptions={entryDetailOptions}
         cardCompanyOptions={entryForm.cardCompanyOptions}
         onClose={entryForm.closeFormModal}
         onSetDate={setSelectedDate}

@@ -7,6 +7,9 @@ import {
   AccountBookUser,
   AccountBookWorkspace,
   AccountEntry,
+  AssetAccount,
+  AssetChange,
+  AssetData,
 } from "./types";
 import {
   ACCOUNT_BOOK_STORE_KEY,
@@ -17,6 +20,10 @@ import {
   saveAccountBookStore,
   toggleShareLink,
 } from "./storage";
+import {
+  getRepresentativeCategory,
+  isSavingsCategory,
+} from "./components/WorkspaceLedgerView/utils";
 
 const DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL = 1_200_000;
 
@@ -614,4 +621,242 @@ export async function replaceWorkspaceEntries(
   }
 
   return latestStore;
+}
+
+// ── 자산(통장) RPC ──────────────────────────────────────────────────────────
+// account_book_get_asset_data 등은 { accounts, changes } JSON을 반환한다.
+// json_agg 로 나온 row는 snake_case 키라서 camelCase 로 매핑한다.
+
+type RawAssetAccount = {
+  id: string;
+  workspace_id: string;
+  name: string;
+  kind: string;
+  goal_amount: number | string | null;
+  created_by_user_id: string | null;
+  archived: boolean;
+  sort_order: number;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+type RawAssetChange = {
+  id: string;
+  workspace_id: string;
+  account_id: string;
+  date: string;
+  amount: number | string;
+  change_type: AssetChange["changeType"];
+  counterpart_account_id: string | null;
+  transfer_group_id: string | null;
+  linked_entry_id: string | null;
+  memo: string | null;
+  created_by_user_id: string | null;
+  created_at: string | null;
+};
+
+function mapRawAssetData(raw: unknown): AssetData {
+  const payload = (raw || {}) as {
+    accounts?: RawAssetAccount[] | null;
+    changes?: RawAssetChange[] | null;
+  };
+  const accounts: AssetAccount[] = (payload.accounts || []).map((account) => ({
+    id: account.id,
+    workspaceId: account.workspace_id,
+    name: account.name,
+    kind: account.kind,
+    goalAmount: Number(account.goal_amount) || 0,
+    createdByUserId: account.created_by_user_id || undefined,
+    archived: Boolean(account.archived),
+    sortOrder: Number(account.sort_order) || 0,
+    createdAt: account.created_at || undefined,
+    updatedAt: account.updated_at || undefined,
+  }));
+  const changes: AssetChange[] = (payload.changes || []).map((change) => ({
+    id: change.id,
+    workspaceId: change.workspace_id,
+    accountId: change.account_id,
+    date: change.date,
+    amount: Number(change.amount) || 0,
+    changeType: change.change_type,
+    counterpartAccountId: change.counterpart_account_id || undefined,
+    transferGroupId: change.transfer_group_id || undefined,
+    linkedEntryId: change.linked_entry_id || undefined,
+    memo: change.memo || "",
+    createdByUserId: change.created_by_user_id || undefined,
+    createdAt: change.created_at || undefined,
+  }));
+  return { accounts, changes };
+}
+
+async function callAssetRpc<TParams extends Record<string, unknown>>(
+  name: string,
+  params: TParams,
+): Promise<AssetData> {
+  const { data, error } = await supabase.rpc(name, params);
+  if (error) {
+    throw error;
+  }
+  return mapRawAssetData(data);
+}
+
+export async function fetchAccountBookAssetData(
+  workspaceId: string,
+): Promise<AssetData> {
+  return callAssetRpc("account_book_get_asset_data", {
+    p_workspace_id: workspaceId,
+  });
+}
+
+export async function upsertAccountBookAssetAccount(
+  account: AssetAccount,
+  actorUserId: string,
+): Promise<AssetData> {
+  return callAssetRpc("account_book_upsert_asset_account", {
+    p_account: account,
+    p_actor_user_id: actorUserId,
+  });
+}
+
+export async function deleteAccountBookAssetAccount(
+  accountId: string,
+  actorUserId: string,
+): Promise<AssetData> {
+  return callAssetRpc("account_book_delete_asset_account", {
+    p_account_id: accountId,
+    p_actor_user_id: actorUserId,
+  });
+}
+
+export async function upsertAccountBookAssetChange(
+  change: AssetChange,
+  actorUserId: string,
+): Promise<AssetData> {
+  return callAssetRpc("account_book_upsert_asset_change", {
+    p_change: change,
+    p_actor_user_id: actorUserId,
+  });
+}
+
+export async function deleteAccountBookAssetChange(
+  changeId: string,
+  actorUserId: string,
+): Promise<AssetData> {
+  return callAssetRpc("account_book_delete_asset_change", {
+    p_change_id: changeId,
+    p_actor_user_id: actorUserId,
+  });
+}
+
+export async function transferAccountBookAsset(params: {
+  workspaceId: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  memo?: string;
+  actorUserId: string;
+}): Promise<AssetData> {
+  return callAssetRpc("account_book_transfer_asset", {
+    p_workspace_id: params.workspaceId,
+    p_from_account_id: params.fromAccountId,
+    p_to_account_id: params.toAccountId,
+    p_amount: params.amount,
+    p_date: params.date,
+    p_memo: params.memo || "",
+    p_actor_user_id: params.actorUserId,
+  });
+}
+
+// ── 가계부 자산/저축 내역 ↔ 통장 자동 연동 (Phase 5) ────────────────────────
+// 가계부에서 자산/저축으로 저축하면 동명(세부항목) 통장에 'ledger' 입금을 만든다.
+// 변동 id는 entry에 종속(`ledger-<entryId>`)이라 재저장 시 중복 없이 갱신된다.
+
+function ledgerChangeId(entryId: string) {
+  return `ledger-${entryId}`;
+}
+
+/** 가계부 저축 entry를 동명 통장에 자동 입금 반영(생성/갱신), 저축이 아니면 연동 해제. */
+export async function syncLedgerSavingToAsset(
+  entry: AccountEntry,
+  actorUserId: string,
+) {
+  try {
+    const isSaving =
+      entry.type === "expense" && isSavingsCategory(entry.category);
+    const data = await fetchAccountBookAssetData(entry.workspaceId);
+    const linked = data.changes.find(
+      (change) => change.linkedEntryId === entry.id,
+    );
+
+    if (!isSaving) {
+      if (linked) {
+        await deleteAccountBookAssetChange(linked.id, actorUserId);
+      }
+      return;
+    }
+
+    const accountName =
+      entry.subCategory?.trim() ||
+      getRepresentativeCategory(entry.category, entry.type) ||
+      "저축";
+    let account = data.accounts.find(
+      (item) => !item.archived && item.name.trim() === accountName,
+    );
+    if (!account) {
+      const created = await upsertAccountBookAssetAccount(
+        {
+          id: createId("asset-account"),
+          workspaceId: entry.workspaceId,
+          name: accountName,
+          kind: "기타",
+          goalAmount: 0,
+          archived: false,
+          sortOrder: data.accounts.length,
+          createdByUserId: actorUserId,
+        },
+        actorUserId,
+      );
+      account = created.accounts.find(
+        (item) => !item.archived && item.name.trim() === accountName,
+      );
+    }
+    if (!account) return;
+
+    await upsertAccountBookAssetChange(
+      {
+        id: ledgerChangeId(entry.id),
+        workspaceId: entry.workspaceId,
+        accountId: account.id,
+        date: entry.date,
+        amount: Math.trunc(entry.amount),
+        changeType: "ledger",
+        linkedEntryId: entry.id,
+        memo: entry.item || "",
+        createdByUserId: actorUserId,
+      },
+      actorUserId,
+    );
+  } catch (error) {
+    console.warn("가계부 저축 → 통장 연동 실패(무시):", error);
+  }
+}
+
+/** 가계부 저축 entry 삭제 시 연동된 통장 변동을 제거. */
+export async function removeLedgerAssetLink(
+  entryId: string,
+  workspaceId: string,
+  actorUserId: string,
+) {
+  try {
+    const data = await fetchAccountBookAssetData(workspaceId);
+    const linked = data.changes.find(
+      (change) => change.linkedEntryId === entryId,
+    );
+    if (linked) {
+      await deleteAccountBookAssetChange(linked.id, actorUserId);
+    }
+  } catch (error) {
+    console.warn("가계부 저축 통장 연동 해제 실패(무시):", error);
+  }
 }

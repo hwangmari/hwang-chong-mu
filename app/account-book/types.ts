@@ -72,6 +72,56 @@ export type AccountBookMonthlyMemo = {
   updatedAt: string;
 };
 
+export type AssetAccountKind =
+  | "예금"
+  | "적금"
+  | "투자"
+  | "연금"
+  | "현금"
+  | "기타";
+
+export type AssetChangeType =
+  | "initial" // 초기 잔액
+  | "deposit" // 입금(적립)
+  | "withdraw" // 출금
+  | "transfer_in" // 이체 받음
+  | "transfer_out" // 이체 보냄
+  | "ledger" // 가계부 저축 연동
+  | "adjust"; // 잔액 조정
+
+export type AssetAccount = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  kind: string;
+  goalAmount: number;
+  createdByUserId?: string;
+  archived: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type AssetChange = {
+  id: string;
+  workspaceId: string;
+  accountId: string;
+  date: string;
+  amount: number; // 원 단위(+/-)
+  changeType: AssetChangeType;
+  counterpartAccountId?: string;
+  transferGroupId?: string;
+  linkedEntryId?: string;
+  memo?: string;
+  createdByUserId?: string;
+  createdAt?: string;
+};
+
+export type AssetData = {
+  accounts: AssetAccount[];
+  changes: AssetChange[];
+};
+
 export type AccountBookStore = {
   version: number;
   users: AccountBookUser[];
@@ -79,6 +129,8 @@ export type AccountBookStore = {
   entries: AccountEntry[];
   shareLinks: AccountBookShareLink[];
   monthlyMemos: AccountBookMonthlyMemo[];
+  assetAccounts: AssetAccount[];
+  assetChanges: AssetChange[];
 };
 
 export type CategoryStat = {

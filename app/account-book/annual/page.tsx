@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { fetchAccountBookStore, upsertAccountBookWorkspace } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
+import AssetBoardSection from "../components/AssetBoardSection";
+import AssetAnnualFlow from "../components/AssetAnnualFlow";
+import { useAssetData } from "../hooks/useAssetData";
 import {
   getRepresentativeCategory,
   isCardSettlementEntry,
@@ -83,6 +86,10 @@ function AccountBookAnnualContent() {
   const [assetGoalSaveState, setAssetGoalSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  // 연간 상세 진입 시 기본적으로 금액을 가린다(프라이버시). 토글로 열람.
+  const [isAmountHidden, setIsAmountHidden] = useState(true);
+  const maskAmount = (value: number) =>
+    isAmountHidden ? "•••••" : formatAmount(value);
 
   useEffect(() => {
     let active = true;
@@ -135,6 +142,13 @@ function AccountBookAnnualContent() {
   const workspace = store ? getWorkspaceById(store, workspaceId) : null;
   const selectedParticipant =
     store?.users.find((user) => user.id === memberId) || null;
+  const assetActorUserId =
+    workspace?.ownerUserId || memberId || store?.users[0]?.id || "";
+  // 통장 관리·축적 흐름이 같은 인스턴스를 공유하도록 상위에서 관리(입금 즉시 양쪽 반영)
+  const asset = useAssetData(
+    kind === "asset" ? workspaceId : null,
+    assetActorUserId,
+  );
   const workspaceEntries = useMemo(
     () => (store && workspace ? resolveWorkspaceEntries(store, workspace.id) : []),
     [store, workspace],
@@ -150,6 +164,51 @@ function AccountBookAnnualContent() {
         entry.member === selectedParticipant?.name,
     );
   }, [memberId, selectedParticipant?.name, workspace, workspaceEntries]);
+
+  // 자산 축적 흐름 = [통장 수동 입금·출금] + [가계부 자산/저축 내역]
+  // ledger 타입 변동은 가계부 내역의 미러본이라 이중집계 방지를 위해 제외한다.
+  const assetFlowItems = useMemo(() => {
+    const changeFlow = asset.changes
+      .filter(
+        (change) =>
+          change.changeType === "deposit" ||
+          change.changeType === "withdraw",
+      )
+      .map((change) => ({ date: change.date, amount: change.amount }));
+    const ledgerFlow = scopedEntries
+      .filter(
+        (entry) =>
+          entry.type === "expense" && isSavingsCategory(entry.category),
+      )
+      .map((entry) => ({ date: entry.date, amount: entry.amount }));
+    return [...changeFlow, ...ledgerFlow];
+  }, [asset.changes, scopedEntries]);
+
+  const assetFlowRows = useMemo(() => {
+    const prefix = `${selectedYear}-`;
+    let cumulative = assetFlowItems
+      .filter((item) => item.date < prefix)
+      .reduce((sum, item) => sum + item.amount, 0);
+    return Array.from({ length: 12 }, (_, index) => {
+      const mm = String(index + 1).padStart(2, "0");
+      const monthPrefix = `${selectedYear}-${mm}`;
+      const monthly = assetFlowItems
+        .filter((item) => item.date.startsWith(monthPrefix))
+        .reduce((sum, item) => sum + item.amount, 0);
+      cumulative += monthly;
+      return {
+        monthNumber: index + 1,
+        monthLabel: `${index + 1}월`,
+        monthly,
+        cumulative,
+      };
+    });
+  }, [assetFlowItems, selectedYear]);
+
+  const assetFlowTotal = useMemo(
+    () => assetFlowItems.reduce((sum, item) => sum + item.amount, 0),
+    [assetFlowItems],
+  );
 
   const annualEntries = useMemo(() => {
     const yearPrefix = `${selectedYear}-`;
@@ -228,6 +287,44 @@ function AccountBookAnnualContent() {
     () => insightEntries.reduce((sum, entry) => sum + entry.amount, 0),
     [insightEntries],
   );
+
+  // 월별 상세 내역: 개별 나열 대신 카테고리별로 묶어 요약(펼치면 개별).
+  const insightCategoryGroups = useMemo(() => {
+    const map = insightEntries.reduce<
+      Record<
+        string,
+        {
+          category: string;
+          count: number;
+          total: number;
+          entries: typeof insightEntries;
+        }
+      >
+    >((acc, entry) => {
+      const category =
+        kind === "asset"
+          ? entry.subCategory?.trim() ||
+            entry.item?.trim() ||
+            entry.category.trim() ||
+            "기타"
+          : getRepresentativeCategory(entry.category, entry.type);
+      if (!acc[category]) {
+        acc[category] = { category, count: 0, total: 0, entries: [] };
+      }
+      acc[category].count += 1;
+      acc[category].total += entry.amount;
+      acc[category].entries.push(entry);
+      return acc;
+    }, {});
+    return Object.values(map)
+      .map((group) => ({
+        ...group,
+        entries: group.entries
+          .slice()
+          .sort((a, b) => b.amount - a.amount),
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [insightEntries, kind]);
 
   const paymentTotals = useMemo(() => {
     return insightEntries.reduce<Record<PaymentKey, number>>(
@@ -585,12 +682,19 @@ function AccountBookAnnualContent() {
             </StTitle>
             <StHeaderDescription>{kindDescription}</StHeaderDescription>
           </div>
+          <StAmountToggle
+            type="button"
+            onClick={() => setIsAmountHidden((prev) => !prev)}
+            aria-pressed={!isAmountHidden}
+          >
+            {isAmountHidden ? "금액 보기" : "금액 숨기기"}
+          </StAmountToggle>
         </StHeader>
 
         <StHeroCard>
           <div>
             <StSectionTitle>{kindLabel} 합계</StSectionTitle>
-            <StTotal>{formatAmount(total)}</StTotal>
+            <StTotal>{maskAmount(total)}</StTotal>
             <StHeroDescription>
               {kind === "asset"
                 ? "연금 카테고리별 목표를 넣고 현재 누적 금액이 얼마나 찼는지 바로 확인할 수 있어요."
@@ -602,13 +706,13 @@ function AccountBookAnnualContent() {
           <StStatGrid>
             <StStatCard>
               <span>월평균</span>
-              <strong>{formatAmount(Math.round(averageMonthlyAmount))}</strong>
+              <strong>{maskAmount(Math.round(averageMonthlyAmount))}</strong>
             </StStatCard>
             <StStatCard>
               <span>가장 큰 달</span>
               <strong>
                 {topMonthRow && topMonthRow.amount > 0
-                  ? `${topMonthRow.month} · ${formatAmount(topMonthRow.amount)}`
+                  ? `${topMonthRow.month} · ${maskAmount(topMonthRow.amount)}`
                   : "-"}
               </strong>
             </StStatCard>
@@ -625,156 +729,22 @@ function AccountBookAnnualContent() {
 
         {kind === "asset" ? (
           <StInsightGrid>
-            <StCard>
-                <StSectionHeader>
-                  <StSectionTitle>연금 목표 현황</StSectionTitle>
-                  <StSectionMeta>
-                    {assetGoalSaveState === "saving"
-                      ? "DB에 저장하는 중..."
-                      : assetGoalSaveState === "saved"
-                        ? "DB에 저장됐어요."
-                        : assetGoalSaveState === "error"
-                          ? "DB 저장에 실패했어요. 다시 수정하면 재시도해요."
-                          : "목표 금액은 DB에 저장돼요."}
-                  </StSectionMeta>
-                </StSectionHeader>
-              <StGoalList>
-                {assetGoalRows.map((row) => (
-                  <StGoalCard key={row.label}>
-                    <StGoalHeader>
-                      <div>
-                        <strong>{row.label}</strong>
-                        <span>
-                          {row.isCompleted
-                            ? "목표 달성 완료"
-                            : row.goal > 0
-                              ? `남은 금액 ${formatAmount(row.remaining)}`
-                              : "목표 금액을 입력하면 달성률이 보여요."}
-                        </span>
-                      </div>
-                      <StGoalInputWrap>
-                        <label htmlFor={`asset-goal-${row.label}`}>목표</label>
-                        <input
-                          id={`asset-goal-${row.label}`}
-                          inputMode="numeric"
-                          value={assetGoalInputs[row.label]}
-                          onChange={(event) =>
-                            setAssetGoalInputs((prev) => ({
-                              ...prev,
-                              [row.label]: formatGoalInputValue(event.target.value),
-                            }))
-                          }
-                          placeholder="0"
-                        />
-                        <em>원</em>
-                      </StGoalInputWrap>
-                    </StGoalHeader>
-                    <StGoalMetaGrid>
-                      <StGoalMetaCard>
-                        <span>현재 누적</span>
-                        <strong>{formatAmount(row.saved)}</strong>
-                      </StGoalMetaCard>
-                      <StGoalMetaCard>
-                        <span>달성률</span>
-                        <strong>
-                          {row.achievementRate === null
-                            ? "-"
-                            : formatCompactPercent(
-                                Math.min(row.achievementRate, 999.9),
-                              )}
-                        </strong>
-                      </StGoalMetaCard>
-                      <StGoalMetaCard>
-                        <span>남은 금액</span>
-                        <strong>{formatAmount(row.remaining)}</strong>
-                      </StGoalMetaCard>
-                    </StGoalMetaGrid>
-                    <StGoalBar>
-                      <StGoalFill
-                        style={{
-                          width: `${
-                            row.achievementRate === null
-                              ? 0
-                              : Math.max(
-                                  Math.min(row.achievementRate, 100),
-                                  row.saved > 0 ? 8 : 0,
-                                )
-                          }%`,
-                        }}
-                      />
-                    </StGoalBar>
-                  </StGoalCard>
-                ))}
-              </StGoalList>
-            </StCard>
-
-            <StSideColumn>
-              <StCard>
-                <StSectionHeader>
-                  <StSectionTitle>목표 요약</StSectionTitle>
-                  <StSectionMeta>연금 카테고리 기준</StSectionMeta>
-                </StSectionHeader>
-                <StGoalSummaryList>
-                  <StGoalSummaryItem>
-                    <span>목표 합계</span>
-                    <strong>{formatAmount(assetGoalSummary.totalGoalAmount)}</strong>
-                  </StGoalSummaryItem>
-                  <StGoalSummaryItem>
-                    <span>현재 누적</span>
-                    <strong>{formatAmount(assetGoalSummary.totalSavedAmount)}</strong>
-                  </StGoalSummaryItem>
-                  <StGoalSummaryItem>
-                    <span>남은 금액</span>
-                    <strong>
-                      {formatAmount(assetGoalSummary.totalRemainingAmount)}
-                    </strong>
-                  </StGoalSummaryItem>
-                  <StGoalSummaryItem>
-                    <span>달성한 카테고리</span>
-                    <strong>
-                      {assetGoalSummary.completedCount}/{assetGoalSummary.activeGoalCount || 0}
-                    </strong>
-                  </StGoalSummaryItem>
-                  <StGoalSummaryItem>
-                    <span>전체 달성률</span>
-                    <strong>
-                      {assetGoalSummary.overallRate === null
-                        ? "-"
-                        : formatCompactPercent(
-                            Math.min(assetGoalSummary.overallRate, 999.9),
-                          )}
-                    </strong>
-                  </StGoalSummaryItem>
-                </StGoalSummaryList>
-              </StCard>
-
-              <StCard>
-                <StSectionHeader>
-                  <StSectionTitle>카테고리 누적 금액</StSectionTitle>
-                  <StSectionMeta>자산 카테고리 전체</StSectionMeta>
-                </StSectionHeader>
-                {assetCumulativeCategoryRows.length === 0 ? (
-                  <StEmpty>누적 카테고리 데이터가 없습니다.</StEmpty>
-                ) : (
-                  <StCategoryList>
-                    {assetCumulativeCategoryRows.map((row) => (
-                      <StCategoryItem key={`asset-category-${row.label}`}>
-                        <div>
-                          <strong>{row.label}</strong>
-                          <span>
-                            {formatCompactPercent(row.ratio)} · {row.count}건 · 최근{" "}
-                            {row.latestDate}
-                          </span>
-                        </div>
-                        <em>{formatAmount(row.amount)}</em>
-                      </StCategoryItem>
-                    ))}
-                  </StCategoryList>
-                )}
-              </StCard>
-            </StSideColumn>
+            <AssetBoardSection
+              asset={asset}
+              currentYear={selectedYear}
+              isAmountHidden={isAmountHidden}
+            />
+            <AssetAnnualFlow
+              rows={assetFlowRows}
+              totalSavings={assetFlowTotal}
+              isLoading={asset.isLoading}
+              year={selectedYear}
+              isAmountHidden={isAmountHidden}
+            />
           </StInsightGrid>
-        ) : (
+        ) : null}
+
+        {(
           <StInsightGrid>
               <StCard>
                 <StSectionHeader>
@@ -795,6 +765,40 @@ function AccountBookAnnualContent() {
               {monthlyRows.every((row) => row.amount === 0) ? (
                 <StEmpty>해당 연도 내역이 없습니다.</StEmpty>
               ) : (
+                <>
+                <StMonthChart>
+                  {monthlyRows.map((row) => {
+                    const isActive = selectedMonth === row.month;
+                    const height =
+                      row.amount > 0 && maxMonthlyAmount > 0
+                        ? Math.max((row.amount / maxMonthlyAmount) * 96, 6)
+                        : 2;
+                    return (
+                      <StMonthChartCol
+                        key={`chart-${row.month}`}
+                        type="button"
+                        $active={isActive}
+                        onClick={() =>
+                          setSelectedMonth((prev) =>
+                            prev === row.month ? null : row.month,
+                          )
+                        }
+                        title={`${row.month} ${maskAmount(row.amount)}`}
+                      >
+                        <StMonthChartTrack>
+                          <StMonthChartBar
+                            style={{ height: `${height}px` }}
+                            $active={isActive}
+                            $empty={row.amount === 0}
+                          />
+                        </StMonthChartTrack>
+                        <StMonthChartLabel $active={isActive}>
+                          {row.month.replace("월", "")}
+                        </StMonthChartLabel>
+                      </StMonthChartCol>
+                    );
+                  })}
+                </StMonthChart>
                 <StMonthlyList>
                   {monthlyRows.map((row) => {
                     const isActive = selectedMonth === row.month;
@@ -816,17 +820,18 @@ function AccountBookAnnualContent() {
                       >
                         <strong>{row.month}</strong>
                         <span>{row.count}건</span>
-                        <em>{formatAmount(row.amount)}</em>
                         <div className="track">
                           <div
                             className="fill"
                             style={{ width: `${Math.max(ratio, row.amount > 0 ? 8 : 0)}%` }}
                           />
                         </div>
+                        <em>{maskAmount(row.amount)}</em>
                       </StMonthLine>
                     );
                   })}
                 </StMonthlyList>
+                </>
               )}
             </StCard>
 
@@ -850,7 +855,7 @@ function AccountBookAnnualContent() {
                               <strong>{row.label}</strong>
                               <span>{formatCompactPercent(row.ratio)}</span>
                             </div>
-                            <em>{formatAmount(row.amount)}</em>
+                            <em>{maskAmount(row.amount)}</em>
                           </StCategoryItem>
                         ))}
                       </StCategoryList>
@@ -874,7 +879,7 @@ function AccountBookAnnualContent() {
                               <strong>{row.label}</strong>
                               <span>{formatCompactPercent(row.ratio)}</span>
                             </div>
-                            <em>{formatAmount(row.amount)}</em>
+                            <em>{maskAmount(row.amount)}</em>
                           </StCategoryItem>
                         ))}
                       </StCategoryList>
@@ -905,7 +910,7 @@ function AccountBookAnnualContent() {
                               <strong>{payment.label}</strong>
                             </div>
                             <div className="meta">
-                              <em>{formatAmount(value)}</em>
+                              <em>{maskAmount(value)}</em>
                               <span>{formatCompactPercent(ratio)}</span>
                             </div>
                           </StLegendItem>
@@ -921,20 +926,64 @@ function AccountBookAnnualContent() {
                         {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
                       </StSectionMeta>
                     </StSectionHeader>
-                    {categoryRows.length === 0 ? (
+                    {insightCategoryGroups.length === 0 ? (
                       <StEmpty>분류할 데이터가 없습니다.</StEmpty>
                     ) : (
-                      <StCategoryList>
-                        {categoryRows.map((row) => (
-                          <StCategoryItem key={row.label}>
-                            <div>
-                              <strong>{row.label}</strong>
-                              <span>{formatCompactPercent(row.ratio)}</span>
-                            </div>
-                            <em>{formatAmount(row.amount)}</em>
-                          </StCategoryItem>
-                        ))}
-                      </StCategoryList>
+                      <StCatSummaryList>
+                        {insightCategoryGroups.map((group) => {
+                          const isOpen =
+                            openAccordions[group.category] ?? false;
+                          const ratio =
+                            insightTotal > 0
+                              ? (group.total / insightTotal) * 100
+                              : 0;
+                          return (
+                            <StCatGroup key={group.category}>
+                              <StCatButton
+                                type="button"
+                                onClick={() =>
+                                  setOpenAccordions((prev) => ({
+                                    ...prev,
+                                    [group.category]: !isOpen,
+                                  }))
+                                }
+                              >
+                                <StCatMain>
+                                  <strong>{group.category}</strong>
+                                  <span>
+                                    {formatCompactPercent(ratio)} ·{" "}
+                                    {group.count}건
+                                  </span>
+                                </StCatMain>
+                                <StCatRight>
+                                  <em>{maskAmount(group.total)}</em>
+                                  <StCatChevron $open={isOpen} aria-hidden>
+                                    ⌄
+                                  </StCatChevron>
+                                </StCatRight>
+                              </StCatButton>
+                              {isOpen ? (
+                                <StCatItems>
+                                  {group.entries.map((entry) => (
+                                    <StCatItem key={entry.resolvedId}>
+                                      <div>
+                                        <strong>{entry.item}</strong>
+                                        <span>
+                                          {entry.date}
+                                          {entry.subCategory
+                                            ? ` · ${entry.subCategory}`
+                                            : ""}
+                                        </span>
+                                      </div>
+                                      <em>{maskAmount(entry.amount)}</em>
+                                    </StCatItem>
+                                  ))}
+                                </StCatItems>
+                              ) : null}
+                            </StCatGroup>
+                          );
+                        })}
+                      </StCatSummaryList>
                     )}
                   </StCard>
                 </>
@@ -942,56 +991,6 @@ function AccountBookAnnualContent() {
             </StSideColumn>
           </StInsightGrid>
         )}
-
-        <StCard>
-          <StSectionHeader>
-            <StSectionTitle>월별 상세 내역</StSectionTitle>
-            <StSectionMeta>
-              {selectedMonth ? `${selectedMonth}만 보는 중` : `${selectedYear}년 전체`}
-            </StSectionMeta>
-          </StSectionHeader>
-          <StAccordionList>
-            {entriesByMonth.length === 0 ? (
-              <StEmpty>해당 조건에 맞는 내역이 없습니다.</StEmpty>
-            ) : (
-              entriesByMonth.map((row) => {
-                const isOpen = openAccordions[row.month] ?? true;
-                return (
-                  <StAccordion key={row.month}>
-                    <StAccordionButton
-                      type="button"
-                      onClick={() =>
-                        setOpenAccordions((prev) => ({
-                          ...prev,
-                          [row.month]: !isOpen,
-                        }))
-                      }
-                    >
-                      <strong>{row.month}</strong>
-                      <span>{row.entries.length}건</span>
-                    </StAccordionButton>
-                    {isOpen && (
-                      <StEntryList>
-                        {row.entries.map((entry) => (
-                          <StEntryItem key={entry.resolvedId}>
-                            <div>
-                              <strong>{entry.item}</strong>
-                              <p>
-                                {entry.date} · {entry.member || "작성자 미상"} ·{" "}
-                                {entry.category}
-                              </p>
-                            </div>
-                            <em>{formatAmount(entry.amount)}</em>
-                          </StEntryItem>
-                        ))}
-                      </StEntryList>
-                    )}
-                  </StAccordion>
-                );
-              })
-            )}
-          </StAccordionList>
-        </StCard>
       </StPage>
     </AccountBookLockGate>
   );
@@ -1028,6 +1027,30 @@ const StHeader = styled.header`
   gap: 0.75rem;
   align-items: flex-start;
   margin-bottom: 1rem;
+`;
+
+const StAmountToggle = styled.button`
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: center;
+  border: 1px solid #e2e3e4;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.white};
+  color: #8a8e95;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: #d3d5d8;
+    background: #f5f6f7;
+    color: #656971;
+  }
 `;
 
 const StEyebrow = styled.p`
@@ -1111,8 +1134,8 @@ const StGoalList = styled.div`
 `;
 
 const StGoalCard = styled.article`
-  border: 1px solid #e5e6e8;
-  border-radius: 20px;
+  border: 1px solid #eaebed;
+  border-radius: 16px;
   background: #fdfdfe;
   padding: 0.9rem;
 `;
@@ -1188,45 +1211,44 @@ const StGoalMetaGrid = styled.div`
 `;
 
 const StGoalMetaCard = styled.div`
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e9eaec;
-  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  background: #f5f6f8;
+  padding: 0.6rem 0.7rem;
 
   span {
     display: block;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     color: #868a91;
     font-weight: 700;
   }
 
   strong {
     display: block;
-    margin-top: 0.24rem;
-    font-size: 0.96rem;
-    color: #192c4e;
+    margin-top: 0.22rem;
+    font-size: 0.95rem;
+    color: #222b36;
     font-weight: 900;
   }
 `;
 
 const StGoalBar = styled.div`
   margin-top: 0.8rem;
-  height: 0.72rem;
+  height: 0.5rem;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.gray200};
+  background: #eceef1;
   overflow: hidden;
 `;
 
 const StGoalFill = styled.div`
   height: 100%;
   border-radius: inherit;
-  background: #3f8f8a;
+  background: #3182f6;
 `;
 
 const StGoalSummaryList = styled.div`
   display: grid;
-  gap: 0.55rem;
-  margin-top: 0.95rem;
+  gap: 0;
+  margin-top: 0.6rem;
 `;
 
 const StGoalSummaryItem = styled.div`
@@ -1234,10 +1256,12 @@ const StGoalSummaryItem = styled.div`
   justify-content: space-between;
   gap: 0.8rem;
   align-items: center;
-  border-radius: 16px;
-  border: 1px solid #e8e9ea;
-  background: rgba(255, 255, 255, 0.92);
-  padding: 0.8rem 0.9rem;
+  border-top: 1px solid #eef0f2;
+  padding: 0.72rem 0.15rem;
+
+  &:first-child {
+    border-top: none;
+  }
 
   span {
     font-size: 0.78rem;
@@ -1386,80 +1410,139 @@ const StFilterChipPlaceholder = styled.span`
   visibility: hidden;
 `;
 
-const StMonthlyList = styled.div`
+const StMonthChart = styled.div`
   margin-top: 1rem;
-  display: grid;
-  gap: 0.55rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 128px;
+  padding: 0 0.1rem;
+`;
+
+const StMonthChartCol = styled.button<{ $active: boolean }>`
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+`;
+
+const StMonthChartTrack = styled.div`
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+`;
+
+const StMonthChartBar = styled.div<{ $active: boolean; $empty: boolean }>`
+  width: 100%;
+  max-width: 20px;
+  border-radius: 5px 5px 2px 2px;
+  background: ${({ $active, $empty }) =>
+    $empty ? "#eceff3" : $active ? "#3182f6" : "#bcd3f8"};
+  transition: background 0.15s ease;
+`;
+
+const StMonthChartLabel = styled.span<{ $active: boolean }>`
+  font-size: 0.66rem;
+  font-weight: ${({ $active }) => ($active ? 900 : 700)};
+  color: ${({ $active }) => ($active ? "#3182f6" : "#a2a6ad")};
+`;
+
+const StMonthlyList = styled.div`
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
 `;
 
 const StMonthLine = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#c7c9cd" : "#e4e5e6")};
-  border-radius: 18px;
-  background: ${({ $active }) => ($active ? "#f6f6f7" : "#fdfdfd")};
-  padding: 0.8rem 0.9rem;
+  border: none;
+  border-top: 1px solid #eef0f2;
+  border-radius: 8px;
+  background: ${({ $active }) => ($active ? "#f5f7fb" : "transparent")};
+  padding: 0.62rem 0.55rem;
   display: grid;
-  grid-template-columns: 0.62fr 0.42fr 0.9fr minmax(120px, 1fr);
+  grid-template-columns: 2.4rem 3rem minmax(70px, 1fr) 7rem;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.85rem;
+  cursor: pointer;
+
+  &:first-child {
+    border-top: none;
+  }
 
   strong {
-    font-size: 0.9rem;
-    font-weight: 900;
-    color: #192c4e;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: ${({ $active }) => ($active ? "#3182f6" : "#2b3441")};
     text-align: left;
   }
 
   span {
-    font-size: 0.76rem;
-    color: #84888f;
+    font-size: 0.75rem;
+    color: #98a0ab;
     font-weight: 700;
     text-align: left;
   }
 
   em {
     font-style: normal;
+    font-size: 0.85rem;
     font-weight: 900;
-    color: #2b4d87;
+    color: #333d4b;
     text-align: right;
+    white-space: nowrap;
   }
 
   .track {
     width: 100%;
-    height: 0.5rem;
+    height: 0.4rem;
     border-radius: 999px;
-    background: ${({ theme }) => theme.colors.blue50};
+    background: #eef1f5;
     overflow: hidden;
   }
 
   .fill {
     height: 100%;
     border-radius: 999px;
-    background: #9a9ea4;
+    background: ${({ $active }) => ($active ? "#3182f6" : "#c3ccd6")};
   }
 
   @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-    justify-items: start;
+    grid-template-columns: 2rem 2.6rem minmax(40px, 1fr) 5.5rem;
+    gap: 0.5rem;
 
     em {
-      text-align: left;
+      font-size: 0.78rem;
     }
   }
 `;
 
 const StCategoryList = styled.div`
-  margin-top: 0.9rem;
+  margin-top: 0.6rem;
   display: grid;
-  gap: 0.55rem;
+  gap: 0;
 `;
 
 const StCategoryItem = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
-  border: 1px solid #ececed;
-  border-radius: 16px;
-  padding: 0.75rem 0.85rem;
+  border-top: 1px solid #eef0f2;
+  padding: 0.72rem 0.15rem;
+
+  &:first-child {
+    border-top: none;
+  }
 
   div {
     display: grid;
@@ -1481,7 +1564,7 @@ const StCategoryItem = styled.div`
   em {
     font-style: normal;
     white-space: nowrap;
-    color: #2b4d87;
+    color: #333d4b;
     font-weight: 900;
   }
 `;
@@ -1490,6 +1573,114 @@ const StAccordionList = styled.div`
   display: grid;
   gap: 0.75rem;
   margin-top: 0.9rem;
+`;
+
+const StCatSummaryList = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.6rem;
+`;
+
+const StCatGroup = styled.div`
+  border-top: 1px solid #eef0f2;
+
+  &:first-child {
+    border-top: none;
+  }
+`;
+
+const StCatButton = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: none;
+  background: transparent;
+  padding: 0.78rem 0.15rem;
+  text-align: left;
+  cursor: pointer;
+`;
+
+const StCatMain = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+
+  strong {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #2b3441;
+  }
+
+  span {
+    font-size: 0.74rem;
+    color: #98a0ab;
+    font-weight: 700;
+  }
+`;
+
+const StCatRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  em {
+    font-style: normal;
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: #333d4b;
+    white-space: nowrap;
+  }
+`;
+
+const StCatChevron = styled.span<{ $open: boolean }>`
+  font-size: 0.85rem;
+  color: #a2a6ad;
+  transition: transform 0.18s ease;
+  transform: rotate(${({ $open }) => ($open ? "180deg" : "0deg")});
+`;
+
+const StCatItems = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.15rem 0.6rem 0.75rem;
+`;
+
+const StCatItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.42rem 0;
+  border-top: 1px dashed #eef0f2;
+
+  div {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  strong {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #3a3f47;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: #98a0ab;
+  }
+
+  em {
+    font-style: normal;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #4e5560;
+    white-space: nowrap;
+  }
 `;
 
 const StAccordion = styled.article`
