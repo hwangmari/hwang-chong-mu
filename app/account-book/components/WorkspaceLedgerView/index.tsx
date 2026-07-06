@@ -69,7 +69,6 @@ export default function WorkspaceLedgerView({
   onSaveMonthlyMemo,
   onSaveEntry,
   onDeleteEntry,
-  onChangeAnnualSavingGoal,
   onBack,
   initialViewMode = "calendar",
 }: WorkspaceLedgerViewProps) {
@@ -929,25 +928,11 @@ export default function WorkspaceLedgerView({
     setSelectedCalendarCardId(null);
   };
 
-  const onAnnualGoalChange = async (nextGoal: number) => {
-    const normalizedGoal = Math.max(0, Math.trunc(nextGoal));
-    const previousGoal = annualSavingGoal;
-    setAnnualSavingGoal(normalizedGoal);
-    const saved = await Promise.resolve(
-      onChangeAnnualSavingGoal(normalizedGoal),
-    );
-    if (!saved) {
-      setAnnualSavingGoal(previousGoal);
-      return false;
-    }
-    return true;
-  };
-
   const annualDetailQuery = useMemo(() => {
     const params = new URLSearchParams({
       year: selectedYear,
       workspaceId: workspace.id,
-      view: "board",
+      view: viewMode,
     });
 
     if (
@@ -958,12 +943,13 @@ export default function WorkspaceLedgerView({
     }
 
     return params;
-  }, [selectedParticipantId, selectedYear, workspace.id, workspace.type]);
-
-  const onMonthlyGoalChange = async (nextGoal: number) => {
-    const normalizedGoal = Math.max(0, Math.trunc(nextGoal));
-    return onAnnualGoalChange(normalizedGoal * 12);
-  };
+  }, [
+    selectedParticipantId,
+    selectedYear,
+    viewMode,
+    workspace.id,
+    workspace.type,
+  ]);
 
   const entryActions = (entry: ResolvedAccountEntry) => {
     if (workspace.type === "personal") {
@@ -1143,11 +1129,8 @@ export default function WorkspaceLedgerView({
           ledgerDetailEntries={ledgerDetailEntries}
           ledgerDetailAssetEntries={ledgerDetailAssetEntries}
           annualSavingGoal={annualSavingGoal}
-          monthlySavingGoal={monthlySavingGoal}
-          onChangeMonthlySavingGoal={onMonthlyGoalChange}
           dashboardRows={dashboardRows}
           onSelectBoardMonth={onDashboardMonthSelect}
-          onChangeAnnualSavingGoal={onAnnualGoalChange}
           calendarDays={calendarDays}
           daySummary={daySummary}
           toIsoDate={toIsoDate}
@@ -1220,6 +1203,9 @@ export default function WorkspaceLedgerView({
         categoryOptions={entryForm.categoryOptions}
         categoryDetailOptions={entryDetailOptions}
         cardCompanyOptions={entryForm.cardCompanyOptions}
+        recurringAvailable={isSavingsCategory(entryForm.category)}
+        recurring={entryForm.recurring}
+        onToggleRecurring={entryForm.setRecurring}
         onClose={entryForm.closeFormModal}
         onSetDate={setSelectedDate}
         onSetType={entryForm.handleTypeChange}

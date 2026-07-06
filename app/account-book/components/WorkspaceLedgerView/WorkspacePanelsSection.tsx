@@ -64,9 +64,6 @@ type Props = {
   ledgerDetailEntries: ResolvedAccountEntry[];
   ledgerDetailAssetEntries: ResolvedAccountEntry[];
   annualSavingGoal: number;
-  monthlySavingGoal: number;
-  onChangeAnnualSavingGoal: (value: number) => boolean | Promise<boolean>;
-  onChangeMonthlySavingGoal: (value: number) => boolean | Promise<boolean>;
   dashboardRows: Array<{
     monthNumber: number;
     monthLabel: string;
@@ -140,9 +137,6 @@ export default function WorkspacePanelsSection({
   ledgerDetailEntries,
   ledgerDetailAssetEntries,
   annualSavingGoal,
-  monthlySavingGoal,
-  onChangeAnnualSavingGoal,
-  onChangeMonthlySavingGoal,
   dashboardRows,
   onSelectBoardMonth,
   calendarDays,
@@ -238,9 +232,6 @@ export default function WorkspacePanelsSection({
                 currentYear={currentYear}
                 currentMonthIndex={currentMonthIndex}
                 annualGoal={annualSavingGoal}
-                monthlyGoal={monthlySavingGoal}
-                onChangeAnnualGoal={onChangeAnnualSavingGoal}
-                onChangeMonthlyGoal={onChangeMonthlySavingGoal}
                 dashboardRows={dashboardRows}
                 onSelectMonth={onSelectBoardMonth}
                 onOpenIncomeYearly={onOpenIncomeYearly}

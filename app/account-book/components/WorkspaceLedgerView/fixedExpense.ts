@@ -22,6 +22,7 @@ export type FixedExpenseTemplate = {
   payment: PaymentType;
   cardCompany: string;
   memo: string;
+  category: string;
   subCategory: string;
   dayOfMonth: number;
   startDate: string;
@@ -63,7 +64,12 @@ export function readFixedExpenseTemplates(
     );
     if (!raw) return [];
     const parsed = JSON.parse(raw) as FixedExpenseTemplate[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    // 레거시 템플릿(카테고리 없음)은 고정비로 간주
+    return parsed.map((template) => ({
+      ...template,
+      category: template.category || "고정비",
+    }));
   } catch {
     return [];
   }
@@ -96,6 +102,7 @@ export function buildFixedExpenseTemplate(
     payment: entry.payment,
     cardCompany: entry.cardCompany,
     memo: entry.memo,
+    category: entry.category || "고정비",
     subCategory: entry.subCategory || "",
     dayOfMonth: parsedDate.getDate(),
     startDate: entry.date,
@@ -122,7 +129,7 @@ export function buildFixedExpenseEntry(
     workspaceId: template.workspaceId,
     createdByUserId: template.createdByUserId,
     type: "expense",
-    category: "고정비",
+    category: template.category || "고정비",
     subCategory: template.subCategory,
     merchant: template.merchant,
     item: template.item,

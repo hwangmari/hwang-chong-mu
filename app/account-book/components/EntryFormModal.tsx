@@ -38,6 +38,9 @@ type Props = {
   categoryOptions: CategoryOption[];
   categoryDetailOptions: string[];
   cardCompanyOptions: string[];
+  recurringAvailable: boolean;
+  recurring: boolean;
+  onToggleRecurring: (value: boolean) => void;
   onClose: () => void;
   onSetDate: (date: string) => void;
   onSetType: (type: EntryType) => void;
@@ -69,6 +72,9 @@ export default function EntryFormModal({
   categoryOptions,
   categoryDetailOptions,
   cardCompanyOptions,
+  recurringAvailable,
+  recurring,
+  onToggleRecurring,
   onClose,
   onSetDate,
   onSetType,
@@ -89,8 +95,17 @@ export default function EntryFormModal({
     if (event.key !== "=" && event.key !== "Enter") return;
     event.preventDefault();
     if (amountValue !== null) {
-      onSetAmount(String(Math.trunc(amountValue)));
+      onSetAmount(Math.trunc(amountValue).toLocaleString("ko-KR"));
     }
+  };
+  // 숫자만 있으면 천단위 콤마, 계산식(연산자 포함)이면 원본 유지
+  const handleAmountChange = (value: string) => {
+    if (/^[\d,]*$/.test(value)) {
+      const digits = value.replace(/,/g, "");
+      onSetAmount(digits ? Number(digits).toLocaleString("ko-KR") : "");
+      return;
+    }
+    onSetAmount(value);
   };
 
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
@@ -131,9 +146,9 @@ export default function EntryFormModal({
                   type="text"
                   inputMode="text"
                   value={amount}
-                  onChange={(e) => onSetAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   onKeyDown={handleAmountKeyDown}
-                  placeholder="예: 15000 또는 15000+3000"
+                  placeholder="예: 15,000 또는 15000+3000"
                 />
                 {amountHasExpression ? (
                   <StAmountPreview $invalid={amountValue === null}>
@@ -307,6 +322,22 @@ export default function EntryFormModal({
                     placeholder="세부 카테고리 직접 입력"
                   />
                 </>
+              ) : null}
+              {recurringAvailable ? (
+                <StRecurringRow
+                  type="button"
+                  $active={recurring}
+                  onClick={() => onToggleRecurring(!recurring)}
+                  aria-pressed={recurring}
+                >
+                  <StRecurringText>
+                    <strong>정기 반복 저축</strong>
+                    <span>매달 이 날짜에 자동으로 기록돼요 (예: 청약)</span>
+                  </StRecurringText>
+                  <StRecurringSwitch $active={recurring} aria-hidden>
+                    <span />
+                  </StRecurringSwitch>
+                </StRecurringRow>
               ) : null}
             </StFormField>
           </StAbSectionCard>
@@ -530,6 +561,58 @@ const StAmountPreview = styled.p<{ $invalid?: boolean }>`
 
   @media (max-width: 720px) {
     font-size: 0.76rem;
+  }
+`;
+
+const StRecurringRow = styled.button<{ $active: boolean }>`
+  width: 100%;
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 1px solid ${({ $active }) => ($active ? "#3182f6" : "#e2e3e5")};
+  border-radius: 14px;
+  background: ${({ $active }) => ($active ? "#eef5fe" : "#ffffff")};
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  text-align: left;
+`;
+
+const StRecurringText = styled.div`
+  display: grid;
+  gap: 0.15rem;
+
+  strong {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #2b3441;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: #8a8e95;
+  }
+`;
+
+const StRecurringSwitch = styled.span<{ $active: boolean }>`
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: ${({ $active }) => ($active ? "#3182f6" : "#d3d5d9")};
+  position: relative;
+  transition: background 0.18s ease;
+
+  span {
+    position: absolute;
+    top: 0.15rem;
+    left: ${({ $active }) => ($active ? "1.15rem" : "0.15rem")};
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    background: #ffffff;
+    transition: left 0.18s ease;
   }
 `;
 

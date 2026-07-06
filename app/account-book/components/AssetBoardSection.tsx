@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import styled from "styled-components";
 import type { useAssetData } from "../hooks/useAssetData";
 import type { AssetChangeType } from "../types";
@@ -98,7 +99,13 @@ export default function AssetBoardSection({
     const isExpanded = expandedId === account.id;
     const history = asset.changesByAccount(account.id);
     const goal = account.goalAmount || 0;
-    const progress = goal > 0 ? Math.min((balance / goal) * 100, 100) : 0;
+    // 목표는 연 단위 → 올해 입금액만 반영(작년 이전 잔액·초기잔액 제외)
+    const yearPrefix = `${currentYear}-`;
+    const yearInflow = history
+      .filter((change) => change.date.startsWith(yearPrefix))
+      .reduce((sum, change) => sum + change.amount, 0);
+    const progress =
+      goal > 0 ? Math.min(Math.max((yearInflow / goal) * 100, 0), 100) : 0;
     return (
       <StAccountBlock key={account.id}>
         <StAccountRow
@@ -223,7 +230,9 @@ export default function AssetBoardSection({
               <StGoalFill style={{ width: `${progress}%` }} />
             </StGoalBar>
             <StGoalMeta>
-              <span>목표 {mask(goal)}</span>
+              <span>
+                올해 {mask(yearInflow)} / 목표 {mask(goal)}
+              </span>
               <strong>{progress.toFixed(0)}%</strong>
             </StGoalMeta>
           </StGoalWrap>
@@ -332,7 +341,33 @@ export default function AssetBoardSection({
             아직 통장이 없어요. “통장 추가”로 첫 통장을 만들어보세요.
           </StEmpty>
         ) : (
-          asset.activeAccounts.map((account) => renderAccountBlock(account))
+          kindGroups.map((group) => {
+            const collapsed = collapsedKinds[group.kind] ?? false;
+            return (
+              <StKindSection key={group.kind}>
+                <StKindSectionHeader
+                  type="button"
+                  onClick={() =>
+                    setCollapsedKinds((prev) => ({
+                      ...prev,
+                      [group.kind]: !collapsed,
+                    }))
+                  }
+                  aria-expanded={!collapsed}
+                >
+                  <strong>{group.kind}</strong>
+                  <span>{group.accounts.length}개</span>
+                  <em>{mask(group.total)}</em>
+                  <StKindCaret $open={!collapsed} aria-hidden>
+                    <ChevronRightRoundedIcon fontSize="inherit" />
+                  </StKindCaret>
+                </StKindSectionHeader>
+                {!collapsed
+                  ? group.accounts.map((account) => renderAccountBlock(account))
+                  : null}
+              </StKindSection>
+            );
+          })
         )}
       </StAccountList>
 
@@ -508,7 +543,10 @@ function ChangeModal({
           <StInput
             inputMode="numeric"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/[^\d]/g, "");
+              setAmount(digits ? Number(digits).toLocaleString("ko-KR") : "");
+            }}
             placeholder="예: 500000"
             autoFocus
           />
@@ -608,7 +646,10 @@ function TransferModal({
           <StInput
             inputMode="numeric"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/[^\d]/g, "");
+              setAmount(digits ? Number(digits).toLocaleString("ko-KR") : "");
+            }}
             placeholder="예: 300000"
           />
         </StField>
@@ -769,59 +810,56 @@ const StAccountList = styled.div`
   flex-direction: column;
 `;
 
-const StKindGroup = styled.div`
-  border-top: 1px solid #eef0f2;
+const StKindSection = styled.div`
+  border-top: 1px solid #e5e7ea;
 
   &:first-child {
     border-top: none;
   }
 `;
 
-const StKindHeader = styled.button`
+const StKindSectionHeader = styled.button`
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
+  gap: 0.4rem;
   border: none;
   background: transparent;
-  padding: 0.7rem 0.15rem;
+  padding: 0.7rem 0.15rem 0.5rem;
+  text-align: left;
   cursor: pointer;
-`;
-
-const StKindTitle = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  min-width: 0;
 
   strong {
-    font-size: 0.86rem;
+    font-size: 1rem;
     font-weight: 900;
-    color: #2b3441;
+    color: #1f2733;
   }
 
   span {
     font-size: 0.72rem;
-    color: #98a0ab;
+    color: #a2a6ad;
     font-weight: 700;
+  }
+
+  em {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #3a424d;
+    white-space: nowrap;
   }
 `;
 
 const StKindCaret = styled.span<{ $open: boolean }>`
-  font-size: 0.7rem;
+  && {
+    font-size: 1.15rem;
+  }
+  display: inline-flex;
+  align-items: center;
   color: #9aa0a8;
-  align-self: center;
   transition: transform 0.15s ease;
   transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
-`;
-
-const StKindTotal = styled.span`
-  font-size: 0.9rem;
-  font-weight: 900;
-  color: #333d4b;
-  white-space: nowrap;
-  flex-shrink: 0;
 `;
 
 const StEmpty = styled.p`
@@ -895,17 +933,17 @@ const StAccountMain = styled.div`
   gap: 0.45rem;
 
   strong {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: #2b3441;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #4a515c;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   span {
-    font-size: 0.72rem;
-    color: #98a0ab;
+    font-size: 0.7rem;
+    color: #a9b0ba;
     flex-shrink: 0;
   }
 `;
@@ -918,9 +956,9 @@ const StAccountRight = styled.div`
 `;
 
 const StBalance = styled.span`
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: #222b36;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #3a424d;
   white-space: nowrap;
 `;
 

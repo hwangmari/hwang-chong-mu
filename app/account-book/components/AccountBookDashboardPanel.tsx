@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import MonthlyIssueMemo from "./MonthlyIssueMemo";
 
@@ -24,9 +24,6 @@ type Props = {
   currentYear: number;
   currentMonthIndex: number;
   annualGoal: number;
-  monthlyGoal: number;
-  onChangeAnnualGoal: (value: number) => boolean | Promise<boolean>;
-  onChangeMonthlyGoal: (value: number) => boolean | Promise<boolean>;
   dashboardRows: DashboardRow[];
   onSelectMonth: (monthNumber: number) => void;
   onOpenIncomeYearly: () => void;
@@ -41,30 +38,15 @@ function formatNumber(value: number) {
   return value.toLocaleString("ko-KR");
 }
 
-function formatGoalInputValue(value: string) {
-  const digitsOnly = value.replace(/\D/g, "");
-  if (!digitsOnly) return "";
-  return Number(digitsOnly).toLocaleString("ko-KR");
-}
-
 function formatPercent(value: number | null) {
   if (value === null || Number.isNaN(value)) return "-";
   return `${value.toFixed(1)}%`;
-}
-
-function getValueTone(value: number) {
-  if (value > 0) return "positive";
-  if (value < 0) return "negative";
-  return "neutral";
 }
 
 export default function AccountBookDashboardPanel({
   currentYear,
   currentMonthIndex,
   annualGoal,
-  monthlyGoal,
-  onChangeAnnualGoal,
-  onChangeMonthlyGoal,
   dashboardRows,
   onSelectMonth,
   onOpenIncomeYearly,
@@ -74,23 +56,9 @@ export default function AccountBookDashboardPanel({
   onChangeMonthlyMemo,
   onSaveMonthlyMemo,
 }: Props) {
-  const [editingTarget, setEditingTarget] = useState<
-    "annual" | "monthly" | null
-  >(null);
-  const [annualGoalInput, setAnnualGoalInput] = useState(
-    formatNumber(annualGoal),
-  );
-  const [monthlyGoalInput, setMonthlyGoalInput] = useState(
-    formatNumber(monthlyGoal),
-  );
-
-  useEffect(() => {
-    setAnnualGoalInput(formatNumber(annualGoal));
-  }, [annualGoal]);
-
-  useEffect(() => {
-    setMonthlyGoalInput(formatNumber(monthlyGoal));
-  }, [monthlyGoal]);
+  const [isAmountHidden, setIsAmountHidden] = useState(false);
+  const displayNum = (value: number) =>
+    isAmountHidden ? "•••••" : formatNumber(value);
 
   const currentMonthRow =
     dashboardRows.find((row) => row.monthNumber === currentMonthIndex + 1) ||
@@ -100,31 +68,13 @@ export default function AccountBookDashboardPanel({
   const annualAchievementRate =
     annualGoal > 0 ? (annualSavings / annualGoal) * 100 : null;
 
-  const submitAnnualGoal = async () => {
-    const normalizedValue = Number(annualGoalInput.replace(/,/g, "").trim());
-    if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
-      alert("연간 목표는 0보다 큰 숫자로 입력해주세요.");
-      return;
-    }
-    const saved = await Promise.resolve(onChangeAnnualGoal(normalizedValue));
-    if (!saved) {
-      return;
-    }
-    setEditingTarget(null);
-  };
-
-  const submitMonthlyGoal = async () => {
-    const normalizedValue = Number(monthlyGoalInput.replace(/,/g, "").trim());
-    if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
-      alert("월간 목표는 0보다 큰 숫자로 입력해주세요.");
-      return;
-    }
-    const saved = await Promise.resolve(onChangeMonthlyGoal(normalizedValue));
-    if (!saved) {
-      return;
-    }
-    setEditingTarget(null);
-  };
+  const chartMax = Math.max(
+    1,
+    ...dashboardRows.map((row) => Math.max(row.income, row.totalExpense)),
+  );
+  const hasChartData = dashboardRows.some(
+    (row) => row.income > 0 || row.totalExpense > 0,
+  );
 
   return (
     <StWrap>
@@ -135,224 +85,124 @@ export default function AccountBookDashboardPanel({
             {currentYear}년 흐름을 한 화면에서 보고 월을 눌러 바로 이동합니다.
           </StSubTitle>
         </div>
-        <MonthlyIssueMemo
-          memo={monthlyMemo}
-          onChangeMemo={onChangeMonthlyMemo}
-          onSaveMemo={onSaveMonthlyMemo}
-        />
+        <StHeaderActions>
+          <StAmountToggle
+            type="button"
+            onClick={() => setIsAmountHidden((prev) => !prev)}
+            aria-pressed={isAmountHidden}
+          >
+            {isAmountHidden ? "금액 보기" : "금액 숨기기"}
+          </StAmountToggle>
+          <MonthlyIssueMemo
+            memo={monthlyMemo}
+            onChangeMemo={onChangeMonthlyMemo}
+            onSaveMemo={onSaveMonthlyMemo}
+          />
+        </StHeaderActions>
       </StHeader>
 
       <StSummaryGrid>
         <StSummaryCard type="button" onClick={onOpenIncomeYearly}>
           <span>수입</span>
-          <strong>{formatNumber(currentMonthRow?.income || 0)}</strong>
+          <strong>{displayNum(currentMonthRow?.income || 0)}</strong>
           <em>이번 달 들어온 금액</em>
         </StSummaryCard>
         <StSummaryRightGrid>
           <StSummaryCard type="button" onClick={onOpenExpenseYearly}>
             <span>지출</span>
-            <strong>{formatNumber(currentMonthRow?.totalExpense || 0)}</strong>
+            <strong>{displayNum(currentMonthRow?.totalExpense || 0)}</strong>
             <em>총 지출 기준</em>
           </StSummaryCard>
           <StSummaryCard type="button" onClick={onOpenAssetYearly}>
             <span>저축</span>
-            <strong>{formatNumber(currentMonthRow?.actualSavings || 0)}</strong>
+            <strong>{displayNum(currentMonthRow?.actualSavings || 0)}</strong>
             <em>실제 저축 · {formatPercent(annualAchievementRate)}</em>
           </StSummaryCard>
         </StSummaryRightGrid>
       </StSummaryGrid>
 
-      <StMainGrid>
-        <StPanel>
-          <StPanelTitle>월별 수입</StPanelTitle>
-          <StMonthTable>
-            <StMonthTableHead>
-              <span>월</span>
-              <span>수입 합계</span>
-            </StMonthTableHead>
-            {dashboardRows.map((row) => (
-              <StMonthRow
-                key={`income-${row.monthNumber}`}
-                type="button"
-                $active={currentMonthIndex + 1 === row.monthNumber}
-                onClick={() => onSelectMonth(row.monthNumber)}
-              >
-                <span>{row.monthLabel}</span>
-                <strong>{formatNumber(row.income)}</strong>
-              </StMonthRow>
-            ))}
-          </StMonthTable>
-        </StPanel>
-
-        <StPanel>
-          <StPanelTitle>지출</StPanelTitle>
-          <StMetricTable>
-            <StMetricHead
-              $columns="0.72fr 1fr 1fr 1fr 1fr"
-              $mobileColumns="0.72fr 1fr 1fr"
-            >
-              <StHeadCell $align="left">월</StHeadCell>
-              <StHeadCell>총 지출</StHeadCell>
-              <StHeadCell $hideOnMobile>고정비</StHeadCell>
-              <StHeadCell>소비지출</StHeadCell>
-              <StHeadCell $hideOnMobile>정기 저축</StHeadCell>
-            </StMetricHead>
-            {dashboardRows.map((row) => (
-              <StMetricRow
-                key={`expense-${row.monthNumber}`}
-                type="button"
-                $columns="0.72fr 1fr 1fr 1fr 1fr"
-                $mobileColumns="0.72fr 1fr 1fr"
-                $active={currentMonthIndex + 1 === row.monthNumber}
-                onClick={() => onSelectMonth(row.monthNumber)}
-              >
-                <StCell $align="left">{row.monthLabel}</StCell>
-                <StCell>{formatNumber(row.totalExpense)}</StCell>
-                <StCell $hideOnMobile>{formatNumber(row.fixedExpense)}</StCell>
-                <StCell>{formatNumber(row.consumptionExpense)}</StCell>
-                <StCell $hideOnMobile>
-                  {formatNumber(row.regularSavings)}
-                </StCell>
-              </StMetricRow>
-            ))}
-          </StMetricTable>
-        </StPanel>
-
-        <StSavingsPanel>
-          <StPanelTitle>저축</StPanelTitle>
-          <StGoalMeta>
-            <span>연간 저축 {formatNumber(annualSavings)}원</span>
-            {editingTarget === "annual" ? (
-              <StGoalDisplay
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void submitAnnualGoal();
-                }}
-              >
-                <label htmlFor="annual-goal-input">연간 목표</label>
-                <StGoalValueInput
-                  id="annual-goal-input"
-                  inputMode="numeric"
-                  value={annualGoalInput}
-                  onChange={(event) =>
-                    setAnnualGoalInput(formatGoalInputValue(event.target.value))
-                  }
-                />
-                <StGoalUnitText>원</StGoalUnitText>
-                <button type="submit">완료</button>
-              </StGoalDisplay>
-            ) : (
-              <StGoalDisplay>
-                <label>연간 목표</label>
-                <StGoalValueText>{formatNumber(annualGoal)}원</StGoalValueText>
-                <button
+      <StPanel>
+        <StChartHead>
+          <StPanelTitle>월별 수입 · 지출</StPanelTitle>
+          <StChartLegend>
+            <span className="income">수입</span>
+            <span className="expense">지출</span>
+          </StChartLegend>
+        </StChartHead>
+        {hasChartData ? (
+          <StChart>
+            {dashboardRows.map((row) => {
+              const incomeHeight =
+                row.income > 0
+                  ? Math.max((row.income / chartMax) * 100, 3)
+                  : 0;
+              const expenseHeight =
+                row.totalExpense > 0
+                  ? Math.max((row.totalExpense / chartMax) * 100, 3)
+                  : 0;
+              return (
+                <StChartCol
+                  key={`chart-${row.monthNumber}`}
                   type="button"
-                  onClick={() => setEditingTarget("annual")}
+                  $active={currentMonthIndex + 1 === row.monthNumber}
+                  onClick={() => onSelectMonth(row.monthNumber)}
+                  title={`${row.monthLabel} · 수입 ${displayNum(
+                    row.income,
+                  )} · 지출 ${displayNum(row.totalExpense)}`}
                 >
-                  설정
-                </button>
-              </StGoalDisplay>
-            )}
-            {editingTarget === "monthly" ? (
-              <StGoalDisplay
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void submitMonthlyGoal();
-                }}
-              >
-                <label htmlFor="monthly-goal-input">월간 목표</label>
-                <StGoalValueInput
-                  id="monthly-goal-input"
-                  inputMode="numeric"
-                  value={monthlyGoalInput}
-                  onChange={(event) =>
-                    setMonthlyGoalInput(
-                      formatGoalInputValue(event.target.value),
-                    )
-                  }
-                />
-                <StGoalUnitText>원</StGoalUnitText>
-                <button type="submit">완료</button>
-              </StGoalDisplay>
-            ) : (
-              <StGoalDisplay>
-                <label>월간 목표</label>
-                <StGoalValueText>{formatNumber(monthlyGoal)}원</StGoalValueText>
-                <button
-                  type="button"
-                  onClick={() => setEditingTarget("monthly")}
-                >
-                  설정
-                  
-                </button>
-              </StGoalDisplay>
-            )}
-          </StGoalMeta>
+                  <StChartBars>
+                    <StChartBar
+                      className="income"
+                      style={{ height: `${incomeHeight}%` }}
+                    />
+                    <StChartBar
+                      className="expense"
+                      style={{ height: `${expenseHeight}%` }}
+                    />
+                  </StChartBars>
+                  <StChartLabel>{row.monthNumber}</StChartLabel>
+                </StChartCol>
+              );
+            })}
+          </StChart>
+        ) : (
+          <StChartEmpty>아직 표시할 수입·지출 데이터가 없어요.</StChartEmpty>
+        )}
+      </StPanel>
 
-          <StMetricTable>
-            <StMetricHead
-              $columns="0.72fr 0.9fr 1fr 0.9fr 1fr 1fr 0.9fr"
-              $mobileColumns="0.72fr 1fr 0.9fr"
+      <StPanel>
+        <StPanelTitle>월별 상세</StPanelTitle>
+        <StMetricTable>
+          <StMetricHead
+            $columns="0.55fr 1fr 1fr 1fr 1fr 1fr"
+            $mobileColumns="0.55fr 1fr 1fr 1fr"
+          >
+            <StHeadCell $align="left">월</StHeadCell>
+            <StHeadCell>수입</StHeadCell>
+            <StHeadCell>총 지출</StHeadCell>
+            <StHeadCell $hideOnMobile>고정비</StHeadCell>
+            <StHeadCell>소비지출</StHeadCell>
+            <StHeadCell $hideOnMobile>정기 저축</StHeadCell>
+          </StMetricHead>
+          {dashboardRows.map((row) => (
+            <StMetricRow
+              key={`month-${row.monthNumber}`}
+              type="button"
+              $columns="0.55fr 1fr 1fr 1fr 1fr 1fr"
+              $mobileColumns="0.55fr 1fr 1fr 1fr"
+              $active={currentMonthIndex + 1 === row.monthNumber}
+              onClick={() => onSelectMonth(row.monthNumber)}
             >
-              <StHeadCell $align="left">월</StHeadCell>
-              <StHeadCell $hideOnMobile>수입-지출</StHeadCell>
-              <StHeadCell>실제 저축</StHeadCell>
-              <StHeadCell $hideOnMobile>저축률</StHeadCell>
-              <StHeadCell $hideOnMobile>누적 저축</StHeadCell>
-              <StHeadCell $hideOnMobile>누적 목표</StHeadCell>
-              <StHeadCell>달성률</StHeadCell>
-            </StMetricHead>
-            {dashboardRows.map((row) => (
-              <StMetricRow
-                key={`savings-${row.monthNumber}`}
-                type="button"
-                $columns="0.72fr 0.9fr 1fr 0.9fr 1fr 1fr 0.9fr"
-                $mobileColumns="0.72fr 1fr 0.9fr"
-                $active={currentMonthIndex + 1 === row.monthNumber}
-                onClick={() => onSelectMonth(row.monthNumber)}
-              >
-                <StCell $align="left">{row.monthLabel}</StCell>
-                <StCell $hideOnMobile $tone={getValueTone(row.netAmount)}>
-                  {formatNumber(row.netAmount)}
-                </StCell>
-                <StCell $tone={getValueTone(row.actualSavings)}>
-                  {formatNumber(row.actualSavings)}
-                </StCell>
-                <StCell
-                  $hideOnMobile
-                  $tone={
-                    row.savingsRate === null
-                      ? "neutral"
-                      : row.savingsRate >= 0
-                        ? "positive"
-                        : "negative"
-                  }
-                >
-                  {formatPercent(row.savingsRate)}
-                </StCell>
-                <StCell
-                  $hideOnMobile
-                  $tone={getValueTone(row.cumulativeSavings)}
-                >
-                  {formatNumber(row.cumulativeSavings)}
-                </StCell>
-                <StCell $hideOnMobile>{formatNumber(row.goalAmount)}</StCell>
-                <StCell
-                  $tone={
-                    row.achievementRate === null
-                      ? "neutral"
-                      : row.achievementRate >= 0
-                        ? "positive"
-                        : "negative"
-                  }
-                >
-                  {formatPercent(row.achievementRate)}
-                </StCell>
-              </StMetricRow>
-            ))}
-          </StMetricTable>
-        </StSavingsPanel>
-      </StMainGrid>
+              <StCell $align="left">{row.monthLabel}</StCell>
+              <StCell $tone="positive">{displayNum(row.income)}</StCell>
+              <StCell>{displayNum(row.totalExpense)}</StCell>
+              <StCell $hideOnMobile>{displayNum(row.fixedExpense)}</StCell>
+              <StCell>{displayNum(row.consumptionExpense)}</StCell>
+              <StCell $hideOnMobile>{displayNum(row.regularSavings)}</StCell>
+            </StMetricRow>
+          ))}
+        </StMetricTable>
+      </StPanel>
     </StWrap>
   );
 }
@@ -372,6 +222,34 @@ const StHeader = styled.div`
   @media (max-width: 900px) {
     flex-direction: column;
     align-items: flex-start;
+  }
+`;
+
+const StHeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+`;
+
+const StAmountToggle = styled.button`
+  border: 1px solid #e2e3e4;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #8a8e95;
+  padding: 0.42rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: #d3d5d8;
+    background: #f5f6f7;
+    color: #656971;
   }
 `;
 
@@ -478,33 +356,10 @@ const StSummaryCard = styled.button`
   }
 `;
 
-const StMainGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(190px, 0.62fr) minmax(0, 1.38fr);
-  gap: 0.75rem;
-  align-items: start;
-
-  @media (max-width: 1080px) {
-    grid-template-columns: 1fr;
-  }
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
 const StPanel = styled.section`
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  border-radius: 18px;
-  border: 1px solid #e6e7e9;
-  background: ${({ theme }) => theme.colors.white};
-  padding: 0.8rem;
-`;
-
-const StSavingsPanel = styled(StPanel)`
-  grid-column: 1 / -1;
 `;
 
 const StPanelTitle = styled.h4`
@@ -513,64 +368,113 @@ const StPanelTitle = styled.h4`
   color: ${({ theme }) => theme.colors.gray800};
 `;
 
-const StMonthTable = styled.div`
-  border: 1px solid #e9eaeb;
+const StChartHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+`;
+
+const StChartLegend = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #70747c;
+  }
+
+  span::before {
+    content: "";
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 3px;
+  }
+
+  span.income::before {
+    background: #3182f6;
+  }
+
+  span.expense::before {
+    background: #f04452;
+  }
+`;
+
+const StChart = styled.div`
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.3rem;
+  align-items: end;
+  height: 168px;
+  padding: 0.6rem 0.2rem 0;
+  border: 1px solid #eeeff1;
   border-radius: 14px;
-  overflow: hidden;
   background: ${({ theme }) => theme.colors.white};
 `;
 
-const StMonthTableHead = styled.div`
-  display: grid;
-  grid-template-columns: 0.72fr 1fr;
-  background: ${({ theme }) => theme.colors.blue50};
+const StChartCol = styled.button<{ $active: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: 100%;
+  border: none;
+  background: ${({ $active }) => ($active ? "#f5f6f8" : "transparent")};
+  border-radius: 8px;
+  padding: 0 0.1rem 0.3rem;
+  cursor: pointer;
 
-  span {
-    padding: 0.48rem 0.7rem;
-    font-size: 0.74rem;
-    font-weight: 900;
-    color: #70747c;
-    border-left: 1px solid #e5e6e8;
-  }
-
-  span:first-child {
-    border-left: none;
+  &:hover {
+    background: #f5f6f8;
   }
 `;
 
-const StMonthRow = styled.button<{ $active: boolean }>`
+const StChartBars = styled.div`
+  flex: 1;
   width: 100%;
-  display: grid;
-  grid-template-columns: 0.72fr 1fr;
-  text-align: left;
-  background: ${({ $active, theme }) => ($active ? "#f8f8f8" : theme.colors.white)};
-  border: none;
-  border-top: 1px solid #ededee;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  min-height: 0;
+`;
 
-  span,
-  strong {
-    padding: 0.58rem 0.7rem;
-    font-size: 0.8rem;
-    border-left: 1px solid #f2f2f3;
+const StChartBar = styled.div`
+  width: 42%;
+  max-width: 12px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.2s ease;
+
+  &.income {
+    background: #3182f6;
   }
 
-  span {
-    color: ${({ theme }) => theme.colors.gray700};
-    font-weight: 800;
-    border-left: none;
+  &.expense {
+    background: #f04452;
   }
+`;
 
-  strong {
-    text-align: right;
-    color: #244071;
-  }
+const StChartLabel = styled.span`
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9aa0a8;
+`;
+
+const StChartEmpty = styled.p`
+  font-size: 0.82rem;
+  color: #8a8e95;
+  padding: 1.2rem 0.2rem;
+  border: 1px solid #eeeff1;
+  border-radius: 14px;
+  text-align: center;
 `;
 
 const StMetricTable = styled.div`
-  border: 1px solid #e9eaeb;
-  border-radius: 14px;
-  overflow: hidden;
-  background: ${({ theme }) => theme.colors.white};
   max-width: 100%;
 `;
 
@@ -580,20 +484,19 @@ const StMetricHead = styled.div<{
 }>`
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
-  background: ${({ theme }) => theme.colors.blue50};
+  padding: 0 0.35rem 0.5rem;
+  border-bottom: 1px solid #ededef;
 
   span {
-    padding: 0.48rem 0.7rem;
-    font-size: 0.73rem;
-    font-weight: 900;
-    color: #70747c;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #a3a7ad;
     text-align: right;
-    border-left: 1px solid #e5e6e8;
+    letter-spacing: -0.01em;
   }
 
   span:first-child {
     text-align: left;
-    border-left: none;
   }
 
   @media (max-width: 720px) {
@@ -601,8 +504,7 @@ const StMetricHead = styled.div<{
       $mobileColumns || $columns};
 
     span {
-      padding: 0.45rem 0.5rem;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
     }
   }
 `;
@@ -615,9 +517,21 @@ const StMetricRow = styled.button<{
   width: 100%;
   display: grid;
   grid-template-columns: ${({ $columns }) => $columns};
-  background: ${({ $active, theme }) => ($active ? "#f8f8f8" : theme.colors.white)};
+  align-items: center;
+  background: ${({ $active }) => ($active ? "#f5f6f8" : "transparent")};
   border: none;
-  border-top: 1px solid #ededee;
+  border-radius: 10px;
+  border-bottom: 1px solid #f4f4f6;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f7f8fa;
+  }
 
   @media (max-width: 720px) {
     grid-template-columns: ${({ $mobileColumns, $columns }) =>
@@ -641,98 +555,22 @@ const StCell = styled.div<{
   $align?: "left" | "right";
   $hideOnMobile?: boolean;
 }>`
-  padding: 0.58rem 0.7rem;
+  padding: 0.62rem 0.35rem;
   text-align: ${({ $align = "right" }) => $align};
-  font-size: 0.79rem;
-  font-weight: 800;
-  border-left: 1px solid #f2f2f3;
-  color: ${({ $tone, theme }) => {
-    if ($tone === "positive") return theme.colors.teal600;
+  font-size: 0.8rem;
+  font-weight: ${({ $align }) => ($align === "left" ? 800 : 700)};
+  font-variant-numeric: tabular-nums;
+  color: ${({ $tone, $align, theme }) => {
+    if ($align === "left") return theme.colors.gray500;
+    if ($tone === "positive") return "#3182f6";
     if ($tone === "negative") return "#888c94";
-    return theme.colors.gray700;
+    return theme.colors.gray800;
   }};
-
-  &:first-child {
-    border-left: none;
-  }
 
   @media (max-width: 720px) {
     display: ${({ $hideOnMobile }) => ($hideOnMobile ? "none" : "block")};
-    padding: 0.55rem 0.5rem;
-    font-size: 0.74rem;
+    padding: 0.58rem 0.3rem;
+    font-size: 0.75rem;
   }
-`;
-
-const StGoalMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.42rem;
-  flex-wrap: wrap;
-  padding-bottom: 0.1rem;
-
-  span {
-    border-radius: 999px;
-    border: 1px solid #e8e9eb;
-    background: ${({ theme }) => theme.colors.blue50};
-    padding: 0.28rem 0.6rem;
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #6f737b;
-  }
-`;
-
-const StGoalDisplay = styled.form`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-radius: 999px;
-  border: 1px solid #e2e3e4;
-  background: ${({ theme }) => theme.colors.white};
-  padding: 0.26rem 0.32rem 0.26rem 0.6rem;
-
-  label {
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #6f737b;
-  }
-
-  button {
-    border-radius: 999px;
-    border: 1px solid #e2e3e5;
-    background: ${({ theme }) => theme.colors.blue50};
-    color: #305596;
-    padding: 0.3rem 0.62rem;
-    font-size: 0.72rem;
-    font-weight: 900;
-  }
-
-  @media (max-width: 720px) {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
-`;
-
-const StGoalValueText = styled.strong`
-  font-size: 0.82rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray800};
-`;
-
-const StGoalValueInput = styled.input`
-  width: min(7rem, 40%);
-  border: none;
-  background: transparent;
-  font-size: 0.82rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray800};
-  outline: none;
-  text-align: right;
-`;
-
-const StGoalUnitText = styled.span`
-  font-size: 0.74rem;
-  font-weight: 800;
-  color: #7b8088;
 `;
 

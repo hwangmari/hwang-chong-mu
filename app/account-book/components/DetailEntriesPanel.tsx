@@ -350,7 +350,9 @@ export default function DetailEntriesPanel({
             onClick={onOpenAdd}
             aria-label="내역 추가"
           >
-            +
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
+            </svg>
           </StDetailAddButton>
         </StDetailHeaderActions>
       </StDetailHeader>
@@ -429,8 +431,8 @@ const StPanel = styled.div`
 `;
 
 const StBlockTitle = styled.h3`
-  font-size: 1.08rem;
-  font-weight: 900;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: ${({ theme }) => theme.colors.gray800};
   margin-bottom: 0.2rem;
 `;
@@ -463,13 +465,18 @@ const StDetailAddButton = styled.button`
   background: #3182f6;
   color: ${({ theme }) => theme.colors.white};
   border-radius: 999px;
-  font-size: 1.35rem;
-  line-height: 1;
-  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   box-shadow: 0 10px 22px rgba(49, 130, 246, 0.24);
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: currentColor;
+    display: block;
+  }
 `;
 const StEntryList = styled.div`
   flex: 1;

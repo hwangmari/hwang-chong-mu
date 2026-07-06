@@ -11,7 +11,7 @@ import {
   readFixedExpenseTemplates,
   writeFixedExpenseTemplates,
 } from "./fixedExpense";
-import { isFixedExpenseCategory, parseIsoDate } from "./utils";
+import { parseIsoDate } from "./utils";
 
 type Params = {
   workspaceId: string;
@@ -38,7 +38,8 @@ export function useFixedExpenseTemplates({
     if (templates.length === 0) return;
 
     const directWorkspaceEntries = entries.filter((entry) => !entry.readonly);
-    const targetMonth = startOfMonth(currentMonth);
+    // 미래 달을 미리 열어봐도 생성되지 않도록, 실제 오늘 달까지만 정기 내역을 생성한다.
+    const targetMonth = startOfMonth(new Date());
     let cancelled = false;
 
     const syncFixedExpenses = async () => {
@@ -59,7 +60,6 @@ export function useFixedExpenseTemplates({
           const syncKey = `${template.id}-${monthKey}`;
           const alreadyExists = directWorkspaceEntries.some(
             (entry) =>
-              isFixedExpenseCategory(entry.category) &&
               entry.date.startsWith(monthKey) &&
               extractFixedExpenseTemplateId(entry.rawText) === template.id,
           );

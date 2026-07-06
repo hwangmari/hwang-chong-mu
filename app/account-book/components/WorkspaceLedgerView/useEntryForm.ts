@@ -29,6 +29,7 @@ import {
   inferCardCompanyFromText,
   inferCategoryFromItemText,
   inferSubCategoryFromText,
+  isSavingsCategory,
   normalizeExpenseCategorySelection,
   parseAmountValue,
   parseQuickDate,
@@ -76,6 +77,8 @@ export function useEntryForm({
   const [memo, setMemo] = useState("");
   const [quickInput, setQuickInput] = useState("");
   const [draftRawText, setDraftRawText] = useState("");
+  // 저축(자산/저축) 정기 반복 토글
+  const [recurring, setRecurring] = useState(false);
 
   const editingEntry = useMemo(
     () =>
@@ -166,6 +169,7 @@ export function useEntryForm({
       setCardCompany(
         getDefaultCardCompany(nextType === "income" ? "cash" : "card"),
       );
+      setRecurring(false);
       setIsFormModalOpen(true);
     },
     [defaultMember, selectedParticipant, setSelectedDate],
@@ -184,11 +188,12 @@ export function useEntryForm({
       // 유지하지 않고, 저장 시 카테고리·메모 기준으로 항목명을 다시 계산한다.
       setMerchant("");
       setItem("");
-      setAmount(String(entry.amount));
+      setAmount(entry.amount.toLocaleString("ko-KR"));
       setPayment(entry.payment);
       setCardCompany(entry.cardCompany || getDefaultCardCompany(entry.payment));
       setMemo(entry.memo);
       setDraftRawText(entry.rawText || "");
+      setRecurring(Boolean(extractFixedExpenseTemplateId(entry.rawText)));
       setIsFormModalOpen(true);
     },
     [defaultMember, setSelectedDate],
@@ -227,10 +232,16 @@ export function useEntryForm({
     }
     const isFixedExpense =
       type === "expense" && normalizedCategory === "고정비";
+    // 저축(자산/저축)은 명시적 "정기 반복" 토글이 켜진 경우에만 정기 템플릿 생성
+    const isRecurringSaving =
+      type === "expense" &&
+      isSavingsCategory(normalizedCategory) &&
+      recurring;
+    const shouldTemplate = isFixedExpense || isRecurringSaving;
     const existingFixedTemplateId = extractFixedExpenseTemplateId(
       editingEntry?.rawText,
     );
-    const nextFixedTemplateId = isFixedExpense
+    const nextFixedTemplateId = shouldTemplate
       ? existingFixedTemplateId || createFixedExpenseTemplateId()
       : null;
     const rawTextBase = draftRawText.trim() || editingEntry?.rawText || "";
@@ -292,6 +303,7 @@ export function useEntryForm({
     merchant,
     onSaveEntry,
     payment,
+    recurring,
     removeFixedExpenseTemplate,
     selectedDate,
     subCategory,
@@ -426,6 +438,8 @@ export function useEntryForm({
     categoryDetailOptions,
     cardCompanyOptions,
     categoryOptions,
+    recurring,
+    setRecurring,
     setMember,
     setSubCategory,
     setMerchant,

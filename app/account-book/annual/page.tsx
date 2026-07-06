@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import styled from "styled-components";
 import { fetchAccountBookStore, upsertAccountBookWorkspace } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
@@ -138,6 +139,11 @@ function AccountBookAnnualContent() {
 
   const workspaceId = searchParams.get("workspaceId") || "";
   const returnViewMode = resolveViewMode(searchParams.get("view"));
+  const changeYear = (delta: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", String(selectedYear + delta));
+    router.replace(`/account-book/annual?${params.toString()}`);
+  };
   const memberId = searchParams.get("memberId") || "";
   const workspace = store ? getWorkspaceById(store, workspaceId) : null;
   const selectedParticipant =
@@ -598,12 +604,6 @@ function AccountBookAnnualContent() {
 
   const kindLabel =
     kind === "income" ? "수입" : kind === "asset" ? "자산/저축" : "지출";
-  const kindDescription =
-    kind === "income"
-      ? "월별 유입 흐름과 어떤 항목에서 수입이 발생했는지 정리했어요."
-      : kind === "asset"
-        ? "저축이 어느 달에 얼마나 쌓였는지 목표 관점으로 확인할 수 있어요."
-        : "월별 지출 흐름과 결제 수단, 많이 쓴 분류를 한 번에 볼 수 있어요.";
   const backButtonLabel =
     returnViewMode === "board"
       ? "보드로 돌아가기"
@@ -668,20 +668,42 @@ function AccountBookAnnualContent() {
     >
       <StPage>
         <StHeader>
-          <StBackButton
-            type="button"
-            onClick={() => router.push(buildBackUrl(workspace.id, returnViewMode))}
-          >
-            {backButtonLabel}
-          </StBackButton>
-          <div>
-            <StEyebrow>{selectedYear}년 {kindLabel} 연간 상세</StEyebrow>
-            <StTitle>
-              {workspace.name}
-              {selectedParticipant ? ` · ${selectedParticipant.name}` : ""}
-            </StTitle>
-            <StHeaderDescription>{kindDescription}</StHeaderDescription>
-          </div>
+          <StHeaderLeft>
+            <StBackButton
+              type="button"
+              aria-label="뒤로 가기"
+              onClick={() =>
+                router.push(buildBackUrl(workspace.id, returnViewMode))
+              }
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m14.71 6.71-1.42-1.42L6.59 12l6.7 6.71 1.42-1.42L9.41 12z" />
+              </svg>
+            </StBackButton>
+          </StHeaderLeft>
+          <StHeaderCenter>
+            <StYearNav>
+              <button
+                type="button"
+                aria-label="이전 연도"
+                onClick={() => changeYear(-1)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                </svg>
+              </button>
+              <StEyebrow>{selectedYear}년 {kindLabel} 연간 상세</StEyebrow>
+              <button
+                type="button"
+                aria-label="다음 연도"
+                onClick={() => changeYear(1)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m8.59 16.59 1.41 1.41 6-6-6-6-1.41 1.41L13.17 12z" />
+                </svg>
+              </button>
+            </StYearNav>
+          </StHeaderCenter>
           <StAmountToggle
             type="button"
             onClick={() => setIsAmountHidden((prev) => !prev)}
@@ -737,6 +759,7 @@ function AccountBookAnnualContent() {
             <AssetAnnualFlow
               rows={assetFlowRows}
               totalSavings={assetFlowTotal}
+              annualGoal={workspace?.annualSavingGoal || 0}
               isLoading={asset.isLoading}
               year={selectedYear}
               isAmountHidden={isAmountHidden}
@@ -960,7 +983,7 @@ function AccountBookAnnualContent() {
                                 <StCatRight>
                                   <em>{maskAmount(group.total)}</em>
                                   <StCatChevron $open={isOpen} aria-hidden>
-                                    ⌄
+                                    <ExpandMoreRoundedIcon fontSize="inherit" />
                                   </StCatChevron>
                                 </StCatRight>
                               </StCatButton>
@@ -1025,10 +1048,25 @@ const StPage = styled.main`
 `;
 
 const StHeader = styled.header`
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.7rem;
+  align-items: center;
   margin-bottom: 1rem;
+`;
+
+const StHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+`;
+
+const StHeaderCenter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
 `;
 
 const StAmountToggle = styled.button`
@@ -1055,34 +1093,63 @@ const StAmountToggle = styled.button`
   }
 `;
 
+const StYearNav = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  button {
+    width: 2.3rem;
+    height: 2.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e3e5;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.gray600};
+    cursor: pointer;
+
+    svg {
+      width: 1.35rem;
+      height: 1.35rem;
+      fill: currentColor;
+    }
+  }
+`;
+
 const StEyebrow = styled.p`
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #868a91;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray800};
+  white-space: nowrap;
+  padding: 0 0.15rem;
+
+  @media (max-width: 640px) {
+    font-size: 0.86rem;
+  }
 `;
 
 const StBackButton = styled.button`
+  width: 2rem;
+  height: 2rem;
   border: none;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.white};
-  color: #2c4d8a;
-  padding: 0.55rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 800;
+  background: transparent;
+  color: #595c62;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+    fill: currentColor;
+  }
 `;
 
-const StTitle = styled.h1`
-  margin-top: 0.2rem;
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray800};
-`;
-
-const StHeaderDescription = styled.p`
-  margin-top: 0.3rem;
-  font-size: 0.84rem;
-  color: #7a7f87;
-`;
 
 const StHeroCard = styled.section`
   display: grid;
@@ -1639,7 +1706,9 @@ const StCatRight = styled.div`
 `;
 
 const StCatChevron = styled.span<{ $open: boolean }>`
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.15rem;
   color: #a2a6ad;
   transition: transform 0.18s ease;
   transform: rotate(${({ $open }) => ($open ? "180deg" : "0deg")});
@@ -1648,7 +1717,7 @@ const StCatChevron = styled.span<{ $open: boolean }>`
 const StCatItems = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0 0.15rem 0.6rem 0.75rem;
+  padding: 0 0.15rem 0.6rem;
 `;
 
 const StCatItem = styled.div`

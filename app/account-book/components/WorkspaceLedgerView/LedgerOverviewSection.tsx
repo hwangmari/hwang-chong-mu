@@ -508,16 +508,17 @@ const StCompareCard = styled.section`
 const StCompareHeader = styled.div`
   display: grid;
   gap: 0.18rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.55rem;
 
   strong {
-    font-size: 0.9rem;
-    color: #162845;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
     font-size: 0.75rem;
-    color: #81858d;
+    color: #9aa0a8;
   }
 `;
 
@@ -533,22 +534,24 @@ const StCardCompanyCard = styled.section`
 const StCardCompanyHeader = styled.div`
   display: grid;
   gap: 0.18rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.55rem;
 
   strong {
-    font-size: 0.9rem;
-    color: #162845;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.gray800};
   }
 
   span {
     font-size: 0.75rem;
-    color: #81858d;
+    color: #9aa0a8;
   }
 `;
 
 const StCardCompanyList = styled.div`
   display: grid;
   gap: 0;
+  margin-left: -0.7rem;
 `;
 
 const StMetaLine = styled.div`
@@ -633,14 +636,15 @@ const StCardCompanyMeta = styled.div`
   strong {
     flex: 1;
     min-width: 0;
-    font-size: 0.84rem;
-    color: #1f375f;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #333d4b;
   }
 
   em {
     font-style: normal;
-    font-size: 0.82rem;
-    font-weight: 900;
+    font-size: 0.84rem;
+    font-weight: 800;
     color: #333d4b;
     white-space: nowrap;
   }
@@ -782,16 +786,16 @@ const StLedgerCategoryText = styled.div`
   min-width: 0;
 
   strong {
-    font-size: 0.86rem;
-    font-weight: 900;
-    color: #1f3860;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #333d4b;
     white-space: nowrap;
   }
 
   span {
     font-size: 0.73rem;
     font-weight: 400;
-    color: #92969c;
+    color: #9aa0a8;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -805,15 +809,15 @@ const StLedgerCategoryMeta = styled.div`
   flex-shrink: 0;
 
   strong {
-    font-size: 0.84rem;
-    font-weight: 900;
+    font-size: 0.86rem;
+    font-weight: 800;
     color: #333d4b;
   }
 
   small {
     font-size: 0.72rem;
     font-weight: 400;
-    color: #878b93;
+    color: #9aa0a8;
   }
 `;
 
@@ -859,14 +863,14 @@ const StLedgerSubGroupHeader = styled.div`
 
   strong {
     font-size: 0.8rem;
-    font-weight: 900;
-    color: #1f3860;
+    font-weight: 700;
+    color: #4e5560;
   }
 
   span {
     font-size: 0.72rem;
     font-weight: 400;
-    color: #92969c;
+    color: #9aa0a8;
   }
 `;
 
@@ -878,8 +882,8 @@ const StLedgerSubGroupHeaderMeta = styled.div`
   em {
     font-style: normal;
     font-size: 0.8rem;
-    font-weight: 900;
-    color: #777b83;
+    font-weight: 700;
+    color: #6b7280;
     white-space: nowrap;
   }
 `;
@@ -918,8 +922,8 @@ const StLedgerDetailLine = styled.div<{ $editable: boolean }>`
   em {
     font-style: normal;
     font-size: 0.78rem;
-    font-weight: 900;
-    color: #2e5290;
+    font-weight: 700;
+    color: #4e5560;
     white-space: nowrap;
   }
 `;
@@ -931,15 +935,15 @@ const StLedgerDetailInfo = styled.div`
   gap: 0.42rem;
 
   strong {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #172748;
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: #4e5560;
   }
 
   span {
     font-size: 0.72rem;
     font-weight: 400;
-    color: #81858d;
+    color: #9aa0a8;
   }
 `;
 

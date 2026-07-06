@@ -13,6 +13,7 @@ export type AssetFlowRow = {
 type Props = {
   rows: AssetFlowRow[];
   totalSavings: number;
+  annualGoal: number;
   isLoading: boolean;
   year: number;
   isAmountHidden: boolean;
@@ -31,6 +32,7 @@ function signed(value: number) {
 export default function AssetAnnualFlow({
   rows,
   totalSavings,
+  annualGoal,
   isLoading,
   year,
   isAmountHidden,
@@ -81,6 +83,35 @@ export default function AssetAnnualFlow({
           </StStat>
         </StStatWrap>
       </StHeader>
+
+      {annualGoal > 0 ? (
+        <StGoalCard>
+          <StGoalTop>
+            <span>연 목표</span>
+            <strong>{mask(annualGoal)}</strong>
+          </StGoalTop>
+          <StGoalBar>
+            <StGoalFill
+              style={{
+                width: `${Math.min(
+                  Math.max((yearNet / annualGoal) * 100, 0),
+                  100,
+                )}%`,
+              }}
+            />
+          </StGoalBar>
+          <StGoalBottom>
+            <span>
+              달성 {Math.max((yearNet / annualGoal) * 100, 0).toFixed(0)}%
+            </span>
+            <span>
+              {yearNet >= annualGoal
+                ? "목표 달성 🎉"
+                : `남은 ${mask(Math.max(annualGoal - yearNet, 0))}`}
+            </span>
+          </StGoalBottom>
+        </StGoalCard>
+      ) : null}
 
       {isLoading ? (
         <StEmpty>불러오는 중…</StEmpty>
@@ -136,6 +167,59 @@ const StCard = styled.section`
   border-radius: 18px;
   background: #fdfdfe;
   padding: 1.1rem 1.2rem;
+`;
+
+const StGoalCard = styled.div`
+  margin-bottom: 0.9rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  background: #f5f8fe;
+  border: 1px solid #e4edfb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+`;
+
+const StGoalTop = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  span {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #5b83c4;
+  }
+
+  strong {
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: #2b3441;
+  }
+`;
+
+const StGoalBar = styled.div`
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #dfe8f8;
+  overflow: hidden;
+`;
+
+const StGoalFill = styled.div`
+  height: 100%;
+  border-radius: inherit;
+  background: #3182f6;
+`;
+
+const StGoalBottom = styled.div`
+  display: flex;
+  justify-content: space-between;
+
+  span {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #6a7c9c;
+  }
 `;
 
 const StHeader = styled.div`
