@@ -888,36 +888,38 @@ function AccountBookAnnualContent() {
                 </>
               ) : (
                 <>
-                  <StCard>
-                    <StSectionHeader>
-                      <StSectionTitle>결제 수단 비중</StSectionTitle>
-                      <StSectionMeta>
-                        {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
-                      </StSectionMeta>
-                    </StSectionHeader>
-                    <StPaymentLegend>
-                      {PAYMENT_META.map((payment) => {
-                        const value = paymentTotals[payment.key];
-                        const ratio = insightTotal > 0 ? (value / insightTotal) * 100 : 0;
+                  {kind !== "asset" ? (
+                    <StCard>
+                      <StSectionHeader>
+                        <StSectionTitle>결제 수단 비중</StSectionTitle>
+                        <StSectionMeta>
+                          {selectedMonth ? `${selectedMonth} 기준` : `${selectedYear}년 전체`}
+                        </StSectionMeta>
+                      </StSectionHeader>
+                      <StPaymentLegend>
+                        {PAYMENT_META.map((payment) => {
+                          const value = paymentTotals[payment.key];
+                          const ratio = insightTotal > 0 ? (value / insightTotal) * 100 : 0;
 
-                        return (
-                          <StLegendItem key={payment.key}>
-                            <div className="info">
-                              <span
-                                className="dot"
-                                style={{ background: payment.color }}
-                              />
-                              <strong>{payment.label}</strong>
-                            </div>
-                            <div className="meta">
-                              <em>{maskAmount(value)}</em>
-                              <span>{formatCompactPercent(ratio)}</span>
-                            </div>
-                          </StLegendItem>
-                        );
-                      })}
-                    </StPaymentLegend>
-                  </StCard>
+                          return (
+                            <StLegendItem key={payment.key}>
+                              <div className="info">
+                                <span
+                                  className="dot"
+                                  style={{ background: payment.color }}
+                                />
+                                <strong>{payment.label}</strong>
+                              </div>
+                              <div className="meta">
+                                <em>{maskAmount(value)}</em>
+                                <span>{formatCompactPercent(ratio)}</span>
+                              </div>
+                            </StLegendItem>
+                          );
+                        })}
+                      </StPaymentLegend>
+                    </StCard>
+                  ) : null}
 
                   <StCard>
                     <StSectionHeader>

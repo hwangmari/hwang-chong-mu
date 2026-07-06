@@ -51,6 +51,9 @@ export default function AssetBoardSection({
   const maskSigned = (value: number) =>
     isAmountHidden ? "•••••" : signedAmount(value);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [collapsedKinds, setCollapsedKinds] = useState<Record<string, boolean>>(
+    {},
+  );
   const [menuId, setMenuId] = useState<string | null>(null);
   const [accountModal, setAccountModal] = useState<
     { id?: string; name: string; kind: string; goalAmount: number } | null
@@ -70,6 +73,200 @@ export default function AssetBoardSection({
     () => Math.max(...yearRows.map((row) => Math.abs(row.monthly)), 1),
     [yearRows],
   );
+
+  // 통장을 종류(예금/적금/투자/연금...)별로 묶어 아코디언으로 보여준다.
+  const kindGroups = useMemo(() => {
+    const map = new Map<
+      string,
+      { kind: string; accounts: typeof asset.activeAccounts; total: number }
+    >();
+    for (const account of asset.activeAccounts) {
+      const kind = account.kind || "기타";
+      if (!map.has(kind)) map.set(kind, { kind, accounts: [], total: 0 });
+      const group = map.get(kind)!;
+      group.accounts.push(account);
+      group.total += asset.balanceByAccount[account.id] || 0;
+    }
+    const order = [...KIND_OPTIONS, "기타"];
+    return [...map.values()].sort(
+      (a, b) => order.indexOf(a.kind) - order.indexOf(b.kind),
+    );
+  }, [asset.activeAccounts, asset.balanceByAccount]);
+
+  const renderAccountBlock = (account: (typeof asset.activeAccounts)[number]) => {
+    const balance = asset.balanceByAccount[account.id] || 0;
+    const isExpanded = expandedId === account.id;
+    const history = asset.changesByAccount(account.id);
+    const goal = account.goalAmount || 0;
+    const progress = goal > 0 ? Math.min((balance / goal) * 100, 100) : 0;
+    return (
+      <StAccountBlock key={account.id}>
+        <StAccountRow
+          role="button"
+          tabIndex={0}
+          onClick={() => setExpandedId(isExpanded ? null : account.id)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setExpandedId(isExpanded ? null : account.id);
+            }
+          }}
+        >
+          <StAccountMain>
+            <strong>{account.name}</strong>
+            <span>{account.kind}</span>
+          </StAccountMain>
+          <StAccountRight>
+            <StBalance>{mask(balance)}</StBalance>
+            <StRowActions>
+              <StRowButton
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setChangeModal({
+                    accountId: account.id,
+                    changeType: "deposit",
+                  });
+                }}
+              >
+                입금
+              </StRowButton>
+              <StKebab
+                type="button"
+                aria-label="더보기"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setMenuId(menuId === account.id ? null : account.id);
+                }}
+              >
+                ⋯
+              </StKebab>
+              {menuId === account.id ? (
+                <>
+                  <StMenuBackdrop
+                    type="button"
+                    aria-label="닫기"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setMenuId(null);
+                    }}
+                  />
+                  <StMenu role="menu">
+                    <StMenuItem
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuId(null);
+                        setChangeModal({
+                          accountId: account.id,
+                          changeType: "withdraw",
+                        });
+                      }}
+                    >
+                      출금
+                    </StMenuItem>
+                    <StMenuItem
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuId(null);
+                        setChangeModal({
+                          accountId: account.id,
+                          changeType: "initial",
+                        });
+                      }}
+                    >
+                      초기잔액 설정
+                    </StMenuItem>
+                    <StMenuItem
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuId(null);
+                        setAccountModal({
+                          id: account.id,
+                          name: account.name,
+                          kind: account.kind,
+                          goalAmount: account.goalAmount,
+                        });
+                      }}
+                    >
+                      통장 수정
+                    </StMenuItem>
+                    <StMenuItem
+                      type="button"
+                      $danger
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setMenuId(null);
+                        if (
+                          window.confirm(
+                            `‘${account.name}’ 통장과 모든 변동내역을 삭제할까요?`,
+                          )
+                        ) {
+                          void asset.removeAccount(account.id);
+                        }
+                      }}
+                    >
+                      통장 삭제
+                    </StMenuItem>
+                  </StMenu>
+                </>
+              ) : null}
+            </StRowActions>
+          </StAccountRight>
+        </StAccountRow>
+
+        {goal > 0 ? (
+          <StGoalWrap>
+            <StGoalBar>
+              <StGoalFill style={{ width: `${progress}%` }} />
+            </StGoalBar>
+            <StGoalMeta>
+              <span>목표 {mask(goal)}</span>
+              <strong>{progress.toFixed(0)}%</strong>
+            </StGoalMeta>
+          </StGoalWrap>
+        ) : null}
+
+        {isExpanded ? (
+          <StHistory>
+            {history.length === 0 ? (
+              <StHistoryEmpty>변동내역이 없어요.</StHistoryEmpty>
+            ) : (
+              history.map((change) => (
+                <StHistoryRow key={change.id}>
+                  <StHistoryMeta>
+                    <StHistoryType $type={change.changeType}>
+                      {CHANGE_TYPE_LABEL[change.changeType]}
+                    </StHistoryType>
+                    <span>{change.date}</span>
+                    {change.memo ? <em>{change.memo}</em> : null}
+                  </StHistoryMeta>
+                  <StHistoryRight>
+                    <StHistoryAmount $negative={change.amount < 0}>
+                      {maskSigned(change.amount)}
+                    </StHistoryAmount>
+                    <StHistoryDelete
+                      type="button"
+                      aria-label="변동내역 삭제"
+                      onClick={() => {
+                        if (window.confirm("이 변동내역을 삭제할까요?")) {
+                          void asset.removeChange(change.id);
+                        }
+                      }}
+                    >
+                      ×
+                    </StHistoryDelete>
+                  </StHistoryRight>
+                </StHistoryRow>
+              ))
+            )}
+          </StHistory>
+        ) : null}
+      </StAccountBlock>
+    );
+  };
 
   return (
     <StWrap>
@@ -135,183 +332,7 @@ export default function AssetBoardSection({
             아직 통장이 없어요. “통장 추가”로 첫 통장을 만들어보세요.
           </StEmpty>
         ) : (
-          asset.activeAccounts.map((account) => {
-            const balance = asset.balanceByAccount[account.id] || 0;
-            const isExpanded = expandedId === account.id;
-            const history = asset.changesByAccount(account.id);
-            const goal = account.goalAmount || 0;
-            const progress =
-              goal > 0 ? Math.min((balance / goal) * 100, 100) : 0;
-            return (
-              <StAccountBlock key={account.id}>
-                <StAccountRow
-                  role="button"
-                  tabIndex={0}
-                  onClick={() =>
-                    setExpandedId(isExpanded ? null : account.id)
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setExpandedId(isExpanded ? null : account.id);
-                    }
-                  }}
-                >
-                  <StAccountMain>
-                    <strong>{account.name}</strong>
-                    <span>{account.kind}</span>
-                  </StAccountMain>
-                  <StAccountRight>
-                    <StBalance>{mask(balance)}</StBalance>
-                    <StRowActions>
-                      <StRowButton
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setChangeModal({
-                            accountId: account.id,
-                            changeType: "deposit",
-                          });
-                        }}
-                      >
-                        입금
-                      </StRowButton>
-                      <StKebab
-                        type="button"
-                        aria-label="더보기"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setMenuId(menuId === account.id ? null : account.id);
-                        }}
-                      >
-                        ⋯
-                      </StKebab>
-                      {menuId === account.id ? (
-                        <>
-                          <StMenuBackdrop
-                            type="button"
-                            aria-label="닫기"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setMenuId(null);
-                            }}
-                          />
-                          <StMenu role="menu">
-                            <StMenuItem
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setMenuId(null);
-                                setChangeModal({
-                                  accountId: account.id,
-                                  changeType: "withdraw",
-                                });
-                              }}
-                            >
-                              출금
-                            </StMenuItem>
-                            <StMenuItem
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setMenuId(null);
-                                setChangeModal({
-                                  accountId: account.id,
-                                  changeType: "initial",
-                                });
-                              }}
-                            >
-                              초기잔액 설정
-                            </StMenuItem>
-                            <StMenuItem
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setMenuId(null);
-                                setAccountModal({
-                                  id: account.id,
-                                  name: account.name,
-                                  kind: account.kind,
-                                  goalAmount: account.goalAmount,
-                                });
-                              }}
-                            >
-                              통장 수정
-                            </StMenuItem>
-                            <StMenuItem
-                              type="button"
-                              $danger
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setMenuId(null);
-                                if (
-                                  window.confirm(
-                                    `‘${account.name}’ 통장과 모든 변동내역을 삭제할까요?`,
-                                  )
-                                ) {
-                                  void asset.removeAccount(account.id);
-                                }
-                              }}
-                            >
-                              통장 삭제
-                            </StMenuItem>
-                          </StMenu>
-                        </>
-                      ) : null}
-                    </StRowActions>
-                  </StAccountRight>
-                </StAccountRow>
-
-                {goal > 0 ? (
-                  <StGoalWrap>
-                    <StGoalBar>
-                      <StGoalFill style={{ width: `${progress}%` }} />
-                    </StGoalBar>
-                    <StGoalMeta>
-                      <span>목표 {mask(goal)}</span>
-                      <strong>{progress.toFixed(0)}%</strong>
-                    </StGoalMeta>
-                  </StGoalWrap>
-                ) : null}
-
-                {isExpanded ? (
-                  <StHistory>
-                    {history.length === 0 ? (
-                      <StHistoryEmpty>변동내역이 없어요.</StHistoryEmpty>
-                    ) : (
-                      history.map((change) => (
-                        <StHistoryRow key={change.id}>
-                          <StHistoryMeta>
-                            <StHistoryType $type={change.changeType}>
-                              {CHANGE_TYPE_LABEL[change.changeType]}
-                            </StHistoryType>
-                            <span>{change.date}</span>
-                            {change.memo ? <em>{change.memo}</em> : null}
-                          </StHistoryMeta>
-                          <StHistoryRight>
-                            <StHistoryAmount $negative={change.amount < 0}>
-                              {maskSigned(change.amount)}
-                            </StHistoryAmount>
-                            <StHistoryDelete
-                              type="button"
-                              aria-label="변동내역 삭제"
-                              onClick={() => {
-                                if (window.confirm("이 변동내역을 삭제할까요?")) {
-                                  void asset.removeChange(change.id);
-                                }
-                              }}
-                            >
-                              ×
-                            </StHistoryDelete>
-                          </StHistoryRight>
-                        </StHistoryRow>
-                      ))
-                    )}
-                  </StHistory>
-                ) : null}
-              </StAccountBlock>
-            );
-          })
+          asset.activeAccounts.map((account) => renderAccountBlock(account))
         )}
       </StAccountList>
 
@@ -746,6 +767,61 @@ const StMiniBarLabel = styled.span`
 const StAccountList = styled.div`
   display: flex;
   flex-direction: column;
+`;
+
+const StKindGroup = styled.div`
+  border-top: 1px solid #eef0f2;
+
+  &:first-child {
+    border-top: none;
+  }
+`;
+
+const StKindHeader = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: none;
+  background: transparent;
+  padding: 0.7rem 0.15rem;
+  cursor: pointer;
+`;
+
+const StKindTitle = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 0;
+
+  strong {
+    font-size: 0.86rem;
+    font-weight: 900;
+    color: #2b3441;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: #98a0ab;
+    font-weight: 700;
+  }
+`;
+
+const StKindCaret = styled.span<{ $open: boolean }>`
+  font-size: 0.7rem;
+  color: #9aa0a8;
+  align-self: center;
+  transition: transform 0.15s ease;
+  transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
+`;
+
+const StKindTotal = styled.span`
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #333d4b;
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const StEmpty = styled.p`

@@ -175,7 +175,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
 
   const handleDeleteEntry = useCallback(
     async (entryId: string) => {
-      const targetEntry = store.entries.find((entry) => entry.id === entryId);
+      const targetEntry = store?.entries.find((entry) => entry.id === entryId);
       const result = await commitStoreChange(() =>
         deleteAccountBookEntry(entryId, getActingUserId()),
       );
@@ -188,7 +188,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         );
       }
     },
-    [store.entries, commitStoreChange, getActingUserId],
+    [store, commitStoreChange, getActingUserId],
   );
 
   const handleChangeAnnualSavingGoal = useCallback(
