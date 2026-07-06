@@ -105,10 +105,11 @@ const StWrap = styled.div`
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.5rem;
 
   @media (max-width: 767px) {
     flex-wrap: wrap;
+    gap: 0.45rem;
   }
 `;
 

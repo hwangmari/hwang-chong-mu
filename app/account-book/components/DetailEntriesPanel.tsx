@@ -424,6 +424,8 @@ const StPanel = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 0;
+  border-top: 1px solid #e5e6e7;
+  padding-top: 1rem;
 `;
 
 const StBlockTitle = styled.h3`

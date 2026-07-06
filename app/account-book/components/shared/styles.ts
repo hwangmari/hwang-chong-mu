@@ -198,6 +198,9 @@ export const StAbPillOption = styled.button<{ $active: boolean }>`
 
 export const abInputBase = css`
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   min-height: 40px;
   border: 1px solid #e2e3e5;
   border-radius: ${abTokens.radius.sm};

@@ -353,7 +353,7 @@ const StFormField = styled.div<{ $mobileTopSpace?: boolean }>`
   margin-bottom: 0.65rem;
 
   @media (max-width: 720px) {
-    margin-bottom: 0;
+    margin-bottom: 0.55rem;
     margin-top: ${({ $mobileTopSpace }) => ($mobileTopSpace ? "0.28rem" : "0")};
   }
 `;
@@ -496,6 +496,16 @@ const StInput = styled.input<{ $large?: boolean }>`
     padding: 0.72rem 0.78rem;
   `
       : ""}
+
+  &[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+  }
+
+  &[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
 
   @media (max-width: 720px) {
     padding: 0.56rem 0.65rem;

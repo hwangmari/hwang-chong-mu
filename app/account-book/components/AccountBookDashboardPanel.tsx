@@ -396,7 +396,7 @@ const StSummaryGrid = styled.div`
   grid-template-columns: minmax(190px, 0.62fr) minmax(0, 1.38fr);
   gap: 0.75rem;
 
-  @media (max-width: 1260px) {
+  @media (max-width: 1080px) {
     grid-template-columns: 1fr;
   }
 
@@ -484,7 +484,7 @@ const StMainGrid = styled.div`
   gap: 0.75rem;
   align-items: start;
 
-  @media (max-width: 1260px) {
+  @media (max-width: 1080px) {
     grid-template-columns: 1fr;
   }
 

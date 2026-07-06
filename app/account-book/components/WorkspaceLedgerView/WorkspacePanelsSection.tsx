@@ -323,7 +323,7 @@ const StCalendarSplit = styled.div<{ $hasDetailPanel: boolean }>`
     if (!$hasDetailPanel) return "minmax(0, 1fr)";
     return "minmax(0, 1.35fr) minmax(min(320px, 100%), 0.78fr)";
   }};
-  gap: 0.85rem;
+  gap: 1rem;
   min-height: 0;
   align-items: start;
 
@@ -338,15 +338,10 @@ const StCalendarSplit = styled.div<{ $hasDetailPanel: boolean }>`
 const StLeftSplitCard = styled.section`
   display: flex;
   flex-direction: column;
-  border: 1px solid #e5e6e7;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
-  padding: 0.9rem;
+  background: transparent;
+  padding: 1rem 0 0;
 
   @media (max-width: 720px) {
-    border: none;
-    border-radius: 0;
-    background: transparent;
     padding: 0;
   }
 `;
@@ -372,23 +367,18 @@ const StLeftBody = styled.div`
 
 const StRightSplitCard = styled.section`
   min-height: 0;
-  border: 1px solid #e5e6e7;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
-  padding: 0.9rem;
+  background: transparent;
+  padding-top: 1rem;
   display: flex;
   flex-direction: column;
 
   @media (max-width: 1080px) {
-    margin: 20px 0;
+    margin: 20px 0 0;
   }
 
   @media (max-width: 720px) {
     margin: 0.8rem 0 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    padding: 0;
+    padding-top: 0;
   }
 `;
 

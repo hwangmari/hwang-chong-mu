@@ -3,7 +3,7 @@ import styled from "styled-components";
 export const StPage = styled.main`
   overscroll-behavior: none;
   min-height: 100vh;
-  background: #f7f7f7;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
 `;

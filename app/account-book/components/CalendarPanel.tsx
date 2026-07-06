@@ -118,14 +118,10 @@ const StCalendarGrid = styled.div`
   }
 `;
 const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
-  border: 1px solid ${({ $selected }) => ($selected ? "#acaeb3" : "#f0f1f2")};
-  background: ${({ $selected }) =>
-    $selected
-      ? "#f6f6f7"
-      : "#ffffff"};
+  border: 1px solid ${({ $selected }) => ($selected ? "#c3c5c8" : "transparent")};
+  background: transparent;
   color: ${({ $selected, $muted, theme }) => $selected ? "#182d4e" : $muted ? "#c7c9cd" : theme.colors.gray900};
-  box-shadow: ${({ $selected }) =>
-    $selected ? "0 10px 22px rgba(151, 154, 160, 0.14)" : "none"};
+  box-shadow: none;
   border-radius: 16px;
   min-height: 80px;
   padding: 0.45rem 0.3rem;
@@ -134,11 +130,15 @@ const StDayCell = styled.button<{ $selected: boolean; $muted: boolean }>`
   align-items: center;
   justify-content: flex-start;
   gap: 0.18rem;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: ${({ $selected }) => ($selected ? "#c3c5c8" : "#e4e5e7")};
+  }
 
   @media (max-width: 720px) {
-    border: none;
-    background: ${({ $selected }) =>
-      $selected ? "#f6f6f7" : "transparent"};
+    border: 1px solid ${({ $selected }) => ($selected ? "#c3c5c8" : "transparent")};
+    background: transparent;
     box-shadow: none;
     border-radius: 14px;
     min-height: 58px;

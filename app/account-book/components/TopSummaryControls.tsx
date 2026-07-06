@@ -303,8 +303,13 @@ const StLedgerCardFooter = styled.div`
 const StCalendarSummaryLine = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.8rem;
+  gap: 1px;
   margin-bottom: 0.75rem;
+  border: 1px solid #e5e6e7;
+  border-radius: 22px;
+  background: #e5e6e7;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(125, 129, 137, 0.05);
 
   @media (max-width: 980px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -312,8 +317,9 @@ const StCalendarSummaryLine = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.45rem;
     margin-bottom: 0.65rem;
+    border-radius: 18px;
+    box-shadow: none;
   }
 `;
 const StCalendarSummaryCard = styled.article<{
@@ -325,37 +331,24 @@ const StCalendarSummaryCard = styled.article<{
   justify-content: flex-start;
   align-items: flex-start;
   min-height: 9.6rem;
-  border-radius: 22px;
-  background: #fdfdfe;
-  border: 1px solid ${({ $active }) => ($active ? "#c3c5c8" : "#e5e6e7")};
-  box-shadow: ${({ $active }) =>
-    $active
-      ? "0 10px 24px rgba(151, 155, 161, 0.12)"
-      : "0 8px 20px rgba(125, 129, 137, 0.05)"};
+  background: ${({ $active }) => ($active ? "#f0f0f2" : "#fdfdfe")};
   padding: 1.12rem 1.18rem;
   text-align: left;
   cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+  transition: background 0.18s ease;
 
   &:hover {
-    ${({ $clickable }) =>
-      $clickable
+    ${({ $clickable, $active }) =>
+      $clickable && !$active
         ? `
-      border-color: #d5d6d9;
-      box-shadow: 0 12px 24px rgba(125, 129, 137, 0.1);
-      transform: translateY(-1px);
+      background: #f5f5f6;
     `
         : ""}
   }
 
   @media (max-width: 720px) {
     min-height: auto;
-    border-radius: 18px;
     padding: 0.8rem 0.88rem;
-    box-shadow: none;
   }
 `;
 const StCalendarSummaryTop = styled.div`
@@ -378,13 +371,24 @@ const StCalendarSummaryLabel = styled.p`
 `;
 const StCalendarSummaryToggle = styled.button`
   border: 1px solid #e2e3e4;
-  background: ${({ theme }) => theme.colors.blue50};
-  color: #72767d;
+  background: #ffffff;
+  color: #8a8e95;
   border-radius: 999px;
   padding: 0.22rem 0.54rem;
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1.2;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: #d3d5d8;
+    background: #f5f6f7;
+    color: #656971;
+  }
 `;
 const StCalendarSummaryValue = styled.p<{
   $tone: "income" | "expense" | "asset";

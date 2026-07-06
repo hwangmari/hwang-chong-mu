@@ -297,7 +297,7 @@ const StWorkspaceHeader = styled.header`
   top: 0;
   z-index: 100;
   border-bottom: 1px solid #dcdee0;
-  background: ${({ theme }) => theme.colors.gray100};
+  background: #ffffff;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-areas: "left center right";
