@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import styled from "styled-components";
-import { fetchAccountBookStore, upsertAccountBookWorkspace } from "../repository";
+import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
 import AssetBoardSection from "../components/AssetBoardSection";
 import AssetAnnualFlow from "../components/AssetAnnualFlow";
@@ -22,18 +22,11 @@ import type { AccountBookStore, ViewMode } from "../types";
 
 type AnnualKind = "income" | "expense" | "asset";
 type PaymentKey = "cash" | "card" | "check_card";
-type AssetGoalCategory = "IRP" | "연금저축" | "퇴직연금" | "ISA";
 
 const PAYMENT_META: Array<{ key: PaymentKey; label: string; color: string }> = [
   { key: "cash", label: "현금", color: "#868a92" },
   { key: "card", label: "카드", color: "#888c94" },
   { key: "check_card", label: "체크카드", color: "#3f8f8a" },
-];
-const ASSET_GOAL_CATEGORIES: AssetGoalCategory[] = [
-  "IRP",
-  "연금저축",
-  "퇴직연금",
-  "ISA",
 ];
 
 function formatAmount(value: number) {
@@ -56,21 +49,6 @@ function buildBackUrl(workspaceId?: string, viewMode: ViewMode = "calendar") {
   return `/account-book?workspaceId=${workspaceId}&view=${viewMode}`;
 }
 
-function formatGoalInputValue(value: string) {
-  const digitsOnly = value.replace(/\D/g, "");
-  if (!digitsOnly) return "";
-  return Number(digitsOnly).toLocaleString("ko-KR");
-}
-
-function createEmptyAssetGoalInputs() {
-  return {
-    IRP: "",
-    연금저축: "",
-    퇴직연금: "",
-    ISA: "",
-  } satisfies Record<AssetGoalCategory, string>;
-}
-
 function AccountBookAnnualContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,12 +59,6 @@ function AccountBookAnnualContent() {
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {},
   );
-  const [assetGoalInputs, setAssetGoalInputs] = useState<
-    Record<AssetGoalCategory, string>
-  >(createEmptyAssetGoalInputs());
-  const [assetGoalSaveState, setAssetGoalSaveState] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
   // 연간 상세 진입 시 기본적으로 금액을 가린다(프라이버시). 토글로 열람.
   const [isAmountHidden, setIsAmountHidden] = useState(true);
   const maskAmount = (value: number) =>
@@ -360,26 +332,6 @@ function AccountBookAnnualContent() {
     [monthlyRows],
   );
 
-  const categoryRows = useMemo(() => {
-    const grouped = insightEntries.reduce<Record<string, number>>((acc, entry) => {
-      const key =
-        kind === "asset"
-          ? entry.subCategory?.trim() || entry.item.trim() || entry.category.trim() || "기타"
-          : getRepresentativeCategory(entry.category, entry.type) || "기타";
-      acc[key] = (acc[key] || 0) + entry.amount;
-      return acc;
-    }, {});
-
-    return Object.entries(grouped)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([label, amount]) => ({
-        label,
-        amount,
-        ratio: insightTotal > 0 ? (amount / insightTotal) * 100 : 0,
-      }));
-  }, [insightEntries, insightTotal, kind]);
-
   const incomeSourceRows = useMemo(() => {
     const grouped = insightEntries.reduce<Record<string, number>>((acc, entry) => {
       const key =
@@ -424,183 +376,6 @@ function AccountBookAnnualContent() {
       .sort((a, b) => b.date.localeCompare(a.date))[0]
       ?.date;
   }, [filteredEntries]);
-
-  const assetCumulativeCategoryRows = useMemo(() => {
-    const grouped = filteredEntries.reduce<
-      Record<
-        string,
-        {
-          amount: number;
-          count: number;
-          latestDate: string;
-        }
-      >
-    >((acc, entry) => {
-      const key =
-        entry.subCategory?.trim() ||
-        entry.item?.trim() ||
-        entry.category?.trim() ||
-        "기타 자산";
-
-      if (!acc[key]) {
-        acc[key] = {
-          amount: 0,
-          count: 0,
-          latestDate: entry.date,
-        };
-      }
-
-      acc[key].amount += entry.amount;
-      acc[key].count += 1;
-      if (entry.date > acc[key].latestDate) {
-        acc[key].latestDate = entry.date;
-      }
-
-      return acc;
-    }, {});
-
-    return Object.entries(grouped)
-      .sort((a, b) => b[1].amount - a[1].amount)
-      .map(([label, meta]) => ({
-        label,
-        amount: meta.amount,
-        count: meta.count,
-        latestDate: meta.latestDate,
-        ratio: total > 0 ? (meta.amount / total) * 100 : 0,
-      }));
-  }, [filteredEntries, total]);
-
-  const assetGoalScopeKey = memberId || "all";
-  const persistedAssetGoalInputs = useMemo(() => {
-    const savedGoals =
-      workspace?.assetGoalMap?.[String(selectedYear)]?.[assetGoalScopeKey] || {};
-
-    return ASSET_GOAL_CATEGORIES.reduce(
-      (acc, label) => {
-        const value = Number(savedGoals[label]) || 0;
-        acc[label] = value > 0 ? value.toLocaleString("ko-KR") : "";
-        return acc;
-      },
-      createEmptyAssetGoalInputs(),
-    );
-  }, [assetGoalScopeKey, selectedYear, workspace?.assetGoalMap]);
-
-  const persistedAssetGoalSignature = JSON.stringify(persistedAssetGoalInputs);
-  const assetGoalInputSignature = JSON.stringify(assetGoalInputs);
-
-  useEffect(() => {
-    setAssetGoalInputs(persistedAssetGoalInputs);
-    setAssetGoalSaveState("idle");
-  }, [persistedAssetGoalSignature, persistedAssetGoalInputs]);
-
-  useEffect(() => {
-    if (kind !== "asset" || !workspace || !store) return;
-    if (assetGoalInputSignature === persistedAssetGoalSignature) return;
-
-    const timeout = window.setTimeout(async () => {
-      try {
-        setAssetGoalSaveState("saving");
-        const scopedGoalMap = ASSET_GOAL_CATEGORIES.reduce<Record<string, number>>(
-          (acc, label) => {
-            const value = Number(assetGoalInputs[label].replace(/,/g, "")) || 0;
-            if (value > 0) {
-              acc[label] = value;
-            }
-            return acc;
-          },
-          {},
-        );
-
-        const nextAssetGoalMap = {
-          ...(workspace.assetGoalMap || {}),
-          [String(selectedYear)]: {
-            ...((workspace.assetGoalMap || {})[String(selectedYear)] || {}),
-            [assetGoalScopeKey]: scopedGoalMap,
-          },
-        };
-
-        const nextStore = await upsertAccountBookWorkspace({
-          ...workspace,
-          assetGoalMap: nextAssetGoalMap,
-        });
-        setStore(nextStore);
-        setAssetGoalSaveState("saved");
-      } catch (error) {
-        console.error("자산 목표 저장 실패:", error);
-        setAssetGoalSaveState("error");
-      }
-    }, 450);
-
-    return () => window.clearTimeout(timeout);
-  }, [
-    assetGoalInputSignature,
-    assetGoalInputs,
-    assetGoalScopeKey,
-    kind,
-    persistedAssetGoalSignature,
-    selectedYear,
-    store,
-    workspace,
-  ]);
-
-  const assetGoalRows = useMemo(() => {
-    const amountMap = new Map(
-      assetCumulativeCategoryRows.map((row) => [row.label, row.amount]),
-    );
-
-    return ASSET_GOAL_CATEGORIES.map((label) => {
-      const goal = Number(assetGoalInputs[label].replace(/,/g, "")) || 0;
-      const saved = amountMap.get(label) || 0;
-      const remaining = Math.max(goal - saved, 0);
-      const achievementRate = goal > 0 ? (saved / goal) * 100 : null;
-
-      return {
-        label,
-        goal,
-        saved,
-        remaining,
-        achievementRate,
-        isCompleted: goal > 0 && saved >= goal,
-      };
-    });
-  }, [assetCumulativeCategoryRows, assetGoalInputs]);
-
-  const assetGoalSummary = useMemo(() => {
-    const totalGoalAmount = assetGoalRows.reduce((sum, row) => sum + row.goal, 0);
-    const totalSavedAmount = assetGoalRows.reduce(
-      (sum, row) => sum + Math.min(row.saved, row.goal || row.saved),
-      0,
-    );
-    const completedCount = assetGoalRows.filter((row) => row.isCompleted).length;
-    const activeGoalCount = assetGoalRows.filter((row) => row.goal > 0).length;
-
-    return {
-      totalGoalAmount,
-      totalSavedAmount,
-      totalRemainingAmount: Math.max(totalGoalAmount - totalSavedAmount, 0),
-      completedCount,
-      activeGoalCount,
-      overallRate:
-        totalGoalAmount > 0 ? (totalSavedAmount / totalGoalAmount) * 100 : null,
-    };
-  }, [assetGoalRows]);
-
-  const entriesByMonth = useMemo(() => {
-    const filteredMonthlyRows = selectedMonth
-      ? monthlyRows.filter((row) => row.month === selectedMonth)
-      : monthlyRows;
-
-    return filteredMonthlyRows
-      .map((row) => {
-        const monthNumber = Number(row.month.replace("월", ""));
-        const mm = String(monthNumber).padStart(2, "0");
-        const monthEntries = filteredEntries
-          .filter((entry) => entry.date.slice(5, 7) === mm)
-          .sort((a, b) => b.date.localeCompare(a.date));
-        return { month: row.month, entries: monthEntries };
-      })
-      .filter((row) => row.entries.length > 0);
-  }, [filteredEntries, monthlyRows, selectedMonth]);
 
   const kindLabel =
     kind === "income" ? "수입" : kind === "asset" ? "자산/저축" : "지출";
@@ -1196,156 +971,6 @@ const StSideColumn = styled.div`
   align-content: start;
 `;
 
-const StGoalList = styled.div`
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 0.95rem;
-`;
-
-const StGoalCard = styled.article`
-  border: 1px solid #eaebed;
-  border-radius: 16px;
-  background: #fdfdfe;
-  padding: 0.9rem;
-`;
-
-const StGoalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.9rem;
-
-  @media (max-width: 820px) {
-    flex-direction: column;
-  }
-
-  div {
-    display: grid;
-    gap: 0.18rem;
-  }
-
-  strong {
-    font-size: 0.95rem;
-    color: ${({ theme }) => theme.colors.gray800};
-  }
-
-  span {
-    font-size: 0.78rem;
-    color: #81858d;
-    font-weight: 700;
-  }
-`;
-
-const StGoalInputWrap = styled.label`
-  display: grid;
-  grid-template-columns: auto minmax(110px, 1fr) auto;
-  align-items: center;
-  gap: 0.45rem;
-  min-width: 250px;
-  font-size: 0.76rem;
-  color: #7e838b;
-  font-weight: 800;
-
-  input {
-    width: 100%;
-    border: 1px solid #e2e3e5;
-    border-radius: 12px;
-    background: ${({ theme }) => theme.colors.white};
-    padding: 0.5rem 0.65rem;
-    font-size: 0.84rem;
-    font-weight: 800;
-    color: ${({ theme }) => theme.colors.gray800};
-  }
-
-  em {
-    font-style: normal;
-    color: #898d94;
-  }
-
-  @media (max-width: 820px) {
-    min-width: 0;
-    width: 100%;
-  }
-`;
-
-const StGoalMetaGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin-top: 0.8rem;
-
-  @media (max-width: 820px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StGoalMetaCard = styled.div`
-  border-radius: 12px;
-  background: #f5f6f8;
-  padding: 0.6rem 0.7rem;
-
-  span {
-    display: block;
-    font-size: 0.72rem;
-    color: #868a91;
-    font-weight: 700;
-  }
-
-  strong {
-    display: block;
-    margin-top: 0.22rem;
-    font-size: 0.95rem;
-    color: #222b36;
-    font-weight: 900;
-  }
-`;
-
-const StGoalBar = styled.div`
-  margin-top: 0.8rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: #eceef1;
-  overflow: hidden;
-`;
-
-const StGoalFill = styled.div`
-  height: 100%;
-  border-radius: inherit;
-  background: #3182f6;
-`;
-
-const StGoalSummaryList = styled.div`
-  display: grid;
-  gap: 0;
-  margin-top: 0.6rem;
-`;
-
-const StGoalSummaryItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  align-items: center;
-  border-top: 1px solid #eef0f2;
-  padding: 0.72rem 0.15rem;
-
-  &:first-child {
-    border-top: none;
-  }
-
-  span {
-    font-size: 0.78rem;
-    color: #81858d;
-    font-weight: 700;
-  }
-
-  strong {
-    font-size: 0.92rem;
-    color: ${({ theme }) => theme.colors.gray800};
-    font-weight: 900;
-    text-align: right;
-  }
-`;
-
 const StSectionHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -1638,12 +1263,6 @@ const StCategoryItem = styled.div`
   }
 `;
 
-const StAccordionList = styled.div`
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 0.9rem;
-`;
-
 const StCatSummaryList = styled.div`
   display: flex;
   flex-direction: column;
@@ -1750,67 +1369,6 @@ const StCatItem = styled.div`
     font-size: 0.82rem;
     font-weight: 800;
     color: #4e5560;
-    white-space: nowrap;
-  }
-`;
-
-const StAccordion = styled.article`
-  border: 1px solid #e9eaeb;
-  border-radius: 18px;
-  overflow: hidden;
-`;
-
-const StAccordionButton = styled.button`
-  width: 100%;
-  border: none;
-  background: ${({ theme }) => theme.colors.blue50};
-  padding: 0.8rem 0.9rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #182a4b;
-
-  strong {
-    font-size: 0.9rem;
-    font-weight: 900;
-  }
-
-  span {
-    font-size: 0.76rem;
-    color: #7e838b;
-    font-weight: 800;
-  }
-`;
-
-const StEntryList = styled.div`
-  display: grid;
-  gap: 0.55rem;
-  padding: 0.8rem;
-`;
-
-const StEntryItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  border: 1px solid #f1f2f3;
-  border-radius: 14px;
-  padding: 0.7rem 0.8rem;
-
-  strong {
-    font-size: 0.88rem;
-    color: ${({ theme }) => theme.colors.gray800};
-  }
-
-  p {
-    margin-top: 0.2rem;
-    font-size: 0.76rem;
-    color: #84888f;
-  }
-
-  em {
-    font-style: normal;
-    font-weight: 800;
-    color: #2a4c84;
     white-space: nowrap;
   }
 `;

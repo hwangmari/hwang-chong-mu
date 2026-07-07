@@ -265,7 +265,8 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       sourceEntryId: link.sourceEntryId || "",
       sourceWorkspaceId: link.sourceWorkspaceId || "",
       targetWorkspaceId: link.targetWorkspaceId || "",
-      sharedByUserId: link.sharedByUserId || users[0]?.id || base.users[0].id,
+      sharedByUserId:
+        link.sharedByUserId || users[0]?.id || base.users[0]?.id || "",
       createdAt: link.createdAt || new Date().toISOString(),
     })),
     monthlyMemos: monthlyMemos.map((monthlyMemo, index) => ({

@@ -105,10 +105,10 @@ export function useRoom(roomId: string) {
           voted_date: v.voted_date,
         }))
       );
-
-      setLoading(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   }, [roomId]);
 

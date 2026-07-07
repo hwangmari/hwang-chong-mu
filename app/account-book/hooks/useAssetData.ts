@@ -92,19 +92,22 @@ export function useAssetData(
   const saveAccount = useCallback(
     async (input: SaveAccountInput) => {
       if (!workspaceId || !actorUserId) return;
+      const existing = input.id
+        ? accounts.find((account) => account.id === input.id)
+        : undefined;
       const account: AssetAccount = {
         id: input.id || createId("asset-account"),
         workspaceId,
         name: input.name.trim() || "통장",
         kind: input.kind || "기타",
         goalAmount: Math.max(Math.trunc(input.goalAmount ?? 0), 0),
-        createdByUserId: actorUserId,
-        archived: false,
-        sortOrder: input.sortOrder ?? accounts.length,
+        createdByUserId: existing?.createdByUserId ?? actorUserId,
+        archived: existing?.archived ?? false,
+        sortOrder: existing?.sortOrder ?? input.sortOrder ?? accounts.length,
       };
       applyData(await upsertAccountBookAssetAccount(account, actorUserId));
     },
-    [accounts.length, actorUserId, applyData, workspaceId],
+    [accounts, actorUserId, applyData, workspaceId],
   );
 
   const removeAccount = useCallback(

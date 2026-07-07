@@ -2,8 +2,8 @@ export const toSlug = (value: string) => {
   const base = value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9가-힣\\s-]/g, "")
-    .replace(/\\s+/g, "-")
+    .replace(/[^a-z0-9가-힣\s-]/g, "")
+    .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 

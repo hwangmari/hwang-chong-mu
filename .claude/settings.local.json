@@ -28,7 +28,9 @@
       "Bash(npm view *)",
       "Bash(python3 tone2.py --apply)",
       "Bash(echo \"TSC:$?\")",
-      "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics"
+      "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics",
+      "Bash(git rm *)",
+      "Bash(echo \"TSC_EXIT:$?\")"
     ]
   }
 }

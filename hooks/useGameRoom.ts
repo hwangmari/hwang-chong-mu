@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -25,6 +25,11 @@ export default function useGameRoom(roomId: string) {
   );
   const [count, setCount] = useState(3);
   const [selectedGame, setSelectedGame] = useState("telepathy");
+  const statusRef = useRef(status);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
 
   useEffect(() => {
@@ -42,13 +47,15 @@ export default function useGameRoom(roomId: string) {
     if (storedId) setMyId(storedId);
     if (storedName) setJoinName(storedName);
     fetchRoomData();
-    subscribeRealtime();
+    return subscribeRealtime();
   }, [roomId]);
 
   useEffect(() => {
     if (status === "countdown") {
-      if (count > 0) setTimeout(() => setCount((c) => c - 1), 1000);
-      else setStatus("playing");
+      if (count > 0) {
+        const timer = setTimeout(() => setCount((c) => c - 1), 1000);
+        return () => clearTimeout(timer);
+      } else setStatus("playing");
     }
   }, [status, count]);
 
@@ -107,8 +114,8 @@ export default function useGameRoom(roomId: string) {
           setSelectedGame(newRoom.game_type);
           if (
             newRoom.status === "playing" &&
-            status !== "playing" &&
-            status !== "countdown"
+            statusRef.current !== "playing" &&
+            statusRef.current !== "countdown"
           ) {
             setStatus("countdown");
             setCount(3);
@@ -118,7 +125,9 @@ export default function useGameRoom(roomId: string) {
         }
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
 

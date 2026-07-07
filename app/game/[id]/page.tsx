@@ -48,6 +48,25 @@ export default function GameRoomPage() {
               onEndGame={() => logic.handleEndGame(true)}
             />
           )}
+          {logic.selectedGame === "telepathy" && (
+            <TelepathyGame
+              roomId={roomId}
+              isHost={logic.isHost}
+              myId={logic.myId}
+              participants={logic.participants}
+              roomData={logic.roomData}
+              onEndGame={() => logic.handleEndGame(true)}
+            />
+          )}
+          {logic.selectedGame === "clicker" && (
+            <ClickerGame
+              roomId={roomId}
+              isHost={logic.isHost}
+              myId={logic.myId}
+              participants={logic.participants}
+              onEndGame={() => logic.handleEndGame(true)}
+            />
+          )}
         </StWrapper>
       </StContainer>
     );
