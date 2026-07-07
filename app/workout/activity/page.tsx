@@ -11,7 +11,6 @@ import {
 } from "../repository";
 import {
   formatDurationMin,
-  formatMinInput,
   groupRecordsByMonth,
   parseMinutesInput,
   todayISO,
@@ -139,7 +138,9 @@ export default function ActivityPage() {
         avgHeartRate: Number(form.avgHeartRate) || undefined,
         memo: form.memo || undefined,
       });
-      resetForm();
+      // 등록 후에도 방금 입력한 날짜(달)를 유지해 연속 입력이 편하게
+      setForm({ ...EMPTY_FORM, date: form.date });
+      setShowCustomInput(false);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했어요.");
@@ -153,7 +154,7 @@ export default function ActivityPage() {
       id: record.id,
       date: record.date,
       activityName: record.activityName,
-      durationMin: formatMinInput(record.durationMin),
+      durationMin: record.durationMin ? String(record.durationMin) : "",
       calories: record.calories ? String(record.calories) : "",
       avgHeartRate: record.avgHeartRate ? String(record.avgHeartRate) : "",
       memo: record.memo || "",
@@ -238,12 +239,18 @@ export default function ActivityPage() {
             />
           </StLabel>
           <StLabel>
-            운동 시간
+            운동 시간 (분)
             <StInput
               type="text"
-              placeholder="예) 60 또는 1:30"
+              inputMode="numeric"
+              placeholder="예) 60"
               value={form.durationMin}
-              onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  durationMin: e.target.value.replace(/[^\d]/g, ""),
+                })
+              }
             />
           </StLabel>
         </StRow>

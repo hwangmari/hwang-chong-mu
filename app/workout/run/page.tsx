@@ -198,7 +198,8 @@ export default function RunPage() {
         intervals: form.intervals.length ? form.intervals : undefined,
         memo: form.memo || undefined,
       });
-      resetForm();
+      // 등록 후에도 방금 입력한 날짜(달)를 유지해 연속 입력이 편하게
+      setForm({ ...EMPTY_FORM, date: form.date });
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했어요.");
@@ -443,10 +444,10 @@ export default function RunPage() {
             />
           </StLabel>
           <StLabel>
-            시간 (mm:ss)
+            시간 (분:초 또는 시:분:초)
             <StInput
               type="text"
-              placeholder="예) 32:40"
+              placeholder="HH:MM:SS"
               value={form.durationInput}
               onChange={(e) =>
                 setForm({ ...form, durationInput: e.target.value })

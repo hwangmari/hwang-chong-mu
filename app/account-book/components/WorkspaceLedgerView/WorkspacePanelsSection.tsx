@@ -17,6 +17,7 @@ type EntryAction = {
 
 type Props = {
   viewMode: ViewMode;
+  isShared: boolean;
   currentMonth: Date;
   currentYear: number;
   currentMonthIndex: number;
@@ -105,6 +106,7 @@ type Props = {
 
 export default function WorkspacePanelsSection({
   viewMode,
+  isShared,
   currentMonth,
   currentYear,
   currentMonthIndex,
@@ -211,6 +213,7 @@ export default function WorkspacePanelsSection({
                   onSelectCardCompany={onSelectCardCompany}
                   onEdit={onEdit}
                   formatAmount={formatAmount}
+                  isShared={isShared}
                   cardColumnFooter={
                     <StLedgerMemoBar>
                       <MonthlyIssueMemo

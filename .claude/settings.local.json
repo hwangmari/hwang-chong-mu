@@ -27,7 +27,8 @@
       "Bash(npx --no-install omc --version)",
       "Bash(npm view *)",
       "Bash(python3 tone2.py --apply)",
-      "Bash(echo \"TSC:$?\")"
+      "Bash(echo \"TSC:$?\")",
+      "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics"
     ]
   }
 }

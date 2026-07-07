@@ -1071,6 +1071,7 @@ export default function WorkspaceLedgerView({
 
         <WorkspacePanelsSection
           viewMode={viewMode}
+          isShared={isSharedWorkspace}
           currentMonth={currentMonth}
           currentYear={currentYear}
           currentMonthIndex={currentMonthIndex}

@@ -41,6 +41,7 @@ type Props = {
   onEdit: (entry: ResolvedAccountEntry) => void;
   formatAmount: (value: number) => string;
   cardColumnFooter?: ReactNode;
+  isShared: boolean;
 };
 
 export default function LedgerOverviewSection({
@@ -60,6 +61,7 @@ export default function LedgerOverviewSection({
   onEdit,
   formatAmount,
   cardColumnFooter,
+  isShared,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [expandedDetailGroups, setExpandedDetailGroups] = useState<
@@ -395,7 +397,7 @@ export default function LedgerOverviewSection({
                                   detailTitle === merchantLabel
                                     ? null
                                     : merchantLabel,
-                                  entry.member,
+                                  isShared ? entry.member : null,
                                 ]
                                   .filter(Boolean)
                                   .join(" · ");

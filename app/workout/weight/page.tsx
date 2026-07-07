@@ -17,7 +17,6 @@ import {
   computeExercisePRs,
   DEFAULT_BARBELL_WEIGHT_KG,
   formatDurationMin,
-  formatMinInput,
   groupRecordsByMonth,
   gymRecordVolumeKg,
   parseMinutesInput,
@@ -246,7 +245,8 @@ export default function WeightPage() {
         exercises: cleaned,
         memo: form.memo || undefined,
       });
-      resetForm();
+      // 등록 후에도 방금 입력한 날짜(달)를 유지해 연속 입력이 편하게
+      setForm({ ...emptyForm(), date: form.date });
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했어요.");
@@ -260,7 +260,7 @@ export default function WeightPage() {
       id: record.id,
       date: record.date,
       bodyPart: (record.bodyPart ?? "chest") as GymBodyPart,
-      durationMin: formatMinInput(record.durationMin),
+      durationMin: record.durationMin ? String(record.durationMin) : "",
       calories: record.calories ? String(record.calories) : "",
       avgHeartRate: record.avgHeartRate ? String(record.avgHeartRate) : "",
       exercises: record.exercises.length
@@ -728,14 +728,17 @@ export default function WeightPage() {
 
         <StRow $cols={3}>
           <StLabel>
-            운동 시간
+            운동 시간 (분)
             <StInput
               type="text"
-              inputMode="text"
-              placeholder="예) 60 또는 1:30"
+              inputMode="numeric"
+              placeholder="예) 60"
               value={form.durationMin}
               onChange={(e) =>
-                setForm({ ...form, durationMin: e.target.value })
+                setForm({
+                  ...form,
+                  durationMin: e.target.value.replace(/[^\d]/g, ""),
+                })
               }
             />
           </StLabel>

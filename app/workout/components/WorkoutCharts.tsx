@@ -1013,6 +1013,20 @@ function isoFromDate(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
+// 캘린더에서 보던 달을 등록 왕복 후에도 유지하기 위한 세션 저장 키
+const CALENDAR_CURSOR_KEY = "workout:calendar-cursor";
+
+function persistCalendarCursor(d: Date) {
+  try {
+    sessionStorage.setItem(
+      CALENDAR_CURSOR_KEY,
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    );
+  } catch {
+    // sessionStorage 접근 불가(프라이빗 모드 등) 시 무시
+  }
+}
+
 export function WorkoutMonthlyCalendar({
   runs,
   gyms,
@@ -1036,6 +1050,20 @@ export function WorkoutMonthlyCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const popoverRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+  // 첫 진입은 오늘 달, 이후 세션에 저장된 보던 달이 있으면 복원 (등록 왕복 후 유지)
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem(CALENDAR_CURSOR_KEY);
+    } catch {
+      stored = null;
+    }
+    if (stored && /^\d{4}-\d{2}$/.test(stored)) {
+      const [year, month] = stored.split("-").map(Number);
+      setCursor(new Date(year, month - 1, 1));
+    }
+  }, []);
 
   const todayISO = isoFromDate(today);
 
@@ -1167,13 +1195,23 @@ export function WorkoutMonthlyCalendar({
   })();
 
   function goPrev() {
-    setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1));
+    setCursor((c) => {
+      const next = new Date(c.getFullYear(), c.getMonth() - 1, 1);
+      persistCalendarCursor(next);
+      return next;
+    });
   }
   function goNext() {
-    setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1));
+    setCursor((c) => {
+      const next = new Date(c.getFullYear(), c.getMonth() + 1, 1);
+      persistCalendarCursor(next);
+      return next;
+    });
   }
   function goToday() {
-    setCursor(new Date(today.getFullYear(), today.getMonth(), 1));
+    const next = new Date(today.getFullYear(), today.getMonth(), 1);
+    persistCalendarCursor(next);
+    setCursor(next);
   }
 
   function handleCellPin(iso: string) {
