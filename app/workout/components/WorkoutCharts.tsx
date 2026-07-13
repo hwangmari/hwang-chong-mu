@@ -1061,6 +1061,9 @@ export function WorkoutMonthlyCalendar({
     }
     if (stored && /^\d{4}-\d{2}$/.test(stored)) {
       const [year, month] = stored.split("-").map(Number);
+      // sessionStorage는 클라이언트 전용이라 initializer에서 읽으면 hydration 불일치가 나므로
+      // 마운트 후 effect에서 복원해야 함 (재렌더 1회는 의도된 비용)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCursor(new Date(year, month - 1, 1));
     }
   }, []);

@@ -15,6 +15,7 @@ import {
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
+import { useModal } from "@/components/common/ModalProvider";
 
 const GAME_OPTIONS = [
   { id: "ladder", name: "사다리 타기", icon: "🪜", desc: "운명의 짝대기 긋기" },
@@ -23,6 +24,7 @@ const GAME_OPTIONS = [
 
 export default function GameLobbyPage() {
   const router = useRouter();
+  const { openAlert } = useModal();
 
   const [viewMode, setViewMode] = useState("SELECT");
 
@@ -38,9 +40,18 @@ export default function GameLobbyPage() {
   }, []);
 
   const createRoom = async () => {
-    if (!roomTitle) return alert("방 제목을 입력해주세요!");
-    if (!nickname) return alert("닉네임을 입력해주세요!");
-    if (!password) return alert("비밀번호를 입력해주세요!");
+    if (!roomTitle) {
+      await openAlert("방 제목을 입력해주세요!");
+      return;
+    }
+    if (!nickname) {
+      await openAlert("닉네임을 입력해주세요!");
+      return;
+    }
+    if (!password) {
+      await openAlert("비밀번호를 입력해주세요!");
+      return;
+    }
 
     setLoading(true);
 
@@ -81,7 +92,7 @@ export default function GameLobbyPage() {
       router.push(`/game/${room.id}`);
     } catch (error) {
       console.error(error);
-      alert("방 생성 중 오류가 발생했습니다.");
+      await openAlert("방 생성 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }

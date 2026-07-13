@@ -22,8 +22,10 @@ import {
   setStoredDailyAccessCode,
 } from "../storage";
 import { getErrorMessage } from "./helpers";
+import { useModal } from "@/components/common/ModalProvider";
 
 export function useDailyNotebook(notebookId: string | undefined) {
+  const { openAlert } = useModal();
   const [notebook, setNotebook] = useState<DailyNotebookConfig | null>(null);
   const [entries, setEntries] = useState<DailyNotebookEntry[]>([]);
   const [monthChecklist, setMonthChecklist] = useState<string[]>([]);
@@ -162,7 +164,7 @@ export function useDailyNotebook(notebookId: string | undefined) {
 
     const nextChecklist = sanitizeChecklist(draftChecklist);
     if (nextChecklist.length === 0) {
-      alert("체크리스트를 1개 이상 입력해주세요.");
+      await openAlert("체크리스트를 1개 이상 입력해주세요.");
       return;
     }
 
@@ -181,9 +183,9 @@ export function useDailyNotebook(notebookId: string | undefined) {
       setEntries((prev) => normalizeEntries(prev, nextChecklist.length));
     } catch (error) {
       console.error("체크리스트 저장 실패:", error);
-      alert("체크리스트를 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+      await openAlert("체크리스트를 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
     }
-  }, [accessCode, draftChecklist, monthKey, notebookId]);
+  }, [accessCode, draftChecklist, monthKey, notebookId, openAlert]);
 
   const addChecklistItem = useCallback(() => {
     setDraftChecklistByMonth((prev) => ({
@@ -229,10 +231,10 @@ export function useDailyNotebook(notebookId: string | undefined) {
       try {
         await persistEntry(targetEntry);
       } catch {
-        alert("기록을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+        await openAlert("기록을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
       }
     },
-    [entries, persistEntry],
+    [entries, openAlert, persistEntry],
   );
 
   const toggleCheck = useCallback(

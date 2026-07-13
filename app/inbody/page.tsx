@@ -17,6 +17,7 @@ import {
 } from "./repository";
 import { clearWorkoutSession } from "../workout/storage";
 import { useWorkoutSession } from "../workout/useWorkoutSession";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   DEFAULT_VISIBLE,
   METRIC_COLOR,
@@ -81,6 +82,7 @@ function formatDelta(v: number, key: InBodyMetricKey): string {
 }
 
 export default function InBodyPage() {
+  const { openConfirm } = useModal();
   const session = useWorkoutSession();
   const [records, setRecords] = useState<InBodyRecord[]>([]);
   const [visible, setVisible] = useState<VisibleMap>(DEFAULT_VISIBLE);
@@ -193,10 +195,8 @@ export default function InBodyPage() {
   }
 
   async function removeRecord(id: string) {
-    if (typeof window !== "undefined") {
-      const ok = window.confirm("이 측정 기록을 삭제할까요?");
-      if (!ok) return;
-    }
+    const ok = await openConfirm("이 측정 기록을 삭제할까요?");
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteInBodyRecord(id);

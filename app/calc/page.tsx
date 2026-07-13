@@ -12,15 +12,17 @@ import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Input } from "@hwangchongmu/ui";
 import { CALC_GUIDE_DATA } from "@/data/footerGuides";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function CreateRoomPage() {
   const [roomName, setRoomName] = useState("");
+  const { openAlert } = useModal();
 
   const { createRoom, loading } = useCalcPersistence();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!roomName.trim()) {
-      alert("모임 이름을 입력해주세요!");
+      await openAlert("모임 이름을 입력해주세요!");
       return;
     }
 

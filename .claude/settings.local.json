@@ -30,7 +30,22 @@
       "Bash(echo \"TSC:$?\")",
       "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics",
       "Bash(git rm *)",
-      "Bash(echo \"TSC_EXIT:$?\")"
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu diff -- hooks/useGameRoom.ts app/workout/page.tsx components/common/ShareButton.tsx)",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu diff)",
+      "Bash(rm -f /private/tmp/claude-501/-Users-hwangmari-toy-project-hwang-chong-mu/eae0cdb8-38bf-4c8f-8f6f-6d2e99304d78/scratchpad/head-check/node_modules)",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu worktree remove /private/tmp/claude-501/-Users-hwangmari-toy-project-hwang-chong-mu/eae0cdb8-38bf-4c8f-8f6f-6d2e99304d78/scratchpad/head-check --force)",
+      "Bash(git checkout *)",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu show --stat --name-status cc24a3a)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -I{} sh -c 'echo \"$\\(grep -cE \": any\\\\b|as any\\\\b|@ts-ignore|@ts-expect-error\" \"{}\"\\) {}\"')",
+      "Bash([ -f \"$f\" ])",
+      "Bash(awk '$1>=500 {print}')",
+      "Bash(python3 *)",
+      "Bash(echo \"EXIT:$?\")",
+      "mcp__plugin_oh-my-claudecode_t__state_list_active",
+      "mcp__plugin_oh-my-claudecode_t__state_clear",
+      "Bash(grep -v '^$')"
     ]
   }
 }

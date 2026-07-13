@@ -5,6 +5,7 @@ import type {
   RunningBest,
   RunningRecord,
 } from "./types";
+import { formatDateKey } from "@/utils/date";
 
 // =========================
 // 시간 / 페이스 포맷
@@ -98,18 +99,11 @@ export function parseMinutesInput(input: string): number {
 // 날짜 / 주간
 // =========================
 export function todayISO() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return formatDateKey(new Date());
 }
 
 function toISO(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return formatDateKey(d);
 }
 
 export function startOfWeek(reference: Date = new Date()): Date {
@@ -182,11 +176,14 @@ export function setVolumeKg(
 export function gymRecordVolumeKg(record: GymRecord) {
   return record.exercises.reduce(
     (sum, ex) =>
-      sum +
-      ex.sets.reduce(
-        (s, set) => s + setVolumeKg(set, ex.sideCount, ex.barWeight),
-        0,
-      ),
+      // 시간 기록 운동은 무게·횟수가 없으므로 볼륨 계산에서 제외.
+      ex.measure === "time"
+        ? sum
+        : sum +
+          ex.sets.reduce(
+            (s, set) => s + setVolumeKg(set, ex.sideCount, ex.barWeight),
+            0,
+          ),
     0,
   );
 }
@@ -195,6 +192,27 @@ export function computeExercisePRs(records: GymRecord[]): ExercisePR[] {
   const bestByName = new Map<string, ExercisePR>();
   for (const r of records) {
     for (const ex of r.exercises) {
+      // 시간 기록 운동: 버틴 최대 시간(durationSec)이 PR.
+      // weight는 해당 세트의 무게(중량 매달리기), reps는 0.
+      if (ex.measure === "time") {
+        for (const set of ex.sets) {
+          if (set.type === "warmup") continue;
+          const dur = set.durationSec || 0;
+          if (dur <= 0) continue;
+          const prev = bestByName.get(ex.name);
+          if (!prev || dur > (prev.durationSec ?? 0)) {
+            bestByName.set(ex.name, {
+              exerciseName: ex.name,
+              achievedAt: r.date,
+              weight: set.weight || 0,
+              reps: 0,
+              durationSec: dur,
+              bodyPart: r.bodyPart,
+            });
+          }
+        }
+        continue;
+      }
       const bar = ex.barWeight && ex.barWeight > 0 ? ex.barWeight : 0;
       const multiplier =
         ex.sideCount && ex.sideCount > 0 ? ex.sideCount : 1;

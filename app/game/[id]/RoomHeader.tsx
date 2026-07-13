@@ -1,14 +1,22 @@
 "use client";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Props {
   title: string;
 }
 
 export default function RoomHeader({ title }: Props) {
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("방 링크가 복사되었습니다!");
+  const { openAlert } = useModal();
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      await openAlert("방 링크가 복사되었습니다!");
+    } catch (err) {
+      console.error("클립보드 복사 실패:", err);
+      await openAlert("링크 복사에 실패했습니다. 주소를 직접 복사해주세요!");
+    }
   };
 
   return (

@@ -13,6 +13,7 @@ import {
   buildScheduleSessionCookieValue,
   signScheduleSession,
 } from "@/lib/schedule-session";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,19 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "필수 값이 비어있습니다." },
         { status: 400 },
+      );
+    }
+
+    if (
+      !checkRateLimit(
+        `enter:${getClientIp(req)}:${userId}:${workspaceId}`,
+        10,
+        60_000,
+      )
+    ) {
+      return NextResponse.json(
+        { error: "시도 횟수가 많습니다. 잠시 후 다시 시도해 주세요." },
+        { status: 429 },
       );
     }
 

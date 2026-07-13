@@ -29,8 +29,10 @@ import { OvertimeRecord, OvertimeRuleId, TabKey } from "@/app/overtime/types";
 import { useOvertimeStorage } from "@/app/overtime/useOvertimeStorage";
 import { useOvertimeView } from "@/app/overtime/useOvertimeView";
 import { useOvertimeForms } from "@/app/overtime/useOvertimeForms";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function OvertimePage() {
+  const { openConfirm } = useModal();
   const todayKey = getTodayDateInputValue();
 
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
@@ -60,6 +62,11 @@ export default function OvertimePage() {
   }, [ruleId]);
 
   const storage = useOvertimeStorage();
+  // openConfirm 다이얼로그가 열려 있는 동안 records가 갱신될 수 있어 최신 값을 ref로 읽는다
+  const recordsRef = useRef(storage.records);
+  useEffect(() => {
+    recordsRef.current = storage.records;
+  }, [storage.records]);
   const view = useOvertimeView({
     todayKey,
     records: storage.records,
@@ -103,20 +110,20 @@ export default function OvertimePage() {
   };
 
   const handleDeleteRecord = async (id: string) => {
-    if (!window.confirm("이 기록을 삭제하시겠습니까?")) {
+    if (!(await openConfirm("이 기록을 삭제하시겠습니까?"))) {
       return;
     }
     await storage.persistRecords(
-      storage.records.filter((record) => record.id !== id),
+      recordsRef.current.filter((record) => record.id !== id),
     );
   };
 
   const handleClearRecords = async () => {
     const targetMonthLabel = formatMonthLabel(view.currentMonth);
-    if (!window.confirm(`${targetMonthLabel} 기록만 삭제하시겠습니까?`)) {
+    if (!(await openConfirm(`${targetMonthLabel} 기록만 삭제하시겠습니까?`))) {
       return;
     }
-    const nextRecords = storage.records.filter(
+    const nextRecords = recordsRef.current.filter(
       (record) => !record.date.startsWith(view.currentMonthKey),
     );
     await storage.persistRecords(nextRecords);

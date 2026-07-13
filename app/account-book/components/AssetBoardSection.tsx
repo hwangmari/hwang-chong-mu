@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 import type { useAssetData } from "../hooks/useAssetData";
 import type { AssetChangeType } from "../types";
+import { formatAmount } from "./WorkspaceLedgerView/utils";
 
 type Props = {
   asset: ReturnType<typeof useAssetData>;
@@ -23,10 +25,6 @@ const CHANGE_TYPE_LABEL: Record<AssetChangeType, string> = {
   ledger: "가계부",
   adjust: "잔액수정",
 };
-
-function formatAmount(value: number) {
-  return `${value.toLocaleString()}원`;
-}
 
 function signedAmount(value: number) {
   return `${value > 0 ? "+" : value < 0 ? "-" : ""}${Math.abs(value).toLocaleString()}원`;
@@ -47,6 +45,7 @@ export default function AssetBoardSection({
   currentYear,
   isAmountHidden,
 }: Props) {
+  const { openConfirm } = useModal();
   const mask = (value: number) =>
     isAmountHidden ? "•••••" : formatAmount(value);
   const maskSigned = (value: number) =>
@@ -203,11 +202,11 @@ export default function AssetBoardSection({
                     <StMenuItem
                       type="button"
                       $danger
-                      onClick={(event) => {
+                      onClick={async (event) => {
                         event.stopPropagation();
                         setMenuId(null);
                         if (
-                          window.confirm(
+                          await openConfirm(
                             `‘${account.name}’ 통장과 모든 변동내역을 삭제할까요?`,
                           )
                         ) {
@@ -259,8 +258,8 @@ export default function AssetBoardSection({
                     <StHistoryDelete
                       type="button"
                       aria-label="변동내역 삭제"
-                      onClick={() => {
-                        if (window.confirm("이 변동내역을 삭제할까요?")) {
+                      onClick={async () => {
+                        if (await openConfirm("이 변동내역을 삭제할까요?")) {
                           void asset.removeChange(change.id);
                         }
                       }}

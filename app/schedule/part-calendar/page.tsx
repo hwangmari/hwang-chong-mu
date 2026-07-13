@@ -50,7 +50,9 @@ function PartCalendarInner() {
       setServices(allServices);
 
       // 이슈 로딩
-      API.fetchPartIssues(partId).then(setIssues).catch(() => {});
+      API.fetchPartIssues(partId)
+        .then(setIssues)
+        .catch((e) => console.error("이슈 로딩 실패:", e));
 
       // 서비스 필터 초기화 (각 서비스별 대표 색상)
       const colorPalette = [

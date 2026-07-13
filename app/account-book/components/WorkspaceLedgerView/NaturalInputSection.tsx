@@ -123,6 +123,10 @@ export default function NaturalInputSection({
                     naturalPreview.cardCompany ? (
                       <span>{naturalPreview.cardCompany}</span>
                     ) : null}
+                    {naturalPreview.payment === "cash" &&
+                    naturalPreview.cashReceipt ? (
+                      <span>🧾 현금영수증</span>
+                    ) : null}
                     <em>{formatAmount(naturalPreview.amount)}</em>
                   </>
                 ) : (

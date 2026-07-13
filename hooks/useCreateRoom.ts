@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { createShortCode, toSlug } from "@/lib/slug";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function useCreateRoom() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [loading, setLoading] = useState(false);
   const [isCustomPeriod, setIsCustomPeriod] = useState(false);
 
@@ -26,11 +28,11 @@ export default function useCreateRoom() {
     const { roomName, startDate, endDate, includeWeekend } = formData;
 
     if (!roomName.trim()) {
-      alert("약속 이름을 입력해주세요! 😅");
+      await openAlert("약속 이름을 입력해주세요! 😅");
       return;
     }
     if (!startDate) {
-      alert("시작 날짜를 선택해주세요! 📅");
+      await openAlert("시작 날짜를 선택해주세요! 📅");
       return;
     }
 
@@ -38,11 +40,11 @@ export default function useCreateRoom() {
 
     if (isCustomPeriod) {
       if (!endDate) {
-        alert("종료 날짜를 선택해주세요! 🏁");
+        await openAlert("종료 날짜를 선택해주세요! 🏁");
         return;
       }
       if (new Date(endDate) < new Date(startDate)) {
-        alert("종료 날짜는 시작 날짜보다 빨라야 해요! ⏳");
+        await openAlert("종료 날짜는 시작 날짜보다 늦어야 해요! ⏳");
         return;
       }
       finalEndDateString = endDate;
@@ -109,7 +111,7 @@ export default function useCreateRoom() {
       }
     } catch (error) {
       console.error("에러 발생:", error);
-      alert("방 생성 중 오류가 발생했습니다. 😭");
+      await openAlert("방 생성 중 오류가 발생했습니다. 😭");
     } finally {
       setLoading(false);
     }

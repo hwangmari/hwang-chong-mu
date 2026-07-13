@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { Button } from "@hwangchongmu/ui";
 import { ScheduleIssue, IssueSeverity, IssueStatus } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 const SEVERITY_CONFIG = {
   blocker: { label: "블로커", color: "#ef4444", bg: "#fef2f2", icon: "🔴" },
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function IssuePanel({ serviceId, issues, onReload }: Props) {
+  const { openAlert, openConfirm } = useModal();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -47,7 +49,7 @@ export default function IssuePanel({ serviceId, issues, onReload }: Props) {
       onReload();
     } catch (err) {
       console.error(err);
-      alert("이슈 생성 실패");
+      await openAlert("이슈 생성 실패");
     } finally {
       setLoading(false);
     }
@@ -63,7 +65,7 @@ export default function IssuePanel({ serviceId, issues, onReload }: Props) {
   };
 
   const handleDelete = async (issueId: string) => {
-    if (!confirm("이슈를 삭제하시겠습니까?")) return;
+    if (!(await openConfirm("이슈를 삭제하시겠습니까?"))) return;
     try {
       await API.deleteIssue(issueId);
       onReload();

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 import AccountBookLockGate from "./components/AccountBookLockGate";
 // import BlogGuideLink from "@/components/common/BlogGuideLink";
 import WorkspaceHub from "./components/WorkspaceHub";
@@ -25,6 +26,7 @@ function resolveInitialViewMode(value: string | null): ViewMode {
 function AccountBookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { openAlert } = useModal();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const selectedWorkspaceId = searchParams.get("workspaceId");
@@ -127,7 +129,7 @@ function AccountBookPageContent() {
             onResetActiveUser={actions.handleResetActiveUser}
             onOpenManage={() => {
               if (!activeUser) {
-                window.alert("먼저 서버방에 참여한 뒤 설정을 열어주세요.");
+                void openAlert("먼저 서버방에 참여한 뒤 설정을 열어주세요.");
                 return;
               }
               setIsSettingsOpen(true);

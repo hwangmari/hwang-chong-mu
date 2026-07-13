@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   AccountBookUser,
   AccountBookWorkspace,
@@ -63,6 +64,7 @@ export function useEntryForm({
   upsertFixedExpenseTemplate,
   removeFixedExpenseTemplate,
 }: Params) {
+  const { openAlert } = useModal();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [type, setType] = useState<EntryType>("expense");
@@ -79,6 +81,8 @@ export function useEntryForm({
   const [draftRawText, setDraftRawText] = useState("");
   // 저축(자산/저축) 정기 반복 토글
   const [recurring, setRecurring] = useState(false);
+  // 현금영수증 발급 여부 (현금 결제에만 의미)
+  const [cashReceipt, setCashReceipt] = useState(false);
 
   const editingEntry = useMemo(
     () =>
@@ -170,6 +174,7 @@ export function useEntryForm({
         getDefaultCardCompany(nextType === "income" ? "cash" : "card"),
       );
       setRecurring(false);
+      setCashReceipt(false);
       setIsFormModalOpen(true);
     },
     [defaultMember, selectedParticipant, setSelectedDate],
@@ -194,6 +199,7 @@ export function useEntryForm({
       setMemo(entry.memo);
       setDraftRawText(entry.rawText || "");
       setRecurring(Boolean(extractFixedExpenseTemplateId(entry.rawText)));
+      setCashReceipt(Boolean(entry.cashReceipt));
       setIsFormModalOpen(true);
     },
     [defaultMember, setSelectedDate],
@@ -202,11 +208,13 @@ export function useEntryForm({
   const onSubmitEntry = useCallback(async () => {
     const parsedAmount = evaluateAmountExpression(amount);
     if (!category.trim()) {
-      alert("카테고리를 입력해주세요.");
+      void openAlert("카테고리를 입력해주세요.");
       return;
     }
     if (parsedAmount === null || parsedAmount === 0) {
-      alert("금액은 0이 아닌 숫자 또는 계산식(예: 15000+3000)으로 입력해주세요.");
+      void openAlert(
+        "금액은 0이 아닌 숫자 또는 계산식(예: 15000+3000)으로 입력해주세요.",
+      );
       return;
     }
 
@@ -227,7 +235,7 @@ export function useEntryForm({
       resolvedPayment !== "cash" &&
       !cardCompany.trim()
     ) {
-      alert("카드 결제 내역은 카드사를 선택해주세요.");
+      void openAlert("카드 결제 내역은 카드사를 선택해주세요.");
       return;
     }
     const isFixedExpense =
@@ -271,6 +279,7 @@ export function useEntryForm({
           ? cardCompany.trim() || getDefaultCardCompany(resolvedPayment)
           : "",
       payment: type === "income" ? "cash" : resolvedPayment,
+      cashReceipt: payment === "cash" ? cashReceipt : undefined,
       memo: memo.trim(),
       rawText:
         nextFixedTemplateId && type === "expense"
@@ -291,6 +300,7 @@ export function useEntryForm({
   }, [
     amount,
     cardCompany,
+    cashReceipt,
     category,
     closeFormModal,
     draftRawText,
@@ -302,6 +312,7 @@ export function useEntryForm({
     memo,
     merchant,
     onSaveEntry,
+    openAlert,
     payment,
     recurring,
     removeFixedExpenseTemplate,
@@ -316,7 +327,7 @@ export function useEntryForm({
   const applyQuickInput = useCallback(async () => {
     const text = quickInput.trim();
     if (!text) {
-      alert("텍스트를 입력해주세요.");
+      void openAlert("텍스트를 입력해주세요.");
       return;
     }
 
@@ -381,7 +392,7 @@ export function useEntryForm({
       .filter(Boolean) as AccountEntry[];
 
     if (parsedEntries.length === 0) {
-      alert("입력 포맷을 인식하지 못했어요. 예: 식당 30000, 택시 12000");
+      void openAlert("입력 포맷을 인식하지 못했어요. 예: 식당 30000, 택시 12000");
       return;
     }
 
@@ -407,11 +418,12 @@ export function useEntryForm({
       setDraftRawText(first.rawText || "");
       return;
     }
-    alert(`${parsedEntries.length}건을 한 번에 추가했어요.`);
+    void openAlert(`${parsedEntries.length}건을 한 번에 추가했어요.`);
   }, [
     defaultMember,
     memberUsers,
     onSaveEntry,
+    openAlert,
     quickInput,
     selectedDate,
     setSelectedDate,
@@ -440,6 +452,8 @@ export function useEntryForm({
     categoryOptions,
     recurring,
     setRecurring,
+    cashReceipt,
+    setCashReceipt,
     setMember,
     setSubCategory,
     setMerchant,

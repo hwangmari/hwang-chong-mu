@@ -7,6 +7,7 @@ import {
   fetchUserByName,
   verifyUserPassword,
 } from "@/lib/schedule-auth-helpers";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "이름과 비밀번호를 입력해 주세요." },
         { status: 400 },
+      );
+    }
+
+    if (!checkRateLimit(`login:${getClientIp(req)}:${name}`, 10, 60_000)) {
+      return NextResponse.json(
+        { error: "시도 횟수가 많습니다. 잠시 후 다시 시도해 주세요." },
+        { status: 429 },
       );
     }
 

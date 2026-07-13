@@ -15,6 +15,7 @@ import {
   parseDateKey,
   splitMinutesToFields,
 } from "./utils";
+import { useModal } from "@/components/common/ModalProvider";
 
 type Params = {
   todayKey: string;
@@ -35,6 +36,7 @@ export function useOvertimeForms({
   setCurrentMonth,
   setSelectedDate,
 }: Params) {
+  const { openAlert } = useModal();
   const [calcTargetDays, setCalcTargetDays] = useState(1);
   const [calcBefore10Hours, setCalcBefore10Hours] = useState("");
   const [calcBefore10Minutes, setCalcBefore10Minutes] = useState("");
@@ -76,7 +78,7 @@ export function useOvertimeForms({
     setEditingRecordId(null);
   }, []);
 
-  const handleCalculate = useCallback(() => {
+  const handleCalculate = useCallback(async () => {
     const normalizedBefore10 = normalizeDurationFields(
       calcBefore10Hours,
       calcBefore10Minutes,
@@ -101,7 +103,7 @@ export function useOvertimeForms({
     );
 
     if (!before10Duration.isValid || !after10Duration.isValid) {
-      alert("시간과 분은 0 이상의 숫자로 입력해주세요.");
+      await openAlert("시간과 분은 0 이상의 숫자로 입력해주세요.");
       return;
     }
 
@@ -109,7 +111,7 @@ export function useOvertimeForms({
       before10Duration.totalMinutes === 0 &&
       after10Duration.totalMinutes === 0
     ) {
-      alert("야근 시간은 0보다 커야 합니다.");
+      await openAlert("야근 시간은 0보다 커야 합니다.");
       return;
     }
 
@@ -134,13 +136,14 @@ export function useOvertimeForms({
     calcAfter10Minutes,
     calcBefore10Hours,
     calcBefore10Minutes,
+    openAlert,
     todayKey,
   ]);
 
   const saveQuickRecord = useCallback(
     async (targetDate: string) => {
       if (!targetDate) {
-        alert("날짜를 입력해주세요.");
+        await openAlert("날짜를 입력해주세요.");
         return false;
       }
 
@@ -168,7 +171,7 @@ export function useOvertimeForms({
       );
 
       if (!before10Duration.isValid || !after10Duration.isValid) {
-        alert("시간과 분은 0 이상의 숫자로 입력해주세요.");
+        await openAlert("시간과 분은 0 이상의 숫자로 입력해주세요.");
         return false;
       }
 
@@ -176,7 +179,7 @@ export function useOvertimeForms({
         before10Duration.totalMinutes === 0 &&
         after10Duration.totalMinutes === 0
       ) {
-        alert("야근 시간은 0보다 커야 합니다.");
+        await openAlert("야근 시간은 0보다 커야 합니다.");
         return false;
       }
 
@@ -210,6 +213,7 @@ export function useOvertimeForms({
     },
     [
       editingRecordId,
+      openAlert,
       persistRecords,
       quickAfter10Hours,
       quickAfter10Minutes,

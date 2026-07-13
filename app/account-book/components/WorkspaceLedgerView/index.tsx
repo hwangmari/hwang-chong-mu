@@ -164,13 +164,6 @@ export default function WorkspaceLedgerView({
     workspaceKindLabel.startsWith(normalizedWorkspaceName)
       ? workspaceKindLabel
       : `${workspace.name} ${workspaceKindLabel}`;
-  const workspaceSubtitle = isSharedWorkspace
-    ? `멤버 ${memberUsers.map((user) => user.name).join(", ") || "미설정"}`
-    : `멤버 ${selectedParticipantLabel || memberUsers[0]?.name || "미설정"}`;
-  const workspaceInfoText =
-    workspace.type === "personal"
-      ? "공용방에서 내가 직접 쓴 내역은 이 화면에 자동 반영됩니다."
-      : "공용방은 참가자별 내역을 함께 보고 비교하는 기준 화면입니다.";
   const isCalendarSummaryDetailActive =
     selectedCalendarCardId === "income" || selectedCalendarCardId === "asset";
   const calendarDetailTitle = isSharedWorkspace
@@ -1015,8 +1008,6 @@ export default function WorkspaceLedgerView({
     <StPage>
       <WorkspaceHeader
         title={workspaceTitle}
-        subtitle={workspaceSubtitle}
-        infoText={workspaceInfoText}
         monthLabel={monthLabel}
         monthRangeLabel={monthRangeLabel}
         monthValue={monthValue}
@@ -1147,6 +1138,9 @@ export default function WorkspaceLedgerView({
           }
           selectedDateAssetEntries={selectedDateAssetEntries}
           onOpenAdd={() => entryForm.openFormModal({ date: selectedDate })}
+          onOpenNaturalAdd={() =>
+            registerModal.openNaturalRegisterForDate(selectedDate)
+          }
           onOpenNaturalRegisterForDate={registerModal.openNaturalRegisterForDate}
           onSelectCalendarCard={(cardId) =>
             setSelectedCalendarCardId((current) =>
@@ -1207,6 +1201,8 @@ export default function WorkspaceLedgerView({
         recurringAvailable={isSavingsCategory(entryForm.category)}
         recurring={entryForm.recurring}
         onToggleRecurring={entryForm.setRecurring}
+        cashReceipt={entryForm.cashReceipt}
+        onSetCashReceipt={entryForm.setCashReceipt}
         onClose={entryForm.closeFormModal}
         onSetDate={setSelectedDate}
         onSetType={entryForm.handleTypeChange}

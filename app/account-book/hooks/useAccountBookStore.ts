@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useModal } from "@/components/common/ModalProvider";
 import { fetchAccountBookStore } from "../repository";
 import { getWorkspaceById, resolveWorkspaceEntries } from "../storage";
 import { AccountBookStore } from "../types";
@@ -35,6 +36,7 @@ function canAccessWorkspace(
 }
 
 export function useAccountBookStore(selectedWorkspaceId: string | null) {
+  const { openAlert } = useModal();
   const [store, setStore] = useState<AccountBookStore | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -157,7 +159,7 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
       return savedStore;
     } catch (error) {
       console.error("가계부 저장 실패:", error);
-      alert(failureMessage);
+      void openAlert(failureMessage);
       return null;
     }
   };

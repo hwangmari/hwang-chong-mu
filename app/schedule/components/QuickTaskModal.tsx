@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { format } from "date-fns";
 import { SchedulePhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Props {
   date: Date;
@@ -22,6 +23,7 @@ export default function QuickTaskModal({
   onClose,
   onCreated,
 }: Props) {
+  const { openAlert } = useModal();
   const [title, setTitle] = useState("");
   const [endDate, setEndDate] = useState(format(date, "yyyy-MM-dd"));
   const [selectedPhaseId, setSelectedPhaseId] = useState(
@@ -47,7 +49,7 @@ export default function QuickTaskModal({
       onClose();
     } catch (err) {
       console.error(err);
-      alert("일정 생성에 실패했습니다.");
+      await openAlert("일정 생성에 실패했습니다.");
     } finally {
       setLoading(false);
     }

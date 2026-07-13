@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import styled, { css } from "styled-components";
 import CheckOutlinedIcon from "@mui/icons-material/CheckOutlined";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
+import { useModal } from "@/components/common/ModalProvider";
 interface ShareButtonProps {
   title?: string;
   description?: string;
 }
 
 const ShareButton = ({ title, description }: ShareButtonProps) => {
+  const { openAlert } = useModal();
   const [isCopied, setIsCopied] = useState(false);
 
   const handleShare = async () => {
@@ -33,7 +35,7 @@ const ShareButton = ({ title, description }: ShareButtonProps) => {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
       } catch (err) {
-        alert("링크 복사에 실패했습니다.");
+        await openAlert("링크 복사에 실패했습니다.");
       }
     }
   };

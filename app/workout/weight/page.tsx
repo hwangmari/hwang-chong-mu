@@ -30,6 +30,7 @@ import {
   type GymBodyPart,
   type GymEquipment,
   type GymExercise,
+  type GymMeasure,
   type GymRecord,
   type GymSet,
   type GymSetType,
@@ -37,6 +38,7 @@ import {
 } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
 import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   StActions,
   StCard,
@@ -112,6 +114,7 @@ export default function WeightPage() {
   const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
   const appliedDateRef = useRef(false);
+  const { openConfirm } = useModal();
 
   const session = useWorkoutSession();
   const [records, setRecords] = useState<GymRecord[]>([]);
@@ -176,7 +179,10 @@ export default function WeightPage() {
   const prs = useMemo(() => computeExercisePRs(records), [records]);
   const prMap = useMemo(() => {
     const m = new Map<string, number>();
-    prs.forEach((pr) => m.set(pr.exerciseName, pr.weight));
+    // 시간 기록 PR은 durationSec 기준이라 무게 기반 뱃지에서는 제외.
+    prs.forEach((pr) => {
+      if (pr.durationSec === undefined) m.set(pr.exerciseName, pr.weight);
+    });
     return m;
   }, [prs]);
 
@@ -189,11 +195,14 @@ export default function WeightPage() {
     () =>
       form.exercises.reduce(
         (s, ex) =>
-          s +
-          ex.sets.reduce(
-            (t, set) => t + setVolumeKg(set, ex.sideCount, ex.barWeight),
-            0,
-          ),
+          // 시간 기록 운동은 볼륨 계산에서 제외 (helpers와 동일 기준).
+          ex.measure === "time"
+            ? s
+            : s +
+              ex.sets.reduce(
+                (t, set) => t + setVolumeKg(set, ex.sideCount, ex.barWeight),
+                0,
+              ),
         0,
       ),
     [form.exercises],
@@ -209,17 +218,20 @@ export default function WeightPage() {
   async function submit() {
     if (!session) return;
     // 전신은 무게·세트 없이 이름만 있어도 저장 (스텝·폼롤러 등).
-    // 그 외엔 맨몸운동도 무게 0 허용, 횟수(시간 플랭크 등)는 reps로 기록.
-    const filled = form.exercises.filter((ex) =>
-      isFullbody
-        ? ex.name.trim()
-        : ex.name.trim() && ex.sets.some((s) => s.reps > 0),
-    );
+    // 시간 기록 운동(매달리기·플랭크 등)은 시간(초)이 입력된 세트가 있으면 유효.
+    // 그 외엔 맨몸운동도 무게 0 허용, 횟수는 reps로 기록.
+    const filled = form.exercises.filter((ex) => {
+      if (isFullbody) return ex.name.trim();
+      if (ex.measure === "time") {
+        return ex.name.trim() && ex.sets.some((s) => (s.durationSec ?? 0) > 0);
+      }
+      return ex.name.trim() && ex.sets.some((s) => s.reps > 0);
+    });
     if (filled.length === 0) {
       setError(
         isFullbody
           ? "운동/활동 이름을 최소 1개 이상 입력해 주세요."
-          : "운동 이름과 횟수가 입력된 세트를 최소 1개 이상 넣어주세요.",
+          : "운동 이름과 횟수 또는 시간이 입력된 세트를 최소 1개 이상 넣어주세요.",
       );
       return;
     }
@@ -387,7 +399,7 @@ export default function WeightPage() {
   }
 
   async function removeRoutine(routine: WorkoutRoutine) {
-    if (!confirm(`루틴 "${routine.name}"을 삭제할까요?`)) return;
+    if (!(await openConfirm(`루틴 "${routine.name}"을 삭제할까요?`))) return;
     setBusy(true);
     try {
       await deleteWorkoutRoutine(routine.id);
@@ -400,7 +412,7 @@ export default function WeightPage() {
   }
 
   async function removeRecord(id: string) {
-    if (!confirm("이 기록을 삭제할까요?")) return;
+    if (!(await openConfirm("이 기록을 삭제할까요?"))) return;
     setBusy(true);
     try {
       await deleteGymRecord(id);
@@ -731,13 +743,12 @@ export default function WeightPage() {
             운동 시간 (분)
             <StInput
               type="text"
-              inputMode="numeric"
-              placeholder="예) 60"
+              placeholder="예) 60 또는 1:30"
               value={form.durationMin}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  durationMin: e.target.value.replace(/[^\d]/g, ""),
+                  durationMin: e.target.value.replace(/[^\d:]/g, ""),
                 })
               }
             />
@@ -904,12 +915,27 @@ export default function WeightPage() {
                 >
                   양쪽 ×2
                 </StSideChip>
+                <StTimeChip
+                  type="button"
+                  $active={ex.measure === "time"}
+                  onClick={() =>
+                    updateExercise(ex.id, {
+                      measure:
+                        ex.measure === "time"
+                          ? ("weightReps" as GymMeasure)
+                          : ("time" as GymMeasure),
+                    })
+                  }
+                  title="매달리기·플랭크·월싯처럼 버틴 시간(초)을 기록하는 운동이면 켜세요"
+                >
+                  ⏱ 시간 기록
+                </StTimeChip>
               </StEquipmentRow>
 
               <StSetHead>
                 <span>세트</span>
-                <span>무게 (kg)</span>
-                <span>횟수</span>
+                <span>{ex.measure === "time" ? "무게 (kg·선택)" : "무게 (kg)"}</span>
+                <span>{ex.measure === "time" ? "시간 (초)" : "횟수"}</span>
                 <span>타입</span>
                 <span />
               </StSetHead>
@@ -922,7 +948,7 @@ export default function WeightPage() {
                       type="number"
                       step="0.5"
                       inputMode="decimal"
-                      placeholder="무게"
+                      placeholder={ex.measure === "time" ? "kg(선택)" : "무게"}
                       value={set.weight || ""}
                       onChange={(e) =>
                         updateSet(ex.id, set.id, {
@@ -930,16 +956,30 @@ export default function WeightPage() {
                         })
                       }
                     />
-                    <StMiniInput
-                      type="number"
-                      placeholder="횟수"
-                      value={set.reps || ""}
-                      onChange={(e) =>
-                        updateSet(ex.id, set.id, {
-                          reps: Number(e.target.value) || 0,
-                        })
-                      }
-                    />
+                    {ex.measure === "time" ? (
+                      <StMiniInput
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="초"
+                        value={set.durationSec || ""}
+                        onChange={(e) =>
+                          updateSet(ex.id, set.id, {
+                            durationSec: Number(e.target.value) || 0,
+                          })
+                        }
+                      />
+                    ) : (
+                      <StMiniInput
+                        type="number"
+                        placeholder="횟수"
+                        value={set.reps || ""}
+                        onChange={(e) =>
+                          updateSet(ex.id, set.id, {
+                            reps: Number(e.target.value) || 0,
+                          })
+                        }
+                      />
+                    )}
                     <StTypeSelect
                       value={set.type}
                       onChange={(e) =>
@@ -948,11 +988,14 @@ export default function WeightPage() {
                         })
                       }
                     >
-                      {Object.entries(GYM_SET_TYPE_LABEL).map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
+                      {Object.entries(GYM_SET_TYPE_LABEL)
+                        // 시간 기록 운동에는 드랍셋 개념이 없어 선택지에서 숨김.
+                        .filter(([v]) => !(ex.measure === "time" && v === "drop"))
+                        .map(([v, l]) => (
+                          <option key={v} value={v}>
+                            {l}
+                          </option>
+                        ))}
                     </StTypeSelect>
                     <StRemoveButton
                       type="button"
@@ -962,7 +1005,7 @@ export default function WeightPage() {
                     </StRemoveButton>
                   </StSetRow>
 
-                  {set.type === "drop" ? (
+                  {set.type === "drop" && ex.measure !== "time" ? (
                     <StDropWrap>
                       {(set.dropSets || []).map((d, dIdx) => (
                         <StDropRow key={dIdx}>
@@ -1199,20 +1242,33 @@ export default function WeightPage() {
                             <StSetList>
                               {ex.sets.map((s, i) => {
                                 const mainW = displayWeight(s.weight || 0);
+                                const isTime = ex.measure === "time";
                                 return (
                                   <StSetChip
                                     key={s.id}
                                     $warm={s.type === "warmup"}
                                   >
-                                    {i + 1}: {mainW}×{s.reps}
-                                    {s.type === "drop" && s.dropSets?.length
-                                      ? ` → ${s.dropSets
-                                          .map(
-                                            (d) =>
-                                              `${displayWeight(d.weight || 0)}×${d.reps}`,
-                                          )
-                                          .join(" → ")}`
-                                      : ""}
+                                    {isTime ? (
+                                      <>
+                                        {i + 1}:{" "}
+                                        {(s.weight || 0) > 0
+                                          ? `${s.weight}kg · `
+                                          : ""}
+                                        {s.durationSec || 0}초
+                                      </>
+                                    ) : (
+                                      <>
+                                        {i + 1}: {mainW}×{s.reps}
+                                        {s.type === "drop" && s.dropSets?.length
+                                          ? ` → ${s.dropSets
+                                              .map(
+                                                (d) =>
+                                                  `${displayWeight(d.weight || 0)}×${d.reps}`,
+                                              )
+                                              .join(" → ")}`
+                                          : ""}
+                                      </>
+                                    )}
                                     {s.type !== "normal" && s.type !== "drop" ? (
                                       <StSetType>
                                         {" "}
@@ -1637,6 +1693,27 @@ const StSideChip = styled.button<{ $active: boolean }>`
   &:hover {
     border-color: ${({ theme }) => theme.colors.indigo100};
     color: ${({ theme }) => theme.colors.indigo600};
+  }
+`;
+
+const StTimeChip = styled.button<{ $active: boolean }>`
+  border: 1px solid
+    ${({ $active, theme }) =>
+      $active ? theme.colors.teal600 : theme.colors.gray200};
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.teal50 : theme.colors.white};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.teal600 : theme.colors.gray500};
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.teal600};
+    color: ${({ theme }) => theme.colors.teal600};
   }
 `;
 

@@ -5,6 +5,7 @@ import styled, { useTheme } from "styled-components";
 import Card from "./ui/Card";
 import SectionTitle from "./ui/SectionTitle";
 import { ExpenseType } from "@/types";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Props {
   members: string[];
@@ -18,6 +19,7 @@ interface Props {
 
 export default function ExpenseInput({ members, onAddExpense }: Props) {
   const theme = useTheme();
+  const { openAlert } = useModal();
   const [payer, setPayer] = useState("");
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
@@ -29,15 +31,23 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
     }
   }, [members, payer]);
 
-  const handleSubmit = () => {
-    if (!payer) return alert("결제한 사람을 선택해주세요.");
-    if (!desc || !amount) return alert("내용과 금액을 입력해주세요.");
+  const handleSubmit = async () => {
+    if (!payer) {
+      await openAlert("결제한 사람을 선택해주세요.");
+      return;
+    }
+    if (!desc || !amount) {
+      await openAlert("내용과 금액을 입력해주세요.");
+      return;
+    }
     const parsedAmount = Number(amount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return alert("금액은 0보다 큰 숫자여야 합니다.");
+      await openAlert("금액은 0보다 큰 숫자여야 합니다.");
+      return;
     }
     if (!Number.isInteger(parsedAmount)) {
-      return alert("금액은 정수로 입력해주세요.");
+      await openAlert("금액은 정수로 입력해주세요.");
+      return;
     }
     onAddExpense(payer, desc, parsedAmount, type);
     setDesc("");

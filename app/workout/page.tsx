@@ -26,6 +26,7 @@ import {
   WorkoutMonthlyCalendar,
 } from "./components/WorkoutCharts";
 import BlogGuideLink from "@/components/common/BlogGuideLink";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   GYM_BODY_PART_LABEL,
   type ActivityRecord,
@@ -37,6 +38,7 @@ import { useWorkoutSession } from "./useWorkoutSession";
 
 export default function WorkoutHomePage() {
   const router = useRouter();
+  const { openConfirm } = useModal();
   const session = useWorkoutSession();
   const [runs, setRuns] = useState<RunningRecord[]>([]);
   const [gyms, setGyms] = useState<GymRecord[]>([]);
@@ -75,7 +77,7 @@ export default function WorkoutHomePage() {
     kind: "run" | "gym" | "activity",
     id: string,
   ) {
-    if (!confirm("이 기록을 삭제할까요?")) return;
+    if (!(await openConfirm("이 기록을 삭제할까요?"))) return;
     setBusy(true);
     try {
       if (kind === "run") await deleteRunningRecord(id);
@@ -292,17 +294,30 @@ export default function WorkoutHomePage() {
         {prs.length ? (
           <>
             <StPRList>
-              {prs.map((pr) => (
-                <StPRRow key={pr.exerciseName}>
-                  <StPRName>{pr.exerciseName}</StPRName>
-                  <StPRValue>
-                    {pr.weight} kg <StPRSmall>(최대 무게)</StPRSmall>
-                    <StPRDate>
-                      {pr.weight}×{pr.reps} · {pr.achievedAt}
-                    </StPRDate>
-                  </StPRValue>
-                </StPRRow>
-              ))}
+              {prs.map((pr) =>
+                pr.durationSec !== undefined ? (
+                  <StPRRow key={pr.exerciseName}>
+                    <StPRName>{pr.exerciseName}</StPRName>
+                    <StPRValue>
+                      {pr.durationSec}초 <StPRSmall>(최대 시간)</StPRSmall>
+                      <StPRDate>
+                        {pr.weight > 0 ? `${pr.weight}kg·` : ""}
+                        {pr.durationSec}초 · {pr.achievedAt}
+                      </StPRDate>
+                    </StPRValue>
+                  </StPRRow>
+                ) : (
+                  <StPRRow key={pr.exerciseName}>
+                    <StPRName>{pr.exerciseName}</StPRName>
+                    <StPRValue>
+                      {pr.weight} kg <StPRSmall>(최대 무게)</StPRSmall>
+                      <StPRDate>
+                        {pr.weight}×{pr.reps} · {pr.achievedAt}
+                      </StPRDate>
+                    </StPRValue>
+                  </StPRRow>
+                ),
+              )}
             </StPRList>
             {hasMorePRs ? (
               <StPRMoreBtn

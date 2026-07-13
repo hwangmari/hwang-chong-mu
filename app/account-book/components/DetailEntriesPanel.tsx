@@ -28,6 +28,8 @@ type Props = {
   }>;
   monthlyTracking?: Array<{ month: string; amount: number; count: number }>;
   onOpenAdd: () => void;
+  // 문장(자연어) 등록 열기 — 캘린더 우클릭이 없는 모바일에서도 문장 등록 진입용
+  onOpenNaturalAdd?: () => void;
   onEdit?: (entry: ResolvedAccountEntry) => void;
   onDelete?: (id: string) => void;
   entryActions?: (entry: ResolvedAccountEntry) => EntryAction[];
@@ -48,6 +50,7 @@ export default function DetailEntriesPanel({
   groupedEntries,
   monthlyTracking,
   onOpenAdd,
+  onOpenNaturalAdd,
   onEdit,
   onDelete,
   entryActions,
@@ -257,6 +260,11 @@ export default function DetailEntriesPanel({
               ? ` · ${entry.cardCompany}`
               : ""}
           </StEntryPayment>
+          {entry.payment === "cash" && entry.cashReceipt ? (
+            <StCashReceiptBadge title="현금영수증 발급" aria-label="현금영수증 발급">
+              🧾
+            </StCashReceiptBadge>
+          ) : null}
           {isShared ? <StSharedTag>공유중</StSharedTag> : null}
           {entry.source !== "direct" ? (
             <StMirrorBadge>
@@ -344,6 +352,16 @@ export default function DetailEntriesPanel({
             >
               {isAmountHidden ? "금액 보기" : "금액 숨기기"}
             </StDetailVisibilityButton>
+          ) : null}
+          {onOpenNaturalAdd ? (
+            <StDetailNaturalButton
+              type="button"
+              onClick={onOpenNaturalAdd}
+              aria-label="문장으로 등록"
+              title="문장으로 등록 (예: 어제 스벅 5500원)"
+            >
+              ✍️
+            </StDetailNaturalButton>
           ) : null}
           <StDetailAddButton
             type="button"
@@ -478,6 +496,19 @@ const StDetailAddButton = styled.button`
     display: block;
   }
 `;
+const StDetailNaturalButton = styled.button`
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.white};
+  font-size: 1rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+`;
+
 const StEntryList = styled.div`
   flex: 1;
   display: flex;
@@ -572,6 +603,13 @@ const StEntryPayment = styled.span`
   font-size: 0.72rem;
   color: #82868d;
   font-weight: 700;
+`;
+const StCashReceiptBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: default;
 `;
 const StMirrorBadge = styled.span`
   display: inline-flex;

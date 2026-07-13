@@ -18,6 +18,7 @@ import {
 import { ACTIVITY_PRESETS, type ActivityRecord } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
 import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   StActions,
   StCard,
@@ -59,6 +60,7 @@ export default function ActivityPage() {
   const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
   const appliedDateRef = useRef(false);
+  const { openConfirm } = useModal();
 
   const session = useWorkoutSession();
   const [records, setRecords] = useState<ActivityRecord[]>([]);
@@ -114,8 +116,8 @@ export default function ActivityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateParam]);
 
-  function resetForm() {
-    setForm({ ...EMPTY_FORM, date: todayISO() });
+  function resetForm(keepDate?: string) {
+    setForm({ ...EMPTY_FORM, date: keepDate ?? todayISO() });
     setShowCustomInput(false);
   }
 
@@ -139,8 +141,7 @@ export default function ActivityPage() {
         memo: form.memo || undefined,
       });
       // 등록 후에도 방금 입력한 날짜(달)를 유지해 연속 입력이 편하게
-      setForm({ ...EMPTY_FORM, date: form.date });
-      setShowCustomInput(false);
+      resetForm(form.date);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했어요.");
@@ -165,7 +166,7 @@ export default function ActivityPage() {
   }
 
   async function removeRecord(id: string) {
-    if (!confirm("이 기록을 삭제할까요?")) return;
+    if (!(await openConfirm("이 기록을 삭제할까요?"))) return;
     setBusy(true);
     try {
       await deleteActivityRecord(id);
@@ -242,13 +243,12 @@ export default function ActivityPage() {
             운동 시간 (분)
             <StInput
               type="text"
-              inputMode="numeric"
-              placeholder="예) 60"
+              placeholder="예) 60 또는 1:30"
               value={form.durationMin}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  durationMin: e.target.value.replace(/[^\d]/g, ""),
+                  durationMin: e.target.value.replace(/[^\d:]/g, ""),
                 })
               }
             />
@@ -292,7 +292,7 @@ export default function ActivityPage() {
 
         <StActions>
           {form.id ? (
-            <StGhostButton type="button" onClick={resetForm}>
+            <StGhostButton type="button" onClick={() => resetForm()}>
               취소
             </StGhostButton>
           ) : null}

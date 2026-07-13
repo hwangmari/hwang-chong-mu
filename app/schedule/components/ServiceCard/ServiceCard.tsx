@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { StCard } from "./ServiceCard.styles";
 import { EditView, ReadView } from "./ServiceCardViews";
+import { useModal } from "@/components/common/ModalProvider";
 
 type BoardData = {
   id: string;
@@ -47,6 +48,7 @@ export default function ServiceCard({
   onSave,
   onDelete,
 }: ServiceCardProps) {
+  const { openAlert } = useModal();
   const { title, setTitle, desc, setDesc } = useCardForm(
     board.title,
     board.description,
@@ -55,7 +57,10 @@ export default function ServiceCard({
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!title.trim()) return alert("제목을 입력해주세요.");
+    if (!title.trim()) {
+      await openAlert("제목을 입력해주세요.");
+      return;
+    }
     await onSave(board.id, title, desc);
   };
 

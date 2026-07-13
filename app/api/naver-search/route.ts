@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const MAX_QUERY_LENGTH = 100;
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("query");
@@ -7,6 +10,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: "query 파라미터가 필요합니다" },
       { status: 400 },
+    );
+  }
+
+  if (query.length > MAX_QUERY_LENGTH) {
+    return NextResponse.json(
+      { error: `검색어는 ${MAX_QUERY_LENGTH}자 이하여야 합니다` },
+      { status: 400 },
+    );
+  }
+
+  if (!checkRateLimit(`naver:${getClientIp(request)}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: "요청이 많습니다. 잠시 후 다시 시도해 주세요" },
+      { status: 429 },
     );
   }
 

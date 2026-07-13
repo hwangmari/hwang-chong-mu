@@ -25,38 +25,58 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     message: "",
   });
 
-  // ✅ ref 사용: 모달이 열린 상태에서 다시 열려도 이전 Promise가 미해결로 남지 않도록 관리
-  const resolverRef = useRef<{
+  // ✅ 모달이 열린 상태에서 새 요청이 오면 이전 모달을 강제 취소하지 않고 큐에 쌓아 순차 표시
+  //    (각 Promise는 자기 모달이 닫힐 때 해결되므로 영구 미해결도, 조용한 취소도 없음)
+  type ModalRequest = {
+    type: "alert" | "confirm";
+    message: string;
     resolve: (value: boolean) => void;
-  } | null>(null);
+  };
+  const queueRef = useRef<ModalRequest[]>([]);
+  const currentRef = useRef<ModalRequest | null>(null);
 
-  const handleClose = useCallback(() => {
-    setModalState((prev) => ({ ...prev, isOpen: false }));
-    resolverRef.current?.resolve(false); // 취소 시 false 반환
-    resolverRef.current = null;
+  const showNext = useCallback(() => {
+    const next = queueRef.current.shift() ?? null;
+    currentRef.current = next;
+    if (next) {
+      setModalState({ isOpen: true, type: next.type, message: next.message });
+    } else {
+      setModalState((prev) => ({ ...prev, isOpen: false }));
+    }
   }, []);
 
-  const handleConfirm = useCallback(() => {
-    setModalState((prev) => ({ ...prev, isOpen: false }));
-    resolverRef.current?.resolve(true); // 확인 시 true 반환
-    resolverRef.current = null;
-  }, []);
+  const settle = useCallback(
+    (value: boolean) => {
+      currentRef.current?.resolve(value);
+      currentRef.current = null;
+      showNext();
+    },
+    [showNext],
+  );
 
-  const openAlert = useCallback((message: string): Promise<void> => {
-    return new Promise((resolve) => {
-      resolverRef.current?.resolve(false); // 이미 열린 모달이 있으면 먼저 해제(Promise 영구 미해결 방지)
-      setModalState({ isOpen: true, type: "alert", message });
-      resolverRef.current = { resolve: () => resolve() };
-    });
-  }, []);
+  const handleClose = useCallback(() => settle(false), [settle]); // 취소 시 false 반환
+  const handleConfirm = useCallback(() => settle(true), [settle]); // 확인 시 true 반환
 
-  const openConfirm = useCallback((message: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      resolverRef.current?.resolve(false); // 이미 열린 모달이 있으면 먼저 해제(Promise 영구 미해결 방지)
-      setModalState({ isOpen: true, type: "confirm", message });
-      resolverRef.current = { resolve }; // handleConfirm에서 true, handleClose에서 false 호출됨
-    });
-  }, []);
+  const enqueue = useCallback(
+    (type: "alert" | "confirm", message: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        queueRef.current.push({ type, message, resolve });
+        if (!currentRef.current) showNext();
+      });
+    },
+    [showNext],
+  );
+
+  const openAlert = useCallback(
+    (message: string): Promise<void> =>
+      enqueue("alert", message).then(() => undefined),
+    [enqueue],
+  );
+
+  const openConfirm = useCallback(
+    (message: string): Promise<boolean> => enqueue("confirm", message),
+    [enqueue],
+  );
 
   return (
     <ModalContext.Provider value={{ openAlert, openConfirm }}>

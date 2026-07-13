@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 import { AccountBookUser, AccountBookWorkspace } from "../types";
 
 type Props = {
@@ -68,6 +69,7 @@ export default function WorkspaceHub({
   onResetActiveUser,
   onOpenManage,
 }: Props) {
+  const { openAlert } = useModal();
   const [modalMode, setModalMode] = useState<
     "create" | "join" | "personal-login" | null
   >(null);
@@ -230,9 +232,9 @@ export default function WorkspaceHub({
   const copyInviteCode = async (inviteCode: string) => {
     try {
       await navigator.clipboard.writeText(inviteCode);
-      window.alert(`참여 코드 ${inviteCode} 를 복사했어요.`);
+      await openAlert(`참여 코드 ${inviteCode} 를 복사했어요.`);
     } catch {
-      window.alert(`참여 코드: ${inviteCode}`);
+      await openAlert(`참여 코드: ${inviteCode}`);
     }
   };
 

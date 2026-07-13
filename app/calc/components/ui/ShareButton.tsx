@@ -2,6 +2,7 @@
 
 import styled from "styled-components";
 import { useState } from "react";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface ShareButtonProps {
   totalAmount: number;
@@ -20,6 +21,7 @@ export default function ShareButton({
   remainder,
   remainderReceiver,
 }: ShareButtonProps) {
+  const { openAlert } = useModal();
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {
@@ -41,7 +43,7 @@ export default function ShareButton({
         await navigator.share({ title: "황총무 정산", text });
       } else {
         await navigator.clipboard.writeText(text);
-        alert("정산 내역이 복사되었습니다! 카톡에 붙여넣어주세요. 💌");
+        await openAlert("정산 내역이 복사되었습니다! 카톡에 붙여넣어주세요. 💌");
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {

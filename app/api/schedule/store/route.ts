@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { getScheduleAdminClient } from "@/lib/schedule-admin";
 import { fetchUser } from "@/lib/schedule-auth-helpers";
+import { readScheduleSession } from "@/lib/schedule-session";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -15,6 +16,17 @@ export async function GET(req: Request) {
       { status: 400 },
     );
   }
+
+  // 세션이 있으면 본인만 조회 가능(IDOR 방지). 세션이 없으면 로그인 직후 프리-세션
+  // 흐름으로 간주해 목록만 제공하되 inviteCode 등 민감 정보는 응답에서 제외한다.
+  const session = await readScheduleSession();
+  if (session && session.userId !== userId) {
+    return NextResponse.json(
+      { error: "본인 계정만 조회할 수 있습니다." },
+      { status: 403 },
+    );
+  }
+  const includeInviteCode = session?.userId === userId;
 
   const user = await fetchUser(userId);
   if (!user) {
@@ -58,7 +70,7 @@ export async function GET(req: Request) {
       type: row.type,
       ownerUserId: row.owner_user_id ?? null,
       memberIds: row.member_ids ?? [],
-      inviteCode: row.invite_code ?? null,
+      inviteCode: includeInviteCode ? (row.invite_code ?? null) : null,
     }));
 
   return NextResponse.json({

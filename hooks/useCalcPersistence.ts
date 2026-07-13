@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { ExpenseType } from "@/types";
 import { createShortCode, parseShortCode, toSlug, isUuid } from "@/lib/slug";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Expense {
   id: number;
@@ -14,6 +15,7 @@ interface Expense {
 
 export const useCalcPersistence = () => {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [loading, setLoading] = useState(false);
 
   const createRoom = async (roomName: string) => {
@@ -46,7 +48,7 @@ export const useCalcPersistence = () => {
       router.push(`/calc/${created.slug}-${created.short_code}`);
     } catch (error) {
       console.error("생성 실패:", error);
-      alert("방 생성에 실패했습니다. 😭");
+      await openAlert("방 생성에 실패했습니다. 😭");
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   addAccountBookSharedRoomMember,
   createAccountBookSharedRoomWithOwner,
@@ -74,6 +75,7 @@ type StoreHelpers = {
 
 export function useAccountBookActions(helpers: StoreHelpers) {
   const router = useRouter();
+  const { openAlert } = useModal();
   const {
     store,
     setStore,
@@ -98,7 +100,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       const sourceEntry = store.entries.find((entry) => entry.id === entryId);
       if (!sourceEntry || !actingUserId) return;
       if (sourceEntry.createdByUserId !== actingUserId) {
-        alert("내가 작성한 내역만 공유 상태를 바꿀 수 있어요.");
+        void openAlert("내가 작성한 내역만 공유 상태를 바꿀 수 있어요.");
         return;
       }
       const previousStore = store;
@@ -128,14 +130,14 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         } catch {
           setStore(previousStore);
         }
-        alert(
+        void openAlert(
           error instanceof Error
             ? error.message
             : "공유 처리에 실패했어요. 잠시 후 다시 시도해주세요.",
         );
       }
     },
-    [store, setStore, getActingUserId],
+    [store, setStore, getActingUserId, openAlert],
   );
 
   const handleSaveEntry = useCallback(
@@ -238,16 +240,16 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         setStore(result.store);
         updateActiveUserId(result.userId);
         router.push(`/account-book?workspaceId=${result.workspaceId}`);
-        window.alert(
+        void openAlert(
           `서버방이 만들어졌어요. 참여 코드는 ${result.inviteCode} 입니다.`,
         );
       } catch (error) {
         console.error("서버방 생성 실패:", error);
-        alert("서버방을 만들지 못했어요. 잠시 후 다시 시도해주세요.");
+        void openAlert("서버방을 만들지 못했어요. 잠시 후 다시 시도해주세요.");
         throw error;
       }
     },
-    [setStore, updateActiveUserId, router],
+    [setStore, updateActiveUserId, router, openAlert],
   );
 
   const handleCreatePersonalWorkspace = useCallback(
@@ -256,7 +258,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         const existingUser = findPersonalUserByName(store, userName);
         if (existingUser) {
           if (existingUser.password !== userPassword) {
-            alert(
+            void openAlert(
               "이미 같은 닉네임의 개인 가계부가 있어요. 개인방 로그인으로 들어가거나 비밀번호를 다시 확인해주세요.",
             );
             return;
@@ -267,13 +269,13 @@ export function useAccountBookActions(helpers: StoreHelpers) {
           );
 
           if (!existingWorkspace) {
-            alert("기존 개인 가계부 작업공간을 찾지 못했어요.");
+            void openAlert("기존 개인 가계부 작업공간을 찾지 못했어요.");
             return;
           }
 
           updateActiveUserId(existingUser.id);
           router.push(`/account-book?workspaceId=${existingWorkspace.id}`);
-          alert(
+          void openAlert(
             "이미 만든 개인 가계부가 있어 기존 작업공간으로 다시 연결했어요.",
           );
           return;
@@ -285,11 +287,11 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         router.push(`/account-book?workspaceId=${result.workspaceId}`);
       } catch (error) {
         console.error("개인 작업공간 생성 실패:", error);
-        alert("개인 작업공간을 만들지 못했어요. 잠시 후 다시 시도해주세요.");
+        void openAlert("개인 작업공간을 만들지 못했어요. 잠시 후 다시 시도해주세요.");
         throw error;
       }
     },
-    [store, setStore, updateActiveUserId, router],
+    [store, setStore, updateActiveUserId, router, openAlert],
   );
 
   const handleCreateSharedWorkspaceForActiveUser = useCallback(
@@ -320,7 +322,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
 
         if (targetWorkspace && existingMember) {
           if (existingMember.password !== userPassword) {
-            alert(
+            void openAlert(
               "이미 등록된 참가자 이름입니다. 비밀번호를 다시 확인해주세요.",
             );
             return;
@@ -340,23 +342,23 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         router.push("/account-book");
       } catch (error) {
         console.error("서버방 참여 실패:", error);
-        alert("참여 코드 확인 후 다시 시도해주세요.");
+        void openAlert("참여 코드 확인 후 다시 시도해주세요.");
         throw error;
       }
     },
-    [store, setStore, updateActiveUserId, router],
+    [store, setStore, updateActiveUserId, router, openAlert],
   );
 
   const handleLoginPersonalWorkspace = useCallback(
     async (userName: string, userPassword: string) => {
       const targetUser = findPersonalUserByName(store, userName);
       if (!targetUser) {
-        alert("일치하는 개인 가계부 사용자를 찾지 못했어요.");
+        void openAlert("일치하는 개인 가계부 사용자를 찾지 못했어요.");
         return;
       }
 
       if (targetUser.password !== userPassword) {
-        alert("개인 비밀번호가 맞지 않아요.");
+        void openAlert("개인 비밀번호가 맞지 않아요.");
         return;
       }
 
@@ -365,14 +367,14 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       );
 
       if (!targetWorkspace) {
-        alert("개인 가계부 작업공간을 찾지 못했어요.");
+        void openAlert("개인 가계부 작업공간을 찾지 못했어요.");
         return;
       }
 
       updateActiveUserId(targetUser.id);
       router.push(`/account-book?workspaceId=${targetWorkspace.id}`);
     },
-    [store, updateActiveUserId, router],
+    [store, updateActiveUserId, router, openAlert],
   );
 
   const handleResetActiveUser = useCallback(() => {
@@ -447,7 +449,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
   const handleAddRoomMember = useCallback(
     async (workspaceId: string, name: string, password: string) => {
       if (findRoomMemberByName(store, workspaceId, name)) {
-        alert("이미 이 방에 같은 이름의 참가자가 있습니다.");
+        void openAlert("이미 이 방에 같은 이름의 참가자가 있습니다.");
         return;
       }
 
@@ -456,7 +458,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         "서버방 참가자를 추가하지 못했어요. 잠시 후 다시 시도해주세요.",
       );
     },
-    [store, commitStoreChange],
+    [store, commitStoreChange, openAlert],
   );
 
   const handleRemoveRoomMember = useCallback(

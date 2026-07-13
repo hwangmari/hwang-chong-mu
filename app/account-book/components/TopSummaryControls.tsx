@@ -311,7 +311,8 @@ const StCalendarSummaryLine = styled.div`
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(125, 129, 137, 0.05);
 
-  @media (max-width: 980px) {
+  /* 태블릿(721~1024)에서는 한 줄 4칸을 유지해 상단 높이를 줄인다. 2칸 전환은 720 이하부터. */
+  @media (max-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

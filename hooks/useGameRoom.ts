@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function useGameRoom(roomId: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { openAlert, openConfirm } = useModal();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [roomData, setRoomData] = useState<any>(null);
@@ -132,7 +134,10 @@ export default function useGameRoom(roomId: string) {
 
 
   const handleJoin = async () => {
-    if (!joinName || !joinPw) return alert("필수 입력값을 확인해주세요.");
+    if (!joinName || !joinPw) {
+      await openAlert("필수 입력값을 확인해주세요.");
+      return;
+    }
     setLoading(true);
     try {
       const existing = participants.find((p) => p.nickname === joinName);
@@ -143,7 +148,7 @@ export default function useGameRoom(roomId: string) {
           setMyId(existing.id);
           setIsJoined(true);
           if (existing.is_host) setIsHost(true);
-        } else alert("비밀번호 불일치");
+        } else await openAlert("비밀번호 불일치");
         return;
       }
       const { data, error } = await supabase
@@ -166,7 +171,7 @@ export default function useGameRoom(roomId: string) {
       setIsJoined(true);
     } catch (e) {
       console.error(e);
-      alert("오류 발생");
+      await openAlert("오류 발생");
     } finally {
       setLoading(false);
     }
@@ -174,8 +179,10 @@ export default function useGameRoom(roomId: string) {
 
   const handleAddGuest = async () => {
     if (!guestName.trim()) return;
-    if (participants.find((p) => p.nickname === guestName))
-      return alert("이미 있는 이름입니다.");
+    if (participants.find((p) => p.nickname === guestName)) {
+      await openAlert("이미 있는 이름입니다.");
+      return;
+    }
     try {
       await supabase.from("game_participants").insert([
         {
@@ -188,12 +195,12 @@ export default function useGameRoom(roomId: string) {
       ]);
       setGuestName("");
     } catch (e) {
-      alert("추가 실패");
+      await openAlert("추가 실패");
     }
   };
 
   const handleKickParticipant = async (targetId: string, name: string) => {
-    if (!confirm(`'${name}' 님을 삭제하시겠습니까?`)) return;
+    if (!(await openConfirm(`'${name}' 님을 삭제하시겠습니까?`))) return;
     setParticipants((prev) => prev.filter((p) => p.id !== targetId));
     try {
       await supabase.from("game_participants").delete().eq("id", targetId);
@@ -227,7 +234,7 @@ export default function useGameRoom(roomId: string) {
   };
 
   const handleEndGame = async (needConfirm = true) => {
-    if (needConfirm && !confirm("게임을 종료할까요?")) return;
+    if (needConfirm && !(await openConfirm("게임을 종료할까요?"))) return;
     await supabase
       .from("game_rooms")
       .update({ status: "waiting" })

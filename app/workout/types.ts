@@ -102,6 +102,15 @@ export const GYM_SET_TYPE_LABEL: Record<GymSetType, string> = {
   failure: "실패까지",
 };
 
+// 측정 방식 — 무게×횟수(기본) vs 시간(초). 매달리기·플랭크·월싯처럼
+// 버틴 시간을 기록하는 운동은 "time".
+export type GymMeasure = "weightReps" | "time";
+
+export const GYM_MEASURE_LABEL: Record<GymMeasure, string> = {
+  weightReps: "kg×회",
+  time: "시간",
+};
+
 export type GymDropSet = {
   weight: number;
   reps: number;
@@ -111,6 +120,8 @@ export type GymSet = {
   id: string;
   weight: number;
   reps: number;
+  // 시간 기록 운동(measure === "time")의 버틴 시간(초).
+  durationSec?: number;
   type: GymSetType;
   dropSets?: GymDropSet[];
   note?: string;
@@ -144,6 +155,9 @@ export type GymExercise = {
   barWeight?: number;
   // 전신/유산소처럼 무게·세트가 없는 항목의 간단 메모 (예: 스텝 20분, 폼롤러).
   note?: string;
+  // 측정 방식 — 미지정 시 "weightReps"로 간주 (이전 기록 호환).
+  // "time"이면 세트마다 durationSec(초)로 기록.
+  measure?: GymMeasure;
   sets: GymSet[];
 };
 
@@ -295,6 +309,8 @@ export type ExercisePR = {
   achievedAt: string;
   weight: number;
   reps: number;
+  // 시간 기록 운동의 PR — 버틴 최대 시간(초). weightReps 운동은 미지정.
+  durationSec?: number;
   bodyPart?: GymBodyPart;
 };
 

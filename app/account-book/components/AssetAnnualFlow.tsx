@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import styled from "styled-components";
+import { formatAmount } from "./WorkspaceLedgerView/utils";
 
 export type AssetFlowRow = {
   monthNumber: number;
@@ -18,10 +19,6 @@ type Props = {
   year: number;
   isAmountHidden: boolean;
 };
-
-function formatAmount(value: number) {
-  return `${value.toLocaleString()}원`;
-}
 
 function signed(value: number) {
   return `${value > 0 ? "+" : value < 0 ? "-" : ""}${Math.abs(

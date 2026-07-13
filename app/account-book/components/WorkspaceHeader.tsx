@@ -305,7 +305,8 @@ const StWorkspaceHeader = styled.header`
   padding: 0.7rem 1rem;
   gap: 2rem;
 
-  @media (max-width: 980px) {
+  /* 태블릿(768~)은 PC와 같은 한 줄 3열 레이아웃 유지. 세로 스택 전환은 767 이하부터. */
+  @media (max-width: 767px) {
     grid-template-columns: 1fr;
     grid-template-areas:
       "main"
@@ -331,7 +332,7 @@ const StHeaderRight = styled.div`
   justify-content: flex-end;
   align-items: center;
 
-  @media (max-width: 980px) {
+  @media (max-width: 767px) {
     justify-content: stretch;
     width: 100%;
   }
@@ -340,7 +341,7 @@ const StHeaderRight = styled.div`
 const StHeaderMoWrap = styled.div`
   display: contents;
 
-  @media (max-width: 980px) {
+  @media (max-width: 767px) {
     grid-area: main;
     display: block;
     position: relative;
@@ -375,7 +376,7 @@ const StHeaderCenter = styled.div`
   justify-content: center;
   min-width: 0;
 
-  @media (max-width: 980px) {
+  @media (max-width: 767px) {
     position: absolute;
     top: 0;
     right: 0;

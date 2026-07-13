@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 import ModalCloseButton from "../ModalCloseButton";
 import type { PaymentType } from "../../types";
 import type { ExtractedImageEntryCandidate } from "./types";
@@ -35,6 +36,7 @@ export default function ImageCaptureSection({
   onSaveEntries,
   onClear,
 }: Props) {
+  const { openAlert } = useModal();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [draftEntries, setDraftEntries] = useState<ExtractedImageEntryCandidate[]>(
@@ -141,8 +143,11 @@ export default function ImageCaptureSection({
     });
   };
 
-  const handleSaveEntries = (entries: ExtractedImageEntryCandidate[]) => {
-    const unresolvedExistingDuplicates = entries.filter((entry) => {
+  // 기존 내역과 중복으로 보이는데 아직 확인 안 된 후보가 있으면 알리고 true 반환
+  const hasUnresolvedExistingDuplicates = (
+    entries: ExtractedImageEntryCandidate[],
+  ) => {
+    const unresolved = entries.filter((entry) => {
       const duplicateKey = getExtractedImageCandidateDuplicateKey(entry);
       return (
         existingEntryDuplicateKeys.has(duplicateKey) &&
@@ -150,11 +155,16 @@ export default function ImageCaptureSection({
       );
     });
 
-    if (unresolvedExistingDuplicates.length > 0) {
+    if (unresolved.length === 0) return false;
+    void openAlert(
+      `이미 등록된 내역으로 보이는 후보가 ${unresolved.length}건 있어요. 삭제하거나 '중복이어도 저장'을 체크해주세요.`,
+    );
+    return true;
+  };
+
+  const handleSaveEntries = (entries: ExtractedImageEntryCandidate[]) => {
+    if (hasUnresolvedExistingDuplicates(entries)) {
       setIsConfirmOpen(true);
-      alert(
-        `이미 등록된 내역으로 보이는 후보가 ${unresolvedExistingDuplicates.length}건 있어요. 삭제하거나 '중복이어도 저장'을 체크해주세요.`,
-      );
       return;
     }
 
@@ -410,21 +420,7 @@ export default function ImageCaptureSection({
               <StPrimaryButton
                 type="button"
                 onClick={() => {
-                  const unresolvedExistingDuplicates = draftEntries.filter((entry) => {
-                    const duplicateKey =
-                      getExtractedImageCandidateDuplicateKey(entry);
-                    return (
-                      existingEntryDuplicateKeys.has(duplicateKey) &&
-                      !confirmedExistingDuplicateIds.has(entry.id)
-                    );
-                  });
-
-                  if (unresolvedExistingDuplicates.length > 0) {
-                    alert(
-                      `이미 등록된 내역으로 보이는 후보가 ${unresolvedExistingDuplicates.length}건 있어요. 삭제하거나 '중복이어도 저장'을 체크해주세요.`,
-                    );
-                    return;
-                  }
+                  if (hasUnresolvedExistingDuplicates(draftEntries)) return;
 
                   onSaveEntries(draftEntries);
                   setIsConfirmOpen(false);

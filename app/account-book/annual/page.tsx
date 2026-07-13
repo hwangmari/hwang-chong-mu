@@ -10,6 +10,7 @@ import AssetBoardSection from "../components/AssetBoardSection";
 import AssetAnnualFlow from "../components/AssetAnnualFlow";
 import { useAssetData } from "../hooks/useAssetData";
 import {
+  formatAmount,
   getRepresentativeCategory,
   isCardSettlementEntry,
   isSavingsCategory,
@@ -28,10 +29,6 @@ const PAYMENT_META: Array<{ key: PaymentKey; label: string; color: string }> = [
   { key: "card", label: "카드", color: "#888c94" },
   { key: "check_card", label: "체크카드", color: "#3f8f8a" },
 ];
-
-function formatAmount(value: number) {
-  return `${value.toLocaleString()}원`;
-}
 
 function formatCompactPercent(value: number) {
   return `${value.toFixed(1)}%`;

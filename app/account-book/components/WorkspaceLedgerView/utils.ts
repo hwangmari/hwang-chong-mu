@@ -1059,6 +1059,8 @@ function removeNaturalNoise(text: string, memberNames: string[]) {
         " ",
       )
       .replace(CAR_COMPANY_NOISE_PATTERN, " ")
+      // 긴 표현 우선: "현금영수증 발급"/"영수증 발급"을 통째로 지워 "발급" 잔여어를 남기지 않는다.
+      .replace(/현금영수증\s*발급|영수증\s*발급|현금영수증|영수증/g, " ")
       .replace(/체크카드|체크|현금|카드|계좌이체|이체|송금/g, " ")
       .replace(/일시불|할부/g, " ")
       .replace(memberPattern || /$^/, " ")
@@ -1107,7 +1109,19 @@ export function parseNaturalInputEntry(
 
   const type = detectEntryType(text);
   const date = parseQuickDate(text, context.fallbackDate);
-  const payment = detectPayment(text, type);
+  // "현금영수증"이 명시되면 결제수단이 없어도 현금으로 본다(현금영수증 자체가 현금 결제를 의미).
+  // 단 "카드"가 명시된 문장에서는 아래 detectPayment가 카드로 판정하도록 그대로 둔다.
+  const hasCashReceiptWord = /현금영수증/.test(text);
+  const hasCardWord = /카드/.test(text);
+  const payment =
+    type === "expense" && hasCashReceiptWord && !hasCardWord
+      ? "cash"
+      : detectPayment(text, type);
+  // "현금영수증"/"영수증" 키워드가 있고 현금 결제로 파싱된 경우에만 발급으로 인정한다.
+  // (카드 결제 문장의 "영수증"은 무시)
+  const hasReceiptKeyword = /현금영수증|영수증/.test(text);
+  const cashReceipt =
+    hasReceiptKeyword && payment === "cash" ? true : undefined;
   const matchedUser =
     context.memberUsers.find((user) => text.includes(user.name)) ||
     context.memberUsers[0] ||
@@ -1142,6 +1156,7 @@ export function parseNaturalInputEntry(
     amount,
     cardCompany,
     payment,
+    cashReceipt,
     memo: "",
     rawText: text,
   };

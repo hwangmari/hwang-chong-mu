@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import * as API from "@/services/schedule";
 import { SchedulePhase } from "@/types/work-schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 import TaskItem from "./card/TaskItem";
 import ColorPicker from "./card/ColorPicker";
@@ -18,6 +19,7 @@ interface KanbanCardProps {
 
 export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   const router = useRouter();
+  const { openAlert } = useModal();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(svc.phaseName);
@@ -42,7 +44,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       setIsEditingName(false);
       refresh();
     } catch (e) {
-      alert("이름 수정 실패");
+      await openAlert("이름 수정 실패");
     }
   };
 
@@ -52,7 +54,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       setShowColorPicker(false);
       refresh();
     } catch (e) {
-      alert("색상 변경 실패");
+      await openAlert("색상 변경 실패");
     }
   };
 
@@ -66,7 +68,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       setShowQuickAdd(false);
       refresh();
     } catch (err) {
-      alert("일정 추가 실패");
+      await openAlert("일정 추가 실패");
     }
   };
 

@@ -25,6 +25,8 @@ export type AccountEntry = {
   payment: PaymentType;
   memo: string;
   rawText?: string;
+  // 현금영수증 발급 여부 (현금 결제에만 의미, 미지정=미발급)
+  cashReceipt?: boolean;
 };
 
 export type ResolvedAccountEntry = AccountEntry & {

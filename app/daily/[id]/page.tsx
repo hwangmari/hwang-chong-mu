@@ -9,6 +9,7 @@ import MonthNavBar from "./components/MonthNavBar";
 import NotebookBoardSection from "./components/NotebookBoardSection";
 import NotebookHeader from "./components/NotebookHeader";
 import SettingsModal from "./components/SettingsModal";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   TREND_COLUMN_WIDTH,
   TREND_ROW_HEIGHT,
@@ -26,6 +27,7 @@ import { useDailyNotebook } from "./useDailyNotebook";
 export default function DailyLogPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { openAlert } = useModal();
   const notebookId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const {
@@ -118,7 +120,7 @@ export default function DailyLogPage() {
     }
     setNextAccessCode("");
     setIsAccessModalOpen(false);
-    alert("비밀번호를 변경했어요.");
+    await openAlert("비밀번호를 변경했어요.");
   };
 
   const handleOpenSettings = () => {

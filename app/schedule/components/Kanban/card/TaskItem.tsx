@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { format } from "date-fns";
 import * as API from "@/services/schedule";
 import { TaskPhase } from "@/types/work-schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface TaskItemProps {
   task: TaskPhase;
@@ -12,6 +13,7 @@ interface TaskItemProps {
 }
 
 export default function TaskItem({ task, refresh }: TaskItemProps) {
+  const { openAlert, openConfirm } = useModal();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [start, setStart] = useState(
@@ -29,17 +31,17 @@ export default function TaskItem({ task, refresh }: TaskItemProps) {
       setIsEditing(false);
       refresh();
     } catch (e) {
-      alert("일정 수정 실패");
+      await openAlert("일정 수정 실패");
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("이 일정을 삭제할까요?")) return;
+    if (!(await openConfirm("이 일정을 삭제할까요?"))) return;
     try {
       await API.deleteTask(task.id);
       refresh();
     } catch (e) {
-      alert("삭제 실패");
+      await openAlert("삭제 실패");
     }
   };
 

@@ -79,7 +79,9 @@ function SchedulePageInner() {
   }
 
   const reloadServices = () => {
-    fetchPartServices(selectedPartId).then(setServices).catch(() => {});
+    fetchPartServices(selectedPartId)
+      .then(setServices)
+      .catch((e) => console.error("서비스 목록 로딩 실패:", e));
   };
 
   return (

@@ -16,18 +16,23 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Input } from "@hwangchongmu/ui";
 import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
 import ColorPickerPanel from "@/components/common/ColorPickerPanel";
+import { useModal } from "@/components/common/ModalProvider";
 
 const COLORS = ["#5e606d", "#ed3654", "#FB923C", "#efb520", "#14b8a6", "#3378e7", "#6366F1"];
 
 export default function CreateHabitPage() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [title, setTitle] = useState("");
   const [emoji, setEmoji] = useState("🥕");
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [loading, setLoading] = useState(false);
 
   const createGoal = async () => {
-    if (!title.trim()) return alert("목표를 입력해주세요!");
+    if (!title.trim()) {
+      await openAlert("목표를 입력해주세요!");
+      return;
+    }
     setLoading(true);
 
     const { data, error } = await supabase
@@ -37,7 +42,7 @@ export default function CreateHabitPage() {
       .single();
 
     if (error) {
-      alert("방 생성에 실패했습니다.");
+      await openAlert("방 생성에 실패했습니다.");
     } else {
       router.push(`/habit/${data.id}`);
     }

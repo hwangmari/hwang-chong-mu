@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { startOfMonth } from "date-fns";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   AccountBookUser,
   AccountBookWorkspace,
@@ -49,6 +50,7 @@ export function useRegisterModal({
   setSelectedCalendarCardId,
   onSaveEntry,
 }: Params) {
+  const { openAlert } = useModal();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [registerMode, setRegisterMode] = useState<"natural" | "image">(
     "natural",
@@ -114,7 +116,7 @@ export function useRegisterModal({
   const saveExtractedImageEntries = useCallback(
     async (candidates: ExtractedImageEntryCandidate[]) => {
       if (candidates.length === 0) {
-        alert("저장할 추출 후보가 없어요.");
+        void openAlert("저장할 추출 후보가 없어요.");
         return;
       }
 
@@ -179,7 +181,7 @@ export function useRegisterModal({
 
       const validEntries = nextEntries.filter((entry) => entry.amount > 0);
       if (validEntries.length === 0) {
-        alert("금액이 인식된 후보가 없어서 저장할 수 없어요.");
+        void openAlert("금액이 인식된 후보가 없어서 저장할 수 없어요.");
         return;
       }
 
@@ -195,13 +197,14 @@ export function useRegisterModal({
       );
       closeRegisterModal();
 
-      alert(`${validEntries.length}건을 가계부에 저장했어요.`);
+      void openAlert(`${validEntries.length}건을 가계부에 저장했어요.`);
     },
     [
       closeRegisterModal,
       defaultMember,
       memberUsers,
       onSaveEntry,
+      openAlert,
       selectedDate,
       selectedParticipant,
       setCurrentMonth,
@@ -270,7 +273,7 @@ export function useRegisterModal({
       .filter(Boolean);
 
     if (lines.length === 0) {
-      alert("지출 문장을 입력해주세요.");
+      void openAlert("지출 문장을 입력해주세요.");
       return;
     }
 
@@ -286,7 +289,7 @@ export function useRegisterModal({
       });
 
       if (!entry) {
-        alert(
+        void openAlert(
           `문장을 해석하지 못했어요: "${line}"\n예: 3월 17일 네이버쇼핑 마라샹궈 구매 119200원`,
         );
         return;
@@ -310,7 +313,7 @@ export function useRegisterModal({
     closeRegisterModal();
 
     if (parsedEntries.length > 1) {
-      alert(`${parsedEntries.length}건을 기록했어요.`);
+      void openAlert(`${parsedEntries.length}건을 기록했어요.`);
     }
   }, [
     closeRegisterModal,
@@ -318,6 +321,7 @@ export function useRegisterModal({
     memberUsers,
     naturalInput,
     onSaveEntry,
+    openAlert,
     selectedDate,
     setCurrentMonth,
     setSelectedDate,

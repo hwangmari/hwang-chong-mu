@@ -6,12 +6,14 @@ import { useRouter, useParams } from "next/navigation";
 import * as API from "@/services/schedule";
 import { SchedulePhase } from "@/types/work-schedule";
 import KanbanColumn from "../../components/Kanban/KanbanColumn";
+import { useModal } from "@/components/common/ModalProvider";
 
 
 export default function KanbanPage() {
   const router = useRouter();
   const params = useParams();
   const boardId = params.id as string;
+  const { openAlert } = useModal();
 
   const [schedules, setSchedules] = useState<SchedulePhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function KanbanPage() {
       setIsAdding(false);
       initData();
     } catch (err) {
-      alert("단계 생성 실패");
+      await openAlert("단계 생성 실패");
     }
   };
 

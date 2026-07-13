@@ -12,8 +12,10 @@ import {
 } from "./constants";
 import { OvertimeRecord, StorageMode } from "./types";
 import { mergeRecordsByDate, parseStoredRecords } from "./utils";
+import { useModal } from "@/components/common/ModalProvider";
 
 export function useOvertimeStorage() {
+  const { openAlert } = useModal();
   const {
     createRoom,
     fetchRoomData,
@@ -102,7 +104,7 @@ export function useOvertimeStorage() {
   const persistServerRecords = useCallback(
     async (nextRecords: OvertimeRecord[]) => {
       if (!serverRoom) {
-        alert("먼저 서버 저장 방을 연결해주세요.");
+        await openAlert("먼저 서버 저장 방을 연결해주세요.");
         return false;
       }
 
@@ -111,7 +113,7 @@ export function useOvertimeStorage() {
       setServerRecords(mergedRecords);
       return true;
     },
-    [replaceRoomRecords, serverRoom],
+    [openAlert, replaceRoomRecords, serverRoom],
   );
 
   const persistRecords = useCallback(
@@ -145,7 +147,7 @@ export function useOvertimeStorage() {
 
   const handleCreateServerRoom = useCallback(async () => {
     if (!roomNameInput.trim()) {
-      alert("방 이름을 입력해주세요.");
+      await openAlert("방 이름을 입력해주세요.");
       return;
     }
 
@@ -155,13 +157,13 @@ export function useOvertimeStorage() {
       await connectServerRoom(room.roomRef);
     } catch (error) {
       console.error("야근 방 생성에 실패했습니다.", error);
-      alert("방 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+      await openAlert("방 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
     }
-  }, [connectServerRoom, createRoom, roomNameInput]);
+  }, [connectServerRoom, createRoom, openAlert, roomNameInput]);
 
   const handleConnectServerRoom = useCallback(async () => {
     if (!roomCodeInput.trim()) {
-      alert("방 코드를 입력해주세요.");
+      await openAlert("방 코드를 입력해주세요.");
       return;
     }
 
@@ -169,9 +171,9 @@ export function useOvertimeStorage() {
       await connectServerRoom(roomCodeInput.trim());
     } catch (error) {
       console.error("야근 방 연결에 실패했습니다.", error);
-      alert("방을 불러오지 못했어요. 방 코드를 다시 확인해주세요.");
+      await openAlert("방을 불러오지 못했어요. 방 코드를 다시 확인해주세요.");
     }
-  }, [connectServerRoom, roomCodeInput]);
+  }, [connectServerRoom, openAlert, roomCodeInput]);
 
   const handleDisconnectServerRoom = useCallback(() => {
     setServerRoom(null);
@@ -191,12 +193,12 @@ export function useOvertimeStorage() {
 
     try {
       await navigator.clipboard.writeText(serverRoom.roomRef);
-      alert("방 코드를 복사했어요.");
+      await openAlert("방 코드를 복사했어요.");
     } catch (error) {
       console.error("방 코드 복사에 실패했습니다.", error);
-      alert("방 코드 복사에 실패했어요.");
+      await openAlert("방 코드 복사에 실패했어요.");
     }
-  }, [serverRoom]);
+  }, [openAlert, serverRoom]);
 
   return {
     records,

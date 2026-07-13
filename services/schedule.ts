@@ -16,6 +16,114 @@ import {
 } from "@/types/work-schedule";
 
 // ─────────────────────────────────────────────────
+// 서버 페이로드 Row 타입
+// (서버 응답은 camelCase·snake_case가 혼재하므로 두 형태를 모두 수용한다)
+// ─────────────────────────────────────────────────
+type TaskRow = {
+  id: string;
+  title: string;
+  startDate?: string;
+  start_date?: string;
+  endDate?: string;
+  end_date?: string;
+  memo?: string | null;
+  isCompleted?: boolean;
+  is_completed?: boolean;
+};
+
+type PhaseRow = {
+  id: string;
+  phaseName?: string;
+  name?: string;
+  color: string;
+  isCompleted?: boolean;
+  is_completed?: boolean;
+  isHidden?: boolean;
+  is_hidden?: boolean;
+  tasks?: TaskRow[];
+  memberId?: string | null;
+  member_id?: string | null;
+  memberName?: string | null;
+  member_name?: string | null;
+  memberColor?: string | null;
+  member_color?: string | null;
+};
+
+type UserRow = {
+  id: string;
+  name: string;
+  personalPartId?: string | null;
+  personal_workspace_id?: string | null;
+};
+
+type PartRow = {
+  id: string;
+  name: string;
+  type: "personal" | "shared";
+  ownerUserId?: string | null;
+  owner_user_id?: string | null;
+  memberIds?: string[];
+  member_ids?: string[];
+  inviteCode?: string | null;
+  invite_code?: string | null;
+};
+
+type ServiceRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  workspace_id: string;
+  created_at: string;
+};
+
+type IssueRow = {
+  id: string;
+  boardId?: string;
+  board_id?: string;
+  title: string;
+  description?: string | null;
+  severity?: IssueSeverity;
+  status?: IssueStatus;
+  createdAt?: string;
+  created_at?: string;
+  resolvedAt?: string | null;
+  resolved_at?: string | null;
+};
+
+// ─────────────────────────────────────────────────
+// 업데이트/생성 페이로드 타입 (호출부에서 넘기는 부분 갱신 형태)
+// ─────────────────────────────────────────────────
+export type ServiceUpdate = {
+  title?: string;
+  description?: string;
+};
+
+export type PhaseUpdate = {
+  phaseName?: string;
+  color?: string;
+  isCompleted?: boolean;
+  is_completed?: boolean;
+  isHidden?: boolean;
+  is_hidden?: boolean;
+};
+
+export type TaskInput = {
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  memo?: string;
+};
+
+export type TaskUpdate = {
+  title?: string;
+  memo?: string;
+  startDate?: Date | string;
+  endDate?: Date | string;
+  isCompleted?: boolean;
+  is_completed?: boolean;
+};
+
+// ─────────────────────────────────────────────────
 // fetch 래퍼
 // ─────────────────────────────────────────────────
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -37,18 +145,18 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 // ─────────────────────────────────────────────────
 // 매퍼 (서버 페이로드 → 앱 도메인)
 // ─────────────────────────────────────────────────
-const mapTaskFromDB = (task: any): TaskPhase => ({
+const mapTaskFromDB = (task: TaskRow): TaskPhase => ({
   id: task.id,
   title: task.title,
-  startDate: new Date(task.startDate ?? task.start_date),
-  endDate: new Date(task.endDate ?? task.end_date),
+  startDate: new Date(task.startDate ?? task.start_date ?? ""),
+  endDate: new Date(task.endDate ?? task.end_date ?? ""),
   memo: task.memo || "",
   isCompleted: task.isCompleted ?? task.is_completed ?? false,
 });
 
-const mapPhaseFromDB = (svc: any, tasks: any[] = []): SchedulePhase => ({
+const mapPhaseFromDB = (svc: PhaseRow, tasks: TaskRow[] = []): SchedulePhase => ({
   id: svc.id,
-  phaseName: svc.phaseName ?? svc.name,
+  phaseName: svc.phaseName ?? svc.name ?? "",
   color: svc.color,
   isCompleted: svc.isCompleted ?? svc.is_completed ?? false,
   isHidden: svc.isHidden ?? svc.is_hidden ?? false,
@@ -58,14 +166,14 @@ const mapPhaseFromDB = (svc: any, tasks: any[] = []): SchedulePhase => ({
   memberColor: svc.memberColor ?? svc.member_color ?? undefined,
 });
 
-const mapUserFromPayload = (row: any): ScheduleUser => ({
+const mapUserFromPayload = (row: UserRow): ScheduleUser => ({
   id: row.id,
   name: row.name,
   password: "",
   personalPartId: row.personalPartId ?? row.personal_workspace_id ?? "",
 });
 
-const mapPartFromPayload = (row: any): SchedulePart => ({
+const mapPartFromPayload = (row: PartRow): SchedulePart => ({
   id: row.id,
   name: row.name,
   type: row.type,
@@ -177,7 +285,7 @@ export const createSharedPart = async (
   });
 
   // 2) 공유 워크스페이스 생성
-  const { workspace } = await api<{ workspace: any }>(
+  const { workspace } = await api<{ workspace: PartRow }>(
     "/api/schedule/workspace",
     {
       method: "POST",
@@ -185,6 +293,8 @@ export const createSharedPart = async (
         ownerUserId: registered.user.id,
         name: partName,
         password: partPassword,
+        // 세션 없는 생성 흐름의 본인 확인용(소유자 계정 비밀번호)
+        ownerPassword,
       }),
     },
   );
@@ -253,7 +363,7 @@ export const createServiceInPart = async (
   title: string,
   description: string,
 ): Promise<ScheduleServiceData> => {
-  const { service } = await api<{ service: any }>(
+  const { service } = await api<{ service: ServiceRow }>(
     `/api/schedule/workspace/${encodeURIComponent(partId)}/services`,
     {
       method: "POST",
@@ -269,8 +379,11 @@ export const createServiceInPart = async (
   };
 };
 
-export const updateService = async (serviceId: string, updates: any) => {
-  const { service } = await api<{ service: any }>(
+export const updateService = async (
+  serviceId: string,
+  updates: ServiceUpdate,
+) => {
+  const { service } = await api<{ service: ServiceRow }>(
     `/api/schedule/service/${encodeURIComponent(serviceId)}`,
     {
       method: "PATCH",
@@ -288,8 +401,8 @@ export const deleteService = async (serviceId: string) => {
 
 export const fetchServiceWithData = async (serviceId: string) => {
   const data = await api<{
-    service: any;
-    phases: any[];
+    service: ServiceRow;
+    phases: PhaseRow[];
   }>(`/api/schedule/service/${encodeURIComponent(serviceId)}`);
   return {
     service: data.service,
@@ -309,7 +422,7 @@ export const createPhase = async (
   description: string,
   color: string,
 ) => {
-  const { phase } = await api<{ phase: any }>(
+  const { phase } = await api<{ phase: PhaseRow }>(
     `/api/schedule/service/${encodeURIComponent(serviceId)}/phases`,
     {
       method: "POST",
@@ -328,7 +441,7 @@ export const createPhaseWithMember = async (
   memberName: string,
   memberColor: string,
 ) => {
-  const { phase } = await api<{ phase: any }>(
+  const { phase } = await api<{ phase: PhaseRow }>(
     `/api/schedule/service/${encodeURIComponent(serviceId)}/phases`,
     {
       method: "POST",
@@ -345,7 +458,7 @@ export const createPhaseWithMember = async (
   return mapPhaseFromDB(phase);
 };
 
-export const updatePhase = async (id: string, updates: any) => {
+export const updatePhase = async (id: string, updates: PhaseUpdate) => {
   const patch: Record<string, unknown> = {};
   if (updates.phaseName !== undefined) patch.phaseName = updates.phaseName;
   if (updates.color !== undefined) patch.color = updates.color;
@@ -355,7 +468,7 @@ export const updatePhase = async (id: string, updates: any) => {
   if (hiddenVal !== undefined) patch.isHidden = hiddenVal;
   if (Object.keys(patch).length === 0) return;
 
-  const { phase } = await api<{ phase: any }>(
+  const { phase } = await api<{ phase: PhaseRow }>(
     `/api/schedule/phase/${encodeURIComponent(id)}`,
     {
       method: "PATCH",
@@ -374,10 +487,10 @@ export const deletePhase = async (id: string) => {
 // ─────────────────────────────────────────────────
 // 태스크 CRUD
 // ─────────────────────────────────────────────────
-export const createTask = async (phaseId: string, task: any) => {
+export const createTask = async (phaseId: string, task: TaskInput) => {
   const startDate = task.startDate?.toISOString?.() ?? task.startDate;
   const endDate = task.endDate?.toISOString?.() ?? task.endDate;
-  const { task: data } = await api<{ task: any }>(
+  const { task: data } = await api<{ task: TaskRow }>(
     `/api/schedule/phase/${encodeURIComponent(phaseId)}/tasks`,
     {
       method: "POST",
@@ -392,7 +505,7 @@ export const createTask = async (phaseId: string, task: any) => {
   return mapTaskFromDB(data);
 };
 
-export const updateTask = async (taskId: string, updates: any) => {
+export const updateTask = async (taskId: string, updates: TaskUpdate) => {
   const patch: Record<string, unknown> = {};
   if (updates.title !== undefined) patch.title = updates.title;
   if (updates.memo !== undefined) patch.memo = updates.memo;
@@ -408,7 +521,7 @@ export const updateTask = async (taskId: string, updates: any) => {
   if (completedVal !== undefined) patch.isCompleted = completedVal;
   if (Object.keys(patch).length === 0) return;
 
-  const { task } = await api<{ task: any }>(
+  const { task } = await api<{ task: TaskRow }>(
     `/api/schedule/task/${encodeURIComponent(taskId)}`,
     {
       method: "PATCH",
@@ -526,21 +639,21 @@ export const fetchMemberWorkloads = async (
 // ─────────────────────────────────────────────────
 // 이슈 트래킹
 // ─────────────────────────────────────────────────
-const mapIssueFromDB = (row: any): ScheduleIssue => ({
+const mapIssueFromDB = (row: IssueRow): ScheduleIssue => ({
   id: row.id,
-  serviceId: row.board_id ?? row.boardId,
+  serviceId: row.board_id ?? row.boardId ?? "",
   title: row.title,
   description: row.description || "",
   severity: row.severity || "normal",
   status: row.status || "open",
-  createdAt: row.created_at ?? row.createdAt,
+  createdAt: row.created_at ?? row.createdAt ?? "",
   resolvedAt: row.resolved_at ?? row.resolvedAt ?? null,
 });
 
 export const fetchServiceIssues = async (
   serviceId: string,
 ): Promise<ScheduleIssue[]> => {
-  const { issues } = await api<{ issues: any[] }>(
+  const { issues } = await api<{ issues: IssueRow[] }>(
     `/api/schedule/service/${encodeURIComponent(serviceId)}/issues`,
   );
   return issues.map(mapIssueFromDB);
@@ -569,7 +682,7 @@ export const createIssue = async (
   description: string,
   severity: IssueSeverity,
 ): Promise<ScheduleIssue> => {
-  const { issue } = await api<{ issue: any }>(
+  const { issue } = await api<{ issue: IssueRow }>(
     `/api/schedule/service/${encodeURIComponent(serviceId)}/issues`,
     {
       method: "POST",
@@ -588,7 +701,7 @@ export const updateIssue = async (
     status?: IssueStatus;
   },
 ): Promise<ScheduleIssue> => {
-  const { issue } = await api<{ issue: any }>(
+  const { issue } = await api<{ issue: IssueRow }>(
     `/api/schedule/issue/${encodeURIComponent(issueId)}`,
     {
       method: "PATCH",
@@ -647,9 +760,11 @@ export const fetchServices = async () => {
 // 레거시: 워크스페이스 스코프 없이 서비스를 만드는 경로는 이제 지원하지 않는다.
 // /schedule/create 등 구 경로가 참조하면 명확히 에러를 유도한다.
 export const createService = async (
-  _title: string,
-  _description: string,
+  title: string,
+  description: string,
 ): Promise<{ id: string }> => {
+  void title;
+  void description;
   throw new Error(
     "서비스는 워크스페이스 안에서만 생성할 수 있습니다. 허브에서 파트를 먼저 선택하세요.",
   );

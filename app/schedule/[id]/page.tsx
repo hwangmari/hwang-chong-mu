@@ -54,7 +54,9 @@ export default function ScheduleDetailPage() {
       setPhases(loadedPhases);
 
       // 이슈 로딩
-      API.fetchServiceIssues(serviceId).then(setIssues).catch(() => {});
+      API.fetchServiceIssues(serviceId)
+              .then(setIssues)
+              .catch((e) => console.error("이슈 로딩 실패:", e));
 
       // 공용 파트 여부 확인 및 멤버 일정 로딩
       if (service.workspace_id) {
@@ -255,7 +257,9 @@ export default function ScheduleDetailPage() {
             serviceId={serviceId}
             issues={issues}
             onReload={() =>
-              API.fetchServiceIssues(serviceId).then(setIssues).catch(() => {})
+              API.fetchServiceIssues(serviceId)
+              .then(setIssues)
+              .catch((e) => console.error("이슈 로딩 실패:", e))
             }
           />
         </StRightSection>

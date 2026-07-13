@@ -41,6 +41,8 @@ type Props = {
   recurringAvailable: boolean;
   recurring: boolean;
   onToggleRecurring: (value: boolean) => void;
+  cashReceipt: boolean;
+  onSetCashReceipt: (value: boolean) => void;
   onClose: () => void;
   onSetDate: (date: string) => void;
   onSetType: (type: EntryType) => void;
@@ -75,6 +77,8 @@ export default function EntryFormModal({
   recurringAvailable,
   recurring,
   onToggleRecurring,
+  cashReceipt,
+  onSetCashReceipt,
   onClose,
   onSetDate,
   onSetType,
@@ -255,6 +259,22 @@ export default function EntryFormModal({
                     placeholder={cardCompanyPlaceholder}
                   />
                 </>
+              ) : null}
+              {payment === "cash" ? (
+                <StRecurringRow
+                  type="button"
+                  $active={cashReceipt}
+                  onClick={() => onSetCashReceipt(!cashReceipt)}
+                  aria-pressed={cashReceipt}
+                >
+                  <StRecurringText>
+                    <strong>🧾 현금영수증 발급</strong>
+                    <span>현금 결제 시 현금영수증을 발급했다면 켜주세요</span>
+                  </StRecurringText>
+                  <StRecurringSwitch $active={cashReceipt} aria-hidden>
+                    <span />
+                  </StRecurringSwitch>
+                </StRecurringRow>
               ) : null}
             </StFormField>
           </StAbSectionCard>

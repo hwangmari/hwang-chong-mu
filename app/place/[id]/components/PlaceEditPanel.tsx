@@ -16,6 +16,7 @@ import {
   StSearchRow,
   StSubTitle,
 } from "../page.styles";
+import { useModal } from "@/components/common/ModalProvider";
 
 const stripHtml = (str: string) => str.replace(/<[^>]*>/g, "");
 
@@ -30,6 +31,7 @@ export default function PlaceEditPanel({
   onAddPlace,
   onDeletePlace,
 }: PlaceEditPanelProps) {
+  const { openAlert } = useModal();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<NaverLocalItem[]>([]);
   const [searching, setSearching] = useState(false);
@@ -44,7 +46,7 @@ export default function PlaceEditPanel({
       const data = await res.json();
       setSearchResults(data.items || []);
     } catch {
-      alert("검색에 실패했습니다.");
+      await openAlert("검색에 실패했습니다.");
     } finally {
       setSearching(false);
     }

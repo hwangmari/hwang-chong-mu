@@ -14,9 +14,11 @@ import {
 import { NaverLocalItem } from "@/types/dinner";
 import { createDinnerRoom, addDinnerPlaces } from "@/services/dinner";
 import NaverMap from "./NaverMap";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function DinnerPage() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [title, setTitle] = useState("");
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState<NaverLocalItem[]>([]);
@@ -44,7 +46,7 @@ export default function DinnerPage() {
       setResults(items);
       setHasMore(items.length >= 5);
     } catch {
-      alert("검색에 실패했습니다.");
+      await openAlert("검색에 실패했습니다.");
     } finally {
       setSearching(false);
     }
@@ -69,7 +71,7 @@ export default function DinnerPage() {
         setHasMore(newItems.length >= 5);
       }
     } catch {
-      alert("추가 검색에 실패했습니다.");
+      await openAlert("추가 검색에 실패했습니다.");
     } finally {
       setLoadingMore(false);
     }
@@ -91,11 +93,11 @@ export default function DinnerPage() {
 
   const handleCreate = async () => {
     if (!title.trim()) {
-      alert("투표 제목을 입력해주세요!");
+      await openAlert("투표 제목을 입력해주세요!");
       return;
     }
     if (selected.length < 2) {
-      alert("최소 2곳 이상 선택해주세요!");
+      await openAlert("최소 2곳 이상 선택해주세요!");
       return;
     }
     setCreating(true);
@@ -113,7 +115,7 @@ export default function DinnerPage() {
       await addDinnerPlaces(room.id, places);
       router.push(`/place/${room.id}`);
     } catch {
-      alert("방 생성에 실패했습니다.");
+      await openAlert("방 생성에 실패했습니다.");
     } finally {
       setCreating(false);
     }

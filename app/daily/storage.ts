@@ -1,3 +1,5 @@
+import { formatDateKey } from "@/utils/date";
+
 export interface DailyNotebookConfig {
   id: string;
   title: string;
@@ -25,12 +27,7 @@ export function sanitizeChecklist(items: string[]) {
   return cleaned.length > 0 ? cleaned : ["기본 항목"];
 }
 
-export function formatDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+export const formatDate = formatDateKey;
 
 export function getMonthKey(date: Date) {
   const year = date.getFullYear();

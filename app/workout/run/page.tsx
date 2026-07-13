@@ -32,6 +32,7 @@ import {
 } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
 import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import { useModal } from "@/components/common/ModalProvider";
 import {
   StActions,
   StCard,
@@ -81,6 +82,7 @@ export default function RunPage() {
   const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
   const appliedDateRef = useRef(false);
+  const { openConfirm } = useModal();
 
   const session = useWorkoutSession();
   const [records, setRecords] = useState<RunningRecord[]>([]);
@@ -237,7 +239,7 @@ export default function RunPage() {
   }
 
   async function removeRecord(id: string) {
-    if (!confirm("이 기록을 삭제할까요?")) return;
+    if (!(await openConfirm("이 기록을 삭제할까요?"))) return;
     setBusy(true);
     try {
       await deleteRunningRecord(id);

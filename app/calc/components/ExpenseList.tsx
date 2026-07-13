@@ -5,6 +5,7 @@ import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import SectionTitle from "./ui/SectionTitle";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Props {
   expenses: Expense[];
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
+  const { openAlert } = useModal();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
@@ -35,13 +37,15 @@ export default function ExpenseList({ expenses, onDelete, onUpdate }: Props) {
     setEditAmount(currentAmount.toString());
   };
 
-  const saveEditing = (id: number) => {
+  const saveEditing = async (id: number) => {
     const parsedAmount = Number(editAmount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return alert("금액은 0보다 큰 숫자여야 합니다.");
+      await openAlert("금액은 0보다 큰 숫자여야 합니다.");
+      return;
     }
     if (!Number.isInteger(parsedAmount)) {
-      return alert("금액은 정수로 입력해주세요.");
+      await openAlert("금액은 정수로 입력해주세요.");
+      return;
     }
     onUpdate(id, parsedAmount);
     setEditingId(null);

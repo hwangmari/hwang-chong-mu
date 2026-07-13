@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useModal } from "@/components/common/ModalProvider";
 import ModalCloseButton from "../ModalCloseButton";
 import SharedWorkspaceSection from "./SharedWorkspaceSection";
 import {
@@ -29,6 +30,7 @@ export default function WorkspaceSettingsModal({
   onAddRoomMember,
   onRemoveRoomMember,
 }: WorkspaceSettingsModalProps) {
+  const { openAlert, openConfirm } = useModal();
   const [userDrafts, setUserDrafts] = useState<Record<string, UserDraft>>({});
   const [roomDrafts, setRoomDrafts] = useState<Record<string, RoomDraft>>({});
   const [newSharedRoomDraft, setNewSharedRoomDraft] = useState<RoomDraft>({
@@ -41,10 +43,10 @@ export default function WorkspaceSettingsModal({
 
   if (!isOpen || !activeUser) return null;
 
-  const handleDeleteSharedWorkspace = (workspaceId: string) => {
+  const handleDeleteSharedWorkspace = async (workspaceId: string) => {
     const target = sharedWorkspaces.find((workspace) => workspace.id === workspaceId);
     if (!target) return;
-    if (!window.confirm(`${target.name} 공용방을 삭제할까요?`)) return;
+    if (!(await openConfirm(`${target.name} 공용방을 삭제할까요?`))) return;
     onDeleteSharedWorkspace(workspaceId);
   };
 
@@ -72,15 +74,16 @@ export default function WorkspaceSettingsModal({
     }));
   };
 
-  const handleRemoveRoomMember = (workspaceId: string, userId: string) => {
+  const handleRemoveRoomMember = async (workspaceId: string, userId: string) => {
     const workspace = sharedWorkspaces.find((item) => item.id === workspaceId);
     const target = users.find((user) => user.id === userId);
     if (!workspace || !target) return;
     if (workspace.memberIds.length <= 1) {
-      alert("서버방에는 최소 1명은 남아 있어야 합니다.");
+      void openAlert("서버방에는 최소 1명은 남아 있어야 합니다.");
       return;
     }
-    if (!window.confirm(`${target.name} 사용자를 이 서버방에서 제외할까요?`)) return;
+    if (!(await openConfirm(`${target.name} 사용자를 이 서버방에서 제외할까요?`)))
+      return;
     onRemoveRoomMember(workspaceId, userId);
   };
 

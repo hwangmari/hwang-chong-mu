@@ -92,6 +92,7 @@ type Props = {
   selectedDateEntries: ResolvedAccountEntry[];
   selectedDateAssetEntries: ResolvedAccountEntry[];
   onOpenAdd: () => void;
+  onOpenNaturalAdd?: () => void;
   onOpenNaturalRegisterForDate: (date: string) => void;
   onSelectCalendarCard: (cardId: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
@@ -149,6 +150,7 @@ export default function WorkspacePanelsSection({
   selectedDateEntries,
   selectedDateAssetEntries,
   onOpenAdd,
+  onOpenNaturalAdd,
   onOpenNaturalRegisterForDate,
   onSelectCalendarCard,
   onEdit,
@@ -272,6 +274,7 @@ export default function WorkspacePanelsSection({
                 entries={ledgerDetailEntries}
                 assetEntries={ledgerDetailAssetEntries}
                 onOpenAdd={onOpenAdd}
+                onOpenNaturalAdd={onOpenNaturalAdd}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 entryActions={entryActions}
@@ -296,6 +299,7 @@ export default function WorkspacePanelsSection({
               }
               onToggleAmountVisibility={onToggleCalendarIncomeAmountHidden}
               onOpenAdd={onOpenAdd}
+              onOpenNaturalAdd={onOpenNaturalAdd}
               onEdit={onEdit}
               onDelete={onDelete}
               entryActions={entryActions}

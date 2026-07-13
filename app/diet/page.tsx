@@ -13,15 +13,20 @@ import PageIntro from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Input } from "@hwangchongmu/ui";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function CreateDietPage() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [title, setTitle] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
   const [loading, setLoading] = useState(false);
 
   const createRoom = async () => {
-    if (!title.trim()) return alert("목표를 입력해주세요!");
+    if (!title.trim()) {
+      await openAlert("목표를 입력해주세요!");
+      return;
+    }
     setLoading(true);
 
     const { data, error } = await supabase
@@ -35,7 +40,7 @@ export default function CreateDietPage() {
 
     if (error) {
       console.error(error);
-      alert("방 생성에 실패했습니다.");
+      await openAlert("방 생성에 실패했습니다.");
     } else {
       router.push(`/diet/${data.id}`);
     }

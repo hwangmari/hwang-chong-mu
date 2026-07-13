@@ -8,6 +8,7 @@ import { GoalComment } from "@/types";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PersonIcon from "@mui/icons-material/Person";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface Props {
   goalId: number;
@@ -20,6 +21,7 @@ export default function CommentSection({
   themeColor,
   selectedDate,
 }: Props) {
+  const { openAlert, openConfirm } = useModal();
   const [comments, setComments] = useState<GoalComment[]>([]);
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
@@ -44,7 +46,8 @@ export default function CommentSection({
 
   const handleSubmit = async () => {
     if (!nickname.trim() || !content.trim()) {
-      return alert("닉네임과 내용을 모두 입력해주세요!");
+      await openAlert("닉네임과 내용을 모두 입력해주세요!");
+      return;
     }
     setLoading(true);
 
@@ -56,7 +59,7 @@ export default function CommentSection({
     });
 
     if (error) {
-      alert("댓글 등록에 실패했습니다.");
+      await openAlert("댓글 등록에 실패했습니다.");
     } else {
       setContent(""); // 닉네임은 유지
       fetchComments();
@@ -65,7 +68,7 @@ export default function CommentSection({
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
+    if (!(await openConfirm("정말 삭제하시겠습니까?"))) return;
 
     const { error } = await supabase
       .from("goal_comments")
@@ -73,7 +76,7 @@ export default function CommentSection({
       .eq("id", id);
 
     if (error) {
-      alert("삭제 실패!");
+      await openAlert("삭제 실패!");
     } else {
       fetchComments();
     }

@@ -4,15 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { createService } from "@/services/schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function CreateSchedulePage() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [formData, setFormData] = useState({ title: "", description: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return alert("일정관리 제목을 입력해주세요!");
+    if (!formData.title.trim()) {
+      await openAlert("일정관리 제목을 입력해주세요!");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -20,7 +25,7 @@ export default function CreateSchedulePage() {
       router.push(`/schedule/${newBoard.id}`);
     } catch (error) {
       console.error(error);
-      alert("생성 실패!");
+      await openAlert("생성 실패!");
     } finally {
       setIsSubmitting(false);
     }

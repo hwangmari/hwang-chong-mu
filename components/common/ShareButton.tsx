@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface ShareButtonProps {
   className?: string; // 외부에서 위치나 마진을 조정할 수 있게
@@ -12,6 +13,7 @@ export default function ShareButton({
   className,
   iconSize = 24,
 }: ShareButtonProps) {
+  const { openAlert } = useModal();
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleShare = async () => {
@@ -25,7 +27,7 @@ export default function ShareButton({
       }, 2000);
     } catch (err) {
       console.error("클립보드 복사 실패:", err);
-      alert("주소 복사에 실패했습니다. URL을 직접 복사해주세요!");
+      await openAlert("주소 복사에 실패했습니다. URL을 직접 복사해주세요!");
     }
   };
 

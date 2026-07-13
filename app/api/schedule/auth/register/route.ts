@@ -82,11 +82,11 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
+    // 내부 오류 상세는 서버 로그에만 남기고 클라이언트에는 고정 메시지만 반환한다.
     console.error("[schedule/auth/register]", err);
-    const message =
-      err instanceof Error && err.message
-        ? `계정 생성에 실패했습니다: ${err.message}`
-        : "계정 생성에 실패했습니다.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "계정 생성에 실패했습니다." },
+      { status: 500 },
+    );
   }
 }

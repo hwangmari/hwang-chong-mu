@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import * as API from "@/services/schedule";
+import { useModal } from "@/components/common/ModalProvider";
 
 export function useScheduleActions(
   initialPhases: SchedulePhase[],
@@ -8,6 +9,7 @@ export function useScheduleActions(
   onToggleHide: (id: string) => void,
   onUpdateAll?: (phases: SchedulePhase[]) => void,
 ) {
+  const { openAlert, openConfirm } = useModal();
   const [phases, setPhases] =
     useState<SchedulePhase[]>(initialPhases);
   const [isEditing, setIsEditing] = useState(false);
@@ -15,6 +17,12 @@ export function useScheduleActions(
   useEffect(() => {
     setPhases(initialPhases);
   }, [initialPhases]);
+
+  // openConfirm 다이얼로그가 열려 있는 동안 phases가 갱신될 수 있어 최신 값을 ref로 읽는다
+  const phasesRef = useRef(phases);
+  useEffect(() => {
+    phasesRef.current = phases;
+  }, [phases]);
 
   const updateLocalState = useCallback(
     (newPhases: SchedulePhase[]) => {
@@ -37,23 +45,27 @@ export function useScheduleActions(
       setIsEditing(true);
     } catch (e) {
       console.error("단계 생성 에러:", e);
-      alert("단계 생성 실패");
+      await openAlert("단계 생성 실패");
     }
   };
 
   const handleDeletePhase = async (phaseId: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
+    if (!(await openConfirm("정말 삭제하시겠습니까?"))) return;
     try {
       await API.deletePhase(phaseId);
-      const nextPhases = phases.filter((s) => s.id !== phaseId);
+      const nextPhases = phasesRef.current.filter((s) => s.id !== phaseId);
       updateLocalState(nextPhases);
     } catch (e) {
       console.error(e);
-      alert("삭제 실패");
+      await openAlert("삭제 실패");
     }
   };
 
-  const handleUpdatePhase = async (phaseId: string, updates: any) => {
+  const handleUpdatePhase = async (
+    phaseId: string,
+    updates: API.PhaseUpdate,
+  ) => {
+    const prevPhases = phases;
     if (updates.isCompleted === true || updates.is_completed === true) {
       onToggleHide(phaseId);
     }
@@ -69,6 +81,8 @@ export function useScheduleActions(
       await API.updatePhase(phaseId, updates);
     } catch (e) {
       console.error("단계 업데이트 에러:", e);
+      updateLocalState(prevPhases);
+      await openAlert("단계 수정 실패");
     }
   };
 
@@ -84,6 +98,7 @@ export function useScheduleActions(
   };
 
   const handlePhaseNameBlur = async (phaseId: string, name: string) => {
+    const prevPhases = phases;
     const nextPhases = phases.map((s) =>
       s.id === phaseId ? { ...s, phaseName: name } : s,
     );
@@ -93,6 +108,8 @@ export function useScheduleActions(
       await API.updatePhase(phaseId, { phaseName: name });
     } catch (e) {
       console.error(e);
+      updateLocalState(prevPhases);
+      await openAlert("단계 이름 수정 실패");
     }
   };
 
@@ -112,10 +129,12 @@ export function useScheduleActions(
       updateLocalState(nextPhases);
     } catch (e) {
       console.error("태스크 생성 에러:", e);
+      await openAlert("업무 생성 실패");
     }
   };
 
   const updateTask = async (phaseId: string, updatedTask: TaskPhase) => {
+    const prevPhases = phases;
     const nextPhases = phases.map((phase) => {
       if (phase.id !== phaseId) return phase;
       return {
@@ -137,13 +156,16 @@ export function useScheduleActions(
       });
     } catch (e) {
       console.error("태스크 업데이트 에러:", e);
+      updateLocalState(prevPhases);
+      await openAlert("업무 수정 실패");
     }
   };
 
   const deleteTask = async (phaseId: string, taskId: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
+    if (!(await openConfirm("삭제하시겠습니까?"))) return;
 
-    const nextPhases = phases.map((phase) => {
+    const prevPhases = phasesRef.current;
+    const nextPhases = phasesRef.current.map((phase) => {
       if (phase.id !== phaseId) return phase;
       return { ...phase, tasks: phase.tasks.filter((t) => t.id !== taskId) };
     });
@@ -153,6 +175,8 @@ export function useScheduleActions(
       await API.deleteTask(taskId);
     } catch (e) {
       console.error("태스크 삭제 에러:", e);
+      updateLocalState(prevPhases);
+      await openAlert("업무 삭제 실패");
     }
   };
 

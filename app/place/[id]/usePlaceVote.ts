@@ -19,9 +19,11 @@ import {
   DinnerVote,
   NaverLocalItem,
 } from "@/types/dinner";
+import { useModal } from "@/components/common/ModalProvider";
 
 export function usePlaceVote(roomId: string) {
   const router = useRouter();
+  const { openAlert, openConfirm } = useModal();
   const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
   const [room, setRoom] = useState<DinnerRoom | null>(null);
   const [places, setPlaces] = useState<DinnerPlace[]>([]);
@@ -139,18 +141,18 @@ export function usePlaceVote(roomId: string) {
         setPlaces((prev) => [...prev, ...newPlaces]);
         return true;
       } catch {
-        alert("장소 추가에 실패했습니다.");
+        await openAlert("장소 추가에 실패했습니다.");
         return false;
       }
     },
-    [resolvedRoomId, roomId],
+    [openAlert, resolvedRoomId, roomId],
   );
 
   const removePlace = useCallback(async (placeId: string) => {
     if (
-      !confirm(
+      !(await openConfirm(
         "이 장소를 삭제하시겠습니까? 해당 장소에 대한 투표도 함께 삭제됩니다.",
-      )
+      ))
     ) {
       return;
     }
@@ -159,9 +161,9 @@ export function usePlaceVote(roomId: string) {
       setPlaces((prev) => prev.filter((p) => p.id !== placeId));
       setVotes((prev) => prev.filter((v) => v.place_id !== placeId));
     } catch {
-      alert("삭제에 실패했습니다.");
+      await openAlert("삭제에 실패했습니다.");
     }
-  }, []);
+  }, [openAlert, openConfirm]);
 
   const togglePlaceSelection = useCallback((placeId: string) => {
     setSelectedPlaceIds((prev) => {
@@ -177,11 +179,11 @@ export function usePlaceVote(roomId: string) {
 
   const submitMyVote = useCallback(async () => {
     if (!voterName.trim()) {
-      alert("이름을 입력해주세요!");
+      await openAlert("이름을 입력해주세요!");
       return;
     }
     if (selectedPlaceIds.size === 0) {
-      alert("장소를 하나 이상 선택해주세요!");
+      await openAlert("장소를 하나 이상 선택해주세요!");
       return;
     }
     setSubmitting(true);
@@ -203,11 +205,11 @@ export function usePlaceVote(roomId: string) {
       setHasVoted(true);
       setSelectedPlaceIds(new Set());
     } catch {
-      alert("투표에 실패했습니다.");
+      await openAlert("투표에 실패했습니다.");
     } finally {
       setSubmitting(false);
     }
-  }, [resolvedRoomId, roomId, selectedPlaceIds, voterName]);
+  }, [openAlert, resolvedRoomId, roomId, selectedPlaceIds, voterName]);
 
   const resetVoteState = useCallback(() => {
     setHasVoted(false);

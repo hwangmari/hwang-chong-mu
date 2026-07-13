@@ -37,10 +37,24 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
     dailyCompletedIds,
     hoveredItemId,
     rawLogs,
+    loading,
   } = state;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
+
+  if (loading) {
+    return (
+      <StFlexBox>
+        <div className="flex-lft-box">
+          <StSection>
+            <StLoadingText>불러오는 중...</StLoadingText>
+          </StSection>
+        </div>
+      </StFlexBox>
+    );
+  }
+
   return (
     <StFlexBox>
       <div className="flex-lft-box">
@@ -161,6 +175,13 @@ export default function MonthlyTracker({ goalId, themeColor }: Props) {
   );
 }
 
+
+const StLoadingText = styled.div`
+  padding: 2rem 0.5rem;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 0.9rem;
+`;
 
 const StToggleHeader = styled.div`
   display: flex;

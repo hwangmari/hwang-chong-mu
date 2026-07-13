@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation"; // useRouter, useParams 제�
 import { useScheduleActions } from "@/hooks/useScheduleActions";
 import { useCardScroll } from "@/hooks/useCardScroll";
 import { buildScheduleText } from "@/utils/clipboardBuilder";
+import { useModal } from "@/components/common/ModalProvider";
 import TaskList from "./Task/TaskList";
 
 interface Props {
@@ -24,6 +25,7 @@ export default function RightTaskPanel({
   onToggleHide,
   onUpdateAll,
 }: Props) {
+  const { openAlert } = useModal();
   const today = startOfDay(new Date());
   const currentYear = new Date().getFullYear();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,7 +63,11 @@ export default function RightTaskPanel({
     const text = buildScheduleText(schedules, hiddenIds, currentYear);
     navigator.clipboard
       .writeText(text)
-      .then(() => alert("일정이 복사되었습니다! (메모 포함)"));
+      .then(() => void openAlert("일정이 복사되었습니다! (메모 포함)"))
+      .catch((err) => {
+        console.error("클립보드 복사 실패:", err);
+        void openAlert("일정 복사에 실패했습니다. 다시 시도해주세요.");
+      });
   };
 
   const searchParams = useSearchParams();

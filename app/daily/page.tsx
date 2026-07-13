@@ -13,9 +13,11 @@ import {
   sanitizeChecklist,
   setStoredDailyAccessCode,
 } from "./storage";
+import { useModal } from "@/components/common/ModalProvider";
 
 export default function DailyCreatePage() {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [title, setTitle] = useState("");
   const [items, setItems] = useState(["운동", "물 2L", "영양제"]);
   const [accessCode, setAccessCode] = useState("");
@@ -46,12 +48,12 @@ export default function DailyCreatePage() {
     const trimmedCode = accessCode.trim();
 
     if (!trimmedTitle) {
-      alert("기록장 이름을 입력해주세요.");
+      await openAlert("기록장 이름을 입력해주세요.");
       return;
     }
 
     if (trimmedCode.length < 4) {
-      alert("접근 비밀번호는 4자 이상 입력해주세요.");
+      await openAlert("접근 비밀번호는 4자 이상 입력해주세요.");
       return;
     }
 
@@ -67,23 +69,23 @@ export default function DailyCreatePage() {
       router.push(`/daily/${notebookId}`);
     } catch (error) {
       console.error("기록장 생성 실패:", error);
-      alert("기록장을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+      await openAlert("기록장을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleOpenNotebook = () => {
+  const handleOpenNotebook = async () => {
     const trimmedId = openNotebookId.trim();
     const trimmedCode = openAccessCode.trim();
 
     if (!trimmedId) {
-      alert("기록장 ID를 입력해주세요.");
+      await openAlert("기록장 ID를 입력해주세요.");
       return;
     }
 
     if (!trimmedCode) {
-      alert("접근 비밀번호를 입력해주세요.");
+      await openAlert("접근 비밀번호를 입력해주세요.");
       return;
     }
 

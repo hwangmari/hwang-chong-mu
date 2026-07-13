@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { createShortCode, toSlug } from "@/lib/slug";
+import { useModal } from "@/components/common/ModalProvider";
 
 interface RoomLike {
   id: string;
@@ -15,6 +16,7 @@ interface RoomLike {
 
 export function useRoomActions(room: RoomLike | null) {
   const router = useRouter();
+  const { openAlert } = useModal();
   const [isCreatingSettlement, setIsCreatingSettlement] = useState(false);
   const [isCreatingDinner, setIsCreatingDinner] = useState(false);
 
@@ -37,7 +39,7 @@ export function useRoomActions(room: RoomLike | null) {
           router.push(`/calc/${room.calc_room_id}`);
         } catch (error) {
           console.error("정산 방 업데이트 실패:", error);
-          alert(
+          await openAlert(
             "정산 방 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.",
           );
         }
@@ -45,7 +47,7 @@ export function useRoomActions(room: RoomLike | null) {
       }
 
       if (memberNames.length === 0) {
-        alert("정산할 참석자가 없습니다.");
+        await openAlert("정산할 참석자가 없습니다.");
         return;
       }
 
@@ -78,12 +80,12 @@ export function useRoomActions(room: RoomLike | null) {
         router.push(`/calc/${newRoom.id}`);
       } catch (error) {
         console.error("정산 방 생성 실패:", error);
-        alert("정산 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        await openAlert("정산 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
       } finally {
         setIsCreatingSettlement(false);
       }
     },
-    [isCreatingSettlement, room, router],
+    [isCreatingSettlement, room, router, openAlert],
   );
 
   const handleCreateDinnerRoom = useCallback(async () => {
@@ -140,11 +142,11 @@ export function useRoomActions(room: RoomLike | null) {
       router.push(`/place/${dinnerSlug}-${dinnerShortCode}`);
     } catch (error) {
       console.error("장소투표 방 생성 실패:", error);
-      alert("장소투표 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      await openAlert("장소투표 방 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsCreatingDinner(false);
     }
-  }, [isCreatingDinner, room, router]);
+  }, [isCreatingDinner, room, router, openAlert]);
 
   return {
     isCreatingSettlement,
