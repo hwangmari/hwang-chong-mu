@@ -243,12 +243,9 @@ export default function WorkspaceHub({
       <StPageInner>
         <StHeader>
           <div>
-            <StEyebrow>Together Ledger</StEyebrow>
             <StTitle>함께 쓰는 가계부 허브</StTitle>
             <StDescription>
-              개인 가계부로 시작하고, 필요할 때 공용방으로 자연스럽게
-              확장해보세요. 참여 코드를 보내면 같은 흐름 안에서 함께 기록하고
-              비교할 수 있습니다.
+              개인 가계부로 시작해 필요할 때 공용방으로 함께 확장하세요.
             </StDescription>
           </div>
           <StHeaderActions>
@@ -669,11 +666,11 @@ export default function WorkspaceHub({
 
 const StPage = styled.main`
   min-height: 100vh;
-  padding: 1.4rem 1.25rem 2rem;
-  background: ${({ theme }) => theme.colors.gray100};
+  padding: 1.25rem 1.25rem 2rem;
+  background: #ffffff;
 
   @media (max-width: 720px) {
-    padding: 1rem 0.9rem 1.4rem;
+    padding: 0.9rem 0.85rem 1.4rem;
   }
 `;
 
@@ -688,7 +685,7 @@ const StHeader = styled.header`
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.9rem;
 
   @media (max-width: 900px) {
     flex-direction: column;
@@ -701,31 +698,21 @@ const StHeaderActions = styled.div`
   flex-wrap: wrap;
 `;
 
-const StEyebrow = styled.p`
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #83878e;
-`;
-
 const StTitle = styled.h1`
-  margin-top: 0.25rem;
-  font-size: 2rem;
+  font-size: 1.2rem;
   font-weight: 900;
   color: ${({ theme }) => theme.colors.gray800};
 
   @media (max-width: 720px) {
-    font-size: 1.55rem;
+    font-size: 1.1rem;
   }
 `;
 
 const StDescription = styled.p`
-  margin-top: 0.45rem;
-  max-width: 42rem;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: #72777f;
+  margin-top: 0.28rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #95999f;
 
   @media (max-width: 720px) {
     display: none;
@@ -744,53 +731,66 @@ const StModeSelector = styled.div`
 `;
 
 const StModeOption = styled.button<{ $active: boolean }>`
-  border: 1px solid ${({ $active }) => ($active ? "#cccdd0" : "#e2e3e5")};
-  border-radius: 1rem;
-  background: ${({ $active, theme }) => ($active ? "#f9f9fa" : theme.colors.white)};
-  padding: 0.9rem 1rem;
+  border: 1px solid ${({ $active }) => ($active ? "#3182f6" : "#e3e4e6")};
+  border-radius: 14px;
+  background: ${({ $active }) => ($active ? "#f0f6ff" : "#fdfdfe")};
+  padding: 0.85rem 0.95rem;
   text-align: left;
   display: grid;
   gap: 0.25rem;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
   strong {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 900;
-    color: ${({ $active, theme }) => ($active ? "#71757d" : theme.colors.gray800)};
+    color: ${({ $active }) => ($active ? "#3182f6" : "#333d4b")};
   }
 
   span {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     line-height: 1.45;
-    color: ${({ $active }) => ($active ? "#7c8088" : "#7c8088")};
+    color: #95999f;
   }
 `;
 
 const StActiveUserNote = styled.p`
   margin-top: -0.15rem;
   margin-bottom: 0.35rem;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.5;
-  color: #72777f;
+  color: #767a82;
 
   strong {
-    color: #1d335a;
+    color: #3182f6;
     font-weight: 900;
   }
 `;
 
 const sharedButtonBase = `
   border-radius: 999px;
-  padding: 0.72rem 1rem;
-  font-size: 0.86rem;
+  padding: 0.6rem 0.95rem;
+  font-size: 0.82rem;
   font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 `;
 
 const StManageButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #d8dadc;
+  border: 1px solid #e3e4e6;
   background: ${({ theme }) => theme.colors.white};
-  color: #2d528d;
+  color: #333d4b;
+
+  &:hover:not(:disabled) {
+    border-color: #d1d2d5;
+    background: #fbfbfc;
+  }
 
   &:disabled {
     opacity: 0.48;
@@ -804,9 +804,20 @@ const StManageButton = styled.button`
 
 const StPrimaryButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #94989f;
-  background: #888c94;
+  border: 1px solid #3182f6;
+  background: #3182f6;
   color: ${({ theme }) => theme.colors.white};
+  box-shadow: 0 8px 18px rgba(49, 130, 246, 0.22);
+
+  &:hover:not(:disabled) {
+    background: #2c76e0;
+    border-color: #2c76e0;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 
   @media (max-width: 720px) {
     width: 100%;
@@ -815,9 +826,14 @@ const StPrimaryButton = styled.button`
 
 const StSecondaryButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #d8dadc;
-  background: ${({ theme }) => theme.colors.blue50};
-  color: #2d528d;
+  border: 1px solid #e3e4e6;
+  background: ${({ theme }) => theme.colors.white};
+  color: #333d4b;
+
+  &:hover {
+    border-color: #d1d2d5;
+    background: #fbfbfc;
+  }
 
   @media (max-width: 720px) {
     width: 100%;
@@ -826,9 +842,14 @@ const StSecondaryButton = styled.button`
 
 const StGhostButton = styled.button`
   ${sharedButtonBase}
-  border: 1px solid #e2e3e4;
+  border: 1px solid #e3e4e6;
   background: ${({ theme }) => theme.colors.white};
-  color: #72777f;
+  color: #767a82;
+
+  &:hover {
+    border-color: #d1d2d5;
+    background: #fbfbfc;
+  }
 
   @media (max-width: 720px) {
     width: 100%;
@@ -836,10 +857,11 @@ const StGhostButton = styled.button`
 `;
 
 const StHeroPanel = styled.section`
-  border: 1px solid #e2e3e4;
-  border-radius: 26px;
-  background: ${({ theme }) => theme.colors.white};
-  padding: 1rem;
+  border: 1px solid #e3e4e6;
+  border-radius: 22px;
+  background: #fdfdfe;
+  box-shadow: 0 6px 16px rgba(125, 129, 137, 0.05);
+  padding: 0.95rem 1.05rem;
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -853,17 +875,18 @@ const StHeroPanel = styled.section`
 
 const StHeroCopy = styled.div`
   display: grid;
-  gap: 0.32rem;
+  gap: 0.28rem;
 
   strong {
-    font-size: 1.05rem;
-    color: ${({ theme }) => theme.colors.gray800};
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #333d4b;
   }
 
   span {
-    font-size: 0.84rem;
-    line-height: 1.55;
-    color: #7d8189;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #95999f;
   }
 
   @media (max-width: 720px) {
@@ -891,20 +914,22 @@ const StWorkspaceColumns = styled.div`
 `;
 
 const StSection = styled.section`
-  margin-top: 1.1rem;
+  margin-top: 0.9rem;
 `;
 
 const StSectionTitle = styled.h2`
-  font-size: 1.05rem;
+  font-size: 0.88rem;
   font-weight: 900;
-  color: #172849;
-  margin-bottom: 0.7rem;
+  color: #333d4b;
+  margin-bottom: 0.5rem;
 `;
 
 const StSectionDescription = styled.p`
-  margin-bottom: 0.7rem;
-  font-size: 0.82rem;
-  color: #7f848c;
+  margin-top: -0.28rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #95999f;
 
   @media (max-width: 720px) {
     display: none;
@@ -919,26 +944,26 @@ const StGrid = styled.div`
 
 const StCard = styled.button`
   text-align: left;
-  border: 1px solid #e2e3e4;
+  border: 1px solid #e3e4e6;
   border-radius: 22px;
-  padding: 1rem;
-  background: ${({ theme }) => theme.colors.white};
+  padding: 1rem 1.05rem;
+  background: #fdfdfe;
+  box-shadow: 0 6px 16px rgba(125, 129, 137, 0.05);
+  cursor: pointer;
   transition:
     border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+    box-shadow 0.18s ease;
 
   &:hover {
-    border-color: #d7d8da;
-    box-shadow: 0 16px 36px rgba(88, 92, 98, 0.08);
-    transform: translateY(-1px);
+    border-color: #d1d2d5;
+    box-shadow: 0 10px 22px rgba(125, 129, 137, 0.1);
   }
 `;
 
 const StCardBody = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(min(220px, 100%), 0.9fr);
-  gap: 1.1rem;
+  gap: 0.9rem;
   align-items: stretch;
 
   @media (max-width: 760px) {
@@ -953,36 +978,36 @@ const StCardMain = styled.div`
 const StCardAside = styled.div`
   display: grid;
   align-content: start;
-  gap: 0.55rem;
-  padding-left: 1.05rem;
-  border-left: 1px dashed #dadbdd;
+  gap: 0.45rem;
+  padding-left: 0.95rem;
+  border-left: 1px dashed #e3e4e6;
 
   @media (max-width: 760px) {
     padding-left: 0;
-    padding-top: 0.95rem;
+    padding-top: 0.85rem;
     border-left: 0;
-    border-top: 1px dashed #dadbdd;
+    border-top: 1px dashed #e3e4e6;
   }
 `;
 
 const StCardAsideLabel = styled.span`
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #858990;
+  color: #95999f;
 `;
 
 const StCardAsideValue = styled.strong`
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 900;
-  color: #172748;
+  color: #333d4b;
 `;
 
 const StCardAsideDescription = styled.p`
-  font-size: 0.8rem;
-  line-height: 1.6;
-  color: #7d8189;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #95999f;
 
   @media (max-width: 720px) {
     display: none;
@@ -992,17 +1017,16 @@ const StCardAsideDescription = styled.p`
 const StCardAsideTags = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
 
   span {
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    border: 1px solid #e2e3e4;
-    background: ${({ theme }) => theme.colors.blue50};
-    color: #2d518f;
-    padding: 0.24rem 0.55rem;
-    font-size: 0.72rem;
+    background: #e8f2fe;
+    color: #3182f6;
+    padding: 0.2rem 0.52rem;
+    font-size: 0.7rem;
     font-weight: 800;
   }
 `;
@@ -1010,34 +1034,35 @@ const StCardAsideTags = styled.div`
 const StCardType = styled.span`
   display: inline-flex;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.indigo50};
-  color: #7d8189;
-  font-size: 0.72rem;
-  font-weight: 900;
-  padding: 0.28rem 0.55rem;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: #767a82;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.22rem 0.52rem;
 `;
 
 const StCardTitle = styled.h3`
-  margin-top: 0.85rem;
-  font-size: 1.2rem;
+  margin-top: 0.7rem;
+  font-size: 1.05rem;
   font-weight: 900;
   color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StCardMeta = styled.p`
-  margin-top: 0.4rem;
-  font-size: 0.85rem;
-  color: #6f737b;
+  margin-top: 0.32rem;
+  font-size: 0.8rem;
+  color: #767a82;
   font-weight: 700;
 `;
 
 const StInviteRow = styled.div`
-  margin-top: 0.75rem;
+  margin-top: 0.6rem;
 
   span {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 800;
-    color: #72767d;
+    color: #767a82;
   }
 `;
 
@@ -1046,20 +1071,29 @@ const StInviteCopyAction = styled.span`
   align-items: center;
   justify-content: center;
   width: fit-content;
-  border: 1px solid #d8dadc;
+  border: 1px solid #e3e4e6;
   background: ${({ theme }) => theme.colors.white};
-  color: #2d528d;
+  color: #3182f6;
   border-radius: 999px;
-  padding: 0.5rem 0.78rem;
-  font-size: 0.74rem;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.72rem;
   font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    border-color: #d1d2d5;
+    background: #fbfbfc;
+  }
 `;
 
 const StCardHint = styled.p`
-  margin-top: 1rem;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: #868a92;
+  margin-top: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #95999f;
 
   @media (max-width: 720px) {
     display: none;
@@ -1069,30 +1103,30 @@ const StCardHint = styled.p`
 const StMemberPreview = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.8rem;
+  gap: 0.32rem;
+  margin-top: 0.6rem;
 
   span {
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    background: ${({ theme }) => theme.colors.indigo50};
-    color: #747880;
-    padding: 0.22rem 0.48rem;
-    font-size: 0.72rem;
+    background: ${({ theme }) => theme.colors.gray100};
+    color: #767a82;
+    padding: 0.2rem 0.46rem;
+    font-size: 0.7rem;
     font-weight: 800;
   }
 `;
 
 const StEmptyCard = styled.div`
-  margin-top: 1rem;
+  margin-top: 0.6rem;
   border-radius: 22px;
-  border: 1px dashed #d7d8db;
-  background: ${({ theme }) => theme.colors.white};
-  color: #7d8189;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  padding: 1rem 1.1rem;
+  border: 1px dashed #e3e4e6;
+  background: #fdfdfe;
+  color: #95999f;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  padding: 0.95rem 1.05rem;
 `;
 
 const StModalBackdrop = styled.div`
@@ -1108,24 +1142,24 @@ const StModalBackdrop = styled.div`
 
 const StModalCard = styled.div`
   width: min(460px, 100%);
-  border-radius: 26px;
-  border: 1px solid #e2e3e4;
+  border-radius: 22px;
+  border: 1px solid #e3e4e6;
   background: rgba(255, 255, 255, 0.98);
-  padding: 1rem;
-  box-shadow: 0 28px 64px rgba(69, 72, 77, 0.18);
+  padding: 1.1rem;
+  box-shadow: 0 20px 40px rgba(83, 86, 91, 0.14);
 `;
 
 const StModalTitle = styled.h3`
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 900;
   color: ${({ theme }) => theme.colors.gray800};
 `;
 
 const StModalDescription = styled.p`
-  margin-top: 0.45rem;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  color: #797e86;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #95999f;
 `;
 
 const StField = styled.label`
@@ -1135,19 +1169,25 @@ const StField = styled.label`
 
   label,
   span {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 800;
-    color: #305698;
+    color: #4e5968;
   }
 
   input {
     width: 100%;
-    border: 1px solid #dfe0e2;
+    border: 1px solid #e3e4e6;
     border-radius: 12px;
     background: ${({ theme }) => theme.colors.white};
     padding: 0.72rem 0.82rem;
     font-size: 0.92rem;
     color: ${({ theme }) => theme.colors.gray800};
+    transition: border-color 0.15s ease;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #3182f6;
   }
 `;
 

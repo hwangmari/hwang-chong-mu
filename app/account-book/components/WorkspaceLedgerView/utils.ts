@@ -1061,6 +1061,8 @@ function removeNaturalNoise(text: string, memberNames: string[]) {
       .replace(CAR_COMPANY_NOISE_PATTERN, " ")
       // 긴 표현 우선: "현금영수증 발급"/"영수증 발급"을 통째로 지워 "발급" 잔여어를 남기지 않는다.
       .replace(/현금영수증\s*발급|영수증\s*발급|현금영수증|영수증/g, " ")
+      // "실적제외"/"실적 제외" 키워드는 항목명에서 제거한다.
+      .replace(/실적\s*제외/g, " ")
       .replace(/체크카드|체크|현금|카드|계좌이체|이체|송금/g, " ")
       .replace(/일시불|할부/g, " ")
       .replace(memberPattern || /$^/, " ")
@@ -1122,6 +1124,14 @@ export function parseNaturalInputEntry(
   const hasReceiptKeyword = /현금영수증|영수증/.test(text);
   const cashReceipt =
     hasReceiptKeyword && payment === "cash" ? true : undefined;
+  // "실적제외"/"실적 제외" 키워드가 있고 카드/체크카드로 파싱된 경우에만 실적 제외로 인정한다.
+  // (현금 결제엔 실적 개념이 없으므로 undefined)
+  const hasBenefitExcludedKeyword = /실적\s*제외/.test(text);
+  const benefitExcluded =
+    hasBenefitExcludedKeyword &&
+    (payment === "card" || payment === "check_card")
+      ? true
+      : undefined;
   const matchedUser =
     context.memberUsers.find((user) => text.includes(user.name)) ||
     context.memberUsers[0] ||
@@ -1157,6 +1167,7 @@ export function parseNaturalInputEntry(
     cardCompany,
     payment,
     cashReceipt,
+    benefitExcluded,
     memo: "",
     rawText: text,
   };

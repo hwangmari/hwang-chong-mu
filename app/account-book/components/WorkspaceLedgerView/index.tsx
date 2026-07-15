@@ -752,6 +752,7 @@ export default function WorkspaceLedgerView({
           label: string;
           paymentGroup: PaymentType;
           amount: number;
+          benefitExcludedAmount: number;
           count: number;
           cardCount: number;
           checkCardCount: number;
@@ -777,6 +778,7 @@ export default function WorkspaceLedgerView({
           label,
           paymentGroup,
           amount: 0,
+          benefitExcludedAmount: 0,
           count: 0,
           cardCount: 0,
           checkCardCount: 0,
@@ -785,6 +787,9 @@ export default function WorkspaceLedgerView({
       }
 
       acc[id].amount += entry.amount;
+      if (entry.benefitExcluded) {
+        acc[id].benefitExcludedAmount += entry.amount;
+      }
       acc[id].count += 1;
 
       if (paymentGroup === "cash") {
@@ -1203,6 +1208,8 @@ export default function WorkspaceLedgerView({
         onToggleRecurring={entryForm.setRecurring}
         cashReceipt={entryForm.cashReceipt}
         onSetCashReceipt={entryForm.setCashReceipt}
+        benefitExcluded={entryForm.benefitExcluded}
+        onSetBenefitExcluded={entryForm.setBenefitExcluded}
         onClose={entryForm.closeFormModal}
         onSetDate={setSelectedDate}
         onSetType={entryForm.handleTypeChange}

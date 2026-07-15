@@ -27,6 +27,8 @@ export type AccountEntry = {
   rawText?: string;
   // 현금영수증 발급 여부 (현금 결제에만 의미, 미지정=미발급)
   cashReceipt?: boolean;
+  // 카드 실적 집계 제외 여부 (공과금·상품권 등 실적 불인정 지출)
+  benefitExcluded?: boolean;
 };
 
 export type ResolvedAccountEntry = AccountEntry & {

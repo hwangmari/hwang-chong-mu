@@ -265,6 +265,11 @@ export default function DetailEntriesPanel({
               🧾
             </StCashReceiptBadge>
           ) : null}
+          {entry.payment !== "cash" && entry.benefitExcluded ? (
+            <StCashReceiptBadge title="실적 제외" aria-label="실적 제외">
+              🚫
+            </StCashReceiptBadge>
+          ) : null}
           {isShared ? <StSharedTag>공유중</StSharedTag> : null}
           {entry.source !== "direct" ? (
             <StMirrorBadge>

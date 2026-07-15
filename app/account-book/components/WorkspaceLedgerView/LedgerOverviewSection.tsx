@@ -18,6 +18,7 @@ type CardCompanySummary = {
   label: string;
   paymentGroup: PaymentType;
   amount: number;
+  benefitExcludedAmount: number;
   count: number;
   cardCount: number;
   checkCardCount: number;
@@ -264,9 +265,14 @@ export default function LedgerOverviewSection({
                       : entry.checkCardCount > 0
                         ? `총 ${entry.count}건 · 체크카드`
                         : `총 ${entry.count}건 · 카드`;
+                  // 실적 계산은 표시 총액이 아니라 실적 제외분을 뺀 인정액 기준.
+                  const benefitEligibleAmount = Math.max(
+                    entry.amount - entry.benefitExcludedAmount,
+                    0,
+                  );
                   const benefit = getCardBenefitStatus(
                     entry.label,
-                    entry.amount,
+                    benefitEligibleAmount,
                   );
 
                   return (
@@ -285,6 +291,9 @@ export default function LedgerOverviewSection({
                         {benefit && !benefit.achieved ? (
                           <StBenefitStatus>
                             {`${benefit.threshold / 10000}만원까지 ${formatAmount(benefit.remaining)}`}
+                            {entry.benefitExcludedAmount > 0
+                              ? ` · 제외 ${formatAmount(entry.benefitExcludedAmount)}`
+                              : ""}
                           </StBenefitStatus>
                         ) : null}
                       </StMetaLine>

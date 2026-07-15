@@ -65,6 +65,9 @@ function normalizeLegacyEntry(
       raw.payment === "cash" ? "" : raw.cardCompany || "현대카드",
     memo: raw.memo || "",
     rawText: raw.rawText || "",
+    // 화이트리스트 재조립이라 새 optional 플래그는 명시적으로 보존해야 한다.
+    cashReceipt: raw.cashReceipt === true ? true : undefined,
+    benefitExcluded: raw.benefitExcluded === true ? true : undefined,
   };
 }
 
@@ -259,6 +262,9 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
         entry.payment === "cash" ? "" : entry.cardCompany || "현대카드",
       memo: entry.memo || "",
       rawText: entry.rawText || "",
+      // 화이트리스트 재조립이라 새 optional 플래그는 명시적으로 보존해야 한다.
+      cashReceipt: entry.cashReceipt === true ? true : undefined,
+      benefitExcluded: entry.benefitExcluded === true ? true : undefined,
     })),
     shareLinks: shareLinks.map((link, index) => ({
       id: link.id || `share-${index + 1}`,

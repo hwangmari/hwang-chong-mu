@@ -127,6 +127,10 @@ export default function NaturalInputSection({
                     naturalPreview.cashReceipt ? (
                       <span>🧾 현금영수증</span>
                     ) : null}
+                    {naturalPreview.payment !== "cash" &&
+                    naturalPreview.benefitExcluded ? (
+                      <span>🚫 실적 제외</span>
+                    ) : null}
                     <em>{formatAmount(naturalPreview.amount)}</em>
                   </>
                 ) : (

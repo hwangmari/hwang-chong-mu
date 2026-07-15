@@ -83,6 +83,8 @@ export function useEntryForm({
   const [recurring, setRecurring] = useState(false);
   // 현금영수증 발급 여부 (현금 결제에만 의미)
   const [cashReceipt, setCashReceipt] = useState(false);
+  // 카드 실적 제외 여부 (카드/체크카드 결제에만 의미)
+  const [benefitExcluded, setBenefitExcluded] = useState(false);
 
   const editingEntry = useMemo(
     () =>
@@ -175,6 +177,7 @@ export function useEntryForm({
       );
       setRecurring(false);
       setCashReceipt(false);
+      setBenefitExcluded(false);
       setIsFormModalOpen(true);
     },
     [defaultMember, selectedParticipant, setSelectedDate],
@@ -200,6 +203,7 @@ export function useEntryForm({
       setDraftRawText(entry.rawText || "");
       setRecurring(Boolean(extractFixedExpenseTemplateId(entry.rawText)));
       setCashReceipt(Boolean(entry.cashReceipt));
+      setBenefitExcluded(Boolean(entry.benefitExcluded));
       setIsFormModalOpen(true);
     },
     [defaultMember, setSelectedDate],
@@ -280,6 +284,10 @@ export function useEntryForm({
           : "",
       payment: type === "income" ? "cash" : resolvedPayment,
       cashReceipt: payment === "cash" ? cashReceipt : undefined,
+      benefitExcluded:
+        payment === "card" || payment === "check_card"
+          ? benefitExcluded
+          : undefined,
       memo: memo.trim(),
       rawText:
         nextFixedTemplateId && type === "expense"
@@ -299,6 +307,7 @@ export function useEntryForm({
     closeFormModal();
   }, [
     amount,
+    benefitExcluded,
     cardCompany,
     cashReceipt,
     category,
@@ -454,6 +463,8 @@ export function useEntryForm({
     setRecurring,
     cashReceipt,
     setCashReceipt,
+    benefitExcluded,
+    setBenefitExcluded,
     setMember,
     setSubCategory,
     setMerchant,

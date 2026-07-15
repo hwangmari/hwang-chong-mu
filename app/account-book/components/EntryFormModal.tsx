@@ -43,6 +43,8 @@ type Props = {
   onToggleRecurring: (value: boolean) => void;
   cashReceipt: boolean;
   onSetCashReceipt: (value: boolean) => void;
+  benefitExcluded: boolean;
+  onSetBenefitExcluded: (value: boolean) => void;
   onClose: () => void;
   onSetDate: (date: string) => void;
   onSetType: (type: EntryType) => void;
@@ -79,6 +81,8 @@ export default function EntryFormModal({
   onToggleRecurring,
   cashReceipt,
   onSetCashReceipt,
+  benefitExcluded,
+  onSetBenefitExcluded,
   onClose,
   onSetDate,
   onSetType,
@@ -272,6 +276,24 @@ export default function EntryFormModal({
                     <span>현금 결제 시 현금영수증을 발급했다면 켜주세요</span>
                   </StRecurringText>
                   <StRecurringSwitch $active={cashReceipt} aria-hidden>
+                    <span />
+                  </StRecurringSwitch>
+                </StRecurringRow>
+              ) : null}
+              {payment === "card" || payment === "check_card" ? (
+                <StRecurringRow
+                  type="button"
+                  $active={benefitExcluded}
+                  onClick={() => onSetBenefitExcluded(!benefitExcluded)}
+                  aria-pressed={benefitExcluded}
+                >
+                  <StRecurringText>
+                    <strong>🚫 실적 제외</strong>
+                    <span>
+                      공과금·상품권처럼 카드 실적에 안 잡히는 지출이면 켜주세요
+                    </span>
+                  </StRecurringText>
+                  <StRecurringSwitch $active={benefitExcluded} aria-hidden>
                     <span />
                   </StRecurringSwitch>
                 </StRecurringRow>

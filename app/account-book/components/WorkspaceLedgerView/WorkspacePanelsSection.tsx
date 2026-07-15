@@ -41,6 +41,7 @@ type Props = {
     label: string;
     paymentGroup: PaymentType;
     amount: number;
+    benefitExcludedAmount: number;
     count: number;
     cardCount: number;
     checkCardCount: number;
