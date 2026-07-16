@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"head -35 docs/architecture/schedule-structure.md\",\"description\":\"Spot-check quality of the largest doc\"}",
+  "error": "Exit code 1\nhead: docs/architecture/schedule-structure.md: No such file or directory",
+  "timestamp": "2026-07-15T01:39:00.317Z",
+  "retry_count": 1
+}
