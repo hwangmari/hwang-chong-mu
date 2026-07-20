@@ -128,6 +128,23 @@ export type AssetData = {
   changes: AssetChange[];
 };
 
+export type StockTradeSide = "buy" | "sell";
+
+export type StockTrade = {
+  id: string; // stock-trade-...
+  workspaceId: string;
+  accountId: string; // 투자 계좌(AssetAccount) 연결
+  date: string; // YYYY-MM-DD
+  side: StockTradeSide;
+  stockCode: string; // 6자리 코드
+  stockName: string; // 표시용 (검색 API에서 채움)
+  quantity: number;
+  price: number; // 주당 체결가
+  fee?: number; // 거래 수수료(원). 평단·실현손익에 반영
+  memo?: string;
+  createdByUserId: string;
+};
+
 export type AccountBookStore = {
   version: number;
   users: AccountBookUser[];

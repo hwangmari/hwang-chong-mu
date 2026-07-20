@@ -10,6 +10,7 @@ import {
   AssetAccount,
   AssetChange,
   AssetData,
+  StockTrade,
 } from "./types";
 import {
   ACCOUNT_BOOK_STORE_KEY,
@@ -771,6 +772,83 @@ export async function transferAccountBookAsset(params: {
     p_memo: params.memo || "",
     p_actor_user_id: params.actorUserId,
   });
+}
+
+// ── 투자 계좌 매매일지 (주식 포트폴리오) ────────────────────────────────────
+// mutation RPC는 갱신된 trades 전체를 반환 → 훅에서 상태를 통째로 교체한다.
+
+type RawStockTrade = {
+  id: string;
+  workspace_id: string;
+  account_id: string;
+  date: string;
+  side: StockTrade["side"];
+  stock_code: string;
+  stock_name: string;
+  quantity: number | string;
+  price: number | string;
+  fee: number | string | null;
+  memo: string | null;
+  created_by_user_id: string | null;
+};
+
+function mapRawStockTrades(raw: unknown): StockTrade[] {
+  const rows = (Array.isArray(raw) ? raw : []) as RawStockTrade[];
+  return rows.map((trade) => ({
+    id: trade.id,
+    workspaceId: trade.workspace_id,
+    accountId: trade.account_id,
+    date: trade.date,
+    side: trade.side,
+    stockCode: trade.stock_code,
+    stockName: trade.stock_name,
+    quantity: Number(trade.quantity) || 0,
+    price: Number(trade.price) || 0,
+    fee: Number(trade.fee) || 0,
+    memo: trade.memo || undefined,
+    createdByUserId: trade.created_by_user_id || "",
+  }));
+}
+
+export async function fetchStockTrades(
+  workspaceId: string,
+): Promise<StockTrade[]> {
+  const { data, error } = await supabase.rpc(
+    "account_book_get_stock_trades",
+    { p_workspace_id: workspaceId },
+  );
+  if (error) {
+    throw error;
+  }
+  return mapRawStockTrades(data);
+}
+
+export async function upsertStockTrade(
+  trade: StockTrade,
+  actorUserId: string,
+): Promise<StockTrade[]> {
+  const { data, error } = await supabase.rpc(
+    "account_book_upsert_stock_trade",
+    { p_trade: trade, p_actor_user_id: actorUserId },
+  );
+  if (error) {
+    throw error;
+  }
+  return mapRawStockTrades(data);
+}
+
+export async function deleteStockTrade(
+  tradeId: string,
+  actorUserId: string,
+): Promise<StockTrade[]> {
+  const { data, error } = await supabase.rpc(
+    "account_book_delete_stock_trade",
+    { p_trade_id: tradeId, p_actor_user_id: actorUserId },
+  );
+  if (error) {
+    throw error;
+  }
+  return mapRawStockTrades(data);
 }
 
 // ── 가계부 자산/저축 내역 ↔ 통장 자동 연동 (Phase 5) ────────────────────────

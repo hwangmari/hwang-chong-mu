@@ -9,6 +9,7 @@ import AccountBookLockGate from "../components/AccountBookLockGate";
 import AssetBoardSection from "../components/AssetBoardSection";
 import AssetAnnualFlow from "../components/AssetAnnualFlow";
 import { useAssetData } from "../hooks/useAssetData";
+import { useStockTrades } from "../hooks/useStockTrades";
 import {
   formatAmount,
   getRepresentativeCategory,
@@ -124,6 +125,22 @@ function AccountBookAnnualContent() {
     kind === "asset" ? workspaceId : null,
     assetActorUserId,
   );
+  // 투자 계좌의 "올해 목표"는 자산 입금이 아니라 주식 매매(올해 순매수)로 채운다.
+  const { trades: stockTrades } = useStockTrades(
+    kind === "asset" ? workspaceId : null,
+    assetActorUserId,
+  );
+  const stockYearBuyByAccount = useMemo(() => {
+    const yearPrefix = `${selectedYear}-`;
+    const map: Record<string, number> = {};
+    for (const trade of stockTrades) {
+      if (!trade.date.startsWith(yearPrefix)) continue;
+      const amount = trade.quantity * trade.price;
+      const signed = trade.side === "buy" ? amount : -amount;
+      map[trade.accountId] = (map[trade.accountId] || 0) + signed;
+    }
+    return map;
+  }, [stockTrades, selectedYear]);
   const workspaceEntries = useMemo(
     () => (store && workspace ? resolveWorkspaceEntries(store, workspace.id) : []),
     [store, workspace],
@@ -527,6 +544,7 @@ function AccountBookAnnualContent() {
               asset={asset}
               currentYear={selectedYear}
               isAmountHidden={isAmountHidden}
+              stockYearBuyByAccount={stockYearBuyByAccount}
             />
             <AssetAnnualFlow
               rows={assetFlowRows}

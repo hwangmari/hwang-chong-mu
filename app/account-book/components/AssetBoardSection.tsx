@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import styled from "styled-components";
 import { useModal } from "@/components/common/ModalProvider";
@@ -12,6 +13,8 @@ type Props = {
   asset: ReturnType<typeof useAssetData>;
   currentYear: number;
   isAmountHidden: boolean;
+  // 투자 계좌 목표 진행용 — 계좌별 올해 순매수(매수−매도) 금액
+  stockYearBuyByAccount?: Record<string, number>;
 };
 
 const KIND_OPTIONS = ["예금", "적금", "투자", "연금", "현금", "기타"];
@@ -44,8 +47,10 @@ export default function AssetBoardSection({
   asset,
   currentYear,
   isAmountHidden,
+  stockYearBuyByAccount,
 }: Props) {
   const { openConfirm } = useModal();
+  const router = useRouter();
   const mask = (value: number) =>
     isAmountHidden ? "•••••" : formatAmount(value);
   const maskSigned = (value: number) =>
@@ -55,6 +60,35 @@ export default function AssetBoardSection({
     {},
   );
   const [menuId, setMenuId] = useState<string | null>(null);
+
+  // 아코디언 접힘 상태를 세션에 저장 — 주식 상세를 다녀와도(리마운트) 유지된다.
+  // 새 세션(탭)에서 처음 들어오면 저장값이 없어 전부 닫힘(기본)으로 시작.
+  // 복원은 마운트 때 읽기만 하고, 저장은 토글 시점(setCollapsedKinds 내부)에 직접 한다
+  // — persist를 effect로 하면 마운트 시 빈 값으로 저장소를 덮어쓰는 레이스가 생긴다.
+  const COLLAPSE_STORAGE_KEY = "hwang-asset-collapsed-kinds";
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(COLLAPSE_STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) setCollapsedKinds(JSON.parse(raw));
+    } catch {
+      // 무시
+    }
+  }, []);
+  const toggleKindCollapsed = (kind: string, collapsed: boolean) => {
+    setCollapsedKinds((prev) => {
+      const next = { ...prev, [kind]: !collapsed };
+      try {
+        window.sessionStorage.setItem(
+          COLLAPSE_STORAGE_KEY,
+          JSON.stringify(next),
+        );
+      } catch {
+        // 무시
+      }
+      return next;
+    });
+  };
   const [accountModal, setAccountModal] = useState<
     { id?: string; name: string; kind: string; goalAmount: number } | null
   >(null);
@@ -75,34 +109,40 @@ export default function AssetBoardSection({
   );
 
   // 통장을 종류(예금/적금/투자/연금...)별로 묶어 아코디언으로 보여준다.
+  const { activeAccounts, balanceByAccount } = asset;
   const kindGroups = useMemo(() => {
     const map = new Map<
       string,
-      { kind: string; accounts: typeof asset.activeAccounts; total: number }
+      { kind: string; accounts: typeof activeAccounts; total: number }
     >();
-    for (const account of asset.activeAccounts) {
+    for (const account of activeAccounts) {
       const kind = account.kind || "기타";
       if (!map.has(kind)) map.set(kind, { kind, accounts: [], total: 0 });
       const group = map.get(kind)!;
       group.accounts.push(account);
-      group.total += asset.balanceByAccount[account.id] || 0;
+      group.total += balanceByAccount[account.id] || 0;
     }
     const order = [...KIND_OPTIONS, "기타"];
     return [...map.values()].sort(
       (a, b) => order.indexOf(a.kind) - order.indexOf(b.kind),
     );
-  }, [asset.activeAccounts, asset.balanceByAccount]);
+  }, [activeAccounts, balanceByAccount]);
 
   const renderAccountBlock = (account: (typeof asset.activeAccounts)[number]) => {
     const balance = asset.balanceByAccount[account.id] || 0;
     const isExpanded = expandedId === account.id;
     const history = asset.changesByAccount(account.id);
     const goal = account.goalAmount || 0;
-    // 목표는 연 단위 → 올해 입금액만 반영(작년 이전 잔액·초기잔액 제외)
+    // 목표는 연 단위 → 올해 유입액만 반영.
+    // 투자 계좌는 자산 입금이 아니라 주식 매매(올해 순매수)를 유입으로 본다.
+    // (기존 보유분은 매수 일자를 실제 취득일로 넣으면 올해에서 자동 제외됨)
     const yearPrefix = `${currentYear}-`;
-    const yearInflow = history
-      .filter((change) => change.date.startsWith(yearPrefix))
-      .reduce((sum, change) => sum + change.amount, 0);
+    const yearInflow =
+      account.kind === "투자"
+        ? stockYearBuyByAccount?.[account.id] || 0
+        : history
+            .filter((change) => change.date.startsWith(yearPrefix))
+            .reduce((sum, change) => sum + change.amount, 0);
     const progress =
       goal > 0 ? Math.min(Math.max((yearInflow / goal) * 100, 0), 100) : 0;
     return (
@@ -125,6 +165,21 @@ export default function AssetBoardSection({
           <StAccountRight>
             <StBalance>{mask(balance)}</StBalance>
             <StRowActions>
+              {account.kind === "투자" ? (
+                <StPortfolioButton
+                  type="button"
+                  title="주식 포트폴리오"
+                  aria-label="주식 포트폴리오"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    router.push(
+                      `/account-book/investment?workspace=${account.workspaceId}&account=${account.id}`,
+                    );
+                  }}
+                >
+                  📈
+                </StPortfolioButton>
+              ) : null}
               <StRowButton
                 type="button"
                 onClick={(event) => {
@@ -341,17 +396,13 @@ export default function AssetBoardSection({
           </StEmpty>
         ) : (
           kindGroups.map((group) => {
-            const collapsed = collapsedKinds[group.kind] ?? false;
+            // 통장이 많아 목록이 길어지므로 그룹 아코디언은 기본 닫힘으로 시작한다.
+            const collapsed = collapsedKinds[group.kind] ?? true;
             return (
               <StKindSection key={group.kind}>
                 <StKindSectionHeader
                   type="button"
-                  onClick={() =>
-                    setCollapsedKinds((prev) => ({
-                      ...prev,
-                      [group.kind]: !collapsed,
-                    }))
-                  }
+                  onClick={() => toggleKindCollapsed(group.kind, collapsed)}
                   aria-expanded={!collapsed}
                 >
                   <strong>{group.kind}</strong>
@@ -977,6 +1028,20 @@ const StRowButton = styled.button`
   font-size: 0.72rem;
   font-weight: 800;
   cursor: pointer;
+`;
+
+const StPortfolioButton = styled.button`
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid #e6e7e9;
+  background: #ffffff;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const StKebab = styled.button`
