@@ -45,7 +45,8 @@ const popIn = keyframes`
 const StOverlay = styled.div`
   position: fixed;
   inset: 0; /* top:0, right:0, bottom:0, left:0 */
-  z-index: 50;
+  /* 전역 확인/알림 모달은 앱의 어떤 오버레이(InstallGuide 9999 포함)보다 위에 있어야 한다 */
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;

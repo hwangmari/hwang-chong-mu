@@ -66,6 +66,9 @@ type Props = {
   ledgerDetailEntries: ResolvedAccountEntry[];
   ledgerDetailAssetEntries: ResolvedAccountEntry[];
   annualSavingGoal: number;
+  monthlyBudget: number;
+  onChangeAnnualSavingGoal?: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlyBudget?: (value: number) => boolean | Promise<boolean>;
   dashboardRows: Array<{
     monthNumber: number;
     monthLabel: string;
@@ -97,6 +100,7 @@ type Props = {
   onOpenNaturalRegisterForDate: (date: string) => void;
   onSelectCalendarCard: (cardId: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
+  onCopy?: (entry: ResolvedAccountEntry) => void;
   onDelete: (id: string) => void;
   entryActions: (entry: ResolvedAccountEntry) => EntryAction[];
   paymentLabel: (payment: PaymentType) => string;
@@ -141,6 +145,9 @@ export default function WorkspacePanelsSection({
   ledgerDetailEntries,
   ledgerDetailAssetEntries,
   annualSavingGoal,
+  monthlyBudget,
+  onChangeAnnualSavingGoal,
+  onChangeMonthlyBudget,
   dashboardRows,
   onSelectBoardMonth,
   calendarDays,
@@ -155,6 +162,7 @@ export default function WorkspacePanelsSection({
   onOpenNaturalRegisterForDate,
   onSelectCalendarCard,
   onEdit,
+  onCopy,
   onDelete,
   entryActions,
   paymentLabel,
@@ -238,6 +246,9 @@ export default function WorkspacePanelsSection({
                 currentYear={currentYear}
                 currentMonthIndex={currentMonthIndex}
                 annualGoal={annualSavingGoal}
+                monthlyBudget={monthlyBudget}
+                onChangeAnnualGoal={onChangeAnnualSavingGoal}
+                onChangeMonthlyBudget={onChangeMonthlyBudget}
                 dashboardRows={dashboardRows}
                 onSelectMonth={onSelectBoardMonth}
                 onOpenIncomeYearly={onOpenIncomeYearly}
@@ -277,6 +288,7 @@ export default function WorkspacePanelsSection({
                 onOpenAdd={onOpenAdd}
                 onOpenNaturalAdd={onOpenNaturalAdd}
                 onEdit={onEdit}
+                onCopy={onCopy}
                 onDelete={onDelete}
                 entryActions={entryActions}
                 formatAmount={formatAmount}
@@ -302,6 +314,7 @@ export default function WorkspacePanelsSection({
               onOpenAdd={onOpenAdd}
               onOpenNaturalAdd={onOpenNaturalAdd}
               onEdit={onEdit}
+              onCopy={onCopy}
               onDelete={onDelete}
               entryActions={entryActions}
               formatAmount={formatAmount}

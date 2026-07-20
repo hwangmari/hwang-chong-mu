@@ -52,6 +52,8 @@ export type AccountBookWorkspace = {
   type: WorkspaceType;
   password: string;
   annualSavingGoal?: number;
+  // 월 소비지출 예산(원). 0 또는 미설정 = 예산 미사용
+  monthlyBudget?: number;
   assetGoalMap?: AccountBookAssetGoalMap;
   ownerUserId?: string;
   memberIds: string[];

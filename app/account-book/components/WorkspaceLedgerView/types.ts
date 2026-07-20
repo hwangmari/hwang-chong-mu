@@ -24,7 +24,8 @@ export type WorkspaceLedgerViewProps = {
   ) => boolean | Promise<boolean>;
   onSaveEntry: (entry: AccountEntry) => boolean | Promise<boolean>;
   onDeleteEntry: (entryId: string) => void | Promise<void>;
-  onChangeAnnualSavingGoal: (value: number) => boolean | Promise<boolean>;
+  onChangeAnnualSavingGoal?: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlyBudget?: (value: number) => boolean | Promise<boolean>;
   onBack: () => void;
   initialViewMode?: ViewMode;
 };

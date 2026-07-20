@@ -106,6 +106,7 @@ function AccountBookPageContent() {
             onSaveMonthlyMemo={actions.handleSaveMonthlyMemo}
             onDeleteEntry={actions.handleDeleteEntry}
             onChangeAnnualSavingGoal={actions.handleChangeAnnualSavingGoal}
+            onChangeMonthlyBudget={actions.handleChangeMonthlyBudget}
             onBack={() => router.push("/account-book")}
             initialViewMode={initialViewMode}
           />

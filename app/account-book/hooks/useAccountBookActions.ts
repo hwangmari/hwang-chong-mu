@@ -210,6 +210,23 @@ export function useAccountBookActions(helpers: StoreHelpers) {
     [selectedWorkspace, commitStoreChange],
   );
 
+  const handleChangeMonthlyBudget = useCallback(
+    async (value: number) => {
+      if (!selectedWorkspace) return false;
+      return Boolean(
+        await commitStoreChange(
+          () =>
+            upsertAccountBookWorkspace({
+              ...selectedWorkspace,
+              monthlyBudget: value,
+            }),
+          "월 예산을 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
+        ),
+      );
+    },
+    [selectedWorkspace, commitStoreChange],
+  );
+
   const getShareTargets = useCallback(() => {
     if (!selectedWorkspace) return [];
     return getPersonalShareTargets(store, selectedWorkspace);
@@ -411,6 +428,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
             password,
             currentPersonalWorkspace?.annualSavingGoal,
             currentPersonalWorkspace?.assetGoalMap,
+            currentPersonalWorkspace?.monthlyBudget,
           ),
         "사용자 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
       );
@@ -477,6 +495,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
     handleSaveMonthlyMemo,
     handleDeleteEntry,
     handleChangeAnnualSavingGoal,
+    handleChangeMonthlyBudget,
     getShareTargets,
     checkIsEntryShared,
 

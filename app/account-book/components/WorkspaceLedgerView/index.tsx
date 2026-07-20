@@ -69,6 +69,8 @@ export default function WorkspaceLedgerView({
   onSaveMonthlyMemo,
   onSaveEntry,
   onDeleteEntry,
+  onChangeAnnualSavingGoal,
+  onChangeMonthlyBudget,
   onBack,
   initialViewMode = "calendar",
 }: WorkspaceLedgerViewProps) {
@@ -98,6 +100,7 @@ export default function WorkspaceLedgerView({
   const [annualSavingGoal, setAnnualSavingGoal] = useState(
     DEFAULT_ANNUAL_SAVING_GOAL,
   );
+  const [monthlyBudget, setMonthlyBudget] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] =
     useState<EntryCategoryFilter>("all");
@@ -511,6 +514,15 @@ export default function WorkspaceLedgerView({
         : DEFAULT_ANNUAL_SAVING_GOAL;
     setAnnualSavingGoal(nextGoal);
   }, [workspace.annualSavingGoal, workspace.id]);
+
+  useEffect(() => {
+    const nextBudget =
+      Number.isFinite(Number(workspace.monthlyBudget)) &&
+      Number(workspace.monthlyBudget) > 0
+        ? Math.trunc(Number(workspace.monthlyBudget))
+        : 0;
+    setMonthlyBudget(nextBudget);
+  }, [workspace.monthlyBudget, workspace.id]);
 
   useEffect(() => {
     setViewMode(initialViewMode);
@@ -1126,6 +1138,9 @@ export default function WorkspaceLedgerView({
           ledgerDetailEntries={ledgerDetailEntries}
           ledgerDetailAssetEntries={ledgerDetailAssetEntries}
           annualSavingGoal={annualSavingGoal}
+          monthlyBudget={monthlyBudget}
+          onChangeAnnualSavingGoal={onChangeAnnualSavingGoal}
+          onChangeMonthlyBudget={onChangeMonthlyBudget}
           dashboardRows={dashboardRows}
           onSelectBoardMonth={onDashboardMonthSelect}
           calendarDays={calendarDays}
@@ -1156,6 +1171,7 @@ export default function WorkspaceLedgerView({
             setSelectedCalendarCardId(null);
             entryForm.openEditModal(entry);
           }}
+          onCopy={entryForm.openCopyModal}
           onDelete={handleDeleteEntry}
           entryActions={entryActions}
           paymentLabel={paymentLabel}

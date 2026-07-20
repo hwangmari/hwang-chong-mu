@@ -209,6 +209,31 @@ export function useEntryForm({
     [defaultMember, setSelectedDate],
   );
 
+  // 내역 복사: 기존 항목 내용으로 채운 "새 항목" 폼을 연다.
+  // 날짜는 현재 보고 있는 날짜를 유지(매달 반복 내역 재등록 용도),
+  // 고정비 템플릿 마커·문장 원문은 복사본에 끌고 가지 않는다.
+  const openCopyModal = useCallback(
+    (entry: ResolvedAccountEntry) => {
+      setEditingEntryId(null);
+      setType(entry.type);
+      setMember(entry.member || defaultMember);
+      setCategory(getRepresentativeCategory(entry.category, entry.type));
+      setSubCategory(entry.subCategory || "");
+      setMerchant("");
+      setItem("");
+      setAmount(entry.amount.toLocaleString("ko-KR"));
+      setPayment(entry.payment);
+      setCardCompany(entry.cardCompany || getDefaultCardCompany(entry.payment));
+      setMemo(entry.memo);
+      setDraftRawText("");
+      setRecurring(false);
+      setCashReceipt(Boolean(entry.cashReceipt));
+      setBenefitExcluded(Boolean(entry.benefitExcluded));
+      setIsFormModalOpen(true);
+    },
+    [defaultMember],
+  );
+
   const onSubmitEntry = useCallback(async () => {
     const parsedAmount = evaluateAmountExpression(amount);
     if (!category.trim()) {
@@ -479,6 +504,7 @@ export function useEntryForm({
     closeFormModal,
     openFormModal,
     openEditModal,
+    openCopyModal,
     onSubmitEntry,
     applyQuickInput,
   };

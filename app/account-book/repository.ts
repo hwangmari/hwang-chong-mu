@@ -440,6 +440,7 @@ export async function updateAccountBookUser(
   password: string,
   annualSavingGoal = DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
   assetGoalMap: AccountBookWorkspace["assetGoalMap"] = {},
+  monthlyBudget = 0,
 ) {
   await callStoreRpc("account_book_upsert_user", {
     p_id: currentUser.id,
@@ -454,6 +455,7 @@ export async function updateAccountBookUser(
     p_type: "personal",
     p_password: password,
     p_annual_saving_goal: annualSavingGoal,
+    p_monthly_budget: monthlyBudget,
     p_asset_goal_map: assetGoalMap || {},
     p_owner_user_id: currentUser.id,
     p_member_ids: [currentUser.id],
@@ -470,6 +472,7 @@ export async function createAccountBookUser(name: string, password: string) {
     p_type: "personal",
     p_password: password,
     p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+    p_monthly_budget: 0,
     p_asset_goal_map: {},
     p_owner_user_id: userId,
     p_member_ids: [userId],
@@ -506,6 +509,7 @@ export async function upsertAccountBookWorkspace(
       p_password: workspace.password,
       p_annual_saving_goal:
         workspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+      p_monthly_budget: workspace.monthlyBudget || 0,
       p_asset_goal_map: workspace.assetGoalMap || {},
       p_owner_user_id: workspace.ownerUserId || "",
       p_member_ids: workspace.memberIds,
@@ -541,6 +545,7 @@ export async function createAccountBookSharedWorkspace(
     p_type: "shared",
     p_password: password,
     p_annual_saving_goal: DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+    p_monthly_budget: 0,
     p_asset_goal_map: {},
     p_owner_user_id: "",
     p_member_ids: memberIds,

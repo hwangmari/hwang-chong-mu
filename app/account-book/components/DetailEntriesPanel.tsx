@@ -31,6 +31,8 @@ type Props = {
   // 문장(자연어) 등록 열기 — 캘린더 우클릭이 없는 모바일에서도 문장 등록 진입용
   onOpenNaturalAdd?: () => void;
   onEdit?: (entry: ResolvedAccountEntry) => void;
+  // 내역 복사 — 행 우클릭 또는 ⋯ 메뉴의 "복사"로 내용이 채워진 새 항목 폼을 연다
+  onCopy?: (entry: ResolvedAccountEntry) => void;
   onDelete?: (id: string) => void;
   entryActions?: (entry: ResolvedAccountEntry) => EntryAction[];
   formatAmount: (value: number) => string;
@@ -52,6 +54,7 @@ export default function DetailEntriesPanel({
   onOpenAdd,
   onOpenNaturalAdd,
   onEdit,
+  onCopy,
   onDelete,
   entryActions,
   formatAmount,
@@ -231,6 +234,9 @@ export default function DetailEntriesPanel({
         active: action.active,
       })),
     ];
+    if (onCopy) {
+      menuItems.push({ key: "copy", label: "복사", onClick: () => onCopy(entry) });
+    }
     if (!entry.readonly && onEdit) {
       menuItems.push({ key: "edit", label: "수정", onClick: () => onEdit(entry) });
     }
@@ -248,7 +254,18 @@ export default function DetailEntriesPanel({
     );
 
     return (
-      <StEntryItem key={entry.resolvedId} $shared={isShared}>
+      <StEntryItem
+        key={entry.resolvedId}
+        $shared={isShared}
+        onContextMenu={
+          onCopy
+            ? (event) => {
+                event.preventDefault();
+                onCopy(entry);
+              }
+            : undefined
+        }
+      >
         <StEntryTop>
           {entry.source !== "direct" ? (
             <StMemberBadge>{entry.member || "나"}</StMemberBadge>
