@@ -42,11 +42,13 @@ type Props = {
     paymentGroup: PaymentType;
     amount: number;
     benefitExcludedAmount: number;
+    filteredAmount: number;
     count: number;
     cardCount: number;
     checkCardCount: number;
     cashCount: number;
   }>;
+  categoryFilterLabel: string;
   selectedCardCompany: string | null;
   onSelectCardCompany: (cardCompany: string) => void;
   onOpenIncomeYearly: () => void;
@@ -132,6 +134,7 @@ export default function WorkspacePanelsSection({
   onSelectExpenseMember,
   monthCategorySummary,
   cardCompanySummary,
+  categoryFilterLabel,
   selectedCardCompany,
   onSelectCardCompany,
   onOpenIncomeYearly,
@@ -220,6 +223,7 @@ export default function WorkspacePanelsSection({
                     ]),
                   )}
                   cardCompanySummary={cardCompanySummary}
+                  categoryFilterLabel={categoryFilterLabel}
                   selectedCardCompany={selectedCardCompany}
                   onSelectCardCompany={onSelectCardCompany}
                   onEdit={onEdit}

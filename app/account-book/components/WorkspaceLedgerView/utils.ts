@@ -372,7 +372,7 @@ const CATEGORY_DETAIL_RULES = [
   },
   {
     category: "주차/교통",
-    detail: "주차장",
+    detail: "주차",
     patterns: [/주차|주차장/i],
   },
   {
@@ -658,7 +658,7 @@ export function normalizeExpenseCategorySelection(
       category: "이동/차량",
       subCategory: "충전",
     },
-    { pattern: /^주차|주차장$/i, category: "이동/차량", subCategory: "주차장" },
+    { pattern: /^주차|주차장$/i, category: "이동/차량", subCategory: "주차" },
     { pattern: /^대리$/i, category: "이동/차량", subCategory: "대리" },
     { pattern: /^택시$/i, category: "이동/차량", subCategory: "택시" },
     { pattern: /^버스$/i, category: "이동/차량", subCategory: "버스" },
@@ -1145,8 +1145,17 @@ export function parseNaturalInputEntry(
     inferCategoryFromItemText(detailText || text) ||
     (type === "income" ? INCOME_CATEGORY_LABEL : "생활비");
   const subCategory = inferSubCategoryFromText(category, detailText || text);
-  const normalizedItem =
-    item || merchant || (type === "income" ? "수입" : "미입력");
+  // 항목이 카테고리 키워드(예: "주차")면, 실제 설명(merchant, 예: "한강")을 항목·메모로 남긴다.
+  // ("한강 주차" → 세부태그 주차 + 항목/메모 한강)
+  const itemIsCategoryKeyword =
+    item.trim() !== "" &&
+    merchant.trim() !== "" &&
+    subCategory !== "" &&
+    inferSubCategoryFromText(category, item) === subCategory;
+  const memo = itemIsCategoryKeyword ? merchant.trim() : "";
+  const normalizedItem = itemIsCategoryKeyword
+    ? merchant.trim()
+    : item || merchant || (type === "income" ? "수입" : "미입력");
   const cardCompany =
     payment === "cash"
       ? ""
@@ -1168,7 +1177,7 @@ export function parseNaturalInputEntry(
     payment,
     cashReceipt,
     benefitExcluded,
-    memo: "",
+    memo,
     rawText: text,
   };
 }

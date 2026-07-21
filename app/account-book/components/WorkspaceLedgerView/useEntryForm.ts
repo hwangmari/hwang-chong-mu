@@ -192,10 +192,10 @@ export function useEntryForm({
       setMember(entry.member || defaultMember);
       setCategory(getRepresentativeCategory(entry.category, entry.type));
       setSubCategory(entry.subCategory || "");
-      // 가맹점·항목 입력란을 제거했으므로 편집 시 자동 파싱값(예: "배달"/"배민")을
-      // 유지하지 않고, 저장 시 카테고리·메모 기준으로 항목명을 다시 계산한다.
-      setMerchant("");
-      setItem("");
+      // 항목·가맹점 입력란은 UI에 없지만, 문장등록으로 파싱된 항목명(예: "스타벅스")을
+      // 그대로 유지해야 수정 후에도 값이 보존된다. (지우면 저장 시 카테고리/메모로 대체돼 사라짐)
+      setMerchant(entry.merchant || "");
+      setItem(entry.item || "");
       setAmount(entry.amount.toLocaleString("ko-KR"));
       setPayment(entry.payment);
       setCardCompany(entry.cardCompany || getDefaultCardCompany(entry.payment));

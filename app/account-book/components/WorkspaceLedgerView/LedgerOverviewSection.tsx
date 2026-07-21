@@ -19,6 +19,7 @@ type CardCompanySummary = {
   paymentGroup: PaymentType;
   amount: number;
   benefitExcludedAmount: number;
+  filteredAmount: number;
   count: number;
   cardCount: number;
   checkCardCount: number;
@@ -37,6 +38,7 @@ type Props = {
   monthCategorySummary: Array<[string, number]>;
   categoryDescriptions: Record<string, string>;
   cardCompanySummary: CardCompanySummary[];
+  categoryFilterLabel: string;
   selectedCardCompany: string | null;
   onSelectCardCompany: (cardCompany: string) => void;
   onEdit: (entry: ResolvedAccountEntry) => void;
@@ -57,6 +59,7 @@ export default function LedgerOverviewSection({
   monthCategorySummary,
   categoryDescriptions,
   cardCompanySummary,
+  categoryFilterLabel,
   selectedCardCompany,
   onSelectCardCompany,
   onEdit,
@@ -274,6 +277,18 @@ export default function LedgerOverviewSection({
                     entry.label,
                     benefitEligibleAmount,
                   );
+                  // 카테고리 필터 시: 이 카드 사용액 중 필터 카테고리 비중
+                  const showCategoryPortion =
+                    !!categoryFilterLabel &&
+                    entry.filteredAmount > 0 &&
+                    entry.amount > 0;
+                  const categoryPercent = showCategoryPortion
+                    ? Math.round((entry.filteredAmount / entry.amount) * 100)
+                    : 0;
+                  // 막대 채움(width) 안에서 필터 카테고리가 차지하는 비율
+                  const categoryFillWidth = showCategoryPortion
+                    ? `${(entry.filteredAmount / entry.amount) * 100}%`
+                    : "0%";
 
                   return (
                     <StCardCompanyRow
@@ -288,7 +303,12 @@ export default function LedgerOverviewSection({
                       </StCardCompanyMeta>
                       <StMetaLine>
                         <span>{paymentMeta}</span>
-                        {benefit && !benefit.achieved ? (
+                        {showCategoryPortion ? (
+                          <StCategoryPortion>
+                            {categoryFilterLabel} {formatAmount(entry.filteredAmount)} (
+                            {categoryPercent}%)
+                          </StCategoryPortion>
+                        ) : benefit && !benefit.achieved ? (
                           <StBenefitStatus>
                             {`${benefit.threshold / 10000}만원까지 ${formatAmount(benefit.remaining)}`}
                             {entry.benefitExcludedAmount > 0
@@ -300,7 +320,13 @@ export default function LedgerOverviewSection({
                       <StCardCompanyBar>
                         <StCardCompanyFill
                           style={{ width, background: color }}
-                        />
+                        >
+                          {showCategoryPortion ? (
+                            <StCardCompanyCategoryFill
+                              style={{ width: categoryFillWidth }}
+                            />
+                          ) : null}
+                        </StCardCompanyFill>
                       </StCardCompanyBar>
                     </StCardCompanyRow>
                   );
@@ -594,6 +620,18 @@ const StBenefitStatus = styled.span`
   }
 `;
 
+const StCategoryPortion = styled.span`
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  && {
+    color: #333d4b;
+  }
+`;
+
 const StCardCompanyRow = styled.button<{ $active: boolean }>`
   display: grid;
   gap: 0.34rem;
@@ -672,6 +710,17 @@ const StCardCompanyBar = styled.div`
 const StCardCompanyFill = styled.div`
   height: 100%;
   border-radius: inherit;
+  position: relative;
+`;
+
+// 막대 채움 안에서 필터 카테고리가 차지하는 구간(더 진하게 오버레이)
+const StCardCompanyCategoryFill = styled.div`
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.32);
 `;
 
 const StCardCompanyEmpty = styled.p`

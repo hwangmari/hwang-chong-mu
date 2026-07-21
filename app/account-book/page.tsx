@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { useModal } from "@/components/common/ModalProvider";
@@ -15,6 +15,10 @@ import { useAccountBookActions } from "./hooks/useAccountBookActions";
 import { ViewMode } from "./types";
 
 const SETTINGS_ACCESS_KEY = "hwang-account-book-settings-access";
+// 마지막으로 연 가계부방 — 홈 바로가기(PWA)로 앱을 열면 이 방으로 자동 이동한다.
+const LAST_WORKSPACE_KEY = "hwang-account-book-last-workspace";
+// 세션당 한 번만 자동 이동(허브로 되돌아왔을 때 다시 튕기지 않도록)
+const ENTRY_REDIRECT_FLAG = "hwang-account-book-entry-redirected";
 
 function resolveInitialViewMode(value: string | null): ViewMode {
   if (value === "board" || value === "calendar" || value === "ledger") {
@@ -56,6 +60,31 @@ function AccountBookPageContent() {
     updateActiveUserId,
     commitStoreChange: storeHelpers.commitStoreChange,
   });
+
+  // 워크스페이스를 열면 "마지막 방"으로 기억
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (
+      selectedWorkspaceId &&
+      store?.workspaces.some((workspace) => workspace.id === selectedWorkspaceId)
+    ) {
+      window.localStorage.setItem(LAST_WORKSPACE_KEY, selectedWorkspaceId);
+    }
+  }, [selectedWorkspaceId, store]);
+
+  // 앱 진입(세션 첫 로드) 시 워크스페이스 미지정이면 마지막 방으로 자동 이동
+  // — 모바일 홈 바로가기(PWA)에서 열면 허브가 아니라 바로 그 가계부로 들어간다.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!storageReady || !store) return;
+    if (selectedWorkspaceId) return;
+    if (window.sessionStorage.getItem(ENTRY_REDIRECT_FLAG)) return;
+    window.sessionStorage.setItem(ENTRY_REDIRECT_FLAG, "1");
+    const last = window.localStorage.getItem(LAST_WORKSPACE_KEY);
+    if (last && store.workspaces.some((workspace) => workspace.id === last)) {
+      router.replace(`/account-book?workspaceId=${last}`);
+    }
+  }, [storageReady, store, selectedWorkspaceId, router]);
 
   const closeSettings = () => {
     setIsSettingsOpen(false);

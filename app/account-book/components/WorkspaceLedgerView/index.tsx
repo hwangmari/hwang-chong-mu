@@ -313,12 +313,40 @@ export default function WorkspaceLedgerView({
     };
   }, [categoryFilter, normalizedSearchQuery]);
 
+  // 결제수단별 카드 막대에 겹칠 필터 카테고리 라벨(전체면 빈 문자열)
+  const categoryFilterLabel =
+    categoryFilter === "all"
+      ? ""
+      : categoryFilter === "income"
+        ? "수입"
+        : categoryFilter === "asset"
+          ? "자산/저축"
+          : categoryFilter === "fixed"
+            ? "고정비"
+            : categoryFilter === "living"
+              ? "생활비"
+              : categoryFilter === "gathering"
+                ? "모임비"
+                : categoryFilter === "move"
+                  ? "이동/차량"
+                  : categoryFilter === "exercise"
+                    ? "운동"
+                    : categoryFilter === "shopping"
+                      ? "쇼핑/여가"
+                      : "특별/기타";
+
   const monthEntries = useMemo(() => {
     const ym = format(currentMonth, "yyyy-MM");
     return visibleEntries
       .filter((entry) => entry.date.startsWith(ym))
       .filter(matchesEntryFilter);
   }, [currentMonth, matchesEntryFilter, visibleEntries]);
+  // 카테고리 필터를 적용하지 않은 이번 달 전체 내역 — 결제수단별 카드 요약(총액)은
+  // 필터와 무관하게 월 전체를 보여주고, 필터 카테고리는 막대 오버레이로만 표시한다.
+  const monthEntriesAllCategories = useMemo(() => {
+    const ym = format(currentMonth, "yyyy-MM");
+    return visibleEntries.filter((entry) => entry.date.startsWith(ym));
+  }, [currentMonth, visibleEntries]);
   const displayMonthEntries = useMemo(
     () => monthEntries.filter((entry) => !isCardSettlementEntry(entry)),
     [monthEntries],
@@ -756,7 +784,7 @@ export default function WorkspaceLedgerView({
       check_card: 1,
       cash: 2,
     };
-    const grouped = monthEntries.reduce<
+    const grouped = monthEntriesAllCategories.reduce<
       Record<
         string,
         {
@@ -765,6 +793,8 @@ export default function WorkspaceLedgerView({
           paymentGroup: PaymentType;
           amount: number;
           benefitExcludedAmount: number;
+          // 현재 카테고리 필터에 해당하는 이 카드의 사용액 (막대 오버레이용)
+          filteredAmount: number;
           count: number;
           cardCount: number;
           checkCardCount: number;
@@ -791,6 +821,7 @@ export default function WorkspaceLedgerView({
           paymentGroup,
           amount: 0,
           benefitExcludedAmount: 0,
+          filteredAmount: 0,
           count: 0,
           cardCount: 0,
           checkCardCount: 0,
@@ -801,6 +832,9 @@ export default function WorkspaceLedgerView({
       acc[id].amount += entry.amount;
       if (entry.benefitExcluded) {
         acc[id].benefitExcludedAmount += entry.amount;
+      }
+      if (categoryFilter !== "all" && matchesEntryFilter(entry)) {
+        acc[id].filteredAmount += entry.amount;
       }
       acc[id].count += 1;
 
@@ -821,7 +855,7 @@ export default function WorkspaceLedgerView({
         b.amount - a.amount ||
         a.label.localeCompare(b.label, "ko-KR"),
     );
-  }, [monthEntries]);
+  }, [monthEntriesAllCategories, categoryFilter, matchesEntryFilter]);
 
   const selectedLedgerColumn = useMemo(
     () =>
@@ -1103,6 +1137,7 @@ export default function WorkspaceLedgerView({
           }}
           monthCategorySummary={monthCategorySummary}
           cardCompanySummary={cardCompanySummary}
+          categoryFilterLabel={categoryFilterLabel}
           selectedCardCompany={selectedCardCompany}
           onSelectCardCompany={(cardCompany) => {
             setSelectedCardCompany((current) =>
