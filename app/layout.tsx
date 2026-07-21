@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   },
   description:
     "약속 잡기, 엔빵 계산기, 야근 계산기, 장소 투표, 가계부, 습관 관리 등 일상의 소소한 불편함을 해결해주는 미니 서비스 모음 — 황총무의 실험실.",
+  // 파일 컨벤션(app/manifest.ts) 대신 metadata로 지정해야 하위 레이아웃(가계부 등)이
+  // 각자 manifest를 오버라이드할 수 있다. (홈 화면 추가 시 구역별 start_url 적용)
+  manifest: "/manifest.webmanifest",
   keywords: [
     "황총무",
     "약속 잡기",
