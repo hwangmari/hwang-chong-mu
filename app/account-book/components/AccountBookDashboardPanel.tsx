@@ -23,10 +23,14 @@ type DashboardRow = {
 type Props = {
   currentYear: number;
   currentMonthIndex: number;
+  currentMonthKey: string;
   annualGoal: number;
   monthlyBudget: number;
   onChangeAnnualGoal?: (value: number) => boolean | Promise<boolean>;
-  onChangeMonthlyBudget?: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlyBudget?: (
+    value: number,
+    monthKey: string,
+  ) => boolean | Promise<boolean>;
   dashboardRows: DashboardRow[];
   onSelectMonth: (monthNumber: number) => void;
   onOpenIncomeYearly: () => void;
@@ -116,6 +120,7 @@ function formatPercent(value: number | null) {
 export default function AccountBookDashboardPanel({
   currentYear,
   currentMonthIndex,
+  currentMonthKey,
   annualGoal,
   monthlyBudget,
   onChangeAnnualGoal,
@@ -280,11 +285,11 @@ export default function AccountBookDashboardPanel({
             {isEditingBudget ? (
               <AmountEditor
                 initialValue={monthlyBudget}
-                label="월 예산"
+                label={`${Number(currentMonthKey.slice(5, 7))}월 예산`}
                 placeholder="월 예산 금액"
                 hint={budgetHint}
                 onSave={(value) => {
-                  void onChangeMonthlyBudget?.(value);
+                  void onChangeMonthlyBudget?.(value, currentMonthKey);
                   setIsEditingBudget(false);
                 }}
                 onCancel={() => setIsEditingBudget(false)}

@@ -52,8 +52,10 @@ export type AccountBookWorkspace = {
   type: WorkspaceType;
   password: string;
   annualSavingGoal?: number;
-  // 월 소비지출 예산(원). 0 또는 미설정 = 예산 미사용
+  // 월 소비지출 예산(원). 0 또는 미설정 = 예산 미사용 (레거시 단일값, 폴백으로 유지)
   monthlyBudget?: number;
+  // 월별(yyyy-MM) 소비지출 예산 맵. 특정 달에 값이 없으면 직전 달 예산을 이어받는다.
+  monthlyBudgets?: Record<string, number>;
   assetGoalMap?: AccountBookAssetGoalMap;
   ownerUserId?: string;
   memberIds: string[];

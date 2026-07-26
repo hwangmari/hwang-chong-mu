@@ -9,6 +9,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { EXTRA_MENU, MENU_CATEGORIES } from "@/lib/menuCategories";
+import { useAuth } from "@/hooks/useAuth";
 
 const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
@@ -25,6 +26,8 @@ const ROUTE_CONFIG = [
   { path: "/game", label: "황총무 게임방" },
   { path: "/portfolio", label: "포트폴리오" },
   { path: "/blog", label: "블로그" },
+  { path: "/login", label: "로그인" },
+  { path: "/account", label: "내 계정" },
 
   { path: "/ui-kit", label: "UI Kit 모음집" },
 ];
@@ -50,6 +53,7 @@ export default function GlobalHeader() {
   const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("황총무의 실험실");
+  const { user, logout } = useAuth();
   const isAccountBookHub =
     pathname === "/account-book" && !searchParams.get("workspaceId");
   const isScheduleHub =
@@ -169,6 +173,43 @@ export default function GlobalHeader() {
                 <span>황총무의 실험실</span>
               </StHomeItem>
             </Link>
+
+            <StAccountBox>
+              {user ? (
+                <>
+                  <StAccountInfo
+                    type="button"
+                    onClick={() => {
+                      router.push("/account");
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <span className="icon">👤</span>
+                    <span>{user.nickname}</span>
+                  </StAccountInfo>
+                  <StAccountAction
+                    type="button"
+                    onClick={() => {
+                      void logout();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    로그아웃
+                  </StAccountAction>
+                </>
+              ) : (
+                <StAccountAction
+                  type="button"
+                  $primary
+                  onClick={() => {
+                    router.push("/login");
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  로그인 / 회원가입
+                </StAccountAction>
+              )}
+            </StAccountBox>
 
             {MENU_CATEGORIES.map((category) => (
               <StCategoryBlock key={category.title}>
@@ -332,6 +373,56 @@ const StHomeItem = styled.div<{ $isActive: boolean }>`
             background-color: ${theme.colors.gray100};
           }
         `}
+`;
+
+const StAccountBox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.6rem 1rem 0.25rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid #e4e5e6;
+  background: #fbfbfc;
+`;
+
+const StAccountInfo = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray800};
+
+  .icon {
+    font-size: 1rem;
+  }
+
+  span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+const StAccountAction = styled.button<{ $primary?: boolean }>`
+  flex-shrink: 0;
+  border: 1px solid ${({ $primary }) => ($primary ? "#3182f6" : "#e2e3e5")};
+  background: ${({ $primary }) => ($primary ? "#3182f6" : "#ffffff")};
+  color: ${({ $primary }) => ($primary ? "#ffffff" : "#6a6f78")};
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 `;
 
 const StCategoryBlock = styled.div`

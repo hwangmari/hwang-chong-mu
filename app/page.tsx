@@ -3,6 +3,7 @@
 import Link from "next/link";
 import styled from "styled-components";
 import ThemeToggleButton from "@/components/common/ThemeToggleButton";
+import HomeDashboard from "@/components/home/HomeDashboard";
 import { MENU_CATEGORIES } from "@/lib/menuCategories";
 
 export default function Home() {
@@ -20,6 +21,9 @@ export default function Home() {
           일상의 번거로움을 덜어주는 <b>다정한 도구들</b>을 연구합니다.
         </StSubDescription>
       </StProfileSection>
+
+      {/* 🧩 로그인 사용자의 연결된 서비스 요약 위젯 */}
+      <HomeDashboard />
 
       {/* 📂 카테고리별 메뉴 */}
       <StCategoryWrapper>

@@ -54,6 +54,7 @@ import {
   isSavingsCategory,
   parseIsoDate,
   paymentLabel,
+  resolveMonthlyBudget,
   toIsoDate,
 } from "./utils";
 
@@ -100,7 +101,6 @@ export default function WorkspaceLedgerView({
   const [annualSavingGoal, setAnnualSavingGoal] = useState(
     DEFAULT_ANNUAL_SAVING_GOAL,
   );
-  const [monthlyBudget, setMonthlyBudget] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] =
     useState<EntryCategoryFilter>("all");
@@ -125,6 +125,16 @@ export default function WorkspaceLedgerView({
   const monthLabel = format(currentMonth, "M월", { locale: ko });
   const monthValue = format(currentMonth, "yyyy-MM");
   const currentMonthKey = format(currentMonth, "yyyy-MM");
+  // 그 달의 예산: 명시값 → 직전 달 이어받기 → 레거시 단일값 → 0
+  const monthlyBudget = useMemo(
+    () =>
+      resolveMonthlyBudget(
+        workspace.monthlyBudgets,
+        workspace.monthlyBudget,
+        currentMonthKey,
+      ),
+    [workspace.monthlyBudgets, workspace.monthlyBudget, currentMonthKey],
+  );
   const serverMonthlyMemo = useMemo(
     () =>
       monthlyMemos.find((monthlyMemo) => monthlyMemo.monthKey === currentMonthKey)
@@ -542,15 +552,6 @@ export default function WorkspaceLedgerView({
         : DEFAULT_ANNUAL_SAVING_GOAL;
     setAnnualSavingGoal(nextGoal);
   }, [workspace.annualSavingGoal, workspace.id]);
-
-  useEffect(() => {
-    const nextBudget =
-      Number.isFinite(Number(workspace.monthlyBudget)) &&
-      Number(workspace.monthlyBudget) > 0
-        ? Math.trunc(Number(workspace.monthlyBudget))
-        : 0;
-    setMonthlyBudget(nextBudget);
-  }, [workspace.monthlyBudget, workspace.id]);
 
   useEffect(() => {
     setViewMode(initialViewMode);
@@ -1117,6 +1118,7 @@ export default function WorkspaceLedgerView({
           currentMonth={currentMonth}
           currentYear={currentYear}
           currentMonthIndex={currentMonthIndex}
+          currentMonthKey={currentMonthKey}
           selectedDate={selectedDate}
           monthEntries={displayMonthEntries}
           monthTotals={monthTotals}

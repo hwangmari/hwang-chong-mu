@@ -5,6 +5,7 @@ import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
 import { ModalProvider } from "@/components/common/ModalProvider";
 import GlobalHeader from "@/components/common/GlobalHeader";
+import AuthLinkBootstrap from "@/components/common/AuthLinkBootstrap";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.hwang-lab.kr"),
@@ -81,6 +82,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <GlobalHeader />
             </Suspense>
+            <AuthLinkBootstrap />
             {children}
           </ModalProvider>
         </StyledComponentsRegistry>

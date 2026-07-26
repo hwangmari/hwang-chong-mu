@@ -21,7 +21,7 @@ export default function ProfileCard() {
 
       {/* 2. 정보 텍스트 영역 */}
       <StInfoList>
-        <InfoItem label="Update" value="@2025.12.26" />
+        <InfoItem label="Update" value="@2026.07.23" />
         <InfoItem label="Writer" value="@linda.hwang" />
       </StInfoList>
     </StCardContainer>

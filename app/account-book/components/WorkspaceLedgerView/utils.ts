@@ -488,6 +488,26 @@ export function formatAmount(value: number) {
   return `${value.toLocaleString()}원`;
 }
 
+// 월별 예산 해석: 해당 월에 값이 있으면 그 값, 없으면 직전(가장 최근 하위 monthKey) 달 값 이어받기,
+// 그래도 없으면 레거시 단일 예산, 최종 0. (yyyy-MM 키, 양의 정수만 유효)
+export function resolveMonthlyBudget(
+  monthlyBudgets: Record<string, number> | undefined,
+  legacyDefault: number | undefined,
+  monthKey: string,
+): number {
+  const map = monthlyBudgets ?? {};
+  const direct = Number(map[monthKey]);
+  if (Number.isFinite(direct) && direct > 0) return Math.trunc(direct);
+  // 직전 달 이어받기: monthKey 이하의 키 중 가장 큰(최근) 유효값
+  const prior = Object.keys(map)
+    .filter((k) => /^\d{4}-\d{2}$/.test(k) && k <= monthKey && Number(map[k]) > 0)
+    .sort()
+    .pop();
+  if (prior) return Math.trunc(Number(map[prior]));
+  const legacy = Number(legacyDefault);
+  return Number.isFinite(legacy) && legacy > 0 ? Math.trunc(legacy) : 0;
+}
+
 export function formatSelectedDateTitle(selectedDate: string) {
   const parsed = parseIsoDate(selectedDate);
   if (!parsed) return "선택한 날짜";

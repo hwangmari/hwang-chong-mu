@@ -112,6 +112,7 @@ function createLegacySeedStore(): AccountBookStore {
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
+      monthlyBudgets: {},
       assetGoalMap: {},
       ownerUserId: "user-1",
       memberIds: ["user-1"],
@@ -123,6 +124,7 @@ function createLegacySeedStore(): AccountBookStore {
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
+      monthlyBudgets: {},
       assetGoalMap: {},
       ownerUserId: "user-2",
       memberIds: ["user-2"],
@@ -134,6 +136,7 @@ function createLegacySeedStore(): AccountBookStore {
       password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
+      monthlyBudgets: {},
       assetGoalMap: {},
       memberIds: ["user-1", "user-2"],
       inviteCode: "SHARED01",
@@ -232,6 +235,23 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
         Number(workspace.monthlyBudget) > 0
           ? Math.trunc(Number(workspace.monthlyBudget))
           : 0,
+      monthlyBudgets: (() => {
+        const src = (workspace as { monthlyBudgets?: Record<string, unknown> })
+          .monthlyBudgets;
+        const out: Record<string, number> = {};
+        if (src && typeof src === "object") {
+          for (const [k, v] of Object.entries(src)) {
+            if (
+              /^\d{4}-\d{2}$/.test(k) &&
+              Number.isFinite(Number(v)) &&
+              Number(v) > 0
+            ) {
+              out[k] = Math.trunc(Number(v));
+            }
+          }
+        }
+        return out;
+      })(),
       assetGoalMap:
         workspace.assetGoalMap &&
         typeof workspace.assetGoalMap === "object" &&

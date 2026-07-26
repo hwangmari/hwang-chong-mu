@@ -211,14 +211,17 @@ export function useAccountBookActions(helpers: StoreHelpers) {
   );
 
   const handleChangeMonthlyBudget = useCallback(
-    async (value: number) => {
+    async (value: number, monthKey: string) => {
       if (!selectedWorkspace) return false;
+      const nextBudgets = { ...(selectedWorkspace.monthlyBudgets ?? {}) };
+      if (value > 0) nextBudgets[monthKey] = Math.trunc(value);
+      else delete nextBudgets[monthKey];
       return Boolean(
         await commitStoreChange(
           () =>
             upsertAccountBookWorkspace({
               ...selectedWorkspace,
-              monthlyBudget: value,
+              monthlyBudgets: nextBudgets,
             }),
           "월 예산을 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
         ),
@@ -429,6 +432,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
             currentPersonalWorkspace?.annualSavingGoal,
             currentPersonalWorkspace?.assetGoalMap,
             currentPersonalWorkspace?.monthlyBudget,
+            currentPersonalWorkspace?.monthlyBudgets,
           ),
         "사용자 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
       );

@@ -21,6 +21,7 @@ type Props = {
   currentMonth: Date;
   currentYear: number;
   currentMonthIndex: number;
+  currentMonthKey: string;
   selectedDate: string;
   monthEntries: ResolvedAccountEntry[];
   monthTotals: { income: number; expense: number };
@@ -70,7 +71,10 @@ type Props = {
   annualSavingGoal: number;
   monthlyBudget: number;
   onChangeAnnualSavingGoal?: (value: number) => boolean | Promise<boolean>;
-  onChangeMonthlyBudget?: (value: number) => boolean | Promise<boolean>;
+  onChangeMonthlyBudget?: (
+    value: number,
+    monthKey: string,
+  ) => boolean | Promise<boolean>;
   dashboardRows: Array<{
     monthNumber: number;
     monthLabel: string;
@@ -118,6 +122,7 @@ export default function WorkspacePanelsSection({
   currentMonth,
   currentYear,
   currentMonthIndex,
+  currentMonthKey,
   selectedDate,
   monthEntries,
   monthTotals,
@@ -249,6 +254,7 @@ export default function WorkspacePanelsSection({
               <AccountBookDashboardPanel
                 currentYear={currentYear}
                 currentMonthIndex={currentMonthIndex}
+                currentMonthKey={currentMonthKey}
                 annualGoal={annualSavingGoal}
                 monthlyBudget={monthlyBudget}
                 onChangeAnnualGoal={onChangeAnnualSavingGoal}
