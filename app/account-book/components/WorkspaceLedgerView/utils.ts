@@ -15,6 +15,7 @@ import type {
 
 export const CARD_COMPANY_DEFAULT = "현대카드";
 export const CHECK_CARD_BRAND_DEFAULT = "네이버하나머니";
+export const WELFARE_CARD_LABEL = "복지카드";
 export const MEMBER_FALLBACK = "사용자1";
 export const ALL_PARTICIPANTS_ID = "all";
 export const INCOME_CATEGORY_LABEL = "수입";
@@ -30,6 +31,7 @@ export const CARD_COMPANY_OPTIONS = [
   "우리카드",
   "NH농협카드",
   "BC카드",
+  WELFARE_CARD_LABEL,
 ] as const;
 export const CHECK_CARD_BRAND_OPTIONS = [
   "네이버하나머니",
@@ -520,7 +522,14 @@ export function paymentLabel(payment: PaymentType) {
   return "카드";
 }
 
+// 복지카드 지출: 카드사가 "복지카드"인 카드 지출. 기록·리스트엔 보이되
+// 모든 지출/예산/집계(카드 실적·카드사별 집계 포함)에서 제외된다.
+export function isWelfareEntry(entry: { cardCompany?: string }) {
+  return (entry.cardCompany ?? "") === WELFARE_CARD_LABEL;
+}
+
 export function getDefaultCardCompany(payment: PaymentType) {
+  // 현금은 카드사가 없다.
   if (payment === "cash") return "";
   return payment === "check_card"
     ? CHECK_CARD_BRAND_DEFAULT

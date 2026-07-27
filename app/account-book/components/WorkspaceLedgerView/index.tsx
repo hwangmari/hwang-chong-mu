@@ -52,6 +52,7 @@ import {
   isCardSettlementEntry,
   isFixedExpenseCategory,
   isSavingsCategory,
+  isWelfareEntry,
   parseIsoDate,
   paymentLabel,
   resolveMonthlyBudget,
@@ -382,7 +383,8 @@ export default function WorkspaceLedgerView({
         if (
           entry.type === "expense" &&
           !isSavingsCategory(entry.category) &&
-          !isCardSettlementEntry(entry)
+          !isCardSettlementEntry(entry) &&
+          !isWelfareEntry(entry)
         ) {
           acc.expense += entry.amount;
         }
@@ -398,7 +400,8 @@ export default function WorkspaceLedgerView({
         if (
           entry.type === "expense" &&
           !isSavingsCategory(entry.category) &&
-          !isCardSettlementEntry(entry)
+          !isCardSettlementEntry(entry) &&
+          !isWelfareEntry(entry)
         ) {
           acc[entry.payment] += entry.amount;
         }
@@ -437,7 +440,8 @@ export default function WorkspaceLedgerView({
         (entry) =>
           entry.type === "expense" &&
           !isSavingsCategory(entry.category) &&
-          !isCardSettlementEntry(entry),
+          !isCardSettlementEntry(entry) &&
+          !isWelfareEntry(entry),
       )
       .reduce<Record<string, number>>((acc, entry) => {
         const key = entry.member || defaultMember;
@@ -459,6 +463,10 @@ export default function WorkspaceLedgerView({
     return Object.entries(
       monthEntries.reduce<Record<string, number>>((acc, entry) => {
         if (entry.type === "expense" && isCardSettlementEntry(entry)) {
+          return acc;
+        }
+        // 복지카드 지출은 카테고리 집계에서 제외(리스트엔 그대로 노출)
+        if (entry.type === "expense" && isWelfareEntry(entry)) {
           return acc;
         }
         const key =
@@ -488,7 +496,10 @@ export default function WorkspaceLedgerView({
         .reduce((sum, entry) => sum + entry.amount, 0);
       const regularSavings = rows
         .filter(
-          (entry) => entry.type === "expense" && isSavingsCategory(entry.category),
+          (entry) =>
+            entry.type === "expense" &&
+            isSavingsCategory(entry.category) &&
+            !isWelfareEntry(entry),
         )
         .reduce((sum, entry) => sum + entry.amount, 0);
       const fixedExpense = rows
@@ -496,6 +507,7 @@ export default function WorkspaceLedgerView({
           (entry) =>
             entry.type === "expense" &&
             !isCardSettlementEntry(entry) &&
+            !isWelfareEntry(entry) &&
             FIXED_EXPENSE_CATEGORIES.includes(
               getRepresentativeExpenseCategory(
                 entry.category,
@@ -509,12 +521,17 @@ export default function WorkspaceLedgerView({
             entry.type === "expense" &&
             !isCardSettlementEntry(entry) &&
             !isSavingsCategory(entry.category) &&
+            !isWelfareEntry(entry) &&
             !FIXED_EXPENSE_CATEGORIES.includes(
               getRepresentativeExpenseCategory(
                 entry.category,
               ) as (typeof FIXED_EXPENSE_CATEGORIES)[number],
             ),
         )
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      // 복지카드 사용액(그 달 카드사="복지카드" 지출 합) — 총지출/예산엔 안 잡히고 별도 표시용
+      const welfareExpense = rows
+        .filter((entry) => entry.type === "expense" && isWelfareEntry(entry))
         .reduce((sum, entry) => sum + entry.amount, 0);
       const totalExpense = fixedExpense + consumptionExpense + regularSavings;
       const netAmount = income - totalExpense;
@@ -531,6 +548,7 @@ export default function WorkspaceLedgerView({
         fixedExpense,
         consumptionExpense,
         regularSavings,
+        welfareExpense,
         netAmount,
         actualSavings,
         savingsRate: income > 0 ? (actualSavings / income) * 100 : null,
@@ -655,7 +673,8 @@ export default function WorkspaceLedgerView({
       if (entry.type === "income") target.income += entry.amount;
       if (entry.type === "expense" && isCardSettlementEntry(entry)) {
         target.settlement += entry.amount;
-      } else if (entry.type === "expense") {
+      } else if (entry.type === "expense" && !isWelfareEntry(entry)) {
+        // 복지카드 지출은 캘린더 일별 총액에서 제외
         target.expense += entry.amount;
       }
       acc[entry.date] = target;
@@ -806,6 +825,8 @@ export default function WorkspaceLedgerView({
       if (entry.type !== "expense") return acc;
       if (isSavingsCategory(entry.category)) return acc;
       if (isCardSettlementEntry(entry)) return acc;
+      // 복지카드(cardCompany="복지카드")는 결제수단별 사용액엔 자기 막대로 노출한다.
+      // (예산·소비지출·지출 총액·카드 실적에서는 별도로 제외됨 — "복지카드 사용"은 사용 추적용)
 
       const paymentGroup = entry.payment;
       const label =
@@ -880,6 +901,7 @@ export default function WorkspaceLedgerView({
           if (entry.type !== "expense") return false;
           if (isSavingsCategory(entry.category)) return false;
           if (isCardSettlementEntry(entry)) return false;
+          // 복지카드 행을 눌렀을 때 상세 내역이 보이도록 여기선 제외하지 않는다.
 
           const label =
             entry.payment === "cash"

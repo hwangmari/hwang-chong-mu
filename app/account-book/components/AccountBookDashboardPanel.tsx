@@ -12,6 +12,7 @@ type DashboardRow = {
   fixedExpense: number;
   consumptionExpense: number;
   regularSavings: number;
+  welfareExpense: number;
   netAmount: number;
   actualSavings: number;
   savingsRate: number | null;
@@ -166,6 +167,8 @@ export default function AccountBookDashboardPanel({
   // 수입 카드 하단 비율 팁: 수입 대비 총 지출/실제 저축
   const monthTotalExpense = currentMonthRow?.totalExpense || 0;
   const monthActualSavings = currentMonthRow?.actualSavings || 0;
+  // 복지카드 사용액: 총지출/예산엔 안 잡히는 별도 집계(0보다 클 때만 노출)
+  const monthWelfareExpense = currentMonthRow?.welfareExpense || 0;
   const incomeExpensePct =
     monthIncome > 0 ? Math.round((monthTotalExpense / monthIncome) * 100) : 0;
   const incomeSavingsPct =
@@ -332,6 +335,11 @@ export default function AccountBookDashboardPanel({
                 월 예산 설정
               </StSetButton>
             )}
+            {monthWelfareExpense > 0 ? (
+              <StWelfareNote title="복지카드 지출은 총지출·예산·집계에서 제외됩니다">
+                복지카드 사용 {displayNum(monthWelfareExpense)}원
+              </StWelfareNote>
+            ) : null}
           </StSummaryCell>
           <StSummaryCell>
             <StSummaryCard type="button" onClick={onOpenAssetYearly}>
@@ -559,12 +567,19 @@ const StSummaryRightGrid = styled.div`
   }
 `;
 
+// 셀 자체를 하나의 카드로 만들어 숫자·진행바·메타를 한 박스 안에 묶는다.
+// (기존엔 테두리가 안쪽 숫자 버튼에만 있고 바는 박스 밖에 떠 있어 어색했음)
 const StSummaryCell = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  border-radius: 16px;
+  border: 1px solid #eaebec;
+  background: #fdfdfd;
+  padding: 0.8rem 0.75rem;
 `;
 
+// '예산 바→수정' 버튼. 숫자 버튼과 동일한 hover 하이라이트로 클릭 영역을 명확히 한다.
 const StGoalButton = styled.button`
   display: flex;
   flex-direction: column;
@@ -572,9 +587,21 @@ const StGoalButton = styled.button`
   width: 100%;
   border: none;
   background: transparent;
-  padding: 0 0.15rem;
+  padding: 0.3rem 0.45rem;
+  margin: 0 -0.3rem;
+  border-radius: 12px;
   cursor: pointer;
   text-align: left;
+  transition: background 0.16s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(154, 157, 163, 0.34);
+    outline-offset: -2px;
+  }
 `;
 
 const StRatioWrap = styled.div`
@@ -656,6 +683,15 @@ const StSetButton = styled.button`
   &:hover {
     color: #3182f6;
   }
+`;
+
+const StWelfareNote = styled.span`
+  align-self: flex-start;
+  padding: 0.12rem 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #9aa0a8;
+  font-variant-numeric: tabular-nums;
 `;
 
 const StEditWrap = styled.div`
@@ -741,29 +777,27 @@ const StEditCancel = styled.button`
   cursor: pointer;
 `;
 
+// 카드 안의 '숫자→연간 상세' 버튼. 클릭 영역이 명확하도록 hover 시 은은한 배경 하이라이트.
+// (음수 마진으로 하이라이트만 바깥으로 넓히고, 텍스트는 바와 좌우 정렬을 유지)
 const StSummaryCard = styled.button`
   width: 100%;
   display: block;
   text-align: left;
-  border-radius: 16px;
-  border: 1px solid #eaebec;
-  background: #fdfdfd;
-  padding: 0.75rem 0.85rem;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.45rem;
+  margin: -0.35rem -0.3rem 0;
+  border-radius: 12px;
   cursor: pointer;
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    border-color 0.16s ease;
+  transition: background 0.16s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    border-color: #dbdcde;
-    box-shadow: 0 10px 24px rgba(162, 165, 170, 0.12);
+    background: #f3f4f6;
   }
 
   &:focus-visible {
     outline: 2px solid rgba(154, 157, 163, 0.34);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 
   small {

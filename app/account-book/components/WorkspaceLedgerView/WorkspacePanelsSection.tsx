@@ -83,6 +83,7 @@ type Props = {
     fixedExpense: number;
     consumptionExpense: number;
     regularSavings: number;
+    welfareExpense: number;
     netAmount: number;
     actualSavings: number;
     savingsRate: number | null;

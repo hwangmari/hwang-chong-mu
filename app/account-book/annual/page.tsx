@@ -15,6 +15,7 @@ import {
   getRepresentativeCategory,
   isCardSettlementEntry,
   isSavingsCategory,
+  isWelfareEntry,
 } from "../components/WorkspaceLedgerView/utils";
 import {
   getWorkspaceById,
@@ -219,7 +220,8 @@ function AccountBookAnnualContent() {
       (entry) =>
         entry.type === "expense" &&
         !isSavingsCategory(entry.category) &&
-        !isCardSettlementEntry(entry),
+        !isCardSettlementEntry(entry) &&
+        !isWelfareEntry(entry),
     );
   }, [annualEntries, kind]);
 
@@ -245,7 +247,9 @@ function AccountBookAnnualContent() {
       }
       acc[month].amount += entry.amount;
       acc[month].count += 1;
-      acc[month].payments[entry.payment] += entry.amount;
+      if (!isWelfareEntry(entry)) {
+        acc[month].payments[entry.payment] += entry.amount;
+      }
       return acc;
     }, {});
 
@@ -321,7 +325,9 @@ function AccountBookAnnualContent() {
   const paymentTotals = useMemo(() => {
     return insightEntries.reduce<Record<PaymentKey, number>>(
       (acc, entry) => {
-        acc[entry.payment] += entry.amount;
+        if (!isWelfareEntry(entry)) {
+          acc[entry.payment] += entry.amount;
+        }
         return acc;
       },
       { cash: 0, card: 0, check_card: 0 },

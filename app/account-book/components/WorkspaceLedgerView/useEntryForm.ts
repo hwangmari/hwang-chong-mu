@@ -133,7 +133,7 @@ export function useEntryForm({
     (nextPayment: PaymentType) => {
       setPayment(nextPayment);
       if (nextPayment === "cash") {
-        setCardCompany(getDefaultCardCompany("cash"));
+        setCardCompany(getDefaultCardCompany(nextPayment));
         return;
       }
       if (nextPayment === "check_card") {
@@ -259,11 +259,9 @@ export function useEntryForm({
     const normalizedSubCategory = normalizedSelection.subCategory;
     const resolvedPayment =
       type === "expense" && normalizedCategory === "카드대금" ? "cash" : payment;
-    if (
-      type === "expense" &&
-      resolvedPayment !== "cash" &&
-      !cardCompany.trim()
-    ) {
+    // 현금은 카드사가 없는 결제수단
+    const resolvedPaymentHasCard = resolvedPayment !== "cash";
+    if (type === "expense" && resolvedPaymentHasCard && !cardCompany.trim()) {
       void openAlert("카드 결제 내역은 카드사를 선택해주세요.");
       return;
     }
@@ -304,7 +302,7 @@ export function useEntryForm({
       item: resolvedItem,
       amount: Math.trunc(parsedAmount),
       cardCompany:
-        type === "expense" && resolvedPayment !== "cash"
+        type === "expense" && resolvedPaymentHasCard
           ? cardCompany.trim() || getDefaultCardCompany(resolvedPayment)
           : "",
       payment: type === "income" ? "cash" : resolvedPayment,

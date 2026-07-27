@@ -10,6 +10,7 @@ import {
   isSavingsCategory,
   isFixedExpenseCategory,
   isCardSettlementEntry,
+  isWelfareEntry,
   resolveMonthlyBudget,
 } from "@/app/account-book/components/WorkspaceLedgerView/utils";
 import {
@@ -142,7 +143,8 @@ function AccountBookWidget({ resourceRef }: { resourceRef: Record<string, unknow
       (entry) =>
         entry.workspaceId === workspaceId &&
         entry.type === "expense" &&
-        !isCardSettlementEntry(entry),
+        !isCardSettlementEntry(entry) &&
+        !isWelfareEntry(entry),
     );
 
     // 오늘 지출(저축 제외 실지출)
