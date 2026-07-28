@@ -48,6 +48,21 @@ export default function CalendarGrid({
 
   const hoveredUser = participants.find((p) => p.id === hoveredUserId);
 
+  // 확정 단계: 선호일 투표를 집계해 "단독 최다 득표일 하나"만 추천으로 표시한다.
+  // (동률이거나 투표 전이면 추천 배지 없음 — 선호는 히트맵 농도로 드러난다)
+  const voteCounts =
+    step === "CONFIRM"
+      ? confirmVotes.reduce<Record<string, number>>((acc, v) => {
+          acc[v.voted_date] = (acc[v.voted_date] || 0) + 1;
+          return acc;
+        }, {})
+      : {};
+  const voteValues = Object.values(voteCounts);
+  const maxConfirmVotes = voteValues.length ? Math.max(...voteValues) : 0;
+  const hasUniqueTopVote =
+    maxConfirmVotes > 0 &&
+    voteValues.filter((c) => c === maxConfirmVotes).length === 1;
+
   const handleBadgeClick = (e: React.MouseEvent, dateKey: string) => {
     e.stopPropagation(); // 부모 버튼의 클릭 이벤트 전파 중단
     setOpenTooltipDate((prev) => (prev === dateKey ? null : dateKey));
@@ -92,6 +107,13 @@ export default function CalendarGrid({
             step === "CONFIRM" && finalDate && isSameDay(finalDate, date);
 
           const isBestDate = step === "CONFIRM" && unavailableCount === 0;
+
+          // 추천일: 단독 최다 득표일 하나에만 표시
+          const isRecommended =
+            step === "CONFIRM" &&
+            !isFinalSelected &&
+            hasUniqueTopVote &&
+            confirmVoteCount === maxConfirmVotes;
           const isHoveredDate = hoveredUser?.unavailableDates.some((ud) =>
             isSameDay(ud, date),
           );
@@ -99,6 +121,12 @@ export default function CalendarGrid({
           const isTypingMode = step === "VOTING" && currentName.length > 0;
           const baseColor = isTypingMode ? "209, 213, 219" : "251, 113, 133";
           const dynamicBg = `rgba(${baseColor}, ${intensity * 0.9})`;
+
+          // 선호일 투표가 있는(불가 0) 날은 득표수에 비례해 앰버 톤을 채운다(히트맵).
+          const cellBg =
+            step === "CONFIRM" && unavailableCount === 0 && confirmVoteCount > 0
+              ? `rgba(251, 191, 36, ${Math.min(confirmVoteCount * 0.14, 0.4)})`
+              : dynamicBg;
 
           const dayString = format(date, "d");
           const showMonth = dayString === "1" || index === firstDateIndex;
@@ -115,7 +143,7 @@ export default function CalendarGrid({
               $isConfirmSelected={isConfirmSelected}
               $isFinalSelected={!!isFinalSelected}
               $isBestDate={isBestDate}
-              $dynamicBg={dynamicBg}
+              $dynamicBg={cellBg}
               $unavailableCount={unavailableCount}
               $isHoveredDate={!!isHoveredDate}
               $isHoliday={!!holidayName || isSun}
@@ -150,9 +178,7 @@ export default function CalendarGrid({
                 </StBadgeGroup>
               )}
 
-              {step === "CONFIRM" &&
-                unavailableCount === 0 &&
-                !isFinalSelected && <StRecommendBadge>추천👍</StRecommendBadge>}
+              {isRecommended && <StRecommendBadge>추천👍</StRecommendBadge>}
 
               {step === "CONFIRM" && confirmVoteCount > 0 && (
                 <StConfirmVoteBadge>{confirmVoteCount}표</StConfirmVoteBadge>
@@ -247,13 +273,13 @@ const StDateButton = styled.button<{
     theme,
   }) => {
     if ($isFinalSelected) return theme.colors.gray900;
-    if ($isMySelection) return theme.colors.white;
+    if ($isMySelection) return theme.colors.blue600;
     return $dynamicBg;
   }};
 
   color: ${({ $isFinalSelected, $isMySelection, $unavailableCount, $isHoliday, theme }) => {
     if ($isFinalSelected) return theme.colors.white;
-    if ($isMySelection) return theme.colors.black;
+    if ($isMySelection) return theme.colors.white;
     if ($unavailableCount > 0) return theme.colors.white;
     if ($isHoliday) return theme.colors.rose500;
     return theme.colors.gray500;
@@ -271,15 +297,16 @@ const StDateButton = styled.button<{
   ${({ $isMySelection, theme }) =>
     $isMySelection &&
     css`
-      border: 2px solid ${theme.colors.black};
+      border: 2px solid ${theme.colors.blue700};
+      box-shadow: 0 6px 14px -4px rgba(49, 130, 246, 0.5);
+      transform: scale(1.04);
       z-index: 10;
     `}
 
-  ${({ $isConfirmSelected, theme }) =>
+  ${({ $isConfirmSelected }) =>
     $isConfirmSelected &&
     css`
       border: 2px solid ${({ theme }) => theme.colors.amber500};
-      background-color: ${({ theme }) => theme.colors.amber50};
       z-index: 10;
     `}
 
@@ -290,13 +317,6 @@ const StDateButton = styled.button<{
       transform: scale(1.1);
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       z-index: 20;
-    `}
-
-  ${({ $isBestDate, $isFinalSelected, theme }) =>
-    $isBestDate &&
-    !$isFinalSelected &&
-    css`
-      box-shadow: 0 0 0 2px ${theme.colors.gray400};
     `}
 
   @media ${({ theme }) => theme.media.desktop} {
@@ -423,16 +443,16 @@ const StConfirmVoteBadge = styled.span`
   transform: translateX(-50%);
   background-color: ${({ theme }) => theme.colors.amber500};
   color: ${({ theme }) => theme.colors.white};
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 800;
-  padding: 0.0625rem 0.3rem;
+  padding: 0.125rem 0.45rem;
   border-radius: 9999px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   z-index: 30;
   white-space: nowrap;
 
   @media ${({ theme }) => theme.media.desktop} {
-    font-size: 0.5625rem;
+    font-size: 0.72rem;
   }
 `;
 
@@ -441,12 +461,11 @@ const StRecommendBadge = styled.span`
   top: -0.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background-color: ${({ theme }) => theme.colors.gray800};
-  color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.5rem;
   padding: 0.125rem 0.375rem;
   border-radius: 9999px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   z-index: 30;
   white-space: nowrap;
 
