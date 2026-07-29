@@ -1,13 +1,12 @@
-// POST /api/auth/reset/confirm  { token, password } → 토큰 검증 후 비밀번호 교체
-// 토큰 평문은 URL로만 오가고, DB 조회는 sha256 해시로만 한다(1회용·1시간 만료).
-import crypto from "node:crypto";
+// POST /api/auth/reset/direct  { nickname, email, password }
+// 메일 발송 없는 복구: 닉네임 + 가입 이메일이 맞으면 즉시 새 비밀번호로 교체한다.
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
-    if (!checkRateLimit(`auth-reset-confirm:${getClientIp(req)}`, 10, 60_000)) {
+    if (!checkRateLimit(`auth-reset-direct:${getClientIp(req)}`, 10, 60_000)) {
       return NextResponse.json(
         { error: "시도 횟수가 많습니다. 잠시 후 다시 시도해 주세요." },
         { status: 429 },
@@ -15,11 +14,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => null);
-    const token = typeof body?.token === "string" ? body.token : "";
+    const nickname =
+      typeof body?.nickname === "string" ? body.nickname.trim() : "";
+    const email = typeof body?.email === "string" ? body.email.trim() : "";
     const password = typeof body?.password === "string" ? body.password : "";
-    if (!token || !password) {
+
+    if (!nickname || !email || !password) {
       return NextResponse.json(
-        { error: "토큰과 새 비밀번호를 입력해 주세요." },
+        { error: "닉네임·이메일·새 비밀번호를 입력해 주세요." },
         { status: 400 },
       );
     }
@@ -30,9 +32,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const { data, error } = await supabase.rpc("hwang_reset_password", {
-      p_token_hash: tokenHash,
+    const { data, error } = await supabase.rpc("hwang_reset_by_email", {
+      p_nickname: nickname,
+      p_email: email,
       p_new_password: password,
     });
 
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
-      console.error("[auth/reset/confirm]", error);
+      console.error("[auth/reset/direct]", error);
       return NextResponse.json(
         { error: "비밀번호 재설정에 실패했습니다." },
         { status: 500 },
@@ -55,12 +57,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    // 닉네임+이메일이 맞지 않을 때는 사용자가 원인을 알 수 있게 안내(셀프 복구 UX)
     return NextResponse.json(
-      { error: "링크가 만료되었거나 유효하지 않아요. 다시 요청해 주세요." },
+      { error: "닉네임 또는 이메일이 맞지 않아요." },
       { status: 400 },
     );
   } catch (err) {
-    console.error("[auth/reset/confirm]", err);
+    console.error("[auth/reset/direct]", err);
     return NextResponse.json(
       { error: "비밀번호 재설정에 실패했습니다." },
       { status: 500 },

@@ -192,6 +192,15 @@ export default function AccountBookDashboardPanel({
           value: Math.max(budgetHeadroom, 0),
         }
       : null;
+  // 목표(계획) 배분 비율: 목표 지출 = 고정비 + 월 예산, 목표 저축 = 월 저축 목표
+  const hasPlanRatio = monthlyBudget > 0 || monthlySavingGoal > 0;
+  const planExpense = monthFixedExpense + monthlyBudget;
+  const planExpensePct =
+    monthIncome > 0 ? Math.round((planExpense / monthIncome) * 100) : 0;
+  const planSavingsPct =
+    monthIncome > 0 ? Math.round((monthlySavingGoal / monthIncome) * 100) : 0;
+  const planLeftoverPct = 100 - planExpensePct - planSavingsPct;
+
   const hasSavingsGoal = monthlySavingGoal > 0;
   const savingsUsed = currentMonthRow?.actualSavings || 0;
   const savingsPercent = hasSavingsGoal
@@ -262,7 +271,7 @@ export default function AccountBookDashboardPanel({
               {monthIncome > 0 ? (
                 <>
                   <span>
-                    지출 {incomeExpensePct}% · 저축 {incomeSavingsPct}%
+                    실제 지출 {incomeExpensePct}% · 저축 {incomeSavingsPct}%
                   </span>
                   {incomeLeftoverPct >= 0 ? (
                     <strong>여유 {incomeLeftoverPct}%</strong>
@@ -277,6 +286,28 @@ export default function AccountBookDashboardPanel({
               )}
             </StGoalMeta>
           </StRatioWrap>
+          {hasPlanRatio ? (
+            <StRatioWrap title="월 예산(고정비 포함)·저축 목표 기준 계획 배분입니다">
+              <StGoalMeta>
+                {monthIncome > 0 ? (
+                  <>
+                    <span>
+                      목표 지출 {planExpensePct}% · 저축 {planSavingsPct}%
+                    </span>
+                    {planLeftoverPct >= 0 ? (
+                      <strong>여유 {planLeftoverPct}%</strong>
+                    ) : (
+                      <strong className="over">
+                        계획이 수입 {Math.abs(planLeftoverPct)}% 초과
+                      </strong>
+                    )}
+                  </>
+                ) : (
+                  <span>이번 달 수입이 아직 없어요</span>
+                )}
+              </StGoalMeta>
+            </StRatioWrap>
+          ) : null}
         </StSummaryCell>
         <StSummaryRightGrid>
           <StSummaryCell>
@@ -687,6 +718,7 @@ const StSetButton = styled.button`
 
 const StWelfareNote = styled.span`
   align-self: flex-start;
+  margin-top: -0.4rem;
   padding: 0.12rem 0.15rem;
   font-size: 0.72rem;
   font-weight: 800;

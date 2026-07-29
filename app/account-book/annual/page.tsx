@@ -55,6 +55,7 @@ function AccountBookAnnualContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {},
   );
@@ -107,6 +108,12 @@ function AccountBookAnnualContent() {
     }
     return "expense";
   }, [searchParams]);
+
+  // 연도 이동/kind 변경 시 이전 스코프의 월·분류 필터는 더 이상 유효하지 않으므로 초기화한다.
+  useEffect(() => {
+    setSelectedMonth(null);
+    setSelectedCategory(null);
+  }, [selectedYear, kind]);
 
   const workspaceId = searchParams.get("workspaceId") || "";
   const returnViewMode = resolveViewMode(searchParams.get("view"));
@@ -225,13 +232,29 @@ function AccountBookAnnualContent() {
     );
   }, [annualEntries, kind]);
 
+  // "많이 나온 분류"에서 분류를 누르면 월별 흐름 차트/통계만 그 분류로 스코프한다.
+  // 분류 키 규칙은 insightCategoryGroups와 100% 동일해야 매칭된다.
+  const chartEntries = useMemo(() => {
+    if (!selectedCategory) return filteredEntries;
+    return filteredEntries.filter((entry) => {
+      const key =
+        kind === "asset"
+          ? entry.subCategory?.trim() ||
+            entry.item?.trim() ||
+            entry.category.trim() ||
+            "기타"
+          : getRepresentativeCategory(entry.category, entry.type);
+      return key === selectedCategory;
+    });
+  }, [filteredEntries, selectedCategory, kind]);
+
   const total = useMemo(
-    () => filteredEntries.reduce((sum, entry) => sum + entry.amount, 0),
-    [filteredEntries],
+    () => chartEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [chartEntries],
   );
 
   const monthlyRows = useMemo(() => {
-    const grouped = filteredEntries.reduce<
+    const grouped = chartEntries.reduce<
       Record<
         string,
         { amount: number; count: number; payments: Record<PaymentKey, number> }
@@ -263,7 +286,7 @@ function AccountBookAnnualContent() {
         payments: target.payments || { cash: 0, card: 0, check_card: 0 },
       };
     });
-  }, [filteredEntries]);
+  }, [chartEntries]);
 
   const selectedMonthCode = useMemo(() => {
     if (!selectedMonth) return null;
@@ -567,8 +590,18 @@ function AccountBookAnnualContent() {
           <StInsightGrid>
               <StCard>
                 <StSectionHeader>
-                  <StSectionTitle>월별 흐름</StSectionTitle>
+                  <StSectionTitle>
+                    월별 흐름{selectedCategory ? ` · ${selectedCategory}` : ""}
+                  </StSectionTitle>
                   <StSectionHeaderActions>
+                    {selectedCategory ? (
+                      <StFilterChip
+                        type="button"
+                        onClick={() => setSelectedCategory(null)}
+                      >
+                        {selectedCategory} 필터 해제
+                      </StFilterChip>
+                    ) : null}
                     {selectedMonth ? (
                       <StFilterChip
                         type="button"
@@ -576,9 +609,10 @@ function AccountBookAnnualContent() {
                       >
                         {selectedMonth} 필터 해제
                       </StFilterChip>
-                    ) : (
+                    ) : null}
+                    {!selectedCategory && !selectedMonth ? (
                       <StFilterChipPlaceholder aria-hidden="true" />
-                    )}
+                    ) : null}
                   </StSectionHeaderActions>
                 </StSectionHeader>
               {monthlyRows.every((row) => row.amount === 0) ? (
@@ -762,12 +796,18 @@ function AccountBookAnnualContent() {
                             <StCatGroup key={group.category}>
                               <StCatButton
                                 type="button"
-                                onClick={() =>
+                                $active={selectedCategory === group.category}
+                                onClick={() => {
+                                  setSelectedCategory((prev) =>
+                                    prev === group.category
+                                      ? null
+                                      : group.category,
+                                  );
                                   setOpenAccordions((prev) => ({
                                     ...prev,
                                     [group.category]: !isOpen,
-                                  }))
-                                }
+                                  }));
+                                }}
                               >
                                 <StCatMain>
                                   <strong>{group.category}</strong>
@@ -1298,17 +1338,21 @@ const StCatGroup = styled.div`
   }
 `;
 
-const StCatButton = styled.button`
+const StCatButton = styled.button<{ $active?: boolean }>`
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  border: none;
-  background: transparent;
-  padding: 0.78rem 0.15rem;
+  border: 1px solid ${({ $active }) => ($active ? "#f5c451" : "transparent")};
+  border-radius: 12px;
+  background: ${({ $active }) => ($active ? "#fdf6e3" : "transparent")};
+  padding: 0.78rem 0.5rem;
   text-align: left;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 `;
 
 const StCatMain = styled.div`

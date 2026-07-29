@@ -31,20 +31,20 @@ function LoginContent() {
     if (submitting) return;
     const nick = nickname.trim();
 
-    // 비밀번호 찾기: 닉네임+이메일로 재설정 링크 요청(성공 시 안내 메시지 표시)
+    // 비밀번호 찾기(메일 발송 없음): 닉네임+가입 이메일이 맞으면 즉시 새 비번으로 교체
     if (mode === "reset") {
       const mail = email.trim();
-      if (!nick || !mail) {
-        setError("닉네임과 이메일을 입력해 주세요.");
+      if (!nick || !mail || !password) {
+        setError("닉네임·이메일·새 비밀번호를 입력해 주세요.");
         return;
       }
       setSubmitting(true);
       setError("");
       try {
-        const res = await fetch("/api/auth/reset/request", {
+        const res = await fetch("/api/auth/reset/direct", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ nickname: nick, email: mail }),
+          body: JSON.stringify({ nickname: nick, email: mail, password }),
         });
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as {
@@ -108,7 +108,7 @@ function LoginContent() {
         </StTitle>
         <StSubtitle>
           {mode === "reset"
-            ? "가입 때 입력한 닉네임과 이메일로 재설정 링크를 보내드려요."
+            ? "닉네임과 가입 이메일이 맞으면 새 비밀번호로 바로 바꿔드려요."
             : "닉네임 하나로 황총무의 여러 서비스를 한 계정으로 이어보세요."}
         </StSubtitle>
 
@@ -133,11 +133,9 @@ function LoginContent() {
 
         {mode === "reset" && resetSent ? (
           <StNotice>
-            <p>
-              재설정 링크를 메일로 보냈어요. 받은편지함을 확인해 주세요.
-            </p>
+            <p>비밀번호가 변경됐어요. 새 비밀번호로 로그인해 주세요.</p>
             <StTextButton type="button" onClick={() => switchMode("login")}>
-              로그인으로 돌아가기
+              로그인하러 가기
             </StTextButton>
           </StNotice>
         ) : (
@@ -157,19 +155,34 @@ function LoginContent() {
             </StField>
 
             {mode === "reset" ? (
-              <StField>
-                <label>이메일</label>
-                <StInput
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="가입 때 입력한 이메일"
-                  autoComplete="email"
-                />
-              </StField>
+              <>
+                <StField>
+                  <label>가입 이메일</label>
+                  <StInput
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="가입 때 입력한 이메일"
+                    autoComplete="email"
+                  />
+                </StField>
+                <StField>
+                  <label>새 비밀번호</label>
+                  <StInput
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="4자 이상"
+                    autoComplete="new-password"
+                  />
+                </StField>
+              </>
             ) : (
               <StField>
                 <label>비밀번호</label>
@@ -212,7 +225,7 @@ function LoginContent() {
                   ? "로그인"
                   : mode === "signup"
                     ? "가입하고 시작하기"
-                    : "재설정 링크 받기"}
+                    : "비밀번호 변경"}
             </StSubmit>
 
             {mode === "login" && (

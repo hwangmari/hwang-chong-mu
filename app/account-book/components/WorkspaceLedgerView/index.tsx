@@ -411,17 +411,23 @@ export default function WorkspaceLedgerView({
     );
   }, [monthEntries]);
 
+  // 현금 잔액(이번 달 실제로 통장에서 나가고 남은 돈).
+  // = 수입 전액 − (현금·체크카드 즉시 지출[저축 포함] + 이번 달 카드대금 정산)
+  // 신용카드 사용액은 아직 안 나감(다음 달 카드대금으로 나감) → 제외, 복지카드는 전부 제외.
   const cashBalance = useMemo(() => {
     return monthEntries.reduce((sum, entry) => {
-      if (entry.payment !== "cash") {
-        return sum;
+      if (isWelfareEntry(entry)) return sum;
+      if (entry.type === "income") return sum + entry.amount;
+      if (entry.type !== "expense") return sum;
+      // 카드대금 정산: 이전에 쓴 카드를 이번 달에 갚는 실제 현금 유출
+      if (isCardSettlementEntry(entry)) return sum - entry.amount;
+      // 저축(자산으로 빠진 돈)은 결제수단과 무관하게 통장에서 나간 것으로 본다
+      if (isSavingsCategory(entry.category)) return sum - entry.amount;
+      // 현금·체크카드 즉시 소비지출. 신용카드 사용액은 다음 달 카드정산으로 나감 → 제외.
+      if (entry.payment === "cash" || entry.payment === "check_card") {
+        return sum - entry.amount;
       }
-
-      if (entry.type === "income") {
-        return sum + entry.amount;
-      }
-
-      return sum - entry.amount;
+      return sum;
     }, 0);
   }, [monthEntries]);
 

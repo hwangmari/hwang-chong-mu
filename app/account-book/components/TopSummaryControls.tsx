@@ -79,7 +79,10 @@ export default function TopSummaryControls({
       label: "현금 잔액",
       value: formatAmount(cashBalance),
       detailLines: [
-        `현금 지출 ${formatAmount(monthPaymentTotals.cash)}`,
+        `현금·체크 ${formatAmount(
+          monthPaymentTotals.cash + monthPaymentTotals.check_card,
+        )}`,
+        `저축 ${formatAmount(monthAssetTotal)}`,
         `카드정산 ${formatAmount(monthSettlementTotal)}`,
       ],
       tone: "income" as const,
