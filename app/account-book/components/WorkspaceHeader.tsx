@@ -10,7 +10,6 @@ type Props = {
   subtitle?: string;
   infoText?: string;
   monthLabel: string;
-  monthRangeLabel: string;
   monthValue: string;
   rightSlot?: ReactNode;
   onBack?: () => void;
@@ -23,7 +22,6 @@ export default function WorkspaceHeader({
   subtitle,
   infoText,
   monthLabel,
-  monthRangeLabel,
   monthValue,
   rightSlot,
   onBack,
@@ -205,7 +203,6 @@ export default function WorkspaceHeader({
                   <path d="m5.5 7.5 4.5 4.5 4.5-4.5" />
                 </StMonthCaret>
               </StMonthTitleRow>
-              <StMonthRange>{monthRangeLabel}</StMonthRange>
             </StMonthInfoButton>
             <StMonthButton type="button" onClick={() => onMonthMove?.(1)}>
               <StChevronIcon viewBox="0 0 24 24" aria-hidden="true">
@@ -302,7 +299,7 @@ const StWorkspaceHeader = styled.header`
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-areas: "left center right";
   align-items: center;
-  padding: 0.7rem 1rem;
+  padding: 0.55rem 1rem;
   gap: 2rem;
 
   /* 태블릿(768~)은 PC와 같은 한 줄 3열 레이아웃 유지. 세로 스택 전환은 767 이하부터. */
@@ -312,8 +309,8 @@ const StWorkspaceHeader = styled.header`
       "main"
       "right";
     justify-items: stretch;
-    padding: 0.8rem 0.75rem;
-    gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    gap: 0.55rem;
   }
 
   @media (max-width: 720px) {
@@ -321,8 +318,8 @@ const StWorkspaceHeader = styled.header`
     grid-template-areas:
       "main"
       "right";
-    padding: 0.75rem 0.7rem;
-    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    gap: 0.5rem;
   }
 `;
 
@@ -457,13 +454,22 @@ const StMonthButton = styled.button`
   width: 2.3rem;
   height: 2.3rem;
   border-radius: 999px;
-  border: 1px solid #e2e3e5;
-  background: ${({ theme }) => theme.colors.white};
+  border: none;
+  background: transparent;
   font-size: 1.3rem;
-  color: ${({ theme }) => theme.colors.gray600};
+  color: ${({ theme }) => theme.colors.gray500};
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray700};
+  }
 `;
 const StChevronIcon = styled.svg`
   width: 1.35rem;
@@ -513,15 +519,6 @@ const StMonthCaret = styled.svg`
   stroke: #84888f;
   stroke-width: 1.8;
   fill: none;
-`;
-
-const StMonthRange = styled.p`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.gray500};
-
-  @media (max-width: 720px) {
-    display: none;
-  }
 `;
 
 const StMonthPickerLayer = styled.div`

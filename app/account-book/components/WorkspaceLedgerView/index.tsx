@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addMonths,
@@ -26,8 +26,21 @@ import EntrySearchBar, {
 import NaturalInputSection from "./NaturalInputSection";
 import ShareConfirmDialog from "./ShareConfirmDialog";
 import ViewModeTabs from "./ViewModeTabs";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import WorkspacePanelsSection from "./WorkspacePanelsSection";
-import { StContentWrap, StPage } from "./WorkspaceLedgerView.styles";
+import {
+  StContentWrap,
+  StPage,
+  StHeaderRightSlot,
+  StTabsFill,
+  StStockShortcut,
+  StStockIcon,
+  StStockLabel,
+  StStockMenuWrap,
+  StStockMenuOverlay,
+  StStockMenu,
+  StStockMenuItem,
+} from "./WorkspaceLedgerView.styles";
 import {
   DEFAULT_ANNUAL_SAVING_GOAL,
   DEFAULT_HIDDEN_CALENDAR_AMOUNT_CARD_IDS,
@@ -157,7 +170,6 @@ export default function WorkspaceLedgerView({
     currentMonth,
     onSaveEntry,
   });
-  const monthRangeLabel = `${format(currentMonth, "M.1", { locale: ko })} - ${format(endOfMonth(currentMonth), "M.d", { locale: ko })}`;
   const selectedYear = format(currentMonth, "yyyy");
   const currentYear = currentMonth.getFullYear();
   const currentMonthIndex = currentMonth.getMonth();
@@ -222,6 +234,20 @@ export default function WorkspaceLedgerView({
   });
   // 자산/저축 저축 시 세부 태그를 실제 통장 목록으로 노출(선택 → 그 통장에 자동 입금)
   const assetData = useAssetData(workspace.id, currentUserId);
+  // 주식 바로가기용: 이 워크스페이스의 투자 계좌들(있을 때만 헤더에 바로가기 노출)
+  const investmentAccounts = useMemo(
+    () => assetData.accounts.filter((account) => account.kind === "투자"),
+    [assetData.accounts],
+  );
+  const [stockMenuOpen, setStockMenuOpen] = useState(false);
+  const openStockAccount = useCallback(
+    (accountId: string) => {
+      router.push(
+        `/account-book/investment?workspace=${workspace.id}&account=${accountId}&back=board`,
+      );
+    },
+    [router, workspace.id],
+  );
   const savingsAccountNames = useMemo(
     () => assetData.activeAccounts.map((account) => account.name),
     [assetData.activeAccounts],
@@ -1089,13 +1115,59 @@ export default function WorkspaceLedgerView({
       <WorkspaceHeader
         title={workspaceTitle}
         monthLabel={monthLabel}
-        monthRangeLabel={monthRangeLabel}
         monthValue={monthValue}
         onBack={onBack}
         onMonthMove={onMonthMove}
         onMonthSelect={onMonthSelect}
         rightSlot={
-          <ViewModeTabs viewMode={viewMode} onChangeViewMode={setViewMode} />
+          <StHeaderRightSlot>
+            {investmentAccounts.length > 0 ? (
+              <StStockMenuWrap>
+                <StStockShortcut
+                  type="button"
+                  title="주식 포트폴리오"
+                  aria-label="주식 포트폴리오"
+                  aria-expanded={stockMenuOpen}
+                  onClick={() => {
+                    if (investmentAccounts.length === 1) {
+                      openStockAccount(investmentAccounts[0].id);
+                    } else {
+                      setStockMenuOpen((prev) => !prev);
+                    }
+                  }}
+                >
+                  <StStockIcon>
+                    <ShowChartRoundedIcon fontSize="inherit" />
+                  </StStockIcon>
+                  <StStockLabel>주식</StStockLabel>
+                </StStockShortcut>
+                {stockMenuOpen ? (
+                  <>
+                    <StStockMenuOverlay
+                      onClick={() => setStockMenuOpen(false)}
+                    />
+                    <StStockMenu>
+                      {investmentAccounts.map((account) => (
+                        <StStockMenuItem
+                          key={account.id}
+                          type="button"
+                          onClick={() => {
+                            setStockMenuOpen(false);
+                            openStockAccount(account.id);
+                          }}
+                        >
+                          📈 {account.name}
+                        </StStockMenuItem>
+                      ))}
+                    </StStockMenu>
+                  </>
+                ) : null}
+              </StStockMenuWrap>
+            ) : null}
+            <StTabsFill>
+              <ViewModeTabs viewMode={viewMode} onChangeViewMode={setViewMode} />
+            </StTabsFill>
+          </StHeaderRightSlot>
         }
       />
       <StContentWrap>

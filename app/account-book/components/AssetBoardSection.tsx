@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import styled from "styled-components";
 import { useModal } from "@/components/common/ModalProvider";
 import type { useAssetData } from "../hooks/useAssetData";
@@ -177,7 +178,7 @@ export default function AssetBoardSection({
                     );
                   }}
                 >
-                  📈
+                  <ShowChartRoundedIcon fontSize="inherit" />
                 </StPortfolioButton>
               ) : null}
               <StRowButton
@@ -1036,8 +1037,9 @@ const StPortfolioButton = styled.button`
   border: 1px solid #e6e7e9;
   background: #ffffff;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1;
+  color: ${({ theme }) => theme.colors.blue600};
   cursor: pointer;
   display: inline-flex;
   align-items: center;

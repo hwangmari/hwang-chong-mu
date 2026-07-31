@@ -202,7 +202,11 @@ function AccountBookInvestmentContent() {
 
   const accountBalance = asset.balanceByAccount[accountId] || 0;
 
-  const backUrl = `/account-book/annual?kind=asset&workspaceId=${workspaceId}`;
+  // 헤더 주식 메뉴로 진입한 경우(back=board)엔 가계부 보드로, 그 외엔 연간 자산으로 돌아간다.
+  const backUrl =
+    searchParams.get("back") === "board"
+      ? `/account-book?workspaceId=${workspaceId}&view=board`
+      : `/account-book/annual?kind=asset&workspaceId=${workspaceId}`;
 
   // 요약 집계
   const summary = useMemo(() => {

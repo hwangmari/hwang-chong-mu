@@ -1,6 +1,10 @@
 "use client";
 
+import type { ElementType } from "react";
 import styled from "styled-components";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
+import FormatListBulletedRoundedIcon from "@mui/icons-material/FormatListBulletedRounded";
+import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import type { ViewMode } from "../../types";
 
 type Props = {
@@ -8,53 +12,74 @@ type Props = {
   onChangeViewMode: (viewMode: ViewMode) => void;
 };
 
-const VIEW_MODES: Array<{ id: ViewMode; label: string }> = [
-  { id: "calendar", label: "캘린더" },
-  { id: "ledger", label: "리스트" },
-  { id: "board", label: "보드" },
+const VIEW_MODES: Array<{ id: ViewMode; label: string; Icon: ElementType }> = [
+  { id: "calendar", label: "캘린더", Icon: CalendarMonthRoundedIcon },
+  { id: "ledger", label: "리스트", Icon: FormatListBulletedRoundedIcon },
+  { id: "board", label: "보드", Icon: SpaceDashboardRoundedIcon },
 ];
 
 export default function ViewModeTabs({ viewMode, onChangeViewMode }: Props) {
   return (
     <StViewModeSwitch aria-label="가계부 화면 전환">
-      {VIEW_MODES.map((item) => (
-        <StViewModeButton
-          key={item.id}
-          type="button"
-          $active={viewMode === item.id}
-          onClick={() => onChangeViewMode(item.id)}
-        >
-          {item.label}
-        </StViewModeButton>
-      ))}
+      {VIEW_MODES.map(({ id, label, Icon }) => {
+        const active = viewMode === id;
+        return (
+          <StViewModeButton
+            key={id}
+            type="button"
+            $active={active}
+            onClick={() => onChangeViewMode(id)}
+          >
+            <StTabIcon $active={active}>
+              <Icon fontSize="inherit" />
+            </StTabIcon>
+            {label}
+          </StViewModeButton>
+        );
+      })}
     </StViewModeSwitch>
   );
 }
 
 const StViewModeSwitch = styled.div`
   display: inline-flex;
-  gap: 0.45rem;
+  align-items: center;
+  gap: 1.1rem;
 
   @media (max-width: 720px) {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    justify-content: flex-end;
     width: 100%;
   }
 `;
 
+// 아이콘 + 컬러로 활성 표시 (테두리·밑줄 없음)
 const StViewModeButton = styled.button<{ $active: boolean }>`
-  min-width: 6rem;
-  border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? "#3182f6" : "#e2e3e4")};
-  background: ${({ $active, theme }) => ($active ? "#e8f2fe" : theme.colors.white)};
-  color: ${({ $active, theme }) => ($active ? "#3182f6" : theme.colors.gray500)};
-  padding: 0.62rem 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  padding: 0.3rem 0.1rem;
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: ${({ $active }) => ($active ? 800 : 700)};
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.gray900 : theme.colors.gray400};
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.16s ease;
 
-  @media (max-width: 720px) {
-    min-width: 0;
-    width: 100%;
-    padding: 0.7rem 0.35rem;
+  &:hover {
+    color: ${({ $active, theme }) =>
+      $active ? theme.colors.gray900 : theme.colors.gray600};
   }
+`;
+
+const StTabIcon = styled.span<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.blue600 : theme.colors.gray300};
+  transition: color 0.16s ease;
 `;
