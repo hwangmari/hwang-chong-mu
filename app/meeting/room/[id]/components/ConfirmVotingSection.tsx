@@ -2,6 +2,7 @@
 
 import { Typography } from "@hwangchongmu/ui";
 import { format } from "date-fns";
+import type { UserVote } from "@/types";
 import CalendarGrid from "@/app/meeting/room/detail/CalendarGrid";
 import ParticipantList from "@/app/meeting/room/detail/ParticipantList";
 import { StFlexBox, StWrapper } from "@/components/styled/layout.styled";
@@ -22,7 +23,7 @@ interface ConfirmVote {
 }
 
 interface ConfirmVotingSectionProps {
-  participants: any[];
+  participants: UserVote[];
   calendarGrid: (Date | null)[];
   currentUnavailable: Date[];
   step: "VOTING" | "CONFIRM";

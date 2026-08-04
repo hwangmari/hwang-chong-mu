@@ -105,7 +105,14 @@ export default function useCreateRoom() {
           }));
           await supabase.from("participants").insert(rows);
         }
-        router.push(`/meeting/room/${created.slug}-${created.short_code}`);
+        const roomId = `${created.slug}-${created.short_code}`;
+        // 로그인 사용자면 내 계정에 자동 등록(비로그인은 서버가 401 → 무시)
+        void fetch("/api/auth/rooms", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ service: "meeting", roomId, label: roomName }),
+        }).catch(() => {});
+        router.push(`/meeting/room/${roomId}`);
       } else {
         throw new Error("방 코드 생성에 실패했습니다.");
       }

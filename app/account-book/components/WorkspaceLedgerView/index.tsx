@@ -27,6 +27,7 @@ import NaturalInputSection from "./NaturalInputSection";
 import ShareConfirmDialog from "./ShareConfirmDialog";
 import ViewModeTabs from "./ViewModeTabs";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
+import { useModal } from "@/components/common/ModalProvider";
 import WorkspacePanelsSection from "./WorkspacePanelsSection";
 import {
   StContentWrap,
@@ -90,6 +91,7 @@ export default function WorkspaceLedgerView({
   initialViewMode = "calendar",
 }: WorkspaceLedgerViewProps) {
   const router = useRouter();
+  const { openConfirm } = useModal();
   const initialDate = toIsoDate(new Date());
   const [currentMonth, setCurrentMonth] = useState(() =>
     startOfMonth(parseIsoDate(initialDate) || new Date()),
@@ -1103,9 +1105,42 @@ export default function WorkspaceLedgerView({
     const targetEntry = entries.find((entry) => entry.id === entryId) || null;
     const fixedTemplateId = extractFixedExpenseTemplateId(targetEntry?.rawText);
 
-    await Promise.resolve(onDeleteEntry(entryId));
+    // 일반 항목: 바로 삭제
+    if (!fixedTemplateId) {
+      await Promise.resolve(onDeleteEntry(entryId));
+      return;
+    }
 
-    if (targetEntry && isFixedExpenseCategory(targetEntry.category) && fixedTemplateId) {
+    // 정기 반복 항목(고정비·정기저축)은 템플릿이 매달 자동 생성하므로 삭제 범위를 선택받는다.
+    const label =
+      targetEntry?.item ||
+      targetEntry?.subCategory ||
+      targetEntry?.merchant ||
+      "이 항목";
+
+    // 1) 이번 달부터 이후(반복 해제) — 지난 달 기록은 유지
+    const thisAndAfter = await openConfirm(
+      `‘${label}’은 매달 자동 생성되는 정기 반복 항목이에요.\n\n확인 · 이번 달부터 이후 삭제 (반복 해제, 지난 달 기록은 유지)\n취소 · 전체 삭제 여부 확인`,
+    );
+    if (thisAndAfter) {
+      await Promise.resolve(onDeleteEntry(entryId));
+      removeFixedExpenseTemplate(fixedTemplateId);
+      return;
+    }
+
+    // 2) 전체(지난 달 포함) 삭제 — 취소하면 아무것도 안 함
+    const deleteAll = await openConfirm(
+      `지난 달 포함 ‘${label}’ 전체 기록을 삭제할까요?\n\n확인 · 전체 삭제 (반복 해제)\n취소 · 삭제 안 함`,
+    );
+    if (deleteAll) {
+      const occurrences = entries.filter(
+        (entry) =>
+          !entry.readonly &&
+          extractFixedExpenseTemplateId(entry.rawText) === fixedTemplateId,
+      );
+      for (const occurrence of occurrences) {
+        await Promise.resolve(onDeleteEntry(occurrence.id));
+      }
       removeFixedExpenseTemplate(fixedTemplateId);
     }
   };

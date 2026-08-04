@@ -1,5 +1,18 @@
 import styled from "styled-components";
 
+// 헤더(RoomHeader)를 VOTING 단계의 2열 데스크톱 컨테이너와 동일한 폭으로
+// 정렬하기 위한 래퍼. 모바일/태블릿(<1024px)에서는 기존과 동일하게 540px로
+// 좁게 유지하고, 데스크톱에서만 폭을 100%(=StContainer의 1024px 상한)로 넓힌다.
+export const StHeaderWrapper = styled.div`
+  width: 100%;
+  max-width: ${({ theme }) => theme.layout.narrowWidth};
+  margin: 0 auto;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    max-width: ${({ theme }) => theme.layout.maxWidth};
+  }
+`;
+
 export const StLoadingContainer = styled.div`
   min-height: 100vh;
   display: flex;
@@ -49,12 +62,10 @@ export const StInputRow = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: nowrap;
+  /* 좁은 사이드바(PC)·모바일에서 이름입력과 버튼이 겹치지 않도록 줄바꿈 허용
+     (안 맞으면 이름입력이 한 줄, 다돼요/다안돼요가 아래 줄로 내려감) */
+  flex-wrap: wrap;
   margin-bottom: 20px;
-
-  @media (max-width: 768px) {
-    flex-wrap: wrap;
-  }
 `;
 
 export const StNameChipList = styled.div`

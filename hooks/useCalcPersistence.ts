@@ -45,7 +45,14 @@ export const useCalcPersistence = () => {
         throw new Error("방 코드 생성에 실패했습니다.");
       }
 
-      router.push(`/calc/${created.slug}-${created.short_code}`);
+      const roomId = `${created.slug}-${created.short_code}`;
+      // 로그인 사용자면 내 계정에 자동 등록(비로그인은 서버가 401 → 무시)
+      void fetch("/api/auth/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ service: "calc", roomId, label: roomName }),
+      }).catch(() => {});
+      router.push(`/calc/${roomId}`);
     } catch (error) {
       console.error("생성 실패:", error);
       await openAlert("방 생성에 실패했습니다. 😭");

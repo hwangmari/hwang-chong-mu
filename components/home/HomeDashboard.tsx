@@ -36,6 +36,23 @@ type LinkRow = {
   label: string;
 };
 
+// "내 방"(약속·정산): 서비스당 여러 개일 수 있는 진행 중 방.
+type RoomRow = {
+  id: string;
+  service: "meeting" | "calc";
+  roomId: string;
+  label: string;
+  createdAt: string;
+};
+
+const ROOM_WIDGET_META: Record<
+  "meeting" | "calc",
+  { icon: string; name: string; path: string }
+> = {
+  meeting: { icon: "📅", name: "약속잡기", path: "/meeting/room" },
+  calc: { icon: "🧮", name: "정산방", path: "/calc" },
+};
+
 // 위젯 로더의 표시 데이터. main은 핵심 수치 한 줄, sub는 보조 설명.
 type WidgetView = {
   main: string;
@@ -323,6 +340,39 @@ function DietWidget({ resourceRef }: { resourceRef: Record<string, unknown> }) {
   );
 }
 
+// ── 내 방 위젯: 진행 중 방 개수/최근 방. 방이 1개면 그 방으로, 여러 개면 /account로 ──
+function RoomWidget({
+  service,
+  rooms,
+}: {
+  service: "meeting" | "calc";
+  rooms: RoomRow[];
+}) {
+  const meta = ROOM_WIDGET_META[service];
+  // rooms는 최신순(RPC에서 정렬) — 첫 항목이 가장 최근 방
+  const latest = rooms[0];
+  const href =
+    rooms.length === 1
+      ? `${meta.path}/${latest.roomId}`
+      : "/account";
+  const view: WidgetView = {
+    main:
+      rooms.length === 1
+        ? latest.label || meta.name
+        : `진행 중 ${rooms.length}개`,
+    sub: rooms.length > 1 ? `최근: ${latest.label || meta.name}` : undefined,
+  };
+  return (
+    <WidgetShell
+      href={href}
+      icon={meta.icon}
+      name={meta.name}
+      view={view}
+      status="ready"
+    />
+  );
+}
+
 function renderWidget(link: LinkRow) {
   switch (link.service) {
     case "account-book":
@@ -344,11 +394,13 @@ function renderWidget(link: LinkRow) {
 export default function HomeDashboard() {
   const { user, loading } = useAuth();
   const [links, setLinks] = useState<LinkRow[] | null>(null);
+  const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setLinks(null);
+      setRooms([]);
       return;
     }
     let active = true;
@@ -361,6 +413,17 @@ export default function HomeDashboard() {
       } catch {
         // 링크 로드 실패 시 빈 목록으로 처리 — 홈은 정상 유지
         if (active) setLinks([]);
+      }
+    })();
+    void (async () => {
+      try {
+        const res = await fetch("/api/auth/rooms", { cache: "no-store" });
+        if (!res.ok) throw new Error("rooms load failed");
+        const data = (await res.json()) as { rooms?: RoomRow[] };
+        if (active) setRooms(data.rooms ?? []);
+      } catch {
+        // 방 로드 실패 시 빈 목록 — 위젯만 생략
+        if (active) setRooms([]);
       }
     })();
     return () => {
@@ -405,9 +468,12 @@ export default function HomeDashboard() {
   }
 
   const supportedLinks = links.filter((link) => link.service !== "schedule");
+  const meetingRooms = rooms.filter((room) => room.service === "meeting");
+  const calcRooms = rooms.filter((room) => room.service === "calc");
+  const hasRoomWidgets = meetingRooms.length > 0 || calcRooms.length > 0;
 
-  // 연결된 서비스가 없을 때
-  if (supportedLinks.length === 0) {
+  // 연결된 서비스도, 등록된 방도 없을 때
+  if (supportedLinks.length === 0 && !hasRoomWidgets) {
     return (
       <StSection>
         <StPromptCard>
@@ -424,40 +490,63 @@ export default function HomeDashboard() {
 
   return (
     <StSection>
-      <StBoard>
-        <StBoardHead>
-          <StBoardTitleWrap>
-            <StBoardTitle>✨ 내 서비스 요약</StBoardTitle>
-            <StInfoWrap>
-              <StInfoButton
-                type="button"
-                aria-label="요약 사용 안내"
-                aria-expanded={guideOpen}
-                onClick={() => setGuideOpen((v) => !v)}
-              >
-                i
-              </StInfoButton>
-              {guideOpen ? (
-                <>
-                  <StTooltipOverlay onClick={() => setGuideOpen(false)} />
-                  <StTooltip role="tooltip">
-                    <StTooltipTitle>이렇게 쓰면 돼요</StTooltipTitle>
-                    <StTooltipList>
-                      <li>연결한 서비스의 오늘·이번 주 요약을 한눈에 볼 수 있어요.</li>
-                      <li>카드를 누르면 해당 서비스로 바로 이동해요.</li>
-                      <li>‘연결 관리’에서 서비스를 계정에 연결하거나 해제할 수 있어요.</li>
-                    </StTooltipList>
-                  </StTooltip>
-                </>
-              ) : null}
-            </StInfoWrap>
-          </StBoardTitleWrap>
-          <Link href="/account" passHref>
-            <StBoardManage>연결 관리</StBoardManage>
-          </Link>
-        </StBoardHead>
-        <StGrid>{supportedLinks.map((link) => renderWidget(link))}</StGrid>
-      </StBoard>
+      {supportedLinks.length > 0 ? (
+        <StBoard>
+          <StBoardHead>
+            <StBoardTitleWrap>
+              <StBoardTitle>✨ 내 서비스 요약</StBoardTitle>
+              <StInfoWrap>
+                <StInfoButton
+                  type="button"
+                  aria-label="요약 사용 안내"
+                  aria-expanded={guideOpen}
+                  onClick={() => setGuideOpen((v) => !v)}
+                >
+                  i
+                </StInfoButton>
+                {guideOpen ? (
+                  <>
+                    <StTooltipOverlay onClick={() => setGuideOpen(false)} />
+                    <StTooltip role="tooltip">
+                      <StTooltipTitle>이렇게 쓰면 돼요</StTooltipTitle>
+                      <StTooltipList>
+                        <li>연결한 서비스의 오늘·이번 주 요약을 한눈에 볼 수 있어요.</li>
+                        <li>카드를 누르면 해당 서비스로 바로 이동해요.</li>
+                        <li>‘연결 관리’에서 서비스를 계정에 연결하거나 해제할 수 있어요.</li>
+                      </StTooltipList>
+                    </StTooltip>
+                  </>
+                ) : null}
+              </StInfoWrap>
+            </StBoardTitleWrap>
+            <Link href="/account" passHref>
+              <StBoardManage>연결 관리</StBoardManage>
+            </Link>
+          </StBoardHead>
+          <StGrid>{supportedLinks.map((link) => renderWidget(link))}</StGrid>
+        </StBoard>
+      ) : null}
+
+      {hasRoomWidgets ? (
+        <StBoard>
+          <StBoardHead>
+            <StBoardTitleWrap>
+              <StBoardTitle>🗓️ 내 약속·정산방</StBoardTitle>
+            </StBoardTitleWrap>
+            <Link href="/account" passHref>
+              <StBoardManage>관리</StBoardManage>
+            </Link>
+          </StBoardHead>
+          <StGrid>
+            {meetingRooms.length > 0 ? (
+              <RoomWidget key="meeting" service="meeting" rooms={meetingRooms} />
+            ) : null}
+            {calcRooms.length > 0 ? (
+              <RoomWidget key="calc" service="calc" rooms={calcRooms} />
+            ) : null}
+          </StGrid>
+        </StBoard>
+      ) : null}
     </StSection>
   );
 }

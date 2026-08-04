@@ -6,12 +6,12 @@ import { useRoom } from "@/hooks/useRoom";
 import RoomHeader from "@/app/meeting/room/detail/RoomHeader";
 import Modal from "@/components/common/Modal";
 import { GuideModal } from "@/components/common/GuideModal";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import { StContainer } from "@/components/styled/layout.styled";
 import { toSlug } from "@/lib/slug";
 import ConfirmVotingSection from "./components/ConfirmVotingSection";
 import FinalConfirmedSection from "./components/FinalConfirmedSection";
 import VotingSection from "./components/VotingSection";
-import { StLoadingContainer } from "./page.styles";
+import { StHeaderWrapper, StLoadingContainer } from "./page.styles";
 import { useRoomActions } from "./useRoomActions";
 
 export default function RoomDetail() {
@@ -80,7 +80,7 @@ export default function RoomDetail() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StHeaderWrapper>
         <RoomHeader
           title={room.name}
           startDate={
@@ -94,7 +94,7 @@ export default function RoomDetail() {
             !finalDate && step === "VOTING" ? handleUpdatePeriod : undefined
           }
         />
-      </StWrapper>
+      </StHeaderWrapper>
 
       {!finalDate && step === "VOTING" && (
         <VotingSection

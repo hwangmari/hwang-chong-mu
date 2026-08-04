@@ -7,7 +7,7 @@ import DateControlButtons from "@/app/meeting/room/detail/DateControlButtons";
 import NameInput from "@/app/meeting/room/detail/NameInput";
 import ParticipantList from "@/app/meeting/room/detail/ParticipantList";
 import VoteSubmitButtons from "@/app/meeting/room/detail/VoteSubmitButtons";
-import { StFlexBox, StWrapper } from "@/components/styled/layout.styled";
+import { StWrapper } from "@/components/styled/layout.styled";
 import {
   StGuideButton,
   StGuideRow,
@@ -15,11 +15,18 @@ import {
   StHighlightText,
   StInputRow,
 } from "../page.styles";
+import {
+  StCalendarColumn,
+  StGuideBlock,
+  StParticipantsBlock,
+  StSidebarColumn,
+  StVotingLayout,
+} from "./VotingSection.styles";
 
 interface VotingSectionProps {
   isEditing: boolean;
   currentName: string;
-  participants: any[];
+  participants: UserVote[];
   calendarGrid: (Date | null)[];
   currentUnavailable: Date[];
   step: "VOTING" | "CONFIRM";
@@ -62,65 +69,49 @@ export default function VotingSection({
   onShowGuide,
 }: VotingSectionProps) {
   return (
-    <>
-      <StWrapper>
-        <StGuideTextWrapper>
-          <StGuideRow>
-            <Typography variant="body2" color="gray500" className="fw-700">
-              {isEditing ? (
-                `${currentName}님의 일정을 수정 중입니다 ✏️`
-              ) : currentName ? (
-                <>
-                  {currentName}님,{" "}
-                  <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                  선택해주세요!
-                </>
-              ) : (
-                <>
-                  👇 이름을 입력하고{" "}
-                  <StHighlightText>참석 불가능한 날짜</StHighlightText>를
-                  선택하세요!
-                </>
-              )}
-            </Typography>
-            <StGuideButton onClick={onShowGuide} aria-label="가이드">
-              ?
-            </StGuideButton>
-          </StGuideRow>
-        </StGuideTextWrapper>
-        <StInputRow>
-          <NameInput
-            currentName={currentName}
-            isEditing={isEditing}
-            onChangeName={setCurrentName}
-            onCancelEdit={cancelEdit}
-          />
-          <DateControlButtons
-            onReset={onResetDates}
-            onSelectAll={onSelectAllDates}
-          />
-        </StInputRow>
-      </StWrapper>
-      <StFlexBox>
-        <div className="flex-lft-box">
-          <CalendarGrid
-            dates={calendarGrid}
-            participants={participants}
-            currentUnavailable={currentUnavailable}
-            step={step}
-            currentName={currentName}
-            finalDate={finalDate}
-            includeWeekend={includeWeekend}
-            onToggleDate={onToggleDate}
-            hoveredUserId={hoveredUserId}
-          />
-          <VoteSubmitButtons
-            isEditing={isEditing}
-            onSubmitVote={onSubmitVote}
-            onSubmitAbsent={onSubmitAbsent}
-          />
-        </div>
-        <div className="flex-rgt-box">
+    <StVotingLayout>
+      <StSidebarColumn>
+        <StGuideBlock>
+          <StWrapper>
+            <StGuideTextWrapper>
+              <StGuideRow>
+                <Typography variant="body2" color="gray500" className="fw-700">
+                  {isEditing ? (
+                    `${currentName}님의 일정을 수정 중입니다 ✏️`
+                  ) : currentName ? (
+                    <>
+                      {currentName}님,{" "}
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택해주세요!
+                    </>
+                  ) : (
+                    <>
+                      👇 이름을 입력하고{" "}
+                      <StHighlightText>참석 불가능한 날짜</StHighlightText>를
+                      선택하세요!
+                    </>
+                  )}
+                </Typography>
+                <StGuideButton onClick={onShowGuide} aria-label="가이드">
+                  ?
+                </StGuideButton>
+              </StGuideRow>
+            </StGuideTextWrapper>
+            <StInputRow>
+              <NameInput
+                currentName={currentName}
+                isEditing={isEditing}
+                onChangeName={setCurrentName}
+                onCancelEdit={cancelEdit}
+              />
+              <DateControlButtons
+                onReset={onResetDates}
+                onSelectAll={onSelectAllDates}
+              />
+            </StInputRow>
+          </StWrapper>
+        </StGuideBlock>
+        <StParticipantsBlock>
           <ParticipantList
             participants={participants}
             onEdit={onEditUser}
@@ -128,8 +119,26 @@ export default function VotingSection({
             hoveredUserId={hoveredUserId}
             setHoveredUserId={setHoveredUserId}
           />
-        </div>
-      </StFlexBox>
-    </>
+        </StParticipantsBlock>
+      </StSidebarColumn>
+      <StCalendarColumn>
+        <CalendarGrid
+          dates={calendarGrid}
+          participants={participants}
+          currentUnavailable={currentUnavailable}
+          step={step}
+          currentName={currentName}
+          finalDate={finalDate}
+          includeWeekend={includeWeekend}
+          onToggleDate={onToggleDate}
+          hoveredUserId={hoveredUserId}
+        />
+        <VoteSubmitButtons
+          isEditing={isEditing}
+          onSubmitVote={onSubmitVote}
+          onSubmitAbsent={onSubmitAbsent}
+        />
+      </StCalendarColumn>
+    </StVotingLayout>
   );
 }
