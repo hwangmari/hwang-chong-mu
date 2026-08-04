@@ -47,10 +47,10 @@ type RoomRow = {
 
 const ROOM_WIDGET_META: Record<
   "meeting" | "calc",
-  { icon: string; name: string; path: string }
+  { icon: string; name: string; path: string; tone: WidgetTone }
 > = {
-  meeting: { icon: "📅", name: "약속잡기", path: "/meeting/room" },
-  calc: { icon: "🧮", name: "정산방", path: "/calc" },
+  meeting: { icon: "📅", name: "약속잡기", path: "/meeting/room", tone: "indigo" },
+  calc: { icon: "🧮", name: "정산방", path: "/calc", tone: "rose" },
 };
 
 // 위젯 로더의 표시 데이터. main은 핵심 수치 한 줄, sub는 보조 설명.
@@ -62,6 +62,9 @@ type WidgetView = {
 };
 
 type WidgetStatus = "loading" | "ready" | "empty" | "error";
+
+// 서비스별 아이콘 톤 (같은 파랑 반복 → 서비스마다 색 구분으로 생동감)
+type WidgetTone = "blue" | "amber" | "green" | "teal" | "indigo" | "rose";
 
 const DAY_FORMAT = "yyyy-MM-dd";
 
@@ -76,12 +79,14 @@ function WidgetShell({
   name,
   view,
   status,
+  tone = "blue",
 }: {
   href: string;
   icon: string;
   name: string;
   view: WidgetView | null;
   status: WidgetStatus;
+  tone?: WidgetTone;
 }) {
   const main =
     status === "loading"
@@ -95,7 +100,7 @@ function WidgetShell({
   return (
     <Link href={href} passHref>
       <StWidgetCard>
-        <StWidgetIcon>{icon}</StWidgetIcon>
+        <StWidgetIcon $tone={tone}>{icon}</StWidgetIcon>
         <StWidgetBody>
           <StWidgetName>{name}</StWidgetName>
           <StWidgetValue $muted={status !== "ready"}>{main}</StWidgetValue>
@@ -210,6 +215,7 @@ function AccountBookWidget({ resourceRef }: { resourceRef: Record<string, unknow
   return (
     <WidgetShell
       href="/account-book"
+      tone="amber"
       icon="💰"
       name="가계부"
       view={view}
@@ -260,6 +266,7 @@ function WorkoutWidget({ resourceRef }: { resourceRef: Record<string, unknown> }
   return (
     <WidgetShell
       href="/workout"
+      tone="blue"
       icon="🏋️"
       name="운동"
       view={view}
@@ -289,6 +296,7 @@ function HabitWidget({ resourceRef }: { resourceRef: Record<string, unknown> }) 
   return (
     <WidgetShell
       href={`/habit/${goalId}`}
+      tone="teal"
       icon="🌱"
       name="습관"
       view={view}
@@ -332,6 +340,7 @@ function DietWidget({ resourceRef }: { resourceRef: Record<string, unknown> }) {
   return (
     <WidgetShell
       href={`/diet/${goalId}`}
+      tone="green"
       icon="🥗"
       name="다이어트"
       view={view}
@@ -355,16 +364,15 @@ function RoomWidget({
     rooms.length === 1
       ? `${meta.path}/${latest.roomId}`
       : "/account";
+  // 방 라벨(uuid 등)이 큰 제목으로 뜨지 않게 항상 개수를 main으로, 최근 방은 sub로.
   const view: WidgetView = {
-    main:
-      rooms.length === 1
-        ? latest.label || meta.name
-        : `진행 중 ${rooms.length}개`,
-    sub: rooms.length > 1 ? `최근: ${latest.label || meta.name}` : undefined,
+    main: `진행 중 ${rooms.length}개`,
+    sub: latest ? `최근: ${latest.label || meta.name}` : undefined,
   };
   return (
     <WidgetShell
       href={href}
+      tone={meta.tone}
       icon={meta.icon}
       name={meta.name}
       view={view}
@@ -528,7 +536,7 @@ export default function HomeDashboard() {
       ) : null}
 
       {hasRoomWidgets ? (
-        <StBoard>
+        <StBoard $variant="rooms">
           <StBoardHead>
             <StBoardTitleWrap>
               <StBoardTitle>🗓️ 내 약속·정산방</StBoardTitle>
@@ -561,16 +569,19 @@ const StSection = styled.section`
 `;
 
 // 아래 메뉴 카드(회색 배경 위 흰 카드)와 확실히 구분되도록, 요약은 그라데이션 보드로 감싼다.
-const StBoard = styled.div`
+const StBoard = styled.div<{ $variant?: "summary" | "rooms" }>`
   width: 100%;
   padding: 1.25rem;
   border-radius: 1.75rem;
-  background: linear-gradient(
-    135deg,
-    ${({ theme }) => theme.colors.blue500} 0%,
-    ${({ theme }) => theme.colors.indigo500} 100%
-  );
-  box-shadow: 0 18px 36px -14px rgba(49, 130, 246, 0.5);
+  /* 요약 보드는 밝은 블루→인디고, 약속·정산방 보드는 더 깊은 톤으로 구분 */
+  background: ${({ $variant, theme }) =>
+    $variant === "rooms"
+      ? `linear-gradient(135deg, ${theme.colors.indigo600} 0%, ${theme.colors.blue700} 100%)`
+      : `linear-gradient(135deg, ${theme.colors.blue500} 0%, ${theme.colors.indigo500} 100%)`};
+  box-shadow: ${({ $variant }) =>
+    $variant === "rooms"
+      ? "0 18px 36px -14px rgba(67, 56, 202, 0.5)"
+      : "0 18px 36px -14px rgba(49, 130, 246, 0.5)"};
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -687,15 +698,32 @@ const StGrid = styled.div`
   gap: 1rem;
 
   @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+    /* minmax(0,1fr): 긴 텍스트(uuid 등)가 트랙을 밀어 카드가 넘치지 않게 */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
 
-const StWidgetIcon = styled.div`
+const StWidgetIcon = styled.div<{ $tone: WidgetTone }>`
   width: 3rem;
   height: 3rem;
-  background-color: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.blue600};
+  background-color: ${({ $tone, theme }) =>
+    ({
+      blue: theme.colors.blue50,
+      amber: theme.colors.amber50,
+      green: theme.colors.green50,
+      teal: theme.colors.teal50,
+      indigo: theme.colors.indigo50,
+      rose: theme.colors.rose50,
+    })[$tone]};
+  color: ${({ $tone, theme }) =>
+    ({
+      blue: theme.colors.blue600,
+      amber: theme.colors.amber600,
+      green: theme.colors.green600,
+      teal: theme.colors.teal600,
+      indigo: theme.colors.indigo600,
+      rose: theme.colors.rose600,
+    })[$tone]};
   border-radius: 0.8rem;
   display: flex;
   justify-content: center;
