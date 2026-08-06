@@ -6,14 +6,13 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import { GameParticipant, GameRoomData } from "../types";
 
 interface Props {
   roomId: string;
   isHost: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  participants: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  roomData: any; // 로컬 모드일 땐 undefined일 수 있음
+  participants: GameParticipant[];
+  roomData?: GameRoomData; // 로컬 모드일 땐 undefined일 수 있음
   onEndGame: () => void;
 }
 

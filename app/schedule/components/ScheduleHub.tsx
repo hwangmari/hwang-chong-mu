@@ -13,19 +13,19 @@ interface Props {
   personalParts: SchedulePart[];
   sharedParts: SchedulePart[];
   onSelectPart: (partId: string) => void;
-  onCreatePersonal: (name: string, password: string) => Promise<any>;
-  onLogin: (name: string, password: string) => Promise<any>;
+  onCreatePersonal: (name: string, password: string) => Promise<unknown>;
+  onLogin: (name: string, password: string) => Promise<unknown>;
   onCreateSharedPart: (
     partName: string,
     partPassword: string,
     ownerName: string,
     ownerPassword: string,
-  ) => Promise<any>;
+  ) => Promise<unknown>;
   onJoinPart: (
     inviteCode: string,
     userName: string,
     userPassword: string,
-  ) => Promise<any>;
+  ) => Promise<unknown>;
   onLogout: () => void;
 }
 
@@ -92,8 +92,10 @@ export default function ScheduleHub({
         await onJoinPart(inviteCode, name, password);
       }
       closeModal();
-    } catch (err: any) {
-      setError(err.message || "오류가 발생했습니다.");
+    } catch (err: unknown) {
+      setError(
+        (err instanceof Error ? err.message : "") || "오류가 발생했습니다.",
+      );
     } finally {
       setLoading(false);
     }
@@ -375,41 +377,6 @@ const StButtonGroup = styled.div`
   margin-top: 1.5rem;
 `;
 
-const StPrimaryButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  background: ${({ theme }) => theme.colors.gray900};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const StSecondaryButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray700};
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray50};
-  }
-`;
-
 const StUserHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -425,21 +392,6 @@ const StWelcome = styled.p`
   b {
     font-weight: 800;
     color: ${({ theme }) => theme.colors.gray900};
-  }
-`;
-
-const StLogoutButton = styled.button`
-  padding: 0.4rem 0.8rem;
-  border-radius: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray500};
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover {
-    color: ${({ theme }) => theme.colors.gray700};
-    border-color: ${({ theme }) => theme.colors.gray300};
   }
 `;
 
@@ -460,23 +412,6 @@ const StSectionTitle = styled.h2`
 const StSectionActions = styled.div`
   display: flex;
   gap: 0.5rem;
-`;
-
-const StSmallButton = styled.button`
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray50};
-    border-color: ${({ theme }) => theme.colors.blue500};
-    color: ${({ theme }) => theme.colors.blue600};
-  }
 `;
 
 const StWorkspaceGrid = styled.div`

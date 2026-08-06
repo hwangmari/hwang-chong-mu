@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import styled from "styled-components";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
 // import BlogGuideLink from "@/components/common/BlogGuideLink";
 import { useScheduleStore } from "@/hooks/useScheduleStore";
@@ -109,9 +108,3 @@ export default function ScheduleListPage() {
     </Suspense>
   );
 }
-
-const ScheduleGuideWrap = styled.div`
-  max-width: ${({ theme }) => theme.layout.maxWidth};
-  margin: 1.5rem auto 2rem;
-  padding: 0 1rem;
-`;

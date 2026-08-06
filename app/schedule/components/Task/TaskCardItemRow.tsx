@@ -25,6 +25,7 @@ export default function TaskCardItemRow({
   const [showMemo, setShowMemo] = useState(!!task.memo);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitleValue(task.title);
     if (task.memo) setShowMemo(true);
   }, [task]);

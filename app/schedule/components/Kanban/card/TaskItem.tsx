@@ -30,7 +30,7 @@ export default function TaskItem({ task, refresh }: TaskItemProps) {
       });
       setIsEditing(false);
       refresh();
-    } catch (e) {
+    } catch {
       await openAlert("일정 수정 실패");
     }
   };
@@ -40,7 +40,7 @@ export default function TaskItem({ task, refresh }: TaskItemProps) {
     try {
       await API.deleteTask(task.id);
       refresh();
-    } catch (e) {
+    } catch {
       await openAlert("삭제 실패");
     }
   };

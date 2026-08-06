@@ -34,6 +34,7 @@ export default function KanbanPage() {
 
   useEffect(() => {
     initData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   const handleAddProject = async () => {
@@ -43,7 +44,7 @@ export default function KanbanPage() {
       setNewProjectName("");
       setIsAdding(false);
       initData();
-    } catch (err) {
+    } catch {
       await openAlert("단계 생성 실패");
     }
   };

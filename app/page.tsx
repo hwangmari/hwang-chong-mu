@@ -3,7 +3,6 @@
 import Link from "next/link";
 import styled from "styled-components";
 import ThemeToggleButton from "@/components/common/ThemeToggleButton";
-import HomeDashboard from "@/components/home/HomeDashboard";
 import { MENU_CATEGORIES } from "@/lib/menuCategories";
 
 export default function Home() {
@@ -22,8 +21,16 @@ export default function Home() {
         </StSubDescription>
       </StProfileSection>
 
-      {/* 🧩 로그인 사용자의 연결된 서비스 요약 위젯 */}
-      <HomeDashboard />
+      {/* ✨ 내 서비스 요약(/my) 진입 배너 */}
+      <Link href="/my" passHref style={{ width: "100%", maxWidth: 600 }}>
+        <StMyBanner>
+          <StMyBannerText>
+            <strong>✨ 내 서비스 요약</strong>
+            <span>아래 서비스들을 하나의 계정으로 연동하고, 한곳에서 모아 관리해요</span>
+          </StMyBannerText>
+          <StMyBannerArrow>→</StMyBannerArrow>
+        </StMyBanner>
+      </Link>
 
       {/* 📂 카테고리별 메뉴 */}
       <StCategoryWrapper>
@@ -204,6 +211,57 @@ const StSubDescription = styled.p`
     color: ${({ theme }) => theme.colors.blue500};
     font-weight: 600;
   }
+`;
+
+// 홈 → /my 진입 배너: 요약 보드와 같은 블루→인디고 그라데이션으로 눈에 띄게
+const StMyBanner = styled.div`
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 1.1rem 1.35rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    135deg,
+    ${({ theme }) => theme.colors.blue500} 0%,
+    ${({ theme }) => theme.colors.indigo500} 100%
+  );
+  box-shadow: 0 18px 36px -14px rgba(49, 130, 246, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px -14px rgba(49, 130, 246, 0.6);
+  }
+`;
+
+const StMyBannerText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  span {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.45;
+  }
+`;
+
+const StMyBannerArrow = styled.span`
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
 `;
 
 const StCategoryWrapper = styled.div`

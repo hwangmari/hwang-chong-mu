@@ -120,7 +120,11 @@ function AccountBookPageContent() {
           title={`${selectedWorkspace.name} 비밀번호`}
           description="선택한 가계부방 비밀번호를 입력하면 이 방으로 들어갑니다."
           backToHome={false}
-          onBack={() => router.push("/account-book")}
+          onBack={() =>
+            router.push(
+              searchParams.get("from") === "my" ? "/my" : "/account-book",
+            )
+          }
         >
           <WorkspaceLedgerView
             workspace={selectedWorkspace}
@@ -136,7 +140,11 @@ function AccountBookPageContent() {
             onDeleteEntry={actions.handleDeleteEntry}
             onChangeAnnualSavingGoal={actions.handleChangeAnnualSavingGoal}
             onChangeMonthlyBudget={actions.handleChangeMonthlyBudget}
-            onBack={() => router.push("/account-book")}
+            onBack={() =>
+              router.push(
+                searchParams.get("from") === "my" ? "/my" : "/account-book",
+              )
+            }
             initialViewMode={initialViewMode}
           />
         </AccountBookLockGate>

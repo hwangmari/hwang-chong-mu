@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import * as API from "@/services/schedule";
-import { SchedulePhase } from "@/types/work-schedule";
+import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import { useModal } from "@/components/common/ModalProvider";
 
 import TaskItem from "./card/TaskItem";
@@ -29,7 +29,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
   const sortedTasks = useMemo(() => {
     if (!svc.tasks) return [];
     return [...svc.tasks].sort(
-      (a: any, b: any) =>
+      (a: TaskPhase, b: TaskPhase) =>
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
     );
   }, [svc.tasks]);
@@ -43,7 +43,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       await API.updatePhase(svc.id, { phaseName: editName });
       setIsEditingName(false);
       refresh();
-    } catch (e) {
+    } catch {
       await openAlert("이름 수정 실패");
     }
   };
@@ -53,7 +53,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       await API.updatePhase(svc.id, { color: newColor });
       setShowColorPicker(false);
       refresh();
-    } catch (e) {
+    } catch {
       await openAlert("색상 변경 실패");
     }
   };
@@ -67,7 +67,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       });
       setShowQuickAdd(false);
       refresh();
-    } catch (err) {
+    } catch {
       await openAlert("일정 추가 실패");
     }
   };
@@ -109,7 +109,7 @@ export default function KanbanCard({ svc, boardId, refresh }: KanbanCardProps) {
       {/* 2. 업무 리스트 (TaskItem 컴포넌트 반복) */}
       {sortedTasks.length > 0 && (
         <div className="task-mini-list">
-          {sortedTasks.map((t: any) => (
+          {sortedTasks.map((t: TaskPhase) => (
             <TaskItem key={t.id} task={t} refresh={refresh} />
           ))}
         </div>

@@ -21,7 +21,7 @@ export default function CalendarTaskItem({
   const isEnd = isSameDay(day, task.endDate);
   const isSingleDay = isSameDay(task.startDate, task.endDate);
 
-  const isCompleted = (task as any).isCompleted || false;
+  const isCompleted = task.isCompleted || false;
 
   if (isCompleted) {
     return null;
@@ -38,7 +38,7 @@ export default function CalendarTaskItem({
     title: task.title,
     startDate: task.startDate,
     endDate: task.endDate,
-    memo: (task as any).memo || "",
+    memo: task.memo || "",
     isCompleted: isCompleted,
   };
 

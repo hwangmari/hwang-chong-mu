@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
+import { PhaseUpdate } from "@/services/schedule";
 import {
   StScrollArea,
   StAddServiceBlock,
@@ -12,7 +12,7 @@ import TaskCardItem from "./TaskCardItem";
 
 interface TaskListProps {
   schedules: SchedulePhase[];
-  scrollAreaRef: any;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   collapsedIds: Set<string>;
   highlightId: string | null;
   isEditing: boolean;
@@ -29,7 +29,7 @@ interface TaskListProps {
   onDeleteTask: (svcId: string, taskId: string) => void | Promise<void>;
   onAddTask: (svcId: string) => void | Promise<void>;
   onAddService: () => void | Promise<void>;
-  onUpdateService: (id: string, updates: any) => void | Promise<void>;
+  onUpdateService: (id: string, updates: PhaseUpdate) => void | Promise<void>;
 }
 
 export default function TaskList({

@@ -11,7 +11,6 @@ import { useModal } from "@/components/common/ModalProvider";
 interface Props {
   date: Date;
   phases: SchedulePhase[];
-  serviceId: string;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -19,7 +18,6 @@ interface Props {
 export default function QuickTaskModal({
   date,
   phases,
-  serviceId,
   onClose,
   onCreated,
 }: Props) {

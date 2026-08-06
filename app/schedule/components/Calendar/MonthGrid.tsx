@@ -6,7 +6,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isWeekend,
-  EachDayOfIntervalResult,
 } from "date-fns";
 import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
 import CalendarDayCell from "./CalendarDayCell";

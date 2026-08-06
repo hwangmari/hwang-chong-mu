@@ -9,7 +9,7 @@ import Link from "next/link";
 
 import LeftCalendar from "../components/LeftCalendar";
 import * as API from "@/services/schedule";
-import { SchedulePhase, ScheduleServiceData, ScheduleIssue } from "@/types/work-schedule";
+import { ScheduleServiceData, ScheduleIssue } from "@/types/work-schedule";
 import { PartCalendarPhase } from "@/services/schedule";
 import { StLoadingWrapper } from "@/components/styled/layout.styled";
 

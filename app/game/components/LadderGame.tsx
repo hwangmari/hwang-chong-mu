@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import styled from "styled-components";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import { GameRoomData } from "../types";
 
 interface Props {
   participants: { id: string; nickname: string }[];
   isHost: boolean;
   roomId: string;
   onEndGame: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  roomData?: any;
+  roomData?: GameRoomData;
 }
 
 const COLORS = [

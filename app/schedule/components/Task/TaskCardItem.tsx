@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { SchedulePhase, TaskPhase } from "@/types/work-schedule";
+import { PhaseUpdate } from "@/services/schedule";
 import {
   StCard,
   StCardBody,
   StPastSection,
   StFooter,
   StAddButton,
-  StHiddenMessage,
 } from "./TaskList.styles";
 import TaskCardItemRow from "./TaskCardItemRow";
 import TaskCardHeader from "./TaskCardHeader"; // ✨ 추가
@@ -30,7 +30,7 @@ interface Props {
   onUpdateTask: (task: TaskPhase) => void;
   onDeleteTask: (taskId: string) => void;
   onAddTask: () => void;
-  onUpdateService: (id: string, updates: any) => void;
+  onUpdateService: (id: string, updates: PhaseUpdate) => void;
 }
 
 export default function TaskCardItem(props: Props) {
@@ -57,6 +57,7 @@ export default function TaskCardItem(props: Props) {
     } else {
       setFrozenTaskIds([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
   const handleToggleComplete = (e: React.ChangeEvent<HTMLInputElement>) => {

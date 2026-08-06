@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { GameParticipant, GameRoomData } from "../types";
 
 const QUESTIONS = [
   { q: "평생 하나만 먹어야 한다면?", a: "물냉면", b: "비빔냉면" },
@@ -23,10 +24,8 @@ interface Props {
   roomId: string;
   isHost: boolean;
   myId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  participants: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  roomData: any;
+  participants: GameParticipant[];
+  roomData: GameRoomData;
   onEndGame: () => void;
 }
 

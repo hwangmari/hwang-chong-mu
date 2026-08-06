@@ -6,7 +6,6 @@ import styled from "styled-components";
 import { Button } from "@hwangchongmu/ui";
 import { ScheduleServiceData, SchedulePart } from "@/types/work-schedule";
 import { updateService, deleteService } from "@/services/schedule";
-import { StLoadingWrapper } from "@/components/styled/layout.styled";
 import { useModal } from "@/components/common/ModalProvider";
 import ServiceCard from "./ServiceCard/ServiceCard";
 
@@ -18,7 +17,7 @@ interface Props {
     partId: string,
     title: string,
     description: string,
-  ) => Promise<any>;
+  ) => Promise<unknown>;
   onReloadServices: () => void;
 }
 
@@ -70,9 +69,11 @@ export default function ScheduleWorkspaceView({
       setNewTitle("");
       setNewDesc("");
       setShowCreateForm(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("서비스 생성 에러:", err);
-      await openAlert(`생성 실패: ${err.message || "알 수 없는 오류"}`);
+      await openAlert(
+        `생성 실패: ${(err instanceof Error ? err.message : "") || "알 수 없는 오류"}`,
+      );
     }
   };
 

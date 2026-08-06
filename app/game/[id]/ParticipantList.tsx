@@ -1,9 +1,9 @@
 "use client";
 import styled from "styled-components";
+import { GameParticipant } from "../types";
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  participants: any[];
+  participants: GameParticipant[];
   myId: string;
   isHost: boolean;
   guestName: string;

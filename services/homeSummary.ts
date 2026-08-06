@@ -128,3 +128,22 @@ export async function fetchDietProgressSummary(
     latestDate: latest.date,
   };
 }
+
+// 정산방(calc): 계정에 등록된 라벨이 비었거나 uuid일 때 실제 방 이름으로 보여주기 위한 조회.
+// (약속에서 파생된 방이면 room_name에 그 이름이 들어있다)
+export async function fetchCalcRoomNames(
+  roomIds: string[],
+): Promise<Record<string, string>> {
+  if (roomIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from("calc_rooms")
+    .select("id, room_name")
+    .in("id", roomIds);
+  if (error) throw error;
+
+  const names: Record<string, string> = {};
+  for (const row of (data ?? []) as { id: string; room_name: string | null }[]) {
+    if (row.room_name) names[row.id] = row.room_name;
+  }
+  return names;
+}

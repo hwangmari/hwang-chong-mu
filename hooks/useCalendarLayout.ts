@@ -17,6 +17,7 @@ export interface CalendarTask {
   phaseName: string;
   color: string;
   isCompleted: boolean;
+  memo: string;
   memberName?: string;
 }
 export function useCalendarLayout(
@@ -38,6 +39,7 @@ export function useCalendarLayout(
         phaseName: phase.phaseName,
         color: phase.color,
         isCompleted: t.isCompleted || false,
+        memo: t.memo,
         memberName: phase.memberName,
       })),
     );

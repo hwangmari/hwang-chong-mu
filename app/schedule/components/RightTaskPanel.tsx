@@ -123,7 +123,7 @@ export default function RightTaskPanel({
 
       <TaskList
         schedules={filteredSchedules}
-        scrollAreaRef={scrollAreaRef as any}
+        scrollAreaRef={scrollAreaRef}
         collapsedIds={collapsedIds}
         highlightId={highlightId}
         isEditing={isEditing}

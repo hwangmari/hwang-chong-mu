@@ -24,6 +24,7 @@ export default function DateInput({
     const startFmt = format(startDate, "yyyy.MM.dd");
     const endFmt = format(endDate, "yyyy.MM.dd");
     if (startFmt === endFmt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTextValue(startFmt);
     } else {
       setTextValue(`${startFmt}-${endFmt}`);

@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const ROUTE_CONFIG = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
+  { path: "/my", label: "내 서비스 요약" },
   { path: "/schedule", label: "업무 캘린더" },
   { path: "/meeting", label: "약속 잡기" },
   { path: "/place", label: "장소잡기" },
@@ -119,6 +120,12 @@ export default function GlobalHeader() {
   }
 
   const handleBack = () => {
+    // /my(내 서비스 요약)에서 넘어온 페이지는 백키로 다시 /my로 돌아간다
+    if (searchParams.get("from") === "my") {
+      router.push("/my");
+      return;
+    }
+
     // 경로 세그먼트 분리: /a/b/c → ["", "a", "b", "c"]
     const segments = pathname.split("/").filter(Boolean);
 
@@ -171,6 +178,16 @@ export default function GlobalHeader() {
               >
                 <span className="icon">🐰</span>
                 <span>황총무의 실험실</span>
+              </StHomeItem>
+            </Link>
+
+            <Link href="/my" passHref>
+              <StHomeItem
+                $isActive={pathname.startsWith("/my")}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="icon">✨</span>
+                <span>내 서비스 요약</span>
               </StHomeItem>
             </Link>
 

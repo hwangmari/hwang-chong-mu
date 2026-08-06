@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import styled from "styled-components";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useModal } from "@/components/common/ModalProvider";
 import { fetchAccountBookStore } from "@/app/account-book/repository";
 import {
   isSavingsCategory,
@@ -22,7 +23,17 @@ import { weeklyWorkoutDays, weeklyRunDistance } from "@/app/workout/helpers";
 import {
   fetchHabitTodaySummary,
   fetchDietProgressSummary,
+  fetchCalcRoomNames,
 } from "@/services/homeSummary";
+import { isUuid } from "@/lib/slug";
+import QuickActionModal, {
+  QUICK_ACTION_META,
+  type QuickService,
+} from "@/components/home/QuickActionModal";
+
+// /my에서 서비스로 이동한 뒤 헤더 백키로 다시 /my로 돌아올 수 있게 하는 쿼리
+const withFromMy = (href: string) =>
+  `${href}${href.includes("?") ? "&" : "?"}from=my`;
 
 // 통합 홈 대시보드: 로그인 사용자의 연결된 서비스 요약을 위젯으로 보여준다.
 // - 비로그인: 로그인 유도 카드 하나 (홈은 정상 동작)
@@ -214,7 +225,12 @@ function AccountBookWidget({ resourceRef }: { resourceRef: Record<string, unknow
   if (status === "error") return null;
   return (
     <WidgetShell
-      href="/account-book"
+      // 연결된 워크스페이스가 있으면 허브를 거치지 않고 개인 가계부로 바로 이동
+      href={withFromMy(
+        workspaceId
+          ? `/account-book?workspaceId=${workspaceId}`
+          : "/account-book",
+      )}
       tone="amber"
       icon="💰"
       name="가계부"
@@ -265,7 +281,7 @@ function WorkoutWidget({ resourceRef }: { resourceRef: Record<string, unknown> }
   if (status === "error") return null;
   return (
     <WidgetShell
-      href="/workout"
+      href={withFromMy("/workout")}
       tone="blue"
       icon="🏋️"
       name="운동"
@@ -295,7 +311,7 @@ function HabitWidget({ resourceRef }: { resourceRef: Record<string, unknown> }) 
   if (status === "error") return null;
   return (
     <WidgetShell
-      href={`/habit/${goalId}`}
+      href={withFromMy(`/habit/${goalId}`)}
       tone="teal"
       icon="🌱"
       name="습관"
@@ -339,44 +355,12 @@ function DietWidget({ resourceRef }: { resourceRef: Record<string, unknown> }) {
   if (status === "error") return null;
   return (
     <WidgetShell
-      href={`/diet/${goalId}`}
+      href={withFromMy(`/diet/${goalId}`)}
       tone="green"
       icon="🥗"
       name="다이어트"
       view={view}
       status={status}
-    />
-  );
-}
-
-// ── 내 방 위젯: 진행 중 방 개수/최근 방. 방이 1개면 그 방으로, 여러 개면 /account로 ──
-function RoomWidget({
-  service,
-  rooms,
-}: {
-  service: "meeting" | "calc";
-  rooms: RoomRow[];
-}) {
-  const meta = ROOM_WIDGET_META[service];
-  // rooms는 최신순(RPC에서 정렬) — 첫 항목이 가장 최근 방
-  const latest = rooms[0];
-  const href =
-    rooms.length === 1
-      ? `${meta.path}/${latest.roomId}`
-      : "/account";
-  // 방 라벨(uuid 등)이 큰 제목으로 뜨지 않게 항상 개수를 main으로, 최근 방은 sub로.
-  const view: WidgetView = {
-    main: `진행 중 ${rooms.length}개`,
-    sub: latest ? `최근: ${latest.label || meta.name}` : undefined,
-  };
-  return (
-    <WidgetShell
-      href={href}
-      tone={meta.tone}
-      icon={meta.icon}
-      name={meta.name}
-      view={view}
-      status="ready"
     />
   );
 }
@@ -399,11 +383,54 @@ function renderWidget(link: LinkRow) {
   }
 }
 
-export default function HomeDashboard() {
+// wide: 전용 페이지(/my)에서 PC 화면을 넓게 쓰는 레이아웃 (기본은 홈용 540~600px 폭)
+export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
   const { user, loading } = useAuth();
   const [links, setLinks] = useState<LinkRow[] | null>(null);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [guideOpen, setGuideOpen] = useState(false);
+  // 우클릭 컨텍스트 메뉴(빠른 등록) 상태
+  const [quickMenu, setQuickMenu] = useState<{
+    x: number;
+    y: number;
+    link: LinkRow;
+  } | null>(null);
+  const [quickModal, setQuickModal] = useState<LinkRow | null>(null);
+  // 빠른 등록 후 위젯 그리드를 다시 마운트해 요약을 새로고침한다
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const { openConfirm, openAlert } = useModal();
+
+  // 방 등록 해제: 계정에서만 빠지고 방 자체는 남는다 (/account 관리와 동일 동작)
+  const handleDeleteRoom = async (room: RoomRow) => {
+    const meta = ROOM_WIDGET_META[room.service];
+    const confirmed = await openConfirm(
+      `'${room.label || meta.name}' 방 등록을 해제할까요?\n(방 자체는 삭제되지 않아요)`,
+    );
+    if (!confirmed) return;
+    try {
+      const res = await fetch(
+        `/api/auth/rooms?service=${room.service}&roomId=${encodeURIComponent(room.roomId)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("room delete failed");
+      const data = (await res.json()) as { rooms?: RoomRow[] };
+      setRooms(data.rooms ?? []);
+    } catch {
+      await openAlert("해제에 실패했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  const openQuickMenu = (
+    event: ReactMouseEvent<HTMLDivElement>,
+    link: LinkRow,
+  ) => {
+    if (!(link.service in QUICK_ACTION_META)) return;
+    event.preventDefault();
+    // 화면 오른쪽 끝에서 메뉴가 잘리지 않게 보정
+    const x = Math.min(event.clientX, window.innerWidth - 230);
+    setQuickMenu({ x, y: event.clientY, link });
+  };
 
   useEffect(() => {
     if (!user) {
@@ -428,7 +455,30 @@ export default function HomeDashboard() {
         const res = await fetch("/api/auth/rooms", { cache: "no-store" });
         if (!res.ok) throw new Error("rooms load failed");
         const data = (await res.json()) as { rooms?: RoomRow[] };
-        if (active) setRooms(data.rooms ?? []);
+        const loaded = data.rooms ?? [];
+        if (active) setRooms(loaded);
+
+        // 정산방 라벨이 비었거나 uuid면 calc_rooms의 실제 방 이름(약속 파생명)으로 교체
+        const unnamedCalcIds = loaded
+          .filter(
+            (room) =>
+              room.service === "calc" &&
+              (!room.label || isUuid(room.label)) &&
+              isUuid(room.roomId),
+          )
+          .map((room) => room.roomId);
+        if (unnamedCalcIds.length > 0) {
+          const names = await fetchCalcRoomNames(unnamedCalcIds);
+          if (active && Object.keys(names).length > 0) {
+            setRooms((prev) =>
+              prev.map((room) =>
+                names[room.roomId]
+                  ? { ...room, label: names[room.roomId] }
+                  : room,
+              ),
+            );
+          }
+        }
       } catch {
         // 방 로드 실패 시 빈 목록 — 위젯만 생략
         if (active) setRooms([]);
@@ -445,7 +495,7 @@ export default function HomeDashboard() {
   // 비로그인: 로그인 유도 카드
   if (!user) {
     return (
-      <StSection>
+      <StSection $wide={wide}>
         <StPromptCard>
           <StPromptText>
             로그인하면 내 서비스 요약을 한눈에 볼 수 있어요.
@@ -461,12 +511,12 @@ export default function HomeDashboard() {
   // 로그인했지만 링크 로딩 중
   if (links === null) {
     return (
-      <StSection>
+      <StSection $wide={wide}>
         <StBoard>
           <StBoardHead>
-            <StBoardTitle>✨ 내 서비스 요약</StBoardTitle>
+            <StBoardTitle>📊 서비스 현황</StBoardTitle>
           </StBoardHead>
-          <StGrid>
+          <StGrid $wide={wide}>
             <StSkeletonCard />
             <StSkeletonCard />
           </StGrid>
@@ -476,14 +526,12 @@ export default function HomeDashboard() {
   }
 
   const supportedLinks = links.filter((link) => link.service !== "schedule");
-  const meetingRooms = rooms.filter((room) => room.service === "meeting");
-  const calcRooms = rooms.filter((room) => room.service === "calc");
-  const hasRoomWidgets = meetingRooms.length > 0 || calcRooms.length > 0;
+  const hasRooms = rooms.length > 0;
 
   // 연결된 서비스도, 등록된 방도 없을 때
-  if (supportedLinks.length === 0 && !hasRoomWidgets) {
+  if (supportedLinks.length === 0 && !hasRooms) {
     return (
-      <StSection>
+      <StSection $wide={wide}>
         <StPromptCard>
           <StPromptText>
             서비스를 계정에 연결해보세요. 연결하면 홈에서 요약을 볼 수 있어요.
@@ -497,12 +545,12 @@ export default function HomeDashboard() {
   }
 
   return (
-    <StSection>
+    <StSection $wide={wide}>
       {supportedLinks.length > 0 ? (
         <StBoard>
           <StBoardHead>
             <StBoardTitleWrap>
-              <StBoardTitle>✨ 내 서비스 요약</StBoardTitle>
+              <StBoardTitle>📊 서비스 현황</StBoardTitle>
               <StInfoWrap>
                 <StInfoButton
                   type="button"
@@ -527,64 +575,118 @@ export default function HomeDashboard() {
                 ) : null}
               </StInfoWrap>
             </StBoardTitleWrap>
-            <Link href="/account" passHref>
+            <Link href={withFromMy("/account")} passHref>
               <StBoardManage>연결 관리</StBoardManage>
             </Link>
           </StBoardHead>
-          <StGrid>{supportedLinks.map((link) => renderWidget(link))}</StGrid>
+          <StGrid $wide={wide} key={refreshKey}>
+            {supportedLinks.map((link) => (
+              <div
+                key={link.service}
+                style={{ display: "contents" }}
+                onContextMenu={(event) => openQuickMenu(event, link)}
+              >
+                {renderWidget(link)}
+              </div>
+            ))}
+          </StGrid>
         </StBoard>
       ) : null}
 
-      {hasRoomWidgets ? (
-        <StBoard $variant="rooms">
+      {hasRooms ? (
+        <StBoard>
           <StBoardHead>
             <StBoardTitleWrap>
               <StBoardTitle>🗓️ 내 약속·정산방</StBoardTitle>
             </StBoardTitleWrap>
-            <Link href="/account" passHref>
+            <Link href={withFromMy("/account")} passHref>
               <StBoardManage>관리</StBoardManage>
             </Link>
           </StBoardHead>
-          <StGrid>
-            {meetingRooms.length > 0 ? (
-              <RoomWidget key="meeting" service="meeting" rooms={meetingRooms} />
-            ) : null}
-            {calcRooms.length > 0 ? (
-              <RoomWidget key="calc" service="calc" rooms={calcRooms} />
-            ) : null}
-          </StGrid>
+          {/* 방은 여러 건일 수 있어 카드 대신 리스트로 나열하고, 행에서 바로 해제한다 */}
+          <StRoomList>
+            {rooms.map((room) => {
+              const meta = ROOM_WIDGET_META[room.service];
+              return (
+                <StRoomRow key={room.id}>
+                  <Link
+                    href={withFromMy(`${meta.path}/${room.roomId}`)}
+                    passHref
+                    style={{ flex: 1, minWidth: 0 }}
+                  >
+                    <StRoomLink>
+                      <StRoomIcon $tone={meta.tone}>{meta.icon}</StRoomIcon>
+                      <StRoomInfo>
+                        <StRoomService>{meta.name}</StRoomService>
+                        <StRoomLabel>{room.label || meta.name}</StRoomLabel>
+                      </StRoomInfo>
+                    </StRoomLink>
+                  </Link>
+                  <StRoomDelete
+                    type="button"
+                    aria-label="방 등록 해제"
+                    onClick={() => void handleDeleteRoom(room)}
+                  >
+                    ✕
+                  </StRoomDelete>
+                </StRoomRow>
+              );
+            })}
+          </StRoomList>
         </StBoard>
+      ) : null}
+
+      {/* 우클릭 컨텍스트 메뉴: 서비스별 대표 기능 바로 등록 */}
+      {quickMenu ? (
+        <>
+          <StMenuBackdrop
+            onClick={() => setQuickMenu(null)}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setQuickMenu(null);
+            }}
+          />
+          <StContextMenu style={{ top: quickMenu.y, left: quickMenu.x }}>
+            <StContextMenuItem
+              type="button"
+              onClick={() => {
+                setQuickModal(quickMenu.link);
+                setQuickMenu(null);
+              }}
+            >
+              {QUICK_ACTION_META[quickMenu.link.service as QuickService].label}
+            </StContextMenuItem>
+          </StContextMenu>
+        </>
+      ) : null}
+
+      {quickModal ? (
+        <QuickActionModal
+          service={quickModal.service as QuickService}
+          resourceRef={quickModal.resourceRef}
+          onClose={() => setQuickModal(null)}
+          onSaved={() => setRefreshKey((key) => key + 1)}
+        />
       ) : null}
     </StSection>
   );
 }
 
-const StSection = styled.section`
+const StSection = styled.section<{ $wide?: boolean }>`
   width: 100%;
-  max-width: 600px;
+  max-width: ${({ $wide }) => ($wide ? "100%" : "600px")};
   margin-bottom: 3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 2rem;
 `;
 
-// 아래 메뉴 카드(회색 배경 위 흰 카드)와 확실히 구분되도록, 요약은 그라데이션 보드로 감싼다.
-const StBoard = styled.div<{ $variant?: "summary" | "rooms" }>`
+// 대시보드 스타일: 회색 배경 위에 섹션 라벨 + 흰 카드 그리드 (홈 메뉴와 같은 결)
+const StBoard = styled.div`
   width: 100%;
-  padding: 1.25rem;
-  border-radius: 1.75rem;
-  /* 요약 보드는 밝은 블루→인디고, 약속·정산방 보드는 더 깊은 톤으로 구분 */
-  background: ${({ $variant, theme }) =>
-    $variant === "rooms"
-      ? `linear-gradient(135deg, ${theme.colors.indigo600} 0%, ${theme.colors.blue700} 100%)`
-      : `linear-gradient(135deg, ${theme.colors.blue500} 0%, ${theme.colors.indigo500} 100%)`};
-  box-shadow: ${({ $variant }) =>
-    $variant === "rooms"
-      ? "0 18px 36px -14px rgba(67, 56, 202, 0.5)"
-      : "0 18px 36px -14px rgba(49, 130, 246, 0.5)"};
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.85rem;
 `;
 
 const StBoardHead = styled.div`
@@ -592,27 +694,29 @@ const StBoardHead = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0 0.15rem;
+  padding: 0 0.25rem;
 `;
 
 const StBoardTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  color: #ffffff;
+  color: ${({ theme }) => theme.colors.gray700};
 `;
 
 const StBoardManage = styled.span`
   font-size: 0.8rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  color: ${({ theme }) => theme.semantic.primary};
   cursor: pointer;
   transition: opacity 0.2s;
 
   &:hover {
     opacity: 0.7;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 `;
 
@@ -633,8 +737,8 @@ const StInfoButton = styled.button`
   padding: 0;
   border: none;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.28);
-  color: #ffffff;
+  background: ${({ theme }) => theme.colors.gray200};
+  color: ${({ theme }) => theme.colors.gray600};
   font-size: 0.72rem;
   font-weight: 900;
   font-style: italic;
@@ -645,7 +749,7 @@ const StInfoButton = styled.button`
   justify-content: center;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.45);
+    background: ${({ theme }) => theme.colors.gray300};
   }
 `;
 
@@ -691,7 +795,41 @@ const StTooltipList = styled.ul`
   }
 `;
 
-const StGrid = styled.div`
+const StMenuBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+`;
+
+const StContextMenu = styled.div`
+  position: fixed;
+  z-index: 115;
+  min-width: 13rem;
+  padding: 0.3rem;
+  border-radius: 0.85rem;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  box-shadow: 0 14px 30px -8px rgba(23, 43, 77, 0.35);
+`;
+
+const StContextMenuItem = styled.button`
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: none;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray800};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray50};
+  }
+`;
+
+const StGrid = styled.div<{ $wide?: boolean }>`
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
@@ -700,6 +838,12 @@ const StGrid = styled.div`
   @media (min-width: 640px) {
     /* minmax(0,1fr): 긴 텍스트(uuid 등)가 트랙을 밀어 카드가 넘치지 않게 */
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 전용 페이지(wide)에서는 데스크톱에서 3열로 넓게 */
+  @media ${({ theme }) => theme.media.desktop} {
+    grid-template-columns: ${({ $wide }) =>
+      $wide ? "repeat(3, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))"};
   }
 `;
 
@@ -780,8 +924,8 @@ const StWidgetCard = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
   padding: 1.1rem;
   border-radius: 1.25rem;
-  box-shadow: 0 8px 18px -8px rgba(23, 43, 77, 0.28);
-  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -790,7 +934,8 @@ const StWidgetCard = styled.div`
   height: 100%;
 
   &:hover {
-    box-shadow: 0 12px 22px -8px rgba(23, 43, 77, 0.36);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: ${({ theme }) => theme.colors.blue200};
     transform: translateY(-2px);
 
     ${StWidgetIcon} {
@@ -804,11 +949,93 @@ const StWidgetBody = styled.div`
   min-width: 0;
 `;
 
+// ── 약속·정산방 리스트 ──
+const StRoomList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const StRoomRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 0.6rem 0.75rem;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: ${({ theme }) => theme.colors.blue200};
+  }
+`;
+
+const StRoomLink = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  cursor: pointer;
+`;
+
+// 위젯 아이콘과 같은 톤, 리스트에 맞게 크기만 줄임
+const StRoomIcon = styled(StWidgetIcon)`
+  width: 2.4rem;
+  height: 2.4rem;
+  font-size: 1.2rem;
+  border-radius: 0.65rem;
+`;
+
+const StRoomInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const StRoomService = styled.p`
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray400};
+`;
+
+const StRoomLabel = styled.p`
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const StRoomDelete = styled.button`
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: ${({ theme }) => theme.colors.gray300};
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.rose50};
+    color: ${({ theme }) => theme.colors.rose600};
+  }
+`;
+
 const StSkeletonCard = styled.div`
   height: 5.2rem;
   border-radius: 1.25rem;
-  border: none;
-  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  background: ${({ theme }) => theme.colors.gray100};
 `;
 
 const StPromptCard = styled.div`

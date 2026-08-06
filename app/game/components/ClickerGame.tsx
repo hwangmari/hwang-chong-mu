@@ -5,13 +5,13 @@ import styled, { keyframes } from "styled-components";
 import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import { GameParticipant } from "../types";
 
 interface Props {
   roomId: string;
   isHost: boolean;
   myId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  participants: any[];
+  participants: GameParticipant[];
   onEndGame: () => void;
 }
 

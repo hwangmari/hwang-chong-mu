@@ -187,7 +187,6 @@ export default function ScheduleDetailPage() {
   const previewTasks = useMemo(() => {
     if (!previewDate) return [];
     const dayStart = startOfDay(previewDate);
-    const dayEnd = endOfDay(previewDate);
     const tasks: { phaseName: string; color: string; title: string; memberName?: string }[] = [];
     visiblePhases.forEach((phase) => {
       phase.tasks.forEach((t) => {
@@ -296,7 +295,6 @@ export default function ScheduleDetailPage() {
         <QuickTaskModal
           date={quickTaskDate}
           phases={phases}
-          serviceId={serviceId}
           onClose={() => setQuickTaskDate(null)}
           onCreated={loadData}
         />
