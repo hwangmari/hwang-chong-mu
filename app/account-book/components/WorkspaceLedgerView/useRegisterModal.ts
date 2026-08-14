@@ -29,6 +29,7 @@ type Params = {
   workspace: AccountBookWorkspace;
   users: AccountBookUser[];
   memberUsers: AccountBookUser[];
+  currentUserId: string;
   defaultMember: string;
   selectedParticipant: AccountBookUser | null;
   selectedDate: string;
@@ -42,6 +43,7 @@ export function useRegisterModal({
   workspace,
   users,
   memberUsers,
+  currentUserId,
   defaultMember,
   selectedParticipant,
   selectedDate,
@@ -71,8 +73,10 @@ export function useRegisterModal({
         users,
         memberUsers,
         defaultMember,
+        currentUserId,
       }),
     [
+      currentUserId,
       defaultMember,
       memberUsers,
       naturalInput,
@@ -159,7 +163,7 @@ export function useRegisterModal({
           date: parseQuickDate(candidate.date || candidate.rawText, selectedDate),
           member: selectedParticipant?.name || defaultMember,
           workspaceId: workspace.id,
-          createdByUserId: matchedUser.id,
+          createdByUserId: currentUserId || matchedUser.id,
           type: nextType,
           category: normalizedSelection.category,
           subCategory:
@@ -201,6 +205,7 @@ export function useRegisterModal({
     },
     [
       closeRegisterModal,
+      currentUserId,
       defaultMember,
       memberUsers,
       onSaveEntry,
@@ -286,6 +291,7 @@ export function useRegisterModal({
         users,
         memberUsers,
         defaultMember,
+        currentUserId,
       });
 
       if (!entry) {
@@ -317,6 +323,7 @@ export function useRegisterModal({
     }
   }, [
     closeRegisterModal,
+    currentUserId,
     defaultMember,
     memberUsers,
     naturalInput,

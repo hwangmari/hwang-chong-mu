@@ -41,6 +41,9 @@ type Params = {
   workspace: AccountBookWorkspace;
   users: AccountBookUser[];
   memberUsers: AccountBookUser[];
+  // 실제 작성자(현재 로그인/선택된 사용자) — 공용방에서 다른 멤버 몫을 입력해도
+  // 작성자는 본인으로 저장돼야 권한 체크를 통과한다
+  currentUserId: string;
   defaultMember: string;
   selectedParticipant: AccountBookUser | null;
   selectedDate: string;
@@ -55,6 +58,7 @@ export function useEntryForm({
   workspace,
   users,
   memberUsers,
+  currentUserId,
   defaultMember,
   selectedParticipant,
   selectedDate,
@@ -294,7 +298,8 @@ export function useEntryForm({
       date: selectedDate,
       member,
       workspaceId: workspace.id,
-      createdByUserId: matchedUser.id,
+      // 작성자는 항상 본인 — member(지출한 사람)와 분리해 공용방에서 대신 입력을 허용
+      createdByUserId: currentUserId || matchedUser.id,
       type,
       category: normalizedCategory,
       subCategory: normalizedSubCategory,
@@ -335,6 +340,7 @@ export function useEntryForm({
     cashReceipt,
     category,
     closeFormModal,
+    currentUserId,
     draftRawText,
     editingEntry,
     editingEntryId,
@@ -404,7 +410,7 @@ export function useEntryForm({
           member: matchedMember?.name || defaultMember,
           workspaceId: workspace.id,
           createdByUserId:
-            matchedMember?.id || memberUsers[0]?.id || users[0].id,
+            currentUserId || matchedMember?.id || memberUsers[0]?.id || users[0].id,
           type: segment.includes("수입") ? "income" : defaultType,
           category: nextCategory,
           subCategory: inferSubCategoryFromText(nextCategory, segment),
@@ -452,6 +458,7 @@ export function useEntryForm({
     }
     void openAlert(`${parsedEntries.length}건을 한 번에 추가했어요.`);
   }, [
+    currentUserId,
     defaultMember,
     memberUsers,
     onSaveEntry,

@@ -225,6 +225,7 @@ export default function WorkspaceLedgerView({
     workspace,
     users,
     memberUsers,
+    currentUserId,
     defaultMember,
     selectedParticipant,
     selectedDate,
@@ -264,6 +265,7 @@ export default function WorkspaceLedgerView({
     workspace,
     users,
     memberUsers,
+    currentUserId,
     defaultMember,
     selectedParticipant,
     selectedDate,
@@ -279,10 +281,14 @@ export default function WorkspaceLedgerView({
     }
 
     const participantName = selectedParticipant?.name;
-    return entriesWithPermissions.filter(
-      (entry) =>
-        entry.createdByUserId === selectedParticipantId ||
-        (participantName ? entry.member === participantName : false),
+    // 내역의 주인은 member(지출한 사람) 기준 — 작성자는 대신 입력했을 수 있어
+    // member가 비어있는 과거 내역만 작성자(createdByUserId)로 귀속시킨다
+    return entriesWithPermissions.filter((entry) =>
+      entry.member
+        ? participantName
+          ? entry.member === participantName
+          : false
+        : entry.createdByUserId === selectedParticipantId,
     );
   }, [
     entriesWithPermissions,

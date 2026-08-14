@@ -531,9 +531,18 @@ export function resolveWorkspaceEntries(
     return dedupeResolvedEntries([...directEntries, ...linkedEntries]);
   }
 
+  // 공용방 내역의 주인은 member(지출한 사람) — 다른 멤버가 대신 입력해도
+  // 지출한 사람의 개인 가계부로 반영한다. member가 없는 과거 내역만 작성자 기준.
+  const ownerName = store.users.find(
+    (user) => user.id === workspace.ownerUserId,
+  )?.name;
   const mirroredSharedEntries = store.entries
     .filter((entry) => entry.workspaceId !== workspace.id)
-    .filter((entry) => entry.createdByUserId === workspace.ownerUserId)
+    .filter((entry) =>
+      entry.member
+        ? ownerName != null && entry.member === ownerName
+        : entry.createdByUserId === workspace.ownerUserId,
+    )
     .filter((entry) => {
       const entryWorkspace = getWorkspaceById(store, entry.workspaceId);
       return entryWorkspace?.type === "shared";

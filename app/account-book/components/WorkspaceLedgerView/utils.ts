@@ -1195,7 +1195,8 @@ export function parseNaturalInputEntry(
     date,
     member: matchedUser?.name || context.defaultMember,
     workspaceId: context.workspaceId,
-    createdByUserId: matchedUser?.id || context.users[0].id,
+    createdByUserId:
+      context.currentUserId || matchedUser?.id || context.users[0].id,
     type,
     category,
     subCategory,

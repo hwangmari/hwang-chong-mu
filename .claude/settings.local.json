@@ -45,7 +45,15 @@
       "Bash(echo \"EXIT:$?\")",
       "mcp__plugin_oh-my-claudecode_t__state_list_active",
       "mcp__plugin_oh-my-claudecode_t__state_clear",
-      "Bash(grep -v '^$')"
+      "Bash(grep -v '^$')",
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu stash list)",
+      "Bash(git -C /Users/hwangmari/toy-project/hwang-chong-mu status --short)",
+      "Bash(pkill -9 -f \"next dev -p 3001\")",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run *)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" nohup npm run dev -- -p 3001)",
+      "Bash(disown)",
+      "Bash(echo \"launched pid $!\")"
     ]
   }
 }

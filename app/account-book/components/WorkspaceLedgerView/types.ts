@@ -39,6 +39,8 @@ export type NaturalParseContext = {
   users: AccountBookUser[];
   memberUsers: AccountBookUser[];
   defaultMember: string;
+  // 실제 작성자 id — member(지출한 사람)와 무관하게 작성자는 본인으로 저장한다
+  currentUserId?: string;
 };
 
 export type ExtractedImageEntryCandidate = {
