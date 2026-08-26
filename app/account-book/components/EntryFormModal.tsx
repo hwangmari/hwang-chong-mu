@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent } from "react";
 import styled from "styled-components";
 import ModalCloseButton from "./ModalCloseButton";
 import { CategoryOption, EntryType, PaymentType } from "../types";
@@ -95,6 +95,10 @@ export default function EntryFormModal({
   onSetMemo,
   onSubmit,
 }: Props) {
+  // 인풋 드래그 중 배경에서 mouseup 되면 click이 배경으로 잡혀 모달이 닫히는 것 방지 —
+  // mousedown이 배경에서 시작된 경우에만 닫는다
+  const backdropMouseDown = useRef(false);
+
   if (!isOpen) return null;
 
   const amountValue = evaluateAmountExpression(amount);
@@ -122,7 +126,17 @@ export default function EntryFormModal({
     payment === "check_card" ? "예: 네이버하나머니" : "예: 삼성카드";
 
   return (
-    <StModalBackdrop onClick={onClose}>
+    <StModalBackdrop
+      onMouseDown={(event) => {
+        backdropMouseDown.current = event.target === event.currentTarget;
+      }}
+      onClick={(event) => {
+        if (backdropMouseDown.current && event.target === event.currentTarget) {
+          onClose();
+        }
+        backdropMouseDown.current = false;
+      }}
+    >
       <StModalCard onClick={(event) => event.stopPropagation()}>
         <StSheetHandle aria-hidden="true" />
         <StModalHeader>
