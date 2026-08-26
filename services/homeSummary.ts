@@ -129,6 +129,54 @@ export async function fetchDietProgressSummary(
   };
 }
 
+// 약속방(meeting): 확정된 약속 날짜 조회. roomId는 uuid 또는 "슬러그-단축코드" 형태.
+// 반환 키는 입력한 roomId 그대로 — 확정된 방만 담긴다.
+export async function fetchMeetingConfirmedDates(
+  roomIds: string[],
+): Promise<Record<string, string>> {
+  if (roomIds.length === 0) return {};
+
+  const uuidRe =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const ids = roomIds.filter((roomId) => uuidRe.test(roomId));
+  const codeMap = new Map<string, string>(); // short_code → 원본 roomId
+  for (const roomId of roomIds) {
+    if (uuidRe.test(roomId)) continue;
+    const match = roomId.match(/-([A-Za-z0-9]{6})$/);
+    if (match) codeMap.set(match[1], roomId);
+  }
+
+  const dates: Record<string, string> = {};
+  const [byId, byCode] = await Promise.all([
+    ids.length > 0
+      ? supabase.from("rooms").select("id, confirmed_date").in("id", ids)
+      : Promise.resolve({ data: [], error: null }),
+    codeMap.size > 0
+      ? supabase
+          .from("rooms")
+          .select("short_code, confirmed_date")
+          .in("short_code", [...codeMap.keys()])
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (byId.error) throw byId.error;
+  if (byCode.error) throw byCode.error;
+
+  for (const row of (byId.data ?? []) as {
+    id: string;
+    confirmed_date: string | null;
+  }[]) {
+    if (row.confirmed_date) dates[row.id] = row.confirmed_date;
+  }
+  for (const row of (byCode.data ?? []) as {
+    short_code: string;
+    confirmed_date: string | null;
+  }[]) {
+    const original = codeMap.get(row.short_code);
+    if (original && row.confirmed_date) dates[original] = row.confirmed_date;
+  }
+  return dates;
+}
+
 // 정산방(calc): 계정에 등록된 라벨이 비었거나 uuid일 때 실제 방 이름으로 보여주기 위한 조회.
 // (약속에서 파생된 방이면 room_name에 그 이름이 들어있다)
 export async function fetchCalcRoomNames(

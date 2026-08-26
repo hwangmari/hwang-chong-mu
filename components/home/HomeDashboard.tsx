@@ -4,6 +4,7 @@ import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import styled from "styled-components";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
+import { ko } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useModal } from "@/components/common/ModalProvider";
 import { fetchAccountBookStore } from "@/app/account-book/repository";
@@ -24,6 +25,7 @@ import {
   fetchHabitTodaySummary,
   fetchDietProgressSummary,
   fetchCalcRoomNames,
+  fetchMeetingConfirmedDates,
 } from "@/services/homeSummary";
 import { isUuid } from "@/lib/slug";
 import QuickActionModal, {
@@ -54,6 +56,8 @@ type RoomRow = {
   roomId: string;
   label: string;
   createdAt: string;
+  // 약속방의 확정된 약속 날짜(yyyy-MM-dd) — 클라에서 rooms 조회로 채운다
+  confirmedDate?: string;
 };
 
 const ROOM_WIDGET_META: Record<
@@ -81,6 +85,17 @@ const DAY_FORMAT = "yyyy-MM-dd";
 
 function formatKrw(value: number) {
   return `${Math.round(value).toLocaleString("ko-KR")}원`;
+}
+
+// 확정된 약속 날짜 표기: "📅 11월 14일 (토) 확정 · D-87" (지난 약속은 D-day 생략)
+function formatConfirmedDate(dateStr: string) {
+  const date = parseISO(dateStr);
+  if (isNaN(date.getTime())) return `📅 ${dateStr} 확정`;
+  const base = `📅 ${format(date, "M월 d일 (EEE)", { locale: ko })} 확정`;
+  const dday = differenceInCalendarDays(date, new Date());
+  if (dday > 0) return `${base} · D-${dday}`;
+  if (dday === 0) return `${base} · 오늘!`;
+  return base;
 }
 
 // ── 공통 위젯 셸: 아이콘 + 서비스명 + 핵심 수치. 클릭 시 해당 서비스로 이동 ──
@@ -467,17 +482,37 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
               isUuid(room.roomId),
           )
           .map((room) => room.roomId);
-        if (unnamedCalcIds.length > 0) {
-          const names = await fetchCalcRoomNames(unnamedCalcIds);
-          if (active && Object.keys(names).length > 0) {
-            setRooms((prev) =>
-              prev.map((room) =>
-                names[room.roomId]
-                  ? { ...room, label: names[room.roomId] }
-                  : room,
-              ),
-            );
-          }
+        // 약속방은 확정된 약속 날짜를 함께 로드해 행에 표시
+        const meetingIds = loaded
+          .filter((room) => room.service === "meeting")
+          .map((room) => room.roomId);
+        const [names, confirmedDates] = await Promise.all([
+          unnamedCalcIds.length > 0
+            ? fetchCalcRoomNames(unnamedCalcIds).catch(
+                () => ({}) as Record<string, string>,
+              )
+            : Promise.resolve({} as Record<string, string>),
+          meetingIds.length > 0
+            ? fetchMeetingConfirmedDates(meetingIds).catch(
+                () => ({}) as Record<string, string>,
+              )
+            : Promise.resolve({} as Record<string, string>),
+        ]);
+        if (
+          active &&
+          (Object.keys(names).length > 0 ||
+            Object.keys(confirmedDates).length > 0)
+        ) {
+          setRooms((prev) =>
+            prev.map((room) => ({
+              ...room,
+              label: names[room.roomId] || room.label,
+              confirmedDate:
+                room.service === "meeting"
+                  ? confirmedDates[room.roomId]
+                  : undefined,
+            })),
+          );
         }
       } catch {
         // 방 로드 실패 시 빈 목록 — 위젯만 생략
@@ -619,6 +654,11 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
                       <StRoomInfo>
                         <StRoomService>{meta.name}</StRoomService>
                         <StRoomLabel>{room.label || meta.name}</StRoomLabel>
+                        {room.confirmedDate ? (
+                          <StRoomDate>
+                            {formatConfirmedDate(room.confirmedDate)}
+                          </StRoomDate>
+                        ) : null}
                       </StRoomInfo>
                     </StRoomLink>
                   </Link>
@@ -1004,6 +1044,16 @@ const StRoomLabel = styled.p`
   font-size: 0.92rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.gray900};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const StRoomDate = styled.p`
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.indigo600};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

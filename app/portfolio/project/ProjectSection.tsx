@@ -27,6 +27,7 @@ const CORE_STACK = [
 ];
 
 const TOY_PROJECT_MENU = [
+  { id: "toy-my", label: "내 서비스 요약" },
   { id: "toy-schedule", label: "업무 캘린더" },
   { id: "toy-meeting", label: "약속 잡기" },
   { id: "toy-calc", label: "N빵 계산기" },

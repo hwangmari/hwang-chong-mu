@@ -30,6 +30,68 @@ export default function ProjectList() {
 
   return (
     <StProjectList>
+      {/* 내 서비스 요약(통합 대시보드) 프로젝트 */}
+      <ProjectCard
+        anchorId="toy-my"
+        title="내 서비스 요약"
+        period="2026.08 - 진행 중 (1인 개발)"
+        linkUrl="/my"
+        description={
+          <>
+            흩어져 있던 서비스를 <b>하나의 계정</b>으로 연동하면, 오늘·이번 주
+            현황을 <b>한 화면에서 모아 보는 통합 대시보드</b>입니다.
+            <br />
+            가계부·운동·습관·체중 요약 위젯과 진행 중인 약속방·정산방을 한곳에
+            모으고, 위젯에서 바로 <b>빠른 등록</b>까지 할 수 있게 했습니다.
+          </>
+        }
+        details={{
+          problem: (
+            <>
+              서비스가 늘어날수록 &quot;내 현황&quot;을 확인하러 매번 각
+              페이지를 돌아다녀야 했습니다.
+              <StDetailList>
+                <li>서비스마다 별도의 입장 코드/URL로 접근해 진입점이 분산</li>
+                <li>오늘 습관·지출·체중 같은 핵심 수치를 한눈에 볼 수 없음</li>
+                <li>참여 중인 약속방·정산방 링크를 잃어버리기 쉬움</li>
+              </StDetailList>
+            </>
+          ),
+          solution: (
+            <>
+              <b>통합 로그인 + 서비스 연동 + 요약 위젯</b>을 하나의 흐름으로
+              묶었습니다.
+              <StDetailList>
+                <li>계정에 서비스 리소스를 연결하면 요약 위젯이 자동 구성</li>
+                <li>
+                  위젯은 개별 격리되어 한 서비스 장애가 전체 화면에 영향 없음
+                </li>
+                <li>우클릭 빠른 등록으로 페이지 이동 없이 기록 추가</li>
+                <li>PC는 넓은 그리드, 모바일은 단일 컬럼으로 반응형 구성</li>
+              </StDetailList>
+            </>
+          ),
+          tech: (
+            <>
+              <StDetailList>
+                <li>
+                  Next.js Route Handler 기반 세션 인증과 서비스 링크/방 관리
+                  API(`/api/auth/*`)
+                </li>
+                <li>
+                  서비스별 요약 쿼리를 <code>services/homeSummary</code>로
+                  모아 컴포넌트의 Supabase 직접 접근을 차단(ESLint 제약)
+                </li>
+                <li>
+                  공통 <code>useWidgetLoader</code> 훅으로 loading / ready /
+                  empty / error 상태를 위젯마다 독립 관리
+                </li>
+              </StDetailList>
+            </>
+          ),
+        }}
+      />
+
       {/* 업무 캘린더 프로젝트 */}
       <ProjectCard
         anchorId="toy-schedule"

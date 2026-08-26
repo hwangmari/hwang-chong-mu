@@ -71,7 +71,9 @@ export default function RoomDetail() {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (room && isUuid.test(roomId) && room.short_code) {
       const slug = room.slug || toSlug(room.name);
-      router.replace(`/meeting/room/${slug}-${room.short_code}`);
+      // 쿼리(?from=my 등)를 유지한 채 슬러그 주소로 교체 — /my 백키 복귀가 끊기지 않게
+      const search = window.location.search || "";
+      router.replace(`/meeting/room/${slug}-${room.short_code}${search}`);
     }
   }, [room, roomId, router]);
 
