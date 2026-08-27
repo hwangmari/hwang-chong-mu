@@ -135,12 +135,22 @@ export default function AssetBoardSection({
     const history = asset.changesByAccount(account.id);
     const goal = account.goalAmount || 0;
     // 목표는 연 단위 → 올해 유입액만 반영.
-    // 투자 계좌는 자산 입금이 아니라 주식 매매(올해 순매수)를 유입으로 본다.
+    // 투자 계좌는 주식 순매수와 현금 순유입(입금·가계부연동·이체, 초기잔액/조정 제외) 중
+    // 큰 쪽을 유입으로 본다 — 입금 위주 연금 계좌도 잡히고, 입금→매수로 같은 돈이
+    // 양쪽에 기록된 계좌도 이중 집계되지 않는다.
     // (기존 보유분은 매수 일자를 실제 취득일로 넣으면 올해에서 자동 제외됨)
     const yearPrefix = `${currentYear}-`;
+    const yearCashInflow = history
+      .filter(
+        (change) =>
+          change.date.startsWith(yearPrefix) &&
+          change.changeType !== "initial" &&
+          change.changeType !== "adjust",
+      )
+      .reduce((sum, change) => sum + change.amount, 0);
     const yearInflow =
       account.kind === "투자"
-        ? stockYearBuyByAccount?.[account.id] || 0
+        ? Math.max(stockYearBuyByAccount?.[account.id] || 0, yearCashInflow)
         : history
             .filter((change) => change.date.startsWith(yearPrefix))
             .reduce((sum, change) => sum + change.amount, 0);

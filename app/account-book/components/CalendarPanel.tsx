@@ -7,13 +7,15 @@ type Props = {
   calendarDays: Date[];
   daySummary: Record<
     string,
-    { income: number; expense: number; settlement: number }
+    { income: number; expense: number; saving: number; settlement: number }
   >;
   selectedDate: string;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
   onOpenNaturalRegisterForDate: (date: string) => void;
   hideIncomeAmount?: boolean;
+  // 자산/저축 카드가 "금액 숨김"이면 캘린더의 저축 금액도 표시하지 않는다
+  hideSavingAmount?: boolean;
 };
 
 function formatCalendarAmount(value?: number) {
@@ -30,6 +32,7 @@ export default function CalendarPanel({
   onSelectDate,
   onOpenNaturalRegisterForDate,
   hideIncomeAmount = false,
+  hideSavingAmount = false,
 }: Props) {
   return (
     <>
@@ -70,6 +73,13 @@ export default function CalendarPanel({
               </StDayMeta>
               <StDayMeta $kind="expense" $selected={isSelected}>
                 {info?.expense ? `-${formatCalendarAmount(info.expense)}` : ""}
+              </StDayMeta>
+              <StDayMeta $kind="saving" $selected={isSelected}>
+                {info?.saving
+                  ? hideSavingAmount
+                    ? "•••"
+                    : formatCalendarAmount(info.saving)
+                  : ""}
               </StDayMeta>
               <StDayMeta $kind="settlement" $selected={isSelected}>
                 {info?.settlement
@@ -158,17 +168,19 @@ const StDayNum = styled.span<{ $selected: boolean }>`
   }
 `;
 const StDayMeta = styled.span<{
-  $kind: "income" | "expense" | "settlement";
+  $kind: "income" | "expense" | "saving" | "settlement";
   $selected: boolean;
 }>`
   font-size: 0.65rem;
   color: ${({ $kind, $selected }) => {
     if ($selected) {
       if ($kind === "income") return "#2b6fd6";
+      if ($kind === "saving") return "#0d9488";
       if ($kind === "settlement") return "#e03d49";
       return "#7f848c";
     }
     if ($kind === "income") return "#3182f6";
+    if ($kind === "saving") return "#14b8a6";
     if ($kind === "settlement") return "#f04452";
     return "#888c94";
   }};

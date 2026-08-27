@@ -10,6 +10,7 @@ import {
   format,
   startOfMonth,
   startOfWeek,
+  subMonths,
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
@@ -522,6 +523,199 @@ export default function WorkspaceLedgerView({
       .sort((a, b) => b[1] - a[1]);
   }, [monthEntries]);
 
+  // 이번 달 리뷰 집계 단위: 큰 카테고리("생활비") 기본 ↔ 세부항목("생활비 · 외식") 토글.
+  // 세부항목은 달마다 라벨이 안 맞으면 유령 증감이 생겨 탐색용으로만 제공한다.
+  const [reviewGroupMode, setReviewGroupMode] = useState<
+    "detail" | "category"
+  >("category");
+
+  // 이번 달 리뷰(보드 노출): 지난달 대비 급증/감소 카테고리 + 반복 지출 그룹.
+  // 검색/카테고리 필터와 무관하게 참여자 필터만 적용된 visibleEntries 기준.
+  const monthlyReview = useMemo(() => {
+    const ym = format(currentMonth, "yyyy-MM");
+    const prevKeys = [format(subMonths(currentMonth, 1), "yyyy-MM")];
+    const isConsumption = (entry: ResolvedAccountEntry) =>
+      entry.type === "expense" &&
+      !isCardSettlementEntry(entry) &&
+      !isWelfareEntry(entry) &&
+      !isSavingsCategory(entry.category);
+
+    const currentTotals: Record<string, number> = {};
+    // 급증/감소 카테고리 클릭 시 펼쳐 보여줄 이번 달 세부 내역
+    const categoryEntries: Record<
+      string,
+      { id: string; date: string; label: string; amount: number }[]
+    > = {};
+    // 비교용으로 함께 펼쳐 보여줄 직전 달 세부 내역
+    const prevCategoryEntries: Record<
+      string,
+      { id: string; date: string; label: string; amount: number }[]
+    > = {};
+    const prevMonthKey = prevKeys[0];
+    const prevTotals: Record<string, number> = {};
+    const prevMonthsWithData = new Set<string>();
+    const repeatGroups: Record<
+      string,
+      { label: string; count: number; total: number }
+    > = {};
+
+    // 집계 단위: 세부항목 모드면 "생활비 · 외식"처럼 쪼개서
+    // 큰 카테고리 안에 묻히는 외식·배달·병원 같은 흐름도 잡아낸다
+    const reviewGroupOf = (entry: ResolvedAccountEntry, category: string) => {
+      if (reviewGroupMode === "category") return category;
+      const subCategory = (entry.subCategory || "").trim();
+      return subCategory ? `${category} · ${subCategory}` : category;
+    };
+
+    for (const entry of visibleEntries) {
+      if (!isConsumption(entry)) continue;
+      const category = getRepresentativeExpenseCategory(entry.category);
+      const group = reviewGroupOf(entry, category);
+      if (entry.date.startsWith(ym)) {
+        currentTotals[group] = (currentTotals[group] || 0) + entry.amount;
+        const label = (
+          entry.merchant ||
+          entry.item ||
+          entry.subCategory ||
+          category
+        ).trim();
+        (categoryEntries[group] ||= []).push({
+          id: entry.resolvedId,
+          date: entry.date,
+          label: label || category,
+          amount: entry.amount,
+        });
+        if (label) {
+          const key = label.toLowerCase();
+          const repeatGroup = repeatGroups[key] || {
+            label,
+            count: 0,
+            total: 0,
+          };
+          repeatGroup.count += 1;
+          repeatGroup.total += entry.amount;
+          repeatGroups[key] = repeatGroup;
+        }
+        continue;
+      }
+      const prevKey = prevKeys.find((key) => entry.date.startsWith(key));
+      if (prevKey) {
+        prevMonthsWithData.add(prevKey);
+        prevTotals[group] = (prevTotals[group] || 0) + entry.amount;
+        if (prevKey === prevMonthKey) {
+          const label = (
+            entry.merchant ||
+            entry.item ||
+            entry.subCategory ||
+            category
+          ).trim();
+          (prevCategoryEntries[group] ||= []).push({
+            id: entry.resolvedId,
+            date: entry.date,
+            label: label || category,
+            amount: entry.amount,
+          });
+        }
+      }
+    }
+
+    const comparedMonthCount = prevMonthsWithData.size;
+    const surges =
+      comparedMonthCount === 0
+        ? []
+        : Object.entries(currentTotals)
+            .map(([category, currentAmount]) => {
+              const averageAmount = Math.round(
+                (prevTotals[category] || 0) / comparedMonthCount,
+              );
+              return {
+                category,
+                currentAmount,
+                averageAmount,
+                increaseRatio:
+                  averageAmount > 0
+                    ? (currentAmount - averageAmount) / averageAmount
+                    : 0,
+                entries: (categoryEntries[category] || []).sort(
+                  (a, b) => b.amount - a.amount,
+                ),
+                prevEntries: (prevCategoryEntries[category] || []).sort(
+                  (a, b) => b.amount - a.amount,
+                ),
+              };
+            })
+            // 지난달 대비 +20% 이상이면서 증가액 1만원 이상만 (소액 노이즈 컷)
+            .filter(
+              (surge) =>
+                surge.averageAmount > 0 &&
+                surge.currentAmount >= surge.averageAmount * 1.2 &&
+                surge.currentAmount - surge.averageAmount >= 10_000,
+            )
+            .sort(
+              (a, b) =>
+                b.currentAmount - b.averageAmount -
+                (a.currentAmount - a.averageAmount),
+            )
+            .slice(0, 5);
+
+    // 줄어든 지출: 이번 달에 아예 안 쓴 카테고리(현재 0원)도 포함해 칭찬해준다
+    const allCategories = new Set([
+      ...Object.keys(currentTotals),
+      ...Object.keys(prevTotals),
+    ]);
+    const drops =
+      comparedMonthCount === 0
+        ? []
+        : [...allCategories]
+            .map((category) => {
+              const currentAmount = currentTotals[category] || 0;
+              const averageAmount = Math.round(
+                (prevTotals[category] || 0) / comparedMonthCount,
+              );
+              return {
+                category,
+                currentAmount,
+                averageAmount,
+                decreaseRatio:
+                  averageAmount > 0
+                    ? (averageAmount - currentAmount) / averageAmount
+                    : 0,
+                entries: (categoryEntries[category] || []).sort(
+                  (a, b) => b.amount - a.amount,
+                ),
+                prevEntries: (prevCategoryEntries[category] || []).sort(
+                  (a, b) => b.amount - a.amount,
+                ),
+              };
+            })
+            // 지난달 대비 −15% 이상이면서 감소액 1만원 이상만 (칭찬은 급증 20%보다 후하게)
+            .filter(
+              (drop) =>
+                drop.averageAmount > 0 &&
+                drop.currentAmount <= drop.averageAmount * 0.85 &&
+                drop.averageAmount - drop.currentAmount >= 10_000,
+            )
+            .sort(
+              (a, b) =>
+                b.averageAmount - b.currentAmount -
+                (a.averageAmount - a.currentAmount),
+            )
+            .slice(0, 5);
+
+    const repeats = Object.values(repeatGroups)
+      .filter((group) => group.count >= 3)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    return {
+      surges,
+      drops,
+      repeats,
+      comparedMonthCount,
+      prevMonthLabel: format(subMonths(currentMonth, 1), "M월"),
+    };
+  }, [currentMonth, reviewGroupMode, visibleEntries]);
+
   const dashboardRows = useMemo(() => {
     let cumulativeSavings = 0;
 
@@ -707,15 +901,27 @@ export default function WorkspaceLedgerView({
 
   const daySummary = useMemo(() => {
     return monthEntries.reduce<
-      Record<string, { income: number; expense: number; settlement: number }>
+      Record<
+        string,
+        { income: number; expense: number; saving: number; settlement: number }
+      >
     >((acc, entry) => {
-      const target = acc[entry.date] || { income: 0, expense: 0, settlement: 0 };
+      const target = acc[entry.date] || {
+        income: 0,
+        expense: 0,
+        saving: 0,
+        settlement: 0,
+      };
       if (entry.type === "income") target.income += entry.amount;
       if (entry.type === "expense" && isCardSettlementEntry(entry)) {
         target.settlement += entry.amount;
       } else if (entry.type === "expense" && !isWelfareEntry(entry)) {
-        // 복지카드 지출은 캘린더 일별 총액에서 제외
-        target.expense += entry.amount;
+        // 복지카드 지출은 캘린더 일별 총액에서 제외, 저축은 지출과 분리 표시
+        if (isSavingsCategory(entry.category)) {
+          target.saving += entry.amount;
+        } else {
+          target.expense += entry.amount;
+        }
       }
       acc[entry.date] = target;
       return acc;
@@ -1320,6 +1526,9 @@ export default function WorkspaceLedgerView({
           onChangeAnnualSavingGoal={onChangeAnnualSavingGoal}
           onChangeMonthlyBudget={onChangeMonthlyBudget}
           dashboardRows={dashboardRows}
+          monthlyReview={monthlyReview}
+          reviewGroupMode={reviewGroupMode}
+          onChangeReviewGroupMode={setReviewGroupMode}
           onSelectBoardMonth={onDashboardMonthSelect}
           calendarDays={calendarDays}
           daySummary={daySummary}

@@ -2,7 +2,10 @@
 
 import styled from "styled-components";
 import type { PaymentType, ResolvedAccountEntry, ViewMode } from "../../types";
-import AccountBookDashboardPanel from "../AccountBookDashboardPanel";
+import AccountBookDashboardPanel, {
+  type MonthlyReview,
+  type ReviewGroupMode,
+} from "../AccountBookDashboardPanel";
 import MonthlyIssueMemo from "../MonthlyIssueMemo";
 import CalendarPanel from "../CalendarPanel";
 import DetailEntriesPanel from "../DetailEntriesPanel";
@@ -92,10 +95,13 @@ type Props = {
     achievementRate: number | null;
   }>;
   onSelectBoardMonth: (monthNumber: number) => void;
+  monthlyReview: MonthlyReview;
+  reviewGroupMode: ReviewGroupMode;
+  onChangeReviewGroupMode: (mode: ReviewGroupMode) => void;
   calendarDays: Date[];
   daySummary: Record<
     string,
-    { income: number; expense: number; settlement: number }
+    { income: number; expense: number; saving: number; settlement: number }
   >;
   toIsoDate: (date: Date) => string;
   onSelectDate: (date: string) => void;
@@ -159,6 +165,9 @@ export default function WorkspacePanelsSection({
   onChangeMonthlyBudget,
   dashboardRows,
   onSelectBoardMonth,
+  monthlyReview,
+  reviewGroupMode,
+  onChangeReviewGroupMode,
   calendarDays,
   daySummary,
   toIsoDate,
@@ -261,6 +270,9 @@ export default function WorkspacePanelsSection({
                 onChangeAnnualGoal={onChangeAnnualSavingGoal}
                 onChangeMonthlyBudget={onChangeMonthlyBudget}
                 dashboardRows={dashboardRows}
+                monthlyReview={monthlyReview}
+                reviewGroupMode={reviewGroupMode}
+                onChangeReviewGroupMode={onChangeReviewGroupMode}
                 onSelectMonth={onSelectBoardMonth}
                 onOpenIncomeYearly={onOpenIncomeYearly}
                 onOpenExpenseYearly={onOpenExpenseYearly}
@@ -282,6 +294,7 @@ export default function WorkspacePanelsSection({
                   isCalendarIncomeAmountHidden ||
                   hiddenCalendarAmountCardIds.includes("income")
                 }
+                hideSavingAmount={hiddenCalendarAmountCardIds.includes("asset")}
               />
             )}
           </StLeftBody>
