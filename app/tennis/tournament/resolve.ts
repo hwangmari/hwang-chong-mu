@@ -121,3 +121,45 @@ export function countFinishedTournament(matches: ResolvedMatch[]) {
   const visible = matches.filter((m) => m.status !== "hidden");
   return { done: visible.filter((m) => m.status === "done").length, total: visible.length };
 }
+
+
+// === 선수별 실제 뛴 게임 수 ===
+// 페어 교체 규칙(4게임 단위 A→B→C)에 총 게임 수를 대입한다. 6:4면 10게임 → 1~4 페어A, 5~8 페어B, 9~10 페어C
+export type SeedGames = Record<1 | 2 | 3 | 4, number>;
+
+export function seedGamesForMatch(scoreA: number, scoreB: number): SeedGames {
+  const total = scoreA + scoreB;
+  const clamp = (n: number) => Math.max(0, Math.min(4, n));
+  const a = clamp(total); // 1~4게임
+  const b = clamp(total - 4); // 5~8게임
+  const c = clamp(total - 8); // 9~12게임
+  // 페어A = 시드2+4, 페어B = 시드1+3, 페어C = 시드1+2
+  return { 1: b + c, 2: a + c, 3: b, 4: a };
+}
+
+export type PlayerLoad = {
+  seed: 1 | 2 | 3 | 4;
+  name: string;
+  games: number; // 끝난 경기에서 실제 뛴 게임 합
+  perMatch: { matchNo: number; label: string; games: number }[];
+};
+
+export function teamPlayerLoad(matches: ResolvedMatch[], team: TeamEntry): PlayerLoad[] {
+  const done = matches.filter(
+    (m) => m.status === "done" && m.scoreA !== null && m.scoreB !== null && (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
+  );
+  return ([1, 2, 3, 4] as const).map((seed) => {
+    const player = team.players.find((p) => p.seed === seed);
+    const perMatch = done.map((m) => ({
+      matchNo: m.template.no,
+      label: m.template.label,
+      games: seedGamesForMatch(m.scoreA!, m.scoreB!)[seed],
+    }));
+    return {
+      seed,
+      name: player?.name || `시드 ${seed}`,
+      games: perMatch.reduce((sum, x) => sum + x.games, 0),
+      perMatch,
+    };
+  });
+}

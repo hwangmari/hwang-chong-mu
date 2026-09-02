@@ -5,7 +5,7 @@ import BracketDiagram from "./BracketDiagram";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
-import { countFinishedTournament, placements, resolveBracket, scheduleBlocks, teamPath } from "./resolve";
+import { countFinishedTournament, placements, resolveBracket, scheduleBlocks, teamPath, teamPlayerLoad } from "./resolve";
 import type { TeamEntry, TournamentEvent } from "./types";
 import { formatDate } from "../format";
 import {
@@ -52,6 +52,8 @@ import {
   StSubtitle,
   StTab,
   StTabRow,
+  StTable,
+  StTableWrap,
   StTeamName,
   StTitle,
 } from "../page.styles";
@@ -574,6 +576,43 @@ export default function TournamentView({ initialEvent }: Props) {
                 </StPlacementRow>
               ))}
               {teamPath(matches, selected).length === 0 ? <StCardHint>아직 정해진 경기가 없어요.</StCardHint> : null}
+              <StCardHead>
+                <StCardTitle>🏃 선수별 실제 뛴 게임</StCardTitle>
+              </StCardHead>
+              <StCardHint>
+                끝난 경기의 총 게임 수를 페어 교체 규칙(1~4게임 페어A=시드2+4, 5~8 페어B=1+3, 9~12 페어C=1+2)에 대입해 계산해요.
+                진행 중·예정 경기는 아직 안 세요.
+              </StCardHint>
+              <StTableWrap>
+                <StTable>
+                  <thead>
+                    <tr>
+                      <th className="name">선수</th>
+                      <th>뛴 게임</th>
+                      {teamPath(matches, selected)
+                        .filter((x) => x.outcome !== null)
+                        .map((x) => (
+                          <th key={x.match.template.no}>{x.match.template.no}번</th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamPlayerLoad(matches, selected).map((row) => (
+                      <tr key={row.seed}>
+                        <td className="name">
+                          <StSeedTag>{row.seed}</StSeedTag> {row.name}
+                        </td>
+                        <td className="points">{row.games}</td>
+                        {row.perMatch.map((pm) => (
+                          <td key={pm.matchNo} className="muted">
+                            {pm.games}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </StTable>
+              </StTableWrap>
             </StQueueList>
           ) : (
             <StCardHint>위에서 팀을 골라 주세요.</StCardHint>
