@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EventSetupForm from "./components/EventSetupForm";
 import { EVENTS } from "./data";
-import { formatEventDate } from "./format";
+import { TOURNAMENTS } from "./tournament/data";
+import { formatDate, formatEventDate } from "./format";
 import { createTennisEvent, type NewTennisEvent } from "@/services/tennis";
 import {
   StCard,
@@ -85,9 +86,17 @@ export default function TennisHomePage() {
         <StCardHead>
           <StCardTitle>📌 진행 중인 교류전</StCardTitle>
         </StCardHead>
+        {TOURNAMENTS.map((t) => (
+          <StEventLink key={t.id} as={Link} href={`/tennis/${t.id}`}>
+            <StEventTitle>🏆 {t.title}</StEventTitle>
+            <StEventMeta>
+              {formatDate(t.date)} {t.timeTbd ? "· 시간 미정" : t.startTime} · {t.place} · {t.teams.length}팀 더블 엘리미네이션 · 코트 {t.courts}면
+            </StEventMeta>
+          </StEventLink>
+        ))}
         {EVENTS.map((event) => (
           <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
-            <StEventTitle>{event.title}</StEventTitle>
+            <StEventTitle>🎾 {event.title}</StEventTitle>
             <StEventMeta>
               {formatEventDate(event)} · {event.place} · {event.players.length}명 · {event.matches.length}경기
             </StEventMeta>

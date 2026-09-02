@@ -579,6 +579,9 @@ export const StScoreColon = styled.span`
 `;
 
 export const StSaveBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 2.5rem;
   border: none;
   background: ${({ theme }) => theme.semantic.primary};
@@ -600,7 +603,7 @@ export const StGhostBtn = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.2rem;
+  min-height: 2.5rem;
   border: 1px dashed ${({ theme }) => theme.colors.gray300};
   background: transparent;
   color: ${({ theme }) => theme.colors.gray500};
@@ -858,15 +861,19 @@ export const StActions = styled.div`
 `;
 
 export const StPrimaryBtn = styled.button`
-  min-height: 2.7rem;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border: 1px solid ${({ theme }) => theme.semantic.primary};
   background: ${({ theme }) => theme.semantic.primary};
   color: ${({ theme }) => theme.colors.white};
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  padding: 0 1.2rem;
-  border-radius: 0.7rem;
+  padding: 0 1.1rem;
+  border-radius: 0.6rem;
   cursor: pointer;
+  box-sizing: border-box;
 
   &:disabled {
     opacity: 0.4;
@@ -893,20 +900,59 @@ export const StWarnList = styled.ul`
   }
 `;
 
-/* 편집 중인 경기 한 줄 */
-export const StEditMatch = styled.div<{ $color: string }>`
+/* 편집 중인 경기 한 줄 (드래그 가능) */
+export const StEditMatch = styled.div<{ $color: string; $dragging?: boolean; $over?: boolean; $locked?: boolean }>`
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 0.7rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ $over, theme }) => ($over ? theme.colors.blue500 : theme.colors.gray100)};
   border-left: 4px solid ${({ $color }) => $color};
   border-radius: 0.8rem;
+  background: ${({ $locked, theme }) => ($locked ? theme.colors.gray50 : theme.colors.white)};
+  opacity: ${({ $dragging }) => ($dragging ? 0.4 : 1)};
+  cursor: ${({ $locked }) => ($locked ? "default" : "grab")};
+  transition: border-color 0.15s;
 
   @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
   }
+`;
+
+export const StDragHandle = styled.span`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.gray300};
+  user-select: none;
+  touch-action: none;
+`;
+
+export const StGroupHead = styled.div<{ $over?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray500};
+  background: ${({ $over, theme }) => ($over ? theme.colors.blue50 : theme.colors.gray100)};
+  border: 1px dashed ${({ $over, theme }) => ($over ? theme.colors.blue500 : "transparent")};
+`;
+
+export const StSuggestion = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.7rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #92400e;
 `;
 
 export const StEditMeta = styled.span`
@@ -1038,4 +1084,114 @@ export const StStatButton = styled(StStatBox).attrs({ as: "button", type: "butto
     border-color: ${({ theme }) => theme.colors.blue200};
     background: ${({ theme }) => theme.colors.blue50};
   }
+`;
+
+/* 규칙 배지: 연한 바탕 + 색 글자 (칩보다 조용하게) */
+export const StRuleBadge = styled.span<{ $tone: "fixed" | "on" }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  color: ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray500 : theme.colors.teal600)};
+  background: ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray100 : theme.colors.teal50)};
+  border: 1px solid ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray200 : theme.colors.teal100)};
+`;
+
+/* === 팀 토너먼트 === */
+export const StBlockHead = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.1rem;
+  border-bottom: 2px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+export const StTeamName = styled.span<{ $muted?: boolean }>`
+  font-size: 1rem;
+  font-weight: 900;
+  color: ${({ $muted, theme }) => ($muted ? theme.colors.gray400 : theme.colors.gray900)};
+`;
+
+export const StSeedTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.66rem;
+  font-weight: 900;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.4rem;
+  color: ${({ theme }) => theme.colors.white};
+  background: ${({ theme }) => theme.colors.gray400};
+`;
+
+export const StPairRotation = styled.div`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.25rem 0.6rem;
+  font-size: 0.74rem;
+  color: ${({ theme }) => theme.colors.gray500};
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  background: ${({ theme }) => theme.colors.gray50};
+
+  b {
+    color: ${({ theme }) => theme.colors.gray700};
+    font-weight: 800;
+  }
+
+  span.names {
+    color: ${({ theme }) => theme.colors.gray900};
+    font-weight: 700;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+export const StPlacementRow = styled.div<{ $top: boolean }>`
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  background: ${({ $top, theme }) => ($top ? "#fffbeb" : theme.colors.white)};
+`;
+
+export const StRank = styled.span`
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+export const StTeamGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const StTeamCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 0.8rem;
+`;
+
+export const StTeamPlayers = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: ${({ theme }) => theme.colors.gray700};
 `;

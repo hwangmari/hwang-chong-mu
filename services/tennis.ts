@@ -11,6 +11,7 @@ import type {
   Round,
   TennisEvent,
 } from "@/app/tennis/types";
+import type { TeamEntry, TournamentEvent } from "@/app/tennis/tournament/types";
 
 // === 점수 ===
 
@@ -22,6 +23,8 @@ type ScoreRow = {
   court: Court | null;
   started_at: string | null;
   finished_at: string | null;
+  tiebreak_a: number | null;
+  tiebreak_b: number | null;
 };
 
 function toScore(row: ScoreRow): MatchScore {
@@ -32,13 +35,15 @@ function toScore(row: ScoreRow): MatchScore {
     court: row.court ?? undefined,
     startedAt: row.started_at ?? undefined,
     finishedAt: row.finished_at ?? undefined,
+    tiebreakA: row.tiebreak_a ?? undefined,
+    tiebreakB: row.tiebreak_b ?? undefined,
   };
 }
 
 export async function fetchTennisScores(eventId: string): Promise<MatchScore[]> {
   const { data, error } = await supabase
     .from("tennis_scores")
-    .select("event_id, match_no, score_a, score_b, court, started_at, finished_at")
+    .select("event_id, match_no, score_a, score_b, court, started_at, finished_at, tiebreak_a, tiebreak_b")
     .eq("event_id", eventId)
     .order("match_no", { ascending: true });
   if (error) throw error;
@@ -82,6 +87,8 @@ export async function saveTennisScore(
       court: score.court ?? null,
       started_at: score.startedAt ?? null,
       finished_at: score.finishedAt ?? new Date().toISOString(),
+      tiebreak_a: score.tiebreakA ?? null,
+      tiebreak_b: score.tiebreakB ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "event_id,match_no" },
@@ -105,6 +112,7 @@ export async function deleteTennisScore(
 
 type EventRow = {
   id: string;
+  kind: "exchange" | "tournament" | null;
   title: string;
   date: string;
   start_time: string;
@@ -116,6 +124,8 @@ type EventRow = {
   rounds: Round[];
   matches: Match[];
   rules: unknown;
+  teams: TeamEntry[] | null;
+  config: Record<string, unknown> | null; // 토너먼트 설정 (gamesToWin, timeTbd, beforeNote)
 };
 
 function toEvent(row: EventRow): TennisEvent {
@@ -135,17 +145,76 @@ function toEvent(row: EventRow): TennisEvent {
   };
 }
 
-const EVENT_COLUMNS =
-  "id, title, date, start_time, place, courts, minutes_per_match, after_note, players, rounds, matches, rules";
+function toTournament(row: EventRow): TournamentEvent {
+  const cfg = row.config ?? {};
+  return {
+    id: row.id,
+    kind: "tournament",
+    title: row.title,
+    date: row.date,
+    startTime: row.start_time,
+    timeTbd: typeof cfg.timeTbd === "boolean" ? cfg.timeTbd : false,
+    place: row.place ?? "",
+    minutesPerMatch: row.minutes_per_match,
+    gamesToWin: typeof cfg.gamesToWin === "number" ? cfg.gamesToWin : 6,
+    courts: row.courts,
+    teams: row.teams ?? [],
+    beforeNote: typeof cfg.beforeNote === "string" ? cfg.beforeNote : "",
+    afterNote: row.after_note ?? "",
+    rules: normalizeRules(row.rules),
+  };
+}
 
-export async function fetchTennisEvent(id: string): Promise<TennisEvent | null> {
+const EVENT_COLUMNS =
+  "id, kind, title, date, start_time, place, courts, minutes_per_match, after_note, players, rounds, matches, rules, teams, config";
+
+export type AnyTennisEvent = TennisEvent | TournamentEvent;
+
+export function isTournament(event: AnyTennisEvent): event is TournamentEvent {
+  return (event as TournamentEvent).kind === "tournament";
+}
+
+export async function fetchTennisEvent(id: string): Promise<AnyTennisEvent | null> {
   const { data, error } = await supabase
     .from("tennis_events")
     .select(EVENT_COLUMNS)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? toEvent(data as EventRow) : null;
+  if (!data) return null;
+  const row = data as EventRow;
+  return row.kind === "tournament" ? toTournament(row) : toEvent(row);
+}
+
+// 토너먼트 저장 (코드에 든 대회를 처음 편집할 때도 같은 id로 통째로 저장)
+export async function upsertTournament(event: TournamentEvent): Promise<TournamentEvent> {
+  const { data, error } = await supabase
+    .from("tennis_events")
+    .upsert(
+      {
+        id: event.id,
+        kind: "tournament",
+        title: event.title,
+        date: event.date,
+        start_time: event.startTime,
+        place: event.place,
+        courts: event.courts,
+        minutes_per_match: event.minutesPerMatch,
+        after_note: event.afterNote,
+        players: [],
+        rounds: [],
+        matches: [],
+        rules: event.rules,
+        teams: event.teams,
+        config: { gamesToWin: event.gamesToWin, timeTbd: event.timeTbd, beforeNote: event.beforeNote },
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    )
+    .select(EVENT_COLUMNS)
+    .single();
+  if (error) throw error;
+  return toTournament(data as EventRow);
 }
 
 export type NewTennisEvent = Omit<TennisEvent, "id" | "builtIn">;
@@ -154,6 +223,7 @@ export async function createTennisEvent(input: NewTennisEvent): Promise<TennisEv
   const { data, error } = await supabase
     .from("tennis_events")
     .insert({
+      kind: "exchange",
       title: input.title,
       date: input.date,
       start_time: input.startTime,
@@ -179,6 +249,7 @@ export async function upsertTennisEvent(event: TennisEvent): Promise<TennisEvent
     .upsert(
       {
         id: event.id,
+        kind: "exchange",
         title: event.title,
         date: event.date,
         start_time: event.startTime,

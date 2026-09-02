@@ -534,3 +534,51 @@ export function validateBracket(
 
   return warnings;
 }
+
+
+// === 순서 변경 추천 ===
+// "연달아 있어요" 같은 순서 경고를 줄이는 두 경기 맞바꾸기를 찾는다. (잠긴 경기는 건드리지 않는다)
+export type SwapSuggestion = {
+  from: number; // 위치(0부터)
+  to: number;
+  message: string; // 예) "11번을 13번과 바꾸면 경고 2개 → 0개"
+};
+
+function orderWarningCount(players: Player[], matches: Match[], courts: number, rules: RuleSettings): number {
+  // 순서와 관련 있는 경고만 센다 (연달아 / 연속 휴식 / 연속 출전)
+  return validateBracket(players, matches, courts, rules).filter(
+    (w) => w.message.includes("연달아") || w.message.includes("연속"),
+  ).length;
+}
+
+export function suggestSwaps(
+  players: Player[],
+  matches: Match[],
+  courts: number,
+  rules: RuleSettings,
+  locked: Set<number> = new Set(), // 이미 시작·완료된 경기 번호(no)
+  limit = 3,
+): SwapSuggestion[] {
+  const base = orderWarningCount(players, matches, courts, rules);
+  if (base === 0) return [];
+  const candidates: (SwapSuggestion & { after: number })[] = [];
+  for (let i = 0; i < matches.length; i += 1) {
+    if (locked.has(matches[i].no)) continue;
+    for (let j = i + 1; j < matches.length; j += 1) {
+      if (locked.has(matches[j].no)) continue;
+      const next = [...matches];
+      [next[i], next[j]] = [next[j], next[i]];
+      const after = orderWarningCount(players, next, courts, rules);
+      if (after < base) {
+        candidates.push({
+          from: i,
+          to: j,
+          after,
+          message: `${i + 1}번을 ${j + 1}번과 바꾸면 순서 경고 ${base}개 → ${after}개`,
+        });
+      }
+    }
+  }
+  candidates.sort((a, b) => a.after - b.after || Math.abs(a.from - a.to) - Math.abs(b.from - b.to));
+  return candidates.slice(0, limit).map(({ from, to, message }) => ({ from, to, message }));
+}

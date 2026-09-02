@@ -11,9 +11,11 @@ create table if not exists tennis_scores (
   match_no integer not null check (match_no > 0),
   score_a integer not null default 0 check (score_a >= 0),
   score_b integer not null default 0 check (score_b >= 0),
-  court text check (court in ('A', 'B')),   -- 실제로 뛴 코트
+  court text check (court in ('A', 'B', 'C', 'D')),   -- 실제로 뛴 코트 (교류전 A·B, 토너먼트 A~D)
   started_at timestamptz,                    -- "지금 시작" 누른 시각
   finished_at timestamptz,                   -- 처음 점수를 넣은 시각 = 경기 끝난 시각
+  tiebreak_a integer check (tiebreak_a >= 0), -- 토너먼트: 5:5 타이브레이크 점수 (선택)
+  tiebreak_b integer check (tiebreak_b >= 0),
   updated_at timestamptz not null default now(),
   primary key (event_id, match_no)
 );

@@ -19,7 +19,7 @@ export type Round = {
   time: string; // 예) "10:00 — 10:45"
 };
 
-export type Court = "A" | "B";
+export type Court = "A" | "B" | "C" | "D"; // 교류전은 A·B, 토너먼트는 A~D
 
 // 경기. 배열 순서가 곧 진행 순서다. no는 점수와 연결되는 고정 번호라 순서를 바꿔도 변하지 않는다.
 // round/court는 "처음 계획"일 뿐(PDF 대진표 등). 실제 코트는 비는 코트에 순서대로 들어간다.
@@ -74,6 +74,9 @@ export type MatchScore = {
   court?: Court; // 실제로 뛴 코트
   startedAt?: string; // ISO
   finishedAt?: string; // ISO. 처음 점수를 저장한 시각. 점수를 고쳐도 유지
+  // 토너먼트: 5:5에서 7점 타이브레이크로 끝났을 때의 타이브레이크 점수 (선택)
+  tiebreakA?: number;
+  tiebreakB?: number;
 };
 
 // 완료된 기록인지. (옛 기록엔 startedAt/finishedAt이 없을 수 있어 그런 건 완료로 본다)

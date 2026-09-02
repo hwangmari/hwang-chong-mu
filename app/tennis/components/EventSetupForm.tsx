@@ -28,6 +28,7 @@ import {
   StNotice,
   StPrimaryBtn,
   StRow,
+  StRuleBadge,
   StTextarea,
 } from "../page.styles";
 import type { EventDraft, Match, Player } from "../types";
@@ -279,9 +280,9 @@ export default function EventSetupForm({ onCreate }: Props) {
         <StFieldName>대진표 규칙 — 누르면 켜고 꺼요</StFieldName>
         <StChipRow>
           {FIXED_RULES.map((r) => (
-            <StChip key={r.label} type="button" $active $color="#64748b" title={r.description} disabled>
+            <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
               🔒 {r.label}
-            </StChip>
+            </StRuleBadge>
           ))}
           {RULE_INFO.map((r) => {
             const on = isRuleOn(rules, r.id);
