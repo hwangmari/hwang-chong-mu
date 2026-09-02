@@ -456,7 +456,7 @@ export default function TournamentView({ initialEvent }: Props) {
             <StCardTitle>🗂️ 대진표 · 점수 입력</StCardTitle>
           </StCardHead>
           <StCardHint>
-            {event.beforeNote ? `${event.beforeNote} → ` : ""}교시는 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요.
+            {event.beforeNote ? `${event.beforeNote} → ` : ""}타임는 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요.
             앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로 채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
           </StCardHint>
           <StQueueList>
@@ -467,7 +467,7 @@ export default function TournamentView({ initialEvent }: Props) {
                 <div key={block.no} style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                   <StBlockHead>
                     <StRoundTitle>
-                      {block.no}교시 · {block.title}
+                      {block.no}타임 · {block.title}
                     </StRoundTitle>
                     <StRoundTime>
                       {block.time}
@@ -533,7 +533,7 @@ export default function TournamentView({ initialEvent }: Props) {
           <StCardHead>
             <StCardTitle>🧭 팀별 여정</StCardTitle>
           </StCardHead>
-          <StCardHint>팀을 고르면 몇 교시에 어느 코트에서 누구와 붙는지, 결과가 어땠는지 보여요.</StCardHint>
+          <StCardHint>팀을 고르면 몇 타임에 어느 코트에서 누구와 붙는지, 결과가 어땠는지 보여요.</StCardHint>
           <StChipRow>
             {event.teams.map((t) => (
               <StChip key={t.seed} type="button" $active={selectedTeam === t.seed} $color="#1d4ed8" onClick={() => setSelectedTeam(t.seed)}>
@@ -545,7 +545,7 @@ export default function TournamentView({ initialEvent }: Props) {
             <StQueueList>
               {teamPath(matches, selected).map(({ match, opponent, outcome }) => (
                 <StPlacementRow key={match.template.no} $top={outcome === "win"}>
-                  <StRank>{match.template.block}교시</StRank>
+                  <StRank>{match.template.block}타임</StRank>
                   <span>
                     <b>{match.template.label}</b> · {scores[match.template.no]?.court ? `코트 ${scores[match.template.no]?.court}` : `계획 코트 ${match.template.court}`} · {blockTime(match.template.block)}
                     <br />

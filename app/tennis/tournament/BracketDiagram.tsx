@@ -99,7 +99,7 @@ export default function BracketDiagram({ matches }: Props) {
                                 ? "시작 가능"
                                 : state === "hidden"
                                   ? "조건부"
-                                  : `${m.template.block}교시`}
+                                  : `${m.template.block}타임`}
                         </span>
                       </StNodeHead>
                       {teamLine(m.teamA, m.aLabel, m.scoreA, winnerA)}
