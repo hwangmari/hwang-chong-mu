@@ -1,6 +1,5 @@
 "use client";
 
-import { matchLabel } from "../data";
 import { buildPlayerSchedule } from "../standings";
 import { toClock } from "../format";
 import type { Timeline } from "../timeline";
@@ -48,7 +47,8 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
         <StCardTitle>👤 선수별 일정</StCardTitle>
       </StCardHead>
       <StCardHint>
-        내 이름을 누르면 오늘 몇 시에, 어느 코트에서, 누구와 짝이 되어 누구랑 붙는지 한눈에 보여요.
+        내 이름을 누르면 몇 번째 경기인지, 어느 코트에서 몇 시쯤, 누구와 짝이 되어 누구랑 붙는지 한눈에 보여요.
+        시간은 실제 진행에 맞춰 계속 바뀌는 예상 시각이에요.
       </StCardHint>
       <StChipRow>
         {event.players.map((player) => (
@@ -69,6 +69,7 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
       ) : (
         <StScheduleList>
           {schedule.map((view) => {
+            const t = timeline.byMatch.get(view.match.no);
             const mine = view.score
               ? view.side === "A"
                 ? view.score.scoreA
@@ -79,22 +80,22 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
                 ? view.score.scoreB
                 : view.score.scoreA
               : null;
+            const when = !t
+              ? ""
+              : t.status === "done"
+                ? `완료 ${toClock(t.expectedEnd)}`
+                : t.status === "playing"
+                  ? "진행 중"
+                  : t.status === "ready"
+                    ? "지금 시작 가능"
+                    : `예상 ${toClock(t.expectedStart)}`;
             return (
               <StScheduleRow key={view.match.no} $color={MATCH_TYPE_COLOR[view.match.type]}>
                 <StScheduleTime>
+                  <span>{view.position}번째 경기</span>
                   <span>
-                    R{view.round.no} ·{" "}
-                    {(() => {
-                      const t = timeline.byMatch.get(view.match.no);
-                      if (!t || t.status === "done") return view.round.time.split(" — ")[0];
-                      if (t.status === "playing") return "진행 중";
-                      return t.expectedStart !== t.plannedStart
-                        ? `예상 ${toClock(t.expectedStart)}`
-                        : view.round.time.split(" — ")[0];
-                    })()}
-                  </span>
-                  <span>
-                    코트 {view.match.court} · {matchLabel(view.match.no)}
+                    {when}
+                    {t ? ` · 코트 ${t.court}` : ""}
                   </span>
                 </StScheduleTime>
                 <StScheduleMain>
@@ -119,7 +120,7 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
                       </StResultBadge>
                     </>
                   ) : (
-                    <StResultBadge $tone="todo">예정</StResultBadge>
+                    <StResultBadge $tone="todo">{t?.status === "playing" ? "진행 중" : "예정"}</StResultBadge>
                   )}
                 </StScheduleScore>
               </StScheduleRow>

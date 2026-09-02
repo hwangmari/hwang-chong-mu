@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
 import { generateBracket, suggestSplit, type Generated } from "../generate";
 import { parsePlayersText } from "../parsePlayers";
-import { formatDate, roundLabel, roundTime } from "../format";
+import { formatDate, toClock, toMinutes } from "../format";
 import {
   StActions,
   StCard,
@@ -19,7 +19,7 @@ import {
   StRow,
   StTextarea,
 } from "../page.styles";
-import type { EventDraft, Match, Player, Round } from "../types";
+import type { EventDraft, Match, Player } from "../types";
 import type { NewTennisEvent } from "@/services/tennis";
 import { formatDateKey } from "@/utils/date";
 
@@ -39,7 +39,7 @@ export default function EventSetupForm({ onCreate }: Props) {
   const [startTime, setStartTime] = useState("10:00");
   const [place, setPlace] = useState("");
   const [courts, setCourts] = useState(2);
-  const [rounds, setRounds] = useState(8);
+  const [totalMatches, setTotalMatches] = useState(16);
   const [minutesPerMatch, setMinutesPerMatch] = useState(45);
   const [afterNote, setAfterNote] = useState("");
   const [playersText, setPlayersText] = useState("");
@@ -59,10 +59,9 @@ export default function EventSetupForm({ onCreate }: Props) {
 
   // 남복/여복/혼복 구성은 인원·코트·라운드로 자동 결정 (사람이 계산하지 않는다)
   const split = useMemo(
-    () => suggestSplit(players, courts, rounds),
-    [players, courts, rounds],
+    () => suggestSplit(players, courts, totalMatches),
+    [players, courts, totalMatches],
   );
-  const totalMatches = courts * rounds;
   const splitOk =
     split.menMatches + split.womenMatches + split.mixedMatches === totalMatches;
 
@@ -76,7 +75,7 @@ export default function EventSetupForm({ onCreate }: Props) {
       startTime,
       place: place.trim(),
       courts,
-      rounds,
+      totalMatches,
       minutesPerMatch,
       afterNote: afterNote.trim(),
       players,
@@ -91,7 +90,7 @@ export default function EventSetupForm({ onCreate }: Props) {
       return;
     }
     if (!splitOk) {
-      setError("이 인원으로는 경기를 다 채울 수 없어요. 라운드나 코트 수를 줄여 보세요.");
+      setError("이 인원으로는 경기를 다 채울 수 없어요. 총 경기 수를 줄여 보세요.");
       return;
     }
     const result = generateBracket(draft());
@@ -105,7 +104,6 @@ export default function EventSetupForm({ onCreate }: Props) {
 
   function updateMatches(matches: Match[]) {
     if (!generated) return;
-    // 손으로 고치면 라운드 제목(종목 구성)은 그대로 두고 경기만 바꾼다
     setGenerated({ ...generated, matches });
   }
 
@@ -127,11 +125,6 @@ export default function EventSetupForm({ onCreate }: Props) {
     setBusy(true);
     setError("");
     try {
-      const roundsOut: Round[] = generated.rounds.map((r, i) => ({
-        ...r,
-        label: roundLabel(generated.matches.filter((m) => m.round === r.no).map((m) => m.type)),
-        time: roundTime(startTime, minutesPerMatch, i),
-      }));
       await onCreate({
         title: title.trim(),
         date,
@@ -141,7 +134,7 @@ export default function EventSetupForm({ onCreate }: Props) {
         minutesPerMatch,
         afterNote: afterNote.trim(),
         players,
-        rounds: roundsOut,
+        rounds: [], // 라운드 고정 없이 순서 목록으로 진행한다
         matches: generated.matches,
       });
     } catch (e) {
@@ -218,13 +211,13 @@ export default function EventSetupForm({ onCreate }: Props) {
           />
         </StLabel>
         <StLabel>
-          <StFieldName>라운드 수</StFieldName>
+          <StFieldName>총 경기 수</StFieldName>
           <StInput
             type="number"
             min={1}
-            max={20}
-            value={rounds}
-            onChange={(e) => setRounds(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
+            max={60}
+            value={totalMatches}
+            onChange={(e) => setTotalMatches(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
           />
         </StLabel>
         <StLabel>
@@ -260,11 +253,12 @@ export default function EventSetupForm({ onCreate }: Props) {
       ) : null}
 
       <StCardHint>
-        총 {totalMatches}경기 ({rounds}라운드 × {courts}코트).
+        총 {totalMatches}경기 · 코트 {courts}면이면 {startTime}에 시작해 약{" "}
+        {toClock(toMinutes(startTime) + Math.ceil(totalMatches / courts) * minutesPerMatch)}에 끝나요.
         {players.length >= 4 && splitOk
           ? ` 인원에 맞춰 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 남자는 1인당 약 ${menApps.toFixed(1)}회, 여자는 약 ${womenApps.toFixed(1)}회 출전해요.`
           : players.length >= 4
-            ? " 이 인원으로는 경기를 다 채울 수 없어요. 라운드나 코트 수를 줄여 보세요."
+            ? " 이 인원으로는 경기를 다 채울 수 없어요. 총 경기 수를 줄여 보세요."
             : " 선수 명단을 넣으면 종목 구성을 자동으로 정해 드려요."}
       </StCardHint>
 
@@ -284,13 +278,13 @@ export default function EventSetupForm({ onCreate }: Props) {
             </StCardTitle>
           </StCardHead>
           <StCardHint>
-            선수 이름을 눌러 바꿀 수 있어요. 빨간 경고는 고쳐야 만들 수 있고, 주황 경고는 참고만
-            하면 돼요.
+            위에서부터 진행 순서예요. 선수 이름을 눌러 바꿀 수 있고, 만든 뒤에도 순서와 선수를 고칠 수
+            있어요. 빨간 경고는 고쳐야 만들 수 있고, 주황 경고는 참고만 하면 돼요.
           </StCardHint>
           <BracketEditor
             players={players}
-            rounds={generated.rounds}
             matches={generated.matches}
+            courts={courts}
             onChange={updateMatches}
           />
           <StActions>

@@ -3,6 +3,7 @@
 // 표는 anon permissive 정책 — 실제 통제는 "링크를 아는 사람만"이라는 전제.
 import { supabase } from "@/lib/supabase";
 import type {
+  Court,
   Match,
   MatchScore,
   Player,
@@ -17,6 +18,8 @@ type ScoreRow = {
   match_no: number;
   score_a: number;
   score_b: number;
+  court: Court | null;
+  started_at: string | null;
   finished_at: string | null;
 };
 
@@ -25,6 +28,8 @@ function toScore(row: ScoreRow): MatchScore {
     matchNo: row.match_no,
     scoreA: row.score_a,
     scoreB: row.score_b,
+    court: row.court ?? undefined,
+    startedAt: row.started_at ?? undefined,
     finishedAt: row.finished_at ?? undefined,
   };
 }
@@ -32,14 +37,37 @@ function toScore(row: ScoreRow): MatchScore {
 export async function fetchTennisScores(eventId: string): Promise<MatchScore[]> {
   const { data, error } = await supabase
     .from("tennis_scores")
-    .select("event_id, match_no, score_a, score_b, finished_at")
+    .select("event_id, match_no, score_a, score_b, court, started_at, finished_at")
     .eq("event_id", eventId)
     .order("match_no", { ascending: true });
   if (error) throw error;
   return (data as ScoreRow[] | null)?.map(toScore) ?? [];
 }
 
-// finished_at은 payload에 넣지 않는다 → 처음 저장할 때만 기본값(now)이 들어가고, 점수를 고쳐도 유지된다
+// "지금 시작": 코트와 시작 시각만 기록한다 (점수는 아직 0:0, finished_at 없음 = 진행 중)
+export async function startTennisMatch(
+  eventId: string,
+  matchNo: number,
+  court: Court,
+  startedAt: string,
+): Promise<void> {
+  const { error } = await supabase.from("tennis_scores").upsert(
+    {
+      event_id: eventId,
+      match_no: matchNo,
+      score_a: 0,
+      score_b: 0,
+      court,
+      started_at: startedAt,
+      finished_at: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "event_id,match_no" },
+  );
+  if (error) throw error;
+}
+
+// 점수 저장(완료). court·startedAt·finishedAt은 클라이언트가 기존 값을 이어서 넘긴다
 export async function saveTennisScore(
   eventId: string,
   score: MatchScore,
@@ -50,6 +78,9 @@ export async function saveTennisScore(
       match_no: score.matchNo,
       score_a: score.scoreA,
       score_b: score.scoreB,
+      court: score.court ?? null,
+      started_at: score.startedAt ?? null,
+      finished_at: score.finishedAt ?? new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "event_id,match_no" },

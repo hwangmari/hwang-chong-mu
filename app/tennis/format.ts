@@ -24,8 +24,12 @@ export function roundTime(startTime: string, minutesPerMatch: number, roundIndex
   return `${toClock(start)} — ${toClock(start + minutesPerMatch)}`;
 }
 
-export function endTime(event: Pick<TennisEvent, "startTime" | "minutesPerMatch" | "rounds">) {
-  return toClock(toMinutes(event.startTime) + event.rounds.length * event.minutesPerMatch);
+// 예상 종료: 시작 + ceil(경기 수 / 코트 수) × 경기 시간
+export function endTime(
+  event: Pick<TennisEvent, "startTime" | "minutesPerMatch" | "matches" | "courts">,
+) {
+  const waves = Math.ceil(event.matches.length / Math.max(1, event.courts));
+  return toClock(toMinutes(event.startTime) + waves * event.minutesPerMatch);
 }
 
 // "2026-09-19" → "2026. 09. 19 (토)"

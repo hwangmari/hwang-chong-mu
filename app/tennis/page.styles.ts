@@ -186,17 +186,200 @@ export const StMatchGrid = styled.div`
   }
 `;
 
-/* 경기 카드 */
-export const StMatch = styled.article<{ $color: string; $done: boolean }>`
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-left: 4px solid ${({ $color }) => $color};
+/* 경기 카드 — 상태별로 확실히 다르게: 완료(회색·흐림) / 진행 중(초록) / 시작 가능(파랑) / 대기(흰색) */
+export type MatchCardState = "done" | "playing" | "ready" | "waiting";
+
+export const StMatch = styled.article<{ $color: string; $state: MatchCardState }>`
+  border: 1px solid
+    ${({ $state, theme }) =>
+      $state === "playing"
+        ? theme.colors.teal500
+        : $state === "ready"
+          ? theme.colors.blue500
+          : theme.colors.gray100};
+  border-left: 5px solid
+    ${({ $state, $color, theme }) =>
+      $state === "playing" ? theme.colors.teal600 : $state === "ready" ? theme.colors.blue600 : $color};
   border-radius: 0.9rem;
   padding: 0.8rem 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  background: ${({ $done, theme }) => ($done ? theme.colors.gray50 : theme.colors.white)};
+  background: ${({ $state, theme }) =>
+    $state === "done"
+      ? theme.colors.gray50
+      : $state === "playing"
+        ? theme.colors.teal50
+        : $state === "ready"
+          ? theme.colors.blue50
+          : theme.colors.white};
+  opacity: ${({ $state }) => ($state === "done" ? 0.75 : 1)};
+  box-shadow: ${({ $state }) =>
+    $state === "playing" ? "0 0 0 3px rgba(20, 184, 166, 0.18)" : "none"};
 `;
+
+export const StStateBadge = styled.span<{ $state: MatchCardState }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: ${({ theme }) => theme.colors.white};
+  background: ${({ $state, theme }) =>
+    $state === "playing"
+      ? theme.colors.teal600
+      : $state === "ready"
+        ? theme.colors.blue600
+        : $state === "done"
+          ? theme.colors.gray400
+          : theme.colors.gray300};
+`;
+
+export const StFinalScore = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+export const StOrderNo = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.8rem;
+  font-weight: 900;
+`;
+
+export const StCourtPick = styled.button<{ $primary?: boolean }>`
+  min-height: 2.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.blue600};
+  background: ${({ $primary, theme }) => ($primary ? theme.colors.blue600 : theme.colors.white)};
+  color: ${({ $primary, theme }) => ($primary ? theme.colors.white : theme.colors.blue600)};
+  font-size: 0.85rem;
+  font-weight: 900;
+  padding: 0 0.9rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+`;
+
+export const StReorderBtn = styled.button`
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.white};
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray700};
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+`;
+
+/* 코트 보드: 코트마다 "지금 → 다음 → 그다음"을 크게 */
+export const StCourtBoard = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const StCourtCard = styled.div<{ $live: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 2px solid ${({ $live, theme }) => ($live ? theme.colors.teal500 : theme.colors.gray200)};
+  background: ${({ $live, theme }) => ($live ? theme.colors.teal50 : theme.colors.white)};
+`;
+
+export const StCourtHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+export const StCourtTitle = styled.span`
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+export const StCourtSlot = styled.div<{ $kind: "now" | "next" | "later" }>`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.7rem;
+  background: ${({ $kind, theme }) =>
+    $kind === "now" ? theme.colors.white : "transparent"};
+  border: 1px dashed
+    ${({ $kind, theme }) => ($kind === "now" ? theme.colors.teal500 : theme.colors.gray200)};
+  opacity: ${({ $kind }) => ($kind === "later" ? 0.7 : 1)};
+`;
+
+export const StCourtSlotLabel = styled.span<{ $kind: "now" | "next" | "later" }>`
+  font-size: 0.7rem;
+  font-weight: 900;
+  white-space: nowrap;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.white};
+  background: ${({ $kind, theme }) =>
+    $kind === "now" ? theme.colors.teal600 : $kind === "next" ? theme.colors.blue600 : theme.colors.gray400};
+`;
+
+export const StCourtSlotMain = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+
+  b {
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: ${({ theme }) => theme.colors.gray900};
+  }
+
+  em {
+    font-style: normal;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.gray500};
+  }
+`;
+
+export const StQueueList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
 
 export const StMatchMeta = styled.div`
   display: flex;

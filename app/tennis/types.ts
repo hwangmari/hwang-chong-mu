@@ -18,13 +18,17 @@ export type Round = {
   time: string; // 예) "10:00 — 10:45"
 };
 
+export type Court = "A" | "B";
+
+// 경기. 배열 순서가 곧 진행 순서다. no는 점수와 연결되는 고정 번호라 순서를 바꿔도 변하지 않는다.
+// round/court는 "처음 계획"일 뿐(PDF 대진표 등). 실제 코트는 비는 코트에 순서대로 들어간다.
 export type Match = {
-  no: number; // M01 → 1
-  round: number;
-  court: "A" | "B";
+  no: number;
   type: MatchType;
   teamA: [string, string]; // 선수 이름 2명
   teamB: [string, string];
+  round?: number;
+  court?: Court;
 };
 
 export type TennisEvent = {
@@ -49,7 +53,7 @@ export type EventDraft = {
   startTime: string;
   place: string;
   courts: number;
-  rounds: number;
+  totalMatches: number; // 총 경기 수 (라운드는 내부에서 ceil(총 경기 / 코트)로 계산)
   minutesPerMatch: number;
   afterNote: string;
   players: Player[];
@@ -58,13 +62,22 @@ export type EventDraft = {
   mixedMatches: number;
 };
 
-// 한 경기의 게임 스코어. 예) 6:4 → scoreA 6, scoreB 4
+// 한 경기의 진행 기록. "지금 시작"을 누르면 startedAt·court만 있는 상태(진행 중),
+// 점수를 저장하면 finishedAt이 붙는다(완료). 예) 6:4 → scoreA 6, scoreB 4
 export type MatchScore = {
   matchNo: number;
   scoreA: number;
   scoreB: number;
-  finishedAt?: string; // 처음 점수를 저장한 시각(ISO). 경기 끝난 시각으로 쓴다
+  court?: Court; // 실제로 뛴 코트
+  startedAt?: string; // ISO
+  finishedAt?: string; // ISO. 처음 점수를 저장한 시각. 점수를 고쳐도 유지
 };
+
+// 완료된 기록인지. (옛 기록엔 startedAt/finishedAt이 없을 수 있어 그런 건 완료로 본다)
+export function isFinished(score: MatchScore | undefined | null): boolean {
+  if (!score) return false;
+  return Boolean(score.finishedAt) || !score.startedAt;
+}
 
 export type ScoreMap = Record<number, MatchScore>;
 
@@ -121,7 +134,7 @@ export type PlayerStanding = {
 // 선수 한 명의 경기 일정 한 줄 (선수 탭용)
 export type PlayerMatchView = {
   match: Match;
-  round: Round;
+  position: number; // 전체 순서에서 몇 번째 경기인지 (1부터)
   partner: string;
   opponents: [string, string];
   side: "A" | "B";

@@ -2,21 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import BracketEditor from "../components/BracketEditor";
+import MatchQueue from "../components/MatchQueue";
 import PlayerRoster from "../components/PlayerRoster";
 import PlayerSchedule from "../components/PlayerSchedule";
-import RoundList from "../components/RoundList";
 import StandingsTable from "../components/StandingsTable";
 import { findBuiltInEvent } from "../data";
-import { formatEventDate, roundLabel } from "../format";
+import { formatEventDate } from "../format";
 import { buildStandings, countFinished } from "../standings";
 import { buildTimeline, nowMinutesIfEventDay } from "../timeline";
 import {
+  createTennisEvent,
   deleteTennisScore,
   fetchTennisEvent,
   fetchTennisScores,
   saveTennisScore,
+  startTennisMatch,
   updateTennisBracket,
 } from "@/services/tennis";
 import {
@@ -40,13 +42,14 @@ import {
   StTabRow,
   StTitle,
 } from "../page.styles";
-import type { Match, MatchScore, Player, ScoreMap, TennisEvent } from "../types";
+import type { Court, Match, MatchScore, Player, ScoreMap, TennisEvent } from "../types";
 
 type Tab = "bracket" | "standings" | "players";
 // cloud: Supabase에 저장(모두가 공유) / local: 이 브라우저에만 저장(표가 아직 없을 때 대비)
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
+const MY_EVENTS_KEY = "hcm:tennis:my-events";
 
 function toMap(list: MatchScore[]): ScoreMap {
   const map: ScoreMap = {};
@@ -74,8 +77,21 @@ function saveLocal(eventId: string, map: ScoreMap) {
   window.localStorage.setItem(localKey(eventId), JSON.stringify(Object.values(map)));
 }
 
+function rememberMyEvent(item: { id: string; title: string; date: string }) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(MY_EVENTS_KEY);
+    const list = raw ? (JSON.parse(raw) as { id: string; title: string; date: string }[]) : [];
+    const next = [item, ...list.filter((e) => e.id !== item.id)].slice(0, 20);
+    window.localStorage.setItem(MY_EVENTS_KEY, JSON.stringify(next));
+  } catch {
+    // 저장 못 해도 화면 동작엔 지장 없음
+  }
+}
+
 export default function TennisEventPage() {
   const params = useParams();
+  const router = useRouter();
   const eventId = String(params.id ?? "");
 
   const [event, setEvent] = useState<TennisEvent | null>(null);
@@ -90,11 +106,10 @@ export default function TennisEventPage() {
   const [error, setError] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
 
-  // 대진표 수정 모드 (화면에서 만든 교류전만)
+  // 대진표(선수 교체) 수정 모드 — 화면에서 만든 교류전만
   const [editing, setEditing] = useState(false);
   const [draftMatches, setDraftMatches] = useState<Match[]>([]);
   const [copied, setCopied] = useState(false);
-  // 선수단 카드 펼침 (위쪽 "선수" 상자를 누르면)
   const [showRoster, setShowRoster] = useState(false);
 
   // 1) 교류전 불러오기: 코드에 든 것이면 바로, 아니면 DB에서
@@ -116,9 +131,7 @@ export default function TennisEventPage() {
       .catch((e: unknown) => {
         if (cancelled) return;
         setEventError(
-          e instanceof Error
-            ? `교류전을 불러오지 못했어요. (${e.message})`
-            : "교류전을 불러오지 못했어요.",
+          e instanceof Error ? `교류전을 불러오지 못했어요. (${e.message})` : "교류전을 불러오지 못했어요.",
         );
       })
       .finally(() => {
@@ -129,7 +142,7 @@ export default function TennisEventPage() {
     };
   }, [eventId]);
 
-  // 2) 점수 불러오기: 클라우드 → 실패하면 이 브라우저 저장으로
+  // 2) 진행 기록 불러오기: 클라우드 → 실패하면 이 브라우저 저장으로
   const reload = useCallback(
     async (quiet = false) => {
       if (!quiet) setLoading(true);
@@ -174,13 +187,10 @@ export default function TennisEventPage() {
     () => new Map((event?.players ?? []).map((player) => [player.name, player])),
     [event],
   );
-  const standings = useMemo(
-    () => (event ? buildStandings(event, scores) : []),
-    [event, scores],
-  );
+  const standings = useMemo(() => (event ? buildStandings(event, scores) : []), [event, scores]);
   const finished = event ? countFinished(event, scores) : 0;
 
-  // 행사 당일이면 현재 시각을 30초마다 갱신해 "진행 중/예상 시각"을 다시 계산한다
+  // 행사 당일이면 현재 시각을 30초마다 갱신해 "진행 중/시작 가능/예상 시각"을 다시 계산한다
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     if (!event) return;
@@ -192,43 +202,55 @@ export default function TennisEventPage() {
       window.clearTimeout(first);
     };
   }, [event]);
-  const timeline = useMemo(
-    () => (event ? buildTimeline(event, scores, now) : null),
-    [event, scores, now],
-  );
+  const timeline = useMemo(() => (event ? buildTimeline(event, scores, now) : null), [event, scores, now]);
 
-  async function saveScore(matchNo: number, scoreA: number, scoreB: number) {
-    // 처음 저장할 때의 시각을 "경기 끝난 시각"으로 남긴다. 점수를 고쳐도 그대로
-    const finishedAt = scores[matchNo]?.finishedAt ?? new Date().toISOString();
-    const score: MatchScore = { matchNo, scoreA, scoreB, finishedAt };
-    const next = { ...scores, [matchNo]: score };
+  async function persist(next: ScoreMap, action: () => Promise<void>, failMessage: string) {
     setBusy(true);
     setError("");
     try {
-      if (mode === "cloud") await saveTennisScore(eventId, score);
+      if (mode === "cloud") await action();
       else saveLocal(eventId, next);
       setScores(next);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 눌러 주세요.");
+      setError(e instanceof Error ? e.message : failMessage);
     } finally {
       setBusy(false);
     }
   }
 
+  // "지금 시작": 코트와 시작 시각만 기록 (진행 중)
+  async function startMatch(matchNo: number, court: Court) {
+    const startedAt = new Date().toISOString();
+    const score: MatchScore = { matchNo, scoreA: 0, scoreB: 0, court, startedAt };
+    await persist(
+      { ...scores, [matchNo]: score },
+      () => startTennisMatch(eventId, matchNo, court, startedAt),
+      "시작 기록을 저장하지 못했어요.",
+    );
+  }
+
+  // 점수 저장(완료). 처음 저장한 시각을 "경기 끝난 시각"으로 남기고, 고쳐도 유지
+  async function saveScore(matchNo: number, scoreA: number, scoreB: number) {
+    const prev = scores[matchNo];
+    const score: MatchScore = {
+      matchNo,
+      scoreA,
+      scoreB,
+      court: prev?.court,
+      startedAt: prev?.startedAt,
+      finishedAt: prev?.finishedAt ?? new Date().toISOString(),
+    };
+    await persist(
+      { ...scores, [matchNo]: score },
+      () => saveTennisScore(eventId, score),
+      "저장하지 못했어요. 다시 눌러 주세요.",
+    );
+  }
+
   async function clearScore(matchNo: number) {
     const next = { ...scores };
     delete next[matchNo];
-    setBusy(true);
-    setError("");
-    try {
-      if (mode === "cloud") await deleteTennisScore(eventId, matchNo);
-      else saveLocal(eventId, next);
-      setScores(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "지우지 못했어요. 다시 눌러 주세요.");
-    } finally {
-      setBusy(false);
-    }
+    await persist(next, () => deleteTennisScore(eventId, matchNo), "지우지 못했어요. 다시 눌러 주세요.");
   }
 
   function pickPlayer(name: string) {
@@ -236,46 +258,68 @@ export default function TennisEventPage() {
     setTab("players");
   }
 
-  function startEdit() {
-    if (!event) return;
-    setDraftMatches(event.matches);
-    setEditing(true);
-  }
-
-  async function saveBracket() {
+  async function saveBracketParts(parts: Partial<Pick<TennisEvent, "players" | "matches">>) {
     if (!event) return;
     setBusy(true);
     setError("");
     try {
-      const rounds = event.rounds.map((r) => ({
-        ...r,
-        label: roundLabel(draftMatches.filter((m) => m.round === r.no).map((m) => m.type)),
-      }));
       const updated = await updateTennisBracket(event.id, {
-        players: event.players,
-        rounds,
-        matches: draftMatches,
+        players: parts.players ?? event.players,
+        rounds: event.rounds,
+        matches: parts.matches ?? event.matches,
       });
       setEvent(updated);
-      setEditing(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "대진표를 저장하지 못했어요.");
     } finally {
       setBusy(false);
     }
   }
 
+  async function saveBracket() {
+    try {
+      await saveBracketParts({ matches: draftMatches });
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "대진표를 저장하지 못했어요.");
+    }
+  }
+
+  async function saveOrder(matches: Match[]) {
+    try {
+      await saveBracketParts({ matches });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "순서를 저장하지 못했어요.");
+      throw e;
+    }
+  }
+
   async function saveRoster(nextPlayers: Player[], nextMatches: Match[]) {
+    await saveBracketParts({ players: nextPlayers, matches: nextMatches });
+  }
+
+  // 코드에 든 교류전을 편집 가능한 사본으로 복사 (순서 바꾸기·선수 교체가 필요할 때)
+  async function copyAsEditable() {
     if (!event) return;
     setBusy(true);
     setError("");
     try {
-      const updated = await updateTennisBracket(event.id, {
-        players: nextPlayers,
+      const created = await createTennisEvent({
+        title: event.title,
+        date: event.date,
+        startTime: event.startTime,
+        place: event.place,
+        courts: event.courts,
+        minutesPerMatch: event.minutesPerMatch,
+        afterNote: event.afterNote,
+        players: event.players,
         rounds: event.rounds,
-        matches: nextMatches,
+        matches: event.matches,
       });
-      setEvent(updated);
+      rememberMyEvent({ id: created.id, title: created.title, date: created.date });
+      router.push(`/tennis/${created.id}`);
+    } catch (e) {
+      setError(
+        `복사하지 못했어요. tennis_events 표가 아직 없다면 supabase/20260902_create_tennis_events.sql을 실행해 주세요.${e instanceof Error ? ` (${e.message})` : ""}`,
+      );
     } finally {
       setBusy(false);
     }
@@ -301,7 +345,7 @@ export default function TennisEventPage() {
     );
   }
 
-  if (!event) {
+  if (!event || !timeline) {
     return (
       <StPage>
         <StHeader>
@@ -319,6 +363,7 @@ export default function TennisEventPage() {
 
   const men = event.players.filter((p) => p.gender === "M").length;
   const women = event.players.length - men;
+  const editable = !event.builtIn;
 
   return (
     <StPage>
@@ -326,34 +371,50 @@ export default function TennisEventPage() {
         <StTitle>🎾 {event.title}</StTitle>
         <StSubtitle>
           {formatEventDate(event)}
-          {event.place ? ` · ${event.place}` : ""} · 코트 {event.courts}면 · 경기당{" "}
-          {event.minutesPerMatch}분
+          {event.place ? ` · ${event.place}` : ""} · 코트 {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
         <StActions>
           <StGhostBtn type="button" onClick={copyLink}>
             {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
           </StGhostBtn>
-          {!event.builtIn && !editing ? (
-            <StGhostBtn type="button" onClick={startEdit}>
-              ✏️ 대진표 수정
+          {editable && !editing ? (
+            <StGhostBtn
+              type="button"
+              onClick={() => {
+                setDraftMatches(event.matches);
+                setEditing(true);
+              }}
+            >
+              ✏️ 선수 교체
+            </StGhostBtn>
+          ) : null}
+          {!editable ? (
+            <StGhostBtn type="button" onClick={copyAsEditable} disabled={busy}>
+              📄 편집 가능한 사본 만들기
             </StGhostBtn>
           ) : null}
           <StGhostBtn as={Link} href="/tennis">
             목록
           </StGhostBtn>
         </StActions>
+        {!editable ? (
+          <StCardHint>
+            이 교류전은 코드에 들어 있는 대진표라 순서·선수를 바꿀 수 없어요. 당일 순서를 조정하려면
+            &ldquo;편집 가능한 사본 만들기&rdquo;로 복사해서 그 링크를 쓰세요.
+          </StCardHint>
+        ) : null}
       </StHeader>
 
       <StStatGrid>
         <StStatBox>
-          <StStatValue>{event.rounds.length}</StStatValue>
-          <StStatLabel>라운드</StStatLabel>
+          <StStatValue>{event.matches.length}</StStatValue>
+          <StStatLabel>총 경기 · 코트 {event.courts}면</StStatLabel>
         </StStatBox>
         <StStatBox>
           <StStatValue>
             {finished}/{event.matches.length}
           </StStatValue>
-          <StStatLabel>점수 들어간 경기</StStatLabel>
+          <StStatLabel>끝난 경기</StStatLabel>
         </StStatBox>
         <StStatButton onClick={() => setShowRoster((v) => !v)} aria-expanded={showRoster}>
           <StStatValue>{event.players.length}</StStatValue>
@@ -365,10 +426,10 @@ export default function TennisEventPage() {
 
       {showRoster ? (
         <PlayerRoster
-          key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}`).join("|")}
+          key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}:${p.team ?? ""}`).join("|")}
           players={event.players}
           matches={event.matches}
-          editable={!event.builtIn}
+          editable={editable}
           busy={busy}
           onSave={saveRoster}
           onClose={() => setShowRoster(false)}
@@ -377,7 +438,7 @@ export default function TennisEventPage() {
 
       {mode === "local" ? (
         <StNotice $tone="warn">
-          아직 공용 저장 공간(tennis_scores 표)이 준비되지 않아 점수를 이 기기에만 저장하고
+          아직 공용 저장 공간(tennis_scores 표)이 준비되지 않아 진행 기록을 이 기기에만 저장하고
           있어요. 다른 사람과 같이 쓰려면 supabase/20260902_create_tennis_scores.sql을 실행해
           주세요.
         </StNotice>
@@ -387,16 +448,16 @@ export default function TennisEventPage() {
       {editing ? (
         <StCard>
           <StCardHead>
-            <StCardTitle>✏️ 대진표 수정</StCardTitle>
+            <StCardTitle>✏️ 선수 교체</StCardTitle>
           </StCardHead>
           <StCardHint>
-            선수를 바꾸면 저장 후 모두에게 반영돼요. 이미 넣은 점수는 경기 번호 기준으로 그대로
-            남아요.
+            경기마다 선수를 바꿀 수 있어요. 저장하면 모두에게 반영돼요. 순서를 바꾸는 건 경기 목록의
+            &ldquo;순서 바꾸기&rdquo;에서 해요.
           </StCardHint>
           <BracketEditor
             players={event.players}
-            rounds={event.rounds}
             matches={draftMatches}
+            courts={event.courts}
             onChange={setDraftMatches}
           />
           <StActions>
@@ -412,7 +473,7 @@ export default function TennisEventPage() {
         <>
           <StTabRow>
             <StTab type="button" $active={tab === "bracket"} onClick={() => setTab("bracket")}>
-              대진표 · 점수 입력
+              경기 진행 · 점수
             </StTab>
             <StTab type="button" $active={tab === "standings"} onClick={() => setTab("standings")}>
               승점 순위
@@ -424,17 +485,20 @@ export default function TennisEventPage() {
 
           {loading ? (
             <StCard>
-              <StCardHint>점수를 불러오는 중...</StCardHint>
+              <StCardHint>진행 기록을 불러오는 중...</StCardHint>
             </StCard>
           ) : tab === "bracket" ? (
-            <RoundList
+            <MatchQueue
               event={event}
               players={players}
               scores={scores}
-              timeline={timeline!}
+              timeline={timeline}
               busy={busy}
+              canReorder={editable}
+              onStart={startMatch}
               onSave={saveScore}
               onClear={clearScore}
+              onReorder={saveOrder}
             />
           ) : tab === "standings" ? (
             <StandingsTable
@@ -447,7 +511,7 @@ export default function TennisEventPage() {
             <PlayerSchedule
               event={event}
               scores={scores}
-              timeline={timeline!}
+              timeline={timeline}
               selected={selectedPlayer}
               onSelect={setSelectedPlayer}
             />

@@ -1,15 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { matchLabel } from "../data";
 import { validateBracket } from "../generate";
 import {
   StEditMatch,
   StEditMeta,
   StEditTeam,
-  StRoundHead,
-  StRoundTime,
-  StRoundTitle,
   StSelect,
   StVs,
   StWarnList,
@@ -20,13 +16,12 @@ import {
   type Gender,
   type Match,
   type Player,
-  type Round,
 } from "../types";
 
 type Props = {
   players: Player[];
-  rounds: Round[];
-  matches: Match[];
+  matches: Match[]; // 배열 순서 = 진행 순서
+  courts: number;
   onChange: (matches: Match[]) => void;
 };
 
@@ -37,10 +32,10 @@ function slotGender(type: Match["type"], index: 0 | 1): Gender {
   return index === 0 ? "M" : "F";
 }
 
-export default function BracketEditor({ players, rounds, matches, onChange }: Props) {
+export default function BracketEditor({ players, matches, courts, onChange }: Props) {
   const warnings = useMemo(
-    () => validateBracket(players, matches, rounds.length),
-    [players, matches, rounds.length],
+    () => validateBracket(players, matches, courts),
+    [players, matches, courts],
   );
 
   function setPlayer(matchNo: number, side: "A" | "B", index: 0 | 1, name: string) {
@@ -54,13 +49,13 @@ export default function BracketEditor({ players, rounds, matches, onChange }: Pr
     );
   }
 
-  function renderSelect(m: Match, side: "A" | "B", index: 0 | 1) {
+  function renderSelect(m: Match, side: "A" | "B", index: 0 | 1, position: number) {
     const gender = slotGender(m.type, index);
     const value = side === "A" ? m.teamA[index] : m.teamB[index];
     const options = players.filter((p) => p.gender === gender);
     return (
       <StSelect
-        aria-label={`${matchLabel(m.no)} ${side}팀 ${index + 1}번째 선수`}
+        aria-label={`${position}번째 경기 ${side}팀 ${index + 1}번째 선수`}
         value={value}
         onChange={(e) => setPlayer(m.no, side, index, e.target.value)}
       >
@@ -88,34 +83,24 @@ export default function BracketEditor({ players, rounds, matches, onChange }: Pr
         </StWarnList>
       ) : null}
 
-      {rounds.map((round) => (
-        <div key={round.no} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <StRoundHead>
-            <StRoundTitle>
-              R{round.no} · {round.label}
-            </StRoundTitle>
-            <StRoundTime>{round.time}</StRoundTime>
-          </StRoundHead>
-          {matches
-            .filter((m) => m.round === round.no)
-            .map((m) => (
-              <StEditMatch key={m.no} $color={MATCH_TYPE_COLOR[m.type]}>
-                <StEditMeta>
-                  {matchLabel(m.no)} · {m.court}코트 · {MATCH_TYPE_SHORT[m.type]}
-                </StEditMeta>
-                <StEditTeam>
-                  {renderSelect(m, "A", 0)}
-                  {renderSelect(m, "A", 1)}
-                </StEditTeam>
-                <StVs>vs</StVs>
-                <StEditTeam>
-                  {renderSelect(m, "B", 0)}
-                  {renderSelect(m, "B", 1)}
-                </StEditTeam>
-              </StEditMatch>
-            ))}
-        </div>
-      ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {matches.map((m, i) => (
+          <StEditMatch key={m.no} $color={MATCH_TYPE_COLOR[m.type]}>
+            <StEditMeta>
+              {i + 1}번 · {MATCH_TYPE_SHORT[m.type]}
+            </StEditMeta>
+            <StEditTeam>
+              {renderSelect(m, "A", 0, i + 1)}
+              {renderSelect(m, "A", 1, i + 1)}
+            </StEditTeam>
+            <StVs>vs</StVs>
+            <StEditTeam>
+              {renderSelect(m, "B", 0, i + 1)}
+              {renderSelect(m, "B", 1, i + 1)}
+            </StEditTeam>
+          </StEditMatch>
+        ))}
+      </div>
     </>
   );
 }

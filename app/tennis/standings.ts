@@ -1,6 +1,7 @@
 // 점수 → 선수별 순위·개인 일정 집계 (순수 함수)
 import {
   POINTS,
+  isFinished,
   type Match,
   type MatchOutcome,
   type MatchScore,
@@ -49,7 +50,8 @@ export function buildStandings(
   const byName = new Map(rows.map((row) => [row.player.name, row]));
 
   for (const match of event.matches) {
-    const score = scores[match.no];
+    const raw = scores[match.no];
+    const score = raw && isFinished(raw) ? raw : null;
     for (const name of [...match.teamA, ...match.teamB]) {
       const row = byName.get(name);
       if (!row) continue;
@@ -108,31 +110,29 @@ export function buildPlayerSchedule(
   scores: ScoreMap,
   name: string,
 ): PlayerMatchView[] {
-  const roundByNo = new Map(event.rounds.map((round) => [round.no, round]));
   const views: PlayerMatchView[] = [];
 
-  for (const match of event.matches) {
+  event.matches.forEach((match, index) => {
     const side = sideOf(match, name);
-    if (!side) continue;
-    const round = roundByNo.get(match.round);
-    if (!round) continue;
+    if (!side) return;
 
     const mine = side === "A" ? match.teamA : match.teamB;
     const opponents = side === "A" ? match.teamB : match.teamA;
     const partner = mine[0] === name ? mine[1] : mine[0];
-    const score = scores[match.no] ?? null;
+    const raw = scores[match.no];
+    const score = raw && isFinished(raw) ? raw : null;
     const outcome = score
       ? side === "A"
         ? outcomeForA(score)
         : flip(outcomeForA(score))
       : null;
 
-    views.push({ match, round, partner, opponents, side, score, outcome });
-  }
+    views.push({ match, position: index + 1, partner, opponents, side, score, outcome });
+  });
 
-  return views.sort((a, b) => a.match.no - b.match.no);
+  return views;
 }
 
 export function countFinished(event: TennisEvent, scores: ScoreMap) {
-  return event.matches.filter((match) => scores[match.no]).length;
+  return event.matches.filter((match) => isFinished(scores[match.no])).length;
 }

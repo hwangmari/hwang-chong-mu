@@ -46,8 +46,7 @@ function shuffle<T>(list: T[], rand: () => number): T[] {
 }
 
 // 남복/여복/혼복 경기 수 추천: 남녀 1인당 출전 횟수가 가장 비슷해지는 조합
-export function suggestSplit(players: Player[], courts: number, rounds: number): Split {
-  const total = courts * rounds;
+export function suggestSplit(players: Player[], courts: number, total: number): Split {
   const men = players.filter((p) => p.gender === "M").length;
   const women = players.length - men;
 
@@ -97,7 +96,8 @@ function planRoundTypes(
     ...Array<MatchType>(split.womenMatches).fill("women"),
     ...Array<MatchType>(split.mixedMatches).fill("mixed"),
   ];
-  if (pool.length !== courts * rounds) return null;
+  // 총 경기 수가 코트 수로 나누어떨어지지 않으면 마지막 라운드는 경기가 적다
+  if (pool.length > courts * rounds || pool.length <= courts * (rounds - 1)) return null;
 
   const need = (types: MatchType[], gender: Gender) =>
     types.reduce(
@@ -219,13 +219,14 @@ function buildOnce(
       tracker.pairs.add(pairKey(b1.name, b2.name));
       penalty += Math.abs(a1.years + a2.years - (b1.years + b2.years));
 
+      // round/court는 "처음 계획"으로만 남긴다. 실제 진행은 목록 순서 + 빈 코트
       matches.push({
         no,
-        round,
-        court: courtIndex === 0 ? "A" : "B",
         type,
         teamA: [a1.name, a2.name],
         teamB: [b1.name, b2.name],
+        round,
+        court: courtIndex === 0 ? "A" : "B",
       });
       no += 1;
     });
@@ -248,11 +249,13 @@ function buildOnce(
 
 // 연속 휴식 위반 수. 마지막 경기 뒤로 쉬는 건 세지 않는다 (PDF 대진표의 검증 기준과 동일)
 function countRestViolations(players: Player[], matches: Match[], rounds: number): number {
+  const courts = Math.max(1, Math.ceil(matches.length / Math.max(1, rounds)));
   let count = 0;
   for (const p of players) {
     const playedRounds = matches
-      .filter((m) => m.teamA.includes(p.name) || m.teamB.includes(p.name))
-      .map((m) => m.round);
+      .map((m, i) => ({ m, round: Math.floor(i / courts) + 1 }))
+      .filter(({ m }) => m.teamA.includes(p.name) || m.teamB.includes(p.name))
+      .map(({ round }) => round);
     if (playedRounds.length === 0) continue;
     const played = new Set(playedRounds);
     const last = Math.max(...playedRounds);
@@ -272,20 +275,22 @@ function countRestViolations(players: Player[], matches: Match[], rounds: number
 }
 
 export function generateBracket(draft: EventDraft, attempts = 400): Generated | { error: string } {
-  const { players, courts, rounds } = draft;
+  const { players, courts, totalMatches } = draft;
   const men = players.filter((p) => p.gender === "M").length;
   const women = players.length - men;
   if (players.length < 4) return { error: "선수가 최소 4명은 있어야 해요." };
-  if (courts < 1 || rounds < 1) return { error: "코트 수와 라운드 수는 1 이상이어야 해요." };
+  if (courts < 1 || totalMatches < 1) return { error: "코트 수와 총 경기 수는 1 이상이어야 해요." };
   if (courts > 2) return { error: "지금은 코트 2면까지만 지원해요." };
+  // 내부적으로는 "동시에 뛰는 묶음(라운드)" 단위로 짜야 같은 사람이 겹치지 않는다
+  const rounds = Math.ceil(totalMatches / courts);
 
   const split: Split = {
     menMatches: draft.menMatches,
     womenMatches: draft.womenMatches,
     mixedMatches: draft.mixedMatches,
   };
-  if (split.menMatches + split.womenMatches + split.mixedMatches !== courts * rounds) {
-    return { error: `남복·여복·혼복 경기 수의 합이 총 경기 수(${courts * rounds})와 같아야 해요.` };
+  if (split.menMatches + split.womenMatches + split.mixedMatches !== totalMatches) {
+    return { error: `남복·여복·혼복 경기 수의 합이 총 경기 수(${totalMatches})와 같아야 해요.` };
   }
 
   let seed = Date.now() % 100000;
@@ -318,26 +323,34 @@ export function generateBracket(draft: EventDraft, attempts = 400): Generated | 
   return {
     matches: best.matches,
     rounds: roundsOut,
-    warnings: validateBracket(players, best.matches, rounds),
+    warnings: validateBracket(players, best.matches, courts),
   };
 }
 
 // 대진표 점검 (자동 생성 결과·손으로 고친 결과 모두 여기로)
-export function validateBracket(players: Player[], matches: Match[], rounds: number): BracketWarning[] {
+export function validateBracket(players: Player[], matches: Match[], courts = 2): BracketWarning[] {
   const warnings: BracketWarning[] = [];
   const byName = new Map(players.map((p) => [p.name, p]));
   const apps = new Map<string, number>();
   const pairs = new Map<string, number>();
 
-  for (let r = 1; r <= rounds; r += 1) {
+  // 순서상 코트 수만큼 연달아 붙은 경기들은 동시에 뛸 수 있으니 같은 사람이 겹치면 안 된다
+  const step = Math.max(1, courts);
+  for (let i = 0; i + 1 < matches.length; i += 1) {
+    const window = matches.slice(i, i + step);
+    if (window.length < 2) continue;
     const seen = new Map<string, number>();
-    for (const m of matches.filter((x) => x.round === r)) {
-      for (const n of [...m.teamA, ...m.teamB]) seen.set(n, (seen.get(n) ?? 0) + 1);
-    }
+    for (const m of window) for (const n of [...m.teamA, ...m.teamB]) seen.set(n, (seen.get(n) ?? 0) + 1);
     for (const [name, count] of seen) {
-      if (count > 1) warnings.push({ level: "error", message: `R${r}에 ${name} 님이 ${count}번 나와요.` });
+      if (count > 1) {
+        warnings.push({
+          level: "warn",
+          message: `${i + 1}~${i + window.length}번째 경기에 ${name} 님이 연달아 있어요. 한 코트가 기다리게 돼요.`,
+        });
+      }
     }
   }
+  const rounds = Math.ceil(matches.length / step);
 
   for (const m of matches) {
     const all = [...m.teamA, ...m.teamB];
