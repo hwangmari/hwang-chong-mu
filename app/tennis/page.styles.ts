@@ -1222,14 +1222,16 @@ export const StTeamPlayers = styled.div`
 export const StGuide = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  font-size: 0.86rem;
-  line-height: 1.6;
+  gap: 0.8rem;
+  font-size: 0.88rem;
+  line-height: 1.75;
   color: ${({ theme }) => theme.colors.gray700};
 
   h4 {
-    margin-top: 0.4rem;
-    font-size: 0.92rem;
+    margin-top: 0.8rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+    font-size: 0.95rem;
     font-weight: 900;
     color: ${({ theme }) => theme.colors.gray900};
   }
@@ -1237,8 +1239,13 @@ export const StGuide = styled.div`
   ul {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.75rem;
     padding-left: 1.1rem;
+  }
+
+  li > table,
+  li > div {
+    margin: 0.4rem 0;
   }
 
   b {
