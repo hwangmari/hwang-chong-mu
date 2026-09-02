@@ -1,5 +1,6 @@
 // 테니스 교류전 도메인 타입.
 // 대진표(선수·라운드·경기)는 data.ts에 코드로 들어 있고, 점수만 저장소(tennis_scores)에 쌓인다.
+import type { RuleSettings } from "./rules";
 
 export type Gender = "M" | "F";
 
@@ -43,7 +44,8 @@ export type TennisEvent = {
   players: Player[];
   rounds: Round[];
   matches: Match[];
-  builtIn?: boolean; // 코드(data.ts)에 들어 있는 이벤트 — 화면에서 수정 불가
+  rules: RuleSettings; // 대진표를 짤 때 적용한 규칙 (배지로 보여준다)
+  builtIn?: boolean; // 코드(data.ts)에 들어 있는 이벤트 (처음 편집하면 저장 공간으로 옮겨 담는다)
 };
 
 // 화면에서 새 교류전을 만들 때 넣는 값 (대진표 자동 생성 입력)
@@ -60,6 +62,7 @@ export type EventDraft = {
   menMatches: number;
   womenMatches: number;
   mixedMatches: number;
+  rules: RuleSettings;
 };
 
 // 한 경기의 진행 기록. "지금 시작"을 누르면 startedAt·court만 있는 상태(진행 중),

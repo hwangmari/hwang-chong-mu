@@ -162,6 +162,12 @@ export const StChip = styled.button<{ $active: boolean; $color: string }>`
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
   cursor: pointer;
+
+  /* 배지(누를 수 없는 칩)는 흐리지 않게, 못 켜는 규칙 칩만 흐리게 */
+  &:disabled {
+    cursor: default;
+    opacity: ${({ $active }) => ($active ? 1 : 0.45)};
+  }
 `;
 
 export const StTag = styled.span<{ $color: string }>`

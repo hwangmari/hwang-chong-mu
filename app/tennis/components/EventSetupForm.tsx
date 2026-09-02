@@ -2,8 +2,17 @@
 
 import { useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
-import { generateBracket, suggestSplit, type Generated } from "../generate";
+import { expectedAppearances, generateBracket, suggestSplit, type Generated } from "../generate";
 import { parsePlayersText } from "../parsePlayers";
+import {
+  DEFAULT_RULES,
+  FIXED_RULES,
+  RULE_INFO,
+  isRuleOn,
+  teamMatchAvailable,
+  type RuleId,
+  type RuleSettings,
+} from "../rules";
 import { formatDate, toClock, toMinutes } from "../format";
 import {
   StActions,
@@ -11,6 +20,8 @@ import {
   StCardHead,
   StCardHint,
   StCardTitle,
+  StChip,
+  StChipRow,
   StFieldName,
   StInput,
   StLabel,
@@ -43,6 +54,7 @@ export default function EventSetupForm({ onCreate }: Props) {
   const [minutesPerMatch, setMinutesPerMatch] = useState(45);
   const [afterNote, setAfterNote] = useState("");
   const [playersText, setPlayersText] = useState("");
+  const [rules, setRules] = useState<RuleSettings>(DEFAULT_RULES);
 
   const [generated, setGenerated] = useState<Generated | null>(null);
   const [error, setError] = useState("");
@@ -59,14 +71,15 @@ export default function EventSetupForm({ onCreate }: Props) {
 
   // 남복/여복/혼복 구성은 인원·코트·라운드로 자동 결정 (사람이 계산하지 않는다)
   const split = useMemo(
-    () => suggestSplit(players, courts, totalMatches),
-    [players, courts, totalMatches],
+    () => suggestSplit(players, courts, totalMatches, rules.teamMatch),
+    [players, courts, totalMatches, rules.teamMatch],
   );
   const splitOk =
     split.menMatches + split.womenMatches + split.mixedMatches === totalMatches;
 
-  const menApps = men ? (4 * split.menMatches + 2 * split.mixedMatches) / men : 0;
-  const womenApps = women ? (4 * split.womenMatches + 2 * split.mixedMatches) / women : 0;
+  const appearanceHint = expectedAppearances(players, split, rules.teamMatch)
+    .map((r) => `${r.label} 1인당 약 ${r.perPlayer.toFixed(1)}회`)
+    .join(", ");
 
   function draft(): EventDraft {
     return {
@@ -80,7 +93,16 @@ export default function EventSetupForm({ onCreate }: Props) {
       afterNote: afterNote.trim(),
       players,
       ...split,
+      rules,
     };
+  }
+
+  function toggleRule(id: RuleId) {
+    setRules((prev) => {
+      if (id === "maxRest") return { ...prev, maxRest: prev.maxRest === null ? 3 : null };
+      return { ...prev, [id]: !prev[id] };
+    });
+    setGenerated(null);
   }
 
   function generate() {
@@ -136,6 +158,7 @@ export default function EventSetupForm({ onCreate }: Props) {
         players,
         rounds: [], // 라운드 고정 없이 순서 목록으로 진행한다
         matches: generated.matches,
+        rules,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "만들지 못했어요. 다시 눌러 주세요.");
@@ -252,11 +275,66 @@ export default function EventSetupForm({ onCreate }: Props) {
         </StNotice>
       ) : null}
 
+      <StLabel as="div">
+        <StFieldName>대진표 규칙 — 누르면 켜고 꺼요</StFieldName>
+        <StChipRow>
+          {FIXED_RULES.map((r) => (
+            <StChip key={r.label} type="button" $active $color="#64748b" title={r.description} disabled>
+              🔒 {r.label}
+            </StChip>
+          ))}
+          {RULE_INFO.map((r) => {
+            const on = isRuleOn(rules, r.id);
+            const team = r.id === "teamMatch" ? teamMatchAvailable(players) : null;
+            const disabled = team ? !team.ok : false;
+            return (
+              <StChip
+                key={r.id}
+                type="button"
+                $active={on && !disabled}
+                $color={r.id === "teamMatch" ? "#c2410c" : "#1f8a54"}
+                title={disabled ? `${r.description} (${team?.reason})` : r.description}
+                disabled={disabled}
+                onClick={() => toggleRule(r.id)}
+              >
+                {on && !disabled ? "✓ " : ""}
+                {r.id === "maxRest" && rules.maxRest !== null ? `연속 휴식 ≤${rules.maxRest}` : r.label}
+              </StChip>
+            );
+          })}
+        </StChipRow>
+        <StCardHint>
+          {rules.maxRest !== null ? (
+            <>
+              연속 휴식 한도:{" "}
+              {[2, 3, 4].map((n) => (
+                <StChip
+                  key={n}
+                  type="button"
+                  $active={rules.maxRest === n}
+                  $color="#1f8a54"
+                  onClick={() => {
+                    setRules((prev) => ({ ...prev, maxRest: n }));
+                    setGenerated(null);
+                  }}
+                  style={{ marginRight: "0.25rem" }}
+                >
+                  {n}묶음
+                </StChip>
+              ))}
+              (한 묶음 = 코트 {courts}면이 동시에 뛰는 시간)
+            </>
+          ) : (
+            "자물쇠 규칙은 항상 지켜요. 나머지는 취향대로 켜고 끄세요. 팀 대항은 선수마다 소속을 적으면 켤 수 있어요."
+          )}
+        </StCardHint>
+      </StLabel>
+
       <StCardHint>
         총 {totalMatches}경기 · 코트 {courts}면이면 {startTime}에 시작해 약{" "}
         {toClock(toMinutes(startTime) + Math.ceil(totalMatches / courts) * minutesPerMatch)}에 끝나요.
         {players.length >= 4 && splitOk
-          ? ` 인원에 맞춰 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 남자는 1인당 약 ${menApps.toFixed(1)}회, 여자는 약 ${womenApps.toFixed(1)}회 출전해요.`
+          ? ` 인원에 맞춰 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 출전은 ${appearanceHint}예요.${rules.teamMatch ? " (팀 대항은 경기마다 두 팀에서 같은 수가 나오니, 인원이 적은 쪽이 더 자주 뛰어요.)" : ""}`
           : players.length >= 4
             ? " 이 인원으로는 경기를 다 채울 수 없어요. 총 경기 수를 줄여 보세요."
             : " 선수 명단을 넣으면 종목 구성을 자동으로 정해 드려요."}
@@ -285,6 +363,7 @@ export default function EventSetupForm({ onCreate }: Props) {
             players={players}
             matches={generated.matches}
             courts={courts}
+            rules={rules}
             onChange={updateMatches}
           />
           <StActions>

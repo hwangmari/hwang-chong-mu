@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { validateBracket } from "../generate";
+import type { RuleSettings } from "../rules";
 import {
   StEditMatch,
   StEditMeta,
@@ -22,6 +23,7 @@ type Props = {
   players: Player[];
   matches: Match[]; // 배열 순서 = 진행 순서
   courts: number;
+  rules: RuleSettings;
   onChange: (matches: Match[]) => void;
 };
 
@@ -32,10 +34,10 @@ function slotGender(type: Match["type"], index: 0 | 1): Gender {
   return index === 0 ? "M" : "F";
 }
 
-export default function BracketEditor({ players, matches, courts, onChange }: Props) {
+export default function BracketEditor({ players, matches, courts, rules, onChange }: Props) {
   const warnings = useMemo(
-    () => validateBracket(players, matches, courts),
-    [players, matches, courts],
+    () => validateBracket(players, matches, courts, rules),
+    [players, matches, courts, rules],
   );
 
   function setPlayer(matchNo: number, side: "A" | "B", index: 0 | 1, name: string) {

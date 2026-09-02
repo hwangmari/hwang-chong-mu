@@ -17,7 +17,8 @@ create table if not exists tennis_events (
   after_note text not null default '',
   players jsonb not null default '[]'::jsonb,   -- [{name, gender, years}]
   rounds jsonb not null default '[]'::jsonb,    -- [{no, label, time}]
-  matches jsonb not null default '[]'::jsonb,   -- [{no, round, court, type, teamA, teamB}]
+  matches jsonb not null default '[]'::jsonb,   -- [{no, type, teamA, teamB, round?, court?}] 배열 순서 = 진행 순서
+  rules jsonb not null default '{}'::jsonb,     -- 대진표 규칙 {balanced, noRepeatPair, maxRest, balancedYears, noBackToBack, teamMatch}
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

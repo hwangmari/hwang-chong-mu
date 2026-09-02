@@ -10,6 +10,7 @@ import PlayerSchedule from "../components/PlayerSchedule";
 import StandingsTable from "../components/StandingsTable";
 import { findBuiltInEvent } from "../data";
 import { formatEventDate } from "../format";
+import { FIXED_RULES, ruleBadges } from "../rules";
 import { buildStandings, countFinished } from "../standings";
 import { buildTimeline, nowMinutesIfEventDay, playedMinutes } from "../timeline";
 import {
@@ -27,6 +28,8 @@ import {
   StCardHead,
   StCardHint,
   StCardTitle,
+  StChip,
+  StChipRow,
   StGhostBtn,
   StHeader,
   StNotice,
@@ -373,6 +376,18 @@ export default function TennisEventPage() {
           {formatEventDate(event)}
           {event.place ? ` · ${event.place}` : ""} · 코트 {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
+        <StChipRow>
+          {FIXED_RULES.map((r) => (
+            <StChip key={r.label} type="button" $active $color="#64748b" title={r.description} disabled>
+              🔒 {r.label}
+            </StChip>
+          ))}
+          {ruleBadges(event.rules).map((label) => (
+            <StChip key={label} type="button" $active $color="#1f8a54" disabled>
+              ✓ {label}
+            </StChip>
+          ))}
+        </StChipRow>
         <StActions>
           <StGhostBtn type="button" onClick={copyLink}>
             {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
@@ -448,6 +463,7 @@ export default function TennisEventPage() {
             players={event.players}
             matches={draftMatches}
             courts={event.courts}
+            rules={event.rules}
             onChange={setDraftMatches}
           />
           <StActions>

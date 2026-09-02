@@ -1,5 +1,6 @@
 // 대진표 데이터. 출처: "한화시스템x한화생명 교류전.pdf" (검증 완료본, 2026-09-19)
 // 새 교류전이 생기면 이 파일에 이벤트를 하나 더 추가하고 EVENTS에 넣는다.
+import { DEFAULT_RULES } from "./rules";
 import type { Match, Player, Round, TennisEvent } from "./types";
 
 // 소속: 한화생명 9명(차종근·이필환·정현일·손종일·이선민·정해인·이준영·황혜경·남희수), 나머지 10명 한화시스템
@@ -69,6 +70,7 @@ export const HANWHA_2026_09: TennisEvent = {
   players: PLAYERS,
   rounds: ROUNDS,
   matches: MATCHES,
+  rules: DEFAULT_RULES, // PDF의 검증 항목: 전원 고른 출전 · 짝 중복 없음 · 연속 휴식 ≤3 · 구력 균형
   builtIn: true,
 };
 

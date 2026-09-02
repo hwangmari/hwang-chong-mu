@@ -2,6 +2,7 @@
 // 방 공유형 서비스(장소잡기 등)처럼 로그인 없이 링크만 있으면 누구나 점수를 넣는다.
 // 표는 anon permissive 정책 — 실제 통제는 "링크를 아는 사람만"이라는 전제.
 import { supabase } from "@/lib/supabase";
+import { normalizeRules } from "@/app/tennis/rules";
 import type {
   Court,
   Match,
@@ -114,6 +115,7 @@ type EventRow = {
   players: Player[];
   rounds: Round[];
   matches: Match[];
+  rules: unknown;
 };
 
 function toEvent(row: EventRow): TennisEvent {
@@ -129,11 +131,12 @@ function toEvent(row: EventRow): TennisEvent {
     players: row.players ?? [],
     rounds: row.rounds ?? [],
     matches: row.matches ?? [],
+    rules: normalizeRules(row.rules),
   };
 }
 
 const EVENT_COLUMNS =
-  "id, title, date, start_time, place, courts, minutes_per_match, after_note, players, rounds, matches";
+  "id, title, date, start_time, place, courts, minutes_per_match, after_note, players, rounds, matches, rules";
 
 export async function fetchTennisEvent(id: string): Promise<TennisEvent | null> {
   const { data, error } = await supabase
@@ -161,6 +164,7 @@ export async function createTennisEvent(input: NewTennisEvent): Promise<TennisEv
       players: input.players,
       rounds: input.rounds,
       matches: input.matches,
+      rules: input.rules,
     })
     .select(EVENT_COLUMNS)
     .single();
@@ -185,6 +189,7 @@ export async function upsertTennisEvent(event: TennisEvent): Promise<TennisEvent
         players: event.players,
         rounds: event.rounds,
         matches: event.matches,
+        rules: event.rules,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" },
