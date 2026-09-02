@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import BracketDiagram from "./BracketDiagram";
+import BracketTree from "./BracketTree";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
@@ -530,8 +530,8 @@ export default function TournamentView({ initialEvent }: Props) {
           <StCardHead>
             <StCardTitle>🧩 토너먼트 그림</StCardTitle>
           </StCardHead>
-          <StCardHint>승자조는 위, 패자조는 아래, 순위결정전은 맨 아래 줄이에요. 오른쪽으로 갈수록 결승에 가까워요.</StCardHint>
-          <BracketDiagram matches={matches} />
+          <StCardHint>앞 경기 두 개 사이에 다음 경기 칸이 있고, 이긴 팀의 길이 선으로 이어져요. 오른쪽으로 갈수록 결승에 가까워요.</StCardHint>
+          <BracketTree matches={matches} />
         </StCard>
       ) : tab === "placements" ? (
         <StCard>
