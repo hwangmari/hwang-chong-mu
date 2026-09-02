@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BracketDiagram from "./BracketDiagram";
-import { demoScores, demoTeams } from "./demo";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
@@ -85,21 +84,13 @@ function saveLocal(id: string, map: ScoreMap) {
 }
 
 export default function TournamentView({ initialEvent }: Props) {
-  const [savedEvent, setEvent] = useState<TournamentEvent>(initialEvent);
-  const eventId = savedEvent.id;
-  // 시연 모드: 팀·결과를 무작위로 채워 끝까지 보여준다 (저장 안 함, 이 화면에서만)
-  const [demo, setDemo] = useState<{ teams: TeamEntry[]; scores: ScoreMap } | null>(null);
-  const event = useMemo(
-    () => (demo ? { ...savedEvent, teams: demo.teams } : savedEvent),
-    [demo, savedEvent],
-  );
+  const [event, setEvent] = useState<TournamentEvent>(initialEvent);
+  const eventId = event.id;
   const [tab, setTab] = useState<Tab>("bracket");
-  const [savedScores, setScores] = useState<ScoreMap>({});
-  const scores = demo ? demo.scores : savedScores;
+  const [scores, setScores] = useState<ScoreMap>({});
   const [mode, setMode] = useState<StorageMode>("cloud");
   const [loading, setLoading] = useState(true);
-  const [busyState, setBusy] = useState(false);
-  const busy = busyState || demo !== null; // 시연 중엔 저장 동작을 막는다
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showTeams, setShowTeams] = useState(false);
@@ -180,6 +171,26 @@ export default function TournamentView({ initialEvent }: Props) {
   }
   const occupied = new Set<Court>(playingByCourt.keys());
   const readyMatches = matches.filter((m) => m.status === "ready");
+  // 다음 준비: 시작 가능한 경기 먼저, 그다음 앞 경기를 기다리는 경기 (순서대로, 최대 4개)
+  const upNext = [
+    ...readyMatches,
+    ...matches.filter((m) => m.status === "waiting"),
+  ].slice(0, 4);
+  const waitingReason = (m: (typeof matches)[number]) => {
+    const parts: string[] = [];
+    if (!m.teamA) parts.push(m.aLabel);
+    if (!m.teamB) parts.push(m.bLabel);
+    if (parts.length === 0) {
+      const busyTeams = [m.teamA, m.teamB].filter((t) => t && playingTeams.has(t.seed)).map((t) => t!.name);
+      return busyTeams.length > 0 ? `${busyTeams.join(", ")} 경기 끝나면` : "";
+    }
+    return `${parts.join(" · ")} 결과 나오면`;
+  };
+  const playingTeams = new Set<number>();
+  for (const m of playingByCourt.values()) {
+    if (m.teamA) playingTeams.add(m.teamA.seed);
+    if (m.teamB) playingTeams.add(m.teamB.seed);
+  }
   // 팀 이름이 기본값("N번 시드 팀")이거나 선수가 비어 있으면 입력을 재촉한다
   const teamsIncomplete = event.teams.some(
     (t) => /^\d+번 시드 팀$/.test(t.name.trim()) || t.players.some((p) => !p.name.trim()),
@@ -311,22 +322,6 @@ export default function TournamentView({ initialEvent }: Props) {
           <StGhostBtn type="button" onClick={() => setShowTeams((v) => !v)}>
             👥 참가 팀 보기·편집
           </StGhostBtn>
-          {demo ? (
-            <StGhostBtn type="button" onClick={() => setDemo(null)}>
-              🧹 시연 지우기
-            </StGhostBtn>
-          ) : (
-            <StGhostBtn
-              type="button"
-              onClick={() => {
-                const teams = demoTeams(savedEvent);
-                setDemo({ teams, scores: demoScores(savedEvent, teams, Date.now() % 100000) });
-                setTab("diagram");
-              }}
-            >
-              🎲 시연으로 끝까지 채워보기
-            </StGhostBtn>
-          )}
         </StActions>
       </StHeader>
 
@@ -347,7 +342,7 @@ export default function TournamentView({ initialEvent }: Props) {
         </StStatButton>
       </StStatGrid>
 
-      {teamsIncomplete && !showTeams && !demo ? (
+      {teamsIncomplete && !showTeams ? (
         <StNotice $tone="info">
           팀 이름과 선수가 아직 비어 있어요. 기본 이름(&ldquo;1번 시드 팀&rdquo;)은 마음대로 바꿀 수 있어요.{" "}
           <StGhostBtn
@@ -380,12 +375,7 @@ export default function TournamentView({ initialEvent }: Props) {
 
       <TournamentGuide event={event} />
 
-      {demo ? (
-        <StNotice $tone="warn">
-          🎲 시연 데이터를 보는 중이에요. 팀과 결과를 무작위로 채운 것이고 저장되지 않아요. 다시 누르면 다른 결과가 나와요.
-          실제 입력을 하려면 &ldquo;시연 지우기&rdquo;를 눌러 주세요.
-        </StNotice>
-      ) : mode === "local" ? (
+      {mode === "local" ? (
         <StNotice $tone="warn">
           아직 공용 저장 공간(tennis_scores 표)이 준비되지 않아 진행 기록을 이 기기에만 저장하고 있어요.
         </StNotice>
@@ -452,6 +442,33 @@ export default function TournamentView({ initialEvent }: Props) {
               );
             })}
           </StCourtBoard>
+          {upNext.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {upNext.map((m, i) => {
+                const kind = i === 0 ? "next" : i === 1 ? "later" : "later";
+                return (
+                  <StCourtSlot key={m.template.no} $kind={m.status === "ready" ? "next" : kind}>
+                    <StCourtSlotLabel $kind={m.status === "ready" ? "next" : "later"}>
+                      {m.status === "ready" ? "준비됨" : "대기"}
+                    </StCourtSlotLabel>
+                    <StCourtSlotMain>
+                      <b>
+                        {m.template.no}번 · {m.template.label} · {m.teamA ? `#${m.teamA.seed} ${m.teamA.name}` : m.aLabel} vs{" "}
+                        {m.teamB ? `#${m.teamB.seed} ${m.teamB.name}` : m.bLabel}
+                      </b>
+                      <em>
+                        {m.status === "ready"
+                          ? occupied.size < courts.length
+                            ? "▶ 빈 코트를 골라 지금 시작할 수 있어요"
+                            : "코트가 비면 시작할 수 있어요"
+                          : waitingReason(m)}
+                      </em>
+                    </StCourtSlotMain>
+                  </StCourtSlot>
+                );
+              })}
+            </div>
+          ) : null}
           <StCardHead>
             <StCardTitle>🗂️ 대진표 · 점수 입력</StCardTitle>
           </StCardHead>

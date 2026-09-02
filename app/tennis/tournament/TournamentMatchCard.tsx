@@ -145,7 +145,7 @@ export default function TournamentMatchCard({
   };
 
   return (
-    <StMatch $color={color} $state={state}>
+    <StMatch $color={color} $state={state} data-match-no={match.template.no} data-state={match.status}>
       <StMatchMeta>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
           <StOrderNo>{match.template.no}</StOrderNo>
