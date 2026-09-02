@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
+import ExchangeGuide from "./ExchangeGuide";
 import MatchQueue from "./MatchQueue";
 import PlayerRoster from "./PlayerRoster";
 import PlayerSchedule from "./PlayerSchedule";
@@ -384,6 +385,8 @@ export default function ExchangeView({ initialEvent }: Props) {
           onClose={() => setShowRoster(false)}
         />
       ) : null}
+
+      <ExchangeGuide event={event} />
 
       {mode === "local" ? (
         <StNotice $tone="warn">
