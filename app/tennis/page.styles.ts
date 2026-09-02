@@ -1224,3 +1224,104 @@ export const StGuide = styled.div`
     font-weight: 800;
   }
 `;
+
+/* === 토너먼트 대진표 그림 === */
+export const StBracketScroll = styled.div`
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+`;
+
+export const StBracketLane = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+`;
+
+export const StBracketLaneTitle = styled.div<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: ${({ $color }) => $color};
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.gray400};
+  }
+`;
+
+export const StBracketColumns = styled.div<{ $cols: number }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $cols }) => $cols}, minmax(13rem, 1fr));
+  gap: 0.6rem;
+  min-width: ${({ $cols }) => $cols * 13.6}rem;
+`;
+
+export const StBracketCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0.5rem;
+`;
+
+export const StBracketColTitle = styled.div`
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray400};
+  text-align: center;
+`;
+
+export const StNode = styled.div<{ $color: string; $state: "done" | "playing" | "ready" | "waiting" | "hidden" }>`
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.6rem;
+  border: 1px solid
+    ${({ $state, theme }) =>
+      $state === "playing" ? theme.colors.teal500 : $state === "ready" ? theme.colors.blue500 : theme.colors.gray200};
+  border-left: 4px solid ${({ $color }) => $color};
+  background: ${({ $state, theme }) =>
+    $state === "done"
+      ? theme.colors.gray50
+      : $state === "playing"
+        ? theme.colors.teal50
+        : $state === "ready"
+          ? theme.colors.blue50
+          : theme.colors.white};
+  opacity: ${({ $state }) => ($state === "hidden" ? 0.45 : 1)};
+`;
+
+export const StNodeHead = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray400};
+`;
+
+export const StNodeTeam = styled.div<{ $winner: boolean; $empty: boolean }>`
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: ${({ $winner }) => ($winner ? 900 : 600)};
+  color: ${({ $empty, $winner, theme }) =>
+    $empty ? theme.colors.gray400 : $winner ? theme.colors.gray900 : theme.colors.gray500};
+
+  span.name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span.score {
+    font-variant-numeric: tabular-nums;
+    font-weight: 900;
+  }
+`;

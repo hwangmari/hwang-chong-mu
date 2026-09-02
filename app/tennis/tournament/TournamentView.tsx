@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import BracketDiagram from "./BracketDiagram";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
@@ -49,7 +50,7 @@ import {
 import type { MatchScore, ScoreMap } from "../types";
 
 type Props = { initialEvent: TournamentEvent };
-type Tab = "bracket" | "placements" | "teams";
+type Tab = "bracket" | "diagram" | "placements" | "teams";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -344,6 +345,9 @@ export default function TournamentView({ initialEvent }: Props) {
         <StTab type="button" $active={tab === "bracket"} onClick={() => setTab("bracket")}>
           대진표 · 점수
         </StTab>
+        <StTab type="button" $active={tab === "diagram"} onClick={() => setTab("diagram")}>
+          토너먼트 그림
+        </StTab>
         <StTab type="button" $active={tab === "placements"} onClick={() => setTab("placements")}>
           최종 순위
         </StTab>
@@ -401,6 +405,14 @@ export default function TournamentView({ initialEvent }: Props) {
             })}
           </StQueueList>
           {event.afterNote ? <StCardHint>🏅 {event.afterNote}</StCardHint> : null}
+        </StCard>
+      ) : tab === "diagram" ? (
+        <StCard>
+          <StCardHead>
+            <StCardTitle>🧩 토너먼트 그림</StCardTitle>
+          </StCardHead>
+          <StCardHint>승자조는 위, 패자조는 아래, 순위결정전은 맨 아래 줄이에요. 오른쪽으로 갈수록 결승에 가까워요.</StCardHint>
+          <BracketDiagram matches={matches} />
         </StCard>
       ) : tab === "placements" ? (
         <StCard>
