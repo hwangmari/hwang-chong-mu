@@ -59,6 +59,7 @@ import {
 } from "../page.styles";
 import { isFinished, type Court, type MatchScore, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
+import { jumpToMatch } from "../jump";
 
 type Props = { initialEvent: TournamentEvent };
 type Tab = "bracket" | "diagram" | "placements" | "teams";
@@ -422,7 +423,7 @@ export default function TournamentView({ initialEvent }: Props) {
                     {m ? <StStateBadge $state="playing">🎾 진행 중</StStateBadge> : <StStateBadge $state="waiting">비어 있음</StStateBadge>}
                   </StCourtHead>
                   {m ? (
-                    <StCourtSlot $kind="now">
+                    <StCourtSlot as="button" type="button" $kind="now" onClick={() => jumpToMatch(m.template.no)} title="이 경기 카드로 이동">
                       <StCourtSlotLabel $kind="now">지금</StCourtSlotLabel>
                       <StCourtSlotMain>
                         <b>
@@ -449,7 +450,14 @@ export default function TournamentView({ initialEvent }: Props) {
               {upNext.map((m, i) => {
                 const kind = i === 0 ? "next" : i === 1 ? "later" : "later";
                 return (
-                  <StCourtSlot key={m.template.no} $kind={m.status === "ready" ? "next" : kind}>
+                  <StCourtSlot
+                    key={m.template.no}
+                    as="button"
+                    type="button"
+                    $kind={m.status === "ready" ? "next" : kind}
+                    onClick={() => jumpToMatch(m.template.no)}
+                    title="이 경기 카드로 이동"
+                  >
                     <StCourtSlotLabel $kind={m.status === "ready" ? "next" : "later"}>
                       {m.status === "ready" ? "준비됨" : "대기"}
                     </StCourtSlotLabel>

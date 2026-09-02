@@ -22,6 +22,12 @@ const shimmer = keyframes`
   100% { background-position: 200% 50%; }
 `;
 
+const flash = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.0); }
+  20% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+`;
+
 export const StPage = styled.div`
   display: flex;
   flex-direction: column;
@@ -242,6 +248,12 @@ export const StMatch = styled.article<{ $color: string; $state: MatchCardState }
           ? theme.colors.blue50
           : theme.colors.white};
   opacity: ${({ $state }) => ($state === "done" ? 0.75 : 1)};
+  scroll-margin-top: 5rem;
+
+  &[data-flash="1"] {
+    animation: ${flash} 1.6s ease-out 1;
+  }
+
   ${({ $state }) =>
     $state === "playing"
       ? css`
@@ -454,6 +466,16 @@ export const StCourtSlot = styled.div<{ $kind: "now" | "next" | "later" }>`
   border: 1px dashed
     ${({ $kind, theme }) => ($kind === "now" ? theme.colors.teal500 : theme.colors.gray200)};
   opacity: ${({ $kind }) => ($kind === "later" ? 0.7 : 1)};
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.blue50};
+    border-color: ${({ theme }) => theme.colors.blue500};
+  }
 `;
 
 export const StCourtSlotLabel = styled.span<{ $kind: "now" | "next" | "later" }>`

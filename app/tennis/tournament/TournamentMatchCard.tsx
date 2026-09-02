@@ -31,6 +31,7 @@ import {
   StVs,
 } from "../page.styles";
 import { playedMinutes } from "../timeline";
+import { matchCardId } from "../jump";
 import type { Court, MatchScore } from "../types";
 import { PAIR_ROTATION, STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
 
@@ -145,7 +146,7 @@ export default function TournamentMatchCard({
   };
 
   return (
-    <StMatch $color={color} $state={state} data-match-no={match.template.no} data-state={match.status}>
+    <StMatch id={matchCardId(match.template.no)} $color={color} $state={state} data-match-no={match.template.no} data-state={match.status}>
       <StMatchMeta>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
           <StOrderNo>{match.template.no}</StOrderNo>

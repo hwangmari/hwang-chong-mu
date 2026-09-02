@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { outcomeForA } from "../standings";
 import { canStartOn, describeTiming, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
+import { matchCardId } from "../jump";
 import { toClock } from "../format";
 import {
   StBall,
@@ -146,7 +147,7 @@ export default function MatchCard({
   const showScoreInputs = state === "playing" || (finished && editingScore);
 
   return (
-    <StMatch $color={color} $state={state}>
+    <StMatch id={matchCardId(match.no)} $color={color} $state={state}>
       <StMatchMeta>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
           <StOrderNo>{timing.position}</StOrderNo>

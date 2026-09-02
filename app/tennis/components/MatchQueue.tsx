@@ -4,6 +4,7 @@ import { useState } from "react";
 import MatchCard from "./MatchCard";
 import { toClock } from "../format";
 import { courtLetters, elapsedOf, type Timeline } from "../timeline";
+import { jumpToMatch } from "../jump";
 import {
   StActions,
   StBall,
@@ -117,7 +118,7 @@ export default function MatchQueue({
                     )}
                   </StCourtHead>
                   {c.playing && playingT ? (
-                    <StCourtSlot $kind="now">
+                    <StCourtSlot as="button" type="button" $kind="now" onClick={() => jumpToMatch(c.playing!.no)} title="이 경기 카드로 이동">
                       <StCourtSlotLabel $kind="now">지금</StCourtSlotLabel>
                       <StCourtSlotMain>
                         <b>
@@ -163,7 +164,7 @@ export default function MatchQueue({
               if (!t) return null;
               const kind = i === 0 ? "next" : "later";
               return (
-                <StCourtSlot key={m.no} $kind={kind}>
+                <StCourtSlot key={m.no} as="button" type="button" $kind={kind} onClick={() => jumpToMatch(m.no)} title="이 경기 카드로 이동">
                   <StCourtSlotLabel $kind={kind}>{i === 0 ? "다음" : i === 1 ? "그다음" : "그 뒤"}</StCourtSlotLabel>
                   <StCourtSlotMain>
                     <b>
