@@ -5,7 +5,7 @@ import BracketTree from "./BracketTree";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
-import { countFinishedTournament, placements, resolveBracket, scheduleBlocks, teamPath, teamPlayerLoad } from "./resolve";
+import { countFinishedTournament, pairBlocks, placements, resolveBracket, scheduleBlocks, teamPath, teamPlayerLoad } from "./resolve";
 import type { TeamEntry, TournamentEvent } from "./types";
 import { formatDate } from "../format";
 import {
@@ -585,42 +585,85 @@ export default function TournamentView({ initialEvent }: Props) {
               ))}
               {teamPath(matches, selected).length === 0 ? <StCardHint>아직 정해진 경기가 없어요.</StCardHint> : null}
               <StCardHead>
-                <StCardTitle>🏃 선수별 실제 뛴 게임</StCardTitle>
+                <StCardTitle>🏃 실제로 코트에 선 게임 수</StCardTitle>
               </StCardHead>
               <StCardHint>
-                끝난 경기의 총 게임 수를 페어 교체 규칙(1~4게임 페어A=시드2+4, 5~8 페어B=1+3, 9~12 페어C=1+2)에 대입해 계산해요.
-                진행 중·예정 경기는 아직 안 세요.
+                한 경기 안에서 4게임마다 페어가 바뀌어요. 예) 2:6으로 끝나면 총 8게임이라 1~4게임은 페어A(시드 2·4), 5~8게임은
+                페어B(시드 1·3)가 뛰고, 페어C(시드 1·2)는 안 나와요. 아래는 끝난 경기만 센 거예요.
               </StCardHint>
-              <StTableWrap>
-                <StTable>
-                  <thead>
-                    <tr>
-                      <th className="name">선수</th>
-                      <th>뛴 게임</th>
-                      {teamPath(matches, selected)
-                        .filter((x) => x.outcome !== null)
-                        .map((x) => (
-                          <th key={x.match.template.no}>{x.match.template.no}번</th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teamPlayerLoad(matches, selected).map((row) => (
-                      <tr key={row.seed}>
-                        <td className="name">
-                          <StSeedTag>{row.seed}</StSeedTag> {row.name}
-                        </td>
-                        <td className="points">{row.games}</td>
-                        {row.perMatch.map((pm) => (
-                          <td key={pm.matchNo} className="muted">
-                            {pm.games}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </StTable>
-              </StTableWrap>
+              {(() => {
+                const path = teamPath(matches, selected).filter((x) => x.outcome !== null);
+                const loads = teamPlayerLoad(matches, selected);
+                const teamGames = loads[0]?.teamGames ?? 0;
+                const nameOf = (sd: number) => selected.players.find((p) => p.seed === sd)?.name || `시드 ${sd}`;
+                if (path.length === 0) return <StCardHint>아직 끝난 경기가 없어요.</StCardHint>;
+                return (
+                  <>
+                    <StTableWrap>
+                      <StTable>
+                        <thead>
+                          <tr>
+                            <th className="name">경기</th>
+                            <th>결과</th>
+                            <th>총 게임</th>
+                            <th>1~4게임 · 페어A</th>
+                            <th>5~8게임 · 페어B</th>
+                            <th>9~12게임 · 페어C</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {path.map(({ match, outcome }) => {
+                            const bl = pairBlocks(match.scoreA!, match.scoreB!);
+                            const cell = (n: number, seeds: [number, number]) =>
+                              n > 0 ? `${n}게임 · ${nameOf(seeds[0])}·${nameOf(seeds[1])}` : "-";
+                            return (
+                              <tr key={match.template.no}>
+                                <td className="name">
+                                  {match.template.no}번 {match.template.label}
+                                </td>
+                                <td>
+                                  {outcome === "win" ? "승" : "패"} {match.scoreA}:{match.scoreB}
+                                </td>
+                                <td className="points">{bl.total}</td>
+                                <td className="muted">{cell(bl.a, [2, 4])}</td>
+                                <td className="muted">{cell(bl.b, [1, 3])}</td>
+                                <td className="muted">{cell(bl.c, [1, 2])}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </StTable>
+                    </StTableWrap>
+                    <StCardHint>
+                      팀이 지금까지 치른 게임은 총 {teamGames}게임이에요. 그중 각자 코트에 선 게임 수예요.
+                    </StCardHint>
+                    <StTableWrap>
+                      <StTable>
+                        <thead>
+                          <tr>
+                            <th className="name">선수 (팀 내 시드)</th>
+                            <th>코트에 선 게임</th>
+                            <th>팀 총 게임 중</th>
+                            <th>벤치에서 쉰 게임</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {loads.map((row) => (
+                            <tr key={row.seed}>
+                              <td className="name">
+                                <StSeedTag>{row.seed}</StSeedTag> {row.name}
+                              </td>
+                              <td className="points">{row.games}게임</td>
+                              <td className="muted">{teamGames > 0 ? `${Math.round((row.games / teamGames) * 100)}%` : "-"}</td>
+                              <td className="muted">{Math.max(0, teamGames - row.games)}게임</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </StTable>
+                    </StTableWrap>
+                  </>
+                );
+              })()}
             </StQueueList>
           ) : (
             <StCardHint>위에서 팀을 골라 주세요.</StCardHint>

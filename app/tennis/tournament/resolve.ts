@@ -137,10 +137,18 @@ export function seedGamesForMatch(scoreA: number, scoreB: number): SeedGames {
   return { 1: b + c, 2: a + c, 3: b, 4: a };
 }
 
+// 한 경기에서 페어 블록별로 뛴 게임 수 (A: 1~4, B: 5~8, C: 9~12)
+export function pairBlocks(scoreA: number, scoreB: number): { a: number; b: number; c: number; total: number } {
+  const total = scoreA + scoreB;
+  const clamp = (n: number) => Math.max(0, Math.min(4, n));
+  return { a: clamp(total), b: clamp(total - 4), c: clamp(total - 8), total };
+}
+
 export type PlayerLoad = {
   seed: 1 | 2 | 3 | 4;
   name: string;
   games: number; // 끝난 경기에서 실제 뛴 게임 합
+  teamGames: number; // 팀이 치른 총 게임 (끝난 경기)
   perMatch: { matchNo: number; label: string; games: number }[];
 };
 
@@ -148,6 +156,7 @@ export function teamPlayerLoad(matches: ResolvedMatch[], team: TeamEntry): Playe
   const done = matches.filter(
     (m) => m.status === "done" && m.scoreA !== null && m.scoreB !== null && (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
   );
+  const teamGames = done.reduce((sum, m) => sum + m.scoreA! + m.scoreB!, 0);
   return ([1, 2, 3, 4] as const).map((seed) => {
     const player = team.players.find((p) => p.seed === seed);
     const perMatch = done.map((m) => ({
@@ -159,6 +168,7 @@ export function teamPlayerLoad(matches: ResolvedMatch[], team: TeamEntry): Playe
       seed,
       name: player?.name || `시드 ${seed}`,
       games: perMatch.reduce((sum, x) => sum + x.games, 0),
+      teamGames,
       perMatch,
     };
   });
