@@ -241,11 +241,11 @@ export default function TournamentView({ initialEvent }: Props) {
     await persist(next, () => deleteTennisScore(eventId, matchNo), "지우지 못했어요.");
   }
 
-  async function saveTeams(teams: TeamEntry[]) {
+  async function saveTeams(teams: TeamEntry[], roster: string[]) {
     setBusy(true);
     setError("");
     try {
-      const updated = await upsertTournament({ ...event, teams, builtIn: undefined });
+      const updated = await upsertTournament({ ...event, teams, roster, builtIn: undefined });
       setEvent(updated);
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
@@ -317,8 +317,8 @@ export default function TournamentView({ initialEvent }: Props) {
           <StStatLabel>끝난 경기</StStatLabel>
         </StStatBox>
         <StStatButton onClick={() => setShowTeams((v) => !v)} aria-expanded={showTeams}>
-          <StStatValue>{event.teams.length}</StStatValue>
-          <StStatLabel>팀 × 4명 · {showTeams ? "닫기" : "누르면 명단"}</StStatLabel>
+          <StStatValue>{event.roster.length}</StStatValue>
+          <StStatLabel>참가자 · {event.teams.length}팀 × 4명 · {showTeams ? "닫기" : "누르면 명단"}</StStatLabel>
         </StStatButton>
       </StStatGrid>
 
@@ -339,8 +339,9 @@ export default function TournamentView({ initialEvent }: Props) {
 
       {showTeams ? (
         <TeamEditor
-          key={event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}
+          key={`${event.roster.join(",")}#${event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}`}
           teams={event.teams}
+          roster={event.roster}
           locked={anyStarted}
           busy={busy}
           startEditing={teamsEditOnOpen}

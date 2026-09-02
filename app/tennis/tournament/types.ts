@@ -64,6 +64,7 @@ export type TournamentEvent = {
   gamesToWin: number; // 6
   courts: number; // 4
   teams: TeamEntry[]; // 8팀
+  roster: string[]; // 참가자 명단 (팀 배정 전 풀). 팀 편집에서 여기서 골라 넣는다
   beforeNote: string; // 개회식/몸풀기
   afterNote: string; // 시상식/폐회식
   rules: RuleSettings; // 저장 호환용 (토너먼트에선 쓰지 않음)
