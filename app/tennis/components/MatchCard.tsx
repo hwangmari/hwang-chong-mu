@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import { outcomeForA } from "../standings";
-import { describeTiming, type MatchTiming } from "../timeline";
+import { describeTiming, elapsedOf, type MatchTiming, type Timeline } from "../timeline";
 import {
+  StBall,
   StCourtPick,
+  StElapsed,
+  StElapsedFill,
+  StElapsedTrack,
   StFinalScore,
   StGhostBtn,
+  StLiveBadge,
+  StLiveDot,
   StMatch,
   StMatchMeta,
   StOrderNo,
@@ -42,6 +48,7 @@ type Props = {
   players: Map<string, Player>;
   score: MatchScore | null;
   timing: MatchTiming;
+  timeline: Timeline;
   courts: Court[];
   busy: boolean;
   // 순서 바꾸기 모드일 때만 위/아래 버튼이 보인다
@@ -70,6 +77,7 @@ export default function MatchCard({
   players,
   score,
   timing,
+  timeline,
   courts,
   busy,
   reorder,
@@ -77,6 +85,7 @@ export default function MatchCard({
   onSave,
   onClear,
 }: Props) {
+  const elapsed = elapsedOf(timeline, timing);
   const finished = score !== null && isFinished(score);
   const [a, setA] = useState(finished && score ? String(score.scoreA) : "");
   const [b, setB] = useState(finished && score ? String(score.scoreB) : "");
@@ -155,10 +164,16 @@ export default function MatchCard({
               </StReorderBtn>
             </>
           ) : null}
-          <StStateBadge $state={state}>
-            {state === "playing" ? "🎾 " : state === "ready" ? "▶ " : state === "done" ? "✓ " : "⏳ "}
-            {state === "done" && outcome === "draw" ? "무승부" : STATE_LABEL[state]}
-          </StStateBadge>
+          {state === "playing" ? (
+            <StLiveBadge>
+              <StLiveDot /> LIVE <StBall>🎾</StBall>
+            </StLiveBadge>
+          ) : (
+            <StStateBadge $state={state}>
+              {state === "ready" ? "▶ " : state === "done" ? "✓ " : "⏳ "}
+              {state === "done" && outcome === "draw" ? "무승부" : STATE_LABEL[state]}
+            </StStateBadge>
+          )}
         </span>
       </StMatchMeta>
 
@@ -172,9 +187,25 @@ export default function MatchCard({
 
       <StTeams>
         {renderTeam(match.teamA, "A")}
-        <StVs>vs</StVs>
+        <StVs>{state === "playing" ? "⚡" : "vs"}</StVs>
         {renderTeam(match.teamB, "B")}
       </StTeams>
+
+      {elapsed ? (
+        <>
+          <StElapsed>
+            <span>🔥 경기 중 · {elapsed.minutes}분 경과</span>
+            <span>
+              {elapsed.ratio >= 1
+                ? "예정 시간 지남 · 점수 넣어 주세요"
+                : `남은 예상 ${Math.max(0, timeline.minutesPerMatch - elapsed.minutes)}분`}
+            </span>
+          </StElapsed>
+          <StElapsedTrack>
+            <StElapsedFill $ratio={elapsed.ratio} />
+          </StElapsedTrack>
+        </>
+      ) : null}
 
       {state === "ready" || state === "waiting" ? (
         <StScoreRow>

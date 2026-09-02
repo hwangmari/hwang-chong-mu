@@ -1,4 +1,26 @@
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
+
+/* === 진행 중 경기 연출 === */
+const pulseGlow = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+`;
+
+const blink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+`;
+
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+`;
 
 export const StPage = styled.div`
   display: flex;
@@ -214,8 +236,77 @@ export const StMatch = styled.article<{ $color: string; $state: MatchCardState }
           ? theme.colors.blue50
           : theme.colors.white};
   opacity: ${({ $state }) => ($state === "done" ? 0.75 : 1)};
-  box-shadow: ${({ $state }) =>
-    $state === "playing" ? "0 0 0 3px rgba(20, 184, 166, 0.18)" : "none"};
+  ${({ $state }) =>
+    $state === "playing"
+      ? css`
+          animation: ${pulseGlow} 2.2s ease-out infinite;
+          background-image: linear-gradient(
+            120deg,
+            rgba(20, 184, 166, 0.08) 0%,
+            rgba(20, 184, 166, 0.02) 40%,
+            rgba(20, 184, 166, 0.14) 60%,
+            rgba(20, 184, 166, 0.02) 100%
+          );
+          background-size: 200% 100%;
+        `
+      : ""}
+`;
+
+export const StLiveBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.white};
+  background: linear-gradient(90deg, #0f766e, #14b8a6, #0f766e);
+  background-size: 200% 100%;
+  animation: ${shimmer} 2.4s linear infinite;
+`;
+
+export const StLiveDot = styled.span`
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.25);
+  animation: ${blink} 1.1s ease-in-out infinite;
+`;
+
+export const StBall = styled.span`
+  display: inline-block;
+  animation: ${bounce} 0.9s ease-in-out infinite;
+`;
+
+export const StElapsed = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.teal600};
+`;
+
+export const StElapsedTrack = styled.div`
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(20, 184, 166, 0.15);
+  overflow: hidden;
+`;
+
+export const StElapsedFill = styled.div<{ $ratio: number }>`
+  height: 100%;
+  width: ${({ $ratio }) => Math.round($ratio * 100)}%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #14b8a6, #0ea5e9, #14b8a6);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.8s linear infinite;
+  transition: width 0.6s ease;
 `;
 
 export const StStateBadge = styled.span<{ $state: MatchCardState }>`
@@ -314,6 +405,12 @@ export const StCourtCard = styled.div<{ $live: boolean }>`
   border-radius: 1rem;
   border: 2px solid ${({ $live, theme }) => ($live ? theme.colors.teal500 : theme.colors.gray200)};
   background: ${({ $live, theme }) => ($live ? theme.colors.teal50 : theme.colors.white)};
+  ${({ $live }) =>
+    $live
+      ? css`
+          animation: ${pulseGlow} 2.2s ease-out infinite;
+        `
+      : ""}
 `;
 
 export const StCourtHead = styled.div`

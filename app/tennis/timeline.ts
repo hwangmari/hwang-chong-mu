@@ -33,7 +33,16 @@ export type Timeline = {
   expectedEnd: number; // 마지막 경기 예상 종료(분)
   // 지금 이 선수가 뛰고 있는지 (지금 시작 버튼 활성/비활성에 씀)
   busyPlayers: Set<string>;
+  now: number | null; // 계산에 쓴 현재 시각(분). 행사일이 아니면 null
+  minutesPerMatch: number;
 };
+
+// 진행 중 경기의 경과 분·진행률(0~1). 행사일이 아니면 null
+export function elapsedOf(timeline: Timeline, t: MatchTiming): { minutes: number; ratio: number } | null {
+  if (timeline.now === null || t.status !== "playing") return null;
+  const minutes = Math.max(0, timeline.now - t.expectedStart);
+  return { minutes, ratio: Math.min(1, minutes / Math.max(1, timeline.minutesPerMatch)) };
+}
 
 function isoToMinutes(iso: string): number {
   const d = new Date(iso);
@@ -118,7 +127,7 @@ export function buildTimeline(
 
   const expectedEnd = Math.max(eventStart, ...[...byMatch.values()].map((t) => t.expectedEnd));
 
-  return { byMatch, courts: courtStatus, expectedEnd, busyPlayers };
+  return { byMatch, courts: courtStatus, expectedEnd, busyPlayers, now, minutesPerMatch: dur };
 }
 
 function earliestCourt(courtFree: Map<Court, number>): Court {

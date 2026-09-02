@@ -3,9 +3,10 @@
 import { useState } from "react";
 import MatchCard from "./MatchCard";
 import { toClock } from "../format";
-import { courtLetters, type Timeline } from "../timeline";
+import { courtLetters, elapsedOf, type Timeline } from "../timeline";
 import {
   StActions,
+  StBall,
   StCard,
   StCardHead,
   StCardHint,
@@ -17,7 +18,11 @@ import {
   StCourtSlotLabel,
   StCourtSlotMain,
   StCourtTitle,
+  StElapsedFill,
+  StElapsedTrack,
   StGhostBtn,
+  StLiveBadge,
+  StLiveDot,
   StPrimaryBtn,
   StQueueList,
   StStateBadge,
@@ -107,7 +112,9 @@ export default function MatchQueue({
                   <StCourtHead>
                     <StCourtTitle>코트 {c.court}</StCourtTitle>
                     {c.playing ? (
-                      <StStateBadge $state="playing">🎾 진행 중</StStateBadge>
+                      <StLiveBadge>
+                        <StLiveDot /> LIVE <StBall>🎾</StBall>
+                      </StLiveBadge>
                     ) : (
                       <StStateBadge $state="waiting">비어 있음 · {toClock(c.freeAt)}</StStateBadge>
                     )}
@@ -119,7 +126,21 @@ export default function MatchQueue({
                         <b>
                           {playingT.position}번 · {teamText(c.playing)}
                         </b>
-                        <em>{toClock(playingT.expectedStart)} 시작 · 예상 종료 {toClock(playingT.expectedEnd)}</em>
+                        <em>
+                          {toClock(playingT.expectedStart)} 시작
+                          {(() => {
+                            const e = elapsedOf(timeline, playingT);
+                            return e ? ` · ${e.minutes}분 경과` : ` · 예상 종료 ${toClock(playingT.expectedEnd)}`;
+                          })()}
+                        </em>
+                        {(() => {
+                          const e = elapsedOf(timeline, playingT);
+                          return e ? (
+                            <StElapsedTrack style={{ marginTop: "0.3rem" }}>
+                              <StElapsedFill $ratio={e.ratio} />
+                            </StElapsedTrack>
+                          ) : null;
+                        })()}
                       </StCourtSlotMain>
                     </StCourtSlot>
                   ) : null}
@@ -195,6 +216,7 @@ export default function MatchQueue({
                 players={players}
                 score={scores[match.no] ?? null}
                 timing={reordering ? { ...timing, position: index + 1 } : timing}
+                timeline={timeline}
                 courts={courts}
                 busy={busy}
                 reorder={
