@@ -13,7 +13,7 @@ create table if not exists tennis_events (
   date text not null,            -- YYYY-MM-DD
   start_time text not null,      -- HH:mm
   place text not null default '',
-  courts integer not null default 2 check (courts between 1 and 2),
+  courts integer not null default 2 check (courts between 1 and 4), -- 교류전 1~2면, 토너먼트 4면
   minutes_per_match integer not null default 45 check (minutes_per_match between 10 and 180),
   after_note text not null default '',
   players jsonb not null default '[]'::jsonb,   -- [{name, gender, years}]

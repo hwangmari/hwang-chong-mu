@@ -1195,3 +1195,32 @@ export const StTeamPlayers = styled.div`
   font-size: 0.82rem;
   color: ${({ theme }) => theme.colors.gray700};
 `;
+
+/* 대회 방식 안내 본문 */
+export const StGuide = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: ${({ theme }) => theme.colors.gray700};
+
+  h4 {
+    margin-top: 0.4rem;
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: ${({ theme }) => theme.colors.gray900};
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-left: 1.1rem;
+  }
+
+  b {
+    color: ${({ theme }) => theme.colors.gray900};
+    font-weight: 800;
+  }
+`;

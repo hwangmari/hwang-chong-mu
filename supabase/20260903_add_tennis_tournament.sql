@@ -8,6 +8,19 @@ alter table tennis_events
   add column if not exists teams jsonb not null default '[]'::jsonb,
   add column if not exists config jsonb not null default '{}'::jsonb;
 
+-- 코트 4면 허용 (기존 제약은 자동 생성 이름이라 찾아서 지운다)
+do $$
+declare c record;
+begin
+  for c in
+    select conname from pg_constraint
+    where conrelid = 'tennis_events'::regclass and contype = 'c' and pg_get_constraintdef(oid) like '%courts%'
+  loop
+    execute format('alter table tennis_events drop constraint %I', c.conname);
+  end loop;
+end $$;
+alter table tennis_events add constraint tennis_events_courts_check check (courts between 1 and 4);
+
 alter table tennis_events drop constraint if exists tennis_events_kind_check;
 alter table tennis_events add constraint tennis_events_kind_check check (kind in ('exchange', 'tournament'));
 

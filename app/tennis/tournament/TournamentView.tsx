@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import TeamEditor from "./TeamEditor";
+import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
 import { countFinishedTournament, placements, resolveBracket, scheduleBlocks, teamPath } from "./resolve";
 import type { TeamEntry, TournamentEvent } from "./types";
@@ -304,6 +305,8 @@ export default function TournamentView({ initialEvent }: Props) {
           onClose={() => setShowTeams(false)}
         />
       ) : null}
+
+      <TournamentGuide event={event} />
 
       {mode === "local" ? (
         <StNotice $tone="warn">
