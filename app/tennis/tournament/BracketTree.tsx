@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
-import { DOUBLE_ELIM_8 } from "./template";
 import { StCardHint, StNode, StNodeHead, StNodeTeam } from "../page.styles";
 
 // 진짜 대진표 모양: 앞 경기 두 개 사이에 다음 경기 칸이 오고, 이긴 팀의 경로가 선으로 이어진다
@@ -14,7 +13,7 @@ type Link = { from: number; to: number; kind: "winner" | "loser" };
 const COL_W = 250; // 열 간격
 const ROW_H = 104; // 행 간격
 const NODE_W = 210;
-const NODE_H = 104;
+const NODE_H = 84;
 const PAD = 12;
 
 // 승자조: 1라운드 4 → 4강 2 → 결승 → 그랜드 파이널 → (리셋)
@@ -66,14 +65,6 @@ function pos(l: Layout) {
   return { x: PAD + l.col * COL_W, y: PAD + l.row * ROW_H + 18 };
 }
 
-// 이 경기의 승자/패자가 어디로 가는지 (템플릿에서 역으로 찾는다)
-function destinations(no: number) {
-  const win = DOUBLE_ELIM_8.find((m) => (m.a.kind === "winner" && m.a.of === no) || (m.b.kind === "winner" && m.b.of === no));
-  const lose = DOUBLE_ELIM_8.find((m) => (m.a.kind === "loser" && m.a.of === no) || (m.b.kind === "loser" && m.b.of === no));
-  const text = (m: typeof win) => (m ? { short: `${m.no}번`, full: `${m.no}번 ${m.label}` } : null);
-  return { win: text(win), lose: text(lose) };
-}
-
 const RESULT_BADGE: React.CSSProperties = {
   display: "inline-block",
   minWidth: "1.3rem",
@@ -90,11 +81,7 @@ function teamLine(team: TeamEntry | null, label: string, score: number | null, r
   return (
     <StNodeTeam $winner={result === "win"} $empty={!team}>
       <span className="name">
-        {result ? (
-          <span style={{ ...RESULT_BADGE, background: result === "win" ? "#1f8a54" : "#c0304f" }}>
-            {result === "win" ? "승" : "패"}
-          </span>
-        ) : null}
+        {result === "win" ? <span style={{ ...RESULT_BADGE, background: "#1f8a54" }}>승</span> : null}
         {team ? `#${team.seed} ${team.name}` : label}
       </span>
       <span className="score">{score !== null ? score : ""}</span>
@@ -168,8 +155,7 @@ function Tree({
             const resultA = done ? (winnerA ? "win" : "loss") : null;
             const resultB = done ? (winnerB ? "win" : "loss") : null;
             const drops = DROP_IN[l.no] ?? [];
-            const dest = destinations(l.no);
-            const finalNode = l.no === 16 || l.no === 18;
+
             return (
               <div key={l.no} style={{ position: "absolute", left: p.x, top: p.y - 18, width: NODE_W }}>
                 {drops.length > 0 ? (
@@ -190,26 +176,6 @@ function Tree({
                   </StNodeHead>
                   {teamLine(m.teamA, m.aLabel, m.scoreA, resultA)}
                   {teamLine(m.teamB, m.bLabel, m.scoreB, resultB)}
-                  <div style={{ display: "flex", gap: "0.4rem", fontSize: "0.6rem", fontWeight: 700, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden" }}>
-                    {finalNode ? (
-                      <span>🏆 {l.no === 16 ? "이기면 우승 · 패자조 출신이 이기면 리셋" : "이기면 우승"}</span>
-                    ) : (
-                      <>
-                        {dest.win ? (
-                          <span style={{ color: "#1f8a54" }} title={`이기면 ${dest.win.full}으로`}>
-                            이기면 → {dest.win.short}
-                          </span>
-                        ) : null}
-                        {dest.lose ? (
-                          <span style={{ color: "#c0304f" }} title={`지면 ${dest.lose.full}으로`}>
-                            지면 → {dest.lose.short}
-                          </span>
-                        ) : (
-                          <span style={{ color: "#c0304f" }}>지면 → 탈락</span>
-                        )}
-                      </>
-                    )}
-                  </div>
                 </StNode>
               </div>
             );
