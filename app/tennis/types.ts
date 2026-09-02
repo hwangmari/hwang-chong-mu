@@ -27,9 +27,10 @@ export type Match = {
 };
 
 export type TennisEvent = {
-  id: string; // 저장소 키 (event_id)
+  id: string; // 저장소 키 (event_id). 코드에 든 이벤트는 고정 문자열, 화면에서 만든 건 uuid
   title: string;
-  date: string; // 표시용
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm (첫 라운드 시작)
   place: string;
   minutesPerMatch: number;
   courts: number;
@@ -37,6 +38,23 @@ export type TennisEvent = {
   players: Player[];
   rounds: Round[];
   matches: Match[];
+  builtIn?: boolean; // 코드(data.ts)에 들어 있는 이벤트 — 화면에서 수정 불가
+};
+
+// 화면에서 새 교류전을 만들 때 넣는 값 (대진표 자동 생성 입력)
+export type EventDraft = {
+  title: string;
+  date: string;
+  startTime: string;
+  place: string;
+  courts: number;
+  rounds: number;
+  minutesPerMatch: number;
+  afterNote: string;
+  players: Player[];
+  menMatches: number;
+  womenMatches: number;
+  mixedMatches: number;
 };
 
 // 한 경기의 게임 스코어. 예) 6:4 → scoreA 6, scoreB 4
@@ -44,6 +62,7 @@ export type MatchScore = {
   matchNo: number;
   scoreA: number;
   scoreB: number;
+  finishedAt?: string; // 처음 점수를 저장한 시각(ISO). 경기 끝난 시각으로 쓴다
 };
 
 export type ScoreMap = Record<number, MatchScore>;

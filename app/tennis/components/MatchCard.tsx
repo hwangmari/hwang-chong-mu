@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { matchLabel } from "../data";
 import { outcomeForA } from "../standings";
+import { describeTiming, type MatchTiming } from "../timeline";
 import {
   StGhostBtn,
   StMatch,
@@ -17,6 +18,7 @@ import {
   StTeam,
   StTeamLabel,
   StTeams,
+  StTiming,
   StVs,
   StYears,
 } from "../page.styles";
@@ -34,6 +36,7 @@ type Props = {
   match: Match;
   players: Map<string, Player>;
   score: MatchScore | null;
+  timing?: MatchTiming;
   busy: boolean;
   onSave: (matchNo: number, scoreA: number, scoreB: number) => Promise<void>;
   onClear: (matchNo: number) => Promise<void>;
@@ -50,6 +53,7 @@ export default function MatchCard({
   match,
   players,
   score,
+  timing,
   busy,
   onSave,
   onClear,
@@ -113,10 +117,30 @@ export default function MatchCard({
           <StResultBadge $tone={outcome === "draw" ? "draw" : "win"}>
             {outcome === "draw" ? "무승부" : "경기 완료"}
           </StResultBadge>
+        ) : timing?.status === "playing" ? (
+          <StResultBadge $tone="win">진행 중</StResultBadge>
         ) : (
           <StResultBadge $tone="todo">점수 입력 전</StResultBadge>
         )}
       </StMatchMeta>
+      {timing ? (
+        <StTiming
+          $tone={
+            timing.status === "done"
+              ? "done"
+              : timing.status === "playing"
+                ? "playing"
+                : timing.expectedStart !== timing.plannedStart
+                  ? "shifted"
+                  : "plain"
+          }
+        >
+          ⏱ {describeTiming(timing)}
+          {timing.waitingFor === "players" && timing.waitingPlayers.length > 0
+            ? ` · ${timing.waitingPlayers.join(", ")} 다른 코트 경기 끝나면`
+            : ""}
+        </StTiming>
+      ) : null}
 
       <StTeams>
         {renderTeam(match.teamA, "A")}

@@ -2,6 +2,8 @@
 
 import { matchLabel } from "../data";
 import { buildPlayerSchedule } from "../standings";
+import { toClock } from "../format";
+import type { Timeline } from "../timeline";
 import {
   StCard,
   StCardHead,
@@ -30,13 +32,14 @@ import {
 type Props = {
   event: TennisEvent;
   scores: ScoreMap;
+  timeline: Timeline;
   selected: string | null;
   onSelect: (name: string) => void;
 };
 
 const OUTCOME_LABEL = { win: "승", loss: "패", draw: "무" } as const;
 
-export default function PlayerSchedule({ event, scores, selected, onSelect }: Props) {
+export default function PlayerSchedule({ event, scores, timeline, selected, onSelect }: Props) {
   const schedule = selected ? buildPlayerSchedule(event, scores, selected) : [];
 
   return (
@@ -79,7 +82,17 @@ export default function PlayerSchedule({ event, scores, selected, onSelect }: Pr
             return (
               <StScheduleRow key={view.match.no} $color={MATCH_TYPE_COLOR[view.match.type]}>
                 <StScheduleTime>
-                  <span>R{view.round.no} · {view.round.time.split(" — ")[0]}</span>
+                  <span>
+                    R{view.round.no} ·{" "}
+                    {(() => {
+                      const t = timeline.byMatch.get(view.match.no);
+                      if (!t || t.status === "done") return view.round.time.split(" — ")[0];
+                      if (t.status === "playing") return "진행 중";
+                      return t.expectedStart !== t.plannedStart
+                        ? `예상 ${toClock(t.expectedStart)}`
+                        : view.round.time.split(" — ")[0];
+                    })()}
+                  </span>
                   <span>
                     코트 {view.match.court} · {matchLabel(view.match.no)}
                   </span>

@@ -59,7 +59,8 @@ const MATCHES: Match[] = [
 export const HANWHA_2026_09: TennisEvent = {
   id: "hanwha-2026-09-19",
   title: "한화시스템 × 한화생명 테니스 교류전",
-  date: "2026. 09. 19 (토) 10:00 — 16:00",
+  date: "2026-09-19",
+  startTime: "10:00",
   place: "상천체육문화연수원",
   minutesPerMatch: 45,
   courts: 2,
@@ -67,9 +68,14 @@ export const HANWHA_2026_09: TennisEvent = {
   players: PLAYERS,
   rounds: ROUNDS,
   matches: MATCHES,
+  builtIn: true,
 };
 
 export const EVENTS: TennisEvent[] = [HANWHA_2026_09];
+
+export function findBuiltInEvent(id: string): TennisEvent | null {
+  return EVENTS.find((event) => event.id === id) ?? null;
+}
 
 export function matchLabel(no: number) {
   return `M${String(no).padStart(2, "0")}`;

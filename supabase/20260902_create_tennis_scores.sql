@@ -10,6 +10,7 @@ create table if not exists tennis_scores (
   match_no integer not null check (match_no > 0),
   score_a integer not null default 0 check (score_a >= 0),
   score_b integer not null default 0 check (score_b >= 0),
+  finished_at timestamptz not null default now(), -- 처음 점수를 넣은 시각 = 경기 끝난 시각 (수정해도 안 바뀜)
   updated_at timestamptz not null default now(),
   primary key (event_id, match_no)
 );

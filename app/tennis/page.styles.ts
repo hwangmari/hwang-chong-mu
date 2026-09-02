@@ -31,12 +31,8 @@ export const StSubtitle = styled.p`
 /* 상단 숫자 요약 (라운드·경기·선수) */
 export const StStatGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 `;
 
 export const StStatBox = styled.div`
@@ -481,4 +477,263 @@ export const StEmpty = styled.p`
   text-align: center;
   font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.gray400};
+`;
+
+/* === 교류전 만들기 폼 === */
+export const StRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.6rem;
+`;
+
+export const StLabel = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+`;
+
+export const StFieldName = styled.span`
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray500};
+`;
+
+export const StInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.colors.white};
+  padding: 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray900};
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.blue500};
+  }
+`;
+
+export const StTextarea = styled.textarea`
+  width: 100%;
+  min-height: 9rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.colors.white};
+  padding: 0.6rem 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray900};
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.blue500};
+  }
+`;
+
+export const StSelect = styled.select`
+  min-width: 0;
+  width: 100%;
+  min-height: 2.3rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.6rem;
+  background: ${({ theme }) => theme.colors.white};
+  padding: 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+export const StActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+export const StPrimaryBtn = styled.button`
+  min-height: 2.7rem;
+  border: none;
+  background: ${({ theme }) => theme.semantic.primary};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 0 1.2rem;
+  border-radius: 0.7rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+`;
+
+export const StWarnList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-left: 1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+
+  li.error {
+    color: ${({ theme }) => theme.colors.rose600};
+    font-weight: 700;
+  }
+
+  li.warn {
+    color: #b45309;
+    font-weight: 600;
+  }
+`;
+
+/* 편집 중인 경기 한 줄 */
+export const StEditMatch = styled.div<{ $color: string }>`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-left: 4px solid ${({ $color }) => $color};
+  border-radius: 0.8rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+`;
+
+export const StEditMeta = styled.span`
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray400};
+  white-space: nowrap;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-column: 1 / -1;
+  }
+`;
+
+export const StEditTeam = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+`;
+
+/* 교류전 목록 카드 */
+export const StEventLink = styled.a`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border-radius: 0.9rem;
+  text-decoration: none;
+  color: inherit;
+  background: ${({ theme }) => theme.colors.white};
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.blue200};
+    background: ${({ theme }) => theme.colors.blue50};
+  }
+`;
+
+export const StEventTitle = styled.span`
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+export const StEventMeta = styled.span`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-weight: 600;
+`;
+
+/* 코트별 현황 (지금 진행 중 / 다음 경기) */
+export const StCourtStrip = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const StCourtBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  background: ${({ theme }) => theme.colors.blue50};
+  border: 1px solid ${({ theme }) => theme.colors.blue100};
+`;
+
+export const StCourtName = styled.span`
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.blue600};
+`;
+
+export const StCourtLine = styled.span`
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.76rem;
+    color: ${({ theme }) => theme.colors.gray400};
+  }
+`;
+
+export const StTiming = styled.span<{ $tone: "done" | "playing" | "shifted" | "plain" }>`
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: ${({ $tone, theme }) =>
+    $tone === "playing"
+      ? theme.colors.teal600
+      : $tone === "shifted"
+        ? "#c2410c"
+        : $tone === "done"
+          ? theme.colors.gray400
+          : theme.colors.gray500};
+`;
+
+/* 선수단 한 줄 (보기: 이름 · 구력 · 경기 수 / 편집: 이름 · 성별 · 구력 · 빼기) */
+export const StRosterRow = styled.div<{ $view?: boolean }>`
+  display: grid;
+  grid-template-columns: ${({ $view }) => ($view ? "minmax(0, 1fr) auto auto" : "minmax(0, 2fr) 5rem 5rem auto")};
+  align-items: center;
+  gap: 0.5rem;
+  padding: ${({ $view }) => ($view ? "0.45rem 0.2rem" : "0")};
+  border-bottom: ${({ $view, theme }) => ($view ? `1px solid ${theme.colors.gray100}` : "none")};
+  font-size: 0.88rem;
+  color: ${({ theme }) => theme.colors.gray900};
+
+  span:not(:first-child) {
+    font-size: 0.78rem;
+    color: ${({ theme }) => theme.colors.gray400};
+    font-weight: 700;
+  }
+`;
+
+export const StStatButton = styled(StStatBox).attrs({ as: "button", type: "button" })`
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.blue200};
+    background: ${({ theme }) => theme.colors.blue50};
+  }
 `;
