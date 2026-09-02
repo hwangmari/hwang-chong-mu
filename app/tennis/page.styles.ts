@@ -1234,8 +1234,14 @@ export const StBracketScroll = styled.div`
 export const StBracketLane = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.9rem;
+  gap: 0.6rem;
+  margin-bottom: 1.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed ${({ theme }) => theme.colors.gray200};
+
+  &:last-of-type {
+    border-bottom: none;
+  }
 `;
 
 export const StBracketLaneTitle = styled.div<{ $color: string }>`
@@ -1255,30 +1261,40 @@ export const StBracketLaneTitle = styled.div<{ $color: string }>`
 
 export const StBracketColumns = styled.div<{ $cols: number }>`
   display: grid;
-  grid-template-columns: repeat(${({ $cols }) => $cols}, minmax(13rem, 1fr));
-  gap: 0.6rem;
-  min-width: ${({ $cols }) => $cols * 13.6}rem;
+  grid-template-columns: repeat(${({ $cols }) => $cols}, minmax(14rem, 1fr));
+  gap: 1.4rem;
+  min-width: ${({ $cols }) => $cols * 15.4}rem;
 `;
 
 export const StBracketCol = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  gap: 0.5rem;
+  gap: 0.6rem;
 `;
 
 export const StBracketColTitle = styled.div`
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray400};
   text-align: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+/* 열 안의 경기 칸들: 세로 가운데에 고르게 */
+export const StBracketColBody = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0.9rem;
 `;
 
 export const StNode = styled.div<{ $color: string; $state: "done" | "playing" | "ready" | "waiting" | "hidden" }>`
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.45rem 0.55rem;
+  gap: 0.3rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 0.6rem;
   border: 1px solid
     ${({ $state, theme }) =>

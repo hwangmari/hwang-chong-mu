@@ -24,6 +24,13 @@ import {
   StCardTitle,
   StChip,
   StChipRow,
+  StCourtBoard,
+  StCourtCard,
+  StCourtHead,
+  StCourtSlot,
+  StCourtSlotLabel,
+  StCourtSlotMain,
+  StCourtTitle,
   StGhostBtn,
   StHeader,
   StMatchGrid,
@@ -36,6 +43,7 @@ import {
   StRoundTitle,
   StRuleBadge,
   StSeedTag,
+  StStateBadge,
   StStatBox,
   StStatButton,
   StStatGrid,
@@ -47,7 +55,8 @@ import {
   StTeamName,
   StTitle,
 } from "../page.styles";
-import type { MatchScore, ScoreMap } from "../types";
+import { isFinished, type Court, type MatchScore, type ScoreMap } from "../types";
+import { courtLetters } from "../timeline";
 
 type Props = { initialEvent: TournamentEvent };
 type Tab = "bracket" | "diagram" | "placements" | "teams";
@@ -153,6 +162,15 @@ export default function TournamentView({ initialEvent }: Props) {
   const ranks = useMemo(() => placements(matches), [matches]);
   const progress = countFinishedTournament(matches);
   const anyStarted = Object.keys(scores).length > 0;
+  const courts = courtLetters(event.courts);
+  // 코트별 현황: 지금 뛰는 경기 (시작했고 아직 점수 없음)
+  const playingByCourt = new Map<Court, (typeof matches)[number]>();
+  for (const m of matches) {
+    const sc = scores[m.template.no];
+    if (sc?.startedAt && !isFinished(sc) && sc.court) playingByCourt.set(sc.court, m);
+  }
+  const occupied = new Set<Court>(playingByCourt.keys());
+  const readyMatches = matches.filter((m) => m.status === "ready");
   // 팀 이름이 기본값("N번 시드 팀")이거나 선수가 비어 있으면 입력을 재촉한다
   const teamsIncomplete = event.teams.some(
     (t) => /^\d+번 시드 팀$/.test(t.name.trim()) || t.players.some((p) => !p.name.trim()),
@@ -172,14 +190,17 @@ export default function TournamentView({ initialEvent }: Props) {
     }
   }
 
-  async function startMatch(matchNo: number) {
-    const template = matches.find((m) => m.template.no === matchNo)?.template;
-    if (!template) return;
+  // 빈 코트를 골라 시작 (계획 코트는 참고일 뿐)
+  async function startMatch(matchNo: number, court: Court) {
+    if (occupied.has(court)) {
+      setError(`코트 ${court}는 지금 경기 중이에요.`);
+      return;
+    }
     const startedAt = new Date().toISOString();
-    const score: MatchScore = { matchNo, scoreA: 0, scoreB: 0, court: template.court, startedAt };
+    const score: MatchScore = { matchNo, scoreA: 0, scoreB: 0, court, startedAt };
     await persist(
       { ...scores, [matchNo]: score },
-      () => startTennisMatch(eventId, matchNo, template.court, startedAt),
+      () => startTennisMatch(eventId, matchNo, court, startedAt),
       "시작 기록을 저장하지 못했어요.",
     );
   }
@@ -191,7 +212,7 @@ export default function TournamentView({ initialEvent }: Props) {
       matchNo,
       scoreA,
       scoreB,
-      court: prev?.court ?? m?.template.court,
+      court: prev?.court,
       startedAt: prev?.startedAt,
       finishedAt: prev?.finishedAt ?? new Date().toISOString(),
       tiebreakA: tiebreak ? tiebreak[0] : undefined,
@@ -363,11 +384,49 @@ export default function TournamentView({ initialEvent }: Props) {
       ) : tab === "bracket" ? (
         <StCard>
           <StCardHead>
+            <StCardTitle>🏟️ 코트별 진행</StCardTitle>
+            <StCardHint>
+              시작 가능 {readyMatches.length}경기 · 빈 코트 {courts.length - occupied.size}면
+            </StCardHint>
+          </StCardHead>
+          <StCourtBoard>
+            {courts.map((court) => {
+              const m = playingByCourt.get(court);
+              return (
+                <StCourtCard key={court} $live={Boolean(m)}>
+                  <StCourtHead>
+                    <StCourtTitle>코트 {court}</StCourtTitle>
+                    {m ? <StStateBadge $state="playing">🎾 진행 중</StStateBadge> : <StStateBadge $state="waiting">비어 있음</StStateBadge>}
+                  </StCourtHead>
+                  {m ? (
+                    <StCourtSlot $kind="now">
+                      <StCourtSlotLabel $kind="now">지금</StCourtSlotLabel>
+                      <StCourtSlotMain>
+                        <b>
+                          {m.template.no}번 · {m.template.label}
+                        </b>
+                        <em>
+                          #{m.teamA?.seed} {m.teamA?.name} vs #{m.teamB?.seed} {m.teamB?.name}
+                        </em>
+                      </StCourtSlotMain>
+                    </StCourtSlot>
+                  ) : (
+                    <StCardHint>
+                      {readyMatches.length > 0
+                        ? "아래 시작 가능한 경기에서 이 코트를 골라 시작하세요."
+                        : "시작할 수 있는 경기가 없어요. 앞 경기 결과를 기다려요."}
+                    </StCardHint>
+                  )}
+                </StCourtCard>
+              );
+            })}
+          </StCourtBoard>
+          <StCardHead>
             <StCardTitle>🗂️ 대진표 · 점수 입력</StCardTitle>
           </StCardHead>
           <StCardHint>
-            {event.beforeNote ? `${event.beforeNote} → ` : ""}시간대별로 동시에 진행돼요. 앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로
-            채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
+            {event.beforeNote ? `${event.beforeNote} → ` : ""}교시는 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요.
+            앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로 채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
           </StCardHint>
           <StQueueList>
             {blocks.map((block) => {
@@ -393,6 +452,8 @@ export default function TournamentView({ initialEvent }: Props) {
                         blockTime={block.time}
                         gamesToWin={event.gamesToWin}
                         clock={clock}
+                        courts={courts}
+                        occupied={occupied}
                         busy={busy}
                         onStart={startMatch}
                         onSave={saveScore}
@@ -455,7 +516,7 @@ export default function TournamentView({ initialEvent }: Props) {
                 <StPlacementRow key={match.template.no} $top={outcome === "win"}>
                   <StRank>{match.template.block}교시</StRank>
                   <span>
-                    <b>{match.template.label}</b> · 코트 {match.template.court} · {blockTime(match.template.block)}
+                    <b>{match.template.label}</b> · {scores[match.template.no]?.court ? `코트 ${scores[match.template.no]?.court}` : `계획 코트 ${match.template.court}`} · {blockTime(match.template.block)}
                     <br />
                     <span style={{ color: "#64748b" }}>vs {opponent ? `#${opponent.seed} ${opponent.name}` : "상대 미정"}</span>
                   </span>

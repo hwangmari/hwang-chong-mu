@@ -2,6 +2,7 @@
 
 import {
   StBracketCol,
+  StBracketColBody,
   StBracketColTitle,
   StBracketColumns,
   StBracketLane,
@@ -75,6 +76,7 @@ export default function BracketDiagram({ matches }: Props) {
             {lane.columns.map((col, ci) => (
               <StBracketCol key={`${lane.title}-${ci}`}>
                 {col.title ? <StBracketColTitle>{col.title}</StBracketColTitle> : null}
+                <StBracketColBody>
                 {col.nos.map((no) => {
                   const m = by.get(no);
                   if (!m) return null;
@@ -97,7 +99,7 @@ export default function BracketDiagram({ matches }: Props) {
                                 ? "시작 가능"
                                 : state === "hidden"
                                   ? "조건부"
-                                  : `코트 ${m.template.court}`}
+                                  : `${m.template.block}교시`}
                         </span>
                       </StNodeHead>
                       {teamLine(m.teamA, m.aLabel, m.scoreA, winnerA)}
@@ -105,6 +107,7 @@ export default function BracketDiagram({ matches }: Props) {
                     </StNode>
                   );
                 })}
+                </StBracketColBody>
               </StBracketCol>
             ))}
           </StBracketColumns>

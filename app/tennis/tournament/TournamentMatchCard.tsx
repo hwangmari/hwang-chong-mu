@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toClock } from "../format";
 import {
   StBall,
+  StCourtPick,
   StElapsed,
   StElapsedFill,
   StElapsedTrack,
@@ -30,7 +31,7 @@ import {
   StVs,
 } from "../page.styles";
 import { playedMinutes } from "../timeline";
-import type { MatchScore } from "../types";
+import type { Court, MatchScore } from "../types";
 import { PAIR_ROTATION, STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
 
 type Props = {
@@ -39,8 +40,10 @@ type Props = {
   blockTime: string; // "13:00 — 13:30"
   gamesToWin: number;
   clock: number; // 현재 시각(분)
+  courts: Court[]; // 이 대회의 코트들
+  occupied: Set<Court>; // 지금 경기 중인 코트
   busy: boolean;
-  onStart: (matchNo: number) => Promise<void>;
+  onStart: (matchNo: number, court: Court) => Promise<void>;
   onSave: (matchNo: number, scoreA: number, scoreB: number, tiebreak: [number, number] | null) => Promise<void>;
   onClear: (matchNo: number) => Promise<void>;
 };
@@ -70,6 +73,8 @@ export default function TournamentMatchCard({
   blockTime,
   gamesToWin,
   clock,
+  courts,
+  occupied,
   busy,
   onStart,
   onSave,
@@ -145,7 +150,8 @@ export default function TournamentMatchCard({
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
           <StOrderNo>{match.template.no}</StOrderNo>
           <span>
-            {match.template.label} · 코트 {match.template.court}
+            {match.template.label}
+            {score?.court ? ` · 코트 ${score.court}` : ` · 계획 코트 ${match.template.court}`}
           </span>
         </span>
         {match.status === "playing" ? (
@@ -202,9 +208,21 @@ export default function TournamentMatchCard({
 
       {match.status === "ready" ? (
         <StScoreRow>
-          <StSaveBtn type="button" disabled={busy} onClick={() => void onStart(match.template.no)}>
-            ▶ 코트 {match.template.court}에서 시작
-          </StSaveBtn>
+          {courts.map((court) => {
+            const free = !occupied.has(court);
+            return (
+              <StCourtPick
+                key={court}
+                type="button"
+                $primary={free && court === match.template.court}
+                disabled={busy || !free}
+                title={free ? undefined : "이 코트는 경기 중이에요"}
+                onClick={() => void onStart(match.template.no, court)}
+              >
+                ▶ 코트 {court}
+              </StCourtPick>
+            );
+          })}
         </StScoreRow>
       ) : null}
 

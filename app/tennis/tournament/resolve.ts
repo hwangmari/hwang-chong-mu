@@ -21,6 +21,8 @@ function winnerOf(score: MatchScore | undefined): "A" | "B" | null {
 export function resolveBracket(event: TournamentEvent, scores: ScoreMap): ResolvedMatch[] {
   const bySeed = new Map(event.teams.map((t) => [t.seed, t]));
   const resolved = new Map<number, ResolvedMatch>();
+  // 지금 뛰고 있는 팀은 다른 경기를 시작할 수 없다 (뒤에서 status를 정할 때 쓴다)
+  const playingTeams = new Set<number>();
   const labelOf = (m: TemplateMatch | undefined) => (m ? `${m.label} ${m.no}번` : "?");
 
   const refTeam = (ref: SlotRef): { team: TeamEntry | null; label: string } => {
@@ -51,11 +53,15 @@ export function resolveBracket(event: TournamentEvent, scores: ScoreMap): Resolv
       else status = "ready";
     } else if (w) status = "done";
     else if (score?.startedAt) status = "playing";
-    else if (a.team && b.team) status = "ready";
+    else if (a.team && b.team && !playingTeams.has(a.team.seed) && !playingTeams.has(b.team.seed)) status = "ready";
     else status = "waiting";
 
     const teamA = a.team;
     const teamB = b.team;
+    if (status === "playing") {
+      if (teamA) playingTeams.add(teamA.seed);
+      if (teamB) playingTeams.add(teamB.seed);
+    }
     resolved.set(template.no, {
       template,
       teamA,

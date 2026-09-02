@@ -67,7 +67,7 @@ function isoToMinutes(iso: string): number {
 }
 
 export function courtLetters(count: number): Court[] {
-  return (["A", "B"] as Court[]).slice(0, Math.max(1, Math.min(2, count)));
+  return (["A", "B", "C", "D"] as Court[]).slice(0, Math.max(1, Math.min(4, count)));
 }
 
 export function buildTimeline(
