@@ -73,18 +73,17 @@ const RESULT_BADGE: React.CSSProperties = {
   fontWeight: 900,
   padding: "0 0.3rem",
   borderRadius: "999px",
-  marginRight: "0.3rem",
   color: "#fff",
 };
 
 function teamLine(team: TeamEntry | null, label: string, score: number | null, result: "win" | "loss" | null) {
   return (
     <StNodeTeam $winner={result === "win"} $empty={!team}>
-      <span className="name">
+      <span className="name">{team ? `#${team.seed} ${team.name}` : label}</span>
+      <span className="score" style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+        {score !== null ? score : ""}
         {result === "win" ? <span style={{ ...RESULT_BADGE, background: "#1f8a54" }}>승</span> : null}
-        {team ? `#${team.seed} ${team.name}` : label}
       </span>
-      <span className="score">{score !== null ? score : ""}</span>
     </StNodeTeam>
   );
 }
