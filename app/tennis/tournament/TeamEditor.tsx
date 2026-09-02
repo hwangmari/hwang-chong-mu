@@ -23,12 +23,13 @@ type Props = {
   teams: TeamEntry[];
   locked: boolean; // 경기가 하나라도 시작됐으면 시드 순서는 못 바꾸고 이름만 고친다
   busy: boolean;
+  startEditing?: boolean; // 열자마자 편집 상태로
   onSave: (teams: TeamEntry[]) => Promise<void>;
   onClose: () => void;
 };
 
-export default function TeamEditor({ teams, locked, busy, onSave, onClose }: Props) {
-  const [editing, setEditing] = useState(false);
+export default function TeamEditor({ teams, locked, busy, startEditing = false, onSave, onClose }: Props) {
+  const [editing, setEditing] = useState(startEditing);
   const [draft, setDraft] = useState<TeamEntry[]>(teams);
   const [error, setError] = useState("");
 
@@ -87,8 +88,9 @@ export default function TeamEditor({ teams, locked, busy, onSave, onClose }: Pro
         </StActions>
       </StCardHead>
       <StCardHint>
-        팀 번호(#1~#8)가 곧 대진표 시드예요. 팀 안의 1~4번은 팀 내 시드로, 페어 A(2+4)·B(1+3)·C(1+2)
-        구성에 쓰여요.{locked ? " 경기가 시작돼서 시드 순서는 바꿀 수 없고 이름만 고칠 수 있어요." : ""}
+        팀 이름은 마음대로 지어도 돼요 (예: 한화시스템 A, 강남 라켓단). 팀 번호(#1~#8)가 곧 대진표
+        시드예요. 팀 안의 1~4번은 팀 내 시드로, 페어 A(2+4)·B(1+3)·C(1+2) 구성에 쓰여요.
+        {locked ? " 경기가 시작돼서 시드 순서는 바꿀 수 없고 이름만 고칠 수 있어요." : ""}
       </StCardHint>
 
       <StTeamGrid>

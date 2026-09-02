@@ -84,6 +84,7 @@ export default function TournamentView({ initialEvent }: Props) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showTeams, setShowTeams] = useState(false);
+  const [teamsEditOnOpen, setTeamsEditOnOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [clock, setClock] = useState(0);
@@ -151,6 +152,10 @@ export default function TournamentView({ initialEvent }: Props) {
   const ranks = useMemo(() => placements(matches), [matches]);
   const progress = countFinishedTournament(matches);
   const anyStarted = Object.keys(scores).length > 0;
+  // 팀 이름이 기본값("N번 시드 팀")이거나 선수가 비어 있으면 입력을 재촉한다
+  const teamsIncomplete = event.teams.some(
+    (t) => /^\d+번 시드 팀$/.test(t.name.trim()) || t.players.some((p) => !p.name.trim()),
+  );
 
   async function persist(next: ScoreMap, action: () => Promise<void>, failMessage: string) {
     setBusy(true);
@@ -295,14 +300,33 @@ export default function TournamentView({ initialEvent }: Props) {
         </StStatButton>
       </StStatGrid>
 
+      {teamsIncomplete && !showTeams ? (
+        <StNotice $tone="info">
+          팀 이름과 선수가 아직 비어 있어요. 기본 이름(&ldquo;1번 시드 팀&rdquo;)은 마음대로 바꿀 수 있어요.{" "}
+          <StGhostBtn
+            type="button"
+            onClick={() => {
+              setTeamsEditOnOpen(true);
+              setShowTeams(true);
+            }}
+          >
+            ✏️ 참가 팀 입력하기
+          </StGhostBtn>
+        </StNotice>
+      ) : null}
+
       {showTeams ? (
         <TeamEditor
           key={event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}
           teams={event.teams}
           locked={anyStarted}
           busy={busy}
+          startEditing={teamsEditOnOpen}
           onSave={saveTeams}
-          onClose={() => setShowTeams(false)}
+          onClose={() => {
+            setShowTeams(false);
+            setTeamsEditOnOpen(false);
+          }}
         />
       ) : null}
 
