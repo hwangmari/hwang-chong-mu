@@ -591,6 +591,9 @@ export const StSaveBtn = styled.button`
 `;
 
 export const StGhostBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 2.2rem;
   border: 1px dashed ${({ theme }) => theme.colors.gray300};
   background: transparent;
@@ -600,6 +603,8 @@ export const StGhostBtn = styled.button`
   padding: 0 0.7rem;
   border-radius: 0.6rem;
   cursor: pointer;
+  text-decoration: none; /* 링크(as={Link})로 쓸 때도 버튼처럼 보이게 */
+  box-sizing: border-box;
 
   &:hover {
     background: ${({ theme }) => theme.colors.gray50};

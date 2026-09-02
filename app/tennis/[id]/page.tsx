@@ -310,13 +310,28 @@ export default function TennisEventPage() {
     await saveBracketParts({ players: nextPlayers, matches: nextMatches });
   }
 
+  // 클립보드 API는 https·localhost에서만 되므로(폰에서 IP로 열면 막힘), 안 되면 옛 방식으로 한 번 더 시도
   async function copyLink() {
+    const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const box = document.createElement("textarea");
+        box.value = url;
+        box.setAttribute("readonly", "");
+        box.style.position = "fixed";
+        box.style.opacity = "0";
+        document.body.appendChild(box);
+        box.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(box);
+        if (!ok) throw new Error("copy failed");
+      }
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      setError("링크를 복사하지 못했어요. 주소창에서 직접 복사해 주세요.");
+      setError(`링크를 복사하지 못했어요. 이 주소를 직접 복사해 주세요: ${url}`);
     }
   }
 
@@ -376,9 +391,6 @@ export default function TennisEventPage() {
               ✏️ 선수 교체
             </StGhostBtn>
           ) : null}
-          <StGhostBtn as={Link} href="/tennis">
-            목록
-          </StGhostBtn>
         </StActions>
       </StHeader>
 
