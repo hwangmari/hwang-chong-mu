@@ -187,6 +187,15 @@ export async function fetchTennisEvent(id: string): Promise<AnyTennisEvent | nul
   return row.kind === "tournament" ? toTournament(row) : toEvent(row);
 }
 
+// 새 토너먼트 만들기: 화면에서 만든 대회는 uuid 문자열 id를 받는다
+export async function createTournament(input: Omit<TournamentEvent, "id" | "builtIn">): Promise<TournamentEvent> {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `t-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return upsertTournament({ ...input, id });
+}
+
 // 토너먼트 저장 (코드에 든 대회를 처음 편집할 때도 같은 id로 통째로 저장)
 export async function upsertTournament(event: TournamentEvent): Promise<TournamentEvent> {
   const { data, error } = await supabase

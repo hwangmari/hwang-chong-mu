@@ -4,16 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EventSetupForm from "./components/EventSetupForm";
+import TournamentSetupForm from "./tournament/TournamentSetupForm";
+import type { TournamentEvent } from "./tournament/types";
 import { EVENTS } from "./data";
 import { TOURNAMENTS } from "./tournament/data";
 import { formatDate, formatEventDate } from "./format";
-import { createTennisEvent, type NewTennisEvent } from "@/services/tennis";
+import { createTennisEvent, createTournament, type NewTennisEvent } from "@/services/tennis";
 import {
   StCard,
   StCardHead,
   StCardHint,
   StCardTitle,
   StEventLink,
+  StTab,
+  StTabRow,
   StEventMeta,
   StEventTitle,
   StHeader,
@@ -49,6 +53,7 @@ export default function TennisHomePage() {
   const router = useRouter();
   const [myEvents, setMyEvents] = useState<MyEvent[]>([]);
   const [error, setError] = useState("");
+  const [kind, setKind] = useState<"exchange" | "tournament">("exchange");
 
   useEffect(() => {
     // localStorage는 브라우저에서만 읽을 수 있어서 첫 렌더 뒤에 채운다
@@ -66,6 +71,21 @@ export default function TennisHomePage() {
       const message = e instanceof Error ? e.message : "";
       setError(
         `교류전을 저장하지 못했어요. 공용 저장 공간(tennis_events 표)이 아직 없다면 supabase/20260902_create_tennis_events.sql을 실행해 주세요.${message ? ` (${message})` : ""}`,
+      );
+      throw e;
+    }
+  }
+
+  async function createT(input: Omit<TournamentEvent, "id" | "builtIn">) {
+    setError("");
+    try {
+      const event = await createTournament(input);
+      rememberMyEvent({ id: event.id, title: event.title, date: event.date });
+      router.push(`/tennis/${event.id}`);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "";
+      setError(
+        `토너먼트를 저장하지 못했어요. tennis_events 표가 없거나 오래됐다면 supabase/20260902_create_tennis_events.sql 또는 20260903_add_tennis_tournament.sql을 실행해 주세요.${message ? ` (${message})` : ""}`,
       );
       throw e;
     }
@@ -113,7 +133,30 @@ export default function TennisHomePage() {
         </StCardHint>
       </StCard>
 
-      <EventSetupForm onCreate={create} />
+      <StCard>
+        <StCardHead>
+          <StCardTitle>🆕 새로 만들기 · 어떤 대회인가요?</StCardTitle>
+        </StCardHead>
+        <StTabRow>
+          <StTab type="button" $active={kind === "exchange"} onClick={() => setKind("exchange")}>
+            🎾 교류전 (개인 승점 · 짝 바꿔가며)
+          </StTab>
+          <StTab type="button" $active={kind === "tournament"} onClick={() => setKind("tournament")}>
+            🏆 팀 토너먼트 (8팀 더블 엘리미네이션)
+          </StTab>
+        </StTabRow>
+        <StCardHint>
+          {kind === "exchange"
+            ? "한화 교류전처럼 개인이 짝을 바꿔가며 뛰고 개인 승점으로 순위를 매겨요. 선수 명단만 넣으면 대진표를 자동으로 짜요."
+            : "63OPEN처럼 4명이 한 팀이 되어 팀끼리 붙어요. 두 번 지면 탈락, 순위결정전으로 1~8위를 정해요."}
+        </StCardHint>
+      </StCard>
+
+      {kind === "exchange" ? <EventSetupForm onCreate={create} /> : (
+        <StCard>
+          <TournamentSetupForm onCreate={createT} />
+        </StCard>
+      )}
     </StPage>
   );
 }
