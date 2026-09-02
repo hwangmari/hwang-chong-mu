@@ -168,6 +168,33 @@ export async function createTennisEvent(input: NewTennisEvent): Promise<TennisEv
   return toEvent(data as EventRow);
 }
 
+// 코드에 든 교류전을 처음 편집할 때: 같은 id로 통째로 저장한다 (이후엔 이 표의 내용을 쓴다)
+export async function upsertTennisEvent(event: TennisEvent): Promise<TennisEvent> {
+  const { data, error } = await supabase
+    .from("tennis_events")
+    .upsert(
+      {
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        start_time: event.startTime,
+        place: event.place,
+        courts: event.courts,
+        minutes_per_match: event.minutesPerMatch,
+        after_note: event.afterNote,
+        players: event.players,
+        rounds: event.rounds,
+        matches: event.matches,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    )
+    .select(EVENT_COLUMNS)
+    .single();
+  if (error) throw error;
+  return toEvent(data as EventRow);
+}
+
 // 대진표(라운드·경기)만 고친다. 선수 명단은 같이 넘겨 일관성을 유지한다
 export async function updateTennisBracket(
   id: string,

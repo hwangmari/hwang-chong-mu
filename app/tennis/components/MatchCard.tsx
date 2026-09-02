@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { outcomeForA } from "../standings";
-import { describeTiming, elapsedOf, type MatchTiming, type Timeline } from "../timeline";
+import { canStartOn, describeTiming, elapsedOf, type MatchTiming, type Timeline } from "../timeline";
 import {
   StBall,
   StCourtPick,
@@ -209,17 +209,27 @@ export default function MatchCard({
 
       {state === "ready" || state === "waiting" ? (
         <StScoreRow>
-          {courts.map((court) => (
-            <StCourtPick
-              key={court}
-              type="button"
-              $primary={court === timing.court && state === "ready"}
-              disabled={busy || state !== "ready"}
-              onClick={() => void onStart(match.no, court)}
-            >
-              ▶ 코트 {court}에서 시작
-            </StCourtPick>
-          ))}
+          {courts.map((court) => {
+            const ok = canStartOn(timeline, timing, court, [...match.teamA, ...match.teamB]);
+            return (
+              <StCourtPick
+                key={court}
+                type="button"
+                $primary={ok && state === "ready"}
+                disabled={busy || !ok}
+                title={
+                  ok
+                    ? undefined
+                    : timeline.occupiedCourts.has(court)
+                      ? "이 코트는 경기 중이에요"
+                      : "선수가 다른 경기 중이에요"
+                }
+                onClick={() => void onStart(match.no, court)}
+              >
+                ▶ 코트 {court}에서 시작
+              </StCourtPick>
+            );
+          })}
         </StScoreRow>
       ) : null}
 

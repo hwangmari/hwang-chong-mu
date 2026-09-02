@@ -7,7 +7,7 @@ import { isFinished, type Court, type Match, type ScoreMap, type TennisEvent } f
 export type MatchStatus =
   | "done" // 점수 저장됨
   | "playing" // "지금 시작"을 눌러 진행 중
-  | "ready" // 코트도 비고 선수도 자유로워 지금 시작할 수 있음 (행사 당일에만)
+  | "ready" // 빈 코트가 있고 선수 4명이 다른 경기 중이 아니라 지금 시작할 수 있음
   | "waiting"; // 코트나 선수를 기다리는 중
 
 export type MatchTiming = {
@@ -33,15 +33,24 @@ export type Timeline = {
   expectedEnd: number; // 마지막 경기 예상 종료(분)
   // 지금 이 선수가 뛰고 있는지 (지금 시작 버튼 활성/비활성에 씀)
   busyPlayers: Set<string>;
-  now: number | null; // 계산에 쓴 현재 시각(분). 행사일이 아니면 null
+  now: number | null; // 예상 시각 계산에 쓴 현재 시각(분). 행사일이 아니면 null
+  clock: number; // 실제 현재 시각(분). 경과 시간 표시에 쓴다
   minutesPerMatch: number;
+  occupiedCourts: Set<Court>; // 지금 경기가 진행 중인 코트
 };
 
-// 진행 중 경기의 경과 분·진행률(0~1). 행사일이 아니면 null
+// 진행 중 경기의 경과 분·진행률(0~1)
 export function elapsedOf(timeline: Timeline, t: MatchTiming): { minutes: number; ratio: number } | null {
-  if (timeline.now === null || t.status !== "playing") return null;
-  const minutes = Math.max(0, timeline.now - t.expectedStart);
+  if (t.status !== "playing") return null;
+  const minutes = Math.max(0, timeline.clock - t.expectedStart);
   return { minutes, ratio: Math.min(1, minutes / Math.max(1, timeline.minutesPerMatch)) };
+}
+
+// 이 경기를 이 코트에서 지금 시작할 수 있는지
+export function canStartOn(timeline: Timeline, t: MatchTiming, court: Court, people: string[]): boolean {
+  if (t.status !== "ready" && t.status !== "waiting") return false;
+  if (timeline.occupiedCourts.has(court)) return false;
+  return people.every((n) => !timeline.busyPlayers.has(n));
 }
 
 function isoToMinutes(iso: string): number {
@@ -56,7 +65,8 @@ export function courtLetters(count: number): Court[] {
 export function buildTimeline(
   event: TennisEvent,
   scores: ScoreMap,
-  now: number | null, // 오늘이 행사일이면 현재 시각(분), 아니면 null
+  now: number | null, // 오늘이 행사일이면 현재 시각(분), 아니면 null (예상 시각 계산용)
+  clock: number = new Date().getHours() * 60 + new Date().getMinutes(), // 실제 현재 시각(분)
 ): Timeline {
   const dur = event.minutesPerMatch;
   const eventStart = toMinutes(event.startTime);
@@ -67,6 +77,15 @@ export function buildTimeline(
   const playingOn = new Map<Court, Match>();
   const nextOn = new Map<Court, Match>();
   const busyPlayers = new Set<string>();
+  // 진행 중 경기의 선수·코트를 먼저 파악한다 (순서상 뒤에 있는 경기가 진행 중일 수도 있으므로)
+  for (const match of event.matches) {
+    const score = scores[match.no];
+    if (score?.startedAt && !isFinished(score)) {
+      for (const n of [...match.teamA, ...match.teamB]) busyPlayers.add(n);
+      if (score.court) playingOn.set(score.court, match);
+    }
+  }
+  let pendingAhead = 0; // 앞 순서에서 아직 시작 안 한(시작 가능/대기) 경기 수
 
   event.matches.forEach((match, index) => {
     const people = [...match.teamA, ...match.teamB];
@@ -87,7 +106,7 @@ export function buildTimeline(
     } else if (score?.startedAt) {
       court = score.court ?? earliestCourt(courtFree);
       start = isoToMinutes(score.startedAt);
-      end = Math.max(start + dur, now ?? start + dur);
+      end = Math.max(start + dur, now ?? clock);
       status = "playing";
       playingOn.set(court, match);
       for (const n of people) busyPlayers.add(n);
@@ -98,9 +117,12 @@ export function buildTimeline(
       start = Math.max(courtAt, playersAt, now ?? eventStart);
       end = start + dur;
       waitingPlayers = people.filter((n) => (playerFree.get(n) ?? eventStart) > courtAt);
-      // 행사 당일이고 코트·선수가 지금 비어 있으면 바로 시작할 수 있는 상태
-      const courtIdle = !playingOn.has(court) && courtAt <= (now ?? -1);
-      status = now !== null && courtIdle && start <= now ? "ready" : "waiting";
+      // 빈 코트가 있고, 선수 4명이 지금 다른 경기 중이 아니고, 앞 순서 경기들이 코트를 다 잡지 않았으면 시작 가능
+      const freeCourtExists = courts.some((c) => !playingOn.has(c));
+      const playersIdle = people.every((n) => !busyPlayers.has(n));
+      const queueAhead = pendingAhead < courts.length - playingOn.size; // 앞에서 대기 중인 경기 수가 빈 코트 수보다 적을 때
+      status = freeCourtExists && playersIdle && queueAhead ? "ready" : "waiting";
+      if (status === "ready" || status === "waiting") pendingAhead += 1;
       if (!nextOn.has(court)) nextOn.set(court, match);
     }
 
@@ -127,7 +149,16 @@ export function buildTimeline(
 
   const expectedEnd = Math.max(eventStart, ...[...byMatch.values()].map((t) => t.expectedEnd));
 
-  return { byMatch, courts: courtStatus, expectedEnd, busyPlayers, now, minutesPerMatch: dur };
+  return {
+    byMatch,
+    courts: courtStatus,
+    expectedEnd,
+    busyPlayers,
+    now,
+    clock,
+    minutesPerMatch: dur,
+    occupiedCourts: new Set(playingOn.keys()),
+  };
 }
 
 function earliestCourt(courtFree: Map<Court, number>): Court {
