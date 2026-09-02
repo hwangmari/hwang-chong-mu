@@ -40,6 +40,12 @@ export const MENU_CATEGORIES: MenuCategory[] = [
         title: "게임방",
         desc: "심심할 땐 랜덤 게임",
       },
+      {
+        href: "/tennis",
+        icon: "🎾",
+        title: "테니스 교류전",
+        desc: "대진표 보고 점수 넣으면 승점 순위",
+      },
     ],
   },
   {
@@ -69,6 +75,12 @@ export const MENU_CATEGORIES: MenuCategory[] = [
         icon: "🧾",
         title: "가계부",
         desc: "수입/지출을 한눈에 관리",
+      },
+      {
+        href: "/gift-log",
+        icon: "🎁",
+        title: "경조사비 장부",
+        desc: "축의금·부조금 주고받은 내역",
       },
       {
         href: "/habit",

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# oh-my-claudecode 작업 기록 (세션 상태·로그). 프로젝트 스킬만 예외로 커밋 가능
+.omc/
+!.omc/skills/
