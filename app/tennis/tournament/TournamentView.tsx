@@ -195,7 +195,7 @@ export default function TournamentView({ initialEvent }: Props) {
   }
   // 팀 이름이 기본값("N번 시드 팀")이거나 선수가 비어 있으면 입력을 재촉한다
   const teamsIncomplete = event.teams.some(
-    (t) => /^\d+번 시드 팀$/.test(t.name.trim()) || t.players.some((p) => !p.name.trim()),
+    (t) => /^\d+(번 시드 )?팀$/.test(t.name.trim()) || t.players.some((p) => !p.name.trim()),
   );
 
   async function persist(next: ScoreMap, action: () => Promise<void>, failMessage: string) {
@@ -346,7 +346,7 @@ export default function TournamentView({ initialEvent }: Props) {
 
       {teamsIncomplete && !showTeams ? (
         <StNotice $tone="info">
-          팀 이름과 선수가 아직 비어 있어요. 기본 이름(&ldquo;1번 시드 팀&rdquo;)은 마음대로 바꿀 수 있어요.{" "}
+          팀 이름과 선수가 아직 비어 있어요. 기본 이름(&ldquo;1팀&rdquo;)은 마음대로 바꿀 수 있어요.{" "}
           <StGhostBtn
             type="button"
             onClick={() => {

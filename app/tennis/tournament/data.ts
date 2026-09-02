@@ -6,7 +6,7 @@ import type { TeamEntry, TournamentEvent } from "./types";
 export function placeholderTeams(): TeamEntry[] {
   return Array.from({ length: TEAM_COUNT }, (_, i) => ({
     seed: i + 1,
-    name: `${i + 1}번 시드 팀`,
+    name: `${i + 1}팀`,
     players: Array.from({ length: PLAYERS_PER_TEAM }, (_, j) => ({
       name: "",
       seed: (j + 1) as 1 | 2 | 3 | 4,

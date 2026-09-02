@@ -59,7 +59,7 @@ export default function TeamEditor({ teams, roster, locked, busy, startEditing =
   async function save() {
     const cleaned = draft.map((t) => ({
       ...t,
-      name: t.name.trim() || `${t.seed}번 시드 팀`,
+      name: t.name.trim() || `${t.seed}팀`,
       players: t.players.map((p) => ({ ...p, name: p.name.trim() })),
     }));
     const names = cleaned.map((t) => t.name);
@@ -151,7 +151,7 @@ export default function TeamEditor({ teams, roster, locked, busy, startEditing =
                 type="text"
                 value={team.name}
                 maxLength={20}
-                placeholder={`${team.seed}번 시드 팀 이름`}
+                placeholder={`${team.seed}팀 이름 (예: 한화시스템 A)`}
                 onChange={(e) => patchTeam(team.seed, e.target.value)}
               />
             ) : (
