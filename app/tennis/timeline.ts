@@ -154,7 +154,8 @@ export function nowMinutesIfEventDay(eventDate: string, at = new Date()): number
 export function describeTiming(t: MatchTiming): string {
   if (t.status === "done") return `완료 ${toClock(t.expectedEnd)} · 코트 ${t.court}`;
   if (t.status === "playing") return `진행 중 · 코트 ${t.court} · ${toClock(t.expectedStart)} 시작`;
-  if (t.status === "ready") return `지금 시작 가능 · 코트 ${t.court}`;
+  // 아직 시작 전인 경기는 어느 코트로 갈지 정해지지 않았으므로 코트는 보여주지 않는다
+  if (t.status === "ready") return "지금 시작 가능 · 빈 코트를 골라 시작하세요";
   const who = t.waitingPlayers.length > 0 ? ` · ${t.waitingPlayers.join(", ")} 경기 끝나면` : "";
-  return `예상 ${toClock(t.expectedStart)} · 코트 ${t.court}${who}`;
+  return `예상 ${toClock(t.expectedStart)}${who}`;
 }

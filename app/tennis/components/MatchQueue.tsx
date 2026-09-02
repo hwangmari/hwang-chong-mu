@@ -80,16 +80,14 @@ export default function MatchQueue({
     setReordering(false);
   }
 
-  // 코트 보드: 지금 → 다음 → 그다음 (예상 코트 기준)
-  const upcomingByCourt = new Map<Court, Match[]>();
-  for (const m of event.matches) {
+  // 다음 순서: 아직 시작 안 한 경기 중 앞에서 3개 (코트는 그때 비는 곳으로 가므로 코트별로 나누지 않는다)
+  const upcoming = event.matches.filter((m) => {
     const t = timeline.byMatch.get(m.no);
-    if (!t || t.status === "done" || t.status === "playing") continue;
-    const arr = upcomingByCourt.get(t.court) ?? [];
-    if (arr.length < 2) arr.push(m);
-    upcomingByCourt.set(t.court, arr);
-  }
-  const allDone = timeline.courts.every((c) => !c.playing && (upcomingByCourt.get(c.court) ?? []).length === 0);
+    return t && (t.status === "ready" || t.status === "waiting");
+  });
+  const nextThree = upcoming.slice(0, 3);
+  const anyReady = upcoming.some((m) => timeline.byMatch.get(m.no)?.status === "ready");
+  const allDone = timeline.courts.every((c) => !c.playing) && upcoming.length === 0;
 
   return (
     <>
@@ -105,7 +103,6 @@ export default function MatchQueue({
         ) : (
           <StCourtBoard>
             {timeline.courts.map((c) => {
-              const upcoming = upcomingByCourt.get(c.court) ?? [];
               const playingT = c.playing ? timeline.byMatch.get(c.playing.no) : undefined;
               return (
                 <StCourtCard key={c.court} $live={Boolean(c.playing)}>
@@ -144,33 +141,45 @@ export default function MatchQueue({
                       </StCourtSlotMain>
                     </StCourtSlot>
                   ) : null}
-                  {upcoming.map((m, i) => {
-                    const t = timeline.byMatch.get(m.no);
-                    if (!t) return null;
-                    const kind = i === 0 ? "next" : "later";
-                    return (
-                      <StCourtSlot key={m.no} $kind={kind}>
-                        <StCourtSlotLabel $kind={kind}>{i === 0 ? "다음" : "그다음"}</StCourtSlotLabel>
-                        <StCourtSlotMain>
-                          <b>
-                            {t.position}번 · {teamText(m)}
-                          </b>
-                          <em>
-                            {t.status === "ready" ? "지금 시작 가능" : `예상 ${toClock(t.expectedStart)}`}
-                            {t.waitingPlayers.length > 0 ? ` · ${t.waitingPlayers.join(", ")} 경기 끝나면` : ""}
-                          </em>
-                        </StCourtSlotMain>
-                      </StCourtSlot>
-                    );
-                  })}
-                  {!c.playing && upcoming.length === 0 ? (
-                    <StCardHint>이 코트는 남은 경기가 없어요.</StCardHint>
+                  {!c.playing ? (
+                    <StCardHint>
+                      {anyReady
+                        ? "비어 있어요. 아래 다음 순서 경기에서 이 코트를 골라 시작하세요."
+                        : upcoming.length > 0
+                          ? "비어 있어요. 다음 경기 선수들이 다른 코트 경기를 마치면 시작할 수 있어요."
+                          : "남은 경기가 없어요."}
+                    </StCardHint>
                   ) : null}
                 </StCourtCard>
               );
             })}
           </StCourtBoard>
         )}
+
+        {nextThree.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {nextThree.map((m, i) => {
+              const t = timeline.byMatch.get(m.no);
+              if (!t) return null;
+              const kind = i === 0 ? "next" : "later";
+              return (
+                <StCourtSlot key={m.no} $kind={kind}>
+                  <StCourtSlotLabel $kind={kind}>{i === 0 ? "다음" : i === 1 ? "그다음" : "그 뒤"}</StCourtSlotLabel>
+                  <StCourtSlotMain>
+                    <b>
+                      {t.position}번 · {teamText(m)}
+                    </b>
+                    <em>
+                      {t.status === "ready"
+                        ? "▶ 지금 시작 가능 · 빈 코트를 골라 시작"
+                        : `예상 ${toClock(t.expectedStart)}${t.waitingPlayers.length > 0 ? ` · ${t.waitingPlayers.join(", ")} 경기 끝나면` : ""}`}
+                    </em>
+                  </StCourtSlotMain>
+                </StCourtSlot>
+              );
+            })}
+          </div>
+        ) : null}
       </StCard>
 
       <StCard>

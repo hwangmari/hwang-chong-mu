@@ -377,6 +377,9 @@ export default function TennisEventPage() {
           <StGhostBtn type="button" onClick={copyLink}>
             {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
           </StGhostBtn>
+          <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
+            👥 선수단 {editable ? "보기·편집" : "보기"}
+          </StGhostBtn>
           {editable && !editing ? (
             <StGhostBtn
               type="button"
