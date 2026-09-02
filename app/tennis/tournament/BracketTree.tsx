@@ -70,7 +70,7 @@ function pos(l: Layout) {
 function destinations(no: number) {
   const win = DOUBLE_ELIM_8.find((m) => (m.a.kind === "winner" && m.a.of === no) || (m.b.kind === "winner" && m.b.of === no));
   const lose = DOUBLE_ELIM_8.find((m) => (m.a.kind === "loser" && m.a.of === no) || (m.b.kind === "loser" && m.b.of === no));
-  const text = (m: typeof win) => (m ? `${m.no}번 ${m.label}` : null);
+  const text = (m: typeof win) => (m ? { short: `${m.no}번`, full: `${m.no}번 ${m.label}` } : null);
   return { win: text(win), lose: text(lose) };
 }
 
@@ -195,8 +195,18 @@ function Tree({
                       <span>🏆 {l.no === 16 ? "이기면 우승 · 패자조 출신이 이기면 리셋" : "이기면 우승"}</span>
                     ) : (
                       <>
-                        {dest.win ? <span style={{ color: "#1f8a54" }}>이기면 → {dest.win}</span> : null}
-                        {dest.lose ? <span style={{ color: "#c0304f" }}>지면 → {dest.lose}</span> : <span style={{ color: "#c0304f" }}>지면 → 끝</span>}
+                        {dest.win ? (
+                          <span style={{ color: "#1f8a54" }} title={`이기면 ${dest.win.full}으로`}>
+                            이기면 → {dest.win.short}
+                          </span>
+                        ) : null}
+                        {dest.lose ? (
+                          <span style={{ color: "#c0304f" }} title={`지면 ${dest.lose.full}으로`}>
+                            지면 → {dest.lose.short}
+                          </span>
+                        ) : (
+                          <span style={{ color: "#c0304f" }}>지면 → 탈락</span>
+                        )}
                       </>
                     )}
                   </div>
