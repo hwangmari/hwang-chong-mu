@@ -26,7 +26,7 @@ type Props = {
   onClose: () => void;
 };
 
-type Row = { key: number; original: string | null; name: string; gender: Gender; years: string };
+type Row = { key: number; original: string | null; name: string; gender: Gender; years: string; team: string };
 
 function toRows(players: Player[]): Row[] {
   return players.map((p, i) => ({
@@ -35,6 +35,7 @@ function toRows(players: Player[]): Row[] {
     name: p.name,
     gender: p.gender,
     years: String(p.years),
+    team: p.team ?? "",
   }));
 }
 
@@ -59,7 +60,7 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
   function addRow() {
     setRows((prev) => [
       ...prev,
-      { key: Date.now(), original: null, name: "", gender: "M", years: "0" },
+      { key: Date.now(), original: null, name: "", gender: "M", years: "0", team: "" },
     ]);
   }
 
@@ -87,6 +88,7 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
       name: r.name,
       gender: r.gender,
       years: Math.max(0, Math.min(60, Number(r.years) || 0)),
+      ...(r.team.trim() ? { team: r.team.trim() } : {}),
     }));
     // 이름을 바꾼 경우 대진표의 이름도 같이 바꾼다
     const rename = new Map<string, string>();
@@ -129,7 +131,7 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
         <StCardHint>이 교류전은 코드에 들어 있는 대진표라 명단을 화면에서 고칠 수 없어요.</StCardHint>
       ) : editing ? (
         <StCardHint>
-          이름을 바꾸면 대진표의 이름도 같이 바뀌어요. 새로 넣은 선수는 아직 경기가 없으니
+          이름을 바꾸면 대진표의 이름도 같이 바뀌어요. 소속은 팀 대항전에 쓰려고 적어 두는 칸이에요. 새로 넣은 선수는 아직 경기가 없으니
           &ldquo;대진표 수정&rdquo;에서 넣어 주세요. 경기에 들어 있는 선수는 뺄 수 없어요.
         </StCardHint>
       ) : (
@@ -160,6 +162,13 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
                 value={row.years}
                 onChange={(e) => patch(row.key, { years: e.target.value })}
               />
+              <StInput
+                type="text"
+                placeholder="소속 (선택)"
+                value={row.team}
+                maxLength={20}
+                onChange={(e) => patch(row.key, { team: e.target.value })}
+              />
               <StGhostBtn type="button" onClick={() => removeRow(row)} disabled={busy}>
                 빼기
               </StGhostBtn>
@@ -184,6 +193,7 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
               <b>{p.name}</b>{" "}
               <StTag $color={GENDER_COLOR[p.gender]}>{GENDER_LABEL[p.gender]}</StTag>
             </span>
+            <span>{p.team ?? "-"}</span>
             <span>{p.years}년</span>
             <span>{appearances.get(p.name) ?? 0}경기</span>
           </StRosterRow>

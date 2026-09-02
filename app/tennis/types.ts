@@ -9,6 +9,7 @@ export type Player = {
   name: string;
   gender: Gender;
   years: number; // 구력(년)
+  team?: string; // 소속 (예: 한화시스템 / 한화생명). 팀 대항전이 아니면 비워도 된다
 };
 
 export type Round = {

@@ -97,7 +97,9 @@ export default function MatchCard({
                   <StTag $color={GENDER_COLOR[player.gender]}>
                     {GENDER_LABEL[player.gender]}
                   </StTag>
-                  <StYears>{player.years}년</StYears>
+                  <StYears>
+                    {player.years}년{player.team ? ` · ${player.team}` : ""}
+                  </StYears>
                 </>
               ) : null}
             </StPlayerLine>

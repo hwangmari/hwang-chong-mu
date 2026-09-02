@@ -2,28 +2,29 @@
 // 새 교류전이 생기면 이 파일에 이벤트를 하나 더 추가하고 EVENTS에 넣는다.
 import type { Match, Player, Round, TennisEvent } from "./types";
 
+// 소속: 한화생명 9명(차종근·이필환·정현일·손종일·이선민·정해인·이준영·황혜경·남희수), 나머지 10명 한화시스템
 const PLAYERS: Player[] = [
   // 남자 12명 (각 3회 출전)
-  { name: "박종연", gender: "M", years: 10 },
-  { name: "이용훈", gender: "M", years: 7 },
-  { name: "이민재", gender: "M", years: 3 },
-  { name: "이창호", gender: "M", years: 3 },
-  { name: "박철용", gender: "M", years: 2.5 },
-  { name: "김동현", gender: "M", years: 2 },
-  { name: "이광오", gender: "M", years: 2 },
-  { name: "남계승", gender: "M", years: 1.5 },
-  { name: "정현일", gender: "M", years: 3 },
-  { name: "손종일", gender: "M", years: 3 },
-  { name: "이필환", gender: "M", years: 2 },
-  { name: "차종근", gender: "M", years: 1 },
+  { name: "박종연", gender: "M", years: 10, team: "한화시스템" },
+  { name: "이용훈", gender: "M", years: 7, team: "한화시스템" },
+  { name: "이민재", gender: "M", years: 3, team: "한화시스템" },
+  { name: "이창호", gender: "M", years: 3, team: "한화시스템" },
+  { name: "박철용", gender: "M", years: 2.5, team: "한화시스템" },
+  { name: "김동현", gender: "M", years: 2, team: "한화시스템" },
+  { name: "이광오", gender: "M", years: 2, team: "한화시스템" },
+  { name: "남계승", gender: "M", years: 1.5, team: "한화시스템" },
+  { name: "정현일", gender: "M", years: 3, team: "한화생명" },
+  { name: "손종일", gender: "M", years: 3, team: "한화생명" },
+  { name: "이필환", gender: "M", years: 2, team: "한화생명" },
+  { name: "차종근", gender: "M", years: 1, team: "한화생명" },
   // 여자 7명 (각 4회 출전)
-  { name: "서지수", gender: "F", years: 4 },
-  { name: "안혜림", gender: "F", years: 1.5 },
-  { name: "남희수", gender: "F", years: 3 },
-  { name: "황혜경", gender: "F", years: 2 },
-  { name: "이준영", gender: "F", years: 2 },
-  { name: "이선민", gender: "F", years: 1 },
-  { name: "정해인", gender: "F", years: 1 },
+  { name: "서지수", gender: "F", years: 4, team: "한화시스템" },
+  { name: "안혜림", gender: "F", years: 1.5, team: "한화시스템" },
+  { name: "남희수", gender: "F", years: 3, team: "한화생명" },
+  { name: "황혜경", gender: "F", years: 2, team: "한화생명" },
+  { name: "이준영", gender: "F", years: 2, team: "한화생명" },
+  { name: "이선민", gender: "F", years: 1, team: "한화생명" },
+  { name: "정해인", gender: "F", years: 1, team: "한화생명" },
 ];
 
 const ROUNDS: Round[] = [

@@ -712,7 +712,8 @@ export const StTiming = styled.span<{ $tone: "done" | "playing" | "shifted" | "p
 /* 선수단 한 줄 (보기: 이름 · 구력 · 경기 수 / 편집: 이름 · 성별 · 구력 · 빼기) */
 export const StRosterRow = styled.div<{ $view?: boolean }>`
   display: grid;
-  grid-template-columns: ${({ $view }) => ($view ? "minmax(0, 1fr) auto auto" : "minmax(0, 2fr) 5rem 5rem auto")};
+  grid-template-columns: ${({ $view }) =>
+    $view ? "minmax(0, 1fr) auto auto auto" : "minmax(0, 2fr) 4.5rem 4.5rem minmax(0, 1.5fr) auto"};
   align-items: center;
   gap: 0.5rem;
   padding: ${({ $view }) => ($view ? "0.45rem 0.2rem" : "0")};

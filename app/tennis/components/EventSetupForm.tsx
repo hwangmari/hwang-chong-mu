@@ -27,11 +27,11 @@ type Props = {
   onCreate: (event: NewTennisEvent) => Promise<void>;
 };
 
-const PLAYERS_PLACEHOLDER = `한 줄에 한 명씩: 이름 성별 구력(년)
-박종연 남 10
-서지수 여 4
-차종근 남 1
-이선민 여        ← 구력을 모르면 비워도 돼요`;
+const PLAYERS_PLACEHOLDER = `한 줄에 한 명씩: 이름 성별 구력(년) 소속(선택)
+박종연 남 10 한화시스템
+서지수 여 4 한화시스템
+차종근 남 1 한화생명
+이선민 여        ← 구력·소속을 모르면 비워도 돼요`;
 
 export default function EventSetupForm({ onCreate }: Props) {
   const [title, setTitle] = useState("");

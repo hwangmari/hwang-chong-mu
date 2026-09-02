@@ -1,5 +1,5 @@
-// 선수 명단 텍스트 파서. 한 줄에 한 명: `이름 성별 [구력]`
-// 예) "박종연 남 10", "서지수 여 4년", "차종근 남 1", "이선민 여" (구력 없으면 0)
+// 선수 명단 텍스트 파서. 한 줄에 한 명: `이름 성별 [구력] [팀]`
+// 예) "박종연 남 10", "서지수 여 4년", "차종근 남 1 한화생명", "이선민 여" (구력 없으면 0, 팀 없으면 비움)
 // 성별은 남/여/M/F/m/f 모두 허용. 표를 붙여 넣은 경우 "|"와 앞 번호("1.", "1)")는 걷어낸다.
 import type { Gender, Player } from "./types";
 
@@ -34,6 +34,7 @@ export function parsePlayerLine(raw: string): PlayerLine | null {
   let gender: Gender | null = null;
   let years: number | null = null;
   const nameTokens: string[] = [];
+  const teamTokens: string[] = [];
   for (const token of tokens) {
     if (gender === null && parseGender(token) !== null) {
       gender = parseGender(token);
@@ -44,12 +45,18 @@ export function parsePlayerLine(raw: string): PlayerLine | null {
       continue;
     }
     if (gender === null) nameTokens.push(token);
+    else teamTokens.push(token); // 성별(과 구력) 뒤에 남는 글자는 소속 팀
   }
 
   const name = nameTokens.join(" ").trim();
   if (!name) return { raw, player: null, error: "이름을 찾지 못했어요" };
   if (gender === null) return { raw, player: null, error: "성별(남/여)을 찾지 못했어요" };
-  return { raw, player: { name, gender, years: years ?? 0 }, error: "" };
+  const team = teamTokens.join(" ").trim();
+  return {
+    raw,
+    player: { name, gender, years: years ?? 0, ...(team ? { team } : {}) },
+    error: "",
+  };
 }
 
 export function parsePlayersText(text: string): PlayerLine[] {
@@ -75,6 +82,6 @@ export function parsePlayersText(text: string): PlayerLine[] {
 // 저장된 선수 명단 → 다시 텍스트로 (수정용)
 export function playersToText(players: Player[]): string {
   return players
-    .map((p) => `${p.name} ${p.gender === "M" ? "남" : "여"} ${p.years}`)
+    .map((p) => `${p.name} ${p.gender === "M" ? "남" : "여"} ${p.years}${p.team ? ` ${p.team}` : ""}`)
     .join("\n");
 }

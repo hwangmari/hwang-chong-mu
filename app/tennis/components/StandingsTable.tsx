@@ -88,6 +88,7 @@ export default function StandingsTable({
                     <StTag $color={GENDER_COLOR[row.player.gender]}>
                       {GENDER_LABEL[row.player.gender]}
                     </StTag>
+                    {row.player.team ? <StTag $color="#64748b">{row.player.team}</StTag> : null}
                   </StNameCell>
                 </td>
                 <td className="muted">
