@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BracketDiagram from "./BracketDiagram";
+import { demoScores, demoTeams } from "./demo";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
@@ -84,13 +85,21 @@ function saveLocal(id: string, map: ScoreMap) {
 }
 
 export default function TournamentView({ initialEvent }: Props) {
-  const [event, setEvent] = useState<TournamentEvent>(initialEvent);
-  const eventId = event.id;
+  const [savedEvent, setEvent] = useState<TournamentEvent>(initialEvent);
+  const eventId = savedEvent.id;
+  // 시연 모드: 팀·결과를 무작위로 채워 끝까지 보여준다 (저장 안 함, 이 화면에서만)
+  const [demo, setDemo] = useState<{ teams: TeamEntry[]; scores: ScoreMap } | null>(null);
+  const event = useMemo(
+    () => (demo ? { ...savedEvent, teams: demo.teams } : savedEvent),
+    [demo, savedEvent],
+  );
   const [tab, setTab] = useState<Tab>("bracket");
-  const [scores, setScores] = useState<ScoreMap>({});
+  const [savedScores, setScores] = useState<ScoreMap>({});
+  const scores = demo ? demo.scores : savedScores;
   const [mode, setMode] = useState<StorageMode>("cloud");
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [busyState, setBusy] = useState(false);
+  const busy = busyState || demo !== null; // 시연 중엔 저장 동작을 막는다
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showTeams, setShowTeams] = useState(false);
@@ -302,6 +311,22 @@ export default function TournamentView({ initialEvent }: Props) {
           <StGhostBtn type="button" onClick={() => setShowTeams((v) => !v)}>
             👥 참가 팀 보기·편집
           </StGhostBtn>
+          {demo ? (
+            <StGhostBtn type="button" onClick={() => setDemo(null)}>
+              🧹 시연 지우기
+            </StGhostBtn>
+          ) : (
+            <StGhostBtn
+              type="button"
+              onClick={() => {
+                const teams = demoTeams(savedEvent);
+                setDemo({ teams, scores: demoScores(savedEvent, teams, Date.now() % 100000) });
+                setTab("diagram");
+              }}
+            >
+              🎲 시연으로 끝까지 채워보기
+            </StGhostBtn>
+          )}
         </StActions>
       </StHeader>
 
@@ -322,7 +347,7 @@ export default function TournamentView({ initialEvent }: Props) {
         </StStatButton>
       </StStatGrid>
 
-      {teamsIncomplete && !showTeams ? (
+      {teamsIncomplete && !showTeams && !demo ? (
         <StNotice $tone="info">
           팀 이름과 선수가 아직 비어 있어요. 기본 이름(&ldquo;1번 시드 팀&rdquo;)은 마음대로 바꿀 수 있어요.{" "}
           <StGhostBtn
@@ -355,7 +380,12 @@ export default function TournamentView({ initialEvent }: Props) {
 
       <TournamentGuide event={event} />
 
-      {mode === "local" ? (
+      {demo ? (
+        <StNotice $tone="warn">
+          🎲 시연 데이터를 보는 중이에요. 팀과 결과를 무작위로 채운 것이고 저장되지 않아요. 다시 누르면 다른 결과가 나와요.
+          실제 입력을 하려면 &ldquo;시연 지우기&rdquo;를 눌러 주세요.
+        </StNotice>
+      ) : mode === "local" ? (
         <StNotice $tone="warn">
           아직 공용 저장 공간(tennis_scores 표)이 준비되지 않아 진행 기록을 이 기기에만 저장하고 있어요.
         </StNotice>
