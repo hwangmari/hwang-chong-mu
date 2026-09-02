@@ -11,7 +11,7 @@ import StandingsTable from "../components/StandingsTable";
 import { findBuiltInEvent } from "../data";
 import { formatEventDate } from "../format";
 import { buildStandings, countFinished } from "../standings";
-import { buildTimeline, nowMinutesIfEventDay } from "../timeline";
+import { buildTimeline, nowMinutesIfEventDay, playedMinutes } from "../timeline";
 import {
   deleteTennisScore,
   fetchTennisEvent,
@@ -90,7 +90,14 @@ export default function TennisEventPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState(""); // 경기 완료 등 잠깐 보여주는 안내
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   // 대진표(선수 교체) 수정 모드 — 화면에서 만든 교류전만
   const [editing, setEditing] = useState(false);
@@ -235,6 +242,14 @@ export default function TennisEventPage() {
       () => saveTennisScore(eventId, score),
       "저장하지 못했어요. 다시 눌러 주세요.",
     );
+    // 처음 완료될 때만 "얼마나 플레이했는지" 알려준다 (점수 수정 때는 조용히)
+    if (!prev?.finishedAt && event) {
+      const position = event.matches.findIndex((m) => m.no === matchNo) + 1;
+      const mins = playedMinutes(score);
+      setNotice(
+        `🏁 ${position}번 경기 완료 · ${scoreA} : ${scoreB}${mins !== null ? ` · ${mins}분 플레이` : " · 플레이 시간은 시작 버튼을 누른 경기만 기록돼요"}`,
+      );
+    }
   }
 
   async function clearScore(matchNo: number) {
@@ -406,6 +421,7 @@ export default function TennisEventPage() {
         </StNotice>
       ) : null}
       {error ? <StNotice $tone="error">{error}</StNotice> : null}
+      {notice ? <StNotice $tone="info">{notice}</StNotice> : null}
 
       {editing ? (
         <StCard>

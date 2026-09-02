@@ -17,6 +17,7 @@ import {
   StMatch,
   StMatchMeta,
   StOrderNo,
+  StPlayedTime,
   StPlayerLine,
   StReorderBtn,
   StSaveBtn,
@@ -243,14 +244,24 @@ export default function MatchCard({
       ) : null}
 
       {finished && score && !editingScore ? (
-        <StFinalScore>
-          <span>{score.scoreA}</span>
-          <StScoreColon>:</StScoreColon>
-          <span>{score.scoreB}</span>
-          <StGhostBtn type="button" disabled={busy} onClick={() => setEditingScore(true)}>
-            고치기
-          </StGhostBtn>
-        </StFinalScore>
+        <>
+          <StFinalScore>
+            <span>{score.scoreA}</span>
+            <StScoreColon>:</StScoreColon>
+            <span>{score.scoreB}</span>
+            <StGhostBtn type="button" disabled={busy} onClick={() => setEditingScore(true)}>
+              고치기
+            </StGhostBtn>
+          </StFinalScore>
+          {(() => {
+            const mins = playedMinutes(score);
+            return (
+              <StPlayedTime $known={mins !== null}>
+                {mins !== null ? `🕒 ${mins}분 플레이` : "🕒 플레이 시간 없음 · 시작 버튼을 안 누른 경기"}
+              </StPlayedTime>
+            );
+          })()}
+        </>
       ) : null}
 
       {showScoreInputs ? (

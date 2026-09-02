@@ -339,6 +339,16 @@ export const StFinalScore = styled.div`
   color: ${({ theme }) => theme.colors.gray900};
 `;
 
+export const StPlayedTime = styled.div<{ $known: boolean }>`
+  align-self: center;
+  font-size: ${({ $known }) => ($known ? "0.95rem" : "0.75rem")};
+  font-weight: 900;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  color: ${({ $known, theme }) => ($known ? theme.colors.teal600 : theme.colors.gray400)};
+  background: ${({ $known, theme }) => ($known ? theme.colors.teal50 : theme.colors.gray100)};
+`;
+
 export const StOrderNo = styled.span`
   display: inline-flex;
   align-items: center;
