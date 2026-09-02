@@ -61,8 +61,8 @@ export default function StandingsTable({
       </StCardHead>
       <StCardHint>
         승 {POINTS.win}점 · 무 {POINTS.draw}점 · 패 {POINTS.loss}점. 승점이 같으면 득실(딴 게임 −
-        내준 게임) → 딴 게임 순. 지금까지 {finished}/{total}경기 반영. 이름을 누르면 그 선수
-        일정으로 가요.
+        내준 게임) → 딴 게임 순. 지금까지 {finished}/{total}경기 반영. &ldquo;플레이&rdquo;는 시작 버튼을 누른 경기의 실제 플레이
+        시간 합계예요. 이름을 누르면 그 선수 일정으로 가요.
       </StCardHint>
       <StTableWrap>
         <StTable>
@@ -76,6 +76,7 @@ export default function StandingsTable({
               <th>패</th>
               <th>득실</th>
               <th>승점</th>
+              <th>플레이</th>
             </tr>
           </thead>
           <tbody>
@@ -99,6 +100,7 @@ export default function StandingsTable({
                 <td className="muted">{row.losses}</td>
                 <td>{row.diff > 0 ? `+${row.diff}` : row.diff}</td>
                 <td className="points">{row.points}</td>
+                <td className="muted">{row.playedMinutes > 0 ? `${row.playedMinutes}분` : "-"}</td>
               </tr>
             ))}
           </tbody>

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { outcomeForA } from "../standings";
-import { canStartOn, describeTiming, elapsedOf, type MatchTiming, type Timeline } from "../timeline";
+import { canStartOn, describeTiming, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
+import { toClock } from "../format";
 import {
   StBall,
   StCourtPick,
@@ -183,6 +184,14 @@ export default function MatchCard({
         }
       >
         ⏱ {describeTiming(timing)}
+        {state === "done" && score
+          ? (() => {
+              const mins = playedMinutes(score);
+              return mins !== null
+                ? ` · ${mins}분 플레이 (${toClock(timing.expectedStart)} → ${toClock(timing.expectedEnd)})`
+                : " · 플레이 시간 기록 없음 (시작 버튼 없이 점수만 저장)";
+            })()
+          : ""}
       </StTiming>
 
       <StTeams>

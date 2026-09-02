@@ -2,7 +2,7 @@
 
 import { buildPlayerSchedule } from "../standings";
 import { toClock } from "../format";
-import type { Timeline } from "../timeline";
+import { playedMinutes, type Timeline } from "../timeline";
 import {
   StCard,
   StCardHead,
@@ -80,10 +80,11 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
                 ? view.score.scoreB
                 : view.score.scoreA
               : null;
+            const mins = view.score ? playedMinutes(view.score) : null;
             const when = !t
               ? ""
               : t.status === "done"
-                ? `완료 ${toClock(t.expectedEnd)}`
+                ? `완료 ${toClock(t.expectedEnd)}${mins !== null ? ` · ${mins}분` : ""}`
                 : t.status === "playing"
                   ? "진행 중"
                   : t.status === "ready"

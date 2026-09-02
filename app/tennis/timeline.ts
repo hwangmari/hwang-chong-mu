@@ -46,6 +46,14 @@ export function elapsedOf(timeline: Timeline, t: MatchTiming): { minutes: number
   return { minutes, ratio: Math.min(1, minutes / Math.max(1, timeline.minutesPerMatch)) };
 }
 
+// 완료된 경기의 실제 플레이 시간(분). 시작 기록이 없으면(점수만 바로 넣은 경우) null
+export function playedMinutes(score: { startedAt?: string; finishedAt?: string } | null | undefined): number | null {
+  if (!score?.startedAt || !score.finishedAt) return null;
+  const ms = new Date(score.finishedAt).getTime() - new Date(score.startedAt).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  return Math.round(ms / 60000);
+}
+
 // 이 경기를 이 코트에서 지금 시작할 수 있는지
 export function canStartOn(timeline: Timeline, t: MatchTiming, court: Court, people: string[]): boolean {
   if (t.status !== "ready" && t.status !== "waiting") return false;

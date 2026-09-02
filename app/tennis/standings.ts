@@ -1,4 +1,5 @@
 // 점수 → 선수별 순위·개인 일정 집계 (순수 함수)
+import { playedMinutes } from "./timeline";
 import {
   POINTS,
   isFinished,
@@ -45,6 +46,7 @@ export function buildStandings(
     gamesAgainst: 0,
     diff: 0,
     points: 0,
+    playedMinutes: 0,
     rank: 0,
   }));
   const byName = new Map(rows.map((row) => [row.player.name, row]));
@@ -65,6 +67,7 @@ export function buildStandings(
       const theirs = side === "A" ? score.scoreB : score.scoreA;
 
       row.played += 1;
+      row.playedMinutes += playedMinutes(score) ?? 0;
       row.gamesFor += mine;
       row.gamesAgainst += theirs;
       if (outcome === "win") row.wins += 1;

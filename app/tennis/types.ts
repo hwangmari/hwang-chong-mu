@@ -128,6 +128,7 @@ export type PlayerStanding = {
   gamesAgainst: number;
   diff: number; // 득실
   points: number; // 승점
+  playedMinutes: number; // 실제 플레이 시간 합계(분). 시작 기록이 있는 경기만
   rank: number;
 };
 
