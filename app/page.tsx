@@ -206,7 +206,8 @@ const StFrequentCard = styled(Link)`
     display: block;
     font-size: 0.95rem;
   }
-  span {
+  /* 설명 글자에만 (아이콘 상자도 span이라 'div > span'으로 좁힌다) */
+  div > span {
     display: block;
     font-size: 0.78rem;
     color: ${({ theme }) => theme.semantic.subText};
@@ -222,11 +223,14 @@ const StFrequentCard = styled(Link)`
 `;
 
 const StFrequentIcon = styled.span`
+  flex: none;
   width: 2.4rem;
   height: 2.4rem;
   border-radius: 0.7rem;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   font-size: 1.2rem;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.semantic.border};
@@ -324,7 +328,7 @@ const StTool = styled(Link)`
     display: block;
     font-size: 0.92rem;
   }
-  span {
+  div > span {
     display: block;
     font-size: 0.76rem;
     color: ${({ theme }) => theme.semantic.subText};
@@ -339,11 +343,14 @@ const StTool = styled(Link)`
 `;
 
 const StToolIcon = styled.span`
+  flex: none;
   width: 2.1rem;
   height: 2.1rem;
   border-radius: 0.6rem;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   font-size: 1.05rem;
   background: ${({ theme }) => theme.semantic.bg};
 `;
