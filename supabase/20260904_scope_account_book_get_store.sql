@@ -55,6 +55,26 @@ drop function if exists public.account_book_can_access_workspace(text, text);
 --    → PostgREST 로는 이 표를 아예 읽고 쓸 수 없고, 아래 SECURITY DEFINER 함수만
 --      (표 소유자 권한으로) 접근한다.
 -- ────────────────────────────────────────────────────────────────────────────
+-- ─────────────────────────────────────────────────────────────
+-- 사전 보강) 이 스크립트가 참조하는 칸이 실제 표에 없으면 같은 정의로 추가한다.
+--   (코드 저장소의 예전 SQL(20260714·20260720·20260724·20260805)이 실제 저장 공간에 적용되지
+--    않은 경우가 있어 "column ... does not exist"로 멈추는 것을 막는다. 이미 있으면 아무 일도 안 한다.)
+-- ─────────────────────────────────────────────────────────────
+alter table account_book_workspaces
+  add column if not exists monthly_budget integer;
+alter table account_book_workspaces
+  add column if not exists monthly_budgets jsonb not null default '{}'::jsonb;
+alter table account_book_workspaces
+  add column if not exists fixed_templates jsonb not null default '[]'::jsonb;
+alter table account_book_workspaces
+  add column if not exists asset_goal_map jsonb not null default '{}'::jsonb;
+alter table account_book_workspaces
+  add column if not exists annual_saving_goal integer;
+alter table account_book_entries
+  add column if not exists cash_receipt boolean;
+alter table account_book_entries
+  add column if not exists benefit_excluded boolean;
+
 create table if not exists public.account_book_sessions (
   token text primary key,
   user_id text not null,
