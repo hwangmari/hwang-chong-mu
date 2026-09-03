@@ -25,8 +25,8 @@ export const MENU_CATEGORIES: MenuCategory[] = [
       {
         href: "/calc",
         icon: "💸",
-        title: "N빵 계산기",
-        desc: "복잡한 셈은 덜어내고",
+        title: "여행 경비 계산기",
+        desc: "각자 낸 대로 적으면 송금 최소화",
       },
       {
         href: "/place",

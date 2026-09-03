@@ -8,8 +8,8 @@ export const contentType = "image/png";
 export default async function Image() {
   return new ImageResponse(
     <OgTemplate
-      title="N빵 계산기"
-      subtitle="복잡한 셈은 덜어내고, 깔끔하게 정산!"
+      title="여행 경비 계산기"
+      subtitle="여행·모임 경비, 각자 낸 대로 적으면 끝!"
       emoji="💸"
       theme="green"
     />,

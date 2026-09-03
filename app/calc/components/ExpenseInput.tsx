@@ -112,7 +112,7 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
                 checked={type === "COMMON"}
                 onChange={() => setType("COMMON")}
               />
-              N빵
+              공통(같이 나눔)
             </StRadioLabel>
             <StRadioLabel $active={type === "PERSONAL"}>
               <input

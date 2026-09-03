@@ -29,7 +29,7 @@ export default function ToolDemo({ scene }: Props) {
 const SCENE_TITLE: Record<DemoScene, string> = {
   meeting: "약속 잡기 · 안 되는 날 찍기",
   overtime: "야근 계산기 · 밤 10시 넘으면 2배",
-  calc: "N빵 계산기 · 송금 횟수 줄이기",
+  calc: "여행 경비 계산기 · 송금 횟수 줄이기",
   tennis: "테니스 · 대진표 자동 배정",
   gift: "경조사비 장부 · 이름으로 찾기",
 };

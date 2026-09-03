@@ -12,7 +12,7 @@ import { displayFont } from "@/lib/fonts";
 // 첫 화면 오른쪽 "자주 쓰는 도구" 3개 — 링크로 가장 많이 공유되는 것들
 const FREQUENT = [
   { href: "/meeting", icon: "📅", title: "약속 잡기", desc: "안 되는 날만 찍으면 끝" },
-  { href: "/calc", icon: "💸", title: "N빵 계산기", desc: "송금 횟수까지 줄여서" },
+  { href: "/calc", icon: "💸", title: "여행 경비 계산기", desc: "송금 횟수까지 줄여서" },
   { href: "/overtime", icon: "🌙", title: "야근 계산기", desc: "보상휴가 일수까지 자동" },
 ];
 

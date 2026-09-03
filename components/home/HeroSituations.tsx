@@ -35,7 +35,7 @@ const SITUATIONS: Situation[] = [
   {
     question: "여행 다녀왔는데, 누가 누구한테 얼마 보내죠?",
     answer: "숙소·식사·기름값을 각자 낸 대로 적으면, 송금 횟수를 가장 적게 줄여서 알려줘요.",
-    cta: "N빵 계산하기",
+    cta: "여행 경비 계산하기",
     href: "/calc",
     scene: "calc",
     icon: "💸",

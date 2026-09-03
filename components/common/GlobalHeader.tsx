@@ -17,7 +17,7 @@ const ROUTE_CONFIG = [
   { path: "/schedule", label: "업무 캘린더" },
   { path: "/meeting", label: "약속 잡기" },
   { path: "/place", label: "장소잡기" },
-  { path: "/calc", label: "N빵 계산기" },
+  { path: "/calc", label: "여행 경비 계산기" },
   { path: "/overtime", label: "야근 계산기" },
   { path: "/account-book", label: "가계부" },
   { path: "/daily", label: "일일 기록" },

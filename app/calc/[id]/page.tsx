@@ -127,7 +127,7 @@ export default function CalcDetailParamsPage() {
             },
             {
               icon: "✅",
-              title: "정확한 N빵 계산",
+              title: "공통 비용만 정확하게",
               description:
                 "개인 지출은 '개인'으로 설정해 보세요. 공통 비용만 똑똑하게 계산해 드릴게요.",
             },

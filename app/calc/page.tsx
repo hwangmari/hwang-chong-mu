@@ -34,10 +34,10 @@ export default function CreateRoomPage() {
       <StWrapper>
         <PageIntro
           icon="💸"
-          title="황총무의 똑똑한 엔빵"
+          title="황총무의 여행 경비 계산기"
           description={
             <>
-              누가 누구에게 얼마를? 머리 아픈 계산은 이제 그만!
+              여행·모임 뒤에 누가 누구에게 얼마를? 머리 아픈 계산은 이제 그만!
               <br />
               <StHighlight $color="red">복잡한 송금</StHighlight> 대신{" "}
               <StHighlight $color="blue">최소한의 이체</StHighlight>로
