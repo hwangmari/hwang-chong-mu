@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useModal } from "@/components/common/ModalProvider";
+import { linkRoomToAccount } from "@/lib/roomServices";
 
 export default function useGameRoom(roomId: string) {
   const router = useRouter();
@@ -73,9 +74,12 @@ export default function useGameRoom(roomId: string) {
       setSelectedGame(room.game_type || "telepathy");
       if (room.status === "playing") setStatus("playing");
     }
+    // 비밀번호 컬럼은 절대 받아오지 않는다. 화면이 쓰는 값만 명시해서 가져온다.
     const { data: members } = await supabase
       .from("game_participants")
-      .select("*")
+      .select(
+        "id, room_id, nickname, is_host, message, score, selected_answer, joined_at",
+      )
       .eq("room_id", roomId)
       .order("joined_at", { ascending: true });
     if (members) {
@@ -133,6 +137,13 @@ export default function useGameRoom(roomId: string) {
   };
 
 
+  // 참가에 성공하면 로그인 사용자의 "내 방"에 이 게임방을 등록한다.
+  // 참가 비밀번호는 저장하지 않는다 — 다시 들어올 땐 한 번 더 물어본다.
+  // (비로그인은 서버가 401 → 무시)
+  const rememberRoomInAccount = () => {
+    linkRoomToAccount("game", roomId, roomData?.title ?? "게임방");
+  };
+
   const handleJoin = async () => {
     if (!joinName || !joinPw) {
       await openAlert("필수 입력값을 확인해주세요.");
@@ -140,35 +151,34 @@ export default function useGameRoom(roomId: string) {
     }
     setLoading(true);
     try {
-      const existing = participants.find((p) => p.nickname === joinName);
-      if (existing) {
-        if (existing.password === joinPw) {
-          localStorage.setItem("my_id", existing.id);
-          localStorage.setItem("my_nickname", joinName);
-          setMyId(existing.id);
-          setIsJoined(true);
-          if (existing.is_host) setIsHost(true);
-        } else await openAlert("비밀번호 불일치");
-        return;
+      // 처음 참가하는 것도, 같은 닉네임으로 다시 들어오는 것도 서버가 판단한다.
+      // 비밀번호는 서버 안에서만 대조하고 브라우저로 내려오지 않는다.
+      const { data, error } = await supabase.rpc("game_join", {
+        p_room_id: roomId,
+        p_nickname: joinName,
+        p_password: joinPw,
+        p_message: joinMsg,
+      });
+      if (error) {
+        if (error.message?.includes("WRONG_PASSWORD")) {
+          await openAlert("비밀번호 불일치");
+          return;
+        }
+        throw error;
       }
-      const { data, error } = await supabase
-        .from("game_participants")
-        .insert([
-          {
-            room_id: roomId,
-            nickname: joinName,
-            password: joinPw,
-            message: joinMsg,
-            is_host: false,
-          },
-        ])
-        .select()
-        .single();
-      if (error) throw error;
-      localStorage.setItem("my_id", data.id);
+      const me = data as {
+        id: string;
+        is_host?: boolean;
+      } | null;
+      if (!me?.id) throw new Error("NO_PARTICIPANT");
+
+      localStorage.setItem("my_id", me.id);
       localStorage.setItem("my_nickname", joinName);
-      setMyId(data.id);
+      setMyId(me.id);
       setIsJoined(true);
+      if (me.is_host) setIsHost(true);
+      rememberRoomInAccount();
+      fetchRoomData();
     } catch (e) {
       console.error(e);
       await openAlert("오류 발생");
@@ -184,17 +194,16 @@ export default function useGameRoom(roomId: string) {
       return;
     }
     try {
-      await supabase.from("game_participants").insert([
-        {
-          room_id: roomId,
-          nickname: guestName,
-          password: "guest",
-          message: "깍두기 🎲",
-          is_host: false,
-        },
-      ]);
+      // 깍두기는 서버가 아무도 모르는 임의의 비밀번호로 넣는다.
+      // (예전에는 'guest' 라 아무나 그 이름을 가로챌 수 있었다.)
+      const { error } = await supabase.rpc("game_add_guest", {
+        p_room_id: roomId,
+        p_nickname: guestName.trim(),
+      });
+      if (error) throw error;
       setGuestName("");
     } catch (e) {
+      console.error(e);
       await openAlert("추가 실패");
     }
   };
@@ -203,8 +212,15 @@ export default function useGameRoom(roomId: string) {
     if (!(await openConfirm(`'${name}' 님을 삭제하시겠습니까?`))) return;
     setParticipants((prev) => prev.filter((p) => p.id !== targetId));
     try {
-      await supabase.from("game_participants").delete().eq("id", targetId);
+      // 정말 이 방의 방장이 부탁한 것인지 서버가 확인한다.
+      const { error } = await supabase.rpc("game_kick", {
+        p_room_id: roomId,
+        p_participant_id: targetId,
+        p_host_id: myId,
+      });
+      if (error) throw error;
     } catch (e) {
+      console.error(e);
       fetchRoomData();
     }
   };

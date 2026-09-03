@@ -4,6 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  ROOM_SECRET_NOTICE,
+  ROOM_SERVICE_META,
+  ROOM_SERVICES,
+  isRoomService,
+  toRoomLabel,
+  type RoomService,
+} from "@/lib/roomServices";
+import { loadMyEvents } from "@/app/tennis/myEvents";
+import { STORAGE_ROOM_KEY } from "@/app/overtime/constants";
 
 type LinkRow = {
   service: string;
@@ -20,17 +30,16 @@ function readLocalCandidate(service: string): {
     if (service === "workout") {
       const raw = localStorage.getItem("hwang-workout-session");
       if (!raw) return null;
+      // 방 비밀번호는 계정에 저장하지 않는다(ROOM_SECRET_NOTICE 와 같은 원칙).
       const s = JSON.parse(raw) as {
         roomId?: string;
         roomName?: string;
-        password?: string;
       };
       if (!s.roomId) return null;
       return {
         resourceRef: {
           roomId: s.roomId,
           roomName: s.roomName ?? "",
-          password: s.password ?? "",
         },
         label: s.roomName || "운동방",
       };
@@ -93,22 +102,42 @@ const SERVICE_META: Record<
   },
 };
 
-// "내 방"(약속·정산)은 서비스당 여러 개일 수 있어 rooms 시스템으로 관리한다.
+// "내 방"은 서비스당 여러 개일 수 있어 rooms 시스템으로 관리한다.
+// 아이콘·이름·링크는 lib/roomServices.ts에서 가져와 /my와 똑같이 보이게 한다.
 type RoomRow = {
   id: string;
-  service: "meeting" | "calc";
+  service: RoomService;
   roomId: string;
   label: string;
   createdAt: string;
 };
 
-const ROOM_SERVICE_META: Record<
-  "meeting" | "calc",
-  { icon: string; name: string; path: string }
-> = {
-  meeting: { icon: "📅", name: "약속잡기", path: "/meeting/room" },
-  calc: { icon: "🧮", name: "정산방", path: "/calc" },
-};
+// 이 기기의 localStorage에 남아 있는 방을 찾아 "바로 등록" 후보로 보여준다.
+// 비밀번호·접근 코드는 읽지도, 보내지도 않는다.
+function readLocalRoomCandidates(
+  service: RoomService,
+): { roomId: string; label: string }[] {
+  try {
+    if (service === "tennis") {
+      return loadMyEvents()
+        .filter((event) => event.id)
+        .slice(0, 5)
+        .map((event) => ({
+          roomId: event.id,
+          label: toRoomLabel(event.title) || "교류전",
+        }));
+    }
+    if (service === "overtime") {
+      const roomRef = localStorage.getItem(STORAGE_ROOM_KEY);
+      if (!roomRef) return [];
+      return [{ roomId: roomRef, label: roomRef }];
+    }
+  } catch {
+    return [];
+  }
+  // 장소·게임·일일 기록은 이 기기에 방 정보를 남기지 않아 주소를 붙여넣어 등록한다.
+  return [];
+}
 
 function AccountContent() {
   const router = useRouter();
@@ -184,12 +213,11 @@ function AccountContent() {
   };
 
   const roomsByService = useMemo(() => {
-    const map: Record<"meeting" | "calc", RoomRow[]> = {
-      meeting: [],
-      calc: [],
-    };
+    const map = Object.fromEntries(
+      ROOM_SERVICES.map((service) => [service, [] as RoomRow[]]),
+    ) as Record<RoomService, RoomRow[]>;
     for (const r of rooms) {
-      if (r.service === "meeting" || r.service === "calc") map[r.service].push(r);
+      if (isRoomService(r.service)) map[r.service].push(r);
     }
     return map;
   }, [rooms]);
@@ -208,7 +236,8 @@ function AccountContent() {
     setBusy(null);
   };
 
-  const addRoom = async (service: "meeting" | "calc") => {
+  // 방 주소(URL)나 방 번호를 붙여넣어 직접 등록
+  const addRoom = async (service: RoomService) => {
     const raw = (roomInputs[service] || "").trim();
     // URL이면 마지막 경로 조각을 방 id로 사용(habit/diet와 동일)
     const segment = raw.includes("/")
@@ -233,6 +262,26 @@ function AccountContent() {
       const data = (await res.json()) as { rooms?: RoomRow[] };
       setRooms(data.rooms ?? []);
       setRoomInputs((prev) => ({ ...prev, [service]: "" }));
+    }
+    setBusy(null);
+  };
+
+  // 이 기기에서 찾은 방을 그대로 등록 (비밀번호·접근 코드는 보내지 않는다)
+  const addRoomDirect = async (
+    service: RoomService,
+    roomId: string,
+    label: string,
+  ) => {
+    const key = `${service}:add`;
+    setBusy(key);
+    const res = await fetch("/api/auth/rooms", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ service, roomId, label: toRoomLabel(label) }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { rooms?: RoomRow[] };
+      setRooms(data.rooms ?? []);
     }
     setBusy(null);
   };
@@ -343,12 +392,17 @@ function AccountContent() {
         <StRoomsSection>
           <StRoomsTitle>내 방</StRoomsTitle>
           <StRoomsSub>
-            약속·정산 방은 생성 시 자동으로 여기에 등록돼요.
+            방은 만들거나 들어갈 때 자동으로 여기에 등록돼요.
           </StRoomsSub>
+          <StRoomsSub>{ROOM_SECRET_NOTICE}</StRoomsSub>
 
-          {(["meeting", "calc"] as const).map((service) => {
+          {ROOM_SERVICES.map((service) => {
             const meta = ROOM_SERVICE_META[service];
             const group = roomsByService[service];
+            const registered = new Set(group.map((room) => room.roomId));
+            const candidates = readLocalRoomCandidates(service).filter(
+              (candidate) => !registered.has(candidate.roomId),
+            );
             return (
               <StRoomGroup key={service}>
                 <StRoomGroupHead>
@@ -356,9 +410,7 @@ function AccountContent() {
                   {meta.name}
                 </StRoomGroupHead>
                 {group.length === 0 ? (
-                  <StHint>
-                    아직 없어요. {meta.name} 방을 만들면 자동으로 등록돼요.
-                  </StHint>
+                  <StHint>아직 없어요. {meta.emptyHint}</StHint>
                 ) : (
                   group.map((room) => {
                     const busyKey = `${service}:${room.roomId}`;
@@ -368,9 +420,7 @@ function AccountContent() {
                         <StActions>
                           <StPrimaryBtn
                             type="button"
-                            onClick={() =>
-                              router.push(`${meta.path}/${room.roomId}`)
-                            }
+                            onClick={() => router.push(meta.href(room.roomId))}
                           >
                             열기
                           </StPrimaryBtn>
@@ -388,6 +438,29 @@ function AccountContent() {
                     );
                   })
                 )}
+                {candidates.length > 0 ? (
+                  <StCandidateHead>이 기기에서 찾은 방</StCandidateHead>
+                ) : null}
+                {candidates.map((candidate) => (
+                  <StRoomCard key={candidate.roomId}>
+                    <StRoomLabel>{candidate.label}</StRoomLabel>
+                    <StActions>
+                      <StPrimaryBtn
+                        type="button"
+                        disabled={busy === `${service}:add`}
+                        onClick={() =>
+                          void addRoomDirect(
+                            service,
+                            candidate.roomId,
+                            candidate.label,
+                          )
+                        }
+                      >
+                        등록
+                      </StPrimaryBtn>
+                    </StActions>
+                  </StRoomCard>
+                ))}
                 <StRoomAddRow>
                   <StRoomInput
                     value={roomInputs[service] || ""}
@@ -614,6 +687,14 @@ const StRoomCard = styled.div`
   & + & {
     margin-top: 0.5rem;
   }
+`;
+
+const StCandidateHead = styled.p`
+  margin-top: 0.7rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 
 const StRoomAddRow = styled.div`

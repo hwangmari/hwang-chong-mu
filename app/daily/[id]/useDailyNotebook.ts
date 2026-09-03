@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   changeDailyAccessCode,
   fetchDailyMonthEntries,
@@ -23,9 +23,12 @@ import {
 } from "../storage";
 import { getErrorMessage } from "./helpers";
 import { useModal } from "@/components/common/ModalProvider";
+import { linkRoomToAccount } from "@/lib/roomServices";
 
 export function useDailyNotebook(notebookId: string | undefined) {
   const { openAlert } = useModal();
+  // 같은 기록장을 계정에 한 번만 등록하려고 기억해 둔다(달을 넘길 때마다 다시 보내지 않게).
+  const linkedNotebookRef = useRef("");
   const [notebook, setNotebook] = useState<DailyNotebookConfig | null>(null);
   const [entries, setEntries] = useState<DailyNotebookEntry[]>([]);
   const [monthChecklist, setMonthChecklist] = useState<string[]>([]);
@@ -101,6 +104,14 @@ export function useDailyNotebook(notebookId: string | undefined) {
         setStoredDailyAccessCode(notebookId, accessCode);
         setAccessError("");
         setLoadError("");
+
+        // 비밀번호가 맞아 기록장이 열렸을 때만 계정의 "내 방"에 등록한다.
+        // 접근 비밀번호는 저장하지 않는다 — 다시 열 때 한 번 더 물어본다.
+        // (비로그인은 서버가 401 → 무시)
+        if (linkedNotebookRef.current !== notebookId) {
+          linkedNotebookRef.current = notebookId;
+          linkRoomToAccount("daily", notebookId, nextNotebook.title);
+        }
       } catch (error) {
         console.error("기록장 불러오기 실패:", error);
         if (!active) return;

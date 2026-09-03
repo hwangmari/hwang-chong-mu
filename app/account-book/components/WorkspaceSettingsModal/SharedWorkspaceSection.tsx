@@ -146,7 +146,8 @@ export default function SharedWorkspaceSection({
                   onUpdateSharedWorkspace(
                     workspace.id,
                     roomDrafts[workspace.id]?.name.trim() || workspace.name,
-                    roomDrafts[workspace.id]?.password.trim() || workspace.password,
+                    // 비워두면 서버가 기존 비밀번호를 그대로 둔다
+                    roomDrafts[workspace.id]?.password.trim() || "",
                   )
                 }
               >
@@ -170,7 +171,8 @@ export default function SharedWorkspaceSection({
                 if (!user) return null;
                 const draft = memberDrafts[workspace.id]?.[user.id] || {
                   name: user.name,
-                  password: user.password,
+                  // 비밀번호는 화면으로 내려오지 않는다. 바꿀 때만 새로 입력한다.
+                  password: "",
                 };
 
                 return (
@@ -208,7 +210,8 @@ export default function SharedWorkspaceSection({
                           onUpdateUser(
                             user.id,
                             draft.name.trim() || user.name,
-                            draft.password.trim() || user.password,
+                            // 비워두면 서버가 기존 비밀번호를 그대로 둔다
+                            draft.password.trim(),
                           )
                         }
                       >

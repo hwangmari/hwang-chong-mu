@@ -11,8 +11,46 @@ import {
 
 export const ACCOUNT_BOOK_STORE_KEY = "hwang-account-book-store-v1";
 export const LEGACY_ACCOUNT_BOOK_KEY = "hwang-account-book-v2";
+// 지금 로그인한 사람 (화면 표시용).
+export const ACCOUNT_BOOK_ACTIVE_USER_KEY = "hwang-account-book-active-user";
+// 비밀번호를 맞힌 사람에게만 서버가 발급하는 임시 출입증.
+// 서버는 이 값으로만 "누구인지"를 판단한다. 사용자 id는 비밀이 아니라서 신분증이 될 수 없다.
+export const ACCOUNT_BOOK_SESSION_KEY = "hwang-account-book-session";
 
-const DEFAULT_PASSWORD = "6155";
+export function getStoredActiveUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACCOUNT_BOOK_ACTIVE_USER_KEY);
+}
+
+export function setStoredActiveUserId(userId: string | null) {
+  if (typeof window === "undefined") return;
+  if (userId) {
+    window.localStorage.setItem(ACCOUNT_BOOK_ACTIVE_USER_KEY, userId);
+    return;
+  }
+  window.localStorage.removeItem(ACCOUNT_BOOK_ACTIVE_USER_KEY);
+}
+
+export function getStoredSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACCOUNT_BOOK_SESSION_KEY);
+}
+
+export function setStoredSessionToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) {
+    window.localStorage.setItem(ACCOUNT_BOOK_SESSION_KEY, token);
+    return;
+  }
+  window.localStorage.removeItem(ACCOUNT_BOOK_SESSION_KEY);
+}
+
+/** 출입증이 만료되었거나 로그아웃할 때 — 출입증과 활성 사용자를 함께 지운다. */
+export function clearStoredAccountBookSession() {
+  setStoredSessionToken(null);
+  setStoredActiveUserId(null);
+}
+
 const DEFAULT_VERSION = 1;
 const DEFAULT_ANNUAL_SAVING_GOAL = 1_200_000;
 const SAMPLE_USER_IDS = new Set(["user-1", "user-2"]);
@@ -93,13 +131,11 @@ function createLegacySeedStore(): AccountBookStore {
     {
       id: "user-1",
       name: "사용자1",
-      password: DEFAULT_PASSWORD,
       personalWorkspaceId: user1WorkspaceId,
     },
     {
       id: "user-2",
       name: "사용자2",
-      password: DEFAULT_PASSWORD,
       personalWorkspaceId: user2WorkspaceId,
     },
   ];
@@ -109,7 +145,6 @@ function createLegacySeedStore(): AccountBookStore {
       id: user1WorkspaceId,
       name: "사용자1 개인 가계부",
       type: "personal",
-      password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
       monthlyBudgets: {},
@@ -121,7 +156,6 @@ function createLegacySeedStore(): AccountBookStore {
       id: user2WorkspaceId,
       name: "사용자2 개인 가계부",
       type: "personal",
-      password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
       monthlyBudgets: {},
@@ -133,7 +167,6 @@ function createLegacySeedStore(): AccountBookStore {
       id: sharedWorkspaceId,
       name: "공용 가계부방",
       type: "shared",
-      password: DEFAULT_PASSWORD,
       annualSavingGoal: DEFAULT_ANNUAL_SAVING_GOAL,
       monthlyBudget: 0,
       monthlyBudgets: {},
@@ -214,7 +247,6 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
     users: users.map((user, index) => ({
       id: user.id || `user-${index + 1}`,
       name: user.name || `사용자${index + 1}`,
-      password: user.password || DEFAULT_PASSWORD,
       personalWorkspaceId:
         user.personalWorkspaceId ||
         workspaces.find((workspace) => workspace.ownerUserId === user.id)?.id ||
@@ -224,7 +256,6 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
       id: workspace.id || `workspace-${index + 1}`,
       name: workspace.name || `가계부방 ${index + 1}`,
       type: workspace.type === "shared" ? "shared" : "personal",
-      password: workspace.password || DEFAULT_PASSWORD,
       annualSavingGoal:
         Number.isFinite(Number(workspace.annualSavingGoal)) &&
         Number(workspace.annualSavingGoal) > 0
@@ -403,7 +434,9 @@ function removeSeedDataIfActualExists(store: AccountBookStore): AccountBookStore
           (workspace) =>
             workspace.type === "personal" && workspace.ownerUserId === user.id,
         )?.id ||
-        (validWorkspaceIds.has(user.personalWorkspaceId)
+        // 로그인 전에는 방 목록이 비어 있다(서버가 내 방만 내려주기 때문).
+        // 이때까지 개인방 id를 지워버리면 닉네임 로그인 후 갈 곳을 잃는다.
+        (workspaces.length === 0 || validWorkspaceIds.has(user.personalWorkspaceId)
           ? user.personalWorkspaceId
           : ""),
     })),
@@ -439,11 +472,31 @@ export function getAccountBookStore(): AccountBookStore {
   }
 }
 
+// 예전 캐시(또는 예전 코드가 남긴 값)에 비밀번호가 섞여 있을 수 있어,
+// 저장하기 직전에 users/workspaces의 password 키를 한 번 더 털어낸다.
+// (읽을 때는 normalizeStore가 화이트리스트로 재조립하므로 이미 사라진다.)
+function stripStoreSecrets(store: AccountBookStore): AccountBookStore {
+  const drop = <T extends object>(item: T) => {
+    const copy = { ...item } as T & { password?: unknown };
+    delete copy.password;
+    return copy as T;
+  };
+
+  return {
+    ...store,
+    users: store.users.map(drop),
+    workspaces: store.workspaces.map(drop),
+  };
+}
+
 export function saveAccountBookStore(store: AccountBookStore) {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(ACCOUNT_BOOK_STORE_KEY, JSON.stringify(store));
+  window.localStorage.setItem(
+    ACCOUNT_BOOK_STORE_KEY,
+    JSON.stringify(stripStoreSecrets(store)),
+  );
 }
 
 export function getWorkspaceById(store: AccountBookStore, workspaceId: string) {

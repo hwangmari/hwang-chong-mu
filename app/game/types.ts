@@ -4,7 +4,6 @@ export interface GameParticipant {
   nickname: string;
   is_host?: boolean;
   message?: string;
-  password?: string;
   score?: number;
   selected_answer?: "A" | "B" | null;
 }

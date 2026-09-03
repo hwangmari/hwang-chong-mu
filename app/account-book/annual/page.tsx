@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
+import { verifyAccountBookWorkspacePassword } from "../repository";
 import AssetBoardSection from "../components/AssetBoardSection";
 import AssetAnnualFlow from "../components/AssetAnnualFlow";
 import { useAssetData } from "../hooks/useAssetData";
@@ -475,7 +476,9 @@ function AccountBookAnnualContent() {
 
   return (
     <AccountBookLockGate
-      password={workspace.password}
+      onVerify={(input) =>
+        verifyAccountBookWorkspacePassword(workspace.id, input)
+      }
       accessKey={`hwang-account-book-access-${workspace.id}`}
       title={`${workspace.name} 비밀번호`}
       description="연간 상세도 같은 비밀번호로 확인합니다."

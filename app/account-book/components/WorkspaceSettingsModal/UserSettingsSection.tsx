@@ -67,7 +67,8 @@ export default function UserSettingsSection({
                 onUpdateUser(
                   user.id,
                   userDrafts[user.id]?.name || user.name,
-                  userDrafts[user.id]?.password || user.password,
+                  // 비워두면 서버가 기존 비밀번호를 그대로 둔다
+                  userDrafts[user.id]?.password || "",
                 )
               }
             >

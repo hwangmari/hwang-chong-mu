@@ -39,18 +39,20 @@ export type ResolvedAccountEntry = AccountEntry & {
   sourceWorkspaceName?: string;
 };
 
+// 비밀번호는 클라이언트로 절대 내려오지 않는다.
+// 비밀번호 확인은 서버 RPC(account_book_user_login)로만 한다.
 export type AccountBookUser = {
   id: string;
   name: string;
-  password: string;
   personalWorkspaceId: string;
 };
 
+// 비밀번호는 클라이언트로 절대 내려오지 않는다.
+// 방 잠금 해제는 서버 RPC(account_book_workspace_unlock)로만 한다.
 export type AccountBookWorkspace = {
   id: string;
   name: string;
   type: WorkspaceType;
-  password: string;
   annualSavingGoal?: number;
   // 월 소비지출 예산(원). 0 또는 미설정 = 예산 미사용 (레거시 단일값, 폴백으로 유지)
   monthlyBudget?: number;

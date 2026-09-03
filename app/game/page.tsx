@@ -16,6 +16,7 @@ import {
 import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
 import { useModal } from "@/components/common/ModalProvider";
+import { linkRoomToAccount } from "@/lib/roomServices";
 
 const GAME_OPTIONS = [
   { id: "ladder", name: "사다리 타기", icon: "🪜", desc: "운명의 짝대기 긋기" },
@@ -70,24 +71,28 @@ export default function GameLobbyPage() {
 
       if (roomError) throw roomError;
 
-      const { data: participant, error: pError } = await supabase
-        .from("game_participants")
-        .insert([
-          {
-            room_id: room.id,
-            nickname,
-            password,
-            message: message || "방장 등판!",
-            is_host: true,
-          },
-        ])
-        .select()
-        .single();
+      // 방장도 일반 참가와 같은 서버 함수로 들어간다.
+      // 방금 만든 빈 방이라 첫 참가자인 방장이 자동으로 방장 표시를 받는다.
+      // 비밀번호는 서버에서 암호화해 저장하고, 브라우저로는 돌아오지 않는다.
+      const { data: participant, error: pError } = await supabase.rpc(
+        "game_join",
+        {
+          p_room_id: room.id,
+          p_nickname: nickname,
+          p_password: password,
+          p_message: message || "방장 등판!",
+        },
+      );
 
       if (pError) throw pError;
+      if (!participant?.id) throw new Error("NO_PARTICIPANT");
 
       localStorage.setItem("my_id", participant.id);
       localStorage.setItem("my_nickname", nickname);
+
+      // 로그인 사용자면 내 계정의 "내 방"에 자동 등록(비로그인은 서버가 401 → 무시)
+      // 방 비밀번호는 저장하지 않는다. 다시 들어갈 때 한 번 더 물어본다.
+      linkRoomToAccount("game", room.id, roomTitle);
 
       router.push(`/game/${room.id}`);
     } catch (error) {

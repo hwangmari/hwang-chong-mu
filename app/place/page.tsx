@@ -14,6 +14,7 @@ import {
 } from "@/components/styled/layout.styled";
 import { NaverLocalItem } from "@/types/dinner";
 import { createDinnerRoom, addDinnerPlaces } from "@/services/dinner";
+import { linkRoomToAccount } from "@/lib/roomServices";
 import NaverMap from "./NaverMap";
 import { useModal } from "@/components/common/ModalProvider";
 
@@ -114,6 +115,8 @@ export default function DinnerPage() {
         map_y: s.mapy,
       }));
       await addDinnerPlaces(room.id, places);
+      // 로그인 사용자면 내 계정의 "내 방"에 자동 등록(비로그인은 서버가 401 → 무시)
+      linkRoomToAccount("place", room.id, title.trim());
       router.push(`/place/${room.id}`);
     } catch {
       await openAlert("방 생성에 실패했습니다.");

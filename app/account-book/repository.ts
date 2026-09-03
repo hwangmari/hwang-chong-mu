@@ -15,10 +15,13 @@ import {
 import {
   ACCOUNT_BOOK_STORE_KEY,
   LEGACY_ACCOUNT_BOOK_KEY,
+  clearStoredAccountBookSession,
   getAccountBookStore,
+  getStoredSessionToken,
   getWorkspaceById,
   normalizeStore,
   saveAccountBookStore,
+  setStoredSessionToken,
   toggleShareLink,
 } from "./storage";
 import {
@@ -82,6 +85,40 @@ function isLikelyNetworkError(error: unknown) {
     message.includes("network") ||
     message.includes("load failed")
   );
+}
+
+// 마이그레이션 SQL을 아직 실행하지 않은 상태(= 새 RPC가 DB에 없음)를 알아본다.
+// PostgREST는 없는 함수를 부르면 PGRST202, Postgres는 42883(undefined_function)을 준다.
+// 에러 코드만 본다. 메시지 문구("does not exist")로 판단하면 컬럼/테이블이 없다는
+// 전혀 다른 에러까지 "구버전이구나"로 오해해 예전 전체 노출 경로로 되돌아갈 수 있다.
+function isMissingFunctionError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code =
+    "code" in error && typeof error.code === "string" ? error.code : "";
+
+  return code === "PGRST202" || code === "42883";
+}
+
+// 서버가 출입증을 거부하면 'UNAUTHORIZED' 라는 말로 알려준다.
+// 이때는 저장해 둔 출입증을 버리고 다시 로그인하게 해야 한다.
+export function isAccountBookUnauthorizedError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toUpperCase()
+      : "";
+  const details =
+    "details" in error && typeof error.details === "string"
+      ? error.details.toUpperCase()
+      : "";
+
+  return message.includes("UNAUTHORIZED") || details.includes("UNAUTHORIZED");
 }
 
 function canAccessWorkspaceForWrite(
@@ -184,16 +221,31 @@ function assertMonthlyMemoPermission(
   }
 }
 
+// 저장/삭제 RPC들은 마지막에 무인자 account_book_get_store()를 호출해 그 결과를 돌려준다.
+// 그 무인자 버전은 이제 "빈 껍데기"라서(전체 노출을 막으려고 그렇게 바꿨다) 쓸 수 없다.
+// 그래서 반환값은 버리고, 지금 로그인한 사람 기준으로 다시 한 번 받아온다.
 async function callStoreRpc<TParams extends Record<string, unknown>>(
   name: string,
   params?: TParams,
 ) {
-  const { data, error } = await supabase.rpc(name, params);
+  const { error } = await supabase.rpc(name, params);
   if (error) {
+    if (isAccountBookUnauthorizedError(error)) {
+      clearStoredAccountBookSession();
+    }
     throw error;
   }
 
-  return normalizeRpcStore((data || null) as Partial<AccountBookStore> | null);
+  return fetchAccountBookStore();
+}
+
+/** 출입증이 필요한 RPC 를 부를 때 쓰는 파라미터. 출입증이 없으면 바로 막는다. */
+function requireSessionToken() {
+  const token = getStoredSessionToken();
+  if (!token) {
+    throw new Error("UNAUTHORIZED: 로그인이 필요합니다.");
+  }
+  return token;
 }
 
 export function clearLegacyAccountBookLocalData() {
@@ -202,15 +254,123 @@ export function clearLegacyAccountBookLocalData() {
   window.localStorage.removeItem(LEGACY_ACCOUNT_BOOK_KEY);
 }
 
+/** 로그인 화면에 보여줄 사용자 목록. 비밀번호는 서버가 아예 내려주지 않는다. */
+export async function fetchAccountBookUserList(): Promise<AccountBookUser[]> {
+  const { data, error } = await supabase.rpc("account_book_list_users");
+  if (error) {
+    throw error;
+  }
+
+  return (Array.isArray(data) ? data : []) as AccountBookUser[];
+}
+
+/**
+ * 로그인 — 비밀번호가 맞으면 서버가 임시 출입증(token)을 발급한다.
+ * 그 출입증을 localStorage 에 넣어두고, 이후 모든 요청에 함께 보낸다.
+ * 비밀번호 자체는 절대 저장하지 않는다.
+ */
+export async function verifyAccountBookUserPassword(
+  userId: string,
+  password: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("account_book_user_login", {
+    p_user_id: userId,
+    p_password: password,
+  });
+  if (error) {
+    throw error;
+  }
+
+  const payload = (data || null) as { ok?: boolean; token?: string } | null;
+  if (!payload?.ok || !payload.token) {
+    return false;
+  }
+
+  setStoredSessionToken(payload.token);
+  return true;
+}
+
+/** 로그아웃 — 서버의 출입증을 폐기하고 브라우저에 남은 것도 지운다. */
+export async function logoutAccountBook() {
+  const token = getStoredSessionToken();
+  clearStoredAccountBookSession();
+  if (!token) return;
+
+  try {
+    await supabase.rpc("account_book_logout", { p_token: token });
+  } catch (error) {
+    console.warn("가계부 로그아웃 처리에 실패했습니다(무시).", error);
+  }
+}
+
+/** 가계부방 비밀번호 확인 — 출입증 주인이 그 방 멤버일 때만 물어볼 수 있다. */
+export async function verifyAccountBookWorkspacePassword(
+  workspaceId: string,
+  password: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("account_book_workspace_unlock", {
+    p_token: requireSessionToken(),
+    p_workspace_id: workspaceId,
+    p_password: password,
+  });
+  if (error) {
+    if (isAccountBookUnauthorizedError(error)) {
+      clearStoredAccountBookSession();
+    }
+    throw error;
+  }
+
+  return data === true;
+}
+
+/**
+ * 가계부 데이터 불러오기.
+ *
+ * 예전에는 인자 없는 account_book_get_store()가 "모든 사람의 비밀번호와 모든 내역"을
+ * 통째로 내려줬다. 이제는 로그인할 때 받은 출입증을 함께 보내고,
+ * 서버가 그 출입증 주인이 볼 수 있는 범위만 내려준다.
+ *
+ * - 로그인 전(출입증 없음): 사용자 목록만 받아 껍데기 store를 만든다.
+ * - 출입증이 만료/무효면: 저장해 둔 출입증을 지우고 로그인 전 상태로 되돌린다.
+ * - 마이그레이션 SQL을 아직 실행하지 않았다면(새 RPC 없음) 예전 무인자 호출로 되돌아가
+ *   앱이 멈추지 않게 한다. 읽기에만 적용되는 폴백이고, 로그인·수정은 그냥 막힌다.
+ */
 export async function fetchAccountBookStore() {
   try {
-    const { data, error } = await supabase.rpc("account_book_get_store");
-    if (error) {
-      throw error;
+    const token = getStoredSessionToken();
+
+    if (!token) {
+      try {
+        const users = await fetchAccountBookUserList();
+        return normalizeRpcStore({ version: 1, users });
+      } catch (error) {
+        if (!isMissingFunctionError(error)) {
+          throw error;
+        }
+        // SQL 실행 전 폴백(읽기 전용)
+        return fetchLegacyAccountBookStore();
+      }
     }
 
-    const rawStore = (data || null) as Partial<AccountBookStore> | null;
-    return normalizeRpcStore(rawStore);
+    const { data, error } = await supabase.rpc("account_book_get_store", {
+      p_token: token,
+    });
+
+    if (error) {
+      if (isAccountBookUnauthorizedError(error)) {
+        // 출입증 만료 — 로그인 전 화면으로 되돌린다.
+        clearStoredAccountBookSession();
+        const users = await fetchAccountBookUserList();
+        return normalizeRpcStore({ version: 1, users });
+      }
+      if (!isMissingFunctionError(error)) {
+        throw error;
+      }
+      // SQL 실행 전 폴백(읽기 전용)
+      return fetchLegacyAccountBookStore();
+    }
+
+    return normalizeRpcStore((data || null) as Partial<AccountBookStore> | null);
   } catch (error) {
     if (typeof window !== "undefined") {
       console.warn("가계부 원격 불러오기에 실패해 로컬 데이터를 사용합니다.", error);
@@ -221,9 +381,23 @@ export async function fetchAccountBookStore() {
   }
 }
 
+/** 마이그레이션 SQL 실행 전에만 쓰이는 옛 경로(인자 없는 get_store). */
+async function fetchLegacyAccountBookStore() {
+  console.warn(
+    "가계부 보안 SQL(20260904_scope_account_book_get_store.sql)이 아직 적용되지 않았습니다.",
+  );
+  const { data, error } = await supabase.rpc("account_book_get_store");
+  if (error) {
+    throw error;
+  }
+
+  return normalizeRpcStore((data || null) as Partial<AccountBookStore> | null);
+}
+
 async function callRoomActionRpc<TParams extends Record<string, unknown>>(
   name: string,
   params: TParams,
+  loginPassword: string,
 ): Promise<RoomActionResult> {
   const { data, error } = await supabase.rpc(name, params);
   if (error) {
@@ -239,9 +413,19 @@ async function callRoomActionRpc<TParams extends Record<string, unknown>>(
       }
     | null;
 
+  const userId = payload?.userId || "";
+
+  // 방을 만들거나 참여하면 그 자리에서 바로 로그인해 출입증을 받아온다.
+  // (출입증이 없으면 서버가 아무 데이터도 내려주지 않는다.)
+  if (userId) {
+    await verifyAccountBookUserPassword(userId, loginPassword);
+  }
+
+  // payload.store는 전체 노출 시절의 무인자 get_store 결과라 쓰지 않는다.
+  // 방금 받은 출입증 기준으로 다시 받아온다.
   return {
-    store: normalizeRpcStore(payload?.store || {}),
-    userId: payload?.userId || "",
+    store: await fetchAccountBookStore(),
+    userId,
     workspaceId: payload?.workspaceId || "",
     inviteCode: payload?.inviteCode || "",
   };
@@ -435,33 +619,21 @@ export async function upsertAccountBookMonthlyMemo(
   }
 }
 
+/**
+ * 사용자 이름/비밀번호 수정.
+ * 화면이 더 이상 기존 비밀번호를 들고 있지 않으므로, 비밀번호 칸을 비워두면 그대로 유지된다.
+ * (개인 가계부방 이름/비밀번호도 서버에서 함께 맞춰 준다 — 예전 두 번 호출하던 동작과 같다.)
+ */
 export async function updateAccountBookUser(
-  currentUser: AccountBookUser,
+  userId: string,
   name: string,
   password: string,
-  annualSavingGoal = DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
-  assetGoalMap: AccountBookWorkspace["assetGoalMap"] = {},
-  monthlyBudget = 0,
-  monthlyBudgets: AccountBookWorkspace["monthlyBudgets"] = {},
 ) {
-  await callStoreRpc("account_book_upsert_user", {
-    p_id: currentUser.id,
+  return callStoreRpc("account_book_update_user_profile", {
+    p_token: requireSessionToken(),
+    p_user_id: userId,
     p_name: name,
     p_password: password,
-    p_personal_workspace_id: currentUser.personalWorkspaceId,
-  });
-
-  return callStoreRpc("account_book_upsert_workspace", {
-    p_id: currentUser.personalWorkspaceId,
-    p_name: `${name} 개인 가계부`,
-    p_type: "personal",
-    p_password: password,
-    p_annual_saving_goal: annualSavingGoal,
-    p_monthly_budget: monthlyBudget,
-    p_monthly_budgets: monthlyBudgets || {},
-    p_asset_goal_map: assetGoalMap || {},
-    p_owner_user_id: currentUser.id,
-    p_member_ids: [currentUser.id],
   });
 }
 
@@ -481,12 +653,16 @@ export async function createAccountBookUser(name: string, password: string) {
     p_member_ids: [userId],
   });
 
-  const store = await callStoreRpc("account_book_upsert_user", {
+  await callStoreRpc("account_book_upsert_user", {
     p_id: userId,
     p_name: name,
     p_password: password,
     p_personal_workspace_id: personalWorkspaceId,
   });
+
+  // 방금 만든 계정으로 바로 로그인해 출입증을 받아둔다.
+  await verifyAccountBookUserPassword(userId, password);
+  const store = await fetchAccountBookStore();
 
   return {
     store,
@@ -501,22 +677,31 @@ export async function deleteAccountBookUser(userId: string) {
   });
 }
 
-export async function upsertAccountBookWorkspace(
+type WorkspaceSettingsPatch = Pick<
+  AccountBookWorkspace,
+  "annualSavingGoal" | "monthlyBudget" | "monthlyBudgets" | "assetGoalMap"
+>;
+
+/**
+ * 예산·목표만 수정.
+ * 예전에는 이때도 upsert_workspace에 비밀번호를 같이 실어 보냈는데,
+ * 이제 화면에 비밀번호가 없으므로 필요한 값만 바꾸는 전용 RPC를 쓴다.
+ */
+export async function updateAccountBookWorkspaceSettings(
   workspace: AccountBookWorkspace,
+  patch: Partial<WorkspaceSettingsPatch>,
 ) {
+  const nextWorkspace: AccountBookWorkspace = { ...workspace, ...patch };
+
   try {
-    return await callStoreRpc("account_book_upsert_workspace", {
-      p_id: workspace.id,
-      p_name: workspace.name,
-      p_type: workspace.type,
-      p_password: workspace.password,
+    return await callStoreRpc("account_book_set_workspace_settings", {
+      p_token: requireSessionToken(),
+      p_workspace_id: nextWorkspace.id,
       p_annual_saving_goal:
-        workspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
-      p_monthly_budget: workspace.monthlyBudget || 0,
-      p_monthly_budgets: workspace.monthlyBudgets ?? {},
-      p_asset_goal_map: workspace.assetGoalMap || {},
-      p_owner_user_id: workspace.ownerUserId || "",
-      p_member_ids: workspace.memberIds,
+        nextWorkspace.annualSavingGoal || DEFAULT_WORKSPACE_ANNUAL_SAVING_GOAL,
+      p_monthly_budget: nextWorkspace.monthlyBudget || 0,
+      p_monthly_budgets: nextWorkspace.monthlyBudgets ?? {},
+      p_asset_goal_map: nextWorkspace.assetGoalMap || {},
     });
   } catch (error) {
     if (typeof window !== "undefined") {
@@ -529,13 +714,32 @@ export async function upsertAccountBookWorkspace(
       return persistLocalStore({
         ...currentStore,
         workspaces: currentStore.workspaces.map((currentWorkspace) =>
-          currentWorkspace.id === workspace.id ? workspace : currentWorkspace,
+          currentWorkspace.id === nextWorkspace.id
+            ? nextWorkspace
+            : currentWorkspace,
         ),
       });
     }
 
     throw error;
   }
+}
+
+/**
+ * 가계부방 이름/비밀번호 수정.
+ * 비밀번호를 빈 문자열로 보내면 서버가 기존 비밀번호를 그대로 둔다.
+ */
+export async function updateAccountBookWorkspaceProfile(
+  workspaceId: string,
+  name: string,
+  password: string,
+) {
+  return callStoreRpc("account_book_update_workspace_profile", {
+    p_token: requireSessionToken(),
+    p_workspace_id: workspaceId,
+    p_name: name,
+    p_password: password,
+  });
 }
 
 export async function createAccountBookSharedWorkspace(
@@ -562,12 +766,16 @@ export async function createAccountBookSharedRoomWithOwner(
   ownerName: string,
   ownerPassword: string,
 ) {
-  return callRoomActionRpc("account_book_create_shared_room", {
-    p_room_name: roomName,
-    p_room_password: roomPassword,
-    p_owner_name: ownerName,
-    p_owner_password: ownerPassword,
-  });
+  return callRoomActionRpc(
+    "account_book_create_shared_room",
+    {
+      p_room_name: roomName,
+      p_room_password: roomPassword,
+      p_owner_name: ownerName,
+      p_owner_password: ownerPassword,
+    },
+    ownerPassword,
+  );
 }
 
 export async function joinAccountBookSharedRoom(
@@ -575,11 +783,15 @@ export async function joinAccountBookSharedRoom(
   userName: string,
   userPassword: string,
 ) {
-  return callRoomActionRpc("account_book_join_shared_room", {
-    p_invite_code: inviteCode,
-    p_user_name: userName,
-    p_user_password: userPassword,
-  });
+  return callRoomActionRpc(
+    "account_book_join_shared_room",
+    {
+      p_invite_code: inviteCode,
+      p_user_name: userName,
+      p_user_password: userPassword,
+    },
+    userPassword,
+  );
 }
 
 export async function addAccountBookSharedRoomMember(

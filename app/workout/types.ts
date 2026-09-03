@@ -4,10 +4,11 @@ export type WorkoutRoom = {
   createdAt: string;
 };
 
+// 로그인 뒤 이 기기에 남기는 운동방 정보.
+// 비밀번호는 서버에서만 확인하므로 여기에 담지 않는다.
 export type WorkoutSession = {
   roomId: string;
   roomName: string;
-  password: string;
 };
 
 // =========================

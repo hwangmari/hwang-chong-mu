@@ -12,14 +12,17 @@ import {
   deleteAccountBookSharedWorkspace,
   fetchAccountBookStore,
   joinAccountBookSharedRoom,
+  logoutAccountBook,
   removeAccountBookSharedRoomMember,
   removeLedgerAssetLink,
   syncLedgerSavingToAsset,
   toggleAccountBookShareLink,
   updateAccountBookUser,
+  updateAccountBookWorkspaceProfile,
+  updateAccountBookWorkspaceSettings,
   upsertAccountBookEntry,
   upsertAccountBookMonthlyMemo,
-  upsertAccountBookWorkspace,
+  verifyAccountBookUserPassword,
 } from "../repository";
 import {
   getPersonalShareTargets,
@@ -64,9 +67,10 @@ type StoreHelpers = {
   setStore: (store: AccountBookStore) => void;
   activeUserId: string | null;
   effectiveActiveUserId: string | null;
-  activeUser: { id: string; name: string; password: string } | null;
+  activeUser: { id: string; name: string } | null;
   selectedWorkspace: AccountBookWorkspace | null;
   updateActiveUserId: (userId: string | null) => void;
+  reloadStore: () => Promise<AccountBookStore | null>;
   commitStoreChange: (
     action: () => Promise<AccountBookStore>,
     failureMessage?: string,
@@ -84,8 +88,41 @@ export function useAccountBookActions(helpers: StoreHelpers) {
     activeUser,
     selectedWorkspace,
     updateActiveUserId,
+    reloadStore,
     commitStoreChange,
   } = helpers;
+
+  // 비밀번호는 서버만 알고 있다. 화면은 "맞다/틀리다"만 물어본다.
+  // (예전에는 store에 담겨 내려온 평문 비밀번호를 브라우저에서 비교했다.)
+  const checkUserPassword = useCallback(
+    async (userId: string, userPassword: string) => {
+      try {
+        return await verifyAccountBookUserPassword(userId, userPassword);
+      } catch (error) {
+        console.error("비밀번호 확인 실패:", error);
+        void openAlert(
+          "비밀번호를 확인하지 못했어요. 잠시 후 다시 시도해주세요.",
+        );
+        return null;
+      }
+    },
+    [openAlert],
+  );
+
+  // 로그인 전에는 서버가 방 목록을 내려주지 않는다.
+  // 그래서 비밀번호 확인 후 그 사람 기준으로 다시 받아온 뒤 개인방을 찾는다.
+  const findPersonalWorkspace = useCallback(
+    (nextStore: AccountBookStore, user: { id: string; personalWorkspaceId: string }) =>
+      nextStore.workspaces.find(
+        (workspace) => workspace.id === user.personalWorkspaceId,
+      ) ||
+      nextStore.workspaces.find(
+        (workspace) =>
+          workspace.type === "personal" && workspace.ownerUserId === user.id,
+      ) ||
+      null,
+    [],
+  );
 
   const getActingUserId = useCallback(
     () => effectiveActiveUserId || activeUser?.id || "",
@@ -199,8 +236,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       return Boolean(
         await commitStoreChange(
           () =>
-            upsertAccountBookWorkspace({
-              ...selectedWorkspace,
+            updateAccountBookWorkspaceSettings(selectedWorkspace, {
               annualSavingGoal: value,
             }),
           "연간 저축 목표를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
@@ -219,8 +255,7 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       return Boolean(
         await commitStoreChange(
           () =>
-            upsertAccountBookWorkspace({
-              ...selectedWorkspace,
+            updateAccountBookWorkspaceSettings(selectedWorkspace, {
               monthlyBudgets: nextBudgets,
             }),
           "월 예산을 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
@@ -277,23 +312,29 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       try {
         const existingUser = findPersonalUserByName(store, userName);
         if (existingUser) {
-          if (existingUser.password !== userPassword) {
+          const isCorrect = await checkUserPassword(
+            existingUser.id,
+            userPassword,
+          );
+          if (isCorrect === null) return;
+          if (!isCorrect) {
             void openAlert(
               "이미 같은 닉네임의 개인 가계부가 있어요. 개인방 로그인으로 들어가거나 비밀번호를 다시 확인해주세요.",
             );
             return;
           }
 
-          const existingWorkspace = store.workspaces.find(
-            (workspace) => workspace.id === existingUser.personalWorkspaceId,
-          );
+          updateActiveUserId(existingUser.id);
+          const nextStore = await reloadStore();
+          const existingWorkspace = nextStore
+            ? findPersonalWorkspace(nextStore, existingUser)
+            : null;
 
           if (!existingWorkspace) {
             void openAlert("기존 개인 가계부 작업공간을 찾지 못했어요.");
             return;
           }
 
-          updateActiveUserId(existingUser.id);
           router.push(`/account-book?workspaceId=${existingWorkspace.id}`);
           void openAlert(
             "이미 만든 개인 가계부가 있어 기존 작업공간으로 다시 연결했어요.",
@@ -311,7 +352,16 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         throw error;
       }
     },
-    [store, setStore, updateActiveUserId, router, openAlert],
+    [
+      store,
+      setStore,
+      updateActiveUserId,
+      reloadStore,
+      router,
+      openAlert,
+      checkUserPassword,
+      findPersonalWorkspace,
+    ],
   );
 
   const handleCreateSharedWorkspaceForActiveUser = useCallback(
@@ -341,13 +391,19 @@ export function useAccountBookActions(helpers: StoreHelpers) {
           findRoomMemberByName(store, targetWorkspace.id, userName);
 
         if (targetWorkspace && existingMember) {
-          if (existingMember.password !== userPassword) {
+          const isCorrect = await checkUserPassword(
+            existingMember.id,
+            userPassword,
+          );
+          if (isCorrect === null) return;
+          if (!isCorrect) {
             void openAlert(
               "이미 등록된 참가자 이름입니다. 비밀번호를 다시 확인해주세요.",
             );
             return;
           }
           updateActiveUserId(existingMember.id);
+          await reloadStore();
           router.push("/account-book");
           return;
         }
@@ -366,7 +422,15 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         throw error;
       }
     },
-    [store, setStore, updateActiveUserId, router, openAlert],
+    [
+      store,
+      setStore,
+      updateActiveUserId,
+      reloadStore,
+      router,
+      openAlert,
+      checkUserPassword,
+    ],
   );
 
   const handleLoginPersonalWorkspace = useCallback(
@@ -377,27 +441,40 @@ export function useAccountBookActions(helpers: StoreHelpers) {
         return;
       }
 
-      if (targetUser.password !== userPassword) {
+      const isCorrect = await checkUserPassword(targetUser.id, userPassword);
+      if (isCorrect === null) return;
+      if (!isCorrect) {
         void openAlert("개인 비밀번호가 맞지 않아요.");
         return;
       }
 
-      const targetWorkspace = store.workspaces.find(
-        (workspace) => workspace.id === targetUser.personalWorkspaceId,
-      );
+      updateActiveUserId(targetUser.id);
+      const nextStore = await reloadStore();
+      const targetWorkspace = nextStore
+        ? findPersonalWorkspace(nextStore, targetUser)
+        : null;
 
       if (!targetWorkspace) {
         void openAlert("개인 가계부 작업공간을 찾지 못했어요.");
         return;
       }
 
-      updateActiveUserId(targetUser.id);
       router.push(`/account-book?workspaceId=${targetWorkspace.id}`);
     },
-    [store, updateActiveUserId, router, openAlert],
+    [
+      store,
+      updateActiveUserId,
+      reloadStore,
+      router,
+      openAlert,
+      checkUserPassword,
+      findPersonalWorkspace,
+    ],
   );
 
   const handleResetActiveUser = useCallback(() => {
+    // 서버의 출입증도 함께 폐기한다(브라우저에만 지우면 토큰이 계속 유효하다).
+    void logoutAccountBook();
     updateActiveUserId(null);
     router.push("/account-book");
   }, [updateActiveUserId, router]);
@@ -417,23 +494,13 @@ export function useAccountBookActions(helpers: StoreHelpers) {
   );
 
   const handleUpdateUser = useCallback(
+    // password가 빈 문자열이면 서버가 기존 비밀번호를 그대로 둔다
+    // (화면이 더 이상 기존 비밀번호를 들고 있지 않기 때문).
     async (userId: string, name: string, password: string) => {
       const currentUser = store.users.find((user) => user.id === userId);
       if (!currentUser) return;
-      const currentPersonalWorkspace = store.workspaces.find(
-        (workspace) => workspace.id === currentUser.personalWorkspaceId,
-      );
       await commitStoreChange(
-        () =>
-          updateAccountBookUser(
-            currentUser,
-            name,
-            password,
-            currentPersonalWorkspace?.annualSavingGoal,
-            currentPersonalWorkspace?.assetGoalMap,
-            currentPersonalWorkspace?.monthlyBudget,
-            currentPersonalWorkspace?.monthlyBudgets,
-          ),
+        () => updateAccountBookUser(userId, name, password),
         "사용자 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
       );
     },
@@ -447,12 +514,8 @@ export function useAccountBookActions(helpers: StoreHelpers) {
       );
       if (!currentWorkspace) return;
       await commitStoreChange(
-        () =>
-          upsertAccountBookWorkspace({
-            ...currentWorkspace,
-            name,
-            password,
-          }),
+        // password가 빈 문자열이면 서버가 기존 비밀번호를 그대로 둔다.
+        () => updateAccountBookWorkspaceProfile(workspaceId, name, password),
         "공용방 정보를 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
       );
     },

@@ -13,6 +13,7 @@ import {
 import { OvertimeRecord, StorageMode } from "./types";
 import { mergeRecordsByDate, parseStoredRecords } from "./utils";
 import { useModal } from "@/components/common/ModalProvider";
+import { linkRoomToAccount } from "@/lib/roomServices";
 
 export function useOvertimeStorage() {
   const { openAlert } = useModal();
@@ -141,6 +142,10 @@ export function useOvertimeStorage() {
       if (typeof window !== "undefined") {
         localStorage.setItem(STORAGE_ROOM_KEY, loaded.room.roomRef);
       }
+
+      // 방을 새로 만들었을 때도, 방 코드로 연결했을 때도 여기를 지난다.
+      // 로그인 사용자면 내 계정의 "내 방"에 방 코드만 등록한다(비로그인은 서버가 401 → 무시).
+      linkRoomToAccount("overtime", loaded.room.roomRef, loaded.room.roomName);
     },
     [fetchRoomData],
   );

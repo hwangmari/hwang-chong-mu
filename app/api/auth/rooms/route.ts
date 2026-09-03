@@ -1,10 +1,15 @@
-// 통합 계정의 "내 방": 약속(meeting)·정산(calc)처럼 여러 개일 수 있는 방을 계정에 등록.
+// 통합 계정의 "내 방": 약속·정산·장소·테니스·게임·야근·일일기록처럼 여러 개일 수 있는 방을 계정에 등록.
+// room_id에는 주소에 드러나는 공개 식별자만 담는다(방 비밀번호·접근 코드는 저장하지 않는다).
+// 예외: 야근 계산기의 방 코드(roomRef)는 주소이자 열쇠라 저장하면 곧 입장 권한이 된다. 이 표는 세션 쿠키 뒤에 있어
+// 본인만 읽을 수 있으므로 허용하되, 야근 방을 다른 사람과 공유할 때는 코드가 곧 비밀번호임을 사용자에게 안내한다.
 // user_id는 항상 세션 쿠키에서 확정한다(클라 위조 불가).
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { readAppSession } from "@/lib/auth/session";
+import { ROOM_SERVICES } from "@/lib/roomServices";
 
-const SERVICES = ["meeting", "calc"];
+// 허용 서비스는 lib/roomServices.ts 한곳에서 관리한다(SQL의 체크 제약과 같은 목록).
+const SERVICES: readonly string[] = ROOM_SERVICES;
 
 export async function GET() {
   const session = await readAppSession();

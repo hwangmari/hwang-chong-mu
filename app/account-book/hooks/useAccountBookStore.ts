@@ -2,25 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useModal } from "@/components/common/ModalProvider";
-import { fetchAccountBookStore } from "../repository";
-import { getWorkspaceById, resolveWorkspaceEntries } from "../storage";
+import {
+  fetchAccountBookStore,
+  isAccountBookUnauthorizedError,
+} from "../repository";
+import {
+  clearStoredAccountBookSession,
+  getStoredActiveUserId,
+  getStoredSessionToken,
+  getWorkspaceById,
+  resolveWorkspaceEntries,
+  setStoredActiveUserId,
+} from "../storage";
 import { AccountBookStore } from "../types";
-
-const ACTIVE_USER_ACCESS_KEY = "hwang-account-book-active-user";
-
-function getStoredActiveUserId() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACTIVE_USER_ACCESS_KEY);
-}
-
-function setStoredActiveUserId(userId: string | null) {
-  if (typeof window === "undefined") return;
-  if (userId) {
-    window.localStorage.setItem(ACTIVE_USER_ACCESS_KEY, userId);
-    return;
-  }
-  window.localStorage.removeItem(ACTIVE_USER_ACCESS_KEY);
-}
 
 function canAccessWorkspace(
   userId: string,
@@ -48,10 +42,19 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
 
     void (async () => {
       try {
+        // 저장해 둔 출입증으로 "내가 볼 수 있는 것만" 받아온다.
+        // 출입증이 만료됐으면 fetchAccountBookStore가 알아서 지우고 껍데기를 준다.
         const nextStore = await fetchAccountBookStore();
         if (!active) return;
         setStore(nextStore);
-        const storedUserId = getStoredActiveUserId();
+
+        // 출입증 없이 남아 있는 활성 사용자 표시는 신뢰하지 않는다(로그인 전과 같게 본다).
+        const storedUserId = getStoredSessionToken()
+          ? getStoredActiveUserId()
+          : null;
+        if (!storedUserId) {
+          clearStoredAccountBookSession();
+        }
         setActiveUserId(
           storedUserId && nextStore.users.some((user) => user.id === storedUserId)
             ? storedUserId
@@ -139,7 +142,7 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
     if (activeUserId && store.users.some((user) => user.id === activeUserId))
       return;
     setActiveUserId(null);
-    setStoredActiveUserId(null);
+    clearStoredAccountBookSession();
   }, [activeUserId, store]);
 
   useEffect(() => {
@@ -147,6 +150,18 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
     setActiveUserId(effectiveActiveUserId);
     setStoredActiveUserId(effectiveActiveUserId);
   }, [activeUserId, effectiveActiveUserId]);
+
+  // 출입증이 만료되었거나 서버가 거부했을 때: 흔적을 지우고 로그인 전 화면으로 되돌린다.
+  const handleExpiredSession = async () => {
+    clearStoredAccountBookSession();
+    setActiveUserId(null);
+    try {
+      setStore(await fetchAccountBookStore());
+    } catch (error) {
+      console.error("가계부 다시 불러오기 실패:", error);
+    }
+    void openAlert("로그인이 풀렸어요. 비밀번호를 다시 입력해 주세요.");
+  };
 
   // ── Store Mutation Helper ──
   const commitStoreChange = async (
@@ -159,6 +174,10 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
       return savedStore;
     } catch (error) {
       console.error("가계부 저장 실패:", error);
+      if (isAccountBookUnauthorizedError(error)) {
+        await handleExpiredSession();
+        return null;
+      }
       void openAlert(failureMessage);
       return null;
     }
@@ -168,6 +187,24 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
   const updateActiveUserId = (userId: string | null) => {
     setActiveUserId(userId);
     setStoredActiveUserId(userId);
+  };
+
+  // 로그인/방 참여 직후처럼 "보이는 범위"가 달라졌을 때 다시 받아온다.
+  // (서버가 출입증 주인에 따라 다른 범위를 내려주므로 로그인만 하고 끝내면 화면이 비어 보인다.)
+  const reloadStore = async () => {
+    try {
+      const nextStore = await fetchAccountBookStore();
+      setStore(nextStore);
+      return nextStore;
+    } catch (error) {
+      console.error("가계부 다시 불러오기 실패:", error);
+      if (isAccountBookUnauthorizedError(error)) {
+        await handleExpiredSession();
+        return null;
+      }
+      void openAlert("가계부를 다시 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+      return null;
+    }
   };
 
   return {
@@ -180,6 +217,7 @@ export function useAccountBookStore(selectedWorkspaceId: string | null) {
     activeUserId,
     effectiveActiveUserId,
     updateActiveUserId,
+    reloadStore,
 
     selectedWorkspace,
     selectedEntries,

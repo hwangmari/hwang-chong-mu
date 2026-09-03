@@ -3,10 +3,16 @@
 import { FormEvent, ReactNode, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
+import { isAccountBookUnauthorizedError } from "../repository";
 
 type Props = {
   children: ReactNode;
-  password?: string;
+  /**
+   * 비밀번호가 맞는지 서버에 물어보는 함수.
+   * 예전에는 password 문자열을 그대로 받아 브라우저에서 비교했는데,
+   * 그러려면 서버가 평문 비밀번호를 내려줘야 해서 통째로 새고 있었다.
+   */
+  onVerify: (input: string) => Promise<boolean>;
   accessKey?: string;
   storageType?: "local" | "session";
   rememberDays?: number;
@@ -96,7 +102,7 @@ function subscribeAccountBookAccess(onStoreChange: () => void) {
 
 export default function AccountBookLockGate({
   children,
-  password = "6155",
+  onVerify,
   accessKey = "hwang-account-book-access-granted",
   storageType = "local",
   rememberDays = 30,
@@ -109,26 +115,46 @@ export default function AccountBookLockGate({
   const router = useRouter();
   const [passcode, setPasscode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
   const isUnlocked = useSyncExternalStore(
     subscribeAccountBookAccess,
     () => readStoredAccess(accessKey, storageType),
     () => false,
   );
 
-  const submitPasscode = (event?: FormEvent<HTMLFormElement>) => {
+  const submitPasscode = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const nextValue = passcode.trim();
 
-    if (!nextValue || nextValue !== password) {
-      setPasscode("");
-      setErrorMessage("비밀번호가 맞지 않아요.");
+    if (!nextValue) {
+      setErrorMessage("비밀번호를 입력해주세요.");
       return;
     }
 
-    persistStoredAccess(accessKey, storageType, rememberDays);
-    window.dispatchEvent(new Event("account-book-access-change"));
-    setErrorMessage("");
-    setPasscode(nextValue);
+    setIsChecking(true);
+    try {
+      const isCorrect = await onVerify(nextValue);
+      if (!isCorrect) {
+        setPasscode("");
+        setErrorMessage("비밀번호가 맞지 않아요.");
+        return;
+      }
+
+      persistStoredAccess(accessKey, storageType, rememberDays);
+      window.dispatchEvent(new Event("account-book-access-change"));
+      setErrorMessage("");
+      setPasscode(nextValue);
+    } catch (error) {
+      console.error("가계부 비밀번호 확인 실패:", error);
+      setPasscode("");
+      setErrorMessage(
+        isAccountBookUnauthorizedError(error)
+          ? "로그인이 풀렸어요. 가계부 첫 화면에서 다시 로그인해 주세요."
+          : "비밀번호를 확인하지 못했어요. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   if (isUnlocked) {
@@ -156,7 +182,11 @@ export default function AccountBookLockGate({
         <StGateTitle>{title}</StGateTitle>
         <StGateDescription>{description}</StGateDescription>
         <StErrorMessage>{errorMessage || " "}</StErrorMessage>
-        <StForm onSubmit={submitPasscode}>
+        <StForm
+          onSubmit={(event) => {
+            void submitPasscode(event);
+          }}
+        >
           <StPasswordInput
             type="password"
             value={passcode}
@@ -168,7 +198,9 @@ export default function AccountBookLockGate({
             autoComplete="current-password"
             autoFocus
           />
-          <StSubmitButton type="submit">들어가기</StSubmitButton>
+          <StSubmitButton type="submit" disabled={isChecking}>
+            {isChecking ? "확인 중..." : "들어가기"}
+          </StSubmitButton>
         </StForm>
       </StGateCard>
     </StGatePage>
@@ -269,4 +301,8 @@ const StSubmitButton = styled.button`
   color: ${({ theme }) => theme.colors.white};
   font-size: 0.95rem;
   font-weight: 800;
+
+  &:disabled {
+    opacity: 0.6;
+  }
 `;

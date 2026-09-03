@@ -11,6 +11,10 @@ import WorkspaceHub from "./components/WorkspaceHub";
 import WorkspaceLedgerView from "./components/WorkspaceLedgerView";
 import WorkspaceSettingsModal from "./components/WorkspaceSettingsModal";
 import { StAbLoadingPage, StAbLoadingCard } from "./components/shared";
+import {
+  verifyAccountBookUserPassword,
+  verifyAccountBookWorkspacePassword,
+} from "./repository";
 import { useAccountBookStore } from "./hooks/useAccountBookStore";
 import { useAccountBookActions } from "./hooks/useAccountBookActions";
 import { ViewMode } from "./types";
@@ -59,6 +63,7 @@ function AccountBookPageContent() {
     activeUser,
     selectedWorkspace,
     updateActiveUserId,
+    reloadStore: storeHelpers.reloadStore,
     commitStoreChange: storeHelpers.commitStoreChange,
   });
 
@@ -133,7 +138,9 @@ function AccountBookPageContent() {
     <>
       {selectedWorkspace ? (
         <AccountBookLockGate
-          password={selectedWorkspace.password}
+          onVerify={(input) =>
+            verifyAccountBookWorkspacePassword(selectedWorkspace.id, input)
+          }
           accessKey={`hwang-account-book-access-${selectedWorkspace.id}`}
           title={`${selectedWorkspace.name} 비밀번호`}
           description="선택한 가계부방 비밀번호를 입력하면 이 방으로 들어갑니다."
@@ -197,7 +204,9 @@ function AccountBookPageContent() {
 
       {isSettingsOpen && activeUser ? (
         <AccountBookLockGate
-          password={activeUser.password}
+          onVerify={(input) =>
+            verifyAccountBookUserPassword(activeUser.id, input)
+          }
           accessKey={SETTINGS_ACCESS_KEY}
           storageType="session"
           title="서버방 설정 비밀번호"

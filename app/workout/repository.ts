@@ -16,11 +16,11 @@ import type {
 // =========================
 // Row → TS 매핑
 // =========================
-type RoomRow = {
-  id: string;
-  name: string;
-  password: string;
-  created_at: string;
+// 방 생성/입장 RPC(workout_room_create / workout_room_login)가 돌려주는 형태.
+// 비밀번호는 서버 안에서만 확인하고 밖으로 내보내지 않는다.
+type RoomRpcResult = {
+  roomId?: string;
+  roomName?: string;
 };
 
 type RunningRow = {
@@ -102,21 +102,23 @@ export async function createWorkoutRoom(
     throw new Error("방 이름과 비밀번호를 입력해 주세요.");
   }
 
-  const { data, error } = await supabase
-    .from("workout_rooms")
-    .insert({ name: name.trim(), password: password.trim() })
-    .select("*")
-    .single();
+  const { data, error } = await supabase.rpc("workout_room_create", {
+    p_name: name.trim(),
+    p_password: password.trim(),
+  });
 
-  if (error || !data) {
-    throw new Error(error?.message || "방 생성에 실패했어요.");
+  if (error) {
+    throw new Error("방 생성에 실패했어요.");
   }
 
-  const row = data as RoomRow;
+  const result = (data ?? null) as RoomRpcResult | null;
+  if (!result?.roomId) {
+    throw new Error("방 생성에 실패했어요.");
+  }
+
   return {
-    roomId: row.id,
-    roomName: row.name,
-    password: row.password,
+    roomId: result.roomId,
+    roomName: result.roomName ?? name.trim(),
   };
 }
 
@@ -128,26 +130,25 @@ export async function joinWorkoutRoom(
     throw new Error("방 이름과 비밀번호를 입력해 주세요.");
   }
 
-  const { data, error } = await supabase
-    .from("workout_rooms")
-    .select("*")
-    .eq("name", roomName.trim())
-    .eq("password", password.trim())
-    .limit(1);
+  // 비밀번호 대조는 서버(workout_room_login)에서만 한다.
+  // 방 이름이나 비밀번호가 틀리면 서버가 INVALID_ROOM 을 던진다.
+  const { data, error } = await supabase.rpc("workout_room_login", {
+    p_name: roomName.trim(),
+    p_password: password.trim(),
+  });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("방 이름 또는 비밀번호가 맞지 않아요.");
   }
 
-  const row = (data?.[0] as RoomRow | undefined) ?? null;
-  if (!row) {
+  const result = (data ?? null) as RoomRpcResult | null;
+  if (!result?.roomId) {
     throw new Error("방 이름 또는 비밀번호가 맞지 않아요.");
   }
 
   return {
-    roomId: row.id,
-    roomName: row.name,
-    password: row.password,
+    roomId: result.roomId,
+    roomName: result.roomName ?? roomName.trim(),
   };
 }
 

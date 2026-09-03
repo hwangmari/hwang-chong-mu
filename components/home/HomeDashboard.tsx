@@ -28,6 +28,13 @@ import {
   fetchMeetingConfirmedDates,
 } from "@/services/homeSummary";
 import { isUuid } from "@/lib/slug";
+import {
+  ROOM_SECRET_NOTICE,
+  ROOM_SERVICE_META,
+  ROOM_SERVICES,
+  isRoomService,
+  type RoomService,
+} from "@/lib/roomServices";
 import QuickActionModal, {
   QUICK_ACTION_META,
   type QuickService,
@@ -49,23 +56,16 @@ type LinkRow = {
   label: string;
 };
 
-// "내 방"(약속·정산): 서비스당 여러 개일 수 있는 진행 중 방.
+// "내 방": 서비스당 여러 개일 수 있는 진행 중 방(약속·정산·장소·테니스·게임·야근·일일기록).
+// 아이콘·이름·링크는 lib/roomServices.ts에서 가져와 /account와 똑같이 보이게 한다.
 type RoomRow = {
   id: string;
-  service: "meeting" | "calc";
+  service: RoomService;
   roomId: string;
   label: string;
   createdAt: string;
   // 약속방의 확정된 약속 날짜(yyyy-MM-dd) — 클라에서 rooms 조회로 채운다
   confirmedDate?: string;
-};
-
-const ROOM_WIDGET_META: Record<
-  "meeting" | "calc",
-  { icon: string; name: string; path: string; tone: WidgetTone }
-> = {
-  meeting: { icon: "📅", name: "약속잡기", path: "/meeting/room", tone: "indigo" },
-  calc: { icon: "🧮", name: "정산방", path: "/calc", tone: "rose" },
 };
 
 // 위젯 로더의 표시 데이터. main은 핵심 수치 한 줄, sub는 보조 설명.
@@ -418,7 +418,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
 
   // 방 등록 해제: 계정에서만 빠지고 방 자체는 남는다 (/account 관리와 동일 동작)
   const handleDeleteRoom = async (room: RoomRow) => {
-    const meta = ROOM_WIDGET_META[room.service];
+    const meta = ROOM_SERVICE_META[room.service];
     const confirmed = await openConfirm(
       `'${room.label || meta.name}' 방 등록을 해제할까요?\n(방 자체는 삭제되지 않아요)`,
     );
@@ -470,7 +470,10 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
         const res = await fetch("/api/auth/rooms", { cache: "no-store" });
         if (!res.ok) throw new Error("rooms load failed");
         const data = (await res.json()) as { rooms?: RoomRow[] };
-        const loaded = data.rooms ?? [];
+        // 모르는 서비스가 섞여 있으면(예: 앱보다 먼저 늘어난 DB) 조용히 걸러 낸다
+        const loaded = (data.rooms ?? []).filter((room) =>
+          isRoomService(room.service),
+        );
         if (active) setRooms(loaded);
 
         // 정산방 라벨이 비었거나 uuid면 calc_rooms의 실제 방 이름(약속 파생명)으로 교체
@@ -632,47 +635,56 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
         <StBoard>
           <StBoardHead>
             <StBoardTitleWrap>
-              <StBoardTitle>🗓️ 내 약속·정산방</StBoardTitle>
+              <StBoardTitle>🗓️ 내 방</StBoardTitle>
             </StBoardTitleWrap>
             <Link href={withFromMy("/account")} passHref>
               <StBoardManage>관리</StBoardManage>
             </Link>
           </StBoardHead>
-          {/* 방은 여러 건일 수 있어 카드 대신 리스트로 나열하고, 행에서 바로 해제한다 */}
-          <StRoomList>
-            {rooms.map((room) => {
-              const meta = ROOM_WIDGET_META[room.service];
-              return (
-                <StRoomRow key={room.id}>
-                  <Link
-                    href={withFromMy(`${meta.path}/${room.roomId}`)}
-                    passHref
-                    style={{ flex: 1, minWidth: 0 }}
-                  >
-                    <StRoomLink>
-                      <StRoomIcon $tone={meta.tone}>{meta.icon}</StRoomIcon>
-                      <StRoomInfo>
-                        <StRoomService>{meta.name}</StRoomService>
-                        <StRoomLabel>{room.label || meta.name}</StRoomLabel>
-                        {room.confirmedDate ? (
-                          <StRoomDate>
-                            {formatConfirmedDate(room.confirmedDate)}
-                          </StRoomDate>
-                        ) : null}
-                      </StRoomInfo>
-                    </StRoomLink>
-                  </Link>
-                  <StRoomDelete
-                    type="button"
-                    aria-label="방 등록 해제"
-                    onClick={() => void handleDeleteRoom(room)}
-                  >
-                    ✕
-                  </StRoomDelete>
-                </StRoomRow>
-              );
-            })}
-          </StRoomList>
+          <StRoomNotice>{ROOM_SECRET_NOTICE}</StRoomNotice>
+          {/* 방은 여러 건일 수 있어 카드 대신 서비스별로 묶어 나열하고, 행에서 바로 해제한다 */}
+          {ROOM_SERVICES.map((service) => {
+            const group = rooms.filter((room) => room.service === service);
+            if (group.length === 0) return null;
+            const meta = ROOM_SERVICE_META[service];
+            return (
+              <StRoomGroup key={service}>
+                <StRoomGroupHead>
+                  {meta.icon} {meta.name}
+                </StRoomGroupHead>
+                <StRoomList>
+                  {group.map((room) => (
+                    <StRoomRow key={room.id}>
+                      <Link
+                        href={withFromMy(meta.href(room.roomId))}
+                        passHref
+                        style={{ flex: 1, minWidth: 0 }}
+                      >
+                        <StRoomLink>
+                          <StRoomIcon $tone={meta.tone}>{meta.icon}</StRoomIcon>
+                          <StRoomInfo>
+                            <StRoomLabel>{room.label || meta.name}</StRoomLabel>
+                            {room.confirmedDate ? (
+                              <StRoomDate>
+                                {formatConfirmedDate(room.confirmedDate)}
+                              </StRoomDate>
+                            ) : null}
+                          </StRoomInfo>
+                        </StRoomLink>
+                      </Link>
+                      <StRoomDelete
+                        type="button"
+                        aria-label="방 등록 해제"
+                        onClick={() => void handleDeleteRoom(room)}
+                      >
+                        ✕
+                      </StRoomDelete>
+                    </StRoomRow>
+                  ))}
+                </StRoomList>
+              </StRoomGroup>
+            );
+          })}
         </StBoard>
       ) : null}
 
@@ -1034,10 +1046,24 @@ const StRoomInfo = styled.div`
   min-width: 0;
 `;
 
-const StRoomService = styled.p`
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray400};
+const StRoomNotice = styled.p`
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.colors.gray500};
+`;
+
+const StRoomGroup = styled.div`
+  & + & {
+    margin-top: 1rem;
+  }
+`;
+
+const StRoomGroupHead = styled.p`
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
 
 const StRoomLabel = styled.p`

@@ -46,6 +46,7 @@ import {
 import { useModal } from "@/components/common/ModalProvider";
 import { fetchAccountBookStore } from "../repository";
 import AccountBookLockGate from "../components/AccountBookLockGate";
+import { verifyAccountBookWorkspacePassword } from "../repository";
 import { useAssetData } from "../hooks/useAssetData";
 import { useStockTrades } from "../hooks/useStockTrades";
 import { getWorkspaceById } from "../storage";
@@ -293,7 +294,9 @@ function AccountBookInvestmentContent() {
 
   return (
     <AccountBookLockGate
-      password={workspace.password}
+      onVerify={(input) =>
+        verifyAccountBookWorkspacePassword(workspace.id, input)
+      }
       accessKey={`hwang-account-book-access-${workspace.id}`}
       title={`${workspace.name} 비밀번호`}
       description="투자 포트폴리오도 같은 비밀번호로 확인합니다."

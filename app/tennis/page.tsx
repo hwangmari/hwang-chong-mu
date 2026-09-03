@@ -10,6 +10,7 @@ import { EVENTS } from "./data";
 import { TOURNAMENTS } from "./tournament/data";
 import { formatDate, formatEventDate } from "./format";
 import { createTennisEvent, createTournament, type NewTennisEvent } from "@/services/tennis";
+import { rememberMyEvent, type MyEvent, loadMyEvents } from "./myEvents";
 import FooterGuide from "@/components/common/FooterGuide";
 import { TENNIS_GUIDE_DATA } from "@/data/footerGuides";
 import {
@@ -28,28 +29,6 @@ import {
   StSubtitle,
   StTitle,
 } from "./page.styles";
-
-// 이 브라우저에서 만든 교류전 목록 (DB엔 목록 조회 화면이 없으므로 링크를 기억해 둔다)
-const MY_EVENTS_KEY = "hcm:tennis:my-events";
-
-type MyEvent = { id: string; title: string; date: string };
-
-function loadMyEvents(): MyEvent[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(MY_EVENTS_KEY);
-    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-    return Array.isArray(parsed) ? (parsed as MyEvent[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function rememberMyEvent(item: MyEvent) {
-  if (typeof window === "undefined") return;
-  const next = [item, ...loadMyEvents().filter((e) => e.id !== item.id)].slice(0, 20);
-  window.localStorage.setItem(MY_EVENTS_KEY, JSON.stringify(next));
-}
 
 export default function TennisHomePage() {
   const router = useRouter();
@@ -131,7 +110,7 @@ export default function TennisHomePage() {
           </StEventLink>
         ))}
         <StCardHint>
-          다른 기기에서 만든 교류전은 여기 안 보여요. 만들 때 받은 링크로 들어가면 돼요.
+          로그인해 두면 다른 기기에서 만든 교류전도 여기에 모아서 보여요. 로그인 전에는 만들 때 받은 링크로 들어가면 돼요.
         </StCardHint>
       </StCard>
 

@@ -122,3 +122,12 @@ export const EXTRA_MENU: MenuItem[] = [
   { href: "/blog", icon: "📝", title: "블로그", desc: "" },
   { href: "/ui-kit", icon: "🎨", title: "UI Kit 모음집", desc: "" },
 ];
+
+// href로 메뉴 항목 찾기 — 아이콘·이름을 다른 화면(내 방 목록 등)에서 그대로 재사용한다.
+export function findMenuItem(href: string): MenuItem | undefined {
+  for (const category of MENU_CATEGORIES) {
+    const found = category.items.find((item) => item.href === href);
+    if (found) return found;
+  }
+  return EXTRA_MENU.find((item) => item.href === href);
+}

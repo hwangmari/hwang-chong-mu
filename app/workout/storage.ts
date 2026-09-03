@@ -18,13 +18,19 @@ export function readWorkoutSession(): WorkoutSession | null {
     return null;
   }
   try {
-    const parsed = JSON.parse(raw) as WorkoutSession;
-    if (!parsed?.roomId || !parsed?.password) {
+    const parsed = JSON.parse(raw) as Partial<WorkoutSession>;
+    // roomId 만 있으면 유효한 세션이다.
+    // (예전 세션에는 password 가 들어 있지만 더 이상 보지 않는다.)
+    if (!parsed?.roomId) {
       cachedSession = null;
       return null;
     }
-    cachedSession = parsed;
-    return parsed;
+    // 예전 세션에 남아 있는 비밀번호가 다시 퍼지지 않도록 필요한 값만 남긴다.
+    cachedSession = {
+      roomId: parsed.roomId,
+      roomName: parsed.roomName ?? "",
+    };
+    return cachedSession;
   } catch {
     window.localStorage.removeItem(SESSION_KEY);
     cachedRaw = null;

@@ -2,6 +2,13 @@
 -- 황총무 운동 기록 (workout) 스키마
 -- 이 SQL을 Supabase 대시보드 > SQL Editor 에서 실행하세요.
 -- =============================================
+--
+-- ⚠️ 이미 운영 중인 DB에는 이 파일을 다시 실행하지 마세요.
+--    아래 "workout_rooms anon all" 정책은 supabase/20260905_lock_room_password_columns.sql
+--    에서 일부러 지운 것입니다. 이 파일을 다시 돌리면 그 잠금이 풀립니다.
+--    비밀번호 처리는 supabase/20260904_hash_workout_room_password.sql 로 옮겨졌습니다.
+--      · 비밀번호는 password_hash 에 암호화되어 저장됩니다(평문 password 컬럼은 삭제됨).
+--      · 방 만들기/들어가기는 workout_room_create / workout_room_login 함수로만 합니다.
 
 -- 운동 방 (room) : 방 이름 + 비밀번호로 식별
 create table if not exists public.workout_rooms (
@@ -115,8 +122,10 @@ create trigger workout_activity_touch
   before update on public.workout_activity_records
   for each row execute function public.workout_touch_updated_at();
 
--- RLS : 익명 키로 접근하되 room_id 와 password 를 같이 확인하는 클라이언트 로직에 의존
--- (가계부와 동일 철학 — 서버 RPC 없이 단순화)
+-- RLS : 아래는 "처음 만들 때"의 설정이며, 지금은 더 이상 이렇게 두지 않는다.
+-- workout_rooms 는 supabase/20260905_lock_room_password_columns.sql 에서
+-- 정책을 지우고 select 권한도 회수해, 브라우저가 표를 직접 볼 수 없게 잠갔다.
+-- (기록 표들은 room_id 로만 접근하므로 그대로 열려 있다.)
 alter table public.workout_rooms enable row level security;
 alter table public.workout_running_records enable row level security;
 alter table public.workout_gym_records enable row level security;
