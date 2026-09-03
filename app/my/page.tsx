@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import HomeDashboard from "@/components/home/HomeDashboard";
 import { useAuth } from "@/hooks/useAuth";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 
 // 내 서비스 요약 전용 페이지 — 홈에서 분리해 PC에서는 넓은 레이아웃으로 관리한다.
 export default function MyDashboardPage() {
@@ -37,7 +38,10 @@ export default function MyDashboardPage() {
               로그인 / 회원가입
             </StAuthButton>
           )
-        ) : null}
+        ) : (
+          // 로그인 여부를 확인하는 동안에도 버튼 자리를 남겨 둔다
+          <SkeletonBlock width="8.5rem" height="2.1rem" radius="999px" />
+        )}
       </StHeadRow>
       <HomeDashboard wide />
     </StMain>

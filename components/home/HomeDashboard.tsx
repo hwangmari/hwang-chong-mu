@@ -7,6 +7,10 @@ import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useModal } from "@/components/common/ModalProvider";
+import {
+  SkeletonBlock,
+  SkeletonCard,
+} from "@/components/common/Skeleton";
 import { fetchAccountBookStore } from "@/app/account-book/repository";
 import {
   isSavingsCategory,
@@ -527,8 +531,31 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
     };
   }, [user]);
 
-  // 인증 확인 중에는 아무것도 그리지 않아 홈이 깔끔하게 뜨도록 한다.
-  if (loading) return null;
+  // 인증 확인 중에도 자리를 잡아 두어, 요약이 도착할 때 화면이 튀지 않게 한다.
+  if (loading) {
+    return (
+      <StSection $wide={wide}>
+        <StBoard>
+          <StBoardHead>
+            <SkeletonBlock width="7rem" height="0.95rem" radius="0.5rem" />
+          </StBoardHead>
+          <StGrid $wide={wide}>
+            <SkeletonCard height="5.2rem" lines={1} />
+            <SkeletonCard height="5.2rem" lines={1} />
+          </StGrid>
+        </StBoard>
+        <StBoard>
+          <StBoardHead>
+            <SkeletonBlock width="6rem" height="0.95rem" radius="0.5rem" />
+          </StBoardHead>
+          <StGrid $wide={wide}>
+            <SkeletonCard height="5.2rem" lines={1} />
+            <SkeletonCard height="5.2rem" lines={1} />
+          </StGrid>
+        </StBoard>
+      </StSection>
+    );
+  }
 
   // 비로그인: 로그인 유도 카드
   if (!user) {
@@ -555,8 +582,8 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
             <StBoardTitle>📊 서비스 현황</StBoardTitle>
           </StBoardHead>
           <StGrid $wide={wide}>
-            <StSkeletonCard />
-            <StSkeletonCard />
+            <SkeletonCard height="5.2rem" lines={1} />
+            <SkeletonCard height="5.2rem" lines={1} />
           </StGrid>
         </StBoard>
       </StSection>
@@ -1105,13 +1132,6 @@ const StRoomDelete = styled.button`
     background: ${({ theme }) => theme.colors.rose50};
     color: ${({ theme }) => theme.colors.rose600};
   }
-`;
-
-const StSkeletonCard = styled.div`
-  height: 5.2rem;
-  border-radius: 1.25rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  background: ${({ theme }) => theme.colors.gray100};
 `;
 
 const StPromptCard = styled.div`

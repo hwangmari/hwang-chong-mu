@@ -9,6 +9,7 @@ import { findBuiltInEvent } from "../data";
 import { findBuiltInTournament } from "../tournament/data";
 import { fetchTennisEvent, isTournament, type AnyTennisEvent } from "@/services/tennis";
 import { StCard, StCardHint, StHeader, StNotice, StPage, StTitle } from "../page.styles";
+import { SkeletonBlock, SkeletonCard } from "@/components/common/Skeleton";
 
 // 주소 하나로 교류전(개인 승점)과 팀 토너먼트를 모두 연다.
 // 저장 공간에 있으면 그걸 쓰고(편집된 버전), 없으면 코드에 든 것을 쓴다.
@@ -47,9 +48,13 @@ export default function TennisEventPage() {
   if (loading && !event) {
     return (
       <StPage>
-        <StCard>
-          <StCardHint>불러오는 중...</StCardHint>
-        </StCard>
+        <StHeader>
+          <SkeletonBlock width="min(100%, 16rem)" height="1.7rem" radius="0.7rem" />
+          <SkeletonBlock width="min(100%, 11rem)" height="0.9rem" />
+        </StHeader>
+        <SkeletonCard height="7.5rem" lines={2} titleWidth="40%" />
+        <SkeletonCard height="7.5rem" lines={2} titleWidth="35%" />
+        <SkeletonCard height="7.5rem" lines={2} titleWidth="45%" />
       </StPage>
     );
   }

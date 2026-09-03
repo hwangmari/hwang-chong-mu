@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { useAuth } from "@/hooks/useAuth";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 import {
   ROOM_SECRET_NOTICE,
   ROOM_SERVICE_META,
@@ -299,7 +300,19 @@ function AccountContent() {
   if (loading || !user) {
     return (
       <StPage>
-        <StCard>불러오는 중...</StCard>
+        <StCard aria-busy="true">
+          <StHead>
+            <div>
+              <SkeletonBlock width="9rem" height="1.1rem" radius="0.6rem" />
+            </div>
+            <SkeletonBlock width="4.5rem" height="1.9rem" radius="999px" />
+          </StHead>
+          <StList>
+            {[0, 1, 2, 3].map((i) => (
+              <SkeletonBlock key={i} height="4.4rem" radius="1rem" />
+            ))}
+          </StList>
+        </StCard>
       </StPage>
     );
   }

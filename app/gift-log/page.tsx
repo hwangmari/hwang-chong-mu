@@ -18,6 +18,11 @@ import {
 } from "@/services/giftLog";
 import { useAuth } from "@/hooks/useAuth";
 import { useModal } from "@/components/common/ModalProvider";
+import {
+  SkeletonBlock,
+  SkeletonCard,
+  SkeletonList,
+} from "@/components/common/Skeleton";
 import { formatDateKey } from "@/utils/date";
 import type { GiftEntry, GiftEntryInput, GiftRelation } from "./types";
 import {
@@ -242,8 +247,21 @@ export default function GiftLogPage() {
     }
   }
 
-  // 로그인 확인 중엔 깜빡임 방지로 아무것도 그리지 않는다 (HomeDashboard와 동일)
-  if (authLoading) return null;
+  // 로그인 확인 중엔 빈 화면 대신 같은 자리를 차지하는 뼈대를 보여 준다.
+  if (authLoading) {
+    return (
+      <StPage>
+        <StHeader>
+          <SkeletonBlock width="8rem" height="0.9rem" radius="0.6rem" />
+          <SkeletonBlock width="12rem" height="1.6rem" radius="0.7rem" />
+          <SkeletonBlock width="min(100%, 22rem)" height="0.9rem" />
+        </StHeader>
+        <SkeletonCard height="9rem" lines={2} titleWidth="30%" />
+        <SkeletonCard height="7rem" lines={1} titleWidth="35%" />
+        <SkeletonList count={4} height="4.6rem" lines={1} />
+      </StPage>
+    );
+  }
 
   if (!user) {
     return (

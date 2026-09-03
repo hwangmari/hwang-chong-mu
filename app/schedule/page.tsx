@@ -7,7 +7,9 @@ import {
   StLoadingWrapper,
   StWrapper,
 } from "@/components/styled/layout.styled";
+import styled from "styled-components";
 import FooterGuide from "@/components/common/FooterGuide";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 import { SCHEDULE_GUIDE_DATA } from "@/data/footerGuides";
 import { useScheduleStore } from "@/hooks/useScheduleStore";
 import { useSchedulePartActions } from "@/hooks/useSchedulePartActions";
@@ -65,7 +67,7 @@ function SchedulePageInner() {
   if (loading) {
     return (
       <>
-        <StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>
+        <ScheduleHubSkeleton />
         {!selectedPartId ? hubGuide : null}
       </>
     );
@@ -124,8 +126,52 @@ function SchedulePageInner() {
 
 export default function ScheduleListPage() {
   return (
-    <Suspense fallback={<StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>}>
+    <Suspense fallback={<ScheduleHubSkeleton />}>
       <SchedulePageInner />
     </Suspense>
   );
 }
+
+// 허브(파트 목록)와 같은 폭·카드 크기로 자리를 잡아, 목록이 도착해도 화면이 밀리지 않게 한다
+function ScheduleHubSkeleton() {
+  return (
+    <StSkeletonContainer aria-busy="true">
+      <StSkeletonHead>
+        <SkeletonBlock width="min(100%, 12rem)" height="1.5rem" radius="0.7rem" />
+        <SkeletonBlock width="5rem" height="2rem" radius="999px" />
+      </StSkeletonHead>
+      <SkeletonBlock width="7rem" height="1rem" radius="0.5rem" />
+      <StSkeletonGrid>
+        <SkeletonBlock height="5.6rem" radius="1rem" />
+        <SkeletonBlock height="5.6rem" radius="1rem" />
+      </StSkeletonGrid>
+      <SkeletonBlock width="7rem" height="1rem" radius="0.5rem" />
+      <StSkeletonGrid>
+        <SkeletonBlock height="5.6rem" radius="1rem" />
+        <SkeletonBlock height="5.6rem" radius="1rem" />
+      </StSkeletonGrid>
+    </StSkeletonContainer>
+  );
+}
+
+const StSkeletonContainer = styled.div`
+  max-width: ${({ theme }) => theme.layout.maxWidth};
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const StSkeletonHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+const StSkeletonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+`;

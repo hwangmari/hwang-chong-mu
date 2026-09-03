@@ -11,6 +11,7 @@ import WorkspaceHub from "./components/WorkspaceHub";
 import WorkspaceLedgerView from "./components/WorkspaceLedgerView";
 import WorkspaceSettingsModal from "./components/WorkspaceSettingsModal";
 import { StAbLoadingPage, StAbLoadingCard } from "./components/shared";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 import {
   verifyAccountBookUserPassword,
   verifyAccountBookWorkspacePassword,
@@ -113,9 +114,7 @@ function AccountBookPageContent() {
   if (!storageReady) {
     return (
       <>
-        <StAbLoadingPage>
-          <StAbLoadingCard>가계부 허브를 불러오는 중...</StAbLoadingCard>
-        </StAbLoadingPage>
+        <HubSkeleton />
         {!selectedWorkspaceId ? hubGuide : null}
       </>
     );
@@ -236,17 +235,62 @@ function AccountBookPageContent() {
 
 export default function AccountBookPage() {
   return (
-    <Suspense
-      fallback={
-        <StAbLoadingPage>
-          <StAbLoadingCard>가계부 허브를 불러오는 중...</StAbLoadingCard>
-        </StAbLoadingPage>
-      }
-    >
+    <Suspense fallback={<HubSkeleton />}>
       <AccountBookPageContent />
     </Suspense>
   );
 }
+
+// 허브가 뜨기 전 빈 화면 대신, 실제 허브와 같은 폭·카드 크기로 자리를 잡아 둔다
+function HubSkeleton() {
+  return (
+    <StHubSkeletonPage aria-busy="true">
+      <StHubSkeletonInner>
+        <StHubSkeletonHead>
+          <SkeletonBlock width="min(100%, 14rem)" height="1.6rem" radius="0.7rem" />
+          <SkeletonBlock width="min(100%, 20rem)" height="0.85rem" />
+        </StHubSkeletonHead>
+        <SkeletonBlock height="7.5rem" radius="22px" />
+        <StHubSkeletonGrid>
+          <SkeletonBlock width="8rem" height="0.9rem" radius="0.5rem" />
+          <SkeletonBlock height="6.5rem" radius="22px" />
+          <SkeletonBlock height="6.5rem" radius="22px" />
+        </StHubSkeletonGrid>
+      </StHubSkeletonInner>
+    </StHubSkeletonPage>
+  );
+}
+
+const StHubSkeletonPage = styled.div`
+  min-height: 100vh;
+  padding: 1.25rem 1.25rem 2rem;
+  background: #ffffff;
+
+  @media (max-width: 720px) {
+    padding: 0.9rem 0.85rem 1.4rem;
+  }
+`;
+
+const StHubSkeletonInner = styled.div`
+  width: 100%;
+  max-width: 1025px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+`;
+
+const StHubSkeletonHead = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const StHubSkeletonGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+`;
 
 const StHubGuideWrap = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};

@@ -42,6 +42,7 @@ import {
   StTabRow,
   StTitle,
 } from "../page.styles";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 import type { Court, Match, MatchScore, Player, ScoreMap, TennisEvent } from "../types";
 
 type Tab = "bracket" | "standings" | "players";
@@ -439,8 +440,11 @@ export default function ExchangeView({ initialEvent }: Props) {
           </StTabRow>
 
           {loading ? (
-            <StCard>
-              <StCardHint>진행 기록을 불러오는 중...</StCardHint>
+            <StCard aria-busy="true">
+              <SkeletonBlock width="40%" height="1.05rem" radius="0.6rem" />
+              <SkeletonBlock height="3.4rem" radius="0.9rem" />
+              <SkeletonBlock height="3.4rem" radius="0.9rem" />
+              <SkeletonBlock height="3.4rem" radius="0.9rem" />
             </StCard>
           ) : tab === "bracket" ? (
             <MatchQueue

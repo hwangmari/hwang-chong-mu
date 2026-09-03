@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { createWorkoutRoom, joinWorkoutRoom } from "../repository";
 import { writeWorkoutSession } from "../storage";
-import { useWorkoutSession } from "../useWorkoutSession";
+import {
+  useWorkoutSession,
+  useWorkoutSessionReady,
+} from "../useWorkoutSession";
 import FooterGuide from "@/components/common/FooterGuide";
 import { WORKOUT_GUIDE_DATA } from "@/data/footerGuides";
+import { SkeletonBlock, SkeletonList } from "@/components/common/Skeleton";
 
 type Mode = "join" | "create";
 
@@ -18,12 +22,26 @@ type Props = {
 export default function WorkoutAuthGate({ children }: Props) {
   const router = useRouter();
   const session = useWorkoutSession();
+  const sessionReady = useWorkoutSessionReady();
 
   const [mode, setMode] = useState<Mode>("join");
   const [roomName, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  // 저장된 방 정보를 아직 읽지 못한 찰나엔 입장 폼 대신 뼈대를 보여 준다.
+  // (바로 로그인 폼이 번쩍였다가 사라지는 걸 막는다)
+  if (!sessionReady) {
+    return (
+      <StSkeletonPage>
+        <StSkeletonContent>
+          <SkeletonBlock width="min(100%, 18rem)" height="2.4rem" radius="0.9rem" />
+          <SkeletonList count={3} height="7.5rem" lines={2} />
+        </StSkeletonContent>
+      </StSkeletonPage>
+    );
+  }
 
   if (session) {
     return <>{children}</>;
@@ -114,6 +132,27 @@ export default function WorkoutAuthGate({ children }: Props) {
     </StGatePage>
   );
 }
+
+// 로그인 후 실제 화면(WorkoutShell)과 같은 폭·여백을 써서 자리가 어긋나지 않게 한다
+const StSkeletonPage = styled.div`
+  min-height: calc(100vh - 64px);
+  background: ${({ theme }) => theme.colors.gray50};
+  overflow-x: clip;
+`;
+
+const StSkeletonContent = styled.div`
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 4rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  @media (max-width: 540px) {
+    padding: 1rem 0 3rem;
+  }
+`;
 
 const StGatePage = styled.main`
   min-height: calc(100vh - 64px);

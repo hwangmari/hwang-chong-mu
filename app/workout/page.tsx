@@ -28,6 +28,7 @@ import {
 import FooterGuide from "@/components/common/FooterGuide";
 import { WORKOUT_GUIDE_DATA } from "@/data/footerGuides";
 import { useModal } from "@/components/common/ModalProvider";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 import {
   GYM_BODY_PART_LABEL,
   type ActivityRecord,
@@ -233,7 +234,11 @@ export default function WorkoutHomePage() {
             ))}
           </StRecentList>
         ) : loading ? (
-          <StEmpty>불러오는 중...</StEmpty>
+          <StRecentList aria-busy="true">
+            <SkeletonBlock height="2.6rem" radius="0.8rem" />
+            <SkeletonBlock height="2.6rem" radius="0.8rem" />
+            <SkeletonBlock height="2.6rem" radius="0.8rem" />
+          </StRecentList>
         ) : (
           <StEmpty>
             아직 기록이 없어요.{" "}
