@@ -56,7 +56,12 @@ export default function Home() {
         </StInner>
       </StHeroBand>
 
-      {/* 2. 모든 도구 (분류 유지) */}
+      {/* 2. 계정 안내: 로그인 없이도 되지만, 로그인하면 이어서 */}
+      <StInner as="section" aria-label="계정 안내">
+        <LoginInvite />
+      </StInner>
+
+      {/* 3. 모든 도구 (분류 유지) */}
       <StInner as="section" aria-labelledby="all-tools">
         <StSectionHead>
           <StSectionTitle id="all-tools" className="display">
@@ -84,11 +89,6 @@ export default function Home() {
             </StCategory>
           ))}
         </StCategoryGrid>
-      </StInner>
-
-      {/* 3. 계정 안내: 로그인 없이도 되지만, 로그인하면 이어서 */}
-      <StInner as="section" aria-label="계정 안내">
-        <LoginInvite />
       </StInner>
 
       {/* 4. 최근 글 */}
