@@ -841,6 +841,17 @@ export const StInput = styled.input`
     outline: none;
     border-color: ${({ theme }) => theme.colors.blue500};
   }
+
+  /* 숫자 칸의 위아래 화살표(스피너) 숨김 — 일반 입력칸처럼 보이게 */
+  &[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  &[type="number"]::-webkit-outer-spin-button,
+  &[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 `;
 
 export const StTextarea = styled.textarea`
