@@ -44,6 +44,16 @@ import {
   fetchMeetingConfirmedDates,
   fetchTennisEventDates,
 } from "@/services/homeSummary";
+import { fetchOvertimeRoomData } from "@/services/overtime";
+import { OVERTIME_RULES, RULE_KEY } from "@/app/overtime/constants";
+import type { OvertimeRuleId } from "@/app/overtime/types";
+import {
+  buildOvertimeSummary,
+  formatCompactDuration,
+  formatDayValue,
+  formatRawDuration,
+  mergeRecordsByDate,
+} from "@/app/overtime/utils";
 import { isUuid } from "@/lib/slug";
 import {
   ROOM_SECRET_NOTICE,
@@ -66,7 +76,8 @@ const withFromMy = (href: string) =>
 // - 로그인/미연결: 계정 연결 유도 카드
 // - 로그인/연결됨: ① 이번 달 게이지 띠 → ② 이번 달 달력 + 다가오는 일정 → ③ 서비스 현황 → ④ 내 방
 // 서비스별 조회는 대시보드에서 서비스당 딱 한 번만 돌고, 그 결과를 게이지·달력·현황이 나눠 쓴다.
-// schedule 서비스는 서버 세션(hws-session)이 필요해 아직 요약을 그리지 않는다.
+// 업무 캘린더(schedule)는 서버 세션(hws-session)이 있을 때만 수치를 그리고, 없으면 안내 한 줄만 둔다.
+// 야근 계산기(overtime)는 연결(link)이 아니라 "내 방"이라, 가장 최근에 등록한 방 하나를 요약한다.
 
 type LinkRow = {
   service: string;
@@ -98,8 +109,27 @@ type WidgetView = {
 
 type WidgetStatus = "loading" | "ready" | "empty" | "error";
 
+// 현황 줄 하나를 세우는 데 필요한 것. 연결된 서비스(link)와 야근 방을 같은 모양으로 다룬다.
+type ServiceRow = {
+  // summaries 통에서 요약을 찾는 키(서비스 이름)
+  key: string;
+  href: string;
+  icon: string;
+  name: string;
+  tone: WidgetTone;
+  // 우클릭 빠른 등록이 가능한 연결 서비스만 채워진다
+  link?: LinkRow;
+};
+
 // 서비스별 아이콘 톤 (같은 파랑 반복 → 서비스마다 색 구분으로 생동감)
-type WidgetTone = "blue" | "amber" | "green" | "teal" | "indigo" | "rose";
+type WidgetTone =
+  | "blue"
+  | "amber"
+  | "green"
+  | "teal"
+  | "indigo"
+  | "rose"
+  | "orange";
 
 // 이번 달 게이지 띠의 한 칸. 달 단위 목표가 있는 서비스만 만든다.
 type GaugeItem = {
@@ -117,12 +147,29 @@ type GaugeItem = {
   href: string;
 };
 
+// 달력 칩과 "다가오는 일정"이 함께 쓰는 항목.
+// 날짜 있는 방(약속·테니스)과 제목이 있는 서비스 기록(업무 할 일·야근)이 같은 모양으로 모인다.
+type DatedItem = {
+  id: string;
+  // yyyy-MM-dd
+  date: string;
+  // 칩·목록 앞에 붙는 갈래 이름 ("약속" · "테니스" · "업무" · "야근")
+  kind: string;
+  tone: WidgetTone;
+  label: string;
+  href: string;
+  // "다가오는 일정" 목록에 올릴 항목인지. 지난 기록인 야근은 false.
+  upcoming: boolean;
+};
+
 // 서비스 하나를 한 번 조회해서 얻는 모든 것 — 현황 줄 + 게이지 + 달력 칩
 type ServiceSummary = {
   view: WidgetView;
   gauge: GaugeItem | null;
-  // 달력에 찍을 날짜들(yyyy-MM-dd). 달을 넘겨도 쓰도록 전체 기간을 담는다.
+  // 달력에 날짜만 찍는 서비스(운동)가 쓰는 날짜 목록(yyyy-MM-dd).
   calendarDates: string[];
+  // 제목까지 함께 보여 주는 서비스(업무·야근)가 쓰는 항목 목록.
+  calendarItems?: DatedItem[];
 };
 
 type ServiceState = { status: WidgetStatus; data: ServiceSummary | null };
@@ -190,6 +237,22 @@ const SERVICE_META: Record<
     name: "다이어트",
     tone: "green",
     href: (ref) => `/diet/${String(ref.goalId ?? "")}`,
+  },
+  schedule: {
+    icon: "🗓️",
+    name: "업무 캘린더",
+    tone: "teal",
+    href: (ref) => {
+      const workspaceId = String(ref.workspaceId ?? "");
+      return workspaceId ? `/schedule?workspaceId=${workspaceId}` : "/schedule";
+    },
+  },
+  // 야근 계산기는 주소에 방이 없고, 열면 이 기기에 저장된 방으로 자동 연결된다.
+  overtime: {
+    icon: ROOM_SERVICE_META.overtime.icon,
+    name: ROOM_SERVICE_META.overtime.name,
+    tone: "orange",
+    href: () => "/overtime",
   },
 };
 
@@ -414,6 +477,205 @@ async function loadDiet(
   return { view: { main, sub }, gauge: null, calendarDates: [] };
 }
 
+// 5. 업무 캘린더: 오늘 할 일 + 이번 주 완료율. 달력에는 마감일에 할 일 제목을 찍는다.
+// 접근 권한은 업무 캘린더 자신의 세션(hws-session)이 판단한다 — 아직 입장 전이면 안내만 보여 준다.
+type ScheduleTaskRow = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  isCompleted: boolean;
+  boardId: string;
+};
+
+async function loadSchedule(
+  resourceRef: Record<string, unknown>,
+): Promise<ServiceSummary | null> {
+  const workspaceId = String(resourceRef.workspaceId ?? "");
+  if (!workspaceId) return null;
+
+  const res = await fetch(
+    `/api/schedule/summary?workspaceId=${encodeURIComponent(workspaceId)}`,
+    { cache: "no-store", credentials: "same-origin" },
+  );
+  // 401/403 = 아직 워크스페이스에 입장하지 않음(또는 다른 워크스페이스 세션)
+  if (res.status === 401 || res.status === 403) {
+    return {
+      view: {
+        main: "입장하면 요약이 보여요",
+        sub: "업무 캘린더에 들어가면 오늘 할 일이 여기 떠요",
+      },
+      gauge: null,
+      calendarDates: [],
+    };
+  }
+  if (!res.ok) throw new Error("schedule summary failed");
+
+  const data = (await res.json()) as { tasks?: ScheduleTaskRow[] };
+  const tasks = data.tasks ?? [];
+  if (tasks.length === 0) return null;
+
+  const now = new Date();
+  const today = format(now, DAY_FORMAT);
+  const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), DAY_FORMAT);
+  const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), DAY_FORMAT);
+  const boardHref = SERVICE_META.schedule.href(resourceRef);
+
+  // 오늘 걸쳐 있는 미완료 할 일
+  const todayOpen = tasks.filter(
+    (task) =>
+      !task.isCompleted && task.startDate <= today && task.endDate >= today,
+  );
+  // 이번 주(월~일)에 마감인 할 일
+  const weekTasks = tasks.filter(
+    (task) => task.endDate >= weekStart && task.endDate <= weekEnd,
+  );
+  const weekDone = weekTasks.filter((task) => task.isCompleted).length;
+  const weekOpen = weekTasks.length - weekDone;
+  const nextDue = tasks
+    .filter((task) => !task.isCompleted && task.endDate >= today)
+    .sort((a, b) => a.endDate.localeCompare(b.endDate))[0];
+
+  let main: string;
+  if (todayOpen.length > 0) {
+    main = `오늘 할 일 ${todayOpen.length}개`;
+  } else if (weekOpen > 0) {
+    main = `이번 주 마감 ${weekOpen}개`;
+  } else {
+    main = "마감이 임박한 일이 없어요";
+  }
+
+  let sub: string | undefined;
+  if (nextDue) {
+    sub = `다음 마감 · ${nextDue.title} ${formatDday(nextDue.endDate)}`;
+  } else if (weekTasks.length > 0) {
+    sub = "이번 주 할 일을 다 끝냈어요 🎉";
+  }
+
+  const weekRatio = weekTasks.length > 0 ? weekDone / weekTasks.length : 0;
+
+  return {
+    view: {
+      main,
+      sub,
+      progress: weekTasks.length > 0 ? { ratio: weekRatio, over: false } : null,
+    },
+    gauge:
+      weekTasks.length > 0
+        ? {
+            value: `${Math.round(weekRatio * 100)}%`,
+            caption: "업무",
+            label: "이번 주 완료율",
+            ratio: weekRatio,
+            over: false,
+            icon: SERVICE_META.schedule.icon,
+            tone: "teal",
+            href: withFromMy(boardHref),
+          }
+        : null,
+    calendarDates: [],
+    calendarItems: tasks.map((task) => ({
+      id: `schedule-${task.id}`,
+      date: task.endDate,
+      kind: "업무",
+      tone: "teal" as const,
+      label: task.title,
+      href: withFromMy(task.boardId ? `/schedule/${task.boardId}` : boardHref),
+      // 이미 끝낸 할 일은 달력에만 남기고 "다가오는 일정"에는 올리지 않는다
+      upcoming: !task.isCompleted,
+    })),
+  };
+}
+
+// 이 기기에서 고른 야근 계산 규칙(야근 페이지와 같은 키·같은 기본값)
+function readOvertimeRuleId(): OvertimeRuleId {
+  if (typeof window === "undefined") return "threshold_15h";
+  return localStorage.getItem(RULE_KEY) === "from_1830"
+    ? "from_1830"
+    : "threshold_15h";
+}
+
+// 6. 야근 계산기: 이달 야근시간 + 보상휴가. 계산은 야근 페이지의 규칙 함수를 그대로 쓴다.
+// 야근 페이지의 월간 요약과 같은 기준(그 달 기록만 넣어 계산)이라 숫자가 서로 어긋나지 않는다.
+async function loadOvertime(roomRef: string): Promise<ServiceSummary | null> {
+  if (!roomRef) return null;
+  const { records } = await fetchOvertimeRoomData(roomRef);
+  if (records.length === 0) return null;
+
+  const now = new Date();
+  const monthPrefix = format(now, "yyyy-MM");
+  const monthRecords = mergeRecordsByDate(records).filter((record) =>
+    record.date.startsWith(monthPrefix),
+  );
+  const href = withFromMy("/overtime");
+
+  if (monthRecords.length === 0) {
+    return {
+      view: {
+        main: "이번 달은 아직 야근이 없어요 🎉",
+        sub: "지난 달 기록은 야근 계산기에서 볼 수 있어요",
+      },
+      gauge: null,
+      calendarDates: [],
+    };
+  }
+
+  const rule = OVERTIME_RULES[readOvertimeRuleId()];
+  const summary = buildOvertimeSummary(monthRecords, rule);
+  const totalMinutes = summary.totalRawMinutes;
+
+  let sub: string;
+  if (summary.usableDays > 0) {
+    sub = `보상휴가 ${formatDayValue(summary.usableDays)} 적립`;
+  } else if (summary.remainingThresholdMinutes > 0) {
+    sub = `적립 시작까지 ${formatRawDuration(summary.remainingThresholdMinutes)}`;
+  } else {
+    sub = "조금만 더 쌓이면 0.25일이 돼요";
+  }
+
+  // 규칙에 적립 시작 기준(예: 15시간)이 있으면 그 시간을 고리의 한 바퀴로 쓴다.
+  // 기준이 없는 규칙(18:30부터)은 한 바퀴를 40시간으로 두고 "누적"이라고만 적는다.
+  const hasThreshold = rule.thresholdMinutes > 0;
+  const gaugeMax = hasThreshold ? rule.thresholdMinutes : 40 * 60;
+  const gaugeRatio = totalMinutes / gaugeMax;
+
+  return {
+    view: {
+      main: `이달 야근 ${formatRawDuration(totalMinutes)}`,
+      sub,
+      progress: { ratio: gaugeRatio, over: false },
+    },
+    gauge: {
+      value:
+        totalMinutes >= 60
+          ? `${Math.floor(totalMinutes / 60)}시간`
+          : `${totalMinutes}분`,
+      caption: "야근",
+      label: hasThreshold
+        ? `이달 ${rule.thresholdMinutes / 60}시간 중`
+        : "이달 누적",
+      ratio: gaugeRatio,
+      over: false,
+      icon: SERVICE_META.overtime.icon,
+      tone: "orange",
+      href,
+    },
+    calendarDates: [],
+    calendarItems: monthRecords.map((record) => ({
+      id: `overtime-${record.id}`,
+      date: record.date,
+      kind: "야근",
+      tone: "orange" as const,
+      label: formatCompactDuration(
+        record.before10Minutes + record.after10Minutes,
+      ),
+      href,
+      // 야근은 이미 지난 기록이라 "다가오는 일정"에는 올리지 않는다
+      upcoming: false,
+    })),
+  };
+}
+
 const SERVICE_LOADERS: Record<
   string,
   (resourceRef: Record<string, unknown>) => Promise<ServiceSummary | null>
@@ -422,6 +684,7 @@ const SERVICE_LOADERS: Record<
   workout: loadWorkout,
   habit: loadHabit,
   diet: loadDiet,
+  schedule: loadSchedule,
 };
 
 // ── 이번 달 게이지 한 칸 ──
@@ -701,27 +964,91 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
     [links],
   );
 
-  // 게이지 띠: 달 단위 목표가 있는 서비스만, 최대 4칸
+  // 야근 계산기는 연결이 아니라 "내 방"이라 방 목록에서 찾는다.
+  // 방이 여럿이면 가장 최근에 등록한 것 하나만 요약한다(조회도 그만큼만 돈다).
+  const overtimeRoomId = useMemo(() => {
+    const list = rooms.filter((room) => room.service === "overtime");
+    if (list.length === 0) return null;
+    return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+      .roomId;
+  }, [rooms]);
+
+  // 야근 방 요약도 links와 같은 summaries 통에 담아, 게이지·달력·현황이 똑같이 꺼내 쓰게 한다.
+  // (방 이름이 나중에 채워져도 roomId는 그대로라 조회는 방당 한 번만 돈다)
+  useEffect(() => {
+    if (!overtimeRoomId) return;
+    let active = true;
+    void (async () => {
+      try {
+        const result = await loadOvertime(overtimeRoomId);
+        if (!active) return;
+        setSummaries((prev) => ({
+          ...prev,
+          overtime: result
+            ? { status: "ready", data: result }
+            : { status: "empty", data: null },
+        }));
+      } catch {
+        if (active) {
+          setSummaries((prev) => ({
+            ...prev,
+            overtime: { status: "error", data: null },
+          }));
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [overtimeRoomId, refreshKey]);
+
+  // 현황 줄 목록: 연결된 서비스 + (있으면) 야근 방
+  const serviceRows = useMemo<ServiceRow[]>(() => {
+    const rows: ServiceRow[] = supportedLinks.map((link) => {
+      const meta = SERVICE_META[link.service];
+      return {
+        key: link.service,
+        href: withFromMy(meta.href(link.resourceRef)),
+        icon: meta.icon,
+        name: meta.name,
+        tone: meta.tone,
+        link,
+      };
+    });
+    if (overtimeRoomId) {
+      const meta = SERVICE_META.overtime;
+      rows.push({
+        key: "overtime",
+        href: withFromMy(meta.href({})),
+        icon: meta.icon,
+        name: meta.name,
+        tone: meta.tone,
+      });
+    }
+    return rows;
+  }, [supportedLinks, overtimeRoomId]);
+
+  // 게이지 띠: 달 단위 목표가 있는 서비스만, 최대 6칸(넘치면 아래 줄로 접힌다)
   const gauges = useMemo(
     () =>
-      supportedLinks
-        .map((link) => summaries[link.service]?.data?.gauge)
+      serviceRows
+        .map((row) => summaries[row.key]?.data?.gauge)
         .filter((gauge): gauge is GaugeItem => Boolean(gauge))
-        .slice(0, 4),
-    [supportedLinks, summaries],
+        .slice(0, 6),
+    [serviceRows, summaries],
   );
 
   // 게이지가 될 수 있는 서비스가 아직 로딩 중이면 자리만 잡아 둔다(화면 튐 방지)
-  const gaugePending = supportedLinks.filter(
-    (link) =>
-      link.service !== "diet" && (summaries[link.service]?.status ?? "loading") === "loading",
+  const gaugePending = serviceRows.filter(
+    (row) =>
+      row.key !== "diet" && (summaries[row.key]?.status ?? "loading") === "loading",
   ).length;
 
   // 날짜가 있는 방(약속·테니스) — 달력 칩과 다가오는 일정이 함께 쓴다
-  const datedRooms = useMemo(
+  const datedRooms = useMemo<DatedItem[]>(
     () =>
       rooms
-        .map((room) => {
+        .map((room): DatedItem | null => {
           const date =
             room.service === "meeting"
               ? room.confirmedDate
@@ -734,16 +1061,32 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
             id: room.id,
             date,
             kind: room.service === "meeting" ? "약속" : "테니스",
-            tone: (room.service === "meeting" ? "indigo" : "green") as
-              | "indigo"
-              | "green",
+            tone: room.service === "meeting" ? "indigo" : "green",
             label: room.label || meta.name,
             href: withFromMy(meta.href(room.roomId)),
+            upcoming: true,
           };
         })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-        .sort((a, b) => a.date.localeCompare(b.date)),
+        .filter((item): item is DatedItem => item !== null),
     [rooms],
+  );
+
+  // 서비스 요약이 만들어 준 날짜 항목(업무 할 일 마감일·야근 기록일)
+  const serviceDatedItems = useMemo<DatedItem[]>(() => {
+    const items: DatedItem[] = [];
+    for (const state of Object.values(summaries)) {
+      if (state.data?.calendarItems) items.push(...state.data.calendarItems);
+    }
+    return items;
+  }, [summaries]);
+
+  // 달력·다가오는 일정이 함께 보는 하나의 목록
+  const datedItems = useMemo<DatedItem[]>(
+    () =>
+      [...datedRooms, ...serviceDatedItems].sort((a, b) =>
+        a.date.localeCompare(b.date),
+      ),
+    [datedRooms, serviceDatedItems],
   );
 
   // 운동한 날 목록 — 매 렌더마다 새 배열이 되지 않게 고정해 둔다(달력 useMemo가 헛돌지 않도록)
@@ -755,7 +1098,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
   const monthPrefix = format(calendarMonth, "yyyy-MM");
 
   const calendarEvents = useMemo<MonthCalendarEvent[]>(() => {
-    const events: MonthCalendarEvent[] = datedRooms
+    const events: MonthCalendarEvent[] = datedItems
       .filter((item) => item.date.startsWith(monthPrefix))
       .map((item) => ({
         date: item.date,
@@ -774,23 +1117,41 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
         });
       });
     return events;
-  }, [datedRooms, workoutDates, monthPrefix]);
+  }, [datedItems, workoutDates, monthPrefix]);
 
-  // 다가오는 일정: 오늘 이후로 가장 가까운 3건
+  // 다가오는 일정: 오늘 이후로 가장 가까운 3건 (지난 기록인 야근은 빠진다)
   const upcoming = useMemo(() => {
     const today = format(new Date(), DAY_FORMAT);
-    return datedRooms.filter((item) => item.date >= today).slice(0, 3);
-  }, [datedRooms]);
+    return datedItems
+      .filter((item) => item.upcoming && item.date >= today)
+      .slice(0, 3);
+  }, [datedItems]);
 
   const hasCalendarSource =
-    datedRooms.length > 0 ||
-    rooms.some((room) => room.service === "meeting" || room.service === "tennis") ||
-    supportedLinks.some((link) => link.service === "workout");
+    datedItems.length > 0 ||
+    rooms.some(
+      (room) =>
+        room.service === "meeting" ||
+        room.service === "tennis" ||
+        room.service === "overtime",
+    ) ||
+    supportedLinks.some(
+      (link) => link.service === "workout" || link.service === "schedule",
+    );
 
   const monthWorkoutDays = workoutDates.filter((date) =>
     date.startsWith(monthPrefix),
   ).length;
-  const monthPlanCount = calendarEvents.length - monthWorkoutDays;
+  // 이번 달 칩 = 일정(약속·테니스·업무) + 야근 기록일 + 운동한 날
+  const monthItems = datedItems.filter((item) =>
+    item.date.startsWith(monthPrefix),
+  );
+  const monthOvertimeDays = monthItems.filter(
+    (item) => item.kind === "야근",
+  ).length;
+  const monthPlanCount = monthItems.length - monthOvertimeDays;
+  const hasScheduleItems = datedItems.some((item) => item.kind === "업무");
+  const hasOvertimeItems = datedItems.some((item) => item.kind === "야근");
 
   // 인증 확인 중에도 자리를 잡아 두어, 요약이 도착할 때 화면이 튀지 않게 한다.
   if (loading) {
@@ -884,7 +1245,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
               ? gauges.map((gauge) => (
                   <GaugeRing key={gauge.caption} gauge={gauge} />
                 ))
-              : Array.from({ length: Math.min(gaugePending, 4) }, (_, index) => (
+              : Array.from({ length: Math.min(gaugePending, 6) }, (_, index) => (
                   <StGaugeSkeleton key={index}>
                     <SkeletonBlock width="5rem" height="5rem" radius="999px" />
                     <SkeletonBlock width="3.2rem" height="0.8rem" radius="0.4rem" />
@@ -901,7 +1262,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
             <StBoardTitleWrap>
               <StBoardTitle>🗓️ 이번 달 달력</StBoardTitle>
             </StBoardTitleWrap>
-            <StBoardNote>약속·테니스·운동 기록을 한 달치로 모았어요</StBoardNote>
+            <StBoardNote>이번 달 일정·기록을 한곳에 모았어요</StBoardNote>
           </StBoardHead>
           <StCalendarLayout>
             <StCalendarPane>
@@ -917,6 +1278,11 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
                     {workoutDates.length > 0 ? (
                       <StCalSummaryItem>
                         <b>{monthWorkoutDays}</b>일 운동
+                      </StCalSummaryItem>
+                    ) : null}
+                    {hasOvertimeItems ? (
+                      <StCalSummaryItem>
+                        <b>{monthOvertimeDays}</b>일 야근
                       </StCalSummaryItem>
                     ) : null}
                   </StCalSummaryRow>
@@ -935,6 +1301,18 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
                       <StLegendItem $tone="blue">
                         <StLegendDot $tone="blue" />
                         운동
+                      </StLegendItem>
+                    ) : null}
+                    {hasScheduleItems ? (
+                      <StLegendItem $tone="teal">
+                        <StLegendDot $tone="teal" />
+                        업무
+                      </StLegendItem>
+                    ) : null}
+                    {hasOvertimeItems ? (
+                      <StLegendItem $tone="orange">
+                        <StLegendDot $tone="orange" />
+                        야근
                       </StLegendItem>
                     ) : null}
                   </>
@@ -975,7 +1353,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
       ) : null}
 
       {/* ③ 서비스 현황 — 한 줄에 하나씩 넓게 */}
-      {supportedLinks.length > 0 ? (
+      {serviceRows.length > 0 ? (
         <StBoard>
           <StBoardHead>
             <StBoardTitleWrap>
@@ -1015,23 +1393,25 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
           </StBoardHead>
           <StBoardNote>{basisLine}</StBoardNote>
           <StServiceList>
-            {supportedLinks.map((link) => {
-              const state = summaries[link.service] ?? {
+            {serviceRows.map((row) => {
+              const state = summaries[row.key] ?? {
                 status: "loading" as WidgetStatus,
                 data: null,
               };
               if (state.status === "error") return null;
-              const meta = SERVICE_META[link.service];
+              const link = row.link;
               return (
                 <WidgetShell
-                  key={link.service}
-                  href={withFromMy(meta.href(link.resourceRef))}
-                  icon={meta.icon}
-                  name={meta.name}
-                  tone={meta.tone}
+                  key={row.key}
+                  href={row.href}
+                  icon={row.icon}
+                  name={row.name}
+                  tone={row.tone}
                   view={state.data?.view ?? null}
                   status={state.status}
-                  onContextMenu={(event) => openQuickMenu(event, link)}
+                  onContextMenu={
+                    link ? (event) => openQuickMenu(event, link) : undefined
+                  }
                 />
               );
             })}
@@ -1142,6 +1522,7 @@ const toneBg = (tone: WidgetTone) => (theme: { colors: Record<string, string> })
     teal: theme.colors.teal50,
     indigo: theme.colors.indigo50,
     rose: theme.colors.rose50,
+    orange: theme.colors.orange50,
   })[tone];
 
 const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
@@ -1152,6 +1533,7 @@ const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> })
     teal: theme.colors.teal600,
     indigo: theme.colors.indigo600,
     rose: theme.colors.rose600,
+    orange: theme.colors.orange600,
   })[tone];
 
 const StSection = styled.section<{ $wide?: boolean }>`
@@ -1183,6 +1565,7 @@ const StBoardTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  white-space: nowrap;
   font-size: 0.95rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray700};
@@ -1335,10 +1718,9 @@ const StGaugeStrip = styled.div`
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
 
+  /* 칸이 늘어나도 한 줄에 욱여넣지 않고, 좁아지면 아랫줄로 접힌다 */
   @media (min-width: 640px) {
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
     gap: 0.85rem;
   }
 `;

@@ -21,6 +21,7 @@ export type MonthCalendarTone =
   | "teal"
   | "indigo"
   | "rose"
+  | "orange"
   | "gray";
 
 export type MonthCalendarEvent = {
@@ -225,6 +226,7 @@ const toneStyles = css<{ $tone: MonthCalendarTone }>`
       teal: theme.colors.teal600,
       indigo: theme.colors.indigo600,
       rose: theme.colors.rose600,
+      orange: theme.colors.orange600,
       gray: theme.colors.gray600,
     })[$tone]};
   --tone-bg: ${({ $tone, theme }) =>
@@ -235,6 +237,7 @@ const toneStyles = css<{ $tone: MonthCalendarTone }>`
       teal: theme.colors.teal50,
       indigo: theme.colors.indigo50,
       rose: theme.colors.rose50,
+      orange: theme.colors.orange50,
       gray: theme.colors.gray100,
     })[$tone]};
   color: var(--tone-fg);

@@ -43,28 +43,52 @@ export function loginScheduleUserApi(name: string, password: string) {
   });
 }
 
-export function enterWorkspaceApi(
+// 워크스페이스에 들어가면 통합 계정의 "내 서비스"에 업무 캘린더를 자동 연결한다.
+// 방(room)들이 linkRoomToAccount로 자동 등록되는 것과 같은 방식이고,
+// 비밀번호는 보내지 않는다(비로그인이면 서버가 401 → 조용히 무시).
+function linkScheduleToAccount(
+  session: Exclude<ScheduleAuthMeResponse["session"], null>,
+) {
+  if (!session.workspaceId) return;
+  void fetch("/api/auth/links", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      service: "schedule",
+      resourceRef: {
+        workspaceId: session.workspaceId,
+        userId: session.userId,
+      },
+      label: session.workspaceName || "업무 캘린더",
+    }),
+  }).catch(() => {});
+}
+
+export async function enterWorkspaceApi(
   userId: string,
   workspaceId: string,
   password: string,
 ) {
-  return jsonRequest<{ session: Exclude<ScheduleAuthMeResponse["session"], null> }>(
-    "/api/schedule/auth/enter",
-    {
-      method: "POST",
-      body: JSON.stringify({ userId, workspaceId, password }),
-    },
-  );
+  const result = await jsonRequest<{
+    session: Exclude<ScheduleAuthMeResponse["session"], null>;
+  }>("/api/schedule/auth/enter", {
+    method: "POST",
+    body: JSON.stringify({ userId, workspaceId, password }),
+  });
+  linkScheduleToAccount(result.session);
+  return result;
 }
 
-export function joinWorkspaceApi(userId: string, inviteCode: string) {
-  return jsonRequest<{ session: Exclude<ScheduleAuthMeResponse["session"], null> }>(
-    "/api/schedule/auth/join",
-    {
-      method: "POST",
-      body: JSON.stringify({ userId, inviteCode }),
-    },
-  );
+export async function joinWorkspaceApi(userId: string, inviteCode: string) {
+  const result = await jsonRequest<{
+    session: Exclude<ScheduleAuthMeResponse["session"], null>;
+  }>("/api/schedule/auth/join", {
+    method: "POST",
+    body: JSON.stringify({ userId, inviteCode }),
+  });
+  linkScheduleToAccount(result.session);
+  return result;
 }
 
 export function leaveWorkspaceApi() {
