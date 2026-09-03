@@ -52,7 +52,7 @@ const DEFS: Record<RoomService, RoomServiceDef> = {
     menuHref: "/calc",
     tone: "rose",
     icon: "🧮",
-    name: "정산방",
+    name: "여행 경비",
     href: (roomId) => `/calc/${roomId}`,
     emptyHint: "정산 방을 만들면 자동으로 등록돼요.",
   },

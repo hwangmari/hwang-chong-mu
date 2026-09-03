@@ -11,6 +11,10 @@ export type HabitTodaySummary = {
   total: number;
   // 연속 달성일(스트릭): 하루의 모든 항목을 완료한 날이 오늘(또는 어제)부터 며칠 이어졌는지
   streak: number;
+  // 이번 달 체크한 항목 수 (1일~오늘)
+  monthDone: number;
+  // 이번 달 체크할 수 있었던 항목 수 = 항목 수 × 오늘까지 지난 날수
+  monthPossible: number;
 };
 
 // 습관: 오늘 완료 항목 수 / 전체 항목 수 + 연속 달성일. 항목이 없으면 null. 쿼리 에러는 throw.
@@ -60,7 +64,26 @@ export async function fetchHabitTodaySummary(
     cursor = subDays(cursor, 1);
   }
 
-  return { done, total, streak };
+  // 이번 달 달성률: 1일~오늘까지 체크한 항목 수 / (항목 수 × 지난 날수).
+  // 위에서 이미 최근 60일 로그를 받아 왔으므로 추가 조회 없이 계산된다.
+  const now = new Date();
+  const daysElapsed = now.getDate();
+  let monthDone = 0;
+  for (let day = 1; day <= daysElapsed; day += 1) {
+    const key = format(
+      new Date(now.getFullYear(), now.getMonth(), day),
+      DAY_FORMAT,
+    );
+    monthDone += perDay.get(key)?.size ?? 0;
+  }
+
+  return {
+    done,
+    total,
+    streak,
+    monthDone,
+    monthPossible: total * daysElapsed,
+  };
 }
 
 export type DietProgressSummary = {
@@ -194,4 +217,28 @@ export async function fetchCalcRoomNames(
     if (row.room_name) names[row.id] = row.room_name;
   }
   return names;
+}
+
+// 테니스방(tennis): 교류전·토너먼트의 예정 날짜 조회.
+// 달력에 칩으로 찍기 위한 최소 컬럼(id, title, date)만 한 번의 쿼리로 가져온다.
+// 반환 키는 입력한 roomId 그대로 — 날짜가 있는 방만 담긴다.
+export async function fetchTennisEventDates(
+  roomIds: string[],
+): Promise<Record<string, { date: string; title: string }>> {
+  if (roomIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from("tennis_events")
+    .select("id, title, date")
+    .in("id", roomIds);
+  if (error) throw error;
+
+  const result: Record<string, { date: string; title: string }> = {};
+  for (const row of (data ?? []) as {
+    id: string;
+    title: string | null;
+    date: string | null;
+  }[]) {
+    if (row.date) result[row.id] = { date: row.date, title: row.title ?? "" };
+  }
+  return result;
 }
