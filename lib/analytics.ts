@@ -1,6 +1,6 @@
 // 구글 애널리틱스(GA4) 설정. 측정 ID(G-로 시작)는 비밀이 아니라 애드센스 ID처럼 코드에 둔다.
 // 비어 있으면 아무것도 붙지 않는다 (로컬 개발·아직 ID를 못 받은 경우).
-export const GA_MEASUREMENT_ID = "";
+export const GA_MEASUREMENT_ID = "G-B4RJSYS9BR";
 
 type GtagFn = (...args: unknown[]) => void;
 
