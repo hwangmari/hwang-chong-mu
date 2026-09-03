@@ -173,6 +173,7 @@ export default function GlobalHeader() {
       <StMenuOverlay $isOpen={isMenuOpen}>
         <StMenuContainer>
           <div className="center-box">
+            <StMenuTop>
             <Link href="/" passHref>
               <StHomeItem
                 $isActive={pathname === "/"}
@@ -229,7 +230,9 @@ export default function GlobalHeader() {
                 </StAccountAction>
               )}
             </StAccountBox>
+            </StMenuTop>
 
+            <StMenuGrid>
             {MENU_CATEGORIES.map((category) => (
               <StCategoryBlock key={category.title}>
                 <StCategoryLabel>
@@ -243,7 +246,10 @@ export default function GlobalHeader() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <span className="icon">{item.icon}</span>
-                      <span>{item.title}</span>
+                      <span className="text">
+                        {item.title}
+                        <small>{item.desc}</small>
+                      </span>
                     </StMenuItem>
                   </Link>
                 ))}
@@ -261,11 +267,15 @@ export default function GlobalHeader() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span className="icon">{item.icon}</span>
-                    <span>{item.title}</span>
+                    <span className="text">
+                      {item.title}
+                      <small>{item.desc}</small>
+                    </span>
                   </StMenuItem>
                 </Link>
               ))}
             </StCategoryBlock>
+            </StMenuGrid>
           </div>
         </StMenuContainer>
         <StBackdrop onClick={() => setIsMenuOpen(false)} />
@@ -359,6 +369,52 @@ const StMenuContainer = styled.nav`
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+  }
+
+  /* PC에서는 좁은 세로 목록 대신 넓게 펼쳐 한눈에 보이게 */
+  @media ${({ theme }) => theme.media.desktop} {
+    padding: 1rem 0 1.5rem;
+    .center-box {
+      max-width: ${({ theme }) => theme.layout.maxWidth};
+      padding: 0 1rem;
+      gap: 0.75rem;
+    }
+  }
+`;
+
+/* 홈·내 서비스 요약·계정 묶음: 폰은 세로, PC는 가로 한 줄 */
+const StMenuTop = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+    > a {
+      flex: none;
+    }
+    > div:last-child {
+      margin-left: auto;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+`;
+
+/* 분류 묶음: 폰은 세로, PC는 4열(친구들과 함께 · 일과 시간 · 매일의 기록 · 그 외) */
+const StMenuGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1.1fr 0.9fr;
+    gap: 0.5rem;
+    align-items: start;
   }
 `;
 
@@ -487,6 +543,28 @@ const StMenuItem = styled.div<{ $isActive: boolean }>`
     display: inline-flex;
     justify-content: center;
     flex-shrink: 0;
+  }
+  .text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  /* 짧은 설명은 PC에서만 (폰은 목록이 길어져 숨김) */
+  .text small {
+    display: none;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: ${({ theme }) => theme.colors.gray500};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media ${({ theme }) => theme.media.desktop} {
+    padding: 0.55rem 0.9rem;
+    margin: 0 0.25rem;
+    .text small {
+      display: block;
+    }
   }
 
   ${({ $isActive, theme }) =>

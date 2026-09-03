@@ -4,6 +4,7 @@ import Link from "next/link";
 import styled from "styled-components";
 import ThemeToggleButton from "@/components/common/ThemeToggleButton";
 import HeroSituations from "@/components/home/HeroSituations";
+import LoginInvite from "@/components/home/LoginInvite";
 import { MENU_CATEGORIES } from "@/lib/menuCategories";
 import { BLOG_POSTS } from "@/app/blog/data";
 import { displayFont } from "@/lib/fonts";
@@ -85,7 +86,12 @@ export default function Home() {
         </StCategoryGrid>
       </StInner>
 
-      {/* 3. 최근 글 */}
+      {/* 3. 계정 안내: 로그인 없이도 되지만, 로그인하면 이어서 */}
+      <StInner as="section" aria-label="계정 안내">
+        <LoginInvite />
+      </StInner>
+
+      {/* 4. 최근 글 */}
       <StInner as="section" aria-labelledby="recent-posts">
         <StSectionHead>
           <StSectionTitle id="recent-posts" className="display">
@@ -106,7 +112,7 @@ export default function Home() {
         </StPostGrid>
       </StInner>
 
-      {/* 4. 소개 + 문의 (짧게) */}
+      {/* 5. 소개 + 문의 (짧게) */}
       <StInner as="section" aria-labelledby="about">
         <StAbout>
           <div>
