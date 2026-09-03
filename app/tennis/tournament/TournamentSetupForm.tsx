@@ -18,14 +18,15 @@ import {
   StTextarea,
 } from "../page.styles";
 import { formatDateKey } from "@/utils/date";
+import { parseRosterText, rosterSummary } from "./roster";
 
 type Props = {
   onCreate: (event: Omit<TournamentEvent, "id" | "builtIn">) => Promise<void>;
 };
 
-const ROSTER_PLACEHOLDER = `한 줄에 한 명씩 이름만 (쉼표로 이어 써도 돼요)
-유태현
-조현서
+const ROSTER_PLACEHOLDER = `한 줄에 한 명: 이름 성별 구력 (성별·구력은 나중에 채워도 돼요)
+유태현 남 3
+김지혜 여 1.5
 최윤희`;
 
 // 팀 토너먼트(8팀 더블 엘리미네이션) 만들기. 팀 배정은 만든 뒤 화면에서 한다
@@ -42,7 +43,7 @@ export default function TournamentSetupForm({ onCreate }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const roster = [...new Set(rosterText.split(/[\r\n,]+/).map((n) => n.trim()).filter(Boolean))];
+  const roster = parseRosterText(rosterText);
 
   async function create() {
     if (!title.trim()) {
@@ -144,7 +145,9 @@ export default function TournamentSetupForm({ onCreate }: Props) {
       </StRow>
 
       <StLabel>
-        <StFieldName>참가자 명단 — {roster.length}명 (8팀 × 4명 = 32명이 정원)</StFieldName>
+        <StFieldName>
+          참가자 명단 — {roster.length}명{roster.length > 0 ? ` (${rosterSummary(roster)})` : ""} · 8팀 × 4명 = 32명이 정원
+        </StFieldName>
         <StTextarea placeholder={ROSTER_PLACEHOLDER} value={rosterText} onChange={(e) => setRosterText(e.target.value)} />
       </StLabel>
 

@@ -12,6 +12,7 @@ import type {
   TennisEvent,
 } from "@/app/tennis/types";
 import type { TeamEntry, TournamentEvent } from "@/app/tennis/tournament/types";
+import { normalizeRoster } from "@/app/tennis/tournament/roster";
 
 // === 점수 ===
 
@@ -159,7 +160,7 @@ function toTournament(row: EventRow): TournamentEvent {
     gamesToWin: typeof cfg.gamesToWin === "number" ? cfg.gamesToWin : 6,
     courts: row.courts,
     teams: row.teams ?? [],
-    roster: Array.isArray(cfg.roster) ? (cfg.roster as unknown[]).filter((x): x is string => typeof x === "string") : [],
+    roster: normalizeRoster(cfg.roster), // 예전 저장분(이름만 있는 배열)도 읽힌다
     beforeNote: typeof cfg.beforeNote === "string" ? cfg.beforeNote : "",
     afterNote: row.after_note ?? "",
     rules: normalizeRules(row.rules),

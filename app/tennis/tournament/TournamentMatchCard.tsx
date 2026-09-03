@@ -16,6 +16,7 @@ import {
   StMatchMeta,
   StOrderNo,
   StPairRotation,
+  StTeamSubName,
   StPlayedTime,
   StSaveBtn,
   StScoreColon,
@@ -137,6 +138,7 @@ export default function TournamentMatchCard({
         {team ? (
           <StTeamName>
             <StSeedTag>#{team.seed}</StSeedTag> {team.name}
+            {team.subName ? <StTeamSubName>{team.subName}</StTeamSubName> : null}
           </StTeamName>
         ) : (
           <StTeamName $muted>{label}</StTeamName>
@@ -185,7 +187,7 @@ export default function TournamentMatchCard({
           <b>{match.teamB.name}</b>
           {PAIR_ROTATION.map((r) => (
             <div key={r.key} style={{ display: "contents" }}>
-              <span>
+              <span className="label">
                 페어{r.key} <em style={{ fontStyle: "normal" }}>({r.games})</em>
               </span>
               <span className="names">{pairNames(match.teamA, r.seeds)}</span>

@@ -1138,6 +1138,14 @@ export const StTeamName = styled.span<{ $muted?: boolean }>`
   color: ${({ $muted, theme }) => ($muted ? theme.colors.gray400 : theme.colors.gray900)};
 `;
 
+/* 팀 이름 옆 서브 이름 — 작고 흐리게 */
+export const StTeamSubName = styled.span`
+  margin-left: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray500};
+`;
+
 export const StSeedTag = styled.span`
   display: inline-flex;
   align-items: center;
@@ -1171,6 +1179,28 @@ export const StPairRotation = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* 좁은 폰(360~390px)에선 라벨 열이 넓어 이름이 "시드2…"로 잘렸음.
+     라벨은 게임 범위를 아랫줄로 내려 폭을 줄이고, 이름은 자르지 않고 ' · ' 사이에서 줄바꿈 */
+  @media ${({ theme }) => theme.media.mobile} {
+    gap: 0.3rem 0.45rem;
+    align-items: start;
+
+    span.label {
+      max-width: 6.5rem;
+    }
+    span.label em {
+      display: block;
+      font-size: 0.68rem;
+    }
+    span.names {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      word-break: keep-all;
+      line-height: 1.3;
+    }
   }
 `;
 

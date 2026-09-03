@@ -1,6 +1,14 @@
 // 팀 토너먼트(더블 엘리미네이션) 도메인 타입.
 // 교류전(TennisEvent)과 달리 "팀"이 참가 단위이고, 대진은 고정 템플릿(template.ts)에서 앞 경기 결과로 채워진다.
 import type { RuleSettings } from "../rules";
+import type { Gender } from "../types";
+
+// 참가자 명단 한 사람. 성별·구력은 팀 성비/전력 맞출 때 쓰고, 없어도 된다
+export type RosterPlayer = {
+  name: string;
+  gender?: Gender;
+  years?: number; // 구력(년)
+};
 
 export type TeamPlayer = {
   name: string;
@@ -10,6 +18,7 @@ export type TeamPlayer = {
 export type TeamEntry = {
   seed: number; // 팀 간 시드 1~8 (대진표 자리)
   name: string;
+  subName?: string; // 팀 이름 옆에 붙는 서브 이름 (선택, 예: "한화시스템 A")
   players: TeamPlayer[]; // 4명
 };
 
@@ -64,7 +73,7 @@ export type TournamentEvent = {
   gamesToWin: number; // 6
   courts: number; // 4
   teams: TeamEntry[]; // 8팀
-  roster: string[]; // 참가자 명단 (팀 배정 전 풀). 팀 편집에서 여기서 골라 넣는다
+  roster: RosterPlayer[]; // 참가자 명단 (팀 배정 전 풀). 팀 편집에서 여기서 골라 넣는다
   beforeNote: string; // 개회식/몸풀기
   afterNote: string; // 시상식/폐회식
   rules: RuleSettings; // 저장 호환용 (토너먼트에선 쓰지 않음)

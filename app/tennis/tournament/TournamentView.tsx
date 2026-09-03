@@ -6,7 +6,7 @@ import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
 import { countFinishedTournament, pairBlocks, placements, resolveBracket, scheduleBlocks, teamPath, teamPlayerLoad } from "./resolve";
-import type { TeamEntry, TournamentEvent } from "./types";
+import type { RosterPlayer, TeamEntry, TournamentEvent } from "./types";
 import { formatDate } from "../format";
 import {
   deleteTennisScore,
@@ -55,6 +55,7 @@ import {
   StTable,
   StTableWrap,
   StTeamName,
+  StTeamSubName,
   StTitle,
 } from "../page.styles";
 import { isFinished, type Court, type MatchScore, type ScoreMap } from "../types";
@@ -264,7 +265,7 @@ export default function TournamentView({ initialEvent }: Props) {
     await persist(next, () => deleteTennisScore(eventId, matchNo), "지우지 못했어요.");
   }
 
-  async function saveTeams(teams: TeamEntry[], roster: string[]) {
+  async function saveTeams(teams: TeamEntry[], roster: RosterPlayer[]) {
     setBusy(true);
     setError("");
     try {
@@ -362,7 +363,7 @@ export default function TournamentView({ initialEvent }: Props) {
 
       {showTeams ? (
         <TeamEditor
-          key={`${event.roster.join(",")}#${event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}`}
+          key={`${event.roster.map((p) => `${p.name}/${p.gender ?? ""}/${p.years ?? ""}`).join(",")}#${event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}`}
           teams={event.teams}
           roster={event.roster}
           locked={anyStarted}
@@ -546,6 +547,7 @@ export default function TournamentView({ initialEvent }: Props) {
                 {r.team ? (
                   <StTeamName>
                     <StSeedTag>#{r.team.seed}</StSeedTag> {r.team.name}
+                    {r.team.subName ? <StTeamSubName>{r.team.subName}</StTeamSubName> : null}
                   </StTeamName>
                 ) : (
                   <StTeamName $muted>아직 미정</StTeamName>
