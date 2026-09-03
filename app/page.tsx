@@ -27,10 +27,10 @@ export default function Home() {
           <StHeroTop>
             <ThemeToggleButton />
           </StHeroTop>
-          <StHeroGrid>
-            <HeroSituations />
-            <StFrequent aria-label="자주 쓰는 도구">
-              <StFrequentLabel>자주 쓰는 도구</StFrequentLabel>
+          <HeroSituations />
+          <StFrequent aria-label="자주 쓰는 도구">
+            <StFrequentLabel>자주 쓰는 도구</StFrequentLabel>
+            <StFrequentRow>
               {FREQUENT.map((t) => (
                 <StFrequentCard key={t.href} href={t.href}>
                   <StFrequentIcon aria-hidden="true">{t.icon}</StFrequentIcon>
@@ -41,8 +41,8 @@ export default function Home() {
                   <StArrow aria-hidden="true">→</StArrow>
                 </StFrequentCard>
               ))}
-            </StFrequent>
-          </StHeroGrid>
+            </StFrequentRow>
+          </StFrequent>
           <StFacts>
             <span>
               도구 <b>{TOOL_COUNT}개</b>
@@ -164,22 +164,21 @@ const StHeroTop = styled.div`
   margin-bottom: 0.75rem;
 `;
 
-const StHeroGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 2.5rem;
-  align-items: center;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: 1fr;
-    gap: 1.75rem;
-  }
-`;
-
 const StFrequent = styled.nav`
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  margin-top: 2rem;
+`;
+
+const StFrequentRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StFrequentLabel = styled.p`

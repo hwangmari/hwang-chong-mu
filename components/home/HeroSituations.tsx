@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styled, { keyframes } from "styled-components";
+import ToolDemo, { type DemoScene } from "./ToolDemo";
 
 // 메인 첫 화면: 총무가 실제로 마주치는 상황이 몇 초마다 바뀌고, 그 상황을 푸는 도구로 바로 이어진다.
 type Situation = {
@@ -11,6 +12,7 @@ type Situation = {
   cta: string; // 버튼 글자
   href: string;
   icon: string;
+  scene: DemoScene; // 오른쪽 미니 데모 장면
 };
 
 const SITUATIONS: Situation[] = [
@@ -19,6 +21,7 @@ const SITUATIONS: Situation[] = [
     answer: "되는 날을 묻지 말고 안 되는 날만 찍게 하면, 남는 날이 곧 모임 날이에요.",
     cta: "약속 잡기 시작",
     href: "/meeting",
+    scene: "meeting",
     icon: "📅",
   },
   {
@@ -26,13 +29,15 @@ const SITUATIONS: Situation[] = [
     answer: "밤 10시 전후로 나눠 적으면 누적 시간과 보상휴가 일수까지 바로 나와요.",
     cta: "야근 계산하기",
     href: "/overtime",
+    scene: "overtime",
     icon: "🌙",
   },
   {
-    question: "회식비 정산, 누가 얼마 보내면 돼요?",
-    answer: "낸 사람과 금액만 적으면 송금 횟수를 가장 적게 줄여서 알려줘요.",
+    question: "여행 다녀왔는데, 누가 누구한테 얼마 보내죠?",
+    answer: "숙소·식사·기름값을 각자 낸 대로 적으면, 송금 횟수를 가장 적게 줄여서 알려줘요.",
     cta: "N빵 계산하기",
     href: "/calc",
+    scene: "calc",
     icon: "💸",
   },
   {
@@ -40,6 +45,7 @@ const SITUATIONS: Situation[] = [
     answer: "선수 명단만 넣으면 출전 횟수가 공평한 대진표와 승점 순위가 나와요.",
     cta: "대진표 만들기",
     href: "/tennis",
+    scene: "tennis",
     icon: "🎾",
   },
   {
@@ -47,6 +53,7 @@ const SITUATIONS: Situation[] = [
     answer: "이름으로 찾으면 그 사람과 주고받은 경조사비 내역이 바로 나와요.",
     cta: "경조사비 장부 열기",
     href: "/gift-log",
+    scene: "gift",
     icon: "🎁",
   },
 ];
@@ -68,7 +75,8 @@ export default function HeroSituations() {
   const current = SITUATIONS[index];
 
   return (
-    <StHero onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <StHeroGrid onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <StHero>
       <StEyebrow>총무에게 이런 날이 있죠</StEyebrow>
       <StQuestion key={`q-${index}`} className="display" aria-live="polite">
         <StMark>{current.question}</StMark>
@@ -93,12 +101,26 @@ export default function HeroSituations() {
         </StDots>
       </StCtaRow>
     </StHero>
+    <ToolDemo scene={current.scene} />
+    </StHeroGrid>
   );
 }
 
 const rise = keyframes`
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+`;
+
+const StHeroGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 `;
 
 const StHero = styled.div`
