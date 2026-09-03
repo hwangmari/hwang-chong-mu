@@ -10,6 +10,8 @@ import { EVENTS } from "./data";
 import { TOURNAMENTS } from "./tournament/data";
 import { formatDate, formatEventDate } from "./format";
 import { createTennisEvent, createTournament, type NewTennisEvent } from "@/services/tennis";
+import FooterGuide from "@/components/common/FooterGuide";
+import { TENNIS_GUIDE_DATA } from "@/data/footerGuides";
 import {
   StCard,
   StCardHead,
@@ -157,6 +159,13 @@ export default function TennisHomePage() {
           <TournamentSetupForm onCreate={createT} />
         </StCard>
       )}
+
+      <FooterGuide
+        title={TENNIS_GUIDE_DATA.title}
+        story={TENNIS_GUIDE_DATA.story}
+        tips={TENNIS_GUIDE_DATA.tips}
+        blogGuideId="tennis-double-elimination-guide"
+      />
     </StPage>
   );
 }

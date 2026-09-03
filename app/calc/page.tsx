@@ -75,7 +75,7 @@ export default function CreateRoomPage() {
         <FooterGuide
           title={CALC_GUIDE_DATA.title}
           tips={CALC_GUIDE_DATA.tips}
-          blogGuideId="calc-guide"
+          blogGuideId="split-bill-tips"
         />
       </StWrapper>
     </StContainer>

@@ -10,7 +10,13 @@ import {
 } from "@/components/styled/layout.styled";
 import { BLOG_POSTS } from "./data";
 
-const CATEGORIES = ["전체", "사용 가이드", "서비스 소개", "개발 일지", "기술 이야기"];
+// 상단 분류 칩: 보여줄 순서를 정해 두고, 글에만 있고 여기 없는 분류는 뒤에 자동으로 붙인다 (새 분류가 누락되지 않게)
+const CATEGORY_ORDER = ["사용 가이드", "생활 팁", "서비스 소개", "개발 일지", "기술 이야기"];
+const CATEGORIES = [
+  "전체",
+  ...CATEGORY_ORDER.filter((cat) => BLOG_POSTS.some((post) => post.category === cat)),
+  ...[...new Set(BLOG_POSTS.map((post) => post.category))].filter((cat) => !CATEGORY_ORDER.includes(cat)),
+];
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState("전체");

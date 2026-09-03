@@ -6,6 +6,8 @@ import styled from "styled-components";
 import { createWorkoutRoom, joinWorkoutRoom } from "../repository";
 import { writeWorkoutSession } from "../storage";
 import { useWorkoutSession } from "../useWorkoutSession";
+import FooterGuide from "@/components/common/FooterGuide";
+import { WORKOUT_GUIDE_DATA } from "@/data/footerGuides";
 
 type Mode = "join" | "create";
 
@@ -100,6 +102,15 @@ export default function WorkoutAuthGate({ children }: Props) {
             : "전에 만들었던 방 이름과 비밀번호를 입력해 주세요."}
         </StHint>
       </StGateCard>
+
+      <StGateGuide>
+        <FooterGuide
+          title={WORKOUT_GUIDE_DATA.title}
+          story={WORKOUT_GUIDE_DATA.story}
+          tips={WORKOUT_GUIDE_DATA.tips}
+          blogGuideId="workout-guide"
+        />
+      </StGateGuide>
     </StGatePage>
   );
 }
@@ -115,6 +126,12 @@ const StGatePage = styled.main`
       transparent 32%
     ),
     linear-gradient(180deg, ${({ theme }) => theme.colors.gray100} 0%, #eef3f9 100%);
+`;
+
+// 로그인 카드 아래에 안내글을 같은 폭 한도로 놓기 위한 감싸개
+const StGateGuide = styled.div`
+  width: min(100%, 40rem);
+  margin-top: 1.5rem;
 `;
 
 const StGateCard = styled.section`

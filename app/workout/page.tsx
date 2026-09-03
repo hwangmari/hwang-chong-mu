@@ -25,7 +25,8 @@ import {
   WorkoutCalendarHeatmap,
   WorkoutMonthlyCalendar,
 } from "./components/WorkoutCharts";
-import BlogGuideLink from "@/components/common/BlogGuideLink";
+import FooterGuide from "@/components/common/FooterGuide";
+import { WORKOUT_GUIDE_DATA } from "@/data/footerGuides";
 import { useModal } from "@/components/common/ModalProvider";
 import {
   GYM_BODY_PART_LABEL,
@@ -343,7 +344,12 @@ export default function WorkoutHomePage() {
       <WorkoutCalendarHeatmap columns={calendarColumns} />
 
       <StBlogWrap>
-        <BlogGuideLink guideId="workout-guide" />
+        <FooterGuide
+          title={WORKOUT_GUIDE_DATA.title}
+          story={WORKOUT_GUIDE_DATA.story}
+          tips={WORKOUT_GUIDE_DATA.tips}
+          blogGuideId="workout-guide"
+        />
       </StBlogWrap>
     </StPage>
   );

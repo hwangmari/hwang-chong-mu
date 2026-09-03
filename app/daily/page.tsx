@@ -5,7 +5,8 @@ import styled from "styled-components";
 import { useRouter } from "next/navigation";
 import { Typography } from "@hwangchongmu/ui";
 import CreateButton from "@/components/common/CreateButton";
-// import BlogGuideLink from "@/components/common/BlogGuideLink";
+import FooterGuide from "@/components/common/FooterGuide";
+import { DAILY_GUIDE_DATA } from "@/data/footerGuides";
 import { createDailyNotebook } from "./repository";
 import {
   clearLegacyDailyLocalData,
@@ -197,9 +198,13 @@ export default function DailyCreatePage() {
         </OpenButton>
       </OpenSection>
 
-      {/* <GuideLinkWrap>
-        <BlogGuideLink guideId="daily-guide" />
-      </GuideLinkWrap> */}
+      <GuideLinkWrap>
+        <FooterGuide
+          title={DAILY_GUIDE_DATA.title}
+          story={DAILY_GUIDE_DATA.story}
+          tips={DAILY_GUIDE_DATA.tips}
+        />
+      </GuideLinkWrap>
     </CreateContainer>
   );
 }

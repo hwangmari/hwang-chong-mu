@@ -5,7 +5,9 @@ import StyledComponentsRegistry from "@/lib/registry";
 import Script from "next/script";
 import { ModalProvider } from "@/components/common/ModalProvider";
 import GlobalHeader from "@/components/common/GlobalHeader";
+import GlobalFooter from "@/components/common/GlobalFooter";
 import AuthLinkBootstrap from "@/components/common/AuthLinkBootstrap";
+import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.hwang-lab.kr"),
@@ -83,7 +85,14 @@ export default function RootLayout({
               <GlobalHeader />
             </Suspense>
             <AuthLinkBootstrap />
+            {/* 방문자 측정 (구글 애널리틱스). 주소를 읽어야 해서 Suspense로 감싼다 */}
+            <Suspense fallback={null}>
+              <GoogleAnalytics />
+            </Suspense>
             {children}
+            <Suspense fallback={null}>
+              <GlobalFooter />
+            </Suspense>
           </ModalProvider>
         </StyledComponentsRegistry>
       </body>

@@ -2,8 +2,13 @@
 
 import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { StLoadingWrapper } from "@/components/styled/layout.styled";
-// import BlogGuideLink from "@/components/common/BlogGuideLink";
+import {
+  StContainer,
+  StLoadingWrapper,
+  StWrapper,
+} from "@/components/styled/layout.styled";
+import FooterGuide from "@/components/common/FooterGuide";
+import { SCHEDULE_GUIDE_DATA } from "@/data/footerGuides";
 import { useScheduleStore } from "@/hooks/useScheduleStore";
 import { useSchedulePartActions } from "@/hooks/useSchedulePartActions";
 import { fetchPartServices } from "@/services/schedule";
@@ -44,8 +49,26 @@ function SchedulePageInner() {
     setServices,
   });
 
+  // 허브(파트 목록) 아래에 붙는 사용 안내. 불러오는 중에도 같이 보여 준다
+  const hubGuide = (
+    <StContainer>
+      <StWrapper>
+        <FooterGuide
+          title={SCHEDULE_GUIDE_DATA.title}
+          story={SCHEDULE_GUIDE_DATA.story}
+          tips={SCHEDULE_GUIDE_DATA.tips}
+        />
+      </StWrapper>
+    </StContainer>
+  );
+
   if (loading) {
-    return <StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>;
+    return (
+      <>
+        <StLoadingWrapper>로딩 중... ⏳</StLoadingWrapper>
+        {!selectedPartId ? hubGuide : null}
+      </>
+    );
   }
 
   // 파트 미선택 → 허브
@@ -65,9 +88,7 @@ function SchedulePageInner() {
           onJoinPart={handleJoinPart}
           onLogout={handleLogout}
         />
-        {/* <ScheduleGuideWrap>
-          <BlogGuideLink guideId="schedule-guide" />
-        </ScheduleGuideWrap> */}
+        {hubGuide}
       </>
     );
   }

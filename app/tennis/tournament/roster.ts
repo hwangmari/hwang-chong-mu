@@ -1,6 +1,6 @@
 // 팀 토너먼트 참가자 명단(팀 배정 전 풀) 다루기.
 // 텍스트 한 줄(또는 쉼표)에 한 명: `이름 [성별] [구력]` — 성별·구력은 나중에 채워도 된다.
-// 예) "유태현 남 3", "김지혜 여 1.5년", "권혁" (이름만)
+// 예) "김민준 남 3", "이서연 여 1.5년", "최하은" (이름만)
 import { parsePlayerLine } from "../parsePlayers";
 import { GENDER_LABEL, type Gender } from "../types";
 import type { RosterPlayer } from "./types";
@@ -90,7 +90,7 @@ export function groupRoster(roster: RosterPlayer[]): RosterGroup[] {
     .filter((g) => g.players.length > 0);
 }
 
-// 화면에 보이는 한 사람: "유태현 3년" (구력 없으면 이름만)
+// 화면에 보이는 한 사람: "김민준 3년" (구력 없으면 이름만)
 export function rosterEntryLabel(p: RosterPlayer): string {
   return p.years !== undefined ? `${p.name} ${p.years}년` : p.name;
 }

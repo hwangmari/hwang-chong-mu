@@ -25,9 +25,9 @@ type Props = {
 };
 
 const ROSTER_PLACEHOLDER = `한 줄에 한 명: 이름 성별 구력 (성별·구력은 나중에 채워도 돼요)
-유태현 남 3
-김지혜 여 1.5
-최윤희`;
+김민준 남 3
+이서연 여 1.5
+최하은`;
 
 // 팀 토너먼트(8팀 더블 엘리미네이션) 만들기. 팀 배정은 만든 뒤 화면에서 한다
 export default function TournamentSetupForm({ onCreate }: Props) {

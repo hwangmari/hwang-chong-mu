@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import PageIntro from "@/components/common/PageIntro";
-// import BlogGuideLink from "@/components/common/BlogGuideLink";
+import FooterGuide from "@/components/common/FooterGuide";
+import { OVERTIME_GUIDE_DATA } from "@/data/footerGuides";
 import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import CalculatorTab from "@/app/overtime/components/CalculatorTab";
 import RecordsTab from "@/app/overtime/components/RecordsTab";
@@ -308,7 +309,12 @@ export default function OvertimePage() {
           />
         </SurfaceCard>
 
-        {/* <BlogGuideLink guideId="overtime-guide" /> */}
+        <FooterGuide
+          title={OVERTIME_GUIDE_DATA.title}
+          story={OVERTIME_GUIDE_DATA.story}
+          tips={OVERTIME_GUIDE_DATA.tips}
+          blogGuideId="overtime-pay-basics"
+        />
       </StWrapper>
     </StContainer>
   );

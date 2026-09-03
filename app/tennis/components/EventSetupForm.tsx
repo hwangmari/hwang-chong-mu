@@ -40,10 +40,10 @@ type Props = {
 };
 
 const PLAYERS_PLACEHOLDER = `한 줄에 한 명씩: 이름 성별 구력(년) 소속(선택)
-박종연 남 10 한화시스템
-서지수 여 4 한화시스템
-차종근 남 1 한화생명
-이선민 여        ← 구력·소속을 모르면 비워도 돼요`;
+김민준 남 10 초록클럽
+이서연 여 4 초록클럽
+박도윤 남 1 파랑클럽
+최하은 여        ← 구력·소속을 모르면 비워도 돼요`;
 
 export default function EventSetupForm({ onCreate }: Props) {
   const [title, setTitle] = useState("");
@@ -184,7 +184,7 @@ export default function EventSetupForm({ onCreate }: Props) {
           <StFieldName>교류전 이름</StFieldName>
           <StInput
             type="text"
-            placeholder="예) 한화시스템 × 한화생명 테니스 교류전"
+            placeholder="예) 초록클럽 × 파랑클럽 테니스 교류전"
             value={title}
             maxLength={60}
             onChange={(e) => setTitle(e.target.value)}

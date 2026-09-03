@@ -122,7 +122,7 @@ export default function TeamEditor({ teams, roster, locked, busy, startEditing =
           // 편집 중엔 토글 없이 입력칸을 바로 보여준다 (아래 목록은 입력한 대로 실시간 정리)
           <>
             <StCardHint>
-              한 줄에 한 명: <b>이름 성별 구력</b> (예: 유태현 남 3, 김지혜 여 1.5). 성별·구력은 나중에 채워도 되고, 여기
+              한 줄에 한 명: <b>이름 성별 구력</b> (예: 김민준 남 3, 이서연 여 1.5). 성별·구력은 나중에 채워도 되고, 여기
               있는 이름은 아래 팀 칸에서 자동완성으로 떠요.
             </StCardHint>
             <StTextarea rows={12} value={rosterText} onChange={(e) => setRosterText(e.target.value)} />

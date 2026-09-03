@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { Button, Input } from "@hwangchongmu/ui";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
-// import BlogGuideLink from "@/components/common/BlogGuideLink";
+import FooterGuide from "@/components/common/FooterGuide";
+import { PLACE_GUIDE_DATA } from "@/data/footerGuides";
 import {
   StContainer,
   StWrapper,
@@ -252,7 +253,11 @@ export default function DinnerPage() {
           </StSection>
         )}
 
-        {/* <BlogGuideLink guideId="place-guide" /> */}
+        <FooterGuide
+          title={PLACE_GUIDE_DATA.title}
+          story={PLACE_GUIDE_DATA.story}
+          tips={PLACE_GUIDE_DATA.tips}
+        />
       </StWrapper>
     </StContainer>
   );

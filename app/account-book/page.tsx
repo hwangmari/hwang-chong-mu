@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { useModal } from "@/components/common/ModalProvider";
 import AccountBookLockGate from "./components/AccountBookLockGate";
-// import BlogGuideLink from "@/components/common/BlogGuideLink";
+import FooterGuide from "@/components/common/FooterGuide";
+import { ACCOUNT_BOOK_GUIDE_DATA } from "@/data/footerGuides";
 import WorkspaceHub from "./components/WorkspaceHub";
 import WorkspaceLedgerView from "./components/WorkspaceLedgerView";
 import WorkspaceSettingsModal from "./components/WorkspaceSettingsModal";
@@ -93,21 +94,38 @@ function AccountBookPageContent() {
     window.dispatchEvent(new Event("account-book-access-change"));
   };
 
+  // 허브(방 목록) 아래에 붙는 사용 안내. 불러오는 중에도 같이 보여 준다
+  const hubGuide = (
+    <StHubGuideWrap>
+      <FooterGuide
+        title={ACCOUNT_BOOK_GUIDE_DATA.title}
+        story={ACCOUNT_BOOK_GUIDE_DATA.story}
+        tips={ACCOUNT_BOOK_GUIDE_DATA.tips}
+      />
+    </StHubGuideWrap>
+  );
+
   if (!storageReady) {
     return (
-      <StAbLoadingPage>
-        <StAbLoadingCard>가계부 허브를 불러오는 중...</StAbLoadingCard>
-      </StAbLoadingPage>
+      <>
+        <StAbLoadingPage>
+          <StAbLoadingCard>가계부 허브를 불러오는 중...</StAbLoadingCard>
+        </StAbLoadingPage>
+        {!selectedWorkspaceId ? hubGuide : null}
+      </>
     );
   }
 
   if (loadError || !store) {
     return (
-      <StAbLoadingPage>
-        <StAbLoadingCard>
-          {loadError || "가계부 데이터를 불러오지 못했습니다."}
-        </StAbLoadingCard>
-      </StAbLoadingPage>
+      <>
+        <StAbLoadingPage>
+          <StAbLoadingCard>
+            {loadError || "가계부 데이터를 불러오지 못했습니다."}
+          </StAbLoadingCard>
+        </StAbLoadingPage>
+        {!selectedWorkspaceId ? hubGuide : null}
+      </>
     );
   }
 
@@ -173,9 +191,7 @@ function AccountBookPageContent() {
               setIsSettingsOpen(true);
             }}
           />
-          {/* <StHubGuideWrap>
-            <BlogGuideLink guideId="account-book-guide" />
-          </StHubGuideWrap> */}
+          {hubGuide}
         </>
       )}
 

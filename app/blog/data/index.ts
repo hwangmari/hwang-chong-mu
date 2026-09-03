@@ -10,10 +10,26 @@ import { nextjsStyledComponents } from "./nextjs-styled-components";
 import { supabaseRealtime } from "./supabase-realtime";
 import { habitTracker } from "./habit-tracker";
 import { monorepoUiPackage } from "./monorepo-ui-package";
+import { habitTrackingThatSticks } from "./habit-tracking-that-sticks";
+import { companyChongmuChecklist } from "./company-chongmu-checklist";
+import { congratulatoryMoneyGuide } from "./congratulatory-money-guide";
+import { tennisExchangeMatchGuide } from "./tennis-exchange-match-guide";
+import { tennisDoubleEliminationGuide } from "./tennis-double-elimination-guide";
+import { splitBillTips } from "./split-bill-tips";
+import { compensatoryLeaveGuide } from "./compensatory-leave-guide";
+import { overtimePayBasics } from "./overtime-pay-basics";
 
 export type { BlogPost, ContentBlock } from "./types";
 
 export const BLOG_POSTS: BlogPost[] = [
+  habitTrackingThatSticks,
+  companyChongmuChecklist,
+  congratulatoryMoneyGuide,
+  tennisExchangeMatchGuide,
+  tennisDoubleEliminationGuide,
+  splitBillTips,
+  compensatoryLeaveGuide,
+  overtimePayBasics,
   workoutGuide,
   meetingGuide,
   hwangChongmuIntro,

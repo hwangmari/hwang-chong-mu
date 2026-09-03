@@ -10,7 +10,6 @@ const STATIC_ROUTES = [
   "/overtime",
   "/place",
   "/account-book",
-  "/gift-log",
   "/habit",
   "/daily",
   "/diet",
