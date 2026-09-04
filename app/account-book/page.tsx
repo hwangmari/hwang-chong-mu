@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { useMarkChromeHidden } from "@/components/common/useChromeHidden";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import { useModal } from "@/components/common/ModalProvider";
@@ -40,6 +41,7 @@ function AccountBookPageContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const selectedWorkspaceId = searchParams.get("workspaceId");
+  useMarkChromeHidden(Boolean(selectedWorkspaceId)); // 워크스페이스가 열리면 헤더·푸터 숨김
   const initialViewMode = resolveInitialViewMode(searchParams.get("view"));
 
   const storeHelpers = useAccountBookStore(selectedWorkspaceId);

@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useChromeHidden } from "./useChromeHidden";
 import Link from "next/link";
 import styled, { css } from "styled-components";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -53,17 +54,11 @@ const EXPERIENCE_NAMES: Record<string, string> = {
 export default function GlobalHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("황총무의 실험실");
   const { user, logout } = useAuth();
-  const isAccountBookHub =
-    pathname === "/account-book" && !searchParams.get("workspaceId");
-  const isScheduleHub =
-    pathname === "/schedule" && !searchParams.get("workspaceId");
-  const shouldHideHeader =
-    (pathname.startsWith("/account-book") && !isAccountBookHub) ||
-    (pathname.startsWith("/schedule") && !isScheduleHub);
+  // 숨김 판단은 useChromeHidden 한 곳에서 (GlobalFooter와 동일 기준). 주소의 물음표 값은 렌더 중에 읽지 않는다.
+  const shouldHideHeader = useChromeHidden();
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -123,7 +118,8 @@ export default function GlobalHeader() {
 
   const handleBack = () => {
     // /my(내 서비스 요약)에서 넘어온 페이지는 백키로 다시 /my로 돌아간다
-    if (searchParams.get("from") === "my") {
+    // 클릭 순간에만 주소를 읽는다 (렌더와 무관하므로 Suspense가 필요 없다)
+    if (new URLSearchParams(window.location.search).get("from") === "my") {
       router.push("/my");
       return;
     }

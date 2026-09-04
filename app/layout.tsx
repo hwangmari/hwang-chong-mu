@@ -81,19 +81,16 @@ export default function RootLayout({
       <body>
         <StyledComponentsRegistry>
           <ModalProvider>
-            {/* 공통 헤더 적용 */}
-            <Suspense fallback={null}>
-              <GlobalHeader />
-            </Suspense>
+            {/* 공통 헤더. Suspense로 감싸지 않는다 — 감싸면 늦게 뜨는 화면(야근·장소·테니스 등)에서
+                헤더·푸터가 테마 전환 전 상태(밝음)로 굳는 문제가 있었다. 주소 값을 안 읽으므로 경계가 필요 없다. */}
+            <GlobalHeader />
             <AuthLinkBootstrap />
             {/* 방문자 측정 (구글 애널리틱스). 주소를 읽어야 해서 Suspense로 감싼다 */}
             <Suspense fallback={null}>
               <GoogleAnalytics />
             </Suspense>
             {children}
-            <Suspense fallback={null}>
-              <GlobalFooter />
-            </Suspense>
+            <GlobalFooter />
           </ModalProvider>
         </StyledComponentsRegistry>
       </body>

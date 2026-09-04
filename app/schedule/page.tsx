@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { useMarkChromeHidden } from "@/components/common/useChromeHidden";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   StContainer,
@@ -22,6 +23,7 @@ function SchedulePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPartId = searchParams.get("workspaceId");
+  useMarkChromeHidden(Boolean(selectedPartId)); // 파트가 열리면 헤더·푸터 숨김
 
   const {
     loading,

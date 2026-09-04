@@ -1,25 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useChromeHidden } from "./useChromeHidden";
 import styled from "styled-components";
 
 // 가계부·업무 캘린더는 워크스페이스에 들어가면 전체 화면 고정 레이아웃을 쓰기 때문에
 // GlobalHeader와 동일한 기준으로 이 페이지들에서는 푸터도 숨긴다. (GlobalHeader.tsx 참고)
-function useShouldHideChrome() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const isAccountBookHub =
-    pathname === "/account-book" && !searchParams.get("workspaceId");
-  const isScheduleHub =
-    pathname === "/schedule" && !searchParams.get("workspaceId");
-
-  return (
-    (pathname.startsWith("/account-book") && !isAccountBookHub) ||
-    (pathname.startsWith("/schedule") && !isScheduleHub)
-  );
-}
+// 숨김 판단은 useChromeHidden 한 곳에서 (GlobalHeader와 동일 기준)
+const useShouldHideChrome = useChromeHidden;
 
 const FOOTER_LINKS = [
   { href: "/blog/hwang-chongmu-intro", label: "소개" },
