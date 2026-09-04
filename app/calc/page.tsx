@@ -5,7 +5,7 @@ import {
   StContainer,
   StSection,
   StPageWrapper,
-  StFlexBox,
+  StToolColumn,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
@@ -32,8 +32,9 @@ export default function CreateRoomPage() {
 
   return (
     <StContainer>
-      <StPageWrapper>
+      <StPageWrapper $width="narrow">
         <PageIntro
+          align="center"
           icon="💸"
           title="황총무의 여행 경비 계산기"
           description={
@@ -46,45 +47,41 @@ export default function CreateRoomPage() {
             </>
           }
         />
-        <StFlexBox>
-          <div className="flex-lft-box">
-            <StSection>
-              <Input
-                placeholder="예: 강릉 여행"
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                autoFocus
-                disabled={loading}
-              />
-
-              <CreateButton
-                onClick={handleCreate}
-                isLoading={loading}
-                className="mt-4"
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                  }}
-                >
-                  정산 방 만들기 <ArrowForwardIcon fontSize="small" />
-                </span>
-              </CreateButton>
-            </StSection>
-          </div>
-
-          <div className="flex-rgt-box">
-            <FooterGuide
-              title={CALC_GUIDE_DATA.title}
-              tips={CALC_GUIDE_DATA.tips}
-              blogGuideId="split-bill-tips"
-              layout="compact"
+        <StToolColumn>
+          <StSection>
+            <Input
+              placeholder="예: 강릉 여행"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              autoFocus
+              disabled={loading}
             />
-          </div>
-        </StFlexBox>
+
+            <CreateButton
+              onClick={handleCreate}
+              isLoading={loading}
+              className="mt-4"
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                정산 방 만들기 <ArrowForwardIcon fontSize="small" />
+              </span>
+            </CreateButton>
+          </StSection>
+        </StToolColumn>
+
+        <FooterGuide
+          title={CALC_GUIDE_DATA.title}
+          tips={CALC_GUIDE_DATA.tips}
+          blogGuideId="split-bill-tips"
+          layout="compact"
+        />
       </StPageWrapper>
     </StContainer>
   );

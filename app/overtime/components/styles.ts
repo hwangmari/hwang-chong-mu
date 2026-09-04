@@ -11,8 +11,32 @@ export const SurfaceCard = styled.section`
   }
 `;
 
+/* 넓은 화면에서 계산 요건 + 탭을 한 줄에 놓는 래퍼 */
+export const ControlRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  @media (min-width: 900px) {
+    flex-direction: row;
+    align-items: center;
+
+    > *:first-child {
+      flex: 1.7;
+      min-width: 0;
+      margin-bottom: 0;
+    }
+    > *:last-child {
+      flex: 1;
+      min-width: 0;
+      margin-bottom: 0;
+    }
+  }
+`;
+
 export const RuleSelectorCard = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   padding: 1rem;
   border-radius: 0.8rem;
   background: ${({ theme }) => theme.semantic.bg};
@@ -79,7 +103,8 @@ export const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
     border-color 0.15s ease;
 
   background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  border: 1px solid
+    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
   color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
 
   &:hover:not(:disabled) {
@@ -98,7 +123,9 @@ export const TabList = styled.div`
   border-radius: 0.8rem;
   background: ${({ theme }) => theme.semantic.bg};
   border: 1px solid ${({ theme }) => theme.semantic.border};
-  margin-bottom: 1.25rem;
+  margin-bottom: 0;
+  align-self: center;
+  width: 100%;
 `;
 
 export const TabButton = styled.button<{ $isActive: boolean }>`
@@ -116,7 +143,8 @@ export const TabButton = styled.button<{ $isActive: boolean }>`
     border-color 0.15s ease;
 
   background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  border: 1px solid
+    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
   color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
 
   &:hover:not(:disabled) {
@@ -382,7 +410,8 @@ export const StorageModeButton = styled.button<{ $isActive: boolean }>`
     border-color 0.15s ease;
 
   background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  border: 1px solid
+    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
   color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
 
   &:hover:not(:disabled) {
@@ -554,7 +583,8 @@ export const NoticeContent = styled.div`
 
 export const TargetDayButton = styled.button<{ $isActive: boolean }>`
   min-width: 2.4rem;
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.primary : theme.semantic.border)};
+  border: 1px solid
+    ${({ $isActive, theme }) => ($isActive ? theme.semantic.primary : theme.semantic.border)};
   background: ${({ $isActive, theme }) => ($isActive ? theme.semantic.primary : theme.colors.white)};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.semantic.text)};
   border-radius: 0.6rem;

@@ -59,6 +59,7 @@ export default function PrivacyPage() {
           icon="🔒"
           title="개인정보처리방침"
           description="황총무의 실험실의 개인정보 처리에 관한 안내입니다."
+          align="center"
         />
 
         <StSection>

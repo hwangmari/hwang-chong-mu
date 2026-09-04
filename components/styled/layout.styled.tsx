@@ -30,6 +30,8 @@ export const StWaitingBox = styled.div`
 `;
 
 export const StSection = styled.div`
+  /* 안쪽 StFieldGrid 가 '카드 폭'을 기준으로 열 수를 정할 수 있게 */
+  container-type: inline-size;
   background: ${({ theme }) => theme.colors.white};
   padding: 1.25rem;
   border-radius: 1rem;
@@ -133,7 +135,38 @@ export const StInlineButton = styled.button<{ $variant?: "primary" }>`
   }
 `;
 
+/* 폼 필드를 데스크톱에서 2열로 눕히는 그리드.
+   모바일은 그대로 한 줄씩 쌓이고, 768px 이상에서만 두 칸으로 나뉜다. */
+export const StFieldGrid = styled.div`
+  display: grid;
+  gap: 1rem 1.25rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+
+  /* 공용 Input(@hwangchongmu/ui)은 형제일 때 상단 여백을 붙이는데,
+     그리드 안에서는 gap 이 그 역할을 하므로 없앤다. */
+  & > div + div {
+    margin-top: 0;
+  }
+
+  /* 뷰포트가 아니라 담고 있는 카드가 넓을 때만 두 칸으로.
+     560px 카드 안에서는 계속 한 줄씩 쌓인다. */
+  @container (min-width: 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+/* 그리드 안에서 한 줄 전체를 쓰는 칸 (버튼, 체크리스트처럼 넓어야 하는 것) */
+export const StField = styled.div<{ $span?: "full" }>`
+  min-width: 0;
+
+  @container (min-width: 560px) {
+    grid-column: ${({ $span }) => ($span === "full" ? "1 / -1" : "auto")};
+  }
+`;
+
 /* 폼 안 작은 라벨 (eyebrow) — 공용 Input의 label과 같은 톤 */
+/* 한 행 안의 컨트롤 높이를 2.75rem 으로 맞춘다 */
 export const StFieldLabel = styled.span`
   display: block;
   font-size: 0.78rem;
@@ -163,8 +196,18 @@ export const StOptionRow = styled.div`
   }
 `;
 
-/* 모바일은 한 컬럼(540px), 데스크톱에선 1024px 두 컬럼 캔버스 */
-export const StPageWrapper = styled.div`
+/* 페이지 폭은 '내용 성격'으로 정한다.
+   narrow(560) = 입력 필드 몇 개짜리 폼, tool(760) = 계산기처럼 조밀한 도구,
+   wide(1024)  = 목록·지도·검색결과처럼 옆에 둘 내용이 진짜 있는 화면. */
+const PAGE_WIDTHS = {
+  narrow: "560px",
+  tool: "760px",
+  wide: "1025px",
+} as const;
+
+export type PageWidth = keyof typeof PAGE_WIDTHS;
+
+export const StPageWrapper = styled.div<{ $width?: PageWidth }>`
   min-width: 320px;
   width: 100%;
   max-width: ${({ theme }) => theme.layout.narrowWidth};
@@ -173,11 +216,11 @@ export const StPageWrapper = styled.div`
   position: relative;
 
   @media ${({ theme }) => theme.media.desktop} {
-    max-width: ${({ theme }) => theme.layout.maxWidth};
+    max-width: ${({ $width }) => PAGE_WIDTHS[$width ?? "wide"]};
   }
 `;
 
-/* 블록이 하나뿐인 페이지(약관·다이어트 등) — 540px보다는 넓게, 본문은 읽기 좋은 폭으로 */
+/* 블록이 하나뿐인 페이지 — 읽기 좋은 폭 */
 export const StReadWrapper = styled.div`
   min-width: 320px;
   width: 100%;
@@ -187,11 +230,16 @@ export const StReadWrapper = styled.div`
   position: relative;
 
   @media ${({ theme }) => theme.media.desktop} {
-    max-width: 720px;
+    max-width: ${PAGE_WIDTHS.narrow};
   }
 `;
 
-export const StFlexBox = styled.div<{ $leftRatio?: number }>`
+/* 폼/도구가 담기는 열. 폭은 위 wrapper 가 정하므로 여기서는 채우기만 한다. */
+export const StToolColumn = styled.div`
+  width: 100%;
+`;
+
+export const StFlexBox = styled.div<{ $leftRatio?: number; $sticky?: boolean }>`
   width: 100%;
   max-width: ${({ theme }) => theme.layout.narrowWidth};
   margin: 0 auto;
@@ -209,9 +257,14 @@ export const StFlexBox = styled.div<{ $leftRatio?: number }>`
       min-width: 0;
     }
     .flex-lft-box {
-      position: sticky;
-      top: 80px;
       flex: ${({ $leftRatio }) => $leftRatio ?? 1};
+      ${({ $sticky }) =>
+        $sticky
+          ? `
+        position: sticky;
+        top: 80px;
+      `
+          : ""}
     }
     .flex-rgt-box {
       margin-top: 0;

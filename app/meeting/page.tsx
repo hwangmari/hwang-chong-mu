@@ -8,7 +8,7 @@ import {
   StPageWrapper,
   StContainer,
   StSection,
-  StFlexBox,
+  StToolColumn,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { MEETING_GUIDE_DATA } from "@/data/footerGuides";
@@ -30,8 +30,9 @@ export default function CreateRoomPage() {
 
   return (
     <StContainer>
-      <StPageWrapper>
+      <StPageWrapper $width="narrow">
         <PageIntro
+          align="center"
           icon="📅"
           title="황총무의 약속 잡기"
           description={
@@ -43,36 +44,33 @@ export default function CreateRoomPage() {
             </>
           }
         />
-        <StFlexBox>
-          <div className="flex-lft-box">
-            <StSection>
-              <RoomForm
-                formData={formData}
-                loading={loading}
-                onChange={handleChange}
-                onSubmit={createRoom}
-                isCustomPeriod={isCustomPeriod}
-                setIsCustomPeriod={setIsCustomPeriod}
-                members={members}
-                memberInput={memberInput}
-                setMemberInput={setMemberInput}
-                addMember={addMember}
-                removeMember={removeMember}
-              />
-            </StSection>
-          </div>
-
-          {/* 데스크톱에서는 오른쪽 컬럼에 가이드가 붙어 화면을 채운다 */}
-          <div className="flex-rgt-box">
-            <FooterGuide
-              title={MEETING_GUIDE_DATA.title}
-              story={MEETING_GUIDE_DATA.story}
-              tips={MEETING_GUIDE_DATA.tips}
-              blogGuideId="meeting-guide"
-              layout="compact"
+        <StToolColumn>
+          <StSection>
+            <RoomForm
+              formData={formData}
+              loading={loading}
+              onChange={handleChange}
+              onSubmit={createRoom}
+              isCustomPeriod={isCustomPeriod}
+              setIsCustomPeriod={setIsCustomPeriod}
+              members={members}
+              memberInput={memberInput}
+              setMemberInput={setMemberInput}
+              addMember={addMember}
+              removeMember={removeMember}
             />
-          </div>
-        </StFlexBox>
+          </StSection>
+        </StToolColumn>
+
+        {/* 가이드는 아래에 전체 폭으로 — 팁 카드가 3열로 펼쳐진다 */}
+        <FooterGuide
+          title={MEETING_GUIDE_DATA.title}
+          story={MEETING_GUIDE_DATA.story}
+          tips={MEETING_GUIDE_DATA.tips}
+          blogGuideId="meeting-guide"
+          layout="compact"
+        />
+
         {/* <AdBanner /> */}
       </StPageWrapper>
     </StContainer>

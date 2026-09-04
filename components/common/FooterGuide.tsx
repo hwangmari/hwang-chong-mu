@@ -146,10 +146,12 @@ export default function FooterGuide({
 }
 
 const StGuideSection = styled.section`
+  /* 팁 카드 열 수를 '화면 폭'이 아니라 '가이드가 놓인 열의 폭'으로 정한다 */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 `;
 
 const StGuideHeader = styled.div`
@@ -266,16 +268,19 @@ const StTipGrid = styled.div<{ $compact: boolean }>`
   grid-template-columns: minmax(0, 1fr);
   gap: 0.6rem;
 
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media ${({ theme }) => theme.media.desktop} {
-    grid-template-columns: repeat(
-      ${({ $compact }) => ($compact ? 2 : 3)},
-      minmax(0, 1fr)
-    );
-  }
+  /* 560 열 → 1개, 760 열 → 2개, 1024 열 → 3개.
+     compact 는 아무리 넓어도 한 줄씩 유지한다. */
+  ${({ $compact }) =>
+    $compact
+      ? ""
+      : `
+    @container (min-width: 620px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @container (min-width: 900px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  `}
 `;
 
 const StTipCard = styled.article`

@@ -141,7 +141,7 @@ export default function DinnerPage() {
           }
         />
 
-        <StFlexBox>
+        <StFlexBox $leftRatio={0.8} $sticky>
           {/* 왼쪽: 투표 제목과 담아둔 후보 — 스크롤해도 따라온다 */}
           <div className="flex-lft-box">
             {/* 투표 제목 */}

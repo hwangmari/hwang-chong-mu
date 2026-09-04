@@ -9,10 +9,12 @@ import PageIntro from "@/components/common/PageIntro";
 import {
   StContainer,
   StPageWrapper,
+  StToolColumn,
+  StFieldGrid,
+  StField,
   StSection,
   StSectionTitle,
   StInlineButton,
-  StFlexBox,
 } from "@/components/styled/layout.styled";
 import FooterGuide from "@/components/common/FooterGuide";
 import { DAILY_GUIDE_DATA } from "@/data/footerGuides";
@@ -108,26 +110,27 @@ export default function DailyCreatePage() {
 
   return (
     <StContainer>
-      <StPageWrapper>
+      <StPageWrapper $width="narrow">
         <PageIntro
           icon="📓"
           title="일일 기록"
           description="이제 기록은 브라우저가 아니라 서버에서 불러옵니다."
+          align="center"
         />
 
-        <StFlexBox>
-          <div className="flex-lft-box">
-            <StSection>
-              <FormSection>
+        <StToolColumn>
+          <StSection>
+            <StFieldGrid>
+              <StField>
                 <StSectionTitle>1. 기록장 이름</StSectionTitle>
                 <Input
                   placeholder="예: 4월 루틴 기록장"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                 />
-              </FormSection>
+              </StField>
 
-              <FormSection>
+              <StField>
                 <StSectionTitle>2. 접근 비밀번호</StSectionTitle>
                 <Input
                   type="password"
@@ -138,9 +141,10 @@ export default function DailyCreatePage() {
                 <HelperText>
                   서버에 암호화되어 저장되므로 이후에도 이 비밀번호가 필요해요.
                 </HelperText>
-              </FormSection>
+              </StField>
 
-              <FormSection>
+              {/* 체크리스트는 줄이 길어지므로 한 줄 전체 */}
+              <StField $span="full">
                 <HeaderRow>
                   <StSectionTitle>3. 체크리스트 항목</StSectionTitle>
                   <TextButton type="button" onClick={addItem}>
@@ -167,61 +171,55 @@ export default function DailyCreatePage() {
                     </DeleteButton>
                   </ChecklistItem>
                 ))}
-              </FormSection>
+              </StField>
+            </StFieldGrid>
 
-              <CreateButton onClick={handleCreate} disabled={isCreating}>
-                {isCreating ? "기록장 만드는 중..." : "기록장 만들기"}
-              </CreateButton>
-            </StSection>
-          </div>
+            <CreateButton onClick={handleCreate} disabled={isCreating}>
+              {isCreating ? "기록장 만드는 중..." : "기록장 만들기"}
+            </CreateButton>
+          </StSection>
 
-          <div className="flex-rgt-box">
-            <StSection>
-              <StSectionTitle>기존 기록장 열기</StSectionTitle>
-              <OpenGrid>
-                <Input
-                  placeholder="기록장 ID"
-                  value={openNotebookId}
-                  onChange={(event) => setOpenNotebookId(event.target.value)}
-                />
-                <Input
-                  type="password"
-                  placeholder="접근 비밀번호"
-                  value={openAccessCode}
-                  onChange={(event) => setOpenAccessCode(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void handleOpenNotebook();
-                    }
-                  }}
-                />
-              </OpenGrid>
-              <OpenButton
-                type="button"
-                onClick={handleOpenNotebook}
-                disabled={isOpening}
-              >
-                기록장 열기
-              </OpenButton>
-            </StSection>
+          <StSection>
+            <StSectionTitle>기존 기록장 열기</StSectionTitle>
+            <OpenGrid>
+              <Input
+                placeholder="기록장 ID"
+                value={openNotebookId}
+                onChange={(event) => setOpenNotebookId(event.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder="접근 비밀번호"
+                value={openAccessCode}
+                onChange={(event) => setOpenAccessCode(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleOpenNotebook();
+                  }
+                }}
+              />
+            </OpenGrid>
+            <OpenButton
+              type="button"
+              onClick={handleOpenNotebook}
+              disabled={isOpening}
+            >
+              기록장 열기
+            </OpenButton>
+          </StSection>
+        </StToolColumn>
 
-            <FooterGuide
-              title={DAILY_GUIDE_DATA.title}
-              story={DAILY_GUIDE_DATA.story}
-              tips={DAILY_GUIDE_DATA.tips}
-              layout="compact"
-            />
-          </div>
-        </StFlexBox>
+        <FooterGuide
+          title={DAILY_GUIDE_DATA.title}
+          story={DAILY_GUIDE_DATA.story}
+          tips={DAILY_GUIDE_DATA.tips}
+          layout="compact"
+        />
       </StPageWrapper>
     </StContainer>
   );
 }
-
-const FormSection = styled.section`
-  margin-bottom: 1.5rem;
-`;
 
 const HeaderRow = styled.div`
   display: flex;

@@ -7,16 +7,24 @@ interface PageIntroProps {
   icon?: string | React.ReactNode; // 아이콘 (이모지 등)
   title: string; // 메인 타이틀
   description?: React.ReactNode; // 설명 (줄바꿈, 강조 넣기 위해 ReactNode 사용)
+  /**
+   * 정렬.
+   * "left"(기본)   = 넓은 페이지. 아이콘과 제목이 한 줄, 왼쪽 정렬.
+   * "center"       = 560px 좁은 폼 페이지. 아이콘이 제목 위에 오고 450px 안에서 가운데 정렬.
+   */
+  align?: "left" | "center";
 }
 
 export default function PageIntro({
   icon,
   title,
   description,
+  align = "left",
 }: PageIntroProps) {
+  const isCentered = align === "center";
   return (
-    <StHeaderContainer>
-      <StTitleRow>
+    <StHeaderContainer $centered={isCentered}>
+      <StTitleRow $centered={isCentered}>
         {icon && <StIcon aria-hidden>{icon}</StIcon>}
         <StTitle>{title}</StTitle>
       </StTitleRow>
@@ -43,20 +51,35 @@ const draw = keyframes`
   to   { background-size: 100% 100%; }
 `;
 
-const StHeaderContainer = styled.div`
+const StHeaderContainer = styled.div<{ $centered: boolean }>`
   width: 100%;
-  text-align: left;
   padding: 0.5rem 0.25rem 0;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+
+  ${({ $centered }) =>
+    $centered
+      ? `
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+    align-items: center;
+    text-align: center;
+  `
+      : `
+    text-align: left;
+  `}
 `;
 
-const StTitleRow = styled.div`
+const StTitleRow = styled.div<{ $centered: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: ${({ $centered }) => ($centered ? "0.4rem" : "0.55rem")};
+
+  /* 가운데 정렬일 땐 아이콘 타일이 제목 위로 */
+  flex-direction: ${({ $centered }) => ($centered ? "column" : "row")};
 `;
 
 /* 이모지를 담는 작은 라운드 사각 타일 */
@@ -103,6 +126,8 @@ const StDescription = styled.div`
 
 /* 형광펜으로 그은 듯한 밑칠 — 홈 히어로(HeroSituations StMark)와 같은 브랜드 제스처 */
 export const StHighlight = styled.strong<{ $color?: "red" | "blue" }>`
+  /* 형광펜 구절이 줄바꿈으로 쪼개지지 않게 한 덩어리로 */
+  display: inline-block;
   font-weight: 800;
   color: ${({ theme }) => theme.semantic.text};
   background-image: linear-gradient(

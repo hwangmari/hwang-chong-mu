@@ -1,10 +1,12 @@
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import Switch from "../../../components/common/Switch";
 import {
   StInlineButton,
   StOptionGroup,
   StOptionRow,
   StFieldLabel,
+  StFieldGrid,
+  StField,
 } from "@/components/styled/layout.styled";
 import CreateButton from "@/components/common/CreateButton";
 import { Input } from "@hwangchongmu/ui";
@@ -45,18 +47,18 @@ export default function RoomForm({
 }: RoomFormProps) {
   return (
     <StFormContainer>
-      {/* 1. 약속 이름 */}
-      <Input
-        label="약속 이름"
-        placeholder="예: 신년회, 회식"
-        value={formData.roomName}
-        onChange={(e) => onChange("roomName", e.target.value)}
-      />
+      <StFieldGrid>
+        {/* 1행: 약속 이름 | 시작 날짜 */}
+        <StField>
+          <Input
+            label="약속 이름"
+            placeholder="예: 신년회, 회식"
+            value={formData.roomName}
+            onChange={(e) => onChange("roomName", e.target.value)}
+          />
+        </StField>
 
-      {/* 2. 날짜 설정 영역 */}
-      <StDateSection>
-        {/* 시작 날짜 */}
-        <StInputGroup>
+        <StField>
           <Input
             label={
               <>
@@ -70,77 +72,88 @@ export default function RoomForm({
             value={formData.startDate}
             onChange={(e) => onChange("startDate", e.target.value)}
           />
-        </StInputGroup>
+        </StField>
 
-        {/* 기간 관련 옵션 두 개를 한 덩어리로 */}
-        <StOptionGroup>
-          <StOptionRow>
-            <StToggleLabel onClick={() => setIsCustomPeriod(!isCustomPeriod)}>
-              종료 날짜 직접 지정하기
-            </StToggleLabel>
-            <Switch
-              checked={isCustomPeriod}
-              onChange={setIsCustomPeriod}
-              label="종료 날짜 직접 입력 여부"
-            />
-          </StOptionRow>
+        {/* 2행: 기간 옵션 묶음 | 참여 멤버 */}
+        <StField>
+          <StOptionGroup>
+            <StOptionRow>
+              <StToggleLabel onClick={() => setIsCustomPeriod(!isCustomPeriod)}>
+                종료 날짜 직접 지정하기
+              </StToggleLabel>
+              <Switch
+                checked={isCustomPeriod}
+                onChange={setIsCustomPeriod}
+                label="종료 날짜 직접 입력 여부"
+              />
+            </StOptionRow>
 
-          <StOptionRow>
-            <StToggleLabel>주말 포함</StToggleLabel>
-            <Switch
-              checked={formData.includeWeekend}
-              onChange={(isChecked) => onChange("includeWeekend", isChecked)}
-              label="주말 포함 여부"
-            />
-          </StOptionRow>
-        </StOptionGroup>
+            <StOptionRow>
+              <StToggleLabel>주말 포함</StToggleLabel>
+              <Switch
+                checked={formData.includeWeekend}
+                onChange={(isChecked) => onChange("includeWeekend", isChecked)}
+                label="주말 포함 여부"
+              />
+            </StOptionRow>
+          </StOptionGroup>
+        </StField>
+
+        <StField>
+          <StMemberSection>
+            <StFieldLabel>참여 멤버 (선택)</StFieldLabel>
+            <StMemberInputRow>
+              <Input
+                placeholder="이름 입력 후 추가"
+                value={memberInput}
+                onChange={(e) => setMemberInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addMember(memberInput);
+                  }
+                }}
+              />
+              <StInlineButton
+                type="button"
+                onClick={() => addMember(memberInput)}
+                disabled={!memberInput.trim()}
+              >
+                추가
+              </StInlineButton>
+            </StMemberInputRow>
+          </StMemberSection>
+        </StField>
 
         {/* 토글이 켜졌을 때만 나타나는 종료 날짜 입력창 */}
         {isCustomPeriod && (
-          <Input
-            label="종료 날짜"
-            type="date"
-            value={formData.endDate}
-            min={formData.startDate} // 시작일 이전은 선택 불가
-            onChange={(e) => onChange("endDate", e.target.value)}
-          />
+          <StField>
+            <Input
+              label="종료 날짜"
+              type="date"
+              value={formData.endDate}
+              min={formData.startDate} // 시작일 이전은 선택 불가
+              onChange={(e) => onChange("endDate", e.target.value)}
+            />
+          </StField>
         )}
-      </StDateSection>
 
-      {/* 4. 참여 멤버 (선택) */}
-      <StMemberSection>
-        <StFieldLabel>참여 멤버 (선택)</StFieldLabel>
-        <StMemberInputRow>
-          <Input
-            placeholder="이름 입력 후 추가"
-            value={memberInput}
-            onChange={(e) => setMemberInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addMember(memberInput);
-              }
-            }}
-          />
-          <StInlineButton
-            type="button"
-            onClick={() => addMember(memberInput)}
-            disabled={!memberInput.trim()}
-          >
-            추가
-          </StInlineButton>
-        </StMemberInputRow>
+        {/* 담은 멤버 칩은 한 줄 전체 */}
         {members.length > 0 && (
-          <StMemberChipList>
-            {members.map((name) => (
-              <StMemberChip key={name}>
-                {name}
-                <StRemoveBtn onClick={() => removeMember(name)}>✕</StRemoveBtn>
-              </StMemberChip>
-            ))}
-          </StMemberChipList>
+          <StField $span="full">
+            <StMemberChipList>
+              {members.map((name) => (
+                <StMemberChip key={name}>
+                  {name}
+                  <StRemoveBtn onClick={() => removeMember(name)}>
+                    ✕
+                  </StRemoveBtn>
+                </StMemberChip>
+              ))}
+            </StMemberChipList>
+          </StField>
         )}
-      </StMemberSection>
+      </StFieldGrid>
 
       {/* 5. 버튼 */}
       <CreateButton onClick={onSubmit} isLoading={loading}>
@@ -158,20 +171,6 @@ export default function RoomForm({
   );
 }
 
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-const StInputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* space-y-2 */
-
-  &.animate-fade-in {
-    animation: ${fadeIn} 0.3s ease-out;
-  }
-`;
-
 const StFormContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -183,12 +182,6 @@ const StAutoInfoText = styled.span`
   font-weight: 600;
   font-size: 0.75rem;
   margin-left: 0.25rem;
-`;
-
-const StDateSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* space-y-4 */
 `;
 
 const StToggleLabel = styled.span`

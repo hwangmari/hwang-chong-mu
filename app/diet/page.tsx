@@ -53,6 +53,7 @@ export default function CreateDietPage() {
     <StContainer>
       <StReadWrapper>
         <PageIntro
+          align="center"
           icon={<span>🥗</span>}
           title="건강한 다이어트"
           description={

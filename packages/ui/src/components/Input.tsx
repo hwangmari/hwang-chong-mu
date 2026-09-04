@@ -95,7 +95,8 @@ const StyledInput = styled.input<{ $isError: boolean }>`
   }
 
   &[type="date"] {
-    width: 220px;
+    /* 네이티브 피커가 눌리지 않을 최소 폭만 잡고, 나머지는 칸에 맞춘다 */
+    min-width: 200px;
     text-align: left;
   }
 `;

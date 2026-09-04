@@ -12,7 +12,9 @@ import {
   StContainer,
   StSection,
   StPageWrapper,
-  StFlexBox,
+  StToolColumn,
+  StFieldGrid,
+  StField,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
@@ -130,9 +132,10 @@ export default function GameLobbyPage() {
 
   return (
     <StContainer>
-      <StPageWrapper>
+      <StPageWrapper $width="narrow">
         {/* ✨ 하이라이트가 적용된 소개 문구 */}
         <PageIntro
+          align="center"
           icon="🎮"
           title="황총무 게임방"
           description={
@@ -146,79 +149,84 @@ export default function GameLobbyPage() {
           }
         />
 
-        <StFlexBox>
-          <div className="flex-lft-box">
-            {/* 1️⃣ 메인 선택 화면 */}
-            {viewMode === "SELECT" && (
-              <StSection>
-                <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
-                <StModeContainer>
-                  <StModeCard onClick={() => setViewMode("QUICK_LIST")}>
-                    <div className="icon">🚀</div>
-                    <div className="text">
-                      <strong>빠른 시작</strong>
-                      <span>설정 없이 바로 게임 고르기</span>
+        <StToolColumn>
+          {/* 1️⃣ 메인 선택 화면 */}
+          {viewMode === "SELECT" && (
+            <StSection>
+              <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
+              <StModeContainer>
+                <StModeCard onClick={() => setViewMode("QUICK_LIST")}>
+                  <div className="icon">🚀</div>
+                  <div className="text">
+                    <strong>빠른 시작</strong>
+                    <span>설정 없이 바로 게임 고르기</span>
+                  </div>
+                </StModeCard>
+
+                <StModeCard onClick={() => setViewMode("CREATE")}>
+                  <div className="icon">🏰</div>
+                  <div className="text">
+                    <strong>방 만들기</strong>
+                    <span>친구 모아서 시작하기</span>
+                  </div>
+                </StModeCard>
+              </StModeContainer>
+            </StSection>
+          )}
+
+          {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
+          {viewMode === "QUICK_LIST" && (
+            <StSection>
+              <BackButton />
+              <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
+
+              <StGameGrid>
+                {GAME_OPTIONS.map((game) => (
+                  <StGameItem
+                    key={game.id}
+                    onClick={() => handleSelectQuickGame(game.id)}
+                  >
+                    <span className="icon">{game.icon}</span>
+                    <div className="info">
+                      <strong>{game.name}</strong>
+                      <small>{game.desc}</small>
                     </div>
-                  </StModeCard>
+                  </StGameItem>
+                ))}
+              </StGameGrid>
+            </StSection>
+          )}
 
-                  <StModeCard onClick={() => setViewMode("CREATE")}>
-                    <div className="icon">🏰</div>
-                    <div className="text">
-                      <strong>방 만들기</strong>
-                      <span>친구 모아서 시작하기</span>
-                    </div>
-                  </StModeCard>
-                </StModeContainer>
-              </StSection>
-            )}
-
-            {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
-            {viewMode === "QUICK_LIST" && (
-              <StSection>
-                <BackButton />
-                <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
-
-                <StGameGrid>
-                  {GAME_OPTIONS.map((game) => (
-                    <StGameItem
-                      key={game.id}
-                      onClick={() => handleSelectQuickGame(game.id)}
-                    >
-                      <span className="icon">{game.icon}</span>
-                      <div className="info">
-                        <strong>{game.name}</strong>
-                        <small>{game.desc}</small>
-                      </div>
-                    </StGameItem>
-                  ))}
-                </StGameGrid>
-              </StSection>
-            )}
-
-            {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
-            {viewMode === "CREATE" && (
-              <StSection>
-                <BackButton />
-                <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
-                <StInputGroup>
+          {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
+          {viewMode === "CREATE" && (
+            <StSection>
+              <BackButton />
+              <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
+              <StFieldGrid>
+                <StField $span="full">
                   <Input
                     label="방 제목 (필수)"
                     placeholder="예: 커피 내기"
                     value={roomTitle}
                     onChange={(e) => setRoomTitle(e.target.value)}
                   />
-                </StInputGroup>
+                </StField>
+              </StFieldGrid>
 
-                <StDivider />
+              <StDivider />
 
-                <StSectionTitle>👤 내 정보</StSectionTitle>
-                <StInputGroup>
+              <StSectionTitle>👤 내 정보</StSectionTitle>
+              <StFieldGrid>
+                {/* 닉네임 | 비밀번호 를 한 줄에 */}
+                <StField>
                   <Input
                     label="닉네임"
                     placeholder="이름"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                   />
+                </StField>
+                <StField>
                   <Input
                     label="비밀번호"
                     placeholder="재접속용 (숫자 4자리)"
@@ -226,41 +234,40 @@ export default function GameLobbyPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                </StField>
+                <StField $span="full">
                   <Input
                     label="한마디 (선택)"
                     placeholder="각오 한마디!"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
-                </StInputGroup>
+                </StField>
+              </StFieldGrid>
 
-                <StButtonWrapper>
-                  <CreateButton onClick={createRoom} isLoading={loading}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.35rem",
-                      }}
-                    >
-                      방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
-                    </span>
-                  </CreateButton>
-                </StButtonWrapper>
-              </StSection>
-            )}
-          </div>
+              <StButtonWrapper>
+                <CreateButton onClick={createRoom} isLoading={loading}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                    }}
+                  >
+                    방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
+                  </span>
+                </CreateButton>
+              </StButtonWrapper>
+            </StSection>
+          )}
+        </StToolColumn>
 
-          {/* 데스크톱에서는 오른쪽에 가이드를 붙여 화면을 채운다 */}
-          <div className="flex-rgt-box">
-            <FooterGuide
-              title={GAME_GUIDE_DATA.title}
-              story={GAME_GUIDE_DATA.story}
-              tips={GAME_GUIDE_DATA.tips}
-              layout="compact"
-            />
-          </div>
-        </StFlexBox>
+        <FooterGuide
+          title={GAME_GUIDE_DATA.title}
+          story={GAME_GUIDE_DATA.story}
+          tips={GAME_GUIDE_DATA.tips}
+          layout="compact"
+        />
       </StPageWrapper>
     </StContainer>
   );
@@ -405,12 +412,6 @@ const StBackButton = styled.button`
   svg {
     display: block;
   }
-`;
-
-const StInputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 `;
 
 const StDivider = styled.hr`

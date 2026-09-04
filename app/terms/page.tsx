@@ -59,6 +59,7 @@ export default function TermsPage() {
           icon="📋"
           title="이용약관"
           description="황총무의 실험실 서비스 이용에 관한 약관입니다."
+          align="center"
         />
 
         <StSection>

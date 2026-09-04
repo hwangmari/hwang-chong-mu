@@ -9,7 +9,9 @@ import {
   StContainer,
   StSection,
   StPageWrapper,
-  StFlexBox,
+  StToolColumn,
+  StFieldGrid,
+  StField,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
@@ -61,8 +63,9 @@ export default function CreateHabitPage() {
 
   return (
     <StContainer>
-      <StPageWrapper>
+      <StPageWrapper $width="narrow">
         <PageIntro
+          align="center"
           icon={
             <IconWrapper
               onClick={() =>
@@ -90,54 +93,58 @@ export default function CreateHabitPage() {
           }
         />
 
-        <StFlexBox>
-          <div className="flex-lft-box">
-            <StSection>
-              <Input
-                label="습관 이름"
-                placeholder="예: 매일 30분 운동하기"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && createGoal()}
-              />
-
-              <ColorSection>
-                <Label>테마 컬러</Label>
-                <ColorPickerPanel
-                  selectedColor={selectedColor}
-                  onSelect={setSelectedColor}
-                  colors={COLORS}
+        <StToolColumn>
+          <StSection>
+            <StFieldGrid>
+              <StField>
+                <Input
+                  label="습관 이름"
+                  placeholder="예: 매일 30분 운동하기"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && createGoal()}
                 />
-              </ColorSection>
+              </StField>
 
-              <CreateButton
-                onClick={createGoal}
-                bgColor={selectedColor}
-                isLoading={loading}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                  }}
+              <StField>
+                <ColorSection>
+                  <Label>테마 컬러</Label>
+                  <ColorPickerPanel
+                    selectedColor={selectedColor}
+                    onSelect={setSelectedColor}
+                    colors={COLORS}
+                  />
+                </ColorSection>
+              </StField>
+
+              <StField $span="full">
+                <CreateButton
+                  onClick={createGoal}
+                  bgColor={selectedColor}
+                  isLoading={loading}
                 >
-                  습관 방 만들기 <ArrowForwardIcon fontSize="small" />
-                </span>
-              </CreateButton>
-            </StSection>
-          </div>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                    }}
+                  >
+                    습관 방 만들기 <ArrowForwardIcon fontSize="small" />
+                  </span>
+                </CreateButton>
+              </StField>
+            </StFieldGrid>
+          </StSection>
+        </StToolColumn>
 
-          {/* ✅ 습관 관리용 데이터 주입 */}
-          <div className="flex-rgt-box">
-            <FooterGuide
-              title={HABIT_GUIDE_DATA.title}
-              tips={HABIT_GUIDE_DATA.tips}
-              blogGuideId="habit-tracking-that-sticks"
-              layout="compact"
-            />
-          </div>
-        </StFlexBox>
+        {/* ✅ 습관 관리용 데이터 주입 */}
+        <FooterGuide
+          title={HABIT_GUIDE_DATA.title}
+          tips={HABIT_GUIDE_DATA.tips}
+          blogGuideId="habit-tracking-that-sticks"
+          layout="compact"
+        />
       </StPageWrapper>
     </StContainer>
   );
@@ -152,7 +159,6 @@ const IconWrapper = styled.div`
 `;
 
 const ColorSection = styled.div`
-  margin: 1.25rem 0;
   text-align: left;
 `;
 
