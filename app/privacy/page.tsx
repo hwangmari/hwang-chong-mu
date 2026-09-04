@@ -1,12 +1,8 @@
 "use client";
 
 import styled from "styled-components";
-import PageIntro from "@/components/common/PageIntro";
-import {
-  StContainer,
-  StReadWrapper,
-  StSection,
-} from "@/components/styled/layout.styled";
+import ServiceLayout from "@/components/common/ServiceLayout";
+import { StSection } from "@/components/styled/layout.styled";
 
 const PRIVACY_SECTIONS = [
   {
@@ -53,27 +49,25 @@ const PRIVACY_SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <StContainer>
-      <StReadWrapper>
-        <PageIntro
-          icon="🔒"
-          title="개인정보처리방침"
-          description="황총무의 실험실의 개인정보 처리에 관한 안내입니다."
-          align="center"
-        />
+    <ServiceLayout
+      width="narrow"
+      intro={{
+        icon: "🔒",
+        title: "개인정보처리방침",
+        description: "황총무의 실험실의 개인정보 처리에 관한 안내입니다.",
+      }}
+    >
+      <StSection>
+        <StLastUpdated>최종 수정일: 2026년 4월 9일</StLastUpdated>
 
-        <StSection>
-          <StLastUpdated>최종 수정일: 2026년 4월 9일</StLastUpdated>
-
-          {PRIVACY_SECTIONS.map((section) => (
-            <StPrivacyBlock key={section.title}>
-              <StSectionTitle>{section.title}</StSectionTitle>
-              <StSectionContent>{section.content}</StSectionContent>
-            </StPrivacyBlock>
-          ))}
-        </StSection>
-      </StReadWrapper>
-    </StContainer>
+        {PRIVACY_SECTIONS.map((section) => (
+          <StPrivacyBlock key={section.title}>
+            <StSectionTitle>{section.title}</StSectionTitle>
+            <StSectionContent>{section.content}</StSectionContent>
+          </StPrivacyBlock>
+        ))}
+      </StSection>
+    </ServiceLayout>
   );
 }
 

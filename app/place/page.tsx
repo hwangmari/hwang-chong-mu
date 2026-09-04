@@ -4,15 +4,10 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { Button, Input } from "@hwangchongmu/ui";
-import PageIntro, { StHighlight } from "@/components/common/PageIntro";
-import FooterGuide from "@/components/common/FooterGuide";
+import { StHighlight } from "@/components/common/PageIntro";
+import ServiceLayout from "@/components/common/ServiceLayout";
 import { PLACE_GUIDE_DATA } from "@/data/footerGuides";
-import {
-  StContainer,
-  StPageWrapper,
-  StFlexBox,
-  StSection,
-} from "@/components/styled/layout.styled";
+import { StSection } from "@/components/styled/layout.styled";
 import { NaverLocalItem } from "@/types/dinner";
 import { createDinnerRoom, addDinnerPlaces } from "@/services/dinner";
 import { linkRoomToAccount } from "@/lib/roomServices";
@@ -127,158 +122,154 @@ export default function DinnerPage() {
   };
 
   return (
-    <StContainer>
-      <StPageWrapper>
-        <PageIntro
-          icon="🍻"
-          title="황총무의 회식 장소 투표"
-          description={
-            <>
-              네이버에서 맛집을 검색하고{" "}
-              <StHighlight $color="blue">후보를 골라</StHighlight> 투표를
-              받아보세요!
-            </>
-          }
-        />
-
-        <StFlexBox $leftRatio={0.8} $sticky>
-          {/* 왼쪽: 투표 제목과 담아둔 후보 — 스크롤해도 따라온다 */}
-          <div className="flex-lft-box">
-            {/* 투표 제목 */}
-            <StSection>
-              <StSectionTitle>투표 만들기</StSectionTitle>
+    <ServiceLayout
+      width="wide"
+      intro={{
+        icon: "🍻",
+        title: "황총무의 회식 장소 투표",
+        description: (
+          <>
+            네이버에서 맛집을 검색하고{" "}
+            <StHighlight $color="blue">후보를 골라</StHighlight> 투표를
+            받아보세요!
+          </>
+        ),
+      }}
+      guide={{
+        title: PLACE_GUIDE_DATA.title,
+        story: PLACE_GUIDE_DATA.story,
+        tips: PLACE_GUIDE_DATA.tips,
+      }}
+      mainRatio={0.8}
+      sticky
+      /* 오른쪽: 검색하고 후보를 고르는 넓은 작업 영역 */
+      side={
+        <>
+          {/* 네이버 검색 */}
+          <StSection>
+            <StSectionTitle>장소 검색</StSectionTitle>
+            <StSearchRow>
               <Input
-                label="투표 제목"
-                placeholder="예) 4월 팀 회식 장소 투표"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                placeholder="예) 강남 맛집, 홍대 고기집"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-            </StSection>
+              <Button
+                color="primary"
+                size="medium"
+                onClick={handleSearch}
+                loading={searching}
+              >
+                검색
+              </Button>
+            </StSearchRow>
 
-            {/* 선택된 후보 */}
-            {selected.length > 0 && (
-              <StSection>
-                <StSectionTitle>
-                  선택된 후보 <StBadge>{selected.length}곳</StBadge>
-                </StSectionTitle>
-                <StSelectedList>
-                  {selected.map((item, i) => (
-                    <StSelectedChip key={i}>
-                      <span>{stripHtml(item.title)}</span>
-                      <StRemoveButton onClick={() => toggleSelect(item)}>
-                        ✕
-                      </StRemoveButton>
-                    </StSelectedChip>
-                  ))}
-                </StSelectedList>
-                <Button
-                  color="primary"
-                  display="full"
-                  size="large"
-                  onClick={handleCreate}
-                  loading={creating}
-                  disabled={selected.length < 2}
-                >
-                  투표 만들기
-                </Button>
-              </StSection>
+            {/* 네이버 지도 */}
+            {results.length > 0 && (
+              <NaverMap
+                items={results}
+                focusedIndex={focusedIndex}
+                stripHtml={stripHtmlCb}
+              />
             )}
-          </div>
 
-          {/* 오른쪽: 검색하고 후보를 고르는 넓은 작업 영역 */}
-          <div className="flex-rgt-box">
-            {/* 네이버 검색 */}
-            <StSection>
-              <StSectionTitle>장소 검색</StSectionTitle>
-              <StSearchRow>
-                <Input
-                  placeholder="예) 강남 맛집, 홍대 고기집"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                />
-                <Button
-                  color="primary"
-                  size="medium"
-                  onClick={handleSearch}
-                  loading={searching}
-                >
-                  검색
-                </Button>
-              </StSearchRow>
-
-              {/* 네이버 지도 */}
-              {results.length > 0 && (
-                <NaverMap
-                  items={results}
-                  focusedIndex={focusedIndex}
-                  stripHtml={stripHtmlCb}
-                />
-              )}
-
-              {/* 검색 결과 */}
-              {results.length > 0 && (
-                <StResultList>
-                  {results.map((item, i) => (
-                    <StResultItem
-                      key={i}
-                      $selected={isSelected(item)}
-                      onClick={() => toggleSelect(item)}
-                      onMouseEnter={() => setFocusedIndex(i)}
-                      onMouseLeave={() => setFocusedIndex(null)}
-                    >
-                      <StCheckbox $checked={isSelected(item)}>
-                        {isSelected(item) ? "✓" : ""}
-                      </StCheckbox>
-                      <StResultInfo>
-                        <StPlaceName>
-                          <StPlaceNumber>{i + 1}</StPlaceNumber>
-                          {stripHtml(item.title)}
-                        </StPlaceName>
-                        <StPlaceCategory>{item.category}</StPlaceCategory>
-                        {item.description && (
-                          <StPlaceMenu>
-                            🍽 {stripHtml(item.description)}
-                          </StPlaceMenu>
-                        )}
-                        <StPlaceAddress>
-                          {item.roadAddress || item.address}
-                        </StPlaceAddress>
-                        {item.telephone && (
-                          <StPlacePhone>{item.telephone}</StPlacePhone>
-                        )}
-                        <StMapLink
-                          href={`https://map.naver.com/v5/search/${encodeURIComponent(stripHtml(item.title) + " " + (item.roadAddress || item.address).split(" ").slice(0, 3).join(" "))}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          네이버 지도에서 보기 →
-                        </StMapLink>
-                      </StResultInfo>
-                    </StResultItem>
-                  ))}
-                  {hasMore && (
-                    <StLoadMoreButton
-                      onClick={handleLoadMore}
-                      disabled={loadingMore}
-                    >
-                      {loadingMore ? "불러오는 중..." : "더보기"}
-                    </StLoadMoreButton>
-                  )}
-                </StResultList>
-              )}
-            </StSection>
-          </div>
-        </StFlexBox>
-
-        <FooterGuide
-          title={PLACE_GUIDE_DATA.title}
-          story={PLACE_GUIDE_DATA.story}
-          tips={PLACE_GUIDE_DATA.tips}
+            {/* 검색 결과 */}
+            {results.length > 0 && (
+              <StResultList>
+                {results.map((item, i) => (
+                  <StResultItem
+                    key={i}
+                    $selected={isSelected(item)}
+                    onClick={() => toggleSelect(item)}
+                    onMouseEnter={() => setFocusedIndex(i)}
+                    onMouseLeave={() => setFocusedIndex(null)}
+                  >
+                    <StCheckbox $checked={isSelected(item)}>
+                      {isSelected(item) ? "✓" : ""}
+                    </StCheckbox>
+                    <StResultInfo>
+                      <StPlaceName>
+                        <StPlaceNumber>{i + 1}</StPlaceNumber>
+                        {stripHtml(item.title)}
+                      </StPlaceName>
+                      <StPlaceCategory>{item.category}</StPlaceCategory>
+                      {item.description && (
+                        <StPlaceMenu>
+                          🍽 {stripHtml(item.description)}
+                        </StPlaceMenu>
+                      )}
+                      <StPlaceAddress>
+                        {item.roadAddress || item.address}
+                      </StPlaceAddress>
+                      {item.telephone && (
+                        <StPlacePhone>{item.telephone}</StPlacePhone>
+                      )}
+                      <StMapLink
+                        href={`https://map.naver.com/v5/search/${encodeURIComponent(stripHtml(item.title) + " " + (item.roadAddress || item.address).split(" ").slice(0, 3).join(" "))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        네이버 지도에서 보기 →
+                      </StMapLink>
+                    </StResultInfo>
+                  </StResultItem>
+                ))}
+                {hasMore && (
+                  <StLoadMoreButton
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? "불러오는 중..." : "더보기"}
+                  </StLoadMoreButton>
+                )}
+              </StResultList>
+            )}
+          </StSection>
+        </>
+      }
+    >
+      {/* 왼쪽(본문): 투표 제목과 담아둔 후보 — 스크롤해도 따라온다 */}
+      <StSection>
+        <StSectionTitle>투표 만들기</StSectionTitle>
+        <Input
+          label="투표 제목"
+          placeholder="예) 4월 팀 회식 장소 투표"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
-      </StPageWrapper>
-    </StContainer>
+      </StSection>
+
+      {/* 선택된 후보 */}
+      {selected.length > 0 && (
+        <StSection>
+          <StSectionTitle>
+            선택된 후보 <StBadge>{selected.length}곳</StBadge>
+          </StSectionTitle>
+          <StSelectedList>
+            {selected.map((item, i) => (
+              <StSelectedChip key={i}>
+                <span>{stripHtml(item.title)}</span>
+                <StRemoveButton onClick={() => toggleSelect(item)}>
+                  ✕
+                </StRemoveButton>
+              </StSelectedChip>
+            ))}
+          </StSelectedList>
+          <Button
+            color="primary"
+            display="full"
+            size="large"
+            onClick={handleCreate}
+            loading={creating}
+            disabled={selected.length < 2}
+          >
+            투표 만들기
+          </Button>
+        </StSection>
+      )}
+    </ServiceLayout>
   );
 }
 

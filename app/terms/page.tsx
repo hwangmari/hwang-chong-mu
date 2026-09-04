@@ -1,12 +1,8 @@
 "use client";
 
 import styled from "styled-components";
-import PageIntro from "@/components/common/PageIntro";
-import {
-  StContainer,
-  StReadWrapper,
-  StSection,
-} from "@/components/styled/layout.styled";
+import ServiceLayout from "@/components/common/ServiceLayout";
+import { StSection } from "@/components/styled/layout.styled";
 
 const TERMS_SECTIONS = [
   {
@@ -53,27 +49,25 @@ const TERMS_SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <StContainer>
-      <StReadWrapper>
-        <PageIntro
-          icon="📋"
-          title="이용약관"
-          description="황총무의 실험실 서비스 이용에 관한 약관입니다."
-          align="center"
-        />
+    <ServiceLayout
+      width="narrow"
+      intro={{
+        icon: "📋",
+        title: "이용약관",
+        description: "황총무의 실험실 서비스 이용에 관한 약관입니다.",
+      }}
+    >
+      <StSection>
+        <StLastUpdated>최종 수정일: 2026년 4월 10일</StLastUpdated>
 
-        <StSection>
-          <StLastUpdated>최종 수정일: 2026년 4월 10일</StLastUpdated>
-
-          {TERMS_SECTIONS.map((section) => (
-            <StTermsBlock key={section.title}>
-              <StSectionTitle>{section.title}</StSectionTitle>
-              <StSectionContent>{section.content}</StSectionContent>
-            </StTermsBlock>
-          ))}
-        </StSection>
-      </StReadWrapper>
-    </StContainer>
+        {TERMS_SECTIONS.map((section) => (
+          <StTermsBlock key={section.title}>
+            <StSectionTitle>{section.title}</StSectionTitle>
+            <StSectionContent>{section.content}</StSectionContent>
+          </StTermsBlock>
+        ))}
+      </StSection>
+    </ServiceLayout>
   );
 }
 

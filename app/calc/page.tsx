@@ -1,13 +1,8 @@
 "use client";
 import { useState } from "react";
-import FooterGuide from "@/components/common/FooterGuide";
-import {
-  StContainer,
-  StSection,
-  StPageWrapper,
-  StToolColumn,
-} from "@/components/styled/layout.styled";
-import PageIntro, { StHighlight } from "@/components/common/PageIntro";
+import ServiceLayout from "@/components/common/ServiceLayout";
+import { StSection } from "@/components/styled/layout.styled";
+import { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -31,58 +26,53 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <StContainer>
-      <StPageWrapper $width="narrow">
-        <PageIntro
-          align="center"
-          icon="💸"
-          title="황총무의 여행 경비 계산기"
-          description={
-            <>
-              여행·모임 뒤에 누가 누구에게 얼마를? 머리 아픈 계산은 이제 그만!
-              <br />
-              <StHighlight $color="red">복잡한 송금</StHighlight> 대신{" "}
-              <StHighlight $color="blue">최소한의 이체</StHighlight>로
-              끝내보세요 &apos;ㅅ&apos;/
-            </>
-          }
+    <ServiceLayout
+      width="narrow"
+      intro={{
+        icon: "💸",
+        title: "황총무의 여행 경비 계산기",
+        description: (
+          <>
+            여행·모임 뒤에 누가 누구에게 얼마를? 머리 아픈 계산은 이제 그만!
+            <br />
+            <StHighlight $color="red">복잡한 송금</StHighlight> 대신{" "}
+            <StHighlight $color="blue">최소한의 이체</StHighlight>로 끝내보세요
+            &apos;ㅅ&apos;/
+          </>
+        ),
+      }}
+      guide={{
+        title: CALC_GUIDE_DATA.title,
+        tips: CALC_GUIDE_DATA.tips,
+        blogGuideId: "split-bill-tips",
+      }}
+    >
+      <StSection>
+        <Input
+          placeholder="예: 강릉 여행"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+          autoFocus
+          disabled={loading}
         />
-        <StToolColumn>
-          <StSection>
-            <Input
-              placeholder="예: 강릉 여행"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              autoFocus
-              disabled={loading}
-            />
 
-            <CreateButton
-              onClick={handleCreate}
-              isLoading={loading}
-              className="mt-4"
-            >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                }}
-              >
-                정산 방 만들기 <ArrowForwardIcon fontSize="small" />
-              </span>
-            </CreateButton>
-          </StSection>
-        </StToolColumn>
-
-        <FooterGuide
-          title={CALC_GUIDE_DATA.title}
-          tips={CALC_GUIDE_DATA.tips}
-          blogGuideId="split-bill-tips"
-          layout="compact"
-        />
-      </StPageWrapper>
-    </StContainer>
+        <CreateButton
+          onClick={handleCreate}
+          isLoading={loading}
+          className="mt-4"
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+          >
+            정산 방 만들기 <ArrowForwardIcon fontSize="small" />
+          </span>
+        </CreateButton>
+      </StSection>
+    </ServiceLayout>
   );
 }

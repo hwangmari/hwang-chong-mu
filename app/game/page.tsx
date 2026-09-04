@@ -7,16 +7,13 @@ import { supabase } from "@/lib/supabase";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Input } from "@hwangchongmu/ui";
-import FooterGuide from "@/components/common/FooterGuide";
+import ServiceLayout from "@/components/common/ServiceLayout";
 import {
-  StContainer,
   StSection,
-  StPageWrapper,
-  StToolColumn,
   StFieldGrid,
   StField,
 } from "@/components/styled/layout.styled";
-import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
+import { StHighlight } from "@/components/common/PageIntro";
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
 import { useModal } from "@/components/common/ModalProvider";
 import { linkRoomToAccount } from "@/lib/roomServices";
@@ -131,145 +128,139 @@ export default function GameLobbyPage() {
   );
 
   return (
-    <StContainer>
-      <StPageWrapper $width="narrow">
-        {/* ✨ 하이라이트가 적용된 소개 문구 */}
-        <PageIntro
-          align="center"
-          icon="🎮"
-          title="황총무 게임방"
-          description={
-            <>
-              바로 결과를 보는 <StHighlight $color="red">빠른 시작</StHighlight>
-              , <br />
-              친구들이 각자 접속해서 대결하는{" "}
-              <StHighlight $color="blue">방 만들기</StHighlight>. 상황에 맞춰
-              골라보세요.
-            </>
-          }
-        />
+    <ServiceLayout
+      width="narrow"
+      /* ✨ 하이라이트가 적용된 소개 문구 */
+      intro={{
+        icon: "🎮",
+        title: "황총무 게임방",
+        description: (
+          <>
+            바로 결과를 보는 <StHighlight $color="red">빠른 시작</StHighlight>
+            , <br />
+            친구들이 각자 접속해서 대결하는{" "}
+            <StHighlight $color="blue">방 만들기</StHighlight>. 상황에 맞춰
+            골라보세요.
+          </>
+        ),
+      }}
+      guide={{
+        title: GAME_GUIDE_DATA.title,
+        story: GAME_GUIDE_DATA.story,
+        tips: GAME_GUIDE_DATA.tips,
+      }}
+    >
+      {/* 1️⃣ 메인 선택 화면 */}
+      {viewMode === "SELECT" && (
+        <StSection>
+          <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
+          <StModeContainer>
+            <StModeCard onClick={() => setViewMode("QUICK_LIST")}>
+              <div className="icon">🚀</div>
+              <div className="text">
+                <strong>빠른 시작</strong>
+                <span>설정 없이 바로 게임 고르기</span>
+              </div>
+            </StModeCard>
 
-        <StToolColumn>
-          {/* 1️⃣ 메인 선택 화면 */}
-          {viewMode === "SELECT" && (
-            <StSection>
-              <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
-              <StModeContainer>
-                <StModeCard onClick={() => setViewMode("QUICK_LIST")}>
-                  <div className="icon">🚀</div>
-                  <div className="text">
-                    <strong>빠른 시작</strong>
-                    <span>설정 없이 바로 게임 고르기</span>
-                  </div>
-                </StModeCard>
+            <StModeCard onClick={() => setViewMode("CREATE")}>
+              <div className="icon">🏰</div>
+              <div className="text">
+                <strong>방 만들기</strong>
+                <span>친구 모아서 시작하기</span>
+              </div>
+            </StModeCard>
+          </StModeContainer>
+        </StSection>
+      )}
 
-                <StModeCard onClick={() => setViewMode("CREATE")}>
-                  <div className="icon">🏰</div>
-                  <div className="text">
-                    <strong>방 만들기</strong>
-                    <span>친구 모아서 시작하기</span>
-                  </div>
-                </StModeCard>
-              </StModeContainer>
-            </StSection>
-          )}
+      {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
+      {viewMode === "QUICK_LIST" && (
+        <StSection>
+          <BackButton />
+          <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
 
-          {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
-          {viewMode === "QUICK_LIST" && (
-            <StSection>
-              <BackButton />
-              <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
+          <StGameGrid>
+            {GAME_OPTIONS.map((game) => (
+              <StGameItem
+                key={game.id}
+                onClick={() => handleSelectQuickGame(game.id)}
+              >
+                <span className="icon">{game.icon}</span>
+                <div className="info">
+                  <strong>{game.name}</strong>
+                  <small>{game.desc}</small>
+                </div>
+              </StGameItem>
+            ))}
+          </StGameGrid>
+        </StSection>
+      )}
 
-              <StGameGrid>
-                {GAME_OPTIONS.map((game) => (
-                  <StGameItem
-                    key={game.id}
-                    onClick={() => handleSelectQuickGame(game.id)}
-                  >
-                    <span className="icon">{game.icon}</span>
-                    <div className="info">
-                      <strong>{game.name}</strong>
-                      <small>{game.desc}</small>
-                    </div>
-                  </StGameItem>
-                ))}
-              </StGameGrid>
-            </StSection>
-          )}
+      {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
+      {viewMode === "CREATE" && (
+        <StSection>
+          <BackButton />
+          <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
+          <StFieldGrid>
+            <StField $span="full">
+              <Input
+                label="방 제목 (필수)"
+                placeholder="예: 커피 내기"
+                value={roomTitle}
+                onChange={(e) => setRoomTitle(e.target.value)}
+              />
+            </StField>
+          </StFieldGrid>
 
-          {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
-          {viewMode === "CREATE" && (
-            <StSection>
-              <BackButton />
-              <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
-              <StFieldGrid>
-                <StField $span="full">
-                  <Input
-                    label="방 제목 (필수)"
-                    placeholder="예: 커피 내기"
-                    value={roomTitle}
-                    onChange={(e) => setRoomTitle(e.target.value)}
-                  />
-                </StField>
-              </StFieldGrid>
+          <StDivider />
 
-              <StDivider />
+          <StSectionTitle>👤 내 정보</StSectionTitle>
+          <StFieldGrid>
+            {/* 닉네임 | 비밀번호 를 한 줄에 */}
+            <StField>
+              <Input
+                label="닉네임"
+                placeholder="이름"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+              />
+            </StField>
+            <StField>
+              <Input
+                label="비밀번호"
+                placeholder="재접속용 (숫자 4자리)"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </StField>
+            <StField $span="full">
+              <Input
+                label="한마디 (선택)"
+                placeholder="각오 한마디!"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+            </StField>
+          </StFieldGrid>
 
-              <StSectionTitle>👤 내 정보</StSectionTitle>
-              <StFieldGrid>
-                {/* 닉네임 | 비밀번호 를 한 줄에 */}
-                <StField>
-                  <Input
-                    label="닉네임"
-                    placeholder="이름"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                  />
-                </StField>
-                <StField>
-                  <Input
-                    label="비밀번호"
-                    placeholder="재접속용 (숫자 4자리)"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </StField>
-                <StField $span="full">
-                  <Input
-                    label="한마디 (선택)"
-                    placeholder="각오 한마디!"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                </StField>
-              </StFieldGrid>
-
-              <StButtonWrapper>
-                <CreateButton onClick={createRoom} isLoading={loading}>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                    }}
-                  >
-                    방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
-                  </span>
-                </CreateButton>
-              </StButtonWrapper>
-            </StSection>
-          )}
-        </StToolColumn>
-
-        <FooterGuide
-          title={GAME_GUIDE_DATA.title}
-          story={GAME_GUIDE_DATA.story}
-          tips={GAME_GUIDE_DATA.tips}
-          layout="compact"
-        />
-      </StPageWrapper>
-    </StContainer>
+          <StButtonWrapper>
+            <CreateButton onClick={createRoom} isLoading={loading}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                }}
+              >
+                방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
+              </span>
+            </CreateButton>
+          </StButtonWrapper>
+        </StSection>
+      )}
+    </ServiceLayout>
   );
 }
 

@@ -199,7 +199,7 @@ export const StOptionRow = styled.div`
 /* 페이지 폭은 '내용 성격'으로 정한다.
    narrow(560) = 입력 필드 몇 개짜리 폼, tool(760) = 계산기처럼 조밀한 도구,
    wide(1024)  = 목록·지도·검색결과처럼 옆에 둘 내용이 진짜 있는 화면. */
-const PAGE_WIDTHS = {
+export const PAGE_WIDTHS = {
   narrow: "560px",
   tool: "760px",
   wide: "1025px",
