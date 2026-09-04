@@ -122,7 +122,7 @@ export default function TodoList({
             disabled={!newItemTitle.trim()}
             $bgColor={themeColor}
           >
-            <AddIcon sx={{ fontSize: 20, marginRight: "4px" }} /> 추가
+            <AddIcon sx={{ fontSize: 18 }} /> 추가
           </StAddButton>
         </StInputWrapper>
       </StTodoList>
@@ -221,6 +221,12 @@ const StInput = styled.input<{ $focusColor: string }>`
   }
 `;
 const StAddButton = styled.button<{ $bgColor: string }>`
+  /* 아이콘(+)과 글자(추가)를 같은 줄 가운데에 나란히 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
   background: ${({ $bgColor }) => $bgColor};
   color: ${({ theme }) => theme.colors.white};
   border: none;
@@ -228,6 +234,7 @@ const StAddButton = styled.button<{ $bgColor: string }>`
   padding: 0 1rem;
   font-weight: 600;
   font-size: 0.85rem;
+  line-height: 1;
   cursor: pointer;
   transition: opacity 0.2s;
   &:hover {
