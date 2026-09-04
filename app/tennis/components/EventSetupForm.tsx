@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
-import { expectedAppearances, generateBracket, suggestSplit, type Generated } from "../generate";
+import RuleDetailSettings from "./RuleDetailSettings";
+import { expectedAppearances, generateBracket, suggestSplit, type Generated, type Split } from "../generate";
 import { parsePlayersText } from "../parsePlayers";
 import {
   DEFAULT_RULES,
@@ -56,6 +57,8 @@ export default function EventSetupForm({ onCreate }: Props) {
   const [afterNote, setAfterNote] = useState("");
   const [playersText, setPlayersText] = useState("");
   const [rules, setRules] = useState<RuleSettings>(DEFAULT_RULES);
+  // 종목 수를 직접 정할 때 쓰는 값 (자동일 때는 쓰지 않는다)
+  const [manualSplit, setManualSplit] = useState<Split>({ menMatches: 0, womenMatches: 0, mixedMatches: 0 });
 
   const [generated, setGenerated] = useState<Generated | null>(null);
   const [error, setError] = useState("");
@@ -70,11 +73,13 @@ export default function EventSetupForm({ onCreate }: Props) {
   const men = players.filter((p) => p.gender === "M").length;
   const women = players.length - men;
 
-  // 남복/여복/혼복 구성은 인원·코트·라운드로 자동 결정 (사람이 계산하지 않는다)
-  const split = useMemo(
+  // 남복/여복/혼복 구성은 인원·코트·라운드로 자동 결정 (사람이 계산하지 않는다).
+  // 세부 요건에서 "직접 정하기"를 켜면 아래 manualSplit을 쓴다.
+  const autoSplit = useMemo(
     () => suggestSplit(players, courts, totalMatches, rules.teamMatch),
     [players, courts, totalMatches, rules.teamMatch],
   );
+  const split = rules.splitMode === "manual" ? manualSplit : autoSplit;
   const splitOk =
     split.menMatches + split.womenMatches + split.mixedMatches === totalMatches;
 
@@ -96,6 +101,13 @@ export default function EventSetupForm({ onCreate }: Props) {
       ...split,
       rules,
     };
+  }
+
+  // 세부 요건이 바뀌면 미리보기는 지운다. "직접 정하기"를 처음 켜면 자동 구성값을 넣어 준다
+  function changeRules(next: RuleSettings) {
+    if (next.splitMode === "manual" && rules.splitMode === "auto") setManualSplit(autoSplit);
+    setRules(next);
+    setGenerated(null);
   }
 
   function toggleRule(id: RuleId) {
@@ -329,13 +341,26 @@ export default function EventSetupForm({ onCreate }: Props) {
             "자물쇠 규칙은 항상 지켜요. 나머지는 취향대로 켜고 끄세요. 팀 대항은 선수마다 소속을 적으면 켤 수 있어요."
           )}
         </StCardHint>
+        <RuleDetailSettings
+          players={players}
+          courts={courts}
+          totalMatches={totalMatches}
+          rules={rules}
+          onChange={changeRules}
+          autoSplit={autoSplit}
+          manualSplit={manualSplit}
+          onManualSplitChange={(next) => {
+            setManualSplit(next);
+            setGenerated(null);
+          }}
+        />
       </StLabel>
 
       <StCardHint>
         총 {totalMatches}경기 · 코트 {courts}면이면 {startTime}에 시작해 약{" "}
         {toClock(toMinutes(startTime) + Math.ceil(totalMatches / courts) * minutesPerMatch)}에 끝나요.
         {players.length >= 4 && splitOk
-          ? ` 인원에 맞춰 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 출전은 ${appearanceHint}예요.${rules.teamMatch ? " (팀 대항은 경기마다 두 팀에서 같은 수가 나오니, 인원이 적은 쪽이 더 자주 뛰어요.)" : ""}`
+          ? ` ${rules.splitMode === "manual" ? "직접 정한 대로" : "인원에 맞춰"} 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 출전은 ${appearanceHint}예요.${rules.teamMatch ? " (팀 대항은 경기마다 두 팀에서 같은 수가 나오니, 인원이 적은 쪽이 더 자주 뛰어요.)" : ""}`
           : players.length >= 4
             ? " 이 인원으로는 경기를 다 채울 수 없어요. 총 경기 수를 줄여 보세요."
             : " 선수 명단을 넣으면 종목 구성을 자동으로 정해 드려요."}

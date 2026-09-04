@@ -695,6 +695,11 @@ export const StTable = styled.table`
     text-align: left;
   }
 
+  td.right,
+  th.right {
+    text-align: right;
+  }
+
   td.rank {
     font-weight: 900;
     color: ${({ theme }) => theme.colors.gray900};
@@ -1410,4 +1415,81 @@ export const StNodeTeam = styled.div<{ $winner: boolean; $empty: boolean }>`
     font-variant-numeric: tabular-nums;
     font-weight: 900;
   }
+`;
+
+/* === 대진표 세부 요건 설정 (새 교류전 만들기) === */
+export const StDetailPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  padding: 0.9rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.9rem;
+  background: ${({ theme }) => theme.colors.gray50};
+`;
+
+export const StDetailSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+
+  & + & {
+    padding-top: 0.85rem;
+    border-top: 1px solid ${({ theme }) => theme.colors.gray200};
+  }
+`;
+
+export const StDetailTitle = styled.h4`
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+/* 숫자 몇 자리만 넣는 좁은 칸 */
+export const StMiniInput = styled(StInput)`
+  width: 4.5rem;
+  min-height: 2.2rem;
+  padding: 0 0.5rem;
+  font-size: 0.85rem;
+`;
+
+/* [선수 A] [관계] [선수 B] [삭제] 한 줄. 좁은 화면에서는 두 줄로 접힌다 */
+export const StPairRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  min-width: 0;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+/* 묶음마다 종목을 고르는 칸들 */
+export const StSlotGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.4rem;
+  min-width: 0;
+`;
+
+export const StSlotBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.45rem;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.6rem;
+  background: ${({ theme }) => theme.colors.white};
+`;
+
+export const StSlotLabel = styled.span`
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray500};
 `;
