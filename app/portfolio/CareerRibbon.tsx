@@ -112,7 +112,11 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
                   onClick={() => scrollToCompany(span.id)}
                   aria-label={`${span.company} ${span.period} 경력 보기`}
                 >
-                  <StBrandStripe $colorClass={span.colorClass} aria-hidden="true" />
+                  <StBrandStripe
+                    $colorClass={span.colorClass}
+                    $compact={compact}
+                    aria-hidden="true"
+                  />
                   <span className="text">
                     <span className="name">{label}</span>
                     {withDuration && <span className="duration">{span.durationLabel}</span>}
@@ -272,8 +276,8 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
   overflow: hidden;
   display: flex;
   align-items: center;
-  padding: 0 0.5rem 0 0.85rem;
-  text-align: left;
+  padding: ${({ $compact }) => ($compact ? "0 0.6rem" : "0 0.5rem 0 0.85rem")};
+  text-align: ${({ $compact }) => ($compact ? "center" : "left")};
   background: ${({ theme }) => theme.semantic.bg};
   border: 1px solid ${({ theme }) => theme.semantic.border};
   transition:
@@ -286,7 +290,9 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
     display: flex;
     flex-direction: column;
     min-width: 0;
+    width: 100%;
     line-height: 1.2;
+    align-items: ${({ $compact }) => ($compact ? "center" : "flex-start")};
   }
 
   .name {
@@ -310,7 +316,6 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
     css`
       background: ${theme.colors.white};
       border: 2px solid ${theme.semantic.primary};
-      padding-left: calc(0.85rem - 1px);
       transform: translateY(-2px);
       box-shadow: 0 8px 18px -12px ${theme.semantic.primary};
 
@@ -340,7 +345,7 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
   }
 `;
 
-const StBrandStripe = styled.span<{ $colorClass: string }>`
+const StBrandStripe = styled.span<{ $colorClass: string; $compact: boolean }>`
   position: absolute;
   left: 0;
   top: 0;
@@ -348,7 +353,12 @@ const StBrandStripe = styled.span<{ $colorClass: string }>`
   width: 6px;
   background: ${({ theme, $colorClass }) => companyColor(theme, $colorClass)};
 
+  /* 따라다니는 바는 순수한 이동 바라 회사 색 띠를 두지 않는다 */
+  ${({ $compact }) => $compact && "display: none;"}
+
+  /* 폰에서는 이름이 들어갈 자리가 없어, 이 띠가 곧 색 막대가 된다 */
   @media (max-width: 767px) {
+    display: block;
     width: 100%;
   }
 `;

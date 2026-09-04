@@ -203,19 +203,18 @@ export const StCoreBadge = styled.span<BadgeProps>`
 `;
 export const StProjectList = styled.div`
   /* 기본은 접힌 카드들의 격자. 펼친 카드는 한 줄을 통째로 차지한다 */
+  /* 설명을 전부 보여 주므로 칸이 너무 좁지 않게 세 칸까지만 */
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: start;
-  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.9rem;
 
   @media (max-width: 1023px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* 폰에서도 두 칸으로 두면 12개가 6줄로 줄어 스크롤이 확 짧아진다 */
   @media (max-width: 767px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
+    grid-template-columns: 1fr;
   }
 `;
 
