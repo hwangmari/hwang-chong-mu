@@ -1,5 +1,24 @@
 import { ProjectItemList } from "@/types/experiences";
 export const ANALYSIS_HISTORY_DATA: ProjectItemList[] = [
+  // ↓ 2026-09-04 사용자 요청으로 추가한 굵직한 건 2개. 기간·설명은 사용자 확인 후 다듬는다.
+  {
+    id: "2026-06-01",
+    date: "2026.06 ~ 진행 중",
+    title: "보장분석 전용 HSP 상담 플로우",
+    description: [
+      "보장분석 결과 화면에서 이어지는 전용 상담 흐름 설계·구현 (일반 HSP 상담과 분리)",
+      "분석 결과·고객 맥락을 상담 요청에 함께 전달해 FP 연결 품질 향상",
+    ],
+  },
+  {
+    id: "2026-04-01",
+    date: "2026.04 ~ 06",
+    title: "보장분석 고도화",
+    description: [
+      "보장분석 결과 리포트 구성·표현 고도화",
+      "GA 이벤트 흐름 정비로 분석 단계별 이탈·전환 측정",
+    ],
+  },
   {
     id: "2026-02-01",
     date: "2026.01.20 ~ 02.19",
