@@ -12,13 +12,13 @@ interface BadgeProps {
 
 export const StUiKitBanner = styled.a`
   max-width: ${({ theme }) => theme.layout.maxWidth};
-  margin: 0 auto 50px;
+  margin: 0 auto 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 1.2rem 1.35rem;
-  border-radius: 1.25rem;
+  padding: 0.9rem 1.15rem;
+  border-radius: 1rem;
   border: 1px solid ${({ theme }) => theme.colors.blue100};
   background:
     radial-gradient(
@@ -38,8 +38,10 @@ export const StUiKitBanner = styled.a`
     border-color 0.2s ease;
 
   .text-group {
-    display: grid;
-    gap: 0.3rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
   }
 
   .eyebrow {
@@ -61,14 +63,14 @@ export const StUiKitBanner = styled.a`
 
   p {
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.55;
+    font-size: 0.85rem;
+    line-height: 1.5;
     color: ${({ theme }) => theme.colors.gray600};
   }
 
   .cta {
     flex-shrink: 0;
-    padding: 0.7rem 0.95rem;
+    padding: 0.5rem 0.85rem;
     border-radius: 999px;
     background: ${({ theme }) => theme.colors.gray900};
     color: ${({ theme }) => theme.colors.white};
@@ -95,8 +97,9 @@ export const StUiKitBanner = styled.a`
 
 export const StProjectSection = styled.section`
   background-color: ${({ theme }) => theme.colors.gray50};
-  padding: 5rem 0;
-  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
+  padding: 1.9rem 0;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  scroll-margin-top: 4.5rem;
 `;
 
 export const StSectionInner = styled.div`
@@ -106,62 +109,24 @@ export const StSectionInner = styled.div`
 `;
 
 export const StHeaderGroup = styled.div`
-  margin-bottom: 3rem;
+  margin-bottom: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 `;
 
-export const StSectionTitleWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-export const StStickyProjectNav = styled.nav`
-  position: sticky;
-  top: 3.5rem;
-  z-index: 20;
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding: 0.55rem;
-  margin-bottom: 1.25rem;
-  border-radius: 0.9rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  backdrop-filter: blur(6px);
-  box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
-
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-`;
-
-export const StStickyProjectLink = styled.a`
-  flex: 0 0 auto;
-  padding: 0.45rem 0.7rem;
-  border-radius: 9999px;
-  border: 1px solid ${({ theme }) => theme.colors.blue100};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray700};
-  font-size: 0.8rem;
-  font-weight: 700;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.blue500};
-    color: ${({ theme }) => theme.colors.blue700};
-    background: ${({ theme }) => theme.colors.blue50};
-  }
-`;
-
 export const StCommonStackWrapper = styled.div`
+  /* display를 지정하면 hidden 속성이 먹히지 않으므로 직접 다시 숨긴다 */
+  &[hidden] {
+    display: none;
+  }
+
+  margin: 0.6rem 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
   background-color: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 1rem;
@@ -182,6 +147,10 @@ export const StCommonStackWrapper = styled.div`
 `;
 
 export const StCoreBadge = styled.span<BadgeProps>`
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+  }
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -233,14 +202,26 @@ export const StCoreBadge = styled.span<BadgeProps>`
     `}
 `;
 export const StProjectList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
+  /* 기본은 접힌 카드들의 격자. 펼친 카드는 한 줄을 통째로 차지한다 */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.8rem;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 폰에서도 두 칸으로 두면 12개가 6줄로 줄어 스크롤이 확 짧아진다 */
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
 `;
 
 export const StPhilosophyBox = styled.div`
-  margin-top: 24px;
-  padding: 20px;
+  margin-top: 0.25rem;
+  padding: 14px 18px;
   background-color: rgba(
     0,
     0,
@@ -251,10 +232,11 @@ export const StPhilosophyBox = styled.div`
   border-radius: 8px;
 
   .catchphrase {
-    font-size: 1.1rem;
+    display: inline;
+    margin-right: 0.75rem;
+    font-size: 1.02rem;
     font-weight: 700;
-    color: ${({ theme }) => theme.colors.gray800}; /* 제목 색상 */
-    margin-bottom: 12px;
+    color: ${({ theme }) => theme.colors.gray800};
     font-style: italic;
     font-family: serif; /* 영문 캐치프레이즈 느낌 살리기 */
   }

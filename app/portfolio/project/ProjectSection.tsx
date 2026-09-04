@@ -1,20 +1,22 @@
 "use client";
 
-import { Typography } from "@hwangchongmu/ui";
 import Link from "next/link";
 import {
   StProjectSection,
   StSectionInner,
   StHeaderGroup,
-  StSectionTitleWrapper,
-  StStickyProjectLink,
-  StStickyProjectNav,
   StCommonStackWrapper,
   StCoreBadge,
   StPhilosophyBox,
   StUiKitBanner,
 } from "./ProjectSection.styled";
 import ProjectList from "./ProjectList";
+import { SectionTitle } from "../motion";
+import { TOY_PROJECTS } from "./toyProjects";
+import { useState } from "react";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import styled from "styled-components";
+import { displayFont } from "@/lib/fonts";
 
 const CORE_STACK = [
   "Claude Code",
@@ -26,56 +28,55 @@ const CORE_STACK = [
   "Vercel",
 ];
 
-const TOY_PROJECT_MENU = [
-  { id: "toy-my", label: "내 서비스 요약" },
-  { id: "toy-schedule", label: "업무 캘린더" },
-  { id: "toy-meeting", label: "약속 잡기" },
-  { id: "toy-calc", label: "N빵 계산기" },
-  { id: "toy-account-book", label: "가계부" },
-  { id: "toy-habit", label: "습관 관리" },
-  { id: "toy-daily", label: "일일 기록" },
-  { id: "toy-diet", label: "체중 관리" },
-  { id: "toy-workout", label: "운동 기록" },
-  { id: "toy-inbody", label: "인바디 기록" },
-  { id: "toy-game", label: "게임방" },
-];
-
 export default function ProjectSection() {
+  const [philosophyOpen, setPhilosophyOpen] = useState(false);
+
   return (
-    <StProjectSection>
+    <StProjectSection id="toy-projects" className={displayFont.variable}>
       <StSectionInner>
         {/* 섹션 타이틀 & 공통 스택 영역 */}
         <StHeaderGroup>
-          <StSectionTitleWrapper>
-            <Typography variant="h2" as="h2">
-              🚀 Toy Projects
-            </Typography>
-          </StSectionTitleWrapper>
-
-          {/* 🔹 공통 기술 스택 */}
-          <StCommonStackWrapper>
-            <span className="label">Core Tech Stack :</span>
-            <div className="badge-list">
-              {CORE_STACK.map((tech) => (
-                <StCoreBadge
-                  key={tech}
-                  $isAi={
-                    tech.includes("Gemini") || tech.includes("OpenAI Codex")
-                  }
-                  $isClaude={tech.includes("Claude")}
-                >
-                  {tech}
-                </StCoreBadge>
-              ))}
-            </div>
-          </StCommonStackWrapper>
+          <SectionTitle title={`🚀 Toy Projects · ${TOY_PROJECTS.length}개`} />
 
           {/* 개발 철학 및 시너지 강조 영역 */}
           <StPhilosophyBox>
             <p className="catchphrase">
               &quot;Real Problems, Practical Solutions.&quot;
             </p>
-            <p className="description">
+            <StPhilosophyToggle
+              type="button"
+              aria-expanded={philosophyOpen}
+              aria-controls="toy-philosophy"
+              onClick={() => setPhilosophyOpen((v) => !v)}
+            >
+              {philosophyOpen ? "접기" : "어떻게 만들었는지 보기"}
+              <StChevron $open={philosophyOpen} aria-hidden="true">
+                <ExpandMoreIcon fontSize="inherit" />
+              </StChevron>
+            </StPhilosophyToggle>
+            {/* 🔹 공통 기술 스택 */}
+            <StCommonStackWrapper hidden={!philosophyOpen}>
+              <span className="label">Core Tech Stack :</span>
+              <div className="badge-list">
+                {CORE_STACK.map((tech) => (
+                  <StCoreBadge
+                    key={tech}
+                    $isAi={
+                      tech.includes("Gemini") || tech.includes("OpenAI Codex")
+                    }
+                    $isClaude={tech.includes("Claude")}
+                  >
+                    {tech}
+                  </StCoreBadge>
+                ))}
+              </div>
+            </StCommonStackWrapper>
+
+            <p
+              className="description"
+              id="toy-philosophy"
+              hidden={!philosophyOpen}
+            >
               이 프로젝트들은 제가 <b>직접 사용하기 위해</b> 필요성을 정의하고
               설계한 서비스들입니다.
               <br />
@@ -107,16 +108,39 @@ export default function ProjectSection() {
           <span className="cta">/ui-kit</span>
         </StUiKitBanner>
 
-        <StStickyProjectNav aria-label="Toy Projects 빠른 이동">
-          {TOY_PROJECT_MENU.map((item) => (
-            <StStickyProjectLink key={item.id} href={`#${item.id}`}>
-              {item.label}
-            </StStickyProjectLink>
-          ))}
-        </StStickyProjectNav>
-
         <ProjectList />
       </StSectionInner>
     </StProjectSection>
   );
 }
+
+const StPhilosophyToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.gray700};
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.colors.amber500};
+    outline-offset: 2px;
+  }
+`;
+
+const StChevron = styled.span<{ $open: boolean }>`
+  display: inline-flex;
+  font-size: 1.1rem;
+  transition: transform 0.25s ease;
+  transform: rotate(${({ $open }) => ($open ? "180deg" : "0deg")});
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;

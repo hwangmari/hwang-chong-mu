@@ -3,6 +3,7 @@
 import { ProjectImage } from "@/components/common/ProjectImageViewer";
 import ProjectCard from "./ProjectCard";
 import { StDetailList, StProjectList } from "./ProjectSection.styled";
+import ToySpotlight from "./ToySpotlight";
 
 export default function ProjectList() {
   const scheduleImages: ProjectImage[] = [
@@ -29,6 +30,7 @@ export default function ProjectList() {
   ];
 
   return (
+    <ToySpotlight>
     <StProjectList>
       {/* 내 서비스 요약(통합 대시보드) 프로젝트 */}
       <ProjectCard
@@ -336,7 +338,7 @@ export default function ProjectList() {
       {/* N빵 계산기 프로젝트 */}
       <ProjectCard
         anchorId="toy-calc"
-        title="N빵 계산기"
+        title="여행 경비 계산기"
         period="2025.12.24 - 진행 중 (1인 개발)"
         linkUrl="/calc"
         description={
@@ -926,5 +928,6 @@ export default function ProjectList() {
         }}
       />
     </StProjectList>
+    </ToySpotlight>
   );
 }
