@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "styled-components";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   StContainer,
   StSection,
-  StWrapper,
+  StReadWrapper,
 } from "@/components/styled/layout.styled";
 import PageIntro from "@/components/common/PageIntro";
 // import BlogGuideLink from "@/components/common/BlogGuideLink";
@@ -16,6 +17,7 @@ import { Input } from "@hwangchongmu/ui";
 import { useModal } from "@/components/common/ModalProvider";
 
 export default function CreateDietPage() {
+  const theme = useTheme();
   const router = useRouter();
   const { openAlert } = useModal();
   const [title, setTitle] = useState("");
@@ -49,7 +51,7 @@ export default function CreateDietPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StReadWrapper>
         <PageIntro
           icon={<span>🥗</span>}
           title="건강한 다이어트"
@@ -81,7 +83,7 @@ export default function CreateDietPage() {
 
           <CreateButton
             onClick={createRoom}
-            bgColor="#10b981" // 에메랄드 색상
+            bgColor={theme.semantic.success}
             isLoading={loading}
             className="mt-6"
           >
@@ -98,7 +100,7 @@ export default function CreateDietPage() {
         </StSection>
 
         {/* <BlogGuideLink guideId="diet-guide" /> */}
-      </StWrapper>
+      </StReadWrapper>
     </StContainer>
   );
 }

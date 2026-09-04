@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes, css, useTheme } from "styled-components";
 import {
   format,
   startOfWeek,
@@ -39,6 +39,7 @@ interface LogData {
 }
 
 export default function DietMainContent({ goalId }: { goalId: number }) {
+  const theme = useTheme();
   const { openConfirm, openAlert } = useModal();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -336,7 +337,7 @@ export default function DietMainContent({ goalId }: { goalId: number }) {
             <CreateButton
               onClick={handleSave}
               isLoading={loading}
-              bgColor="#10b981"
+              bgColor={theme.semantic.success}
             >
               기록 저장하기
             </CreateButton>
@@ -358,8 +359,8 @@ const DateNav = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
 `;
 const NavBtn = styled.button`
   background: none;
@@ -372,19 +373,22 @@ const NavBtn = styled.button`
   }
 `;
 const CurrentDate = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
   min-width: 140px;
   text-align: center;
 `;
 const SectionCard = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border-radius: 1rem;
   padding: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 const ChartHeader = styled.div`
   display: flex;
@@ -394,28 +398,35 @@ const ChartHeader = styled.div`
 `;
 const ToggleWrapper = styled.div`
   display: flex;
-  background: ${({ theme }) => theme.colors.gray100};
-  padding: 3px;
-  border-radius: 10px;
+  gap: 0.25rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  padding: 0.25rem;
+  border-radius: 0.7rem;
 `;
 const ToggleBtn = styled.button<{ $isActive: boolean }>`
-  padding: 4px 12px;
-  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
   font-size: 0.8rem;
-  font-weight: 600;
-  border: none;
+  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
   cursor: pointer;
-  transition: all 0.2s;
-  background: ${({ $isActive }) => ($isActive ? "white" : "transparent")};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.green500 : theme.colors.gray400)};
-  box-shadow: ${({ $isActive }) =>
-    $isActive ? "0 1px 3px rgba(0,0,0,0.05)" : "none"};
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 const SectionTitle = styled.h3`
   font-size: 1rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray700};
-  margin-bottom: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  margin-bottom: 0.75rem;
 `;
 
 const FormGrid = styled.div`
@@ -428,12 +439,15 @@ const TextArea = styled.textarea`
   height: 80px;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.text};
   resize: none;
   font-size: 0.95rem;
   outline: none;
   &:focus {
-    border-color: ${({ theme }) => theme.colors.gray500};
+    border-color: ${({ theme }) => theme.colors.blue500};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.blue100};
   }
 `;
 const ButtonWrapper = styled.div`
@@ -443,7 +457,7 @@ const ButtonWrapper = styled.div`
   z-index: 10;
 `;
 const GuideWrapper = styled.div`
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px dashed ${({ theme }) => theme.colors.gray200};
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
 `;

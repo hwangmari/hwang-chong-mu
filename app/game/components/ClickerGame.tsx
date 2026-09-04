@@ -110,7 +110,7 @@ const StTitle = styled.h2`
 `;
 const StSubTitle = styled.p`
   font-size: 0.9rem;
-  color: ${({ theme }) => theme.colors.gray600};
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 const StScoreBoard = styled.div`
   display: flex;
@@ -118,7 +118,7 @@ const StScoreBoard = styled.div`
   gap: 0.5rem;
   background: ${({ theme }) => theme.colors.white};
   padding: 1rem;
-  border-radius: 15px;
+  border-radius: 0.9rem;
   max-height: 200px;
   overflow-y: auto;
 `;
@@ -127,7 +127,7 @@ const StUserRow = styled.div<{ $isMe: boolean; $rank: number }>`
   align-items: center;
   gap: 0.5rem;
   font-weight: bold;
-  color: ${({ $isMe }) => ($isMe ? "#2f3542" : "#a4b0be")};
+  color: ${({ $isMe, theme }) => ($isMe ? theme.semantic.text : theme.semantic.subText)};
 `;
 const StRank = styled.span`
   width: 30px;
@@ -148,7 +148,7 @@ const StBarContainer = styled.div`
 `;
 const StBar = styled.div`
   height: 100%;
-  background: linear-gradient(90deg, #ff6b81, ${({ theme }) => theme.colors.rose500});
+  background: ${({ theme }) => theme.colors.rose500};
   transition: width 0.2s;
 `;
 const StScore = styled.span`
@@ -172,7 +172,7 @@ const StBigButton = styled.button`
   color: ${({ theme }) => theme.colors.white};
   font-size: 2.5rem;
   font-weight: 900;
-  box-shadow: 0 10px 0 #c0392b;
+  box-shadow: 0 8px 0 ${({ theme }) => theme.colors.rose600};
   cursor: pointer;
   &:active {
     transform: translateY(10px);
@@ -195,7 +195,7 @@ const StBigButton = styled.button`
 const StWinnerBox = styled.div`
   font-size: 2rem;
   font-weight: 900;
-  color: #2ed573;
+  color: ${({ theme }) => theme.semantic.success};
   text-align: center;
   animation: pop 0.5s;
 `;

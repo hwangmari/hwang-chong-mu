@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
-import { Typography } from "@hwangchongmu/ui";
+import { Input } from "@hwangchongmu/ui";
 import CreateButton from "@/components/common/CreateButton";
+import PageIntro from "@/components/common/PageIntro";
+import {
+  StContainer,
+  StPageWrapper,
+  StSection,
+  StSectionTitle,
+  StInlineButton,
+  StFlexBox,
+} from "@/components/styled/layout.styled";
 import FooterGuide from "@/components/common/FooterGuide";
 import { DAILY_GUIDE_DATA } from "@/data/footerGuides";
 import { createDailyNotebook } from "./repository";
@@ -70,7 +79,9 @@ export default function DailyCreatePage() {
       router.push(`/daily/${notebookId}`);
     } catch (error) {
       console.error("기록장 생성 실패:", error);
-      await openAlert("기록장을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+      await openAlert(
+        "기록장을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -96,169 +107,140 @@ export default function DailyCreatePage() {
   };
 
   return (
-    <CreateContainer>
-      <header className="mb-10 text-center">
-        <Typography variant="h1" className="mb-2">
-          📓 일일 기록
-        </Typography>
-        <Typography variant="body2" className="text-gray-500">
-          이제 기록은 브라우저가 아니라 서버에서 불러옵니다.
-        </Typography>
-      </header>
-
-      <FormSection>
-        <Typography variant="h3" className="mb-3">
-          1. 기록장 이름
-        </Typography>
-        <InputField
-          placeholder="예: 4월 루틴 기록장"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
+    <StContainer>
+      <StPageWrapper>
+        <PageIntro
+          icon="📓"
+          title="일일 기록"
+          description="이제 기록은 브라우저가 아니라 서버에서 불러옵니다."
         />
-      </FormSection>
 
-      <FormSection>
-        <HeaderRow>
-          <Typography variant="h3">2. 접근 비밀번호</Typography>
-        </HeaderRow>
-        <InputField
-          type="password"
-          placeholder="4자 이상 입력해주세요"
-          value={accessCode}
-          onChange={(event) => setAccessCode(event.target.value)}
-        />
-        <HelperText>
-          서버에 암호화되어 저장되므로 이후에도 이 비밀번호가 필요해요.
-        </HelperText>
-      </FormSection>
+        <StFlexBox>
+          <div className="flex-lft-box">
+            <StSection>
+              <FormSection>
+                <StSectionTitle>1. 기록장 이름</StSectionTitle>
+                <Input
+                  placeholder="예: 4월 루틴 기록장"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </FormSection>
 
-      <FormSection>
-        <HeaderRow>
-          <Typography variant="h3">3. 체크리스트 항목</Typography>
-          <TextButton type="button" onClick={addItem}>
-            + 항목 추가
-          </TextButton>
-        </HeaderRow>
+              <FormSection>
+                <StSectionTitle>2. 접근 비밀번호</StSectionTitle>
+                <Input
+                  type="password"
+                  placeholder="4자 이상 입력해주세요"
+                  value={accessCode}
+                  onChange={(event) => setAccessCode(event.target.value)}
+                />
+                <HelperText>
+                  서버에 암호화되어 저장되므로 이후에도 이 비밀번호가 필요해요.
+                </HelperText>
+              </FormSection>
 
-        {items.map((item, index) => (
-          <ChecklistItem key={index}>
-            <ItemIndex>{index + 1}</ItemIndex>
-            <InputField
-              placeholder="체크할 항목을 입력하세요"
-              value={item}
-              onChange={(event) => updateItem(index, event.target.value)}
+              <FormSection>
+                <HeaderRow>
+                  <StSectionTitle>3. 체크리스트 항목</StSectionTitle>
+                  <TextButton type="button" onClick={addItem}>
+                    + 항목 추가
+                  </TextButton>
+                </HeaderRow>
+
+                {items.map((item, index) => (
+                  <ChecklistItem key={index}>
+                    <ItemIndex>{index + 1}</ItemIndex>
+                    <Input
+                      placeholder="체크할 항목을 입력하세요"
+                      value={item}
+                      onChange={(event) =>
+                        updateItem(index, event.target.value)
+                      }
+                    />
+                    <DeleteButton
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length <= 1}
+                    >
+                      삭제
+                    </DeleteButton>
+                  </ChecklistItem>
+                ))}
+              </FormSection>
+
+              <CreateButton onClick={handleCreate} disabled={isCreating}>
+                {isCreating ? "기록장 만드는 중..." : "기록장 만들기"}
+              </CreateButton>
+            </StSection>
+          </div>
+
+          <div className="flex-rgt-box">
+            <StSection>
+              <StSectionTitle>기존 기록장 열기</StSectionTitle>
+              <OpenGrid>
+                <Input
+                  placeholder="기록장 ID"
+                  value={openNotebookId}
+                  onChange={(event) => setOpenNotebookId(event.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="접근 비밀번호"
+                  value={openAccessCode}
+                  onChange={(event) => setOpenAccessCode(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void handleOpenNotebook();
+                    }
+                  }}
+                />
+              </OpenGrid>
+              <OpenButton
+                type="button"
+                onClick={handleOpenNotebook}
+                disabled={isOpening}
+              >
+                기록장 열기
+              </OpenButton>
+            </StSection>
+
+            <FooterGuide
+              title={DAILY_GUIDE_DATA.title}
+              story={DAILY_GUIDE_DATA.story}
+              tips={DAILY_GUIDE_DATA.tips}
+              layout="compact"
             />
-            <DeleteButton
-              type="button"
-              onClick={() => removeItem(index)}
-              disabled={items.length <= 1}
-            >
-              삭제
-            </DeleteButton>
-          </ChecklistItem>
-        ))}
-      </FormSection>
-
-      <div className="mt-8">
-        <CreateButton
-          onClick={handleCreate}
-          className="w-full"
-          bgColor="#22c55e"
-          disabled={isCreating}
-        >
-          {isCreating ? "기록장 만드는 중..." : "기록장 만들기"}
-        </CreateButton>
-      </div>
-
-      <OpenSection>
-        <Typography variant="h3" className="mb-3">
-          기존 기록장 열기
-        </Typography>
-        <OpenGrid>
-          <InputField
-            placeholder="기록장 ID"
-            value={openNotebookId}
-            onChange={(event) => setOpenNotebookId(event.target.value)}
-          />
-          <InputField
-            type="password"
-            placeholder="접근 비밀번호"
-            value={openAccessCode}
-            onChange={(event) => setOpenAccessCode(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void handleOpenNotebook();
-              }
-            }}
-          />
-        </OpenGrid>
-        <OpenButton type="button" onClick={handleOpenNotebook} disabled={isOpening}>
-          기록장 열기
-        </OpenButton>
-      </OpenSection>
-
-      <GuideLinkWrap>
-        <FooterGuide
-          title={DAILY_GUIDE_DATA.title}
-          story={DAILY_GUIDE_DATA.story}
-          tips={DAILY_GUIDE_DATA.tips}
-        />
-      </GuideLinkWrap>
-    </CreateContainer>
+          </div>
+        </StFlexBox>
+      </StPageWrapper>
+    </StContainer>
   );
 }
 
-const GuideLinkWrap = styled.div`
-  margin-top: 2rem;
-`;
-
-const CreateContainer = styled.div`
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: ${({ theme }) => theme.colors.gray50};
-  border: 1px solid #e9e1d4;
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
-`;
-
 const FormSection = styled.section`
-  margin-bottom: 2rem;
-`;
-
-const OpenSection = styled.section`
-  margin-top: 2.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #ece4d8;
+  margin-bottom: 1.5rem;
 `;
 
 const HeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+
+  > h2 {
+    margin-bottom: 0;
+  }
+
   margin-bottom: 0.75rem;
 `;
 
-const InputField = styled.input`
-  width: 100%;
-  padding: 0.7rem 0.75rem;
-  border: 1px solid #d9d7d2;
-  border-radius: 8px;
-  background: ${({ theme }) => theme.colors.white};
-  font-size: 1rem;
-  outline: none;
-
-  &:focus {
-    border-color: #7aa1db;
-    box-shadow: 0 0 0 3px rgba(122, 161, 219, 0.2);
-  }
-`;
-
 const HelperText = styled.p`
-  margin-top: 0.55rem;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray500};
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.semantic.subText};
+  word-break: keep-all;
 `;
 
 const ChecklistItem = styled.div`
@@ -266,29 +248,41 @@ const ChecklistItem = styled.div`
   grid-template-columns: auto 1fr auto;
   gap: 0.5rem;
   align-items: center;
-  margin-bottom: 0.5rem;
+
+  & + & {
+    margin-top: 0.5rem;
+  }
 `;
 
 const ItemIndex = styled.span`
-  min-width: 28px;
-  color: #8a8f9a;
-  font-weight: 600;
+  min-width: 1.5rem;
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.85rem;
+  font-weight: 700;
   text-align: center;
 `;
 
 const TextButton = styled.button`
-  color: #2f6cc7;
-  font-size: 0.875rem;
-  font-weight: 600;
+  color: ${({ theme }) => theme.semantic.primary};
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 `;
 
 const DeleteButton = styled.button`
-  color: ${({ theme }) => theme.colors.gray400};
+  color: ${({ theme }) => theme.semantic.subText};
   font-size: 0.8rem;
+  font-weight: 600;
   padding: 0.35rem 0.45rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.danger};
+  }
 
   &:disabled {
-    opacity: 0.4;
+    color: ${({ theme }) => theme.colors.gray300};
     cursor: not-allowed;
   }
 `;
@@ -298,18 +292,17 @@ const OpenGrid = styled.div`
   grid-template-columns: 1.2fr 1fr;
   gap: 0.75rem;
 
+  /* 공용 Input이 형제일 때 붙이는 상단 여백은 그리드에선 불필요 */
+  > div + div {
+    margin-top: 0;
+  }
+
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const OpenButton = styled.button`
+const OpenButton = styled(StInlineButton)`
+  width: 100%;
   margin-top: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid ${({ theme }) => theme.colors.gray300};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray800};
-  padding: 0.65rem 0.9rem;
-  font-size: 0.92rem;
-  font-weight: 700;
 `;

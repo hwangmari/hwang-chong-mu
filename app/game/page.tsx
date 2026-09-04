@@ -11,7 +11,8 @@ import FooterGuide from "@/components/common/FooterGuide";
 import {
   StContainer,
   StSection,
-  StWrapper,
+  StPageWrapper,
+  StFlexBox,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro"; // StHighlight 임포트 확인 필요
 import { GAME_GUIDE_DATA } from "@/data/footerGuides";
@@ -58,7 +59,7 @@ export default function GameLobbyPage() {
 
     try {
       const newRoomCode = Math.floor(
-        100000 + Math.random() * 900000
+        100000 + Math.random() * 900000,
       ).toString();
 
       const { data: room, error: roomError } = await supabase
@@ -129,7 +130,7 @@ export default function GameLobbyPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         {/* ✨ 하이라이트가 적용된 소개 문구 */}
         <PageIntro
           icon="🎮"
@@ -145,221 +146,240 @@ export default function GameLobbyPage() {
           }
         />
 
-        {/* 1️⃣ 메인 선택 화면 */}
-        {viewMode === "SELECT" && (
-          <StSection>
-            <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
-            <StModeContainer>
-              <StModeCard
-                onClick={() => setViewMode("QUICK_LIST")}
-                color="#FF6B6B"
-              >
-                <div className="icon">🚀</div>
-                <div className="text">
-                  <strong>빠른 시작</strong>
-                  <span>설정 없이 바로 게임 고르기</span>
-                </div>
-              </StModeCard>
+        <StFlexBox>
+          <div className="flex-lft-box">
+            {/* 1️⃣ 메인 선택 화면 */}
+            {viewMode === "SELECT" && (
+              <StSection>
+                <StSectionTitle>👇 게임 모드 선택</StSectionTitle>
+                <StModeContainer>
+                  <StModeCard onClick={() => setViewMode("QUICK_LIST")}>
+                    <div className="icon">🚀</div>
+                    <div className="text">
+                      <strong>빠른 시작</strong>
+                      <span>설정 없이 바로 게임 고르기</span>
+                    </div>
+                  </StModeCard>
 
-              <StModeCard onClick={() => setViewMode("CREATE")} color="#4D96FF">
-                <div className="icon">🏰</div>
-                <div className="text">
-                  <strong>방 만들기</strong>
-                  <span>친구 모아서 시작하기</span>
-                </div>
-              </StModeCard>
-            </StModeContainer>
-          </StSection>
-        )}
+                  <StModeCard onClick={() => setViewMode("CREATE")}>
+                    <div className="icon">🏰</div>
+                    <div className="text">
+                      <strong>방 만들기</strong>
+                      <span>친구 모아서 시작하기</span>
+                    </div>
+                  </StModeCard>
+                </StModeContainer>
+              </StSection>
+            )}
 
-        {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
-        {viewMode === "QUICK_LIST" && (
-          <StSection>
-            <BackButton />
-            <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
+            {/* 2️⃣ 빠른 시작 > 게임 리스트 화면 (여기가 추가된 부분) */}
+            {viewMode === "QUICK_LIST" && (
+              <StSection>
+                <BackButton />
+                <StSectionTitle>🎲 어떤 게임을 할까요?</StSectionTitle>
 
-            <StGameGrid>
-              {GAME_OPTIONS.map((game) => (
-                <StGameItem
-                  key={game.id}
-                  onClick={() => handleSelectQuickGame(game.id)}
-                >
-                  <span className="icon">{game.icon}</span>
-                  <div className="info">
-                    <strong>{game.name}</strong>
-                    <small>{game.desc}</small>
-                  </div>
-                </StGameItem>
-              ))}
-            </StGameGrid>
-          </StSection>
-        )}
+                <StGameGrid>
+                  {GAME_OPTIONS.map((game) => (
+                    <StGameItem
+                      key={game.id}
+                      onClick={() => handleSelectQuickGame(game.id)}
+                    >
+                      <span className="icon">{game.icon}</span>
+                      <div className="info">
+                        <strong>{game.name}</strong>
+                        <small>{game.desc}</small>
+                      </div>
+                    </StGameItem>
+                  ))}
+                </StGameGrid>
+              </StSection>
+            )}
 
-        {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
-        {viewMode === "CREATE" && (
-          <StSection>
-            <BackButton />
-            <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
-            <StInputGroup>
-              <Input
-                label="방 제목 (필수)"
-                placeholder="예: 커피 내기"
-                value={roomTitle}
-                onChange={(e) => setRoomTitle(e.target.value)}
-              />
-            </StInputGroup>
+            {/* 3️⃣ 방 만들기 설정 화면 (여기가 기존 폼 부분) */}
+            {viewMode === "CREATE" && (
+              <StSection>
+                <BackButton />
+                <StSectionTitle>👇 방 만들기 설정</StSectionTitle>
+                <StInputGroup>
+                  <Input
+                    label="방 제목 (필수)"
+                    placeholder="예: 커피 내기"
+                    value={roomTitle}
+                    onChange={(e) => setRoomTitle(e.target.value)}
+                  />
+                </StInputGroup>
 
-            <StDivider />
+                <StDivider />
 
-            <StSectionTitle>👤 내 정보</StSectionTitle>
-            <StInputGroup>
-              <Input
-                label="닉네임"
-                placeholder="이름"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-              />
-              <Input
-                label="비밀번호"
-                placeholder="재접속용 (숫자 4자리)"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Input
-                label="한마디 (선택)"
-                placeholder="각오 한마디!"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </StInputGroup>
+                <StSectionTitle>👤 내 정보</StSectionTitle>
+                <StInputGroup>
+                  <Input
+                    label="닉네임"
+                    placeholder="이름"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                  />
+                  <Input
+                    label="비밀번호"
+                    placeholder="재접속용 (숫자 4자리)"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <Input
+                    label="한마디 (선택)"
+                    placeholder="각오 한마디!"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </StInputGroup>
 
-            <StButtonWrapper>
-              <CreateButton onClick={createRoom} isLoading={loading}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                  }}
-                >
-                  방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
-                </span>
-              </CreateButton>
-            </StButtonWrapper>
-          </StSection>
-        )}
+                <StButtonWrapper>
+                  <CreateButton onClick={createRoom} isLoading={loading}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      방 만들고 입장하기 <ArrowForwardIcon fontSize="small" />
+                    </span>
+                  </CreateButton>
+                </StButtonWrapper>
+              </StSection>
+            )}
+          </div>
 
-        <FooterGuide
-          title={GAME_GUIDE_DATA.title}
-          story={GAME_GUIDE_DATA.story}
-          tips={GAME_GUIDE_DATA.tips}
-        />
-      </StWrapper>
+          {/* 데스크톱에서는 오른쪽에 가이드를 붙여 화면을 채운다 */}
+          <div className="flex-rgt-box">
+            <FooterGuide
+              title={GAME_GUIDE_DATA.title}
+              story={GAME_GUIDE_DATA.story}
+              tips={GAME_GUIDE_DATA.tips}
+              layout="compact"
+            />
+          </div>
+        </StFlexBox>
+      </StPageWrapper>
     </StContainer>
   );
 }
 
-
 const StSectionTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: ${({ theme }) => theme.colors.gray800};
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  margin-bottom: 0.85rem;
 `;
 
 const StModeContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 0.6rem;
 `;
 
 const StModeCard = styled.div`
   display: flex;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   background-color: ${({ theme }) => theme.colors.white};
-  border-radius: 12px;
-  border: 2px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.9rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: ${(props) => props.color};
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    background-color: ${({ theme }) => theme.semantic.bg};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
   .icon {
-    font-size: 2.5rem;
-    margin-right: 1.2rem;
+    flex-shrink: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.7rem;
+    background: ${({ theme }) => theme.semantic.bg};
+    border: 1px solid ${({ theme }) => theme.semantic.border};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-right: 0.75rem;
   }
 
   .text {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
 
     strong {
-      font-size: 1.2rem;
-      margin-bottom: 0.3rem;
-      color: ${({ theme }) => theme.colors.gray800};
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: ${({ theme }) => theme.semantic.text};
     }
 
     span {
-      font-size: 0.9rem;
-      color: ${({ theme }) => theme.colors.gray600};
+      font-size: 0.82rem;
+      color: ${({ theme }) => theme.semantic.subText};
     }
   }
 `;
 
 const StGameGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-top: 0.5rem;
-
-  @media (max-width: 400px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.25rem;
 `;
 
 const StGameItem = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 12px;
-  padding: 1.5rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.9rem;
+  padding: 1rem 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
-    transform: translateY(-3px);
-    border-color: ${({ theme }) => theme.colors.rose500};
-    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
+    background-color: ${({ theme }) => theme.semantic.bg};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
   .icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.8rem;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    line-height: 1;
   }
 
   .info {
     strong {
       display: block;
-      font-size: 1.1rem;
-      margin-bottom: 0.3rem;
-      color: ${({ theme }) => theme.colors.gray800};
+      font-size: 0.92rem;
+      font-weight: 800;
+      margin-bottom: 0.2rem;
+      color: ${({ theme }) => theme.semantic.text};
     }
     small {
-      font-size: 0.85rem;
-      color: ${({ theme }) => theme.colors.gray500};
-      line-height: 1.3;
+      font-size: 0.8rem;
+      color: ${({ theme }) => theme.semantic.subText};
+      line-height: 1.4;
+      word-break: keep-all;
     }
   }
 `;
@@ -367,11 +387,11 @@ const StGameItem = styled.div`
 const StBackButton = styled.button`
   background: none;
   border: none;
-  color: ${({ theme }) => theme.colors.gray600};
-  font-size: 0.95rem;
-  font-weight: 500;
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.85rem;
   padding: 0;
   display: flex;
   align-items: center;
@@ -380,14 +400,10 @@ const StBackButton = styled.button`
   transition: color 0.2s ease;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.gray800};
-    svg {
-      transform: translateX(-4px);
-    }
+    color: ${({ theme }) => theme.semantic.text};
   }
   svg {
     display: block;
-    transition: transform 0.2s ease;
   }
 `;
 
@@ -399,10 +415,10 @@ const StInputGroup = styled.div`
 
 const StDivider = styled.hr`
   border: none;
-  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
-  margin: 2rem 0;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  margin: 1.5rem 0;
 `;
 
 const StButtonWrapper = styled.div`
-  margin-top: 2rem;
+  margin-top: 1.25rem;
 `;

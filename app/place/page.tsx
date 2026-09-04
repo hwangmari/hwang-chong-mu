@@ -9,7 +9,8 @@ import FooterGuide from "@/components/common/FooterGuide";
 import { PLACE_GUIDE_DATA } from "@/data/footerGuides";
 import {
   StContainer,
-  StWrapper,
+  StPageWrapper,
+  StFlexBox,
   StSection,
 } from "@/components/styled/layout.styled";
 import { NaverLocalItem } from "@/types/dinner";
@@ -127,7 +128,7 @@ export default function DinnerPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         <PageIntro
           icon="🍻"
           title="황총무의 회식 장소 투표"
@@ -140,137 +141,152 @@ export default function DinnerPage() {
           }
         />
 
-        {/* 투표 제목 */}
-        <StSection>
-          <StSectionTitle>투표 만들기</StSectionTitle>
-          <Input
-            label="투표 제목"
-            placeholder="예) 4월 팀 회식 장소 투표"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </StSection>
+        <StFlexBox>
+          {/* 왼쪽: 투표 제목과 담아둔 후보 — 스크롤해도 따라온다 */}
+          <div className="flex-lft-box">
+            {/* 투표 제목 */}
+            <StSection>
+              <StSectionTitle>투표 만들기</StSectionTitle>
+              <Input
+                label="투표 제목"
+                placeholder="예) 4월 팀 회식 장소 투표"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </StSection>
 
-        {/* 네이버 검색 */}
-        <StSection>
-          <StSectionTitle>장소 검색</StSectionTitle>
-          <StSearchRow>
-            <Input
-              placeholder="예) 강남 맛집, 홍대 고기집"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <Button
-              color="primary"
-              size="medium"
-              onClick={handleSearch}
-              loading={searching}
-            >
-              검색
-            </Button>
-          </StSearchRow>
-
-          {/* 네이버 지도 */}
-          {results.length > 0 && (
-            <NaverMap
-              items={results}
-              focusedIndex={focusedIndex}
-              stripHtml={stripHtmlCb}
-            />
-          )}
-
-          {/* 검색 결과 */}
-          {results.length > 0 && (
-            <StResultList>
-              {results.map((item, i) => (
-                <StResultItem
-                  key={i}
-                  $selected={isSelected(item)}
-                  onClick={() => toggleSelect(item)}
-                  onMouseEnter={() => setFocusedIndex(i)}
-                  onMouseLeave={() => setFocusedIndex(null)}
+            {/* 선택된 후보 */}
+            {selected.length > 0 && (
+              <StSection>
+                <StSectionTitle>
+                  선택된 후보 <StBadge>{selected.length}곳</StBadge>
+                </StSectionTitle>
+                <StSelectedList>
+                  {selected.map((item, i) => (
+                    <StSelectedChip key={i}>
+                      <span>{stripHtml(item.title)}</span>
+                      <StRemoveButton onClick={() => toggleSelect(item)}>
+                        ✕
+                      </StRemoveButton>
+                    </StSelectedChip>
+                  ))}
+                </StSelectedList>
+                <Button
+                  color="primary"
+                  display="full"
+                  size="large"
+                  onClick={handleCreate}
+                  loading={creating}
+                  disabled={selected.length < 2}
                 >
-                  <StCheckbox $checked={isSelected(item)}>
-                    {isSelected(item) ? "✓" : ""}
-                  </StCheckbox>
-                  <StResultInfo>
-                    <StPlaceName>
-                      <StPlaceNumber>{i + 1}</StPlaceNumber>
-                      {stripHtml(item.title)}
-                    </StPlaceName>
-                    <StPlaceCategory>{item.category}</StPlaceCategory>
-                    {item.description && (
-                      <StPlaceMenu>🍽 {stripHtml(item.description)}</StPlaceMenu>
-                    )}
-                    <StPlaceAddress>{item.roadAddress || item.address}</StPlaceAddress>
-                    {item.telephone && (
-                      <StPlacePhone>{item.telephone}</StPlacePhone>
-                    )}
-                    <StMapLink
-                      href={`https://map.naver.com/v5/search/${encodeURIComponent(stripHtml(item.title) + " " + (item.roadAddress || item.address).split(" ").slice(0, 3).join(" "))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      네이버 지도에서 보기 →
-                    </StMapLink>
-                  </StResultInfo>
-                </StResultItem>
-              ))}
-              {hasMore && (
-                <StLoadMoreButton onClick={handleLoadMore} disabled={loadingMore}>
-                  {loadingMore ? "불러오는 중..." : "더보기"}
-                </StLoadMoreButton>
-              )}
-            </StResultList>
-          )}
-        </StSection>
+                  투표 만들기
+                </Button>
+              </StSection>
+            )}
+          </div>
 
-        {/* 선택된 후보 */}
-        {selected.length > 0 && (
-          <StSection>
-            <StSectionTitle>
-              선택된 후보 <StBadge>{selected.length}곳</StBadge>
-            </StSectionTitle>
-            <StSelectedList>
-              {selected.map((item, i) => (
-                <StSelectedChip key={i}>
-                  <span>{stripHtml(item.title)}</span>
-                  <StRemoveButton onClick={() => toggleSelect(item)}>
-                    ✕
-                  </StRemoveButton>
-                </StSelectedChip>
-              ))}
-            </StSelectedList>
-            <Button
-              color="primary"
-              display="full"
-              size="large"
-              onClick={handleCreate}
-              loading={creating}
-              disabled={selected.length < 2}
-            >
-              투표 만들기
-            </Button>
-          </StSection>
-        )}
+          {/* 오른쪽: 검색하고 후보를 고르는 넓은 작업 영역 */}
+          <div className="flex-rgt-box">
+            {/* 네이버 검색 */}
+            <StSection>
+              <StSectionTitle>장소 검색</StSectionTitle>
+              <StSearchRow>
+                <Input
+                  placeholder="예) 강남 맛집, 홍대 고기집"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <Button
+                  color="primary"
+                  size="medium"
+                  onClick={handleSearch}
+                  loading={searching}
+                >
+                  검색
+                </Button>
+              </StSearchRow>
+
+              {/* 네이버 지도 */}
+              {results.length > 0 && (
+                <NaverMap
+                  items={results}
+                  focusedIndex={focusedIndex}
+                  stripHtml={stripHtmlCb}
+                />
+              )}
+
+              {/* 검색 결과 */}
+              {results.length > 0 && (
+                <StResultList>
+                  {results.map((item, i) => (
+                    <StResultItem
+                      key={i}
+                      $selected={isSelected(item)}
+                      onClick={() => toggleSelect(item)}
+                      onMouseEnter={() => setFocusedIndex(i)}
+                      onMouseLeave={() => setFocusedIndex(null)}
+                    >
+                      <StCheckbox $checked={isSelected(item)}>
+                        {isSelected(item) ? "✓" : ""}
+                      </StCheckbox>
+                      <StResultInfo>
+                        <StPlaceName>
+                          <StPlaceNumber>{i + 1}</StPlaceNumber>
+                          {stripHtml(item.title)}
+                        </StPlaceName>
+                        <StPlaceCategory>{item.category}</StPlaceCategory>
+                        {item.description && (
+                          <StPlaceMenu>
+                            🍽 {stripHtml(item.description)}
+                          </StPlaceMenu>
+                        )}
+                        <StPlaceAddress>
+                          {item.roadAddress || item.address}
+                        </StPlaceAddress>
+                        {item.telephone && (
+                          <StPlacePhone>{item.telephone}</StPlacePhone>
+                        )}
+                        <StMapLink
+                          href={`https://map.naver.com/v5/search/${encodeURIComponent(stripHtml(item.title) + " " + (item.roadAddress || item.address).split(" ").slice(0, 3).join(" "))}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          네이버 지도에서 보기 →
+                        </StMapLink>
+                      </StResultInfo>
+                    </StResultItem>
+                  ))}
+                  {hasMore && (
+                    <StLoadMoreButton
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? "불러오는 중..." : "더보기"}
+                    </StLoadMoreButton>
+                  )}
+                </StResultList>
+              )}
+            </StSection>
+          </div>
+        </StFlexBox>
 
         <FooterGuide
           title={PLACE_GUIDE_DATA.title}
           story={PLACE_GUIDE_DATA.story}
           tips={PLACE_GUIDE_DATA.tips}
         />
-      </StWrapper>
+      </StPageWrapper>
     </StContainer>
   );
 }
 
 const StSectionTitle = styled.h3`
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray800};
-  margin-bottom: 1rem;
+  color: ${({ theme }) => theme.semantic.text};
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -284,6 +300,12 @@ const StSearchRow = styled.div`
 
   & > div {
     flex: 1;
+  }
+
+  & > button {
+    min-height: 2.75rem;
+    border-radius: 0.75rem;
+    flex-shrink: 0;
   }
 `;
 
@@ -300,16 +322,22 @@ const StResultItem = styled.div<{ $selected: boolean }>`
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  border: 1.5px solid
+  border: 1px solid
     ${({ $selected, theme }) =>
-      $selected ? theme.colors.blue500 : theme.colors.gray100};
+      $selected ? theme.colors.blue500 : theme.semantic.border};
   background: ${({ $selected, theme }) =>
     $selected ? theme.colors.blue50 : theme.colors.white};
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.blue200};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
@@ -368,7 +396,7 @@ const StPlaceCategory = styled.div`
 
 const StPlaceMenu = styled.div`
   font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray600};
+  color: ${({ theme }) => theme.semantic.subText};
   margin-bottom: 0.15rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -414,7 +442,7 @@ const StSelectedChip = styled.div`
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 0.6rem;
   background: ${({ theme }) => theme.colors.blue50};
   border: 1px solid ${({ theme }) => theme.colors.blue200};
   color: ${({ theme }) => theme.colors.blue600};
@@ -438,25 +466,31 @@ const StRemoveButton = styled.button`
 
 const StLoadMoreButton = styled.button`
   width: 100%;
+  min-height: 2.75rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  border: 1.5px dashed ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.gray50};
-  color: ${({ theme }) => theme.colors.gray500};
-  font-size: 0.9rem;
-  font-weight: 600;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover:not(:disabled) {
-    border-color: ${({ theme }) => theme.colors.blue200};
-    color: ${({ theme }) => theme.colors.blue500};
-    background: ${({ theme }) => theme.colors.blue50};
+    color: ${({ theme }) => theme.semantic.text};
+    background: ${({ theme }) => theme.semantic.bg};
   }
 
   &:disabled {
     cursor: default;
-    opacity: 0.6;
+    color: ${({ theme }) => theme.colors.gray400};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
@@ -466,5 +500,5 @@ const StBadge = styled.span`
   background: ${({ theme }) => theme.colors.blue500};
   color: ${({ theme }) => theme.colors.white};
   padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: 0.4rem;
 `;

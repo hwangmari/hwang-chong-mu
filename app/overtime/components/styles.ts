@@ -1,31 +1,29 @@
 import styled from "styled-components";
 
 export const SurfaceCard = styled.section`
-  background: linear-gradient(180deg, ${({ theme }) => theme.colors.white} 0%, ${({ theme }) => theme.colors.gray100} 100%);
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 28px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
-  padding: 1.5rem;
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 1rem;
+  padding: 1.25rem;
 
   @media (max-width: 768px) {
     padding: 1rem;
-    border-radius: 22px;
   }
 `;
 
 export const RuleSelectorCard = styled.div`
   margin-bottom: 1rem;
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const RuleSelectorHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.85rem;
 
   > div:first-child {
     flex: 1;
@@ -34,6 +32,7 @@ export const RuleSelectorHeader = styled.div`
 
   @media (max-width: 720px) {
     flex-direction: column;
+    gap: 0.75rem;
   }
 `;
 
@@ -52,9 +51,11 @@ export const RuleSelectorDescription = styled.p`
 
 export const RuleSelectorTabs = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  width: 196px;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.8rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  width: 220px;
   flex-shrink: 0;
 
   @media (max-width: 720px) {
@@ -63,41 +64,67 @@ export const RuleSelectorTabs = styled.div`
 `;
 
 export const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
-  width: 100%;
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
-  border-radius: 999px;
-  padding: 0.85rem 1rem;
-  font-size: 0.96rem;
-  font-weight: 700;
+  flex: 1;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
   cursor: pointer;
   text-align: center;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 export const TabList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  margin-bottom: 1.25rem;
 `;
 
 export const TabButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray100)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray500)};
-  border-radius: 16px;
-  padding: 0.85rem 1rem;
-  font-size: 0.98rem;
-  font-weight: 700;
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
   cursor: pointer;
+  white-space: nowrap;
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.14);
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
@@ -110,7 +137,7 @@ export const TabPanel = styled.div`
 export const GuideText = styled.p`
   margin: 0;
   padding: 1rem 1.1rem;
-  border-radius: 18px;
+  border-radius: 0.8rem;
   background: ${({ theme }) => theme.colors.gray100};
   color: ${({ theme }) => theme.colors.gray700};
   line-height: 1.7;
@@ -128,17 +155,17 @@ export const SplitGrid = styled.div`
 `;
 
 export const DurationCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.gray100};
-  border-radius: 18px;
+  border-radius: 0.8rem;
   padding: 1rem;
 `;
 
 export const DurationInputs = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
   margin-top: 0.6rem;
 `;
 
@@ -149,70 +176,69 @@ export const FieldLabel = styled.label`
 `;
 
 export const CompactInput = styled.input`
-  width: 64px;
-  min-height: 48px;
-  padding: 0.8rem 0.85rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 14px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 0;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.5rem;
+  text-align: center;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray900};
   font-size: 1rem;
   outline: none;
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.gray500};
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    border-color: ${({ theme }) => theme.colors.blue500};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.blue100};
   }
 `;
 
 export const UnitText = styled.span`
-  color: ${({ theme }) => theme.colors.gray500};
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.semantic.subText};
   font-weight: 600;
 `;
 
 export const PrimaryButton = styled.button`
-  border-radius: 16px;
-  background: ${({ theme }) => theme.colors.gray700};
-  color: ${({ theme }) => theme.colors.gray50};
+  border-radius: 0.9rem;
+  background: ${({ theme }) => theme.semantic.primary};
+  color: ${({ theme }) => theme.colors.white};
   padding: 0.95rem 1.15rem;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   cursor: pointer;
-  border: 1px solid ${({ theme }) => theme.colors.gray700};
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  border: 1px solid ${({ theme }) => theme.semantic.primary};
   transition:
-    background-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray600};
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.blue700};
+    border-color: ${({ theme }) => theme.colors.blue700};
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
-    transform: none;
-    box-shadow: none;
+    background: ${({ theme }) => theme.colors.gray200};
+    border-color: ${({ theme }) => theme.colors.gray200};
+    color: ${({ theme }) => theme.colors.gray500};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
 export const DangerButton = styled(PrimaryButton)`
-  background: ${({ theme }) => theme.colors.rose600};
-  border-color: ${({ theme }) => theme.colors.rose600};
-  box-shadow: 0 8px 16px rgba(197, 59, 59, 0.12);
+  background: ${({ theme }) => theme.semantic.danger};
+  border-color: ${({ theme }) => theme.semantic.danger};
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.rose500};
     border-color: ${({ theme }) => theme.colors.rose500};
-    box-shadow: 0 10px 18px rgba(197, 59, 59, 0.16);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
   }
 `;
 
@@ -220,13 +246,18 @@ export const SecondaryButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray700};
+  color: ${({ theme }) => theme.semantic.text};
   padding: 0.72rem 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.semantic.bg};
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -242,10 +273,10 @@ export const DangerGhostButton = styled(SecondaryButton)`
 export const ResultBox = styled.pre`
   margin: 0;
   padding: 1rem 1.1rem;
-  border-radius: 18px;
+  border-radius: 0.8rem;
   background: ${({ theme }) => theme.colors.gray100};
   color: ${({ theme }) => theme.colors.gray800};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   font-family: inherit;
   white-space: pre-wrap;
   line-height: 1.7;
@@ -267,9 +298,9 @@ export const StatCard = styled.div`
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem 1.1rem;
-  border-radius: 18px;
+  border-radius: 0.8rem;
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 
   span {
     color: ${({ theme }) => theme.colors.gray500};
@@ -287,9 +318,9 @@ export const StorageCard = styled.div`
   flex-direction: column;
   gap: 0.9rem;
   padding: 1rem 1.1rem;
-  border-radius: 20px;
+  border-radius: 0.9rem;
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const StorageHeader = styled.div`
@@ -323,9 +354,11 @@ export const StorageDescription = styled.p`
 
 export const StorageModeTabs = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  width: 164px;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.8rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  width: 190px;
   flex-shrink: 0;
 
   @media (max-width: 720px) {
@@ -334,16 +367,31 @@ export const StorageModeTabs = styled.div`
 `;
 
 export const StorageModeButton = styled.button<{ $isActive: boolean }>`
-  width: 100%;
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray600)};
-  border-radius: 999px;
-  padding: 0.8rem 0.95rem;
-  font-size: 0.95rem;
-  font-weight: 700;
+  flex: 1;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
   cursor: pointer;
   text-align: center;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 export const StorageSetupGrid = styled.div`
@@ -362,8 +410,8 @@ export const StorageSetupCard = styled.div`
   gap: 0.55rem;
   min-width: 0;
   padding: 0.9rem;
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.white};
 `;
 
@@ -389,16 +437,16 @@ export const StorageInput = styled.input`
   min-width: 0;
   min-height: 44px;
   padding: 0.75rem 0.85rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 14px;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray900};
   font-size: 0.95rem;
   outline: none;
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.gray500};
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    border-color: ${({ theme }) => theme.colors.blue500};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.blue100};
   }
 `;
 
@@ -414,8 +462,8 @@ export const ConnectedRoomCard = styled.div`
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   gap: 1rem;
   padding: 0.95rem 1rem;
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border-radius: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
@@ -475,9 +523,9 @@ export const NoticeCard = styled.div`
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem 1.1rem;
-  border-radius: 18px;
+  border-radius: 0.8rem;
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   color: ${({ theme }) => theme.colors.gray900};
 
   strong {
@@ -494,8 +542,8 @@ export const NoticeCard = styled.div`
 export const TargetDayTabs = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
 `;
 
 export const NoticeContent = styled.div`
@@ -505,14 +553,23 @@ export const NoticeContent = styled.div`
 `;
 
 export const TargetDayButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray200)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.colors.gray900)};
-  border-radius: 999px;
-  padding: 0.35rem 0.45rem;
+  min-width: 2.4rem;
+  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.semantic.primary : theme.semantic.border)};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.semantic.primary : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : theme.semantic.text)};
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 export const SectionDivider = styled.hr`
@@ -529,8 +586,8 @@ export const SectionHeader = styled.div`
 
 export const SectionTitle = styled.h2`
   margin: 0;
-  color: ${({ theme }) => theme.colors.gray900};
-  font-size: 1.08rem;
+  color: ${({ theme }) => theme.semantic.text};
+  font-size: 1rem;
   font-weight: 800;
 `;
 
@@ -551,10 +608,10 @@ export const CalendarToolbarMain = styled.div`
 `;
 
 export const CalendarNavButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray700};
-  border-radius: 12px;
+  color: ${({ theme }) => theme.semantic.text};
+  border-radius: 0.6rem;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -574,11 +631,12 @@ export const CalendarMonthLabel = styled.strong`
 `;
 
 export const WeekendToggleButton = styled.button<{ $isActive: boolean }>`
-  border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray300)};
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray100 : theme.colors.white)};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.colors.gray700 : theme.colors.gray600)};
-  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ $isActive, theme }) => ($isActive ? theme.semantic.bg : theme.colors.white)};
+  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
+  border-radius: 0.6rem;
   padding: 0.55rem 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
 `;
@@ -612,11 +670,11 @@ export const CalendarCellButton = styled.button<{
   $isToday: boolean;
 }>`
   height: 100px;
-  border-radius: 16px;
+  border-radius: 0.75rem;
   padding: 0.7rem;
   border: 1px solid
-    ${({ $isSelected, $isToday, theme }) => ($isSelected ? theme.colors.gray700 : $isToday ? theme.colors.gray500 : theme.colors.blue100)};
-  background: ${({ $isSelected, theme }) => ($isSelected ? theme.colors.gray100 : theme.colors.white)};
+    ${({ $isSelected, $isToday, theme }) => ($isSelected ? theme.semantic.primary : $isToday ? theme.colors.gray400 : theme.semantic.border)};
+  background: ${({ $isSelected, theme }) => ($isSelected ? theme.colors.blue50 : theme.colors.white)};
   color: ${({ $isCurrentMonth, theme }) => ($isCurrentMonth ? theme.colors.gray900 : theme.colors.gray400)};
   text-align: left;
   display: flex;
@@ -654,7 +712,7 @@ export const CalendarDaySummary = styled.div`
   span {
     display: block;
     background: ${({ theme }) => theme.colors.gray100};
-    border-radius: 10px;
+    border-radius: 0.5rem;
     padding: 0.2rem 0.35rem;
   }
 `;
@@ -696,10 +754,10 @@ export const QuickAddTitle = styled.strong`
 `;
 
 export const EditCancelButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray600};
-  border-radius: 12px;
+  border-radius: 0.6rem;
   padding: 0.5rem 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -709,9 +767,9 @@ export const AccordionSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.gray100};
-  border-radius: 20px;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.semantic.bg};
+  border-radius: 0.9rem;
   padding: 1rem;
 `;
 
@@ -723,10 +781,10 @@ export const AccordionHeader = styled.div`
 `;
 
 export const AccordionToggleButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.gray900};
-  border-radius: 12px;
+  border-radius: 0.6rem;
   padding: 0.55rem 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -761,9 +819,9 @@ export const RecordItem = styled.li`
   justify-content: space-between;
   gap: 1rem;
   padding: 0.95rem 1rem;
-  border-radius: 16px;
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 
   @media (max-width: 640px) {
     align-items: flex-start;
@@ -779,11 +837,12 @@ export const RecordActions = styled.div`
 `;
 
 export const EditButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.gray200};
-  color: ${({ theme }) => theme.colors.gray900};
-  padding: 0.65rem 0.8rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.6rem;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.text};
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
 
@@ -795,10 +854,10 @@ export const EditButton = styled.button`
 
 export const EmptyItem = styled.div`
   padding: 1rem;
-  border-radius: 16px;
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.gray100};
   color: ${({ theme }) => theme.colors.gray500};
-  border: 1px dashed ${({ theme }) => theme.colors.gray300};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const RecordInfo = styled.div`
@@ -821,11 +880,12 @@ export const RecordInfo = styled.div`
 `;
 
 export const DeleteButton = styled.button`
-  border: none;
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.rose100};
-  color: ${({ theme }) => theme.colors.rose600};
-  padding: 0.65rem 0.8rem;
+  border: 1px solid ${({ theme }) => theme.colors.rose200};
+  border-radius: 0.6rem;
+  background: ${({ theme }) => theme.semantic.dangerBg};
+  color: ${({ theme }) => theme.semantic.danger};
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
 
@@ -850,9 +910,9 @@ export const GuidePanel = styled.div`
   gap: 0.75rem;
   margin-top: 1rem;
   padding: 1rem;
-  border-radius: 20px;
+  border-radius: 0.9rem;
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const GuideTitle = styled.h3`
@@ -876,9 +936,9 @@ export const GuideItem = styled.li`
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 0.95rem;
-  border-radius: 14px;
+  border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   color: ${({ theme }) => theme.colors.gray700};
 
   strong {
@@ -896,9 +956,9 @@ export const RuleItem = styled.li`
   justify-content: space-between;
   gap: 1rem;
   padding: 0.95rem 1rem;
-  border-radius: 16px;
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   color: ${({ theme }) => theme.colors.gray700};
 
   strong {

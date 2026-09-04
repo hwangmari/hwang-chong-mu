@@ -1,5 +1,11 @@
 import styled, { keyframes } from "styled-components";
 import Switch from "../../../components/common/Switch";
+import {
+  StInlineButton,
+  StOptionGroup,
+  StOptionRow,
+  StFieldLabel,
+} from "@/components/styled/layout.styled";
 import CreateButton from "@/components/common/CreateButton";
 import { Input } from "@hwangchongmu/ui";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -66,45 +72,44 @@ export default function RoomForm({
           />
         </StInputGroup>
 
-        {/* 종료 날짜 직접 지정 토글 */}
-        <StToggleRow>
-          <StToggleLabel onClick={() => setIsCustomPeriod(!isCustomPeriod)}>
-            종료 날짜 직접 지정하기
-          </StToggleLabel>
-          <Switch
-            checked={isCustomPeriod}
-            onChange={setIsCustomPeriod}
-            label="종료 날짜 직접 입력 여부"
-          />
-        </StToggleRow>
+        {/* 기간 관련 옵션 두 개를 한 덩어리로 */}
+        <StOptionGroup>
+          <StOptionRow>
+            <StToggleLabel onClick={() => setIsCustomPeriod(!isCustomPeriod)}>
+              종료 날짜 직접 지정하기
+            </StToggleLabel>
+            <Switch
+              checked={isCustomPeriod}
+              onChange={setIsCustomPeriod}
+              label="종료 날짜 직접 입력 여부"
+            />
+          </StOptionRow>
+
+          <StOptionRow>
+            <StToggleLabel>주말 포함</StToggleLabel>
+            <Switch
+              checked={formData.includeWeekend}
+              onChange={(isChecked) => onChange("includeWeekend", isChecked)}
+              label="주말 포함 여부"
+            />
+          </StOptionRow>
+        </StOptionGroup>
 
         {/* 토글이 켜졌을 때만 나타나는 종료 날짜 입력창 */}
         {isCustomPeriod && (
-          <>
-            <Input
-              label="종료 날짜"
-              type="date"
-              value={formData.endDate}
-              min={formData.startDate} // 시작일 이전은 선택 불가
-              onChange={(e) => onChange("endDate", e.target.value)}
-            />
-          </>
+          <Input
+            label="종료 날짜"
+            type="date"
+            value={formData.endDate}
+            min={formData.startDate} // 시작일 이전은 선택 불가
+            onChange={(e) => onChange("endDate", e.target.value)}
+          />
         )}
       </StDateSection>
 
-      {/* 3. 주말 포함 토글 */}
-      <StToggleRow>
-        <StToggleLabel>주말 포함</StToggleLabel>
-        <Switch
-          checked={formData.includeWeekend}
-          onChange={(isChecked) => onChange("includeWeekend", isChecked)}
-          label="주말 포함 여부"
-        />
-      </StToggleRow>
-
       {/* 4. 참여 멤버 (선택) */}
       <StMemberSection>
-        <StMemberLabel>참여 멤버 (선택)</StMemberLabel>
+        <StFieldLabel>참여 멤버 (선택)</StFieldLabel>
         <StMemberInputRow>
           <Input
             placeholder="이름 입력 후 추가"
@@ -117,13 +122,13 @@ export default function RoomForm({
               }
             }}
           />
-          <StAddButton
+          <StInlineButton
             type="button"
             onClick={() => addMember(memberInput)}
             disabled={!memberInput.trim()}
           >
             추가
-          </StAddButton>
+          </StInlineButton>
         </StMemberInputRow>
         {members.length > 0 && (
           <StMemberChipList>
@@ -139,14 +144,19 @@ export default function RoomForm({
 
       {/* 5. 버튼 */}
       <CreateButton onClick={onSubmit} isLoading={loading}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+          }}
+        >
           방 만들기 <ArrowForwardIcon fontSize="small" />
         </span>
       </CreateButton>
     </StFormContainer>
   );
 }
-
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(-5px); }
@@ -165,12 +175,13 @@ const StInputGroup = styled.div`
 const StFormContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* space-y-6 */
+  gap: 1.25rem;
 `;
 
 const StAutoInfoText = styled.span`
-  color: ${({ theme }) => theme.colors.blue600}; /* indigo-500 대응 */
-  font-weight: 400;
+  color: ${({ theme }) => theme.semantic.primary};
+  font-weight: 600;
+  font-size: 0.75rem;
   margin-left: 0.25rem;
 `;
 
@@ -180,17 +191,10 @@ const StDateSection = styled.div`
   gap: 1rem; /* space-y-4 */
 `;
 
-const StToggleRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0; /* px-1 py-1 */
-`;
-
 const StToggleLabel = styled.span`
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.semantic.text};
   cursor: pointer;
 `;
 
@@ -200,37 +204,10 @@ const StMemberSection = styled.div`
   gap: 0.75rem;
 `;
 
-const StMemberLabel = styled.span`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.gray600};
-`;
-
 const StMemberInputRow = styled.div`
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
-`;
-
-const StAddButton = styled.button`
-  height: 44px;
-  padding: 0 1rem;
-  border-radius: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.gray800};
-  color: ${({ theme }) => theme.colors.white};
-  font-weight: 700;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  transition: all 0.2s;
-  flex-shrink: 0;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.black};
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 `;
 
 const StMemberChipList = styled.div`
@@ -245,9 +222,10 @@ const StMemberChip = styled.span`
   gap: 0.375rem;
   height: 32px;
   padding: 0 0.75rem;
-  border-radius: 9999px;
-  background-color: ${({ theme }) => theme.colors.gray100};
-  color: ${({ theme }) => theme.colors.gray700};
+  border-radius: 0.6rem;
+  background-color: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  color: ${({ theme }) => theme.semantic.text};
   font-size: 0.813rem;
   font-weight: 700;
 `;
@@ -255,9 +233,13 @@ const StMemberChip = styled.span`
 const StRemoveBtn = styled.button`
   font-size: 0.7rem;
   color: ${({ theme }) => theme.colors.gray400};
-  transition: color 0.15s;
+  transition: color 0.15s ease;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.gray700};
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;

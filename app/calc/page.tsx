@@ -4,7 +4,8 @@ import FooterGuide from "@/components/common/FooterGuide";
 import {
   StContainer,
   StSection,
-  StWrapper,
+  StPageWrapper,
+  StFlexBox,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
@@ -31,7 +32,7 @@ export default function CreateRoomPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         <PageIntro
           icon="💸"
           title="황총무의 여행 경비 계산기"
@@ -45,39 +46,46 @@ export default function CreateRoomPage() {
             </>
           }
         />
-        <StSection>
-          <Input
-            placeholder="예: 강릉 여행"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            autoFocus
-            disabled={loading}
-          />
+        <StFlexBox>
+          <div className="flex-lft-box">
+            <StSection>
+              <Input
+                placeholder="예: 강릉 여행"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                autoFocus
+                disabled={loading}
+              />
 
-          <CreateButton
-            onClick={handleCreate}
-            isLoading={loading}
-            className="mt-4"
-          >
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-              }}
-            >
-              정산 방 만들기 <ArrowForwardIcon fontSize="small" />
-            </span>
-          </CreateButton>
-        </StSection>
+              <CreateButton
+                onClick={handleCreate}
+                isLoading={loading}
+                className="mt-4"
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  정산 방 만들기 <ArrowForwardIcon fontSize="small" />
+                </span>
+              </CreateButton>
+            </StSection>
+          </div>
 
-        <FooterGuide
-          title={CALC_GUIDE_DATA.title}
-          tips={CALC_GUIDE_DATA.tips}
-          blogGuideId="split-bill-tips"
-        />
-      </StWrapper>
+          <div className="flex-rgt-box">
+            <FooterGuide
+              title={CALC_GUIDE_DATA.title}
+              tips={CALC_GUIDE_DATA.tips}
+              blogGuideId="split-bill-tips"
+              layout="compact"
+            />
+          </div>
+        </StFlexBox>
+      </StPageWrapper>
     </StContainer>
   );
 }

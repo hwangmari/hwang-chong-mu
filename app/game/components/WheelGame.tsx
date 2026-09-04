@@ -229,7 +229,7 @@ const StWheelWrapper = styled.div`
 `;
 const StCanvas = styled.canvas<{ $rotation: number }>`
   border-radius: 50%;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
   transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
   transform: ${({ $rotation }) => `rotate(${$rotation}deg)`};
 `;
@@ -260,8 +260,8 @@ const StWinnerBox = styled.div`
   animation: pop 0.5s;
   background: ${({ theme }) => theme.colors.white};
   padding: 0.5rem 1rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 0.6rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 const StWinnerName = styled.span`
   color: #ff6384;

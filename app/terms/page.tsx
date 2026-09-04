@@ -4,7 +4,7 @@ import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
 import {
   StContainer,
-  StWrapper,
+  StReadWrapper,
   StSection,
 } from "@/components/styled/layout.styled";
 
@@ -54,7 +54,7 @@ const TERMS_SECTIONS = [
 export default function TermsPage() {
   return (
     <StContainer>
-      <StWrapper>
+      <StReadWrapper>
         <PageIntro
           icon="📋"
           title="이용약관"
@@ -71,19 +71,19 @@ export default function TermsPage() {
             </StTermsBlock>
           ))}
         </StSection>
-      </StWrapper>
+      </StReadWrapper>
     </StContainer>
   );
 }
 
 const StLastUpdated = styled.p`
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  margin-bottom: 2rem;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.semantic.subText};
+  margin-bottom: 1.5rem;
 `;
 
 const StTermsBlock = styled.div`
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   &:last-child {
     margin-bottom: 0;
@@ -91,15 +91,16 @@ const StTermsBlock = styled.div`
 `;
 
 const StSectionTitle = styled.h3`
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray900};
-  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  margin-bottom: 0.6rem;
 `;
 
 const StSectionContent = styled.p`
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.colors.gray600};
-  line-height: 1.8;
+  font-size: 0.88rem;
+  color: ${({ theme }) => theme.semantic.subText};
+  line-height: 1.75;
   white-space: pre-wrap;
+  word-break: keep-all;
 `;

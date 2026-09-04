@@ -4,18 +4,25 @@ import { useState } from "react";
 import Link from "next/link";
 import styled from "styled-components";
 import PageIntro from "@/components/common/PageIntro";
-import {
-  StContainer,
-  StWrapper,
-} from "@/components/styled/layout.styled";
+import { StContainer, StWrapper } from "@/components/styled/layout.styled";
 import { BLOG_POSTS } from "./data";
 
 // 상단 분류 칩: 보여줄 순서를 정해 두고, 글에만 있고 여기 없는 분류는 뒤에 자동으로 붙인다 (새 분류가 누락되지 않게)
-const CATEGORY_ORDER = ["사용 가이드", "생활 팁", "서비스 소개", "개발 일지", "기술 이야기"];
+const CATEGORY_ORDER = [
+  "사용 가이드",
+  "생활 팁",
+  "서비스 소개",
+  "개발 일지",
+  "기술 이야기",
+];
 const CATEGORIES = [
   "전체",
-  ...CATEGORY_ORDER.filter((cat) => BLOG_POSTS.some((post) => post.category === cat)),
-  ...[...new Set(BLOG_POSTS.map((post) => post.category))].filter((cat) => !CATEGORY_ORDER.includes(cat)),
+  ...CATEGORY_ORDER.filter((cat) =>
+    BLOG_POSTS.some((post) => post.category === cat),
+  ),
+  ...[...new Set(BLOG_POSTS.map((post) => post.category))].filter(
+    (cat) => !CATEGORY_ORDER.includes(cat),
+  ),
 ];
 
 export default function BlogPage() {
@@ -77,55 +84,75 @@ const StWideWrapper = styled(StWrapper)`
 
 const StCategoryList = styled.div`
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
 `;
 
 const StCategoryTag = styled.button<{ $active: boolean }>`
-  padding: 0.4rem 1rem;
-  border-radius: 9999px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.6rem;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: ${({ $active }) => ($active ? 800 : 600)};
   border: 1px solid
     ${({ $active, theme }) =>
-      $active ? theme.colors.blue600 : theme.colors.gray200};
+      $active ? theme.semantic.primary : theme.semantic.border};
   background-color: ${({ $active, theme }) =>
-    $active ? theme.colors.blue600 : theme.colors.white};
+    $active ? theme.semantic.primary : theme.colors.white};
   color: ${({ $active, theme }) =>
-    $active ? theme.colors.white : theme.colors.gray600};
+    $active ? theme.colors.white : theme.semantic.subText};
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.blue500};
     color: ${({ $active, theme }) =>
-      $active ? theme.colors.white : theme.colors.blue600};
+      $active ? theme.colors.white : theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
 const StPostList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+
+  /* 넓은 화면에서는 카드 두 줄로 — 1024px 폭을 그대로 쓴다 */
+  @media ${({ theme }) => theme.media.desktop} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  a {
+    display: block;
+    height: 100%;
+  }
 `;
 
 const StPostCard = styled.article`
+  height: 100%;
   background: ${({ theme }) => theme.colors.white};
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   border: 1px solid ${({ theme }) => theme.semantic.border};
   display: flex;
-  gap: 1rem;
+  gap: 0.85rem;
   align-items: flex-start;
-  transition: all 0.2s;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
   cursor: pointer;
 
   &:hover {
-    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-    border-color: ${({ theme }) => theme.colors.blue200};
+    background: ${({ theme }) => theme.semantic.bg};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
   @media (max-width: 768px) {
@@ -134,15 +161,17 @@ const StPostCard = styled.article`
 `;
 
 const StPostEmoji = styled.div`
-  font-size: 2rem;
+  font-size: 1.25rem;
+  line-height: 1;
   flex-shrink: 0;
-  width: 3rem;
-  height: 3rem;
+  width: 2.4rem;
+  height: 2.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${({ theme }) => theme.colors.gray50};
-  border-radius: 0.75rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.8rem;
 `;
 
 const StPostContent = styled.div`
@@ -163,7 +192,7 @@ const StCategoryBadge = styled.span`
   color: ${({ theme }) => theme.colors.blue600};
   background: ${({ theme }) => theme.colors.blue50};
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 0.4rem;
 `;
 
 const StPostDate = styled.span`
@@ -172,16 +201,16 @@ const StPostDate = styled.span`
 `;
 
 const StPostTitle = styled.h3`
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
   margin-bottom: 0.4rem;
   line-height: 1.4;
 `;
 
 const StPostSummary = styled.p`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.semantic.subText};
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;

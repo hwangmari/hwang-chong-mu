@@ -179,15 +179,15 @@ export default function TelepathyGame({
 const StQuestionCard = styled.div`
   background: ${({ theme }) => theme.colors.white};
   padding: 1.5rem;
-  border-radius: 20px;
+  border-radius: 1rem;
   text-align: center;
   margin-bottom: 1rem;
 `;
 const StBadge = styled.span`
-  background: ${({ theme }) => theme.colors.gray800};
+  background: ${({ theme }) => theme.semantic.text};
   color: ${({ theme }) => theme.colors.white};
   padding: 0.2rem 0.5rem;
-  border-radius: 5px;
+  border-radius: 0.4rem;
   font-size: 0.8rem;
 `;
 const StQuestionText = styled.h2`
@@ -207,7 +207,7 @@ const StVersusText = styled.div`
   top: 50%;
   transform: translate(-50%, -50%);
   background: ${({ theme }) => theme.colors.white};
-  border: 3px solid ${({ theme }) => theme.colors.gray800};
+  border: 3px solid ${({ theme }) => theme.semantic.text};
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -223,11 +223,11 @@ const StOptionButton = styled.button<{
   $isResult: boolean;
 }>`
   flex: 1;
-  border-radius: 15px;
+  border-radius: 0.9rem;
   border: ${({ $selected, $color }) =>
     $selected ? `4px solid ${$color}` : "2px solid transparent"};
-  background: ${({ $selected, $color, $isResult, theme }) => $isResult && !$selected ? theme.colors.gray200 : $selected ? $color : "#f8f9fa"};
-  color: ${({ $selected }) => ($selected ? "white" : "black")};
+  background: ${({ $selected, $color, $isResult, theme }) => $isResult && !$selected ? theme.colors.gray200 : $selected ? $color : theme.semantic.bg};
+  color: ${({ $selected, theme }) => ($selected ? "#ffffff" : theme.semantic.text)};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -252,7 +252,7 @@ const StVoters = styled.div`
   margin-top: 0.5rem;
   background: rgba(255, 255, 255, 0.2);
   padding: 0.5rem;
-  border-radius: 10px;
+  border-radius: 0.6rem;
   width: 80%;
 `;
 const StWaiting = styled.div`

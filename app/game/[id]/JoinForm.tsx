@@ -69,11 +69,10 @@ export default function JoinForm({
 }
 
 const StFooterAction = styled.div`
-  padding: 1.5rem;
+  padding: 1rem;
   z-index: 10;
   background: ${({ theme }) => theme.colors.white};
-  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 const StWaitingMsg = styled.p`
   text-align: center;

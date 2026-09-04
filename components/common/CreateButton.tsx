@@ -4,7 +4,7 @@ import styled, { css } from "styled-components";
 
 interface BaseButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  bgColor?: string; // 배경색 (없으면 기본 다크 스타일 적용)
+  bgColor?: string; // 배경색 (없으면 기본 primary 스타일 적용)
   isLoading?: boolean; // 로딩 상태
   loadingText?: string; // 로딩 텍스트
   children: React.ReactNode;
@@ -30,43 +30,43 @@ const StButton = styled.button<{ $bgColor?: string }>`
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: 700;
+  gap: 0.35rem;
+  font-weight: 800;
+  font-size: 0.95rem;
   color: ${({ theme }) => theme.colors.white};
   border: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 1.1rem;
-  font-size: 1rem;
-  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  border-radius: 0.9rem;
+  transition:
+    background-color 0.15s ease,
+    filter 0.15s ease;
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.gray200};
+    color: ${({ theme }) => theme.colors.gray500};
+    cursor: not-allowed;
+    filter: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
   ${({ $bgColor, theme }) =>
     $bgColor
       ? css`
           background: ${$bgColor};
 
-          box-shadow: 0 4px 12px ${$bgColor}40;
-
-          &:hover {
-            filter: brightness(1.05);
-            transform: translateY(-2px);
-          }
-          &:disabled {
-            background: ${({ theme }) => theme.colors.gray300};
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-            filter: none;
+          &:hover:not(:disabled) {
+            filter: brightness(0.94);
           }
         `
       : css`
-          background-color: ${theme.colors.gray500};
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          background-color: ${theme.semantic.primary};
 
-          &:hover {
-            background-color: ${theme.colors.gray700};
-          }
-          &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+          &:hover:not(:disabled) {
+            background-color: ${theme.colors.blue700};
           }
         `}
 `;

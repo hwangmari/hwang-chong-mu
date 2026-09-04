@@ -47,9 +47,10 @@ const LabelRow = styled.label`
   align-items: center;
 
   .label-text {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.gray500};
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: ${({ theme }) => theme.semantic.subText};
   }
 
   .right-label {
@@ -71,16 +72,20 @@ const StyledInput = styled.input<{ $isError: boolean }>`
   color: ${({ theme }) => theme.colors.gray900};
   outline: none;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.gray400};
   }
 
   &:focus {
-    border-color: ${({ theme }) => theme.colors.gray500};
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.gray100};
+    border-color: ${({ theme }) => theme.colors.blue500};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.blue100};
   }
 
   &:disabled {

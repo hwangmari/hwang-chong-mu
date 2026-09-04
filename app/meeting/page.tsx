@@ -5,9 +5,10 @@ import useCreateRoom from "@/hooks/useCreateRoom";
 import FooterGuide from "@/components/common/FooterGuide"; // ✅ 공통 컴포넌트
 
 import {
-  StWrapper,
+  StPageWrapper,
   StContainer,
   StSection,
+  StFlexBox,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import { MEETING_GUIDE_DATA } from "@/data/footerGuides";
@@ -29,7 +30,7 @@ export default function CreateRoomPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         <PageIntro
           icon="📅"
           title="황총무의 약속 잡기"
@@ -42,31 +43,38 @@ export default function CreateRoomPage() {
             </>
           }
         />
-        <StSection>
-          <RoomForm
-            formData={formData}
-            loading={loading}
-            onChange={handleChange}
-            onSubmit={createRoom}
-            isCustomPeriod={isCustomPeriod}
-            setIsCustomPeriod={setIsCustomPeriod}
-            members={members}
-            memberInput={memberInput}
-            setMemberInput={setMemberInput}
-            addMember={addMember}
-            removeMember={removeMember}
-          />
-        </StSection>
+        <StFlexBox>
+          <div className="flex-lft-box">
+            <StSection>
+              <RoomForm
+                formData={formData}
+                loading={loading}
+                onChange={handleChange}
+                onSubmit={createRoom}
+                isCustomPeriod={isCustomPeriod}
+                setIsCustomPeriod={setIsCustomPeriod}
+                members={members}
+                memberInput={memberInput}
+                setMemberInput={setMemberInput}
+                addMember={addMember}
+                removeMember={removeMember}
+              />
+            </StSection>
+          </div>
 
-        {/* ✅ 공통 가이드 컴포넌트 사용 */}
-        <FooterGuide
-          title={MEETING_GUIDE_DATA.title}
-          story={MEETING_GUIDE_DATA.story}
-          tips={MEETING_GUIDE_DATA.tips}
-          blogGuideId="meeting-guide"
-        />
+          {/* 데스크톱에서는 오른쪽 컬럼에 가이드가 붙어 화면을 채운다 */}
+          <div className="flex-rgt-box">
+            <FooterGuide
+              title={MEETING_GUIDE_DATA.title}
+              story={MEETING_GUIDE_DATA.story}
+              tips={MEETING_GUIDE_DATA.tips}
+              blogGuideId="meeting-guide"
+              layout="compact"
+            />
+          </div>
+        </StFlexBox>
         {/* <AdBanner /> */}
-      </StWrapper>
+      </StPageWrapper>
     </StContainer>
   );
 }

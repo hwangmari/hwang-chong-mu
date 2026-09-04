@@ -4,13 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import PageIntro from "@/components/common/PageIntro";
 import FooterGuide from "@/components/common/FooterGuide";
 import { OVERTIME_GUIDE_DATA } from "@/data/footerGuides";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import {
+  StContainer,
+  StPageWrapper,
+  StFlexBox,
+} from "@/components/styled/layout.styled";
 import CalculatorTab from "@/app/overtime/components/CalculatorTab";
 import RecordsTab from "@/app/overtime/components/RecordsTab";
 import RuleGuideAccordion from "@/app/overtime/components/RuleGuideAccordion";
 import RuleSelector from "@/app/overtime/components/RuleSelector";
 import {
-  SectionDivider,
   SurfaceCard,
   TabButton,
   TabList,
@@ -159,7 +162,7 @@ export default function OvertimePage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         <PageIntro
           icon="🌙"
           title="야근 계산기"
@@ -175,139 +178,144 @@ export default function OvertimePage() {
           }
         />
 
-        <SurfaceCard>
-          <RuleSelector
-            activeRuleId={ruleId}
-            activeRuleDescription={activeRule.description}
-            onChangeRule={handleChangeRule}
-          />
+        <StFlexBox $leftRatio={1.7}>
+          <div className="flex-lft-box">
+            <SurfaceCard>
+              <RuleSelector
+                activeRuleId={ruleId}
+                activeRuleDescription={activeRule.description}
+                onChangeRule={handleChangeRule}
+              />
 
-          <TabList>
-            <TabButton
-              type="button"
-              $isActive={activeTab === "calculator"}
-              onClick={() => setActiveTab("calculator")}
-            >
-              계산기
-            </TabButton>
-            <TabButton
-              type="button"
-              $isActive={activeTab === "records"}
-              onClick={() => setActiveTab("records")}
-            >
-              기록
-            </TabButton>
-          </TabList>
+              <TabList>
+                <TabButton
+                  type="button"
+                  $isActive={activeTab === "calculator"}
+                  onClick={() => setActiveTab("calculator")}
+                >
+                  계산기
+                </TabButton>
+                <TabButton
+                  type="button"
+                  $isActive={activeTab === "records"}
+                  onClick={() => setActiveTab("records")}
+                >
+                  기록
+                </TabButton>
+              </TabList>
 
-          {activeTab === "calculator" ? (
-            <CalculatorTab
-              calcBefore10Hours={forms.calcBefore10Hours}
-              calcBefore10Minutes={forms.calcBefore10Minutes}
-              calcAfter10Hours={forms.calcAfter10Hours}
-              calcAfter10Minutes={forms.calcAfter10Minutes}
-              calcResult={forms.calcResult}
-              calcSummary={forms.calcSummary}
-              calcTargetDays={forms.calcTargetDays}
-              calcTargetGuide={calcTargetGuide}
-              onChangeCalcBefore10Hours={forms.setCalcBefore10Hours}
-              onChangeCalcBefore10Minutes={forms.setCalcBefore10Minutes}
-              onChangeCalcAfter10Hours={forms.setCalcAfter10Hours}
-              onChangeCalcAfter10Minutes={forms.setCalcAfter10Minutes}
-              onNormalizeBefore10={() =>
-                forms.applyDurationNormalization(
-                  forms.calcBefore10Hours,
-                  forms.calcBefore10Minutes,
-                  forms.setCalcBefore10Hours,
-                  forms.setCalcBefore10Minutes,
-                )
-              }
-              onNormalizeAfter10={() =>
-                forms.applyDurationNormalization(
-                  forms.calcAfter10Hours,
-                  forms.calcAfter10Minutes,
-                  forms.setCalcAfter10Hours,
-                  forms.setCalcAfter10Minutes,
-                )
-              }
-              onCalculate={forms.handleCalculate}
-              onChangeCalcTargetDays={forms.setCalcTargetDays}
+              {activeTab === "calculator" ? (
+                <CalculatorTab
+                  calcBefore10Hours={forms.calcBefore10Hours}
+                  calcBefore10Minutes={forms.calcBefore10Minutes}
+                  calcAfter10Hours={forms.calcAfter10Hours}
+                  calcAfter10Minutes={forms.calcAfter10Minutes}
+                  calcResult={forms.calcResult}
+                  calcSummary={forms.calcSummary}
+                  calcTargetDays={forms.calcTargetDays}
+                  calcTargetGuide={calcTargetGuide}
+                  onChangeCalcBefore10Hours={forms.setCalcBefore10Hours}
+                  onChangeCalcBefore10Minutes={forms.setCalcBefore10Minutes}
+                  onChangeCalcAfter10Hours={forms.setCalcAfter10Hours}
+                  onChangeCalcAfter10Minutes={forms.setCalcAfter10Minutes}
+                  onNormalizeBefore10={() =>
+                    forms.applyDurationNormalization(
+                      forms.calcBefore10Hours,
+                      forms.calcBefore10Minutes,
+                      forms.setCalcBefore10Hours,
+                      forms.setCalcBefore10Minutes,
+                    )
+                  }
+                  onNormalizeAfter10={() =>
+                    forms.applyDurationNormalization(
+                      forms.calcAfter10Hours,
+                      forms.calcAfter10Minutes,
+                      forms.setCalcAfter10Hours,
+                      forms.setCalcAfter10Minutes,
+                    )
+                  }
+                  onCalculate={forms.handleCalculate}
+                  onChangeCalcTargetDays={forms.setCalcTargetDays}
+                />
+              ) : (
+                <RecordsTab
+                  currentMonth={view.currentMonth}
+                  monthlyRecordCount={view.monthlyRecords.length}
+                  recordSummary={view.recordSummary}
+                  recordResult={view.recordResult}
+                  targetUsableDays={view.targetUsableDays}
+                  targetDayGuide={view.targetDayGuide}
+                  visibleWeekdays={view.visibleWeekdays}
+                  calendarWeeks={view.calendarWeeks}
+                  recordsByDate={view.recordsByDate}
+                  showWeekends={view.showWeekends}
+                  selectedDate={view.selectedDate}
+                  selectedDateBucket={view.selectedDateBucket}
+                  quickBefore10Hours={forms.quickBefore10Hours}
+                  quickBefore10Minutes={forms.quickBefore10Minutes}
+                  quickAfter10Hours={forms.quickAfter10Hours}
+                  quickAfter10Minutes={forms.quickAfter10Minutes}
+                  editingRecordId={forms.editingRecordId}
+                  isRecordsExpanded={view.isRecordsExpanded}
+                  displayedRecords={view.displayedRecords}
+                  storageMode={storage.storageMode}
+                  serverRoom={storage.serverRoom}
+                  roomNameInput={storage.roomNameInput}
+                  roomCodeInput={storage.roomCodeInput}
+                  isServerLoading={storage.isServerLoading}
+                  onChangeTargetUsableDays={view.setTargetUsableDays}
+                  onMoveMonth={handleMoveMonth}
+                  onGoToday={handleGoToday}
+                  onToggleWeekends={view.toggleWeekends}
+                  onSelectDate={view.setSelectedDate}
+                  onResetQuickAddForm={forms.resetQuickAddForm}
+                  onEditRecord={handleEditRecord}
+                  onDeleteRecord={handleDeleteRecord}
+                  onChangeQuickBefore10Hours={forms.setQuickBefore10Hours}
+                  onChangeQuickBefore10Minutes={forms.setQuickBefore10Minutes}
+                  onChangeQuickAfter10Hours={forms.setQuickAfter10Hours}
+                  onChangeQuickAfter10Minutes={forms.setQuickAfter10Minutes}
+                  onNormalizeQuickBefore10={() =>
+                    forms.applyDurationNormalization(
+                      forms.quickBefore10Hours,
+                      forms.quickBefore10Minutes,
+                      forms.setQuickBefore10Hours,
+                      forms.setQuickBefore10Minutes,
+                    )
+                  }
+                  onNormalizeQuickAfter10={() =>
+                    forms.applyDurationNormalization(
+                      forms.quickAfter10Hours,
+                      forms.quickAfter10Minutes,
+                      forms.setQuickAfter10Hours,
+                      forms.setQuickAfter10Minutes,
+                    )
+                  }
+                  onSaveQuickRecord={handleQuickAddRecord}
+                  onToggleRecordsExpanded={view.toggleRecordsExpanded}
+                  onClearRecords={handleClearRecords}
+                  onChangeStorageMode={handleSwitchStorageMode}
+                  onChangeRoomNameInput={storage.setRoomNameInput}
+                  onChangeRoomCodeInput={storage.setRoomCodeInput}
+                  onCreateServerRoom={storage.handleCreateServerRoom}
+                  onConnectServerRoom={storage.handleConnectServerRoom}
+                  onCopyRoomCode={storage.handleCopyRoomCode}
+                  onDisconnectServerRoom={storage.handleDisconnectServerRoom}
+                />
+              )}
+            </SurfaceCard>
+          </div>
+
+          {/* 보상 규칙 요약은 계산 결과와 나란히 두는 편이 보기 좋다 */}
+          <div className="flex-rgt-box">
+            <RuleGuideAccordion
+              isExpanded={isRuleGuideExpanded}
+              activeRule={activeRule}
+              guideItems={activeRuleGuide}
+              onToggle={() => setIsRuleGuideExpanded((prev) => !prev)}
             />
-          ) : (
-            <RecordsTab
-              currentMonth={view.currentMonth}
-              monthlyRecordCount={view.monthlyRecords.length}
-              recordSummary={view.recordSummary}
-              recordResult={view.recordResult}
-              targetUsableDays={view.targetUsableDays}
-              targetDayGuide={view.targetDayGuide}
-              visibleWeekdays={view.visibleWeekdays}
-              calendarWeeks={view.calendarWeeks}
-              recordsByDate={view.recordsByDate}
-              showWeekends={view.showWeekends}
-              selectedDate={view.selectedDate}
-              selectedDateBucket={view.selectedDateBucket}
-              quickBefore10Hours={forms.quickBefore10Hours}
-              quickBefore10Minutes={forms.quickBefore10Minutes}
-              quickAfter10Hours={forms.quickAfter10Hours}
-              quickAfter10Minutes={forms.quickAfter10Minutes}
-              editingRecordId={forms.editingRecordId}
-              isRecordsExpanded={view.isRecordsExpanded}
-              displayedRecords={view.displayedRecords}
-              storageMode={storage.storageMode}
-              serverRoom={storage.serverRoom}
-              roomNameInput={storage.roomNameInput}
-              roomCodeInput={storage.roomCodeInput}
-              isServerLoading={storage.isServerLoading}
-              onChangeTargetUsableDays={view.setTargetUsableDays}
-              onMoveMonth={handleMoveMonth}
-              onGoToday={handleGoToday}
-              onToggleWeekends={view.toggleWeekends}
-              onSelectDate={view.setSelectedDate}
-              onResetQuickAddForm={forms.resetQuickAddForm}
-              onEditRecord={handleEditRecord}
-              onDeleteRecord={handleDeleteRecord}
-              onChangeQuickBefore10Hours={forms.setQuickBefore10Hours}
-              onChangeQuickBefore10Minutes={forms.setQuickBefore10Minutes}
-              onChangeQuickAfter10Hours={forms.setQuickAfter10Hours}
-              onChangeQuickAfter10Minutes={forms.setQuickAfter10Minutes}
-              onNormalizeQuickBefore10={() =>
-                forms.applyDurationNormalization(
-                  forms.quickBefore10Hours,
-                  forms.quickBefore10Minutes,
-                  forms.setQuickBefore10Hours,
-                  forms.setQuickBefore10Minutes,
-                )
-              }
-              onNormalizeQuickAfter10={() =>
-                forms.applyDurationNormalization(
-                  forms.quickAfter10Hours,
-                  forms.quickAfter10Minutes,
-                  forms.setQuickAfter10Hours,
-                  forms.setQuickAfter10Minutes,
-                )
-              }
-              onSaveQuickRecord={handleQuickAddRecord}
-              onToggleRecordsExpanded={view.toggleRecordsExpanded}
-              onClearRecords={handleClearRecords}
-              onChangeStorageMode={handleSwitchStorageMode}
-              onChangeRoomNameInput={storage.setRoomNameInput}
-              onChangeRoomCodeInput={storage.setRoomCodeInput}
-              onCreateServerRoom={storage.handleCreateServerRoom}
-              onConnectServerRoom={storage.handleConnectServerRoom}
-              onCopyRoomCode={storage.handleCopyRoomCode}
-              onDisconnectServerRoom={storage.handleDisconnectServerRoom}
-            />
-          )}
-
-          <SectionDivider />
-
-          <RuleGuideAccordion
-            isExpanded={isRuleGuideExpanded}
-            activeRule={activeRule}
-            guideItems={activeRuleGuide}
-            onToggle={() => setIsRuleGuideExpanded((prev) => !prev)}
-          />
-        </SurfaceCard>
+          </div>
+        </StFlexBox>
 
         <FooterGuide
           title={OVERTIME_GUIDE_DATA.title}
@@ -315,7 +323,7 @@ export default function OvertimePage() {
           tips={OVERTIME_GUIDE_DATA.tips}
           blogGuideId="overtime-pay-basics"
         />
-      </StWrapper>
+      </StPageWrapper>
     </StContainer>
   );
 }

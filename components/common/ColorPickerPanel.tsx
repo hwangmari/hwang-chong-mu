@@ -42,10 +42,10 @@ export default function ColorPickerPanel({
 }
 
 const Wrap = styled.div`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.colors.white};
-  padding: 10px;
+  padding: 0.75rem;
 `;
 
 const PresetGrid = styled.div`
@@ -63,13 +63,11 @@ const ColorChip = styled.button<{ $color: string; $isSelected: boolean }>`
   box-shadow: ${({ $isSelected, $color, theme }) =>
     $isSelected
       ? `0 0 0 2px ${theme.colors.white}, 0 0 0 4px ${$color}`
-      : "0 0 0 1px rgba(15,23,42,0.15)"};
+      : "none"};
+  outline: ${({ $isSelected, theme }) =>
+    $isSelected ? "none" : `1px solid ${theme.semantic.border}`};
+  outline-offset: 0;
   cursor: pointer;
-  transition: transform 0.15s ease;
-
-  &:hover {
-    transform: scale(1.08);
-  }
 `;
 
 const CustomRow = styled.div`
@@ -78,15 +76,15 @@ const CustomRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.semantic.subText};
 
   input[type="color"] {
     width: 38px;
     height: 26px;
     padding: 0;
-    border: 1px solid ${({ theme }) => theme.colors.gray300};
-    border-radius: 6px;
+    border: 1px solid ${({ theme }) => theme.semantic.border};
+    border-radius: 0.5rem;
     background: ${({ theme }) => theme.colors.white};
     cursor: pointer;
   }

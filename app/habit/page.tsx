@@ -8,7 +8,8 @@ import FooterGuide from "@/components/common/FooterGuide";
 import {
   StContainer,
   StSection,
-  StWrapper,
+  StPageWrapper,
+  StFlexBox,
 } from "@/components/styled/layout.styled";
 import PageIntro, { StHighlight } from "@/components/common/PageIntro";
 import CreateButton from "@/components/common/CreateButton";
@@ -18,7 +19,16 @@ import { HABIT_GUIDE_DATA } from "@/data/footerGuides";
 import ColorPickerPanel from "@/components/common/ColorPickerPanel";
 import { useModal } from "@/components/common/ModalProvider";
 
-const COLORS = ["#5e606d", "#ed3654", "#FB923C", "#efb520", "#14b8a6", "#3378e7", "#6366F1"];
+// 기본 선택은 파랑(첫 번째). 회색은 맨 뒤로 — 새로 만드는 방에만 적용되고 기존 방 색은 그대로다
+const COLORS = [
+  "#3378e7",
+  "#6366F1",
+  "#14b8a6",
+  "#efb520",
+  "#FB923C",
+  "#ed3654",
+  "#5e606d",
+];
 
 export default function CreateHabitPage() {
   const router = useRouter();
@@ -51,7 +61,7 @@ export default function CreateHabitPage() {
 
   return (
     <StContainer>
-      <StWrapper>
+      <StPageWrapper>
         <PageIntro
           icon={
             <IconWrapper
@@ -59,7 +69,7 @@ export default function CreateHabitPage() {
                 setEmoji(
                   ["🥕", "🐰", "🔥", "💪", "📚", "🧘", "✨"][
                     Math.floor(Math.random() * 7)
-                  ]
+                  ],
                 )
               }
             >
@@ -80,65 +90,75 @@ export default function CreateHabitPage() {
           }
         />
 
-        <StSection>
-          <Input
-            placeholder="예: 매일 30분 운동하기"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && createGoal()}
-          />
+        <StFlexBox>
+          <div className="flex-lft-box">
+            <StSection>
+              <Input
+                label="습관 이름"
+                placeholder="예: 매일 30분 운동하기"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && createGoal()}
+              />
 
-          <ColorSection>
-            <Label>테마 컬러</Label>
-            <ColorPickerPanel
-              selectedColor={selectedColor}
-              onSelect={setSelectedColor}
-              colors={COLORS}
+              <ColorSection>
+                <Label>테마 컬러</Label>
+                <ColorPickerPanel
+                  selectedColor={selectedColor}
+                  onSelect={setSelectedColor}
+                  colors={COLORS}
+                />
+              </ColorSection>
+
+              <CreateButton
+                onClick={createGoal}
+                bgColor={selectedColor}
+                isLoading={loading}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  습관 방 만들기 <ArrowForwardIcon fontSize="small" />
+                </span>
+              </CreateButton>
+            </StSection>
+          </div>
+
+          {/* ✅ 습관 관리용 데이터 주입 */}
+          <div className="flex-rgt-box">
+            <FooterGuide
+              title={HABIT_GUIDE_DATA.title}
+              tips={HABIT_GUIDE_DATA.tips}
+              blogGuideId="habit-tracking-that-sticks"
+              layout="compact"
             />
-          </ColorSection>
-
-          <CreateButton
-            onClick={createGoal}
-            bgColor={selectedColor}
-            isLoading={loading}
-            className="mt-4"
-          >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-              습관 방 만들기 <ArrowForwardIcon fontSize="small" />
-            </span>
-          </CreateButton>
-        </StSection>
-
-        {/* ✅ 습관 관리용 데이터 주입 */}
-        <FooterGuide
-          title={HABIT_GUIDE_DATA.title}
-          tips={HABIT_GUIDE_DATA.tips}
-          blogGuideId="habit-tracking-that-sticks"
-        />
-      </StWrapper>
+          </div>
+        </StFlexBox>
+      </StPageWrapper>
     </StContainer>
   );
 }
 
-
 const IconWrapper = styled.div`
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: inline-block;
-  &:hover {
-    transform: scale(1.2) rotate(10deg);
-  }
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 `;
 
 const ColorSection = styled.div`
-  margin: 1.5rem 0;
+  margin: 1.25rem 0;
   text-align: left;
 `;
 
 const Label = styled.p`
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray400};
-  margin-bottom: 1rem;
-  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.semantic.subText};
+  margin-bottom: 0.5rem;
 `;
