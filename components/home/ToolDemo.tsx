@@ -176,7 +176,7 @@ const StFrame = styled.div`
   background: ${({ theme }) => theme.colors.white};
   box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  min-height: 15.5rem;
+  min-height: 16.5rem; /* 다섯 장면 중 가장 큰 것(여행 경비)에 맞춰 높이를 고정해 장면이 바뀌어도 아래가 안 밀리게 */
   display: flex;
   flex-direction: column;
 

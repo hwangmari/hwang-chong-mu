@@ -76,11 +76,14 @@ export default function HeroSituations() {
 
   return (
     <StHeroGrid onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-    <StHero>
       <StEyebrow>총무에게 이런 날이 있죠</StEyebrow>
       <StQuestion key={`q-${index}`} className="display" aria-live="polite">
         <StMark>{current.question}</StMark>
       </StQuestion>
+      {/* 폰에서는 제목과 설명 사이에 데모가 오도록 grid-area로 배치한다 (PC는 오른쪽 열) */}
+      <StDemoSlot>
+        <ToolDemo scene={current.scene} />
+      </StDemoSlot>
       <StAnswer key={`a-${index}`}>{current.answer}</StAnswer>
       <StCtaRow>
         <StCta href={current.href}>
@@ -100,8 +103,6 @@ export default function HeroSituations() {
           ))}
         </StDots>
       </StCtaRow>
-    </StHero>
-    <ToolDemo scene={current.scene} />
     </StHeroGrid>
   );
 }
@@ -111,26 +112,41 @@ const rise = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+/* PC: 왼쪽 글(눈썹·제목·설명·버튼) / 오른쪽 데모. 폰: 눈썹 → 제목 → 데모 → 설명 → 버튼 순으로 한 열 */
 const StHeroGrid = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 2.5rem;
+  grid-template-areas:
+    "eyebrow demo"
+    "question demo"
+    "answer demo"
+    "cta demo";
+  column-gap: 2.5rem;
+  row-gap: 0.9rem;
   align-items: center;
 
   @media ${({ theme }) => theme.media.mobile} {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    grid-template-areas:
+      "eyebrow"
+      "question"
+      "demo"
+      "answer"
+      "cta";
+    row-gap: 0.9rem;
   }
 `;
 
-const StHero = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
+const StDemoSlot = styled.div`
+  grid-area: demo;
   min-width: 0;
+  @media ${({ theme }) => theme.media.mobile} {
+    margin: 0.35rem 0;
+  }
 `;
 
 const StEyebrow = styled.p`
+  grid-area: eyebrow;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -138,6 +154,7 @@ const StEyebrow = styled.p`
 `;
 
 const StQuestion = styled.h2`
+  grid-area: question;
   font-size: clamp(1.9rem, 4.2vw, 3rem);
   line-height: 1.25;
   font-weight: 400;
@@ -147,7 +164,8 @@ const StQuestion = styled.h2`
   min-height: calc(1.25em * 2);
   animation: ${rise} 0.45s ease-out;
   @media ${({ theme }) => theme.media.mobile} {
-    min-height: calc(1.25em * 3);
+    /* 폰은 데모가 제목 아래로 오므로 두 줄만 예약 (세 줄이면 빈 공간이 커 보임) */
+    min-height: calc(1.25em * 2);
   }
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -162,22 +180,21 @@ const StMark = styled.span`
 `;
 
 const StAnswer = styled.p`
+  grid-area: answer;
   font-size: 1.05rem;
   line-height: 1.6;
   color: ${({ theme }) => theme.semantic.subText};
   word-break: keep-all;
   max-width: 34rem;
-  min-height: calc(1.6em * 2); /* 설명도 두 줄 높이 고정 (폰은 세 줄) */
+  min-height: calc(1.6em * 2); /* 설명은 두 줄 높이 고정 */
   animation: ${rise} 0.45s ease-out 0.08s both;
-  @media ${({ theme }) => theme.media.mobile} {
-    min-height: calc(1.6em * 3);
-  }
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 `;
 
 const StCtaRow = styled.div`
+  grid-area: cta;
   display: flex;
   align-items: center;
   gap: 1rem;
