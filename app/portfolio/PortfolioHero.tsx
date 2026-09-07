@@ -6,7 +6,7 @@ import Link from "next/link";
 import styled from "styled-components";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { displayFont } from "@/lib/fonts";
-import { careerYears, heroFacts } from "./careerFacts";
+import { careerYears } from "./careerFacts";
 import AnimatedTitle from "./AnimatedTitle";
 import CareerRibbon from "./CareerRibbon";
 
@@ -50,17 +50,6 @@ export default function PortfolioHero() {
           </StPhoto>
         </StTop>
 
-        <StFacts aria-label="경력 요약 숫자">
-          {heroFacts.map((fact) => (
-            <StFact key={fact.label}>
-              <span className="label">{fact.label}</span>
-              <strong>
-                {fact.value}
-                <em>{fact.unit}</em>
-              </strong>
-            </StFact>
-          ))}
-        </StFacts>
 
         <StRibbonSlot>
           <CareerRibbon />
@@ -244,47 +233,6 @@ const StPhoto = styled.div`
 
   @media ${({ theme }) => theme.media.mobile} {
     display: none;
-  }
-`;
-
-const StFacts = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.6rem;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: repeat(2, 1fr);
-  }
-`;
-
-const StFact = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.8rem 0.9rem;
-  border-radius: 0.85rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.colors.gray50};
-
-  .label {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: ${({ theme }) => theme.semantic.subText};
-  }
-
-  strong {
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: ${({ theme }) => theme.semantic.text};
-    font-variant-numeric: tabular-nums;
-    line-height: 1.1;
-  }
-
-  em {
-    font-style: normal;
-    font-size: 0.9rem;
-    margin-left: 0.1rem;
-    color: ${({ theme }) => theme.colors.gray500};
   }
 `;
 

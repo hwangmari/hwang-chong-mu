@@ -53,6 +53,16 @@ function parsePeriod(period: string) {
   };
 }
 
+
+/** 개월 수 → "3년 1개월" (1년 미만이면 "7개월", 딱 n년이면 "3년") */
+function formatTenure(totalMonths: number): string {
+  const m = Math.max(1, totalMonths);
+  const y = Math.floor(m / 12);
+  const r = m % 12;
+  if (y === 0) return `${r}개월`;
+  return r === 0 ? `${y}년` : `${y}년 ${r}개월`;
+}
+
 /** 오래된 순(왼쪽) → 최근 순(오른쪽). 리본은 이 순서를 그대로 쓴다. */
 export const careerSpans: CareerSpan[] = experiences
   .map((exp) => {
@@ -66,7 +76,10 @@ export const careerSpans: CareerSpan[] = experiences
       summary: exp.summary,
       projectCount: exp.projects.length,
       months: Math.max(1, parsed.endMonth - parsed.startMonth),
-      durationLabel: exp.period.match(/\(([^)]+)\)/)?.[1] ?? null,
+      // 괄호 안 기간이 있으면 그대로, 재직 중이면 시작~오늘을 계산해 "재직 중 · 3년 1개월"로 (사용자 요청: 상단 바에 재직 중 내용 포함)
+      durationLabel:
+        exp.period.match(/\(([^)]+)\)/)?.[1] ??
+        (parsed.ongoing ? `재직 중 · ${formatTenure(parsed.endMonth - parsed.startMonth)}` : null),
       ...parsed,
     };
   })
