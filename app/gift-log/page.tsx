@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@hwangchongmu/ui";
+import ServiceLayout from "@/components/common/ServiceLayout";
+import { StHighlight } from "@/components/common/PageIntro";
+import { GIFT_GUIDE_DATA } from "@/data/footerGuides";
 import GiftEntryForm, { type FormState } from "./components/GiftEntryForm";
 import EntryHistory from "./components/EntryHistory";
 import GiftSummary from "./components/GiftSummary";
@@ -26,17 +29,22 @@ import {
 import { formatDateKey } from "@/utils/date";
 import type { GiftEntry, GiftEntryInput, GiftRelation } from "./types";
 import {
-  StHeader,
   StLoginCard,
   StLoginDesc,
   StLoginEmoji,
   StLoginTitle,
-  StPage,
-  StSubtitle,
-  StTitle,
-  StUserBar,
-  StUserName,
+  StOwnerPill,
 } from "./page.styles";
+
+/* 세 가지 상태(불러오는 중·로그인 전·장부)가 같은 제목을 쓴다 */
+const INTRO_ICON = "🎁";
+const INTRO_TITLE = "경조사비 장부";
+
+const GUIDE = {
+  title: GIFT_GUIDE_DATA.title,
+  story: GIFT_GUIDE_DATA.story,
+  tips: GIFT_GUIDE_DATA.tips,
+};
 
 function emptyForm(): FormState {
   return {
@@ -250,26 +258,39 @@ export default function GiftLogPage() {
   // 로그인 확인 중엔 빈 화면 대신 같은 자리를 차지하는 뼈대를 보여 준다.
   if (authLoading) {
     return (
-      <StPage>
-        <StHeader>
-          <SkeletonBlock width="8rem" height="0.9rem" radius="0.6rem" />
-          <SkeletonBlock width="12rem" height="1.6rem" radius="0.7rem" />
-          <SkeletonBlock width="min(100%, 22rem)" height="0.9rem" />
-        </StHeader>
-        <SkeletonCard height="9rem" lines={2} titleWidth="30%" />
-        <SkeletonCard height="7rem" lines={1} titleWidth="35%" />
-        <SkeletonList count={4} height="4.6rem" lines={1} />
-      </StPage>
+      <ServiceLayout
+        width="wide"
+        intro={{
+          icon: INTRO_ICON,
+          title: INTRO_TITLE,
+          description: "주고받은 축의금·부조금을 사람별로 기록해요.",
+        }}
+        mainRatio={1.1}
+        side={
+          <>
+            <SkeletonCard height="10rem" lines={2} titleWidth="45%" />
+            <SkeletonList count={2} height="8rem" lines={2} />
+          </>
+        }
+      >
+        <SkeletonCard height="24rem" lines={5} titleWidth="30%" />
+        <SkeletonBlock width="100%" height="6rem" radius="1rem" />
+      </ServiceLayout>
     );
   }
 
   if (!user) {
     return (
-      <StPage>
-        <StHeader>
-          <StTitle>🎁 경조사비 장부</StTitle>
-          <StSubtitle>주고받은 축의금·부조금을 사람별로 기록해요.</StSubtitle>
-        </StHeader>
+      <ServiceLayout
+        width="narrow"
+        intro={{
+          icon: INTRO_ICON,
+          title: INTRO_TITLE,
+          description:
+            "주고받은 축의금·부조금을 사람별로 기록하고, 얼마 해야 할지 바로 찾아봐요.",
+        }}
+        guide={GUIDE}
+      >
         <StLoginCard>
           <StLoginEmoji>🔐</StLoginEmoji>
           <StLoginTitle>로그인하면 경조사비 장부를 쓸 수 있어요</StLoginTitle>
@@ -287,24 +308,47 @@ export default function GiftLogPage() {
             로그인 / 회원가입
           </Button>
         </StLoginCard>
-      </StPage>
+      </ServiceLayout>
     );
   }
 
   return (
-    <StPage>
-      <StHeader>
-        <StUserBar>
-          <StUserName>👤 {user.nickname}</StUserName>
-        </StUserBar>
-        <StTitle>🎁 경조사비 장부</StTitle>
-        <StSubtitle>
-          주고받은 축의금·부조금을 사람별로 기록하고, 얼마 해야 할지 바로 찾아봐요.
-        </StSubtitle>
-      </StHeader>
+    <ServiceLayout
+      width="wide"
+      intro={{
+        icon: INTRO_ICON,
+        title: INTRO_TITLE,
+        description: (
+          <>
+            <StOwnerPill>👤 {user.nickname}의 장부</StOwnerPill>
+            <br />
+            주고받은 축의금·부조금을 사람별로 기록하고,{" "}
+            <StHighlight $color="blue">얼마 해야 할지</StHighlight> 바로 찾아봐요.
+          </>
+        ),
+      }}
+      guide={GUIDE}
+      mainRatio={1.1}
+      /* 오른쪽: 찾아보고 확인하는 칸 */
+      side={
+        <>
+          <PersonLookup entries={entries} onNewForPerson={startForPerson} />
 
-      <PersonLookup entries={entries} onNewForPerson={startForPerson} />
+          <GiftSummary entries={entries} />
 
+          <EntryHistory
+            loading={loading}
+            entries={entries}
+            suggestDetails={suggestDetails}
+            onEdit={editEntry}
+            onRemove={removeEntry}
+            onToggleReturned={toggleReturned}
+            onChangeRelationMany={changeRelationMany}
+          />
+        </>
+      }
+    >
+      {/* 왼쪽(본문): 적는 칸 */}
       <GiftEntryForm
         form={form}
         detailSuggestions={detailSuggestions}
@@ -315,19 +359,7 @@ export default function GiftLogPage() {
         onCancel={resetForm}
       />
 
-      <GiftSummary entries={entries} />
-
-      <EntryHistory
-        loading={loading}
-        entries={entries}
-        suggestDetails={suggestDetails}
-        onEdit={editEntry}
-        onRemove={removeEntry}
-        onToggleReturned={toggleReturned}
-        onChangeRelationMany={changeRelationMany}
-      />
-
-      {/* 한 번 쓰고 끝나는 도구들은 아래로 */}
+      {/* 한 번 쓰고 끝나는 도구들은 폼 아래로 */}
       <BulkAddForm defaultDate={formatDateKey(new Date())} onAddMany={addMany} />
 
       <ImportFromAccountBook entries={entries} onImport={importEntry} />
@@ -341,6 +373,6 @@ export default function GiftLogPage() {
           onClose={() => setEditing(null)}
         />
       ) : null}
-    </StPage>
+    </ServiceLayout>
   );
 }

@@ -1,53 +1,36 @@
 import styled from "styled-components";
+import {
+  StFieldGrid,
+  StFieldLabel,
+  StSection,
+  StSectionTitle,
+  StSegmentButton,
+  StSegmented,
+} from "@/components/styled/layout.styled";
 
-export const StPage = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-  max-width: ${({ theme }) => theme.layout.maxWidth};
-  margin: 0 auto;
-  padding: 1rem 1rem 2.5rem;
-`;
+/*
+ * 페이지 뼈대(폭·제목·가이드)는 ServiceLayout 이 맡는다.
+ * 여기에는 경조사비 장부에만 있는 조각(칩·막대·표·모달)만 둔다.
+ */
 
-export const StHeader = styled.header`
-  padding: 0.5rem 0.25rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-`;
-
-export const StUserBar = styled.div`
-  display: flex;
+/* 이 장부가 누구 것인지 알려주는 작은 알약 — 소개 문단 첫 줄 */
+export const StOwnerPill = styled.span`
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-`;
-
-export const StUserName = styled.span`
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray600};
-`;
-
-export const StTitle = styled.h1`
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
-`;
-
-export const StSubtitle = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray500};
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.semantic.bg};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
 /* === 로그인 유도 === */
 
-export const StLoginCard = styled.section`
-  margin-top: 1rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1.1rem;
+export const StLoginCard = styled(StSection)`
   padding: 2rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -74,11 +57,8 @@ export const StLoginDesc = styled.p`
 
 /* === 카드 공통 === */
 
-export const StCard = styled.section`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1.1rem;
-  padding: 1.1rem;
+/* 이 페이지의 카드 한 장 = 공용 StSection. 안쪽 줄 간격만 더한다. */
+export const StCard = styled(StSection)`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -92,10 +72,8 @@ export const StCardHead = styled.div`
   flex-wrap: wrap;
 `;
 
-export const StCardTitle = styled.h2`
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray900};
+export const StCardTitle = styled(StSectionTitle)`
+  margin-bottom: 0;
 `;
 
 export const StCardHint = styled.p`
@@ -125,10 +103,14 @@ export const StError = styled.p`
 
 /* === 폼 === */
 
-export const StRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.7rem;
+/* 공용 필드 그리드는 560px 카드 기준이라, 두 칸 배치의 왼쪽 열(약 500px)에서는
+   한 줄씩 쌓인다. 이 페이지는 그 열이 폼 자리라 기준만 440px 로 낮춰 쓴다. */
+export const StRow = styled(StFieldGrid)`
+  gap: 0.9rem 1rem;
+
+  @container (min-width: 440px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 `;
 
 export const StLabel = styled.label`
@@ -139,11 +121,7 @@ export const StLabel = styled.label`
   color: ${({ theme }) => theme.colors.gray600};
 `;
 
-export const StFieldName = styled.span`
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray700};
-`;
+export const StFieldName = styled(StFieldLabel)``;
 
 export const StInput = styled.input`
   width: 100%;
@@ -202,26 +180,20 @@ export const StChip = styled.button<{ $active: boolean; $color: string }>`
   transition: all 0.12s;
 `;
 
-// 냈어요 / 받았어요 2칸 토글
-export const StSegmentRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.4rem;
-`;
+// 냈어요 / 받았어요 2칸 토글 — 공용 세그먼트(테두리 하나짜리 트랙)를 그대로 쓴다
+export const StSegmentRow = styled(StSegmented)``;
 
-export const StSegmentBtn = styled.button<{ $active: boolean; $color: string }>`
-  min-height: 2.75rem;
-  border: 1px solid
-    ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray200)};
-  background: ${({ $active, $color, theme }) =>
-    $active ? `${$color}1a` : theme.colors.white};
-  color: ${({ $active, $color, theme }) =>
-    $active ? $color : theme.colors.gray500};
+// 고른 쪽만 방향 색(💸 분홍 / 💰 초록)으로 물들인다
+export const StSegmentBtn = styled(StSegmentButton)<{ $color: string }>`
+  min-height: 2.6rem;
   font-size: 0.9rem;
-  font-weight: 900;
-  border-radius: 0.7rem;
-  cursor: pointer;
-  transition: all 0.12s;
+  color: ${({ $active, $color, theme }) =>
+    $active ? $color : theme.semantic.subText};
+
+  &:hover:not(:disabled) {
+    color: ${({ $active, $color, theme }) =>
+      $active ? $color : theme.semantic.text};
+  }
 `;
 
 export const StActions = styled.div`
@@ -248,9 +220,9 @@ export const StNameChip = styled.button<{ $active: boolean }>`
   transition: all 0.12s;
 `;
 
+/* 카드 안이라 테두리 없이 배경 띠로만 구분한다 (테두리는 카드 한 겹만) */
 export const StPersonBox = styled.div`
-  background: ${({ theme }) => theme.colors.gray50};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  background: ${({ theme }) => theme.semantic.bg};
   border-radius: 0.9rem;
   padding: 0.9rem;
   display: flex;
@@ -291,8 +263,7 @@ export const StTotalsGrid = styled.div`
 `;
 
 export const StTotalBox = styled.div<{ $color: string }>`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
+  background: ${({ theme }) => theme.semantic.bg};
   border-left: 3px solid ${({ $color }) => $color};
   border-radius: 0.75rem;
   padding: 0.65rem 0.8rem;
@@ -330,7 +301,6 @@ export const StBadge = styled.span<{ $tone: "good" | "bad" | "neutral" }>`
 // "지난번 결혼식에 50,000원 냈어요" 즉답 문구
 export const StAnswer = styled.p`
   background: ${({ theme }) => theme.colors.blue50};
-  border: 1px solid ${({ theme }) => theme.colors.blue100};
   color: ${({ theme }) => theme.colors.gray800};
   border-radius: 0.75rem;
   padding: 0.7rem 0.85rem;
@@ -473,18 +443,20 @@ export const StBarFill = styled.div<{ $pct: number; $color: string }>`
 
 /* === 전체 내역 === */
 
+/* 장부 줄은 카드 속 카드가 아니라 실선으로 나눈 한 줄씩 */
 export const StRecordList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
 `;
 
 export const StRecordRow = styled.div`
   display: flex;
   gap: 0.75rem;
-  padding: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.9rem;
+  padding: 0.8rem 0;
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 `;
 
 export const StRecordMain = styled.div`
@@ -560,19 +532,18 @@ export const StDelBtn = styled.button`
 export const StImportList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
 `;
 
 export const StImportRow = styled.div<{ $muted?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.9rem;
-  background: ${({ $muted, theme }) =>
-    $muted ? theme.colors.gray50 : theme.colors.white};
-  opacity: ${({ $muted }) => ($muted ? 0.7 : 1)};
+  padding: 0.8rem 0;
+  opacity: ${({ $muted }) => ($muted ? 0.55 : 1)};
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 `;
 
 export const StImportMeta = styled.div`
@@ -656,7 +627,6 @@ export const StBulkBar = styled.div`
   gap: 0.55rem;
   margin-bottom: 0.9rem;
   padding: 0.8rem 0.9rem;
-  border: 1px solid ${({ theme }) => theme.colors.blue200};
   border-radius: 0.8rem;
   background: ${({ theme }) => theme.colors.blue50};
 `;
@@ -805,8 +775,9 @@ export const StModalBox = styled.div`
   border-radius: 1.25rem;
   box-shadow: 0 18px 40px -12px rgba(23, 43, 77, 0.45);
 
-  /* 안쪽 카드 테두리는 모달 상자에 맡긴다 */
-  > section {
+  /* 안쪽 카드 테두리·아래 여백은 모달 상자에 맡긴다 */
+  > div {
     border: none;
+    margin-bottom: 0;
   }
 `;
