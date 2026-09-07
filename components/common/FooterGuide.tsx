@@ -2,12 +2,14 @@
 
 import styled from "styled-components";
 import Link from "next/link";
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ReactNode } from "react";
 
 interface TipItem {
   icon: ReactNode; // 이모지 or MUI 아이콘
   title: string;
   description: ReactNode; // 줄바꿈 등을 위해 ReactNode로
+  /** 팁 끝에 붙는 이동 링크 (예: 약속부터 잡아보기 →) */
+  link?: { href: string; label: string };
 }
 
 interface FooterGuideProps {
@@ -51,26 +53,7 @@ function splitSentences(text: string): string[] {
     .filter(Boolean);
 }
 
-const CLAMP_LINES = 4;
-
 function TipCard({ tip }: { tip: TipItem }) {
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const [isClamped, setIsClamped] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // 실제로 넘칠 때만 '더 보기'를 띄운다 (레이아웃이 흔들리지 않도록 접힌 상태에서 측정)
-  const measure = useCallback(() => {
-    const el = bodyRef.current;
-    if (!el || isExpanded) return;
-    setIsClamped(el.scrollHeight - el.clientHeight > 2);
-  }, [isExpanded]);
-
-  useEffect(() => {
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [measure]);
-
   const paragraphs =
     typeof tip.description === "string"
       ? splitSentences(tip.description)
@@ -80,21 +63,15 @@ function TipCard({ tip }: { tip: TipItem }) {
     <StTipCard>
       <StTipIcon aria-hidden>{tip.icon}</StTipIcon>
       <StTipTitle>{tip.title}</StTipTitle>
-      <StTipBody ref={bodyRef} $expanded={isExpanded}>
+      <StTipBody>
         {paragraphs ? (
           paragraphs.map((sentence, index) => <p key={index}>{sentence}</p>)
         ) : (
           <p>{tip.description}</p>
         )}
       </StTipBody>
-      {isClamped && (
-        <StMoreButton
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          aria-expanded={isExpanded}
-        >
-          {isExpanded ? "접기" : "더 보기"}
-        </StMoreButton>
+      {tip.link && (
+        <StTipLink href={tip.link.href}>{tip.link.label} →</StTipLink>
       )}
     </StTipCard>
   );
@@ -316,41 +293,31 @@ const StTipTitle = styled.h3`
   word-break: keep-all;
 `;
 
-const StTipBody = styled.div<{ $expanded: boolean }>`
+const StTipBody = styled.div`
   font-size: 0.86rem;
   line-height: 1.6;
   color: ${({ theme }) => theme.semantic.subText};
   word-break: keep-all;
   overflow-wrap: anywhere;
-
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-
-  ${({ $expanded }) =>
-    $expanded
-      ? ""
-      : `
-    display: -webkit-box;
-    -webkit-line-clamp: ${CLAMP_LINES};
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  `}
-
-  /* 접힌 상태(-webkit-box)에서도 문장 사이 간격이 유지되도록 */
-  p + p {
-    margin-top: 0.35rem;
-  }
 `;
 
-const StMoreButton = styled.button`
+const StTipLink = styled(Link)`
+  margin-top: 0.15rem;
   padding: 0;
+  text-decoration: none;
   font-size: 0.8rem;
   font-weight: 700;
   color: ${({ theme }) => theme.semantic.primary};
   background: none;
   border: none;
   cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.semantic.primary};

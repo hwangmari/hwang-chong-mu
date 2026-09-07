@@ -66,3 +66,7 @@ Each service lives under `app/<service>/` with its own `page.tsx` and colocated 
 - Pages are predominantly client components (`"use client"`) due to styled-components usage.
 - The `ModalProvider` (`components/common/ModalProvider.tsx`) provides app-wide modal context. Use the `useModal()` hook to get `openAlert(message)` (returns `Promise<void>`) and `openConfirm(message)` (returns `Promise<boolean>`).
 - Korean language throughout — UI text, comments, and variable naming conventions mix Korean comments with English code identifiers.
+
+### Layout: same-row cards match height
+
+When two or more cards/panels sit side by side in the same row (desktop two-column layouts, `StFlexBox`, `StFieldGrid`, dashboard grids), they must end at the same bottom edge. Prefer equal content structure (same number of rows: title → control → hint) over CSS stretching; if content differs, use `align-items: stretch` on the row and let the shorter card fill, never leave a shorter card floating above a taller neighbor. Do not add a field label on one side that the other side lacks (e.g., an input placeholder is enough when the card title already names the field). Check at 1280px before committing.

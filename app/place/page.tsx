@@ -234,7 +234,7 @@ export default function DinnerPage() {
       <StSection>
         <StSectionTitle>투표 만들기</StSectionTitle>
         <Input
-          label="투표 제목"
+          aria-label="투표 제목"
           placeholder="예) 4월 팀 회식 장소 투표"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -287,7 +287,11 @@ const StSearchRow = styled.div`
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
-  margin-bottom: 1rem;
+
+  /* 검색 결과가 붙을 때만 아래 간격 — 빈 상태에선 왼쪽 카드와 높이를 맞춘다 */
+  &:not(:last-child) {
+    margin-bottom: 1rem;
+  }
 
   & > div {
     flex: 1;

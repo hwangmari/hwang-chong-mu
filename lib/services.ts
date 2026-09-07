@@ -166,7 +166,7 @@ export const SERVICES: ServiceDef[] = [
     name: "경조사비 장부",
     shortName: "경조사비",
     desc: "축의금·부조금 주고받은 내역",
-    category: "work",
+    category: "daily",
     seoTitle: "황총무 경조사비 장부",
     seoDescription:
       "축의금·부조금을 사람별로 기록하고, 얼마 해야 할지 바로 찾아보는 장부",

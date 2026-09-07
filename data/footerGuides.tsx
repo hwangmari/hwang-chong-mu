@@ -4,6 +4,8 @@ interface TipItem {
   icon: ReactNode;
   title: string;
   description: ReactNode;
+  /** 팁 끝에 붙는 이동 링크 */
+  link?: { href: string; label: string };
 }
 
 interface GuideData {
@@ -96,6 +98,13 @@ export const CALC_GUIDE_DATA: GuideData = {
       title: "투명한 영수증 관리",
       description:
         "누가, 어디서, 무엇을 썼는지 기록하여 깔끔한 정산을 만드세요.",
+    },
+    {
+      icon: "📅",
+      title: "약속 잡기에서 바로 정산방으로",
+      description:
+        "약속 잡기에서 날짜가 확정된 방에는 '정산하기' 버튼이 생겨요. 누르면 그 약속의 멤버가 그대로 들어간 정산방이 만들어져 이름을 다시 칠 필요가 없어요. 멤버가 바뀐 뒤 다시 누르면 정산방 명단도 함께 갱신돼요.",
+      link: { href: "/meeting", label: "약속부터 잡아보기" },
     },
   ],
 };
@@ -285,7 +294,7 @@ export const OVERTIME_GUIDE_DATA: GuideData = {
       icon: "⚠️",
       title: "결과는 참고용이에요",
       description:
-        "이 계산기는 위 두 규칙을 그대로 산수로 옮긴 것뿐이에요. 실제 보상휴가는 회사 취업규칙·근로계약·인사팀 안내가 우선이니, 신청 전에 꼭 회사 기준과 맞춰 보세요. 규칙 상세와 예시는 위 카드의 '더보기'에서 확인할 수 있어요.",
+        "이 계산기는 위 두 규칙을 그대로 산수로 옮긴 것뿐이에요. 실제 보상휴가는 회사 취업규칙·근로계약·인사팀 안내가 우선이니, 신청 전에 꼭 회사 기준과 맞춰 보세요. 규칙 상세와 예시는 계산기 아래 '보상 규칙 요약'에서 바로 볼 수 있어요.",
     },
     {
       icon: "👥",

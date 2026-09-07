@@ -9,7 +9,14 @@ import type { TournamentEvent } from "./tournament/types";
 import { EVENTS } from "./data";
 import { TOURNAMENTS } from "./tournament/data";
 import { formatDate, formatEventDate } from "./format";
-import { createTennisEvent, createTournament, type NewTennisEvent } from "@/services/tennis";
+import {
+  createTennisEvent,
+  createTournament,
+  fetchTennisEvent,
+  isTournament,
+  type AnyTennisEvent,
+  type NewTennisEvent,
+} from "@/services/tennis";
 import { rememberMyEvent, type MyEvent, loadMyEvents } from "./myEvents";
 import FooterGuide from "@/components/common/FooterGuide";
 import { TENNIS_GUIDE_DATA } from "@/data/footerGuides";
@@ -35,11 +42,33 @@ export default function TennisHomePage() {
   const [myEvents, setMyEvents] = useState<MyEvent[]>([]);
   const [error, setError] = useState("");
   const [kind, setKind] = useState<"exchange" | "tournament">("exchange");
+  // 코드에 든 대회의 저장본(화면에서 편집해 DB에 남은 최신본). 있으면 명단·경기 수를 이걸로 보여준다.
+  const [savedCopies, setSavedCopies] = useState<Record<string, AnyTennisEvent>>({});
+
+  // 코드에 이미 들어 있는 대회는 '이 브라우저에서 만든 교류전' 줄에 다시 띄우지 않는다
+  const builtInIds = new Set<string>([...TOURNAMENTS.map((t) => t.id), ...EVENTS.map((e) => e.id)]);
+  const extraEvents = myEvents.filter((event) => !builtInIds.has(event.id));
 
   useEffect(() => {
     // localStorage는 브라우저에서만 읽을 수 있어서 첫 렌더 뒤에 채운다
     const timer = window.setTimeout(() => setMyEvents(loadMyEvents()), 0);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = [...TOURNAMENTS.map((t) => t.id), ...EVENTS.map((e) => e.id)];
+    Promise.all(ids.map((id) => fetchTennisEvent(id).catch(() => null))).then((rows) => {
+      if (cancelled) return;
+      const next: Record<string, AnyTennisEvent> = {};
+      rows.forEach((row) => {
+        if (row) next[row.id] = row;
+      });
+      setSavedCopies(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function create(input: NewTennisEvent) {
@@ -87,23 +116,31 @@ export default function TennisHomePage() {
         <StCardHead>
           <StCardTitle>📌 진행 중인 교류전</StCardTitle>
         </StCardHead>
-        {TOURNAMENTS.map((t) => (
-          <StEventLink key={t.id} as={Link} href={`/tennis/${t.id}`}>
-            <StEventTitle>🏆 {t.title}</StEventTitle>
-            <StEventMeta>
-              {formatDate(t.date)} {t.timeTbd ? "· 시간 미정" : t.startTime} · {t.place} · {t.teams.length}팀 더블 엘리미네이션 · 코트 {t.courts}면
-            </StEventMeta>
-          </StEventLink>
-        ))}
-        {EVENTS.map((event) => (
-          <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
-            <StEventTitle>🎾 {event.title}</StEventTitle>
-            <StEventMeta>
-              {formatEventDate(event)} · {event.place} · {event.players.length}명 · {event.matches.length}경기
-            </StEventMeta>
-          </StEventLink>
-        ))}
-        {myEvents.map((event) => (
+        {TOURNAMENTS.map((builtIn) => {
+          const saved = savedCopies[builtIn.id];
+          const t = saved && isTournament(saved) ? saved : builtIn;
+          return (
+            <StEventLink key={t.id} as={Link} href={`/tennis/${t.id}`}>
+              <StEventTitle>🏆 {t.title}</StEventTitle>
+              <StEventMeta>
+                {formatDate(t.date)} {t.timeTbd ? "· 시간 미정" : t.startTime} · {t.place} · {t.teams.length}팀 더블 엘리미네이션 · 코트 {t.courts}면
+              </StEventMeta>
+            </StEventLink>
+          );
+        })}
+        {EVENTS.map((builtIn) => {
+          const saved = savedCopies[builtIn.id];
+          const event = saved && !isTournament(saved) ? saved : builtIn;
+          return (
+            <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
+              <StEventTitle>🎾 {event.title}</StEventTitle>
+              <StEventMeta>
+                {formatEventDate(event)} · {event.place} · {event.players.length}명 · {event.matches.length}경기
+              </StEventMeta>
+            </StEventLink>
+          );
+        })}
+        {extraEvents.map((event) => (
           <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
             <StEventTitle>{event.title}</StEventTitle>
             <StEventMeta>{event.date} · 이 브라우저에서 만든 교류전</StEventMeta>
