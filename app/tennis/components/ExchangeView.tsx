@@ -84,6 +84,12 @@ export default function ExchangeView({ initialEvent }: Props) {
   const eventId = initialEvent.id;
   const [event, setEvent] = useState<TennisEvent | null>(initialEvent);
 
+  // [id]/page.tsx는 코드에 든 이벤트를 먼저 넘기고, 저장 공간 버전이 도착하면 같은 id로 다시 넘긴다.
+  // 여기서 갈아타지 않으면 첫 화면의 옛 명단·대진표가 그대로 남는다(2026-09-07: 18명으로 바꿨는데 19명이 보이던 문제).
+  useEffect(() => {
+    setEvent((prev) => (prev && prev.id === initialEvent.id && prev !== initialEvent ? initialEvent : prev ?? initialEvent));
+  }, [initialEvent]);
+
   const [tab, setTab] = useState<Tab>("bracket");
   const [scores, setScores] = useState<ScoreMap>({});
   const [mode, setMode] = useState<StorageMode>("cloud");

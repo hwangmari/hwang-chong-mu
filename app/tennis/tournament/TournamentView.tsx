@@ -90,6 +90,11 @@ function saveLocal(id: string, map: ScoreMap) {
 
 export default function TournamentView({ initialEvent }: Props) {
   const [event, setEvent] = useState<TournamentEvent>(initialEvent);
+
+  // 저장 공간 버전이 뒤늦게 도착하면 갈아탄다 (ExchangeView와 같은 이유)
+  useEffect(() => {
+    setEvent((prev) => (prev.id === initialEvent.id && prev !== initialEvent ? initialEvent : prev));
+  }, [initialEvent]);
   const eventId = event.id;
   const [tab, setTab] = useState<Tab>("bracket");
   const [scores, setScores] = useState<ScoreMap>({});
