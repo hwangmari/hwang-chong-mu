@@ -215,7 +215,7 @@ export default function MatchQueue({
           {reordering ? " 아직 시작하지 않은 경기만 ▲▼로 옮길 수 있어요." : ""}
         </StCardHint>
 
-        <StQueueList>
+        <StQueueList $single={reordering}>
           {list.map((match, index) => {
             const timing = timeline.byMatch.get(match.no);
             if (!timing) return null;

@@ -509,10 +509,18 @@ export const StCourtSlotMain = styled.div`
   }
 `;
 
-export const StQueueList = styled.div`
-  display: flex;
-  flex-direction: column;
+/* 경기 순서 목록. PC(1024px 이상)에서는 카드 두 열로 놓아 화면 폭을 쓰고 스크롤을 절반으로.
+   순서 바꾸기(▲▼) 중에는 위아래 순서가 곧 진행 순서라 한 열로 되돌린다. */
+export const StQueueList = styled.div<{ $single?: boolean }>`
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 0.6rem;
+  align-items: start;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    grid-template-columns: ${({ $single }) => ($single ? "1fr" : "repeat(2, minmax(0, 1fr))")};
+    gap: 0.75rem;
+  }
 `;
 
 
