@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import WorkoutShell from "./components/WorkoutShell";
+import { byId } from "@/lib/services";
+
+// 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
+const service = byId("workout");
 
 export const metadata: Metadata = {
-  title: "황총무 운동 기록",
-  description: "러닝과 웨이트 기록을 모아 성장 그래프로 보여주는 운동 수첩",
+  title: service.seoTitle,
+  description: service.seoDescription,
 };
 
 export default function WorkoutLayout({

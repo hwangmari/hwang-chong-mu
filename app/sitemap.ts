@@ -1,22 +1,17 @@
 import type { MetadataRoute } from "next";
 import { BLOG_POSTS } from "./blog/data";
+import { SERVICES } from "@/lib/services";
 
 const SITE_URL = "https://www.hwang-lab.kr";
 
+// 로그인해야만 쓰는 서비스(경조사비 장부)는 검색에 올리지 않는다.
+const SERVICE_ROUTES = SERVICES.filter(
+  (service) => service.access !== "login",
+).map((service) => service.href);
+
 const STATIC_ROUTES = [
   "",
-  "/meeting",
-  "/calc",
-  "/overtime",
-  "/place",
-  "/account-book",
-  "/habit",
-  "/daily",
-  "/diet",
-  "/game",
-  "/tennis",
-  "/workout",
-  "/schedule",
+  ...SERVICE_ROUTES,
   "/blog",
   "/portfolio",
   "/privacy",

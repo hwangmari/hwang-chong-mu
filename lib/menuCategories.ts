@@ -1,3 +1,7 @@
+// 메뉴 목록 화면(홈 "모든 도구", 헤더 메뉴)이 쓰는 모양.
+// 이름·아이콘·설명은 직접 적지 않고 lib/services.ts(단일 출처)에서 만들어 온다.
+import { CATEGORIES, SERVICES } from "./services";
+
 export type MenuItem = {
   href: string;
   icon: string;
@@ -11,112 +15,22 @@ export type MenuCategory = {
   items: MenuItem[];
 };
 
-export const MENU_CATEGORIES: MenuCategory[] = [
-  {
-    title: "친구들과 함께",
-    emoji: "🤝",
-    items: [
-      {
-        href: "/meeting",
-        icon: "📅",
-        title: "약속 잡기",
-        desc: "친구들과 일정을 잡는 법",
-      },
-      {
-        href: "/calc",
-        icon: "💸",
-        title: "여행 경비 계산기",
-        desc: "각자 낸 대로 적으면 송금 최소화",
-      },
-      {
-        href: "/place",
-        icon: "📍",
-        title: "장소잡기",
-        desc: "네이버 검색으로 후보를 골라 투표",
-      },
-      {
-        href: "/game",
-        icon: "🎮",
-        title: "게임방",
-        desc: "심심할 땐 랜덤 게임",
-      },
-      {
-        href: "/tennis",
-        icon: "🎾",
-        title: "테니스 교류전",
-        desc: "대진표 보고 점수 넣으면 승점 순위",
-      },
-    ],
-  },
-  {
-    title: "일과 시간",
-    emoji: "💼",
-    items: [
-      {
-        href: "/overtime",
-        icon: "🌙",
-        title: "야근 계산기",
-        desc: "보상휴가 기준을 빠르게 계산",
-      },
-      {
-        href: "/schedule",
-        icon: "🗓️",
-        title: "업무 캘린더",
-        desc: "프로젝트 일정 관리",
-      },
-    ],
-  },
-  {
-    title: "매일의 기록",
-    emoji: "🌱",
-    items: [
-      {
-        href: "/account-book",
-        icon: "🧾",
-        title: "가계부",
-        desc: "수입/지출을 한눈에 관리",
-      },
-      {
-        href: "/gift-log",
-        icon: "🎁",
-        title: "경조사비 장부",
-        desc: "축의금·부조금 주고받은 내역",
-      },
-      {
-        href: "/habit",
-        icon: "🥕",
-        title: "습관 관리",
-        desc: "매일매일 쌓이는 성실함",
-      },
-      {
-        href: "/daily",
-        icon: "📓",
-        title: "일일 기록",
-        desc: "한 줄 일기 + 체크리스트 그래프",
-      },
-      {
-        href: "/diet",
-        icon: "⚖️",
-        title: "체중 관리",
-        desc: "평생 숙제 다이어트!",
-      },
-      {
-        href: "/workout",
-        icon: "🏋️‍♂️",
-        title: "운동 기록",
-        desc: "러닝·웨이트 성장 그래프",
-      },
-      {
-        href: "/inbody",
-        icon: "🧬",
-        title: "인바디 기록",
-        desc: "원하는 지표만 골라 추이 보기",
-      },
-    ],
-  },
-];
+export const MENU_CATEGORIES: MenuCategory[] = [...CATEGORIES]
+  .sort((a, b) => a.order - b.order)
+  .map((category) => ({
+    title: category.title,
+    emoji: category.emoji,
+    items: SERVICES.filter((service) => service.category === category.id).map(
+      (service) => ({
+        href: service.href,
+        icon: service.icon,
+        title: service.name,
+        desc: service.desc,
+      }),
+    ),
+  }));
 
-// 기타 독립 페이지 (카테고리 외)
+// 기타 독립 페이지 (카테고리 외) — 서비스가 아니라서 등록소에 없다.
 export const EXTRA_MENU: MenuItem[] = [
   { href: "/portfolio", icon: "👩‍💻", title: "포트폴리오", desc: "" },
   { href: "/blog", icon: "📝", title: "블로그", desc: "" },

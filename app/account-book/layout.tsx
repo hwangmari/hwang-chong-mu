@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import { byId } from "@/lib/services";
+
+// 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
+const service = byId("account-book");
 
 export const metadata: Metadata = {
-  title: "황총무 가계부",
-  description: "문장등록과 월별 흐름으로 빠르게 쓰는 가계부",
+  title: service.seoTitle,
+  description: service.seoDescription,
   manifest: "/account-book/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "황총무 가계부",
+    title: service.seoTitle,
     statusBarStyle: "default",
   },
   formatDetection: {

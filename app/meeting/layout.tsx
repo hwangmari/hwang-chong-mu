@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { byId } from "@/lib/services";
+
+// 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
+const service = byId("meeting");
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hwang-lab.kr"),
-  title: "황총무의 약속 잡기",
-  description: "친구들과 약속을 가장 스마트하게 잡는 방법 📅",
+  title: service.seoTitle,
+  description: service.seoDescription,
   openGraph: {
-    title: "황총무의 약속 잡기",
+    title: service.seoTitle,
     description: "우리 언제 만날까? 여기서 투표해봐!",
   },
 };

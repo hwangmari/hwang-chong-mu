@@ -10,29 +10,19 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { EXTRA_MENU, MENU_CATEGORIES } from "@/lib/menuCategories";
+import { SERVICES, byId } from "@/lib/services";
 import { useAuth } from "@/hooks/useAuth";
 
-const ROUTE_CONFIG = [
+// 서비스 제목은 등록소(lib/services.ts)에서 가져온다. 서비스가 아닌 화면만 여기 직접 적는다.
+// 순서가 곧 매칭 우선순위다 — 서비스가 먼저라서 /account-book 이 /account 보다 먼저 걸린다.
+const ROUTE_CONFIG: { path: string; label: string; exact?: boolean }[] = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
   { path: "/my", label: "내 서비스 요약" },
-  { path: "/schedule", label: "업무 캘린더" },
-  { path: "/meeting", label: "약속 잡기" },
-  { path: "/place", label: "장소잡기" },
-  { path: "/calc", label: "여행 경비 계산기" },
-  { path: "/overtime", label: "야근 계산기" },
-  { path: "/account-book", label: "가계부" },
-  { path: "/daily", label: "일일 기록" },
-  { path: "/habit", label: "습관 관리" },
-  { path: "/diet", label: "체중 관리" },
-  { path: "/inbody", label: "인바디 기록" },
-  { path: "/gift-log", label: "경조사비 장부" },
-  { path: "/game", label: "황총무 게임방" },
-  { path: "/tennis", label: "테니스 교류전" },
+  ...SERVICES.map((service) => ({ path: service.href, label: service.name })),
   { path: "/portfolio", label: "포트폴리오" },
   { path: "/blog", label: "블로그" },
   { path: "/login", label: "로그인" },
   { path: "/account", label: "내 계정" },
-
   { path: "/ui-kit", label: "UI Kit 모음집" },
 ];
 
@@ -72,7 +62,7 @@ export default function GlobalHeader() {
         return;
       }
       const isRoomId = !isNaN(Number(parts[2]));
-      setCurrentTitle(isRoomId ? "게임 대기실" : "황총무 게임방");
+      setCurrentTitle(isRoomId ? "게임 대기실" : byId("game").name);
       return;
     }
 

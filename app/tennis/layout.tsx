@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { byId } from "@/lib/services";
+
+// 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
+const service = byId("tennis");
 
 export const metadata: Metadata = {
-  title: "황총무 테니스 교류전",
-  description: "테니스 교류전 대진표를 보고 경기 점수를 넣으면 승점 순위가 바로 나오는 서비스",
+  title: service.seoTitle,
+  description: service.seoDescription,
 };
 
 export default function TennisLayout({

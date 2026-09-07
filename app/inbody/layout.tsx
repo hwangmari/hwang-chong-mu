@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import WorkoutAuthGate from "../workout/components/WorkoutAuthGate";
+import { byId } from "@/lib/services";
+
+// 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
+const service = byId("inbody");
 
 export const metadata: Metadata = {
-  title: "황총무 인바디 기록",
-  description: "원하는 인바디 지표만 골라 추이를 보는 개인 체성분 수첩",
+  title: service.seoTitle,
+  description: service.seoDescription,
 };
 
 export default function InBodyLayout({
