@@ -3,12 +3,26 @@
 import Link from "next/link";
 import styled from "styled-components";
 import { useAuth } from "@/hooks/useAuth";
+import { SkeletonBlock } from "@/components/common/Skeleton";
 
 // 메인의 계정 안내: 로그인 없이도 쓰지만, 로그인하면 여러 서비스를 한 계정으로 이어서 쓸 수 있다는 안내.
 // 로그인 전: 로그인/회원가입으로, 로그인 후: 내 서비스 요약으로.
 export default function LoginInvite() {
   const { user, loading } = useAuth();
-  if (loading) return <StBox aria-busy="true" />; // 높이만 잡아 두어 화면이 튀지 않게
+  // 로그인 확인 중: 빈 상자 대신 실제 배치(제목·설명·버튼) 모양의 스켈레톤으로 영역을 유지한다
+  if (loading) {
+    return (
+      <StBox aria-busy="true" aria-label="계정 안내 불러오는 중">
+        <StText>
+          <SkeletonBlock width="14rem" height="1.15rem" />
+          <SkeletonBlock width="min(34rem, 100%)" height="0.9rem" />
+        </StText>
+        <StActions>
+          <SkeletonBlock width="9.5rem" height="2.6rem" radius="0.8rem" />
+        </StActions>
+      </StBox>
+    );
+  }
 
   return (
     <StBox>
