@@ -29,7 +29,7 @@ export function useOvertimeView({ todayKey, records, activeRule }: Params) {
   const [currentMonth, setCurrentMonth] = useState(() => parseDateKey(todayKey));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showWeekends, setShowWeekends] = useState(false);
-  const [isRecordsExpanded, setIsRecordsExpanded] = useState(false);
+  const [isRecordsExpanded, setIsRecordsExpanded] = useState(true);
   const [targetUsableDays, setTargetUsableDays] = useState(1);
 
   const currentMonthKey = useMemo(

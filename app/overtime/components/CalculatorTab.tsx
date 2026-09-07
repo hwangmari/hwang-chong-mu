@@ -1,16 +1,18 @@
 import { OvertimeSummary } from "@/app/overtime/types";
 import {
   CompactInput,
-  DurationCard,
   DurationInputs,
-  FieldLabel,
   GuideText,
   PrimaryButton,
   ResultBox,
-  SplitGrid,
   TabPanel,
   UnitText,
 } from "@/app/overtime/components/styles";
+import {
+  StField,
+  StFieldGrid,
+  StFieldLabel,
+} from "@/components/styled/layout.styled";
 import TargetGuideCard from "@/app/overtime/components/TargetGuideCard";
 
 interface CalculatorTabProps {
@@ -56,15 +58,9 @@ export default function CalculatorTab({
 }: CalculatorTabProps) {
   return (
     <TabPanel>
-      <GuideText>
-        시간/분으로 입력할 수 있어요.
-        <br />분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로 `4시간
-        0분` 으로 바뀝니다.
-      </GuideText>
-
-      <SplitGrid>
-        <DurationCard>
-          <FieldLabel>10시 전 야근</FieldLabel>
+      <StFieldGrid>
+        <StField>
+          <StFieldLabel>10시 전 야근</StFieldLabel>
           <DurationInputs>
             <CompactInput
               type="text"
@@ -86,10 +82,10 @@ export default function CalculatorTab({
             />
             <UnitText>분</UnitText>
           </DurationInputs>
-        </DurationCard>
+        </StField>
 
-        <DurationCard>
-          <FieldLabel>10시 이후 야근</FieldLabel>
+        <StField>
+          <StFieldLabel>10시 이후 야근</StFieldLabel>
           <DurationInputs>
             <CompactInput
               type="text"
@@ -111,8 +107,14 @@ export default function CalculatorTab({
             />
             <UnitText>분</UnitText>
           </DurationInputs>
-        </DurationCard>
-      </SplitGrid>
+        </StField>
+      </StFieldGrid>
+
+      <GuideText>
+        시간/분으로 입력할 수 있어요.
+        <br />분 칸에 `240`처럼 넣으면 포커스를 벗어날 때 자동으로 `4시간
+        0분` 으로 바뀝니다.
+      </GuideText>
 
       <PrimaryButton type="button" onClick={onCalculate}>
         계산하기

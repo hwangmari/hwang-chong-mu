@@ -32,8 +32,6 @@ export const OVERTIME_RULES: Record<OvertimeRuleId, OvertimeRule> = {
       { label: "0.25일 사용 가능 기준", value: "보상시간 120분" },
       { label: "발생 일수 표기", value: "분 단위로 계속 누적" },
     ],
-    collapsedHint:
-      "보상 규칙 요약과 10시 전 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.",
     exampleText:
       "예시: 15시간을 넘긴 뒤에는 10시 전 80분 또는 10시 이후 60분이 쌓이면 사용 가능 0.25일이 됩니다.",
   },
@@ -56,8 +54,6 @@ export const OVERTIME_RULES: Record<OvertimeRuleId, OvertimeRule> = {
       { label: "반영 단위", value: "10분 단위로 계산" },
       { label: "발생 일수 표기", value: "분 단위로 계속 누적" },
     ],
-    collapsedHint:
-      "보상 규칙 요약과 18:30 이후 1.5배 기준 휴가 가이드는 더보기로 펼쳐서 확인할 수 있어요.",
     exampleText:
       "예시: 18:30 이후 실제 야근 80분이 쌓이면 120분 보상으로 계산되어 사용 가능 0.25일이 됩니다.",
   },

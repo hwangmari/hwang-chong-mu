@@ -13,12 +13,12 @@ import {
   StorageInlineField,
   StorageInput,
   StorageLabel,
-  StorageModeButton,
   StorageModeTabs,
   StorageSetupCard,
   StorageSetupGrid,
   StorageTitle,
 } from "@/app/overtime/components/styles";
+import { StSegmentButton } from "@/components/styled/layout.styled";
 
 interface StorageModeCardProps {
   storageMode: StorageMode;
@@ -63,20 +63,20 @@ export default function StorageModeCard({
           </StorageDescription>
         </div>
         <StorageModeTabs>
-          <StorageModeButton
+          <StSegmentButton
             type="button"
-            $isActive={storageMode === "local"}
+            $active={storageMode === "local"}
             onClick={() => onChangeStorageMode("local")}
           >
             로컬 저장
-          </StorageModeButton>
-          <StorageModeButton
+          </StSegmentButton>
+          <StSegmentButton
             type="button"
-            $isActive={storageMode === "server"}
+            $active={storageMode === "server"}
             onClick={() => onChangeStorageMode("server")}
           >
             서버 저장
-          </StorageModeButton>
+          </StSegmentButton>
         </StorageModeTabs>
       </StorageHeader>
 

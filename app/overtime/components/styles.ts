@@ -1,6 +1,11 @@
 import styled from "styled-components";
+import {
+  StSegmented,
+} from "@/components/styled/layout.styled";
 
 export const SurfaceCard = styled.section`
+  /* 안쪽 StFieldGrid 가 '카드 폭'을 기준으로 열 수를 정할 수 있게 */
+  container-type: inline-size;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.semantic.border};
   border-radius: 1rem;
@@ -11,42 +16,15 @@ export const SurfaceCard = styled.section`
   }
 `;
 
-/* 넓은 화면에서 계산 요건 + 탭을 한 줄에 놓는 래퍼 */
-export const ControlRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-
-  @media (min-width: 900px) {
-    flex-direction: row;
-    align-items: center;
-
-    > *:first-child {
-      flex: 1.7;
-      min-width: 0;
-      margin-bottom: 0;
-    }
-    > *:last-child {
-      flex: 1;
-      min-width: 0;
-      margin-bottom: 0;
-    }
-  }
-`;
-
+/* 계산 요건 줄 — 카드 없이 여백으로만 구분한다 (카드 안 카드 금지) */
 export const RuleSelectorCard = styled.div`
-  margin-bottom: 0;
-  padding: 1rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.semantic.bg};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  margin-bottom: 1.25rem;
 `;
 
 export const RuleSelectorHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.85rem;
 
   > div:first-child {
@@ -54,16 +32,18 @@ export const RuleSelectorHeader = styled.div`
     min-width: 0;
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 640px) {
     flex-direction: column;
-    gap: 0.75rem;
+    align-items: stretch;
+    gap: 0.6rem;
   }
 `;
 
 export const RuleSelectorTitle = styled.strong`
   display: block;
-  color: ${({ theme }) => theme.colors.gray800};
-  font-size: 0.98rem;
+  color: ${({ theme }) => theme.semantic.text};
+  font-size: 0.95rem;
+  font-weight: 800;
 `;
 
 export const RuleSelectorDescription = styled.p`
@@ -73,87 +53,20 @@ export const RuleSelectorDescription = styled.p`
   line-height: 1.55;
 `;
 
-export const RuleSelectorTabs = styled.div`
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  border-radius: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+/* 컨트롤이므로 트랙 테두리는 남긴다 (공용 StSegmented 에 폭만 얹음) */
+export const RuleSelectorTabs = styled(StSegmented)`
   width: 220px;
   flex-shrink: 0;
 
-  @media (max-width: 720px) {
+  @media (max-width: 640px) {
     width: 100%;
   }
 `;
 
-export const RuleSelectorButton = styled.button<{ $isActive: boolean }>`
-  flex: 1;
-  min-height: 2.4rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.6rem;
-  font-size: 0.88rem;
-  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
-  cursor: pointer;
-  text-align: center;
-  white-space: nowrap;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid
-    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
-
-  &:hover:not(:disabled) {
-    color: ${({ theme }) => theme.semantic.text};
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-export const TabList = styled.div`
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.semantic.bg};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  margin-bottom: 0;
-  align-self: center;
+/* 카드 첫 줄에 오는 탭 스트립 */
+export const TabList = styled(StSegmented)`
   width: 100%;
-`;
-
-export const TabButton = styled.button<{ $isActive: boolean }>`
-  flex: 1;
-  min-height: 2.5rem;
-  padding: 0.55rem 0.6rem;
-  border-radius: 0.6rem;
-  font-size: 0.9rem;
-  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid
-    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
-
-  &:hover:not(:disabled) {
-    color: ${({ theme }) => theme.semantic.text};
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
+  margin-bottom: 1.25rem;
 `;
 
 export const TabPanel = styled.div`
@@ -162,31 +75,12 @@ export const TabPanel = styled.div`
   gap: 1rem;
 `;
 
+/* 입력 밑에 붙는 안내 — 상자 없이 보조 문단으로 */
 export const GuideText = styled.p`
   margin: 0;
-  padding: 1rem 1.1rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  color: ${({ theme }) => theme.colors.gray700};
+  color: ${({ theme }) => theme.semantic.subText};
   line-height: 1.7;
-  font-size: 0.95rem;
-`;
-
-export const SplitGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const DurationCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.8rem;
-  padding: 1rem;
+  font-size: 0.88rem;
 `;
 
 export const DurationInputs = styled.div`
@@ -194,13 +88,7 @@ export const DurationInputs = styled.div`
   align-items: center;
   gap: 0.4rem;
   flex-wrap: nowrap;
-  margin-top: 0.6rem;
-`;
-
-export const FieldLabel = styled.label`
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray800};
+  margin-top: 0.45rem;
 `;
 
 export const CompactInput = styled.input`
@@ -238,20 +126,16 @@ export const PrimaryButton = styled.button`
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  border: 1px solid ${({ theme }) => theme.semantic.primary};
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+  border: none;
+  transition: background-color 0.15s ease;
 
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.blue700};
-    border-color: ${({ theme }) => theme.colors.blue700};
   }
 
   &:disabled {
     cursor: not-allowed;
     background: ${({ theme }) => theme.colors.gray200};
-    border-color: ${({ theme }) => theme.colors.gray200};
     color: ${({ theme }) => theme.colors.gray500};
   }
 
@@ -262,11 +146,9 @@ export const PrimaryButton = styled.button`
 
 export const DangerButton = styled(PrimaryButton)`
   background: ${({ theme }) => theme.semantic.danger};
-  border-color: ${({ theme }) => theme.semantic.danger};
 
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.rose500};
-    border-color: ${({ theme }) => theme.colors.rose500};
   }
 `;
 
@@ -298,13 +180,13 @@ export const DangerGhostButton = styled(SecondaryButton)`
   color: ${({ theme }) => theme.colors.rose600};
 `;
 
+/* 카드 안에서 색을 깔아 두는 유일한 면 — 테두리는 없다 */
 export const ResultBox = styled.pre`
   margin: 0;
   padding: 1rem 1.1rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.colors.gray100};
+  border-radius: 1rem;
+  background: ${({ theme }) => theme.semantic.bg};
   color: ${({ theme }) => theme.colors.gray800};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
   font-family: inherit;
   white-space: pre-wrap;
   line-height: 1.7;
@@ -326,9 +208,8 @@ export const StatCard = styled.div`
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem 1.1rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 1rem;
+  background: ${({ theme }) => theme.semantic.bg};
 
   span {
     color: ${({ theme }) => theme.colors.gray500};
@@ -341,14 +222,13 @@ export const StatCard = styled.div`
   }
 `;
 
+/* 카드 안 카드 대신 실선 한 줄로 구분한다 */
 export const StorageCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  padding: 1rem 1.1rem;
-  border-radius: 0.9rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  padding-top: 1.25rem;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const StorageHeader = styled.div`
@@ -380,46 +260,12 @@ export const StorageDescription = styled.p`
   line-height: 1.55;
 `;
 
-export const StorageModeTabs = styled.div`
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  border-radius: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+export const StorageModeTabs = styled(StSegmented)`
   width: 190px;
   flex-shrink: 0;
 
   @media (max-width: 720px) {
     width: 100%;
-  }
-`;
-
-export const StorageModeButton = styled.button<{ $isActive: boolean }>`
-  flex: 1;
-  min-height: 2.4rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.6rem;
-  font-size: 0.88rem;
-  font-weight: ${({ $isActive }) => ($isActive ? 800 : 600)};
-  cursor: pointer;
-  text-align: center;
-  white-space: nowrap;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-
-  background: ${({ $isActive, theme }) => ($isActive ? theme.colors.white : "transparent")};
-  border: 1px solid
-    ${({ $isActive, theme }) => ($isActive ? theme.semantic.border : "transparent")};
-  color: ${({ $isActive, theme }) => ($isActive ? theme.semantic.text : theme.semantic.subText)};
-
-  &:hover:not(:disabled) {
-    color: ${({ theme }) => theme.semantic.text};
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
   }
 `;
 
@@ -438,10 +284,6 @@ export const StorageSetupCard = styled.div`
   flex-direction: column;
   gap: 0.55rem;
   min-width: 0;
-  padding: 0.9rem;
-  border-radius: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.colors.white};
 `;
 
 export const StorageLabel = styled.label`
@@ -490,10 +332,6 @@ export const ConnectedRoomCard = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
@@ -551,10 +389,6 @@ export const NoticeCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 1rem 1.1rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
   color: ${({ theme }) => theme.colors.gray900};
 
   strong {
@@ -605,7 +439,8 @@ export const TargetDayButton = styled.button<{ $isActive: boolean }>`
 export const SectionDivider = styled.hr`
   margin: 1.75rem 0 1.25rem;
   border: none;
-  border-top: 1px solid ${({ theme }) => theme.colors.gray200};
+  height: 1px;
+  background: ${({ theme }) => theme.semantic.border};
 `;
 
 export const SectionHeader = styled.div`
@@ -617,7 +452,7 @@ export const SectionHeader = styled.div`
 export const SectionTitle = styled.h2`
   margin: 0;
   color: ${({ theme }) => theme.semantic.text};
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
 `;
 
@@ -797,10 +632,6 @@ export const AccordionSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.semantic.bg};
-  border-radius: 0.9rem;
-  padding: 1rem;
 `;
 
 export const AccordionHeader = styled.div`
@@ -808,22 +639,34 @@ export const AccordionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+
+  > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
 `;
 
+/* 테두리 없는 텍스트 버튼 */
 export const AccordionToggleButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray900};
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.semantic.primary};
   border-radius: 0.6rem;
-  padding: 0.55rem 0.8rem;
+  padding: 0.4rem 0.2rem;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 export const AccordionHint = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.gray500};
-  font-size: 0.92rem;
+  margin: 0.3rem 0 0;
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.88rem;
   line-height: 1.6;
 `;
 
@@ -840,7 +683,6 @@ export const RecordList = styled.ul`
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
 `;
 
 export const RecordItem = styled.li`
@@ -848,10 +690,11 @@ export const RecordItem = styled.li`
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 0.75rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  padding: 0.85rem 0;
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 
   @media (max-width: 640px) {
     align-items: flex-start;
@@ -884,10 +727,9 @@ export const EditButton = styled.button`
 
 export const EmptyItem = styled.div`
   padding: 1rem;
-  border-radius: 0.75rem;
-  background: ${({ theme }) => theme.colors.gray100};
+  border-radius: 1rem;
+  background: ${({ theme }) => theme.semantic.bg};
   color: ${({ theme }) => theme.colors.gray500};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
 `;
 
 export const RecordInfo = styled.div`
@@ -931,24 +773,19 @@ export const RuleList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
 `;
 
 export const GuidePanel = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 0.9rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  gap: 0.5rem;
+  /* 규칙 표 옆에 나란히 놓이므로 위 여백 없음 (좁은 화면에선 StFieldGrid gap이 간격) */
 `;
 
 export const GuideTitle = styled.h3`
   margin: 0;
-  color: ${({ theme }) => theme.colors.gray800};
-  font-size: 1rem;
+  color: ${({ theme }) => theme.semantic.text};
+  font-size: 0.95rem;
   font-weight: 800;
 `;
 
@@ -958,18 +795,18 @@ export const GuideList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
 `;
 
 export const GuideItem = styled.li`
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 0.7rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  padding: 0.7rem 0;
   color: ${({ theme }) => theme.colors.gray700};
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 
   strong {
     color: ${({ theme }) => theme.colors.gray900};
@@ -985,11 +822,12 @@ export const RuleItem = styled.li`
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.95rem 1rem;
-  border-radius: 0.75rem;
-  background: ${({ theme }) => theme.colors.gray100};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  padding: 0.7rem 0;
   color: ${({ theme }) => theme.colors.gray700};
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 
   strong {
     color: ${({ theme }) => theme.colors.gray900};

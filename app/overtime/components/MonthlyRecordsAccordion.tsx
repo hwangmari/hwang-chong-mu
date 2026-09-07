@@ -42,7 +42,7 @@ export default function MonthlyRecordsAccordion({
           {formatMonthLabel(currentMonth)} 저장된 야근 기록
         </SectionTitle>
         <AccordionToggleButton type="button" onClick={onToggleExpanded}>
-          {isExpanded ? "접기" : "더보기"}
+          {isExpanded ? "접기" : "펼치기"}
         </AccordionToggleButton>
       </AccordionHeader>
       {isExpanded ? (
@@ -67,9 +67,7 @@ export default function MonthlyRecordsAccordion({
           )}
         </RecordList>
       ) : (
-        <AccordionHint>
-          현재 월 기록은 더보기로 펼쳐서 확인할 수 있어요.
-        </AccordionHint>
+        <AccordionHint>지금은 목록을 접어 둔 상태예요.</AccordionHint>
       )}
     </AccordionSection>
   );

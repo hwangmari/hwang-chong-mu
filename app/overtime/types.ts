@@ -17,7 +17,6 @@ export interface OvertimeRule {
     label: string;
     value: string;
   }>;
-  collapsedHint: string;
   exampleText: string;
 }
 

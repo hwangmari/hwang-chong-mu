@@ -7,20 +7,22 @@ import {
 import { formatDisplayDate } from "@/app/overtime/utils";
 import {
   CompactInput,
-  DurationCard,
   DurationInputs,
   EditCancelButton,
   EmptyItem,
-  FieldLabel,
   PrimaryButton,
   QuickAddCard,
   QuickAddHeader,
   QuickAddTitle,
   RecordList,
   SelectedDatePanel,
-  SplitGrid,
   UnitText,
 } from "@/app/overtime/components/styles";
+import {
+  StField,
+  StFieldGrid,
+  StFieldLabel,
+} from "@/components/styled/layout.styled";
 import RecordItemRow from "@/app/overtime/components/RecordItemRow";
 
 interface SelectedDayPanelProps {
@@ -102,9 +104,9 @@ export default function SelectedDayPanel({
           </EmptyItem>
         )}
 
-        <SplitGrid>
-          <DurationCard>
-            <FieldLabel>10시 전 야근</FieldLabel>
+        <StFieldGrid>
+          <StField>
+            <StFieldLabel>10시 전 야근</StFieldLabel>
             <DurationInputs>
               <CompactInput
                 type="text"
@@ -128,10 +130,10 @@ export default function SelectedDayPanel({
               />
               <UnitText>분</UnitText>
             </DurationInputs>
-          </DurationCard>
+          </StField>
 
-          <DurationCard>
-            <FieldLabel>10시 이후 야근</FieldLabel>
+          <StField>
+            <StFieldLabel>10시 이후 야근</StFieldLabel>
             <DurationInputs>
               <CompactInput
                 type="text"
@@ -155,8 +157,8 @@ export default function SelectedDayPanel({
               />
               <UnitText>분</UnitText>
             </DurationInputs>
-          </DurationCard>
-        </SplitGrid>
+          </StField>
+        </StFieldGrid>
 
         <PrimaryButton
           type="button"

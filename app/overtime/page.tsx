@@ -8,12 +8,11 @@ import RecordsTab from "@/app/overtime/components/RecordsTab";
 import RuleGuideAccordion from "@/app/overtime/components/RuleGuideAccordion";
 import RuleSelector from "@/app/overtime/components/RuleSelector";
 import {
-  ControlRow,
   SectionDivider,
   SurfaceCard,
-  TabButton,
   TabList,
 } from "@/app/overtime/components/styles";
+import { StSegmentButton } from "@/components/styled/layout.styled";
 import {
   DAY_REWARD_SECONDS,
   OVERTIME_RULES,
@@ -37,7 +36,6 @@ export default function OvertimePage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>("calculator");
   const [ruleId, setRuleId] = useState<OvertimeRuleId>("threshold_15h");
-  const [isRuleGuideExpanded, setIsRuleGuideExpanded] = useState(false);
   const hasLoadedRuleRef = useRef(false);
 
   const activeRule = OVERTIME_RULES[ruleId];
@@ -181,30 +179,28 @@ export default function OvertimePage() {
       }}
     >
       <SurfaceCard>
-        <ControlRow>
-          <RuleSelector
-            activeRuleId={ruleId}
-            activeRuleDescription={activeRule.description}
-            onChangeRule={handleChangeRule}
-          />
+        <TabList>
+          <StSegmentButton
+            type="button"
+            $active={activeTab === "calculator"}
+            onClick={() => setActiveTab("calculator")}
+          >
+            계산기
+          </StSegmentButton>
+          <StSegmentButton
+            type="button"
+            $active={activeTab === "records"}
+            onClick={() => setActiveTab("records")}
+          >
+            기록
+          </StSegmentButton>
+        </TabList>
 
-          <TabList>
-            <TabButton
-              type="button"
-              $isActive={activeTab === "calculator"}
-              onClick={() => setActiveTab("calculator")}
-            >
-              계산기
-            </TabButton>
-            <TabButton
-              type="button"
-              $isActive={activeTab === "records"}
-              onClick={() => setActiveTab("records")}
-            >
-              기록
-            </TabButton>
-          </TabList>
-        </ControlRow>
+        <RuleSelector
+          activeRuleId={ruleId}
+          activeRuleDescription={activeRule.description}
+          onChangeRule={handleChangeRule}
+        />
 
         {activeTab === "calculator" ? (
           <CalculatorTab
@@ -309,10 +305,8 @@ export default function OvertimePage() {
 
         {/* 보상 규칙 요약은 계산기 바로 아래 — 카드 하나로 두기엔 작다 */}
         <RuleGuideAccordion
-          isExpanded={isRuleGuideExpanded}
           activeRule={activeRule}
           guideItems={activeRuleGuide}
-          onToggle={() => setIsRuleGuideExpanded((prev) => !prev)}
         />
       </SurfaceCard>
     </ServiceLayout>
