@@ -22,6 +22,11 @@ import {
   setStoredDailyAccessCode,
 } from "./storage";
 import { useModal } from "@/components/common/ModalProvider";
+import { useAuth } from "@/hooks/useAuth";
+import type { RoomService } from "@/lib/roomServices";
+
+// 계정에 등록된 방 한 줄 (/api/auth/rooms). 일일 기록장은 service === "daily".
+type LinkedRoom = { id: string; service: RoomService; roomId: string; label: string };
 
 export default function DailyCreatePage() {
   const router = useRouter();
@@ -33,10 +38,31 @@ export default function DailyCreatePage() {
   const [openAccessCode, setOpenAccessCode] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const { user } = useAuth();
+  // 로그인 사용자가 이 계정으로 열어 본 기록장들 — ID·비밀번호를 다시 치지 않고 바로 들어간다
+  const [myNotebooks, setMyNotebooks] = useState<LinkedRoom[]>([]);
 
   useEffect(() => {
     clearLegacyDailyLocalData();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setMyNotebooks([]);
+      return;
+    }
+    let active = true;
+    fetch("/api/auth/rooms")
+      .then((res) => (res.ok ? res.json() : { rooms: [] }))
+      .then((data: { rooms?: LinkedRoom[] }) => {
+        if (!active) return;
+        setMyNotebooks((data.rooms ?? []).filter((room) => room.service === "daily"));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const addItem = () => setItems((prev) => [...prev, ""]);
 
@@ -110,7 +136,7 @@ export default function DailyCreatePage() {
       intro={{
         icon: "📓",
         title: "일일 기록",
-        description: "이제 기록은 브라우저가 아니라 서버에서 불러옵니다.",
+        description: "한 줄 일기와 체크리스트를 하루 30초에 남겨요. 기록은 서버에 저장돼 어느 기기에서든 이어서 써요.",
       }}
       guide={{
         title: DAILY_GUIDE_DATA.title,
@@ -118,6 +144,29 @@ export default function DailyCreatePage() {
         tips: DAILY_GUIDE_DATA.tips,
       }}
     >
+      {/* 로그인 사용자: 이 계정으로 열어 본 기록장은 바로 이어서 */}
+      {user && myNotebooks.length > 0 && (
+        <StSection>
+          <StSectionTitle>내 기록장</StSectionTitle>
+          <MyNotebookList>
+            {myNotebooks.map((room) => (
+              <MyNotebookButton
+                key={room.id}
+                type="button"
+                onClick={() => router.push(`/daily/${room.roomId}`)}
+              >
+                <span aria-hidden="true">📓</span>
+                <strong>{room.label || room.roomId}</strong>
+                <small>이어서 쓰기 →</small>
+              </MyNotebookButton>
+            ))}
+          </MyNotebookList>
+          <MyNotebookHint>
+            {user.nickname} 계정에 등록된 기록장이에요. 기록장을 한 번 열면 여기에 자동으로 등록돼요.
+          </MyNotebookHint>
+        </StSection>
+      )}
+
       <StSection>
         <StFieldGrid>
           <StField>
@@ -208,6 +257,63 @@ export default function DailyCreatePage() {
     </ServiceLayout>
   );
 }
+
+const MyNotebookList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const MyNotebookButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.text};
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  strong {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.primary};
+  }
+
+  &:hover {
+    background: ${({ theme }) => theme.semantic.bg};
+    border-color: ${({ theme }) => theme.semantic.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.semantic.primary};
+    outline-offset: 2px;
+  }
+`;
+
+const MyNotebookHint = styled.p`
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.semantic.subText};
+  word-break: keep-all;
+`;
 
 const HeaderRow = styled.div`
   display: flex;

@@ -398,7 +398,7 @@ const StMenuGrid = styled.div`
 
   @media ${({ theme }) => theme.media.desktop} {
     display: grid;
-    grid-template-columns: 1.1fr 1fr 1.1fr 0.9fr;
+    grid-template-columns: 1.1fr 0.95fr 0.95fr 1.1fr 0.8fr;
     gap: 0.5rem;
     align-items: start;
   }

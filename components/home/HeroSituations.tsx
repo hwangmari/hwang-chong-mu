@@ -112,6 +112,12 @@ const rise = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+/* 글자가 다 뜬 뒤 형광펜이 왼쪽에서 오른콽으로 그어진다 */
+const sweep = keyframes`
+  from { background-size: 0% 100%; }
+  to { background-size: 100% 100%; }
+`;
+
 /* PC: 왼쪽 글(눈썹·제목·설명·버튼) / 오른쪽 데모. 폰: 눈썹 → 제목 → 데모 → 설명 → 버튼 순으로 한 열 */
 const StHeroGrid = styled.div`
   display: grid;
@@ -176,7 +182,15 @@ const StQuestion = styled.h2`
 const StMark = styled.span`
   background-image: linear-gradient(transparent 58%, ${({ theme }) => theme.colors.amber200} 58%);
   background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 0% 100%;
   padding: 0 0.15em;
+  /* 제목(rise 0.45s)이 끝난 뒤 시작 — 손으로 긋는 속도감 */
+  animation: ${sweep} 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 0.5s both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-size: 100% 100%;
+  }
 `;
 
 const StAnswer = styled.p`

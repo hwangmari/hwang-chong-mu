@@ -12,6 +12,8 @@ export type MenuItem = {
 export type MenuCategory = {
   title: string;
   emoji: string;
+  /** 홈 '모든 도구' PC 3열 중 자리 (같은 번호는 위아래로 쌓임) */
+  column: 1 | 2 | 3;
   items: MenuItem[];
 };
 
@@ -20,6 +22,7 @@ export const MENU_CATEGORIES: MenuCategory[] = [...CATEGORIES]
   .map((category) => ({
     title: category.title,
     emoji: category.emoji,
+    column: category.column,
     items: SERVICES.filter((service) => service.category === category.id).map(
       (service) => ({
         href: service.href,

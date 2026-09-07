@@ -19,6 +19,12 @@ const FREQUENT = [
 const TOOL_COUNT = MENU_CATEGORIES.reduce((n, c) => n + c.items.length, 0);
 const RECENT_POSTS = [...BLOG_POSTS].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
 
+// 홈 '모든 도구': 묶음을 PC 열 번호별로 모은다 (가운데 열은 작은 묶음 둘이 위아래로)
+const TOOL_COLUMNS = ([1, 2, 3] as const).map((column) => ({
+  column,
+  categories: MENU_CATEGORIES.filter((category) => category.column === column),
+}));
+
 export default function Home() {
   return (
     <StMain className={displayFont.variable}>
@@ -70,23 +76,27 @@ export default function Home() {
           <StSectionHint>상황별로 골라 쓰세요. 대부분 로그인 없이 바로 열려요.</StSectionHint>
         </StSectionHead>
         <StCategoryGrid>
-          {MENU_CATEGORIES.map((category) => (
-            <StCategory key={category.title}>
-              <StCategoryTitle>
-                <span aria-hidden="true">{category.emoji}</span> {category.title}
-              </StCategoryTitle>
-              <StToolList>
-                {category.items.map((item) => (
-                  <StTool key={item.href} href={item.href}>
-                    <StToolIcon aria-hidden="true">{item.icon}</StToolIcon>
-                    <div>
-                      <strong>{item.title}</strong>
-                      <span>{item.desc}</span>
-                    </div>
-                  </StTool>
-                ))}
-              </StToolList>
-            </StCategory>
+          {TOOL_COLUMNS.map((column) => (
+            <StCategoryColumn key={column.column}>
+              {column.categories.map((category) => (
+                <StCategory key={category.title}>
+                  <StCategoryTitle>
+                    <span aria-hidden="true">{category.emoji}</span> {category.title}
+                  </StCategoryTitle>
+                  <StToolList>
+                    {category.items.map((item) => (
+                      <StTool key={item.href} href={item.href}>
+                        <StToolIcon aria-hidden="true">{item.icon}</StToolIcon>
+                        <div>
+                          <strong>{item.title}</strong>
+                          <span>{item.desc}</span>
+                        </div>
+                      </StTool>
+                    ))}
+                  </StToolList>
+                </StCategory>
+              ))}
+            </StCategoryColumn>
           ))}
         </StCategoryGrid>
       </StInner>
@@ -296,6 +306,18 @@ const StCategoryGrid = styled.div`
 
   @media ${({ theme }) => theme.media.mobile} {
     grid-template-columns: 1fr;
+  }
+`;
+
+const StCategoryColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+
+  /* 한 열에 묶음이 하나뿐이면 옆 열과 아래선을 맞추도록 늘린다 */
+  & > :only-child {
+    flex: 1;
   }
 `;
 

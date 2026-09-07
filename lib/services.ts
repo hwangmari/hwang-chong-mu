@@ -23,7 +23,7 @@ export type ServiceId =
   | "workout"
   | "inbody";
 
-export type ServiceCategoryId = "together" | "work" | "daily";
+export type ServiceCategoryId = "together" | "work" | "money" | "daily";
 
 // 이 서비스에 들어가려면 무엇이 필요한지
 // open  = 그냥 열린다 (로그인·비밀번호 없음)
@@ -58,12 +58,16 @@ export type ServiceCategory = {
   title: string;
   emoji: string;
   order: number;
+  /** 홈 '모든 도구'에서 PC 3열 중 몇 번째 열에 놓이는지. 같은 열 번호면 위아래로 쌓인다 */
+  column: 1 | 2 | 3;
 };
 
+// 4묶음이지만 PC 화면은 3열을 유지한다 — 작은 두 묶음(일과 시간·돈 관리)은 가운데 열에 위아래로 (2026-09-08 사용자 결정)
 export const CATEGORIES: ServiceCategory[] = [
-  { id: "together", title: "친구들과 함께", emoji: "🤝", order: 1 },
-  { id: "work", title: "일과 시간", emoji: "💼", order: 2 },
-  { id: "daily", title: "매일의 기록", emoji: "🌱", order: 3 },
+  { id: "together", title: "친구들과 함께", emoji: "🤝", order: 1, column: 1 },
+  { id: "work", title: "일과 시간", emoji: "💼", order: 2, column: 2 },
+  { id: "money", title: "돈 관리", emoji: "💰", order: 3, column: 2 },
+  { id: "daily", title: "몸과 습관", emoji: "🌱", order: 4, column: 3 },
 ];
 
 // 배열 순서 = 화면에 보이는 순서 (분류 안에서의 순서도 이 순서를 따른다)
@@ -166,7 +170,7 @@ export const SERVICES: ServiceDef[] = [
     name: "경조사비 장부",
     shortName: "경조사비",
     desc: "축의금·부조금 주고받은 내역",
-    category: "daily",
+    category: "money",
     seoTitle: "황총무 경조사비 장부",
     seoDescription:
       "축의금·부조금을 사람별로 기록하고, 얼마 해야 할지 바로 찾아보는 장부",
@@ -178,7 +182,7 @@ export const SERVICES: ServiceDef[] = [
     icon: "🧾",
     name: "가계부",
     desc: "수입/지출을 한눈에 관리",
-    category: "daily",
+    category: "money",
     seoTitle: "황총무 가계부",
     seoDescription: "문장등록과 월별 흐름으로 빠르게 쓰는 가계부",
     access: "room",
