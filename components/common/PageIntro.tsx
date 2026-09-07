@@ -87,13 +87,11 @@ const StIcon = styled.span`
   flex-shrink: 0;
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 0.8rem;
-  background: ${({ theme }) => theme.semantic.bg};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
+  /* 타일 테두리·배경 없이 이모지만 — 사용자 요청(2026-09-08) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   line-height: 1;
   animation: ${settle} 320ms ease-out both;
 
