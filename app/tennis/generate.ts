@@ -1,5 +1,5 @@
 // 대진표 자동 생성 (순수 함수).
-// 항상 지키는 것: 성별 규칙(남복 남4·여복 여4·혼복 팀마다 남1여1), 같은 묶음(동시에 뛰는 코트들)에 같은 사람 없음.
+// 항상 지키는 것: 성별 규칙(남복 남4·여복 여4·혼복 팀마다 남1여1, 잡복은 성별 무관), 같은 묶음(동시에 뛰는 코트들)에 같은 사람 없음.
 // 켜고 끄는 규칙(rules.ts): 전원 고른 출전, 짝 중복 없음, 연속 휴식 제한, 구력 균형, 연속 출전 없음, 팀 대항.
 // 방법: 우선순위(출전 적은 순 → 오래 쉰 순) + 약간의 무작위로 여러 번 만들어 벌점이 가장 낮은 안을 고른다.
 import { roundLabel, roundTime } from "./format";
@@ -15,7 +15,18 @@ import {
 } from "./rules";
 import type { EventDraft, Gender, Match, MatchType, Player, Round } from "./types";
 
-export type Split = { menMatches: number; womenMatches: number; mixedMatches: number };
+export type Split = {
+  menMatches: number;
+  womenMatches: number;
+  mixedMatches: number;
+  openMatches: number; // 잡복(성별 무관)
+};
+
+export const EMPTY_SPLIT: Split = { menMatches: 0, womenMatches: 0, mixedMatches: 0, openMatches: 0 };
+
+export function splitTotal(split: Split): number {
+  return split.menMatches + split.womenMatches + split.mixedMatches + split.openMatches;
+}
 
 export type BracketWarning = {
   level: "error" | "warn";
@@ -66,14 +77,22 @@ export function expectedAppearances(
 ): { label: string; perPlayer: number }[] {
   const groups = appearanceGroups(players, teamMatch);
   const teams = teamMatch ? new Set(groups.map((g) => g.key.split("|")[0])).size : 1;
+  // 잡복은 성별을 안 따지므로 (팀 대항이면 같은 소속 안에서) 인원 비율대로 나눠 갖는다
+  const sizeOf = new Map<string, number>();
+  for (const g of groups) {
+    const team = g.key.split("|")[0];
+    sizeOf.set(team, (sizeOf.get(team) ?? 0) + g.count);
+  }
   return groups.map((g) => {
-    const gender = g.key.split("|")[1];
+    const [team, gender] = g.key.split("|");
     // 팀 대항이면 한 경기의 자리가 팀 수만큼 나뉜다 (2팀이면 남복 한 경기에 팀당 남자 2명)
     const slots =
       gender === "M"
         ? (4 * split.menMatches + 2 * split.mixedMatches) / teams
         : (4 * split.womenMatches + 2 * split.mixedMatches) / teams;
-    return { label: g.label, perPlayer: g.count ? slots / g.count : 0 };
+    const size = sizeOf.get(team) ?? players.length;
+    const openSlots = size > 0 ? ((4 * split.openMatches) / teams) * (g.count / size) : 0;
+    return { label: g.label, perPlayer: g.count ? (slots + openSlots) / g.count : 0 };
   });
 }
 
@@ -82,7 +101,8 @@ export function suggestSplit(players: Player[], courts: number, total: number, t
   const men = players.filter((p) => p.gender === "M").length;
   const women = players.length - men;
 
-  let best: Split = { menMatches: 0, womenMatches: 0, mixedMatches: 0 };
+  // 자동 추천은 잡복을 쓰지 않는다 (잡복은 "직접 정하기"에서 넣는 종목)
+  let best: Split = { ...EMPTY_SPLIT };
   let bestScore = Number.POSITIVE_INFINITY;
 
   for (let mixed = 0; mixed <= total; mixed += 1) {
@@ -95,7 +115,7 @@ export function suggestSplit(players: Player[], courts: number, total: number, t
       if (men === 0 && (menM > 0 || mixed > 0)) continue;
       if (women === 0 && (womenM > 0 || mixed > 0)) continue;
 
-      const split = { menMatches: menM, womenMatches: womenM, mixedMatches: mixed };
+      const split: Split = { menMatches: menM, womenMatches: womenM, mixedMatches: mixed, openMatches: 0 };
       const rates = expectedAppearances(players, split, teamMatch).map((r) => r.perPlayer);
       const spread = Math.max(...rates) - Math.min(...rates);
       // 묶음 간 출전 횟수 차이가 작을수록 좋고, 혼복이 많을수록(교류 취지) 좋다.
@@ -117,12 +137,14 @@ export function orderedPool(split: Split, order: RoundOrder): MatchType[] {
   const men = Array<MatchType>(split.menMatches).fill("men");
   const women = Array<MatchType>(split.womenMatches).fill("women");
   const mixed = Array<MatchType>(split.mixedMatches).fill("mixed");
-  const total = men.length + women.length + mixed.length;
+  // 잡복은 "성별을 안 따지는 종목"이라 혼복과 같은 자리(뒤쪽·번갈아)에 둔다
+  const open = Array<MatchType>(split.openMatches).fill("open");
+  const total = men.length + women.length + mixed.length + open.length;
 
-  if (order === "mixedFirst") return [...mixed, ...men, ...women];
+  if (order === "mixedFirst") return [...mixed, ...open, ...men, ...women];
   if (order === "alternate") {
-    // 남복 → 여복 → 혼복 순으로 하나씩 번갈아 꺼낸다 (없는 종목은 건너뛴다)
-    const lists = [men, women, mixed];
+    // 남복 → 여복 → 혼복 → 잡복 순으로 하나씩 번갈아 꺼낸다 (없는 종목은 건너뛴다)
+    const lists = [men, women, mixed, open];
     const out: MatchType[] = [];
     let i = 0;
     while (out.length < total) {
@@ -132,15 +154,26 @@ export function orderedPool(split: Split, order: RoundOrder): MatchType[] {
     }
     return out;
   }
-  return [...men, ...women, ...mixed]; // sameFirst (기본)
+  return [...men, ...women, ...mixed, ...open]; // sameFirst (기본)
 }
 
-// 한 묶음에 들어간 종목들이 필요로 하는 남/여 인원
+// 한 묶음에 들어간 종목들이 꼭 필요로 하는 남/여 인원 (잡복은 성별을 안 따지므로 여기서 빠진다)
 function needPlayers(types: MatchType[], gender: Gender): number {
-  return types.reduce(
-    (sum, t) => sum + (t === "mixed" ? 2 : (t === "men") === (gender === "M") ? 4 : 0),
-    0,
-  );
+  return types.reduce((sum, t) => {
+    if (t === "open") return sum;
+    if (t === "mixed") return sum + 2;
+    return sum + ((t === "men") === (gender === "M") ? 4 : 0);
+  }, 0);
+}
+
+// 이 묶음을 이 인원으로 채울 수 있는지.
+// 남/여를 꼭 써야 하는 종목을 먼저 빼고, 남은 사람 수로 잡복(4명씩)을 채울 수 있어야 한다
+function fitsRound(types: MatchType[], men: number, women: number): boolean {
+  const needM = needPlayers(types, "M");
+  const needF = needPlayers(types, "F");
+  if (needM > men || needF > women) return false;
+  const openCount = types.filter((t) => t === "open").length;
+  return openCount * 4 <= men - needM + (women - needF);
 }
 
 // 직접 짠 순서(custom)가 쓸 수 있는지 확인한다. 문제가 있으면 사람이 읽을 이유를 돌려준다
@@ -160,14 +193,14 @@ export function checkCustomOrder(
   if (
     count("men") !== split.menMatches ||
     count("women") !== split.womenMatches ||
-    count("mixed") !== split.mixedMatches
+    count("mixed") !== split.mixedMatches ||
+    count("open") !== split.openMatches
   ) {
-    return `종목 수가 맞지 않아요. 남복 ${count("men")}/${split.menMatches} · 여복 ${count("women")}/${split.womenMatches} · 혼복 ${count("mixed")}/${split.mixedMatches}`;
+    const openPart = split.openMatches > 0 || count("open") > 0 ? ` · 잡복 ${count("open")}/${split.openMatches}` : "";
+    return `종목 수가 맞지 않아요. 남복 ${count("men")}/${split.menMatches} · 여복 ${count("women")}/${split.womenMatches} · 혼복 ${count("mixed")}/${split.mixedMatches}${openPart}`;
   }
-  const bad = customOrder.findIndex(
-    (types) => needPlayers(types, "M") > men || needPlayers(types, "F") > women,
-  );
-  if (bad >= 0) return `${bad + 1}번째 묶음은 남/여 인원이 모자라요.`;
+  const bad = customOrder.findIndex((types) => !fitsRound(types, men, women));
+  if (bad >= 0) return `${bad + 1}번째 묶음은 인원이 모자라요.`;
   return "";
 }
 
@@ -194,8 +227,7 @@ function planRoundTypes(
   // (예: 여자가 7명뿐인데 여자 복식 두 경기가 한 묶음에 몰린 경우)
   const plan: MatchType[][] = [];
   for (let r = 0; r < rounds; r += 1) plan.push(pool.slice(r * courts, (r + 1) * courts));
-  const fits = (types: MatchType[]) =>
-    needPlayers(types, "M") <= men && needPlayers(types, "F") <= women;
+  const fits = (types: MatchType[]) => fitsRound(types, men, women);
 
   for (let pass = 0; pass < rounds * courts + 10; pass += 1) {
     const bad = plan.findIndex((types) => !fits(types));
@@ -230,7 +262,7 @@ function planRoundTypes(
     const order = attempt === 0 ? pool : shuffle(pool, rand);
     const plan: MatchType[][] = [];
     for (let r = 0; r < rounds; r += 1) plan.push(order.slice(r * courts, (r + 1) * courts));
-    const ok = plan.every((types) => needPlayers(types, "M") <= men && needPlayers(types, "F") <= women);
+    const ok = plan.every((types) => fitsRound(types, men, women));
     if (ok) return plan;
   }
   return null;
@@ -248,7 +280,7 @@ type Tracker = {
 };
 
 // "꼭 같이 짝"인 사람은 그 짝이 될 수 있는 종목에만 나온다.
-// (남자 둘이면 남자 복식, 여자 둘이면 여자 복식, 남녀면 혼합 복식)
+// (남자 둘이면 남자 복식, 여자 둘이면 여자 복식, 남녀면 혼합 복식. 잡복은 아무나 짝이 된다)
 function mustPairFits(rules: RuleSettings, tracker: Tracker, name: string, type: MatchType): boolean {
   const partners = mustPartners(rules, name);
   if (partners.length === 0) return true;
@@ -257,6 +289,7 @@ function mustPairFits(rules: RuleSettings, tracker: Tracker, name: string, type:
   return partners.every((n) => {
     const other = tracker.byName.get(n);
     if (!other) return true; // 명단에 없는 이름은 무시한다
+    if (type === "open") return true; // 잡복은 성별을 안 따지니 누구든 짝이 될 수 있다
     if (type === "mixed") return me.gender !== other.gender;
     const gender: Gender = type === "men" ? "M" : "F";
     return me.gender === gender && other.gender === gender;
@@ -422,6 +455,11 @@ function pickTeamMatch(
 
   // 한 소속에서 이 종목의 한 팀(2명)을 뽑는다
   const pickSide = (pool: Player[]): [Player, Player] | null => {
+    if (type === "open") {
+      // 잡복은 성별을 안 따진다 — 이 소속에서 아무 두 명
+      const [a, b] = pickPlayers(pool, 2, round, tracker, rules, type, rand);
+      return a && b ? [a, b] : null;
+    }
     if (type === "mixed") {
       const [m] = pickPlayers(pool.filter((p) => p.gender === "M"), 1, round, tracker, rules, type, rand);
       const [f] = pickPlayers(pool.filter((p) => p.gender === "F"), 1, round, tracker, rules, type, rand);
@@ -521,7 +559,10 @@ function buildOnce(
             rules,
           );
         } else {
-          const pool = (type === "men" ? men : women).filter((p) => !used.has(p.name));
+          // 잡복은 성별을 안 따지므로 후보가 전원이다
+          const pool = (type === "men" ? men : type === "women" ? women : players).filter(
+            (p) => !used.has(p.name),
+          );
           const [p1, p2, p3, p4] = withMustPartners(
             pickPlayers(pool, 4, round, tracker, rules, type, rand),
             pool.filter((p) => !restsAt(rules, p.name, round)),
@@ -629,12 +670,15 @@ export function checkRuleRequirements(players: Player[], split: Split, rules: Ru
     partnerCount.set(b, (partnerCount.get(b) ?? 0) + 1);
     const ga = byName.get(a)?.gender;
     const gb = byName.get(b)?.gender;
-    if (ga !== gb && split.mixedMatches === 0)
-      return `${a} · ${b}는 남녀라 혼합 복식에서만 짝이 될 수 있는데, 혼합 복식이 0경기예요.`;
-    if (ga === gb && ga === "M" && split.menMatches === 0)
-      return `${a} · ${b}는 둘 다 남자라 남자 복식에서만 짝이 될 수 있는데, 남자 복식이 0경기예요.`;
-    if (ga === gb && ga === "F" && split.womenMatches === 0)
-      return `${a} · ${b}는 둘 다 여자라 여자 복식에서만 짝이 될 수 있는데, 여자 복식이 0경기예요.`;
+    // 잡복은 성별을 안 따지니 잡복이 한 경기라도 있으면 어떤 짝이든 만들 수 있다
+    if (split.openMatches === 0) {
+      if (ga !== gb && split.mixedMatches === 0)
+        return `${a} · ${b}는 남녀라 혼합 복식이나 잡복에서만 짝이 될 수 있는데, 둘 다 0경기예요.`;
+      if (ga === gb && ga === "M" && split.menMatches === 0)
+        return `${a} · ${b}는 둘 다 남자라 남자 복식이나 잡복에서만 짝이 될 수 있는데, 둘 다 0경기예요.`;
+      if (ga === gb && ga === "F" && split.womenMatches === 0)
+        return `${a} · ${b}는 둘 다 여자라 여자 복식이나 잡복에서만 짝이 될 수 있는데, 둘 다 0경기예요.`;
+    }
   }
   for (const [name, count] of partnerCount) {
     if (count > 1) return `${name} 님에게 "꼭 같이 짝"이 ${count}명 걸려 있어요. 한 명만 골라 주세요.`;
@@ -662,9 +706,10 @@ export function generateBracket(draft: EventDraft, attempts = 400): Generated | 
     menMatches: draft.menMatches,
     womenMatches: draft.womenMatches,
     mixedMatches: draft.mixedMatches,
+    openMatches: draft.openMatches ?? 0,
   };
-  if (split.menMatches + split.womenMatches + split.mixedMatches !== totalMatches) {
-    return { error: `남복·여복·혼복 경기 수의 합이 총 경기 수(${totalMatches})와 같아야 해요.` };
+  if (splitTotal(split) !== totalMatches) {
+    return { error: `남복·여복·혼복·잡복 경기 수의 합이 총 경기 수(${totalMatches})와 같아야 해요.` };
   }
 
   const requirementError = checkRuleRequirements(players, split, rules);
@@ -684,7 +729,7 @@ export function generateBracket(draft: EventDraft, attempts = 400): Generated | 
   const plan = planRoundTypes(split, courts, rounds, men, women, rules, rand);
   if (!plan) {
     return {
-      error: "이 인원으로는 묶음마다 필요한 남/여 선수 수를 채울 수 없어요. 총 경기 수를 줄여 보세요.",
+      error: "이 인원으로는 묶음마다 필요한 선수 수를 채울 수 없어요. 총 경기 수를 줄여 보세요.",
     };
   }
 
@@ -756,6 +801,7 @@ export function validateBracket(
         warnings.push({ level: "error", message: `${label(i)} ${side}팀: 여자 복식인데 여자가 아닌 선수가 있어요.` });
       if (m.type === "mixed" && !(g.includes("M") && g.includes("F")))
         warnings.push({ level: "error", message: `${label(i)} ${side}팀: 혼합 복식은 남1·여1이어야 해요.` });
+      // 잡복(open)은 성별을 따지지 않으므로 성별 점검이 없다
     };
     check(m.teamA, "A");
     check(m.teamB, "B");

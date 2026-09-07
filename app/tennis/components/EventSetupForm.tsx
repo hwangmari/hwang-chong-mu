@@ -3,7 +3,15 @@
 import { useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
 import RuleDetailSettings from "./RuleDetailSettings";
-import { expectedAppearances, generateBracket, suggestSplit, type Generated, type Split } from "../generate";
+import {
+  EMPTY_SPLIT,
+  expectedAppearances,
+  generateBracket,
+  splitTotal,
+  suggestSplit,
+  type Generated,
+  type Split,
+} from "../generate";
 import { parsePlayersText } from "../parsePlayers";
 import {
   DEFAULT_RULES,
@@ -58,7 +66,7 @@ export default function EventSetupForm({ onCreate }: Props) {
   const [playersText, setPlayersText] = useState("");
   const [rules, setRules] = useState<RuleSettings>(DEFAULT_RULES);
   // 종목 수를 직접 정할 때 쓰는 값 (자동일 때는 쓰지 않는다)
-  const [manualSplit, setManualSplit] = useState<Split>({ menMatches: 0, womenMatches: 0, mixedMatches: 0 });
+  const [manualSplit, setManualSplit] = useState<Split>(EMPTY_SPLIT);
 
   const [generated, setGenerated] = useState<Generated | null>(null);
   const [error, setError] = useState("");
@@ -80,8 +88,7 @@ export default function EventSetupForm({ onCreate }: Props) {
     [players, courts, totalMatches, rules.teamMatch],
   );
   const split = rules.splitMode === "manual" ? manualSplit : autoSplit;
-  const splitOk =
-    split.menMatches + split.womenMatches + split.mixedMatches === totalMatches;
+  const splitOk = splitTotal(split) === totalMatches;
 
   const appearanceHint = expectedAppearances(players, split, rules.teamMatch)
     .map((r) => `${r.label} 1인당 약 ${r.perPlayer.toFixed(1)}회`)
@@ -360,7 +367,7 @@ export default function EventSetupForm({ onCreate }: Props) {
         총 {totalMatches}경기 · 코트 {courts}면이면 {startTime}에 시작해 약{" "}
         {toClock(toMinutes(startTime) + Math.ceil(totalMatches / courts) * minutesPerMatch)}에 끝나요.
         {players.length >= 4 && splitOk
-          ? ` ${rules.splitMode === "manual" ? "직접 정한 대로" : "인원에 맞춰"} 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}경기로 짜요. 출전은 ${appearanceHint}예요.${rules.teamMatch ? " (팀 대항은 경기마다 두 팀에서 같은 수가 나오니, 인원이 적은 쪽이 더 자주 뛰어요.)" : ""}`
+          ? ` ${rules.splitMode === "manual" ? "직접 정한 대로" : "인원에 맞춰"} 남자 복식 ${split.menMatches} · 여자 복식 ${split.womenMatches} · 혼합 복식 ${split.mixedMatches}${split.openMatches > 0 ? ` · 잡복 ${split.openMatches}` : ""}경기로 짜요. 출전은 ${appearanceHint}예요.${rules.teamMatch ? " (팀 대항은 경기마다 두 팀에서 같은 수가 나오니, 인원이 적은 쪽이 더 자주 뛰어요.)" : ""}`
           : players.length >= 4
             ? " 이 인원으로는 경기를 다 채울 수 없어요. 총 경기 수를 줄여 보세요."
             : " 선수 명단을 넣으면 종목 구성을 자동으로 정해 드려요."}

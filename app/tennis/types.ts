@@ -4,7 +4,8 @@ import type { RuleSettings } from "./rules";
 
 export type Gender = "M" | "F";
 
-export type MatchType = "men" | "women" | "mixed";
+// open("잡복") = 성별 무관 복식: 아무 두 명이 짝, 아무 두 명과 대결
+export type MatchType = "men" | "women" | "mixed" | "open";
 
 export type Player = {
   name: string;
@@ -62,6 +63,7 @@ export type EventDraft = {
   menMatches: number;
   womenMatches: number;
   mixedMatches: number;
+  openMatches: number; // 잡복(성별 무관) 경기 수
   rules: RuleSettings;
 };
 
@@ -94,19 +96,30 @@ export const MATCH_TYPE_LABEL: Record<MatchType, string> = {
   men: "남자 복식",
   women: "여자 복식",
   mixed: "혼합 복식",
+  open: "잡복",
 };
 
 export const MATCH_TYPE_SHORT: Record<MatchType, string> = {
   men: "남복",
   women: "여복",
   mixed: "혼복",
+  open: "잡",
 };
 
-// 카드 왼쪽 띠·칩 색 (PDF 대진표 색을 따른다: 남복 남색, 여복 자주, 혼복 주황)
+// 카드 왼쪽 띠·칩 색 (PDF 대진표 색을 따른다: 남복 남색, 여복 자주, 혼복 주황, 잡복 청록)
 export const MATCH_TYPE_COLOR: Record<MatchType, string> = {
   men: "#1e3a8a",
   women: "#9f1239",
   mixed: "#ea580c",
+  open: "#0f766e",
+};
+
+// 종목 한 줄 설명 (안내문·도움말에 쓴다)
+export const MATCH_TYPE_DESCRIPTION: Record<MatchType, string> = {
+  men: "남자 4명이 뛰어요.",
+  women: "여자 4명이 뛰어요.",
+  mixed: "팀마다 남 1 · 여 1이에요.",
+  open: "성별 무관 복식: 아무 두 명이 짝, 아무 두 명과 대결해요.",
 };
 
 export const GENDER_LABEL: Record<Gender, string> = {

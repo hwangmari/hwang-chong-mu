@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { checkCustomOrder, checkRuleRequirements, orderedPool, type Split } from "../generate";
+import {
+  checkCustomOrder,
+  checkRuleRequirements,
+  orderedPool,
+  splitTotal,
+  type Split,
+} from "../generate";
 import {
   PAIR_RELATION_LABEL,
   ROUND_ORDER_HINT,
@@ -48,7 +54,7 @@ type PairRow = { relation: PairRelation; a: string; b: string };
 
 const RELATIONS: PairRelation[] = ["mustPair", "avoidPair", "avoidOpponent"];
 const ROUND_ORDERS: RoundOrder[] = ["sameFirst", "mixedFirst", "alternate", "custom"];
-const TYPES: MatchType[] = ["men", "women", "mixed"];
+const TYPES: MatchType[] = ["men", "women", "mixed", "open"];
 
 function rowsFromRules(rules: RuleSettings): PairRow[] {
   return [
@@ -104,14 +110,20 @@ export default function RuleDetailSettings({
   }
 
   // === 1. 종목 구성 직접 지정 ===
-  const manualSum = manualSplit.menMatches + manualSplit.womenMatches + manualSplit.mixedMatches;
+  const manualSum = splitTotal(manualSplit);
   const splitProblem = (() => {
     if (rules.splitMode !== "manual") return "";
-    if (manualSum !== totalMatches) return `세 종목을 더하면 총 경기 수(${totalMatches})가 되어야 해요. 지금은 ${manualSum}경기예요.`;
+    if (manualSum !== totalMatches) return `네 종목을 더하면 총 경기 수(${totalMatches})가 되어야 해요. 지금은 ${manualSum}경기예요.`;
     if (manualSplit.menMatches > 0 && men < 4) return "남자 복식을 하려면 남자가 4명 이상이어야 해요.";
     if (manualSplit.womenMatches > 0 && women < 4) return "여자 복식을 하려면 여자가 4명 이상이어야 해요.";
     if (manualSplit.mixedMatches > 0 && (men < 2 || women < 2)) return "혼합 복식을 하려면 남자·여자가 각각 2명 이상이어야 해요.";
-    if (courts >= 2 && manualSplit.menMatches >= 2 && men < 8 && manualSplit.womenMatches + manualSplit.mixedMatches === 0)
+    if (manualSplit.openMatches > 0 && players.length < 4) return "잡복을 하려면 선수가 4명 이상이어야 해요.";
+    if (
+      courts >= 2 &&
+      manualSplit.menMatches >= 2 &&
+      men < 8 &&
+      manualSplit.womenMatches + manualSplit.mixedMatches + manualSplit.openMatches === 0
+    )
       return "남자 복식만으로 코트 두 면을 동시에 채우려면 남자가 8명 이상 필요해요.";
     return "";
   })();
@@ -203,7 +215,7 @@ export default function RuleDetailSettings({
         <StDetailPanel>
           {/* 1. 종목 구성 */}
           <StDetailSection>
-            <StDetailTitle>1. 종목 수 — 남복 · 여복 · 혼복을 몇 경기씩</StDetailTitle>
+            <StDetailTitle>1. 종목 수 — 남복 · 여복 · 혼복 · 잡복을 몇 경기씩</StDetailTitle>
             <StChipRow>
               <StChip
                 type="button"
@@ -247,13 +259,27 @@ export default function RuleDetailSettings({
                       onChange={(e) => setManual("mixedMatches", Number(e.target.value) || 0)}
                     />
                   </label>
+                  <label>
+                    <StFieldName>잡복(성별 무관)</StFieldName>
+                    <StMiniInput
+                      type="number"
+                      min={0}
+                      max={60}
+                      value={manualSplit.openMatches}
+                      onChange={(e) => setManual("openMatches", Number(e.target.value) || 0)}
+                    />
+                  </label>
                 </StPairRow>
+                <StCardHint>
+                  성별을 따지지 않는 복식. 연속 출전·긴 휴식을 줄이고 싶을 때 몇 경기 넣어 주세요.
+                </StCardHint>
                 {splitProblem ? <StNotice $tone="warn">{splitProblem}</StNotice> : null}
               </>
             ) : (
               <StCardHint>
                 지금은 인원에 맞춰 자동으로 정해요 — 남복 {autoSplit.menMatches} · 여복{" "}
-                {autoSplit.womenMatches} · 혼복 {autoSplit.mixedMatches}경기. 직접 정하고 싶으면 위 버튼을 누르세요.
+                {autoSplit.womenMatches} · 혼복 {autoSplit.mixedMatches}경기. 직접 정하면 성별을 안 따지는{" "}
+                <b>잡복</b>도 넣을 수 있어요. 직접 정하고 싶으면 위 버튼을 누르세요.
               </StCardHint>
             )}
           </StDetailSection>

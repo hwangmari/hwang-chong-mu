@@ -33,10 +33,12 @@ type Props = {
   onChange: (matches: Match[]) => void;
 };
 
-// 슬롯에 들어갈 수 있는 성별: 남복→남, 여복→여, 혼복→팀의 첫 자리 남·둘째 자리 여
-function slotGender(type: Match["type"], index: 0 | 1): Gender {
+// 슬롯에 들어갈 수 있는 성별: 남복→남, 여복→여, 혼복→팀의 첫 자리 남·둘째 자리 여.
+// 잡복(open)은 성별을 안 따지므로 null(=아무나)
+function slotGender(type: Match["type"], index: 0 | 1): Gender | null {
   if (type === "men") return "M";
   if (type === "women") return "F";
+  if (type === "open") return null;
   return index === 0 ? "M" : "F";
 }
 
@@ -126,7 +128,7 @@ export default function BracketEditor({ players, matches, courts, rules, locked,
   function renderSelect(m: Match, side: "A" | "B", index: 0 | 1, position: number) {
     const gender = slotGender(m.type, index);
     const value = side === "A" ? m.teamA[index] : m.teamB[index];
-    const options = players.filter((p) => p.gender === gender);
+    const options = gender === null ? players : players.filter((p) => p.gender === gender);
     return (
       <StSelect
         aria-label={`${position}번째 경기 ${side}팀 ${index + 1}번째 선수`}

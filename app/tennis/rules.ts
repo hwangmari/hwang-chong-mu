@@ -106,7 +106,11 @@ export const RULE_INFO: RuleInfo[] = [
 
 // 항상 지키는 규칙(끌 수 없음) — 배지에만 보여준다
 export const FIXED_RULES: { label: string; description: string }[] = [
-  { label: "성별 규칙", description: "남자 복식은 남자 4명, 여자 복식은 여자 4명, 혼합 복식은 팀마다 남1·여1이에요." },
+  {
+    label: "성별 규칙",
+    description:
+      "남자 복식은 남자 4명, 여자 복식은 여자 4명, 혼합 복식은 팀마다 남1·여1이에요. 잡복은 성별을 따지지 않아서 아무 두 명이 짝이 되고 아무 두 명과 붙어요.",
+  },
   { label: "동시 출전 없음", description: "같은 사람이 같은 시간에 두 코트에서 뛰지 않아요." },
 ];
 
@@ -118,9 +122,9 @@ export const ROUND_ORDER_LABEL: Record<RoundOrder, string> = {
 };
 
 export const ROUND_ORDER_HINT: Record<RoundOrder, string> = {
-  sameFirst: "남자·여자 복식을 앞에 몰고 혼합 복식을 뒤로 보내요. (지금까지의 기본)",
-  mixedFirst: "혼합 복식을 먼저 해서 처음부터 섞여 놀아요.",
-  alternate: "남복·여복·혼복을 번갈아 넣어 골고루 섞어요.",
+  sameFirst: "남자·여자 복식을 앞에 몰고 혼합 복식·잡복을 뒤로 보내요. (지금까지의 기본)",
+  mixedFirst: "혼합 복식·잡복을 먼저 해서 처음부터 섞여 놀아요.",
+  alternate: "남복·여복·혼복·잡복을 번갈아 넣어 골고루 섞어요.",
   custom: "묶음마다 어떤 종목을 할지 직접 골라요.",
 };
 
@@ -291,7 +295,7 @@ function readCustomOrder(value: unknown): MatchType[][] | null {
     if (!Array.isArray(row)) return null;
     const types: MatchType[] = [];
     for (const t of row) {
-      if (t !== "men" && t !== "women" && t !== "mixed") return null;
+      if (t !== "men" && t !== "women" && t !== "mixed" && t !== "open") return null;
       types.push(t);
     }
     out.push(types);

@@ -23,7 +23,7 @@ export default function ExchangeGuide({ event }: Props) {
     const max = Math.max(...counts);
     return min === max ? `${min}회` : `${min}~${max}회`;
   };
-  const typeCounts = (["men", "women", "mixed"] as MatchType[])
+  const typeCounts = (["men", "women", "mixed", "open"] as MatchType[])
     .map((t) => ({ t, n: event.matches.filter((m) => m.type === t).length }))
     .filter((x) => x.n > 0);
   const onRules = RULE_INFO.filter((r) => isRuleOn(event.rules, r.id));
@@ -53,7 +53,11 @@ export default function ExchangeGuide({ event }: Props) {
               , 총 {event.matches.length}경기예요.
             </li>
             <li>
-              남자 복식은 남자 4명, 여자 복식은 여자 4명, 혼합 복식은 팀마다 남 1·여 1이에요. 경기마다 짝이 바뀌니 카드에서 내 짝과 상대를 확인하세요.
+              남자 복식은 남자 4명, 여자 복식은 여자 4명, 혼합 복식은 팀마다 남 1·여 1이에요.
+              {typeCounts.some((x) => x.t === "open")
+                ? " 잡복은 성별을 따지지 않아서 아무 두 명이 짝이 되고 아무 두 명과 붙어요."
+                : ""}{" "}
+              경기마다 짝이 바뀌니 카드에서 내 짝과 상대를 확인하세요.
             </li>
             <li>
               한 경기는 <b>{event.minutesPerMatch}분</b>이에요. 끝나면 A팀 : B팀 <b>게임 수</b>를 그대로 적어요 (예: 6 : 4). 게임 수가 같으면 무승부예요.
