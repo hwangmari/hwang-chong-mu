@@ -16,6 +16,7 @@ import {
   StEditBtn,
   StEmpty,
   StError,
+  StFilterRow,
   StGhostBtn,
   StGroupHead,
   StGroupMeta,
@@ -26,10 +27,13 @@ import {
   StRecordList,
   StRecordMain,
   StRecordMemo,
+  StRecordMeta,
   StRecordName,
   StRecordRow,
   StRecordTop,
   StRowActionBtn,
+  StSegmentBtn,
+  StSegmentRow,
   StSmallInput,
   StPrimarySmallBtn,
   StTable,
@@ -37,21 +41,22 @@ import {
   StTag,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
   DIRECTION_KEYS,
   DIRECTION_LABEL,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
-  RELATION_COLOR,
+  EVENT_TYPE_TONE,
   RELATION_DETAIL_PLACEHOLDER,
   RELATION_KEYS,
   RELATION_LABEL,
+  RELATION_TONE,
   type GiftDirection,
   type GiftEntry,
   type GiftEventType,
   type GiftRelation,
+  type GiftTone,
 } from "../types";
 import { formatAmount, formatSigned } from "./giftFormat";
 
@@ -59,14 +64,20 @@ type Filter = "all" | GiftDirection;
 type RelationFilter = "all" | GiftRelation;
 type ViewMode = "list" | "table" | "exchange";
 
-const FILTERS: { key: Filter; label: string; color: string }[] = [
-  { key: "all", label: "전체", color: "#3b6fd6" },
-  { key: "given", label: DIRECTION_LABEL.given, color: DIRECTION_COLOR.given },
+const FILTERS: { key: Filter; label: string; tone: GiftTone }[] = [
+  { key: "all", label: "전체", tone: "blue" },
+  { key: "given", label: DIRECTION_LABEL.given, tone: DIRECTION_TONE.given },
   {
     key: "received",
     label: DIRECTION_LABEL.received,
-    color: DIRECTION_COLOR.received,
+    tone: DIRECTION_TONE.received,
   },
+];
+
+const VIEWS: { key: ViewMode; label: string }[] = [
+  { key: "list", label: "목록" },
+  { key: "table", label: "표" },
+  { key: "exchange", label: "주고받음 대조" },
 ];
 
 // 표 보기의 묶음 단위: 종류 × 방향. 예) "결혼 · 받았어요" = 내 결혼식 축의금 명단
@@ -201,53 +212,43 @@ export default function EntryHistory({
     <StCard>
       <StCardHead>
         <StCardTitle>📜 전체 내역</StCardTitle>
-        <StChipRow>
-          <StChip
-            type="button"
-            $active={view === "list"}
-            $color="#3b6fd6"
-            onClick={() => setView("list")}
-          >
-            목록
-          </StChip>
-          <StChip
-            type="button"
-            $active={view === "table"}
-            $color="#3b6fd6"
-            onClick={() => setView("table")}
-          >
-            표 (종류별 명단)
-          </StChip>
-          <StChip
-            type="button"
-            $active={view === "exchange"}
-            $color="#3b6fd6"
-            onClick={() => setView("exchange")}
-          >
-            주고받음 대조
-          </StChip>
-        </StChipRow>
+        <StSegmentRow role="tablist" aria-label="보기 방식">
+          {VIEWS.map((item) => (
+            <StSegmentBtn
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={view === item.key}
+              $active={view === item.key}
+              $tone="blue"
+              onClick={() => setView(item.key)}
+            >
+              {item.label}
+            </StSegmentBtn>
+          ))}
+        </StSegmentRow>
       </StCardHead>
       {view === "exchange" ? null : (
-        <>
-          <StChipRow>
+        /* 방향은 토글 하나로, 관계는 작은 칩으로 — 한 줄에 */
+        <StFilterRow>
+          <StSegmentRow aria-label="주고받은 방향">
             {FILTERS.map((item) => (
-              <StChip
+              <StSegmentBtn
                 key={item.key}
                 type="button"
                 $active={filter === item.key}
-                $color={item.color}
+                $tone={item.tone}
                 onClick={() => setFilter(item.key)}
               >
                 {item.label}
-              </StChip>
+              </StSegmentBtn>
             ))}
-          </StChipRow>
+          </StSegmentRow>
           <StChipRow>
             <StChip
               type="button"
               $active={relationFilter === "all"}
-              $color="#3b6fd6"
+              $tone="blue"
               onClick={() => setRelationFilter("all")}
             >
               관계 전체
@@ -257,14 +258,14 @@ export default function EntryHistory({
                 key={key}
                 type="button"
                 $active={relationFilter === key}
-                $color={RELATION_COLOR[key]}
+                $tone={RELATION_TONE[key]}
                 onClick={() => setRelationFilter(key)}
               >
                 {RELATION_LABEL[key]}
               </StChip>
             ))}
           </StChipRow>
-        </>
+        </StFilterRow>
       )}
 
       {view === "exchange" ? (
@@ -307,7 +308,7 @@ export default function EntryHistory({
                     key={key}
                     type="button"
                     $active={bulkRelation === key}
-                    $color={RELATION_COLOR[key]}
+                    $tone={RELATION_TONE[key]}
                     onClick={() => setBulkRelation(key)}
                   >
                     {RELATION_LABEL[key]}
@@ -321,7 +322,7 @@ export default function EntryHistory({
                       key={detail}
                       type="button"
                       $active={bulkDetail === detail}
-                      $color={RELATION_COLOR[bulkRelation]}
+                      $tone={RELATION_TONE[bulkRelation]}
                       onClick={() => setBulkDetail(detail)}
                     >
                       {detail}
@@ -356,7 +357,7 @@ export default function EntryHistory({
                 <StGroupTitle>
                   {EVENT_TYPE_ICON[group.eventType]}{" "}
                   {EVENT_TYPE_LABEL[group.eventType]}
-                  <StTag $color={DIRECTION_COLOR[group.direction]}>
+                  <StTag $tone={DIRECTION_TONE[group.direction]}>
                     {DIRECTION_LABEL[group.direction]}
                   </StTag>
                 </StGroupTitle>
@@ -403,10 +404,7 @@ export default function EntryHistory({
                           <b>{entry.personName}</b>
                         </td>
                         <td>{relationText(entry)}</td>
-                        <td
-                          className="amount"
-                          style={{ color: DIRECTION_COLOR[entry.direction] }}
-                        >
+                        <td className={`amount ${entry.direction}`}>
                           {formatAmount(entry.amount)}
                         </td>
                         <td>{entry.date}</td>
@@ -445,19 +443,19 @@ export default function EntryHistory({
           {visible.map((entry) => (
             <StRecordRow key={entry.id}>
               <StRecordMain>
-                <StRecordTop>
-                  <StRecordDate>{entry.date}</StRecordDate>
-                  <StTag $color={EVENT_TYPE_COLOR[entry.eventType]}>
+                <StRecordMeta>
+                  <StRecordDate dateTime={entry.date}>{entry.date}</StRecordDate>
+                  <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
                     {EVENT_TYPE_ICON[entry.eventType]}{" "}
                     {EVENT_TYPE_LABEL[entry.eventType]}
                   </StTag>
-                  <StTag $color={RELATION_COLOR[entry.relation]}>
+                  <StTag $tone={RELATION_TONE[entry.relation]}>
                     {relationText(entry)}
                   </StTag>
-                </StRecordTop>
+                </StRecordMeta>
                 <StRecordTop>
                   <StRecordName>{entry.personName}</StRecordName>
-                  <StRecordAmount $color={DIRECTION_COLOR[entry.direction]}>
+                  <StRecordAmount $tone={DIRECTION_TONE[entry.direction]}>
                     {formatSigned(entry.amount, entry.direction)}
                   </StRecordAmount>
                 </StRecordTop>

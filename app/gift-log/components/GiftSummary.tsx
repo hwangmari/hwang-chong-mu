@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { buildYearSummary, listYears } from "../aggregate";
 import {
-  StBadge,
   StBarFill,
   StBarHead,
   StBarList,
@@ -16,16 +15,17 @@ import {
   StCardTitle,
   StEmpty,
   StGhostBtn,
-  StTotalBox,
+  StMoney,
+  StTotalCell,
   StTotalLabel,
   StTotalValue,
-  StTotalsGrid,
+  StTotalsBand,
   StYearBtn,
   StYearLabel,
   StYearSwitch,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_LABEL,
   RELATION_LABEL,
@@ -58,18 +58,18 @@ function BarRow({
           <small>{total.count}건</small>
         </span>
         <StBarMeta>
-          <span style={{ color: DIRECTION_COLOR.given }}>
+          <StMoney $tone={DIRECTION_TONE.given}>
             -{formatAmount(total.given)}
-          </span>
+          </StMoney>
           {" · "}
-          <span style={{ color: DIRECTION_COLOR.received }}>
+          <StMoney $tone={DIRECTION_TONE.received}>
             +{formatAmount(total.received)}
-          </span>
+          </StMoney>
         </StBarMeta>
       </StBarHead>
       <StBarTrack>
-        <StBarFill $pct={givenPct} $color={DIRECTION_COLOR.given} />
-        <StBarFill $pct={receivedPct} $color={DIRECTION_COLOR.received} />
+        <StBarFill $pct={givenPct} $tone={DIRECTION_TONE.given} />
+        <StBarFill $pct={receivedPct} $tone={DIRECTION_TONE.received} />
       </StBarTrack>
     </StBarRow>
   );
@@ -103,7 +103,13 @@ export default function GiftSummary({ entries }: GiftSummaryProps) {
 
   const index = years.indexOf(year);
   const balance = summary.receivedTotal - summary.givenTotal;
-  const tone = balance > 0 ? "good" : balance < 0 ? "bad" : "neutral";
+  // 차액은 부호에 따라 색만 바뀐다 (더 받았으면 초록, 더 냈으면 빨강)
+  const balanceTone =
+    balance > 0
+      ? DIRECTION_TONE.received
+      : balance < 0
+        ? DIRECTION_TONE.given
+        : undefined;
 
   // 막대 기준값: 한 행에서 (나간+받은)이 가장 큰 값
   const eventMax = Math.max(
@@ -141,37 +147,40 @@ export default function GiftSummary({ entries }: GiftSummaryProps) {
         </StYearSwitch>
       </StCardHead>
 
-      <StCardHint>
-        {year}년 나간 돈{" "}
-        <b style={{ color: DIRECTION_COLOR.given }}>
-          {formatAmount(summary.givenTotal)}
-        </b>
-        {" · "}받은 돈{" "}
-        <b style={{ color: DIRECTION_COLOR.received }}>
-          {formatAmount(summary.receivedTotal)}
-        </b>
-        {" · "}차액 <StBadge $tone={tone}>{formatBalance(balance)}</StBadge>{" "}
+      {/* 나간 돈 · 받은 돈 · 차액을 상자 세 개가 아니라 띠 한 줄로 */}
+      <StTotalsBand>
+        <StTotalCell>
+          <StTotalLabel>💸 나간 돈</StTotalLabel>
+          <StTotalValue $tone={DIRECTION_TONE.given}>
+            {formatAmount(summary.givenTotal)}
+          </StTotalValue>
+        </StTotalCell>
+        <StTotalCell>
+          <StTotalLabel>💰 받은 돈</StTotalLabel>
+          <StTotalValue $tone={DIRECTION_TONE.received}>
+            {formatAmount(summary.receivedTotal)}
+          </StTotalValue>
+        </StTotalCell>
+        <StTotalCell>
+          <StTotalLabel>차액</StTotalLabel>
+          <StTotalValue $tone={balanceTone}>
+            {balance === 0 ? "0원" : formatBalance(balance)}
+          </StTotalValue>
+        </StTotalCell>
+      </StTotalsBand>
+
+      <StCardHead>
+        <StCardHint>
+          {year}년에 {summary.byEventType.reduce((n, r) => n + r.total.count, 0)}건
+          주고받았어요.
+        </StCardHint>
         <StGhostBtn type="button" onClick={() => setExpanded((v) => !v)}>
           {expanded ? "접기" : "종류별·관계별 자세히"}
         </StGhostBtn>
-      </StCardHint>
+      </StCardHead>
 
       {!expanded ? null : (
         <>
-          <StTotalsGrid>
-            <StTotalBox $color={DIRECTION_COLOR.given}>
-              <StTotalLabel>💸 나간 돈</StTotalLabel>
-              <StTotalValue>{formatAmount(summary.givenTotal)}</StTotalValue>
-            </StTotalBox>
-            <StTotalBox $color={DIRECTION_COLOR.received}>
-              <StTotalLabel>💰 받은 돈</StTotalLabel>
-              <StTotalValue>{formatAmount(summary.receivedTotal)}</StTotalValue>
-            </StTotalBox>
-          </StTotalsGrid>
-          <StCardHint>
-            올해 차액 <StBadge $tone={tone}>{formatBalance(balance)}</StBadge>
-          </StCardHint>
-
           <StCardTitle as="h3">종류별</StCardTitle>
           <StBarList>
             {summary.byEventType.map((row) => (

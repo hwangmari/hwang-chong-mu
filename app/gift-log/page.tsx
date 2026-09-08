@@ -30,6 +30,7 @@ import {
 import { formatDateKey } from "@/utils/date";
 import type { GiftEntry, GiftEntryInput, GiftRelation } from "./types";
 import {
+  StCard,
   StLoginCard,
   StLoginDesc,
   StLoginEmoji,
@@ -374,10 +375,15 @@ export default function GiftLogPage() {
             onCancel={resetForm}
           />
 
-          {/* 한 번 쓰고 끝나는 도구들은 폼 아래로 */}
-          <BulkAddForm defaultDate={formatDateKey(new Date())} onAddMany={addMany} />
+          {/* 한 번 쓰고 끝나는 도구 둘은 카드 한 장 안에서 실선으로만 나눈다 */}
+          <StCard>
+            <BulkAddForm
+              defaultDate={formatDateKey(new Date())}
+              onAddMany={addMany}
+            />
 
-          <ImportFromAccountBook entries={entries} onImport={importEntry} />
+            <ImportFromAccountBook entries={entries} onImport={importEntry} />
+          </StCard>
         </>
       ) : (
         <>

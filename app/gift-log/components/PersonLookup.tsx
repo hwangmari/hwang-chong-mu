@@ -25,13 +25,13 @@ import {
   StTimelineRow,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
-  RELATION_COLOR,
+  EVENT_TYPE_TONE,
   RELATION_LABEL,
+  RELATION_TONE,
   type GiftEntry,
   type GiftRelation,
 } from "../types";
@@ -156,7 +156,7 @@ export default function PersonLookup({
           <StPersonHead>
             <StPersonName>
               {selected.personName}
-              <StTag $color={RELATION_COLOR[selected.relation]}>
+              <StTag $tone={RELATION_TONE[selected.relation]}>
                 {RELATION_LABEL[selected.relation]}
                 {selected.relationDetail ? ` · ${selected.relationDetail}` : ""}
               </StTag>
@@ -197,16 +197,10 @@ export default function PersonLookup({
                           {EVENT_TYPE_ICON[row.key]} {EVENT_TYPE_LABEL[row.key]}
                         </b>
                       </td>
-                      <td
-                        className="amount"
-                        style={{ color: DIRECTION_COLOR.received }}
-                      >
+                      <td className="amount received">
                         {row.received ? formatAmount(row.received) : "–"}
                       </td>
-                      <td
-                        className="amount"
-                        style={{ color: DIRECTION_COLOR.given }}
-                      >
+                      <td className="amount given">
                         {row.given
                           ? formatAmount(row.given)
                           : row.marked
@@ -283,12 +277,12 @@ export default function PersonLookup({
             {selected.entries.map((entry) => (
               <StTimelineRow key={entry.id}>
                 <time>{entry.date}</time>
-                <StTag $color={EVENT_TYPE_COLOR[entry.eventType]}>
+                <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
                   {EVENT_TYPE_ICON[entry.eventType]}{" "}
                   {EVENT_TYPE_LABEL[entry.eventType]}
                 </StTag>
                 {entry.memo ? <span>{entry.memo}</span> : null}
-                <StAmount $color={DIRECTION_COLOR[entry.direction]}>
+                <StAmount $tone={DIRECTION_TONE[entry.direction]}>
                   {formatSigned(entry.amount, entry.direction)}
                 </StAmount>
               </StTimelineRow>

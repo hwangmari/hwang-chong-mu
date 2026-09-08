@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css, type DefaultTheme } from "styled-components";
 import {
   StFieldGrid,
   StFieldLabel,
@@ -7,11 +7,84 @@ import {
   StSegmentButton,
   StSegmented,
 } from "@/components/styled/layout.styled";
+import type { GiftTone } from "./types";
 
 /*
  * 페이지 뼈대(폭·제목·가이드)는 ServiceLayout 이 맡는다.
  * 여기에는 경조사비 장부에만 있는 조각(칩·막대·표·모달)만 둔다.
+ *
+ * === 테두리 규칙 ===
+ * 테두리는 카드(StCard) 한 겹만. 카드 안에서는 배경 띠(semantic.bg)와
+ * 가로 실선으로만 나눈다. 입력칸과 "고른 칩"만 예외로 테두리를 갖는다.
+ *
+ * === 글자 크기 사다리 (이 페이지 전체가 이 표를 따른다) ===
+ * 카드 제목      1rem   / 800
+ * 필드 라벨      0.78rem/ 700  subText
+ * 입력 글자      0.95rem/ 600  (모바일은 1rem — 아이폰 확대 방지)
+ * 칩            0.82rem/ 700
+ * 목록 이름·금액  0.95rem/ 800
+ * 메타 줄        0.78rem/ 700  subText
+ * 메모·설명      0.8rem / 400  line-height 1.5
+ * 요약 큰 숫자    1.1rem / 800  (캡션 0.78rem)
+ * 표 머리        0.78rem subText / 표 칸 0.85rem
+ * 금액은 어디서나 tabular-nums (자릿수가 흔들리지 않게)
  */
+
+/* 금액 글자 — 자릿수 폭을 고정한다 */
+const numeric = css`
+  font-variant-numeric: tabular-nums;
+`;
+
+/* 읽는 문장 */
+const running = css`
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+/** 색 이름 → 글자 색. 회색은 테마의 보조 글자색을 그대로 쓴다. */
+export function toneInk(theme: DefaultTheme, tone: GiftTone) {
+  switch (tone) {
+    case "rose":
+      return theme.colors.rose600;
+    case "teal":
+      return theme.colors.teal600;
+    case "blue":
+      return theme.colors.blue600;
+    case "indigo":
+      return theme.colors.indigo600;
+    case "amber":
+      return theme.colors.amber600;
+    case "orange":
+      return theme.colors.orange600;
+    case "green":
+      return theme.colors.green600;
+    default:
+      return theme.semantic.subText;
+  }
+}
+
+/** 색 이름 → 옅은 바탕색 (다크 모드에선 어두운 틴트로 뒤집힌다) */
+export function toneBg(theme: DefaultTheme, tone: GiftTone) {
+  switch (tone) {
+    case "rose":
+      return theme.colors.rose50;
+    case "teal":
+      return theme.colors.teal50;
+    case "blue":
+      return theme.colors.blue50;
+    case "indigo":
+      return theme.colors.indigo50;
+    case "amber":
+      return theme.colors.amber50;
+    case "orange":
+      return theme.colors.orange50;
+    case "green":
+      return theme.colors.green50;
+    default:
+      return theme.semantic.bg;
+  }
+}
 
 /* 이 장부가 누구 것인지 알려주는 작은 알약 — 소개 문단 첫 줄 */
 export const StOwnerPill = styled.span`
@@ -22,9 +95,8 @@ export const StOwnerPill = styled.span`
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
   background: ${({ theme }) => theme.semantic.bg};
-  border: 1px solid ${({ theme }) => theme.semantic.border};
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 700;
   color: ${({ theme }) => theme.semantic.subText};
 `;
 
@@ -45,14 +117,13 @@ export const StLoginEmoji = styled.span`
 
 export const StLoginTitle = styled.h2`
   font-size: 1.05rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
 `;
 
 export const StLoginDesc = styled.p`
+  ${running};
   font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray500};
-  line-height: 1.55;
 `;
 
 /* === 카드 공통 === */
@@ -61,7 +132,20 @@ export const StLoginDesc = styled.p`
 export const StCard = styled(StSection)`
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.9rem;
+`;
+
+/* 한 카드 안에서 실선으로만 나뉘는 하위 구획 (명단 담기 / 가계부에서 가져오기) */
+export const StSubSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+
+  & + & {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
 `;
 
 export const StCardHead = styled.div`
@@ -77,36 +161,50 @@ export const StCardTitle = styled(StSectionTitle)`
 `;
 
 export const StCardHint = styled.p`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  line-height: 1.45;
+  ${running};
+  font-size: 0.78rem;
+
+  b {
+    font-weight: 800;
+    color: ${({ theme }) => theme.semantic.text};
+  }
 `;
 
 export const StEmpty = styled.p`
+  ${running};
   font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray400};
+  padding: 0.4rem 0;
 
   b {
-    color: ${({ theme }) => theme.colors.blue600};
+    color: ${({ theme }) => theme.semantic.primary};
     font-weight: 800;
   }
 `;
 
 export const StError = styled.p`
-  color: ${({ theme }) => theme.colors.rose600};
-  background: ${({ theme }) => theme.colors.rose50};
+  color: ${({ theme }) => theme.semantic.danger};
+  background: ${({ theme }) => theme.semantic.dangerBg};
   padding: 0.5rem 0.75rem;
   border-radius: 0.6rem;
   font-size: 0.82rem;
+  line-height: 1.5;
+  font-weight: 700;
+`;
+
+/* 표·미리보기 안에서 쓰는 짧은 경고 글자 */
+export const StErrorText = styled.span`
+  color: ${({ theme }) => theme.semantic.danger};
   font-weight: 700;
 `;
 
 /* === 폼 === */
 
-/* 공용 필드 그리드는 560px 카드 기준이라, 두 칸 배치의 왼쪽 열(약 500px)에서는
-   한 줄씩 쌓인다. 이 페이지는 그 열이 폼 자리라 기준만 440px 로 낮춰 쓴다. */
+/* 공용 필드 그리드는 560px 카드 기준이라 좁은 칸에서는 한 줄씩 쌓인다.
+   이 페이지는 폼이 본문이라 기준만 440px 로 낮춰 쓴다. */
 export const StRow = styled(StFieldGrid)`
   gap: 0.9rem 1rem;
+  /* 한 줄에 놓인 필드는 아래가 같은 높이에서 끝난다 */
+  align-items: stretch;
 
   @container (min-width: 440px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -115,48 +213,53 @@ export const StRow = styled(StFieldGrid)`
 
 export const StLabel = styled.label`
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray600};
+  gap: 0.45rem;
+  align-content: start;
+  min-width: 0;
 `;
 
 export const StFieldName = styled(StFieldLabel)``;
 
-export const StInput = styled.input`
+const control = css`
   width: 100%;
   min-width: 0;
-  min-height: 2.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
   border-radius: 0.7rem;
   background: ${({ theme }) => theme.colors.white};
-  padding: 0 0.75rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray900};
+  color: ${({ theme }) => theme.semantic.text};
+
+  /* 아이폰은 16px 미만 입력칸을 누르면 화면을 확대한다 — 모바일만 16px 유지 */
+  @media ${({ theme }) => theme.media.mobile} {
+    font-size: 1rem;
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.gray400};
+    font-weight: 500;
+  }
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.blue500};
-    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+    border-color: ${({ theme }) => theme.semantic.primary};
   }
 `;
 
-export const StTextarea = styled.textarea`
-  width: 100%;
-  min-width: 0;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  border-radius: 0.7rem;
-  padding: 0.6rem 0.75rem;
-  font-size: 1rem;
-  font-family: inherit;
-  resize: vertical;
-  color: ${({ theme }) => theme.colors.gray900};
+export const StInput = styled.input`
+  ${control};
+  ${numeric};
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+`;
 
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.blue500};
-  }
+export const StTextarea = styled.textarea`
+  ${control};
+  padding: 0.6rem 0.75rem;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.5;
+  resize: vertical;
 `;
 
 export const StChipRow = styled.div`
@@ -165,41 +268,77 @@ export const StChipRow = styled.div`
   gap: 0.35rem;
 `;
 
-export const StChip = styled.button<{ $active: boolean; $color: string }>`
+/* 고른 칩만 테두리를 갖는다. 안 고른 칩은 회색 바탕뿐 (테두리 줄이기) */
+export const StChip = styled.button<{ $active: boolean; $tone?: GiftTone }>`
   border: 1px solid
-    ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray200)};
-  background: ${({ $active, $color, theme }) =>
-    $active ? `${$color}1a` : theme.colors.white};
-  color: ${({ $active, $color, theme }) =>
-    $active ? $color : theme.colors.gray500};
-  font-size: 0.78rem;
-  font-weight: 800;
+    ${({ $active, $tone, theme }) =>
+      $active ? toneInk(theme, $tone ?? "gray") : "transparent"};
+  background: ${({ $active, $tone, theme }) =>
+    $active ? toneBg(theme, $tone ?? "gray") : theme.semantic.bg};
+  color: ${({ $active, $tone, theme }) =>
+    $active ? toneInk(theme, $tone ?? "gray") : theme.semantic.subText};
+  font-size: 0.82rem;
+  font-weight: 700;
   padding: 0.35rem 0.7rem;
   border-radius: 0.55rem;
   cursor: pointer;
-  transition: all 0.12s;
+  white-space: nowrap;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    color: ${({ $active, $tone, theme }) =>
+      $active ? toneInk(theme, $tone ?? "gray") : theme.semantic.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 // 냈어요 / 받았어요 2칸 토글 — 공용 세그먼트(테두리 하나짜리 트랙)를 그대로 쓴다
 export const StSegmentRow = styled(StSegmented)``;
 
 // 고른 쪽만 방향 색(💸 분홍 / 💰 초록)으로 물들인다
-export const StSegmentBtn = styled(StSegmentButton)<{ $color: string }>`
-  min-height: 2.6rem;
-  font-size: 0.9rem;
-  color: ${({ $active, $color, theme }) =>
-    $active ? $color : theme.semantic.subText};
+export const StSegmentBtn = styled(StSegmentButton)<{ $tone: GiftTone }>`
+  min-height: 2.5rem;
+  font-size: 0.88rem;
+  color: ${({ $active, $tone, theme }) =>
+    $active ? toneInk(theme, $tone) : theme.semantic.subText};
 
   &:hover:not(:disabled) {
-    color: ${({ $active, $color, theme }) =>
-      $active ? $color : theme.semantic.text};
+    color: ${({ $active, $tone, theme }) =>
+      $active ? toneInk(theme, $tone) : theme.semantic.text};
+  }
+`;
+
+/* 방향 토글 + 관계 칩을 한 줄에 (모바일에선 줄바꿈) */
+export const StFilterRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+
+  ${StSegmentRow} {
+    flex: 0 0 auto;
   }
 `;
 
 export const StActions = styled.div`
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 0.5rem;
+`;
+
+/* 금액처럼 색만 입히는 짧은 글자 */
+export const StMoney = styled.span<{ $tone: GiftTone; $strong?: boolean }>`
+  ${numeric};
+  color: ${({ $tone, theme }) => toneInk(theme, $tone)};
+  font-weight: ${({ $strong }) => ($strong ? 800 : 700)};
+  white-space: nowrap;
 `;
 
 /* === 사람 찾기 === */
@@ -207,17 +346,20 @@ export const StActions = styled.div`
 export const StNameChip = styled.button<{ $active: boolean }>`
   border: 1px solid
     ${({ $active, theme }) =>
-      $active ? theme.colors.blue500 : theme.colors.gray200};
+      $active ? theme.semantic.primary : "transparent"};
   background: ${({ $active, theme }) =>
-    $active ? theme.colors.blue50 : theme.colors.white};
+    $active ? theme.semantic.primaryLight : theme.semantic.bg};
   color: ${({ $active, theme }) =>
-    $active ? theme.colors.blue600 : theme.colors.gray700};
+    $active ? theme.semantic.primary : theme.semantic.subText};
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.12s;
+
+  &:hover {
+    color: ${({ theme }) => theme.semantic.text};
+  }
 `;
 
 /* 카드 안이라 테두리 없이 배경 띠로만 구분한다 (테두리는 카드 한 겹만) */
@@ -239,77 +381,97 @@ export const StPersonHead = styled.div`
 `;
 
 export const StPersonName = styled.h3`
-  font-size: 1.05rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
   display: flex;
   align-items: center;
   gap: 0.4rem;
 `;
 
-export const StTag = styled.span<{ $color: string }>`
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 0.15rem 0.5rem;
+export const StTag = styled.span<{ $tone: GiftTone }>`
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
   border-radius: 0.4rem;
-  background: ${({ $color }) => `${$color}1a`};
-  color: ${({ $color }) => $color};
+  background: ${({ $tone, theme }) => toneBg(theme, $tone)};
+  color: ${({ $tone, theme }) => toneInk(theme, $tone)};
+  white-space: nowrap;
 `;
 
-export const StTotalsGrid = styled.div`
+/* 연도 합계는 상자 세 개가 아니라 띠 한 줄 */
+export const StTotalsBand = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.semantic.bg};
 `;
 
-export const StTotalBox = styled.div<{ $color: string }>`
-  background: ${({ theme }) => theme.semantic.bg};
-  border-left: 3px solid ${({ $color }) => $color};
-  border-radius: 0.75rem;
-  padding: 0.65rem 0.8rem;
+export const StTotalCell = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
 `;
 
 export const StTotalLabel = styled.span`
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray500};
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
-export const StTotalValue = styled.span`
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
-  line-height: 1.15;
+export const StTotalValue = styled.span<{ $tone?: GiftTone }>`
+  ${numeric};
+  font-size: 1.1rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    font-size: 0.95rem;
+  }
+
+  font-weight: 800;
+  line-height: 1.25;
   word-break: keep-all;
+  color: ${({ $tone, theme }) =>
+    $tone ? toneInk(theme, $tone) : theme.semantic.text};
 `;
 
 export const StBadge = styled.span<{ $tone: "good" | "bad" | "neutral" }>`
+  ${numeric};
   display: inline-block;
   font-size: 0.78rem;
-  font-weight: 800;
-  padding: 0.18rem 0.5rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
   border-radius: 0.45rem;
-  background: ${({ $tone }) =>
-    $tone === "good" ? "#e6f7ee" : $tone === "bad" ? "#fde8ef" : "#eef0f4"};
-  color: ${({ $tone }) =>
-    $tone === "good" ? "#1f8a54" : $tone === "bad" ? "#c0304f" : "#7d8593"};
+  white-space: nowrap;
+  background: ${({ $tone, theme }) =>
+    $tone === "good"
+      ? theme.semantic.successBg
+      : $tone === "bad"
+        ? theme.semantic.dangerBg
+        : theme.semantic.bg};
+  color: ${({ $tone, theme }) =>
+    $tone === "good"
+      ? theme.semantic.success
+      : $tone === "bad"
+        ? theme.semantic.danger
+        : theme.semantic.subText};
 `;
 
 // "지난번 결혼식에 50,000원 냈어요" 즉답 문구
 export const StAnswer = styled.p`
-  background: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.gray800};
+  background: ${({ theme }) => theme.semantic.primaryLight};
+  color: ${({ theme }) => theme.semantic.text};
   border-radius: 0.75rem;
   padding: 0.7rem 0.85rem;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   line-height: 1.5;
 
   b {
-    color: ${({ theme }) => theme.colors.blue600};
-    font-weight: 900;
+    ${numeric};
+    color: ${({ theme }) => theme.semantic.primary};
+    font-weight: 800;
   }
 `;
 
@@ -317,42 +479,56 @@ export const StTimeline = styled.ul`
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
 `;
 
 export const StTimelineRow = styled.li`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.82rem;
-  color: ${({ theme }) => theme.colors.gray700};
+  padding: 0.4rem 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.semantic.subText};
   flex-wrap: wrap;
 
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
+
   time {
+    ${numeric};
     font-weight: 700;
-    color: ${({ theme }) => theme.colors.gray500};
   }
 `;
 
-export const StAmount = styled.span<{ $color: string }>`
+export const StAmount = styled.span<{ $tone: GiftTone }>`
+  ${numeric};
   margin-left: auto;
-  font-weight: 900;
-  color: ${({ $color }) => $color};
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: ${({ $tone, theme }) => toneInk(theme, $tone)};
   white-space: nowrap;
 `;
 
+/* 카드 머리에 붙는 보조 버튼 — 테두리 없이 옅은 파란 바탕만 */
 export const StGhostBtn = styled.button`
-  border: 1px dashed ${({ theme }) => theme.colors.blue200};
-  background: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.blue600};
+  border: none;
+  background: ${({ theme }) => theme.semantic.primaryLight};
+  color: ${({ theme }) => theme.semantic.primary};
   font-size: 0.78rem;
-  font-weight: 800;
-  padding: 0.4rem 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
   border-radius: 0.6rem;
   cursor: pointer;
+  white-space: nowrap;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.blue100};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 `;
 
@@ -365,39 +541,45 @@ export const StYearSwitch = styled.div`
 `;
 
 export const StYearBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
+  border: none;
+  background: ${({ theme }) => theme.semantic.bg};
+  color: ${({ theme }) => theme.semantic.subText};
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 0.5rem;
-  font-weight: 900;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
 
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
   &:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: default;
   }
 `;
 
 export const StYearLabel = styled.span`
+  ${numeric};
   min-width: 3.4rem;
   text-align: center;
   font-size: 0.95rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
 `;
 
 export const StBarList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.6rem;
 `;
 
 export const StBarRow = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 `;
 
 export const StBarHead = styled.div`
@@ -405,40 +587,47 @@ export const StBarHead = styled.div`
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray700};
+  font-size: 0.82rem;
+  color: ${({ theme }) => theme.semantic.text};
 
   b {
-    font-weight: 800;
+    font-weight: 700;
   }
 
   small {
-    font-size: 0.72rem;
-    color: ${({ theme }) => theme.colors.gray400};
+    ${numeric};
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.subText};
     margin-left: 0.3rem;
   }
 `;
 
 export const StBarMeta = styled.span`
+  ${numeric};
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
-  color: ${({ theme }) => theme.colors.gray600};
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
 // 두 방향을 한 트랙에 나눠 그림(왼쪽 냈어요, 오른쪽 받았어요)
 export const StBarTrack = styled.div`
   display: flex;
-  height: 0.55rem;
+  height: 0.5rem;
   border-radius: 999px;
   overflow: hidden;
-  background: ${({ theme }) => theme.colors.gray100};
+  background: ${({ theme }) => theme.semantic.bg};
 `;
 
-export const StBarFill = styled.div<{ $pct: number; $color: string }>`
+export const StBarFill = styled.div<{ $pct: number; $tone: GiftTone }>`
   width: ${({ $pct }) => `${$pct}%`};
-  background: ${({ $color }) => $color};
+  background: ${({ $tone, theme }) => toneInk(theme, $tone)};
   transition: width 0.25s;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 /* === 전체 내역 === */
@@ -451,8 +640,9 @@ export const StRecordList = styled.div`
 
 export const StRecordRow = styled.div`
   display: flex;
+  align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.8rem 0;
+  padding: 0.7rem 0;
 
   & + & {
     border-top: 1px solid ${({ theme }) => theme.semantic.border};
@@ -464,67 +654,90 @@ export const StRecordMain = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.25rem;
 `;
 
-export const StRecordTop = styled.div`
+/* 날짜 · 종류 · 관계 — 작은 글씨 한 줄 */
+export const StRecordMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
-export const StRecordDate = styled.span`
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray500};
+/* 이름 ···· 금액 */
+export const StRecordTop = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+`;
+
+export const StRecordDate = styled.time`
+  ${numeric};
 `;
 
 export const StRecordName = styled.span`
   font-size: 0.95rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
-export const StRecordAmount = styled.span<{ $color: string }>`
-  font-size: 1rem;
-  font-weight: 900;
-  color: ${({ $color }) => $color};
+export const StRecordAmount = styled.span<{ $tone: GiftTone }>`
+  ${numeric};
+  margin-left: auto;
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: ${({ $tone, theme }) => toneInk(theme, $tone)};
 `;
 
 export const StRecordMemo = styled.p`
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray500};
-  line-height: 1.45;
+  ${running};
   white-space: pre-wrap;
 `;
 
 export const StRecordActions = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+`;
+
+/* 목록 오른쪽 글자 버튼 — 테두리 없음 */
+const textButton = css`
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  white-space: nowrap;
 `;
 
 export const StEditBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
+  ${textButton};
+  color: ${({ theme }) => theme.semantic.subText};
+
+  &:hover {
+    color: ${({ theme }) => theme.semantic.text};
+    background: ${({ theme }) => theme.semantic.bg};
+  }
 `;
 
 export const StDelBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.rose200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.rose600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
+  ${textButton};
+  color: ${({ theme }) => theme.semantic.danger};
+
+  &:hover {
+    background: ${({ theme }) => theme.semantic.dangerBg};
+  }
 `;
 
 /* === 가계부에서 가져오기 === */
@@ -538,7 +751,7 @@ export const StImportRow = styled.div<{ $muted?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.8rem 0;
+  padding: 0.7rem 0;
   opacity: ${({ $muted }) => ($muted ? 0.55 : 1)};
 
   & + & {
@@ -549,21 +762,19 @@ export const StImportRow = styled.div<{ $muted?: boolean }>`
 export const StImportMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
-  font-size: 0.8rem;
-  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
 
   time {
-    font-weight: 800;
-    color: ${({ theme }) => theme.colors.gray500};
+    ${numeric};
   }
 `;
 
 export const StImportHint = styled.p`
-  font-size: 0.78rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  line-height: 1.4;
+  ${running};
   word-break: break-all;
 `;
 
@@ -571,7 +782,7 @@ export const StImportFields = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem;
-  align-items: start;
+  align-items: center;
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -579,21 +790,11 @@ export const StImportFields = styled.div`
 `;
 
 export const StSmallInput = styled.input`
-  width: 100%;
-  min-width: 0;
+  ${control};
   min-height: 2.4rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: 0.6rem;
-  background: ${({ theme }) => theme.colors.white};
   padding: 0 0.65rem;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray900};
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.blue500};
-  }
 `;
 
 export const StPrimarySmallBtn = styled.button`
@@ -602,7 +803,7 @@ export const StPrimarySmallBtn = styled.button`
   background: ${({ theme }) => theme.semantic.primary};
   color: ${({ theme }) => theme.colors.white};
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   padding: 0 0.9rem;
   border-radius: 0.6rem;
   cursor: pointer;
@@ -628,7 +829,7 @@ export const StBulkBar = styled.div`
   margin-bottom: 0.9rem;
   padding: 0.8rem 0.9rem;
   border-radius: 0.8rem;
-  background: ${({ theme }) => theme.colors.blue50};
+  background: ${({ theme }) => theme.semantic.primaryLight};
 `;
 
 export const StBulkTitle = styled.div`
@@ -636,9 +837,9 @@ export const StBulkTitle = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.86rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.text};
 `;
 
 export const StBulkRow = styled.div`
@@ -652,10 +853,12 @@ export const StBulkRow = styled.div`
   }
 `;
 
+/* 세로줄 없이 가로 실선만. 금액은 오른쪽 정렬 + 자릿수 고정 */
 export const StTable = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.semantic.text};
 
   th.check,
   td.check {
@@ -666,34 +869,47 @@ export const StTable = styled.table`
   th,
   td {
     padding: 0.5rem 0.55rem;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
+    border-bottom: 1px solid ${({ theme }) => theme.semantic.border};
     text-align: left;
     white-space: nowrap;
+    vertical-align: middle;
   }
 
   th {
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: ${({ theme }) => theme.colors.gray500};
-    background: ${({ theme }) => theme.colors.gray50};
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.subText};
   }
 
   td.amount,
   th.amount {
+    ${numeric};
     text-align: right;
-    font-weight: 900;
+  }
+
+  td.amount {
+    font-weight: 800;
+  }
+
+  td.given {
+    color: ${({ theme }) => theme.colors.rose600};
+  }
+
+  td.received {
+    color: ${({ theme }) => theme.colors.teal600};
   }
 
   td.memo {
     white-space: normal;
-    color: ${({ theme }) => theme.colors.gray500};
+    line-height: 1.5;
+    color: ${({ theme }) => theme.semantic.subText};
     max-width: 16rem;
   }
 
   tfoot td {
-    font-weight: 900;
-    color: ${({ theme }) => theme.colors.gray900};
-    background: ${({ theme }) => theme.colors.gray50};
+    ${numeric};
+    font-weight: 800;
+    color: ${({ theme }) => theme.semantic.text};
     border-bottom: none;
   }
 `;
@@ -709,48 +925,50 @@ export const StGroupHead = styled.div`
 
 export const StGroupTitle = styled.h3`
   font-size: 0.9rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.colors.gray900};
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
   display: flex;
   align-items: center;
   gap: 0.4rem;
 `;
 
 export const StGroupMeta = styled.span`
+  ${numeric};
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.78rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray500};
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
-export const StRowActionBtn = styled.button`
-  border: none;
-  background: transparent;
-  color: ${({ theme }) => theme.colors.gray400};
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.15rem 0.3rem;
-  cursor: pointer;
+export const StRowActionBtn = styled.button<{ $tone?: GiftTone }>`
+  ${textButton};
+  color: ${({ $tone, theme }) =>
+    $tone ? toneInk(theme, $tone) : theme.semantic.subText};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.blue600};
+    color: ${({ $tone, theme }) =>
+      $tone ? toneInk(theme, $tone) : theme.semantic.text};
+    background: ${({ theme }) => theme.semantic.bg};
   }
 `;
 
 export const StGhostDangerBtn = styled.button`
   min-height: 2.4rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray500};
+  border: none;
+  background: ${({ theme }) => theme.semantic.bg};
+  color: ${({ theme }) => theme.semantic.subText};
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   padding: 0 0.8rem;
   border-radius: 0.6rem;
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.rose600};
-    border-color: ${({ theme }) => theme.colors.rose200};
+    color: ${({ theme }) => theme.semantic.danger};
+    background: ${({ theme }) => theme.semantic.dangerBg};
   }
 `;
 

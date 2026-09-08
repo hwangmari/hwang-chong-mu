@@ -17,11 +17,11 @@ import {
   StTableWrap,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
+  EVENT_TYPE_TONE,
   RELATION_LABEL,
   type GiftEntry,
   type GiftEventType,
@@ -81,13 +81,10 @@ function RowsTable({
                   {RELATION_LABEL[p.relation]}
                   {p.relationDetail ? ` · ${p.relationDetail}` : ""}
                 </td>
-                <td
-                  className="amount"
-                  style={{ color: DIRECTION_COLOR.received }}
-                >
+                <td className="amount received">
                   {p.receivedTotal ? formatAmount(p.receivedTotal) : "–"}
                 </td>
-                <td className="amount" style={{ color: DIRECTION_COLOR.given }}>
+                <td className="amount given">
                   {p.givenTotal
                     ? formatAmount(p.givenTotal)
                     : s === "marked"
@@ -127,7 +124,7 @@ function RowsTable({
                   ) : s === "pending" ? (
                     <StRowActionBtn
                       type="button"
-                      style={{ color: DIRECTION_COLOR.given }}
+                      $tone={DIRECTION_TONE.given}
                       onClick={() => onToggleReturned(p.receivedIds, true)}
                     >
                       냈음 표시
@@ -268,7 +265,7 @@ export default function ExchangeTable({ entries, onToggleReturned }: Props) {
             key={k}
             type="button"
             $active={tab === k}
-            $color={EVENT_TYPE_COLOR[k]}
+            $tone={EVENT_TYPE_TONE[k]}
             onClick={() => setPickedTab(k)}
           >
             {EVENT_TYPE_ICON[k]} {TAB_LABEL[k]}

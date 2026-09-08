@@ -9,7 +9,6 @@ import {
 } from "../importFromAccountBook";
 import { loadExcludedSourceIds, saveExcludedSourceIds } from "../storage";
 import {
-  StCard,
   StCardHead,
   StCardHint,
   StCardTitle,
@@ -24,21 +23,23 @@ import {
   StImportList,
   StImportMeta,
   StImportRow,
+  StMoney,
   StPrimarySmallBtn,
   StRowActionBtn,
   StSmallInput,
+  StSubSection,
   StTag,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
   DIRECTION_LABEL,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
-  RELATION_COLOR,
+  EVENT_TYPE_TONE,
   RELATION_KEYS,
   RELATION_LABEL,
+  RELATION_TONE,
   type GiftEntry,
   type GiftEntryInput,
   type GiftEventType,
@@ -158,7 +159,7 @@ export default function ImportFromAccountBook({ entries, onImport }: Props) {
   const excludedCount = candidates.filter((c) => excluded.has(c.sourceId)).length;
 
   return (
-    <StCard>
+    <StSubSection>
       <StCardHead>
         <StCardTitle>🧾 가계부에서 가져오기</StCardTitle>
         {open ? (
@@ -225,18 +226,18 @@ export default function ImportFromAccountBook({ entries, onImport }: Props) {
                   <StImportRow key={c.sourceId} $muted={c.alreadyImported || isExcluded}>
                     <StImportMeta>
                       <time>{c.date}</time>
-                      <StTag $color={DIRECTION_COLOR[c.direction]}>
+                      <StTag $tone={DIRECTION_TONE[c.direction]}>
                         {DIRECTION_LABEL[c.direction]}
                       </StTag>
-                      <b style={{ color: DIRECTION_COLOR[c.direction] }}>
+                      <StMoney $tone={DIRECTION_TONE[c.direction]} $strong>
                         {formatAmount(c.amount)}
-                      </b>
+                      </StMoney>
                       {c.alreadyImported ? (
-                        <StTag $color="#7d8593">이미 담김</StTag>
+                        <StTag $tone="gray">이미 담김</StTag>
                       ) : null}
                       {isExcluded ? (
                         <>
-                          <StTag $color="#7d8593">제외함</StTag>
+                          <StTag $tone="gray">제외함</StTag>
                           <StRowActionBtn
                             type="button"
                             onClick={() => setExcludedFor(c.sourceId, false)}
@@ -256,7 +257,7 @@ export default function ImportFromAccountBook({ entries, onImport }: Props) {
                               key={key}
                               type="button"
                               $active={draft.eventType === key}
-                              $color={EVENT_TYPE_COLOR[key]}
+                              $tone={EVENT_TYPE_TONE[key]}
                               onClick={() => patch(c.sourceId, { eventType: key })}
                             >
                               {EVENT_TYPE_ICON[key]} {EVENT_TYPE_LABEL[key]}
@@ -269,7 +270,7 @@ export default function ImportFromAccountBook({ entries, onImport }: Props) {
                               key={key}
                               type="button"
                               $active={draft.relation === key}
-                              $color={RELATION_COLOR[key]}
+                              $tone={RELATION_TONE[key]}
                               onClick={() => patch(c.sourceId, { relation: key })}
                             >
                               {RELATION_LABEL[key]}
@@ -312,6 +313,6 @@ export default function ImportFromAccountBook({ entries, onImport }: Props) {
           )}
         </>
       )}
-    </StCard>
+    </StSubSection>
   );
 }

@@ -5,13 +5,13 @@ import { Button } from "@hwangchongmu/ui";
 import { parseBulkText } from "../parseBulk";
 import {
   StActions,
-  StCard,
   StCardHead,
   StCardHint,
   StCardTitle,
   StChip,
   StChipRow,
   StError,
+  StErrorText,
   StFieldName,
   StGhostBtn,
   StInput,
@@ -20,21 +20,22 @@ import {
   StSegmentBtn,
   StSegmentRow,
   StTable,
+  StSubSection,
   StTableWrap,
   StTextarea,
 } from "../page.styles";
 import {
-  DIRECTION_COLOR,
   DIRECTION_KEYS,
   DIRECTION_LABEL,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
-  RELATION_COLOR,
+  EVENT_TYPE_TONE,
   RELATION_DETAIL_PLACEHOLDER,
   RELATION_KEYS,
   RELATION_LABEL,
+  RELATION_TONE,
   type GiftDirection,
   type GiftEntryInput,
   type GiftEventType,
@@ -105,7 +106,7 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
   }
 
   return (
-    <StCard>
+    <StSubSection>
       <StCardHead>
         <StCardTitle>📋 명단 한번에 담기</StCardTitle>
         <StGhostBtn type="button" onClick={() => setOpen((v) => !v)}>
@@ -125,7 +126,7 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
                 key={key}
                 type="button"
                 $active={direction === key}
-                $color={DIRECTION_COLOR[key]}
+                $tone={DIRECTION_TONE[key]}
                 onClick={() => setDirection(key)}
               >
                 {key === "given" ? "💸 " : "💰 "}
@@ -159,7 +160,7 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
                   key={key}
                   type="button"
                   $active={eventType === key}
-                  $color={EVENT_TYPE_COLOR[key]}
+                  $tone={EVENT_TYPE_TONE[key]}
                   onClick={() => setEventType(key)}
                 >
                   {EVENT_TYPE_ICON[key]} {EVENT_TYPE_LABEL[key]}
@@ -176,7 +177,7 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
                   key={key}
                   type="button"
                   $active={relation === key}
-                  $color={RELATION_COLOR[key]}
+                  $tone={RELATION_TONE[key]}
                   onClick={() => setRelation(key)}
                 >
                   {RELATION_LABEL[key]}
@@ -219,7 +220,7 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
                           <b>{l.error ? l.raw : l.personName}</b>
                         </td>
                         <td className="amount">
-                          {l.error ? <span style={{ color: "#c0304f" }}>{l.error}</span> : formatAmount(l.amount)}
+                          {l.error ? <StErrorText>{l.error}</StErrorText> : formatAmount(l.amount)}
                         </td>
                         <td className="memo">{l.memo}</td>
                       </tr>
@@ -246,6 +247,6 @@ export default function BulkAddForm({ defaultDate, onAddMany }: Props) {
           </StActions>
         </>
       )}
-    </StCard>
+    </StSubSection>
   );
 }

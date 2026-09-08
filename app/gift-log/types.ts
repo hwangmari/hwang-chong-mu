@@ -140,25 +140,37 @@ export type YearSummary = {
   byRelation: { key: GiftRelation; detail: string; total: DirectionTotal }[];
 };
 
-// 칩·막대에 쓰는 색 (인바디 METRIC_COLOR처럼 고정 hex)
-export const DIRECTION_COLOR: Record<GiftDirection, string> = {
-  given: "#d04a73",
-  received: "#1f8a54",
+// 칩·태그·금액에 쓰는 색 "이름". 실제 색은 테마에서 꺼내 쓴다.
+// (고정 hex 를 두면 다크 모드에서 글씨가 안 보여서 이름만 남긴다 — page.styles.ts 의 toneInk/toneBg)
+export type GiftTone =
+  | "rose"
+  | "teal"
+  | "blue"
+  | "indigo"
+  | "amber"
+  | "orange"
+  | "green"
+  | "gray";
+
+// 낸 돈은 빨강 계열, 받은 돈은 초록 계열
+export const DIRECTION_TONE: Record<GiftDirection, GiftTone> = {
+  given: "rose",
+  received: "teal",
 };
 
-export const EVENT_TYPE_COLOR: Record<GiftEventType, string> = {
-  wedding: "#d04a73",
-  funeral: "#607de0",
-  firstBirthday: "#f59e0b",
-  birthday: "#7c6ae0",
-  etc: "#9aa3b2",
+export const EVENT_TYPE_TONE: Record<GiftEventType, GiftTone> = {
+  wedding: "rose",
+  funeral: "indigo",
+  firstBirthday: "amber",
+  birthday: "orange",
+  etc: "gray",
 };
 
-export const RELATION_COLOR: Record<GiftRelation, string> = {
-  company: "#3b6fd6",
-  friend: "#1f8a54",
-  relative: "#c2792a",
-  school: "#7c6ae0",
-  neighbor: "#2a9d9f",
-  etc: "#9aa3b2",
+export const RELATION_TONE: Record<GiftRelation, GiftTone> = {
+  company: "blue",
+  friend: "teal",
+  relative: "amber",
+  school: "indigo",
+  neighbor: "green",
+  etc: "gray",
 };

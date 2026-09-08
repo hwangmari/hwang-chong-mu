@@ -19,17 +19,17 @@ import {
 } from "../page.styles";
 import {
   AMOUNT_PRESETS,
-  DIRECTION_COLOR,
   DIRECTION_KEYS,
   DIRECTION_LABEL,
-  EVENT_TYPE_COLOR,
+  DIRECTION_TONE,
   EVENT_TYPE_ICON,
   EVENT_TYPE_KEYS,
   EVENT_TYPE_LABEL,
-  RELATION_COLOR,
+  EVENT_TYPE_TONE,
   RELATION_DETAIL_PLACEHOLDER,
   RELATION_KEYS,
   RELATION_LABEL,
+  RELATION_TONE,
   type GiftDirection,
   type GiftEventType,
   type GiftRelation,
@@ -80,7 +80,7 @@ export default function GiftEntryForm({
             key={key}
             type="button"
             $active={form.direction === key}
-            $color={DIRECTION_COLOR[key]}
+            $tone={DIRECTION_TONE[key]}
             onClick={() => onChange({ direction: key })}
           >
             {key === "given" ? "💸 " : "💰 "}
@@ -118,7 +118,7 @@ export default function GiftEntryForm({
               key={key}
               type="button"
               $active={form.eventType === key}
-              $color={EVENT_TYPE_COLOR[key]}
+              $tone={EVENT_TYPE_TONE[key]}
               onClick={() => onChange({ eventType: key })}
             >
               {EVENT_TYPE_ICON[key]} {EVENT_TYPE_LABEL[key]}
@@ -135,7 +135,7 @@ export default function GiftEntryForm({
               key={key}
               type="button"
               $active={form.relation === key}
-              $color={RELATION_COLOR[key]}
+              $tone={RELATION_TONE[key]}
               onClick={() => onChange({ relation: key, relationDetail: "" })}
             >
               {RELATION_LABEL[key]}
@@ -157,7 +157,7 @@ export default function GiftEntryForm({
                 key={detail}
                 type="button"
                 $active={form.relationDetail.trim() === detail}
-                $color={RELATION_COLOR[form.relation]}
+                $tone={RELATION_TONE[form.relation]}
                 onClick={() => onChange({ relationDetail: detail })}
               >
                 {detail}
@@ -184,7 +184,7 @@ export default function GiftEntryForm({
               key={preset}
               type="button"
               $active={Number(form.amount) === preset}
-              $color={DIRECTION_COLOR[form.direction]}
+              $tone={DIRECTION_TONE[form.direction]}
               onClick={() => onChange({ amount: String(preset) })}
             >
               {formatAmount(preset)}
