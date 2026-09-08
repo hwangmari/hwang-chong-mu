@@ -302,6 +302,13 @@ export const OVERTIME_GUIDE_DATA: GuideData = {
       description:
         "보상휴가 제도가 있는 회사에서 야근이 잦은 분, 연말에 '내 휴가 며칠 남았지?' 하고 계산하기 싫은 분, 팀원 야근을 한 방에 모아 보고 싶은 파트장님.",
     },
+    {
+      icon: "✉️",
+      title: "우리 회사 규칙은 달라요",
+      description:
+        "지금은 두 가지 규칙만 들어 있어요. 적립 기준이나 배율이 다르거나, 넣고 싶은 계산 방식이 있으면 문의 메일로 보내 주세요. 회사 이름은 빼고 규칙만 적어 주시면 검토해서 추가할게요.",
+      link: { href: "mailto:hwangmari@naver.com", label: "문의 메일 보내기" },
+    },
   ],
 };
 
