@@ -30,6 +30,10 @@ import {
   StCardHint,
   StCardTitle,
   StChip,
+  StRuleGroups,
+  StRuleGroup,
+  StRuleGroupLabel,
+  StRuleSubRow,
   StChipRow,
   StFieldName,
   StInput,
@@ -53,6 +57,9 @@ const PLAYERS_PLACEHOLDER = `한 줄에 한 명씩: 이름 성별 구력(년) �
 이서연 여 4 초록클럽
 박도윤 남 1 파랑클럽
 최하은 여        ← 구력·소속을 모르면 비워도 돼요`;
+
+// 규칙 칩 색 — 켜진 규칙은 모두 같은 초록(팀 대항도 같은 색으로 통일)
+const RULE_CHIP_COLOR = "#1f8a54";
 
 export default function EventSetupForm({ onCreate }: Props) {
   const [title, setTitle] = useState("");
@@ -296,57 +303,67 @@ export default function EventSetupForm({ onCreate }: Props) {
       ) : null}
 
       <StLabel as="div">
-        <StFieldName>대진표 규칙 — 누르면 켜고 꺼요</StFieldName>
-        <StChipRow>
-          {FIXED_RULES.map((r) => (
-            <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
-              🔒 {r.label}
-            </StRuleBadge>
-          ))}
-          {RULE_INFO.map((r) => {
-            const on = isRuleOn(rules, r.id);
-            const team = r.id === "teamMatch" ? teamMatchAvailable(players) : null;
-            const disabled = team ? !team.ok : false;
-            return (
-              <StChip
-                key={r.id}
-                type="button"
-                $active={on && !disabled}
-                $color={r.id === "teamMatch" ? "#c2410c" : "#1f8a54"}
-                title={disabled ? `${r.description} (${team?.reason})` : r.description}
-                disabled={disabled}
-                onClick={() => toggleRule(r.id)}
-              >
-                {on && !disabled ? "✓ " : ""}
-                {r.id === "maxRest" && rules.maxRest !== null ? `연속 휴식 ≤${rules.maxRest}` : r.label}
-              </StChip>
-            );
-          })}
-        </StChipRow>
-        <StCardHint>
+        <StFieldName>대진표 규칙</StFieldName>
+        <StRuleGroups>
+          <StRuleGroup>
+            <StRuleGroupLabel>항상 지켜요</StRuleGroupLabel>
+            <StChipRow>
+              {FIXED_RULES.map((r) => (
+                <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
+                  🔒 {r.label}
+                </StRuleBadge>
+              ))}
+            </StChipRow>
+          </StRuleGroup>
+          <StRuleGroup>
+            <StRuleGroupLabel>눌러서 선택</StRuleGroupLabel>
+            <StChipRow>
+              {RULE_INFO.map((r) => {
+                const on = isRuleOn(rules, r.id);
+                const team = r.id === "teamMatch" ? teamMatchAvailable(players) : null;
+                const disabled = team ? !team.ok : false;
+                return (
+                  <StChip
+                    key={r.id}
+                    type="button"
+                    $active={on && !disabled}
+                    $color={RULE_CHIP_COLOR}
+                    title={disabled ? `${r.description} (${team?.reason})` : r.description}
+                    disabled={disabled}
+                    aria-pressed={on && !disabled}
+                    onClick={() => toggleRule(r.id)}
+                  >
+                    {on && !disabled ? "✓ " : ""}
+                    {r.id === "maxRest" && rules.maxRest !== null ? `연속 휴식 ≤${rules.maxRest}` : r.label}
+                  </StChip>
+                );
+              })}
+            </StChipRow>
+          </StRuleGroup>
           {rules.maxRest !== null ? (
-            <>
-              연속 휴식 한도:{" "}
+            <StRuleSubRow>
+              <span>연속 휴식 한도</span>
               {[2, 3, 4].map((n) => (
                 <StChip
                   key={n}
                   type="button"
                   $active={rules.maxRest === n}
-                  $color="#1f8a54"
+                  $color={RULE_CHIP_COLOR}
+                  aria-pressed={rules.maxRest === n}
                   onClick={() => {
                     setRules((prev) => ({ ...prev, maxRest: n }));
                     setGenerated(null);
                   }}
-                  style={{ marginRight: "0.25rem" }}
                 >
                   {n}묶음
                 </StChip>
               ))}
-              (한 묶음 = 코트 {courts}면이 동시에 뛰는 시간)
-            </>
-          ) : (
-            "자물쇠 규칙은 항상 지켜요. 나머지는 취향대로 켜고 끄세요. 팀 대항은 선수마다 소속을 적으면 켤 수 있어요."
-          )}
+              <span>· 한 묶음 = 코트 {courts}면이 동시에 뛰는 시간</span>
+            </StRuleSubRow>
+          ) : null}
+        </StRuleGroups>
+        <StCardHint>
+          자물쇠 규칙은 항상 지켜요. 나머지는 취향대로 켜고 끄세요. 팀 대항은 선수마다 소속을 적으면 켤 수 있어요.
         </StCardHint>
         <RuleDetailSettings
           players={players}

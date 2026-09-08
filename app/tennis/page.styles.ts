@@ -160,19 +160,109 @@ export const StChipRow = styled.div`
 `;
 
 export const StChip = styled.button<{ $active: boolean; $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
   border: 1px solid ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray200)};
   background: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.white)};
   color: ${({ $active, theme }) => ($active ? theme.colors.white : theme.colors.gray700)};
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 0.35rem 0.7rem;
+  line-height: 1;
+  padding: 0 0.8rem;
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 
-  /* 배지(누를 수 없는 칩)는 흐리지 않게, 못 켜는 규칙 칩만 흐리게 */
+  &:hover:not(:disabled) {
+    border-color: ${({ $active, $color, theme }) => ($active ? $color : theme.colors.gray400)};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ $color }) => $color};
+    outline-offset: 2px;
+  }
+
+  /* 못 켜는 규칙 칩: 점선 테두리 + 흐리게 (배지처럼 보이지 않게) */
   &:disabled {
     cursor: default;
-    opacity: ${({ $active }) => ($active ? 1 : 0.45)};
+    border-style: dashed;
+    opacity: ${({ $active }) => ($active ? 1 : 0.5)};
+  }
+`;
+
+/* 규칙 칩 묶음: "항상 지켜요" / "취향대로" 라벨 + 칩 줄 */
+export const StRuleGroups = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+`;
+
+export const StRuleGroup = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+`;
+
+export const StRuleGroupLabel = styled.span`
+  flex: 0 0 4.2rem;
+  padding-top: 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: ${({ theme }) => theme.colors.gray500};
+  white-space: nowrap;
+
+  @media (max-width: 560px) {
+    flex-basis: auto;
+    padding-top: 0;
+  }
+`;
+
+/* 연속 휴식 한도 같은 하위 선택: 칩 줄 아래 한 단 들여서 */
+export const StRuleSubRow = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: 4.8rem;
+  font-size: 0.78rem;
+  color: ${({ theme }) => theme.colors.gray500};
+
+  @media (max-width: 560px) {
+    margin-left: 0;
+  }
+`;
+
+/* 세부 요건 열기 버튼: 칩과 같은 키의 실선 버튼 */
+export const StRuleMoreBtn = styled.button<{ $on?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid ${({ $on, theme }) => ($on ? theme.colors.gray700 : theme.colors.gray300)};
+  background: ${({ $on, theme }) => ($on ? theme.colors.gray700 : theme.colors.white)};
+  color: ${({ $on, theme }) => ($on ? theme.colors.white : theme.colors.gray700)};
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.gray700};
+    outline-offset: 2px;
   }
 `;
 
@@ -1145,13 +1235,16 @@ export const StStatButton = styled(StStatBox).attrs({ as: "button", type: "butto
 export const StRuleBadge = styled.span<{ $tone: "fixed" | "on" }>`
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
+  gap: 0.3rem;
+  min-height: 2rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 0.22rem 0.6rem;
+  line-height: 1;
+  padding: 0 0.8rem;
   border-radius: 999px;
+  white-space: nowrap;
   color: ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray500 : theme.colors.teal600)};
-  background: ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray100 : theme.colors.teal50)};
+  background: ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray50 : theme.colors.teal50)};
   border: 1px solid ${({ $tone, theme }) => ($tone === "fixed" ? theme.colors.gray200 : theme.colors.teal100)};
 `;
 

@@ -22,6 +22,7 @@ import {
   StCardHint,
   StChip,
   StChipRow,
+  StRuleMoreBtn,
   StDetailPanel,
   StDetailSection,
   StDetailTitle,
@@ -205,9 +206,9 @@ export default function RuleDetailSettings({
   return (
     <>
       <StChipRow style={{ marginTop: "0.4rem" }}>
-        <StGhostBtn type="button" onClick={() => setOpen((v) => !v)}>
-          {open ? "세부 요건 설정 접기" : "⚙️ 세부 요건 설정 펼치기"}
-        </StGhostBtn>
+        <StRuleMoreBtn type="button" $on={open} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          ⚙️ {open ? "세부 요건 접기" : "세부 요건 설정"}
+        </StRuleMoreBtn>
         {detailOn ? <StCardHint style={{ margin: 0 }}>세부 요건을 쓰고 있어요.</StCardHint> : null}
       </StChipRow>
 
