@@ -65,8 +65,8 @@ export type ServiceCategory = {
 // 4묶음이지만 PC 화면은 3열을 유지한다 — 작은 두 묶음(일과 시간·돈 관리)은 가운데 열에 위아래로 (2026-09-08 사용자 결정)
 export const CATEGORIES: ServiceCategory[] = [
   { id: "together", title: "친구들과 함께", emoji: "🤝", order: 1, column: 1 },
-  { id: "work", title: "일과 시간", emoji: "💼", order: 2, column: 2 },
-  { id: "money", title: "돈 관리", emoji: "💰", order: 3, column: 2 },
+  { id: "money", title: "돈 관리", emoji: "💰", order: 2, column: 2 },
+  { id: "work", title: "일과 시간", emoji: "💼", order: 3, column: 2 },
   { id: "daily", title: "몸과 습관", emoji: "🌱", order: 4, column: 3 },
 ];
 
