@@ -15,8 +15,6 @@ import {
   StMatch,
   StMatchMeta,
   StOrderNo,
-  StPairRotation,
-  StTeamSubName,
   StPlayedTime,
   StSaveBtn,
   StScoreColon,
@@ -27,24 +25,26 @@ import {
   StTeam,
   StTeamLabel,
   StTeamName,
+  StTeamSubName,
   StTeams,
   StTiming,
   StVs,
 } from "../page.styles";
 import { playedMinutes } from "../timeline";
 import { matchCardId } from "../jump";
-import type { Court, MatchScore } from "../types";
 import { validateGameScore } from "../score";
-import { PAIR_ROTATION, STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
+import type { Court, MatchScore } from "../types";
+import { STAGE_COLOR, type GeneralTeam, type ResolvedGeneralMatch } from "./types";
 
 type Props = {
-  match: ResolvedMatch;
+  match: ResolvedGeneralMatch;
   score: MatchScore | null;
   blockTime: string; // "13:00 — 13:30"
   gamesToWin: number;
+  minutesPerMatch: number;
   clock: number; // 현재 시각(분)
-  courts: Court[]; // 이 대회의 코트들
-  occupied: Set<Court>; // 지금 경기 중인 코트
+  courts: Court[];
+  occupied: Set<Court>;
   busy: boolean;
   onStart: (matchNo: number, court: Court) => Promise<void>;
   onSave: (matchNo: number, scoreA: number, scoreB: number, tiebreak: [number, number] | null) => Promise<void>;
@@ -56,19 +56,12 @@ function isoToMinutes(iso: string) {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-// 팀의 페어 구성: 시드 번호 → 선수 이름
-function pairNames(team: TeamEntry | null, seeds: [number, number]) {
-  if (!team) return "-";
-  return seeds
-    .map((sd) => team.players.find((p) => p.seed === sd)?.name || `시드${sd}`)
-    .join(" · ");
-}
-
-export default function TournamentMatchCard({
+export default function GeneralMatchCard({
   match,
   score,
   blockTime,
   gamesToWin,
+  minutesPerMatch,
   clock,
   courts,
   occupied,
@@ -85,6 +78,7 @@ export default function TournamentMatchCard({
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
 
+  // 저장된 점수가 바뀌면(다른 사람이 넣었을 때) 입력칸을 그 값으로 맞춘다
   const key = done ? `${match.scoreA}:${match.scoreB}:${score?.tiebreakA ?? ""}:${score?.tiebreakB ?? ""}` : "";
   const [synced, setSynced] = useState(key);
   if (synced !== key) {
@@ -96,26 +90,25 @@ export default function TournamentMatchCard({
     setEditing(false);
   }
 
-  // 점수 규칙(6게임 선취 · 5:5면 타이브레이크 · 동점 금지)은 일반 대회와 함께 쓰는 score.ts에 있다
   const check = validateGameScore({ a, b, tbA, tbB, gamesToWin });
   const needsTiebreak = check.needsTiebreak;
-
-  const state = match.status === "hidden" ? "waiting" : match.status;
-  const color = STAGE_COLOR[match.template.stage];
+  const color = STAGE_COLOR[match.match.stage];
   const elapsed =
     match.status === "playing" && score?.startedAt
       ? Math.max(0, clock - isoToMinutes(score.startedAt))
       : null;
 
-  const renderTeam = (team: TeamEntry | null, label: string, side: "A" | "B") => {
-    const winner = done && match.winner?.seed === team?.seed && team !== null;
+  const renderTeam = (team: GeneralTeam | null, label: string, side: "A" | "B") => {
+    const winner = done && team !== null && match.winner?.id === team.id;
     return (
       <StTeam $winner={!done || winner} $align={side === "A" ? "left" : "right"}>
-        <StTeamLabel $color={color}>{side}팀{winner ? " · 승" : ""}</StTeamLabel>
+        <StTeamLabel $color={color}>
+          {side}팀{winner ? " · 승" : ""}
+        </StTeamLabel>
         {team ? (
           <StTeamName>
             <StSeedTag>#{team.seed}</StSeedTag> {team.name}
-            {team.subName ? <StTeamSubName>{team.subName}</StTeamSubName> : null}
+            {team.players.length > 0 ? <StTeamSubName>{team.players.join(" · ")}</StTeamSubName> : null}
           </StTeamName>
         ) : (
           <StTeamName $muted>{label}</StTeamName>
@@ -125,13 +118,19 @@ export default function TournamentMatchCard({
   };
 
   return (
-    <StMatch id={matchCardId(match.template.no)} $color={color} $state={state} data-match-no={match.template.no} data-state={match.status}>
+    <StMatch
+      id={matchCardId(match.match.no)}
+      $color={color}
+      $state={match.status}
+      data-match-no={match.match.no}
+      data-state={match.status}
+    >
       <StMatchMeta>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-          <StOrderNo>{match.template.no}</StOrderNo>
+          <StOrderNo $wide={match.match.no >= 100}>{match.match.no}</StOrderNo>
           <span>
-            {match.template.label}
-            {score?.court ? ` · 코트 ${score.court}` : ` · 계획 코트 ${match.template.court}`}
+            {match.match.label}
+            {score?.court ? ` · 코트 ${score.court}` : ` · 계획 코트 ${match.match.court}`}
           </span>
         </span>
         {match.status === "playing" ? (
@@ -139,7 +138,7 @@ export default function TournamentMatchCard({
             <StLiveDot /> LIVE <StBall>🎾</StBall>
           </StLiveBadge>
         ) : (
-          <StStateBadge $state={state}>
+          <StStateBadge $state={match.status}>
             {match.status === "done" ? "✓ 완료" : match.status === "ready" ? "▶ 시작 가능" : "⏳ 앞 경기 대기"}
           </StStateBadge>
         )}
@@ -148,7 +147,12 @@ export default function TournamentMatchCard({
       <StTiming $tone={done ? "done" : match.status === "playing" ? "playing" : "plain"}>
         ⏱ 예정 {blockTime}
         {score?.startedAt ? ` · ${toClock(isoToMinutes(score.startedAt))} 시작` : ""}
-        {done && score ? (() => { const m = playedMinutes(score); return m !== null ? ` · ${m}분 플레이` : ""; })() : ""}
+        {done && score
+          ? (() => {
+              const m = playedMinutes(score);
+              return m !== null ? ` · ${m}분 플레이` : "";
+            })()
+          : ""}
       </StTiming>
 
       <StTeams>
@@ -157,31 +161,18 @@ export default function TournamentMatchCard({
         {renderTeam(match.teamB, match.bLabel, "B")}
       </StTeams>
 
-      {match.teamA && match.teamB && !done ? (
-        <StPairRotation>
-          <b>순서</b>
-          <b>{match.teamA.name}</b>
-          <b>{match.teamB.name}</b>
-          {PAIR_ROTATION.map((r) => (
-            <div key={r.key} style={{ display: "contents" }}>
-              <span className="label">
-                페어{r.key} <em style={{ fontStyle: "normal" }}>({r.games})</em>
-              </span>
-              <span className="names">{pairNames(match.teamA, r.seeds)}</span>
-              <span className="names">{pairNames(match.teamB, r.seeds)}</span>
-            </div>
-          ))}
-        </StPairRotation>
-      ) : null}
-
       {elapsed !== null ? (
         <>
           <StElapsed>
             <span>🔥 경기 중 · {elapsed}분 경과</span>
-            <span>{elapsed >= 30 ? "예정 시간 지남 · 점수 넣어 주세요" : `남은 예상 ${30 - elapsed}분`}</span>
+            <span>
+              {elapsed >= minutesPerMatch
+                ? "예정 시간 지남 · 점수 넣어 주세요"
+                : `남은 예상 ${minutesPerMatch - elapsed}분`}
+            </span>
           </StElapsed>
           <StElapsedTrack>
-            <StElapsedFill $ratio={Math.min(1, elapsed / 30)} />
+            <StElapsedFill $ratio={Math.min(1, elapsed / Math.max(1, minutesPerMatch))} />
           </StElapsedTrack>
         </>
       ) : null}
@@ -194,10 +185,10 @@ export default function TournamentMatchCard({
               <StCourtPick
                 key={court}
                 type="button"
-                $primary={free && court === match.template.court}
+                $primary={free && court === match.match.court}
                 disabled={busy || !free}
                 title={free ? undefined : "이 코트는 경기 중이에요"}
-                onClick={() => void onStart(match.template.no, court)}
+                onClick={() => void onStart(match.match.no, court)}
               >
                 ▶ 코트 {court}
               </StCourtPick>
@@ -227,15 +218,51 @@ export default function TournamentMatchCard({
       {match.status === "playing" || (done && editing) ? (
         <>
           <StScoreRow>
-            <StScoreInput type="number" inputMode="numeric" min={0} max={20} placeholder="A" aria-label="A팀 게임" value={a} onChange={(e) => setA(e.target.value)} />
+            <StScoreInput
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={20}
+              placeholder="A"
+              aria-label="A팀 게임"
+              value={a}
+              onChange={(e) => setA(e.target.value)}
+            />
             <StScoreColon>:</StScoreColon>
-            <StScoreInput type="number" inputMode="numeric" min={0} max={20} placeholder="B" aria-label="B팀 게임" value={b} onChange={(e) => setB(e.target.value)} />
+            <StScoreInput
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={20}
+              placeholder="B"
+              aria-label="B팀 게임"
+              value={b}
+              onChange={(e) => setB(e.target.value)}
+            />
             {needsTiebreak ? (
               <>
                 <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#64748b" }}>타이브레이크</span>
-                <StScoreInput type="number" inputMode="numeric" min={0} max={30} placeholder="7" aria-label="A팀 타이브레이크" value={tbA} onChange={(e) => setTbA(e.target.value)} />
+                <StScoreInput
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={30}
+                  placeholder="7"
+                  aria-label="A팀 타이브레이크"
+                  value={tbA}
+                  onChange={(e) => setTbA(e.target.value)}
+                />
                 <StScoreColon>-</StScoreColon>
-                <StScoreInput type="number" inputMode="numeric" min={0} max={30} placeholder="4" aria-label="B팀 타이브레이크" value={tbB} onChange={(e) => setTbB(e.target.value)} />
+                <StScoreInput
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={30}
+                  placeholder="4"
+                  aria-label="B팀 타이브레이크"
+                  value={tbB}
+                  onChange={(e) => setTbB(e.target.value)}
+                />
               </>
             ) : null}
           </StScoreRow>
@@ -246,7 +273,7 @@ export default function TournamentMatchCard({
               onClick={() => {
                 setError(check.error);
                 if (check.error || check.a === null || check.b === null) return;
-                void onSave(match.template.no, check.a, check.b, check.tiebreak);
+                void onSave(match.match.no, check.a, check.b, check.tiebreak);
               }}
             >
               {done ? "점수 고치기" : "경기 끝 · 점수 저장"}
@@ -256,13 +283,14 @@ export default function TournamentMatchCard({
                 취소
               </StGhostBtn>
             ) : null}
-            <StGhostBtn type="button" disabled={busy} onClick={() => void onClear(match.template.no)}>
+            <StGhostBtn type="button" disabled={busy} onClick={() => void onClear(match.match.no)}>
               {done ? "기록 지우기" : "시작 취소"}
             </StGhostBtn>
           </StScoreRow>
           {error ? <StTiming $tone="shifted">⚠️ {error}</StTiming> : null}
           <StTiming $tone="plain">
-            {gamesToWin}게임 선취 · 5:5면 7점 타이브레이크 (이긴 팀 {gamesToWin}:{gamesToWin - 1}로 적고 타이브레이크 점수를 함께)
+            {gamesToWin}게임 선취 · 5:5면 7점 타이브레이크 (이긴 팀 {gamesToWin}:{gamesToWin - 1}로 적고 타이브레이크
+            점수를 함께)
           </StTiming>
         </>
       ) : null}

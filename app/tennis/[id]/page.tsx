@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import ExchangeView from "../components/ExchangeView";
 import TournamentView from "../tournament/TournamentView";
+import GeneralView from "../general/GeneralView";
 import { findBuiltInEvent } from "../data";
 import { findBuiltInTournament } from "../tournament/data";
-import { fetchTennisEvent, isTournament, type AnyTennisEvent } from "@/services/tennis";
+import { fetchTennisEvent, isGeneral, isTournament, type AnyTennisEvent } from "@/services/tennis";
 import { StCard, StCardHint, StHeader, StNotice, StPage, StTitle } from "../page.styles";
 import { SkeletonBlock, SkeletonCard } from "@/components/common/Skeleton";
 
@@ -31,7 +32,7 @@ export default function TennisEventPage() {
       .then((found) => {
         if (cancelled) return;
         if (found) setEvent(found);
-        else if (!builtIn) setError("이 주소의 교류전을 찾지 못했어요. 링크를 다시 확인해 주세요.");
+        else if (!builtIn) setError("이 주소의 대회를 찾지 못했어요. 링크를 다시 확인해 주세요.");
       })
       .catch((e: unknown) => {
         if (cancelled || builtIn) return;
@@ -76,9 +77,7 @@ export default function TennisEventPage() {
   }
 
   // key를 id로 두어 다른 이벤트로 이동하면 상태를 새로 만든다
-  return isTournament(event) ? (
-    <TournamentView key={event.id} initialEvent={event} />
-  ) : (
-    <ExchangeView key={event.id} initialEvent={event} />
-  );
+  if (isTournament(event)) return <TournamentView key={event.id} initialEvent={event} />;
+  if (isGeneral(event)) return <GeneralView key={event.id} initialEvent={event} />;
+  return <ExchangeView key={event.id} initialEvent={event} />;
 }

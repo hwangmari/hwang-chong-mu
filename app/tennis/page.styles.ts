@@ -367,10 +367,19 @@ export const StPlayedTime = styled.div<{ $known: boolean }>`
   background: ${({ $known, theme }) => ($known ? theme.colors.teal50 : theme.colors.gray100)};
 `;
 
-export const StOrderNo = styled.span`
+/* $wide: 일반 대회 결선처럼 번호가 세 자리 이상일 때만 좌우 여백을 주고 눌리지 않게 한다.
+   기본(한두 자리)은 예전 그대로 정확한 1.7rem 동그라미다 — 교류전·토너먼트 배지 모양이 바뀌지 않는다. */
+export const StOrderNo = styled.span<{ $wide?: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  ${({ $wide }) =>
+    $wide
+      ? css`
+          flex: 0 0 auto;
+          padding: 0 0.4rem;
+        `
+      : ""}
   min-width: 1.7rem;
   height: 1.7rem;
   border-radius: 999px;

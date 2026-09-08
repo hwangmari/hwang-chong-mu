@@ -5,14 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EventSetupForm from "./components/EventSetupForm";
 import TournamentSetupForm from "./tournament/TournamentSetupForm";
+import GeneralSetupForm from "./general/GeneralSetupForm";
 import type { TournamentEvent } from "./tournament/types";
+import type { GeneralEvent } from "./general/types";
 import { EVENTS } from "./data";
 import { TOURNAMENTS } from "./tournament/data";
 import { formatDate, formatEventDate } from "./format";
 import {
+  createGeneral,
   createTennisEvent,
   createTournament,
   fetchTennisEvent,
+  isGeneral,
   isTournament,
   type AnyTennisEvent,
   type NewTennisEvent,
@@ -41,7 +45,7 @@ export default function TennisHomePage() {
   const router = useRouter();
   const [myEvents, setMyEvents] = useState<MyEvent[]>([]);
   const [error, setError] = useState("");
-  const [kind, setKind] = useState<"exchange" | "tournament">("exchange");
+  const [kind, setKind] = useState<"exchange" | "tournament" | "general">("exchange");
   // 코드에 든 대회의 저장본(화면에서 편집해 DB에 남은 최신본). 있으면 명단·경기 수를 이걸로 보여준다.
   const [savedCopies, setSavedCopies] = useState<Record<string, AnyTennisEvent>>({});
 
@@ -101,12 +105,28 @@ export default function TennisHomePage() {
     }
   }
 
+  async function createG(input: Omit<GeneralEvent, "id" | "builtIn">) {
+    setError("");
+    try {
+      const event = await createGeneral(input);
+      rememberMyEvent({ id: event.id, title: event.title, date: event.date });
+      router.push(`/tennis/${event.id}`);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "";
+      setError(
+        `일반 대회를 저장하지 못했어요. tennis_events 표가 오래됐다면 supabase/20260908_add_tennis_general.sql을 실행해 주세요.${message ? ` (${message})` : ""}`,
+      );
+      throw e;
+    }
+  }
+
   return (
     <StPage>
       <StHeader>
-        <StTitle>🎾 테니스 교류전</StTitle>
+        <StTitle>🎾 테니스 대회</StTitle>
         <StSubtitle>
-          선수 명단만 넣으면 대진표를 자동으로 짜고, 링크 하나로 점수를 모아 승점 순위를 바로 봐요.
+          교류전 · 팀 토너먼트 · 일반 대회 중에 골라요. 명단만 넣으면 대진과 시간표를 자동으로 짜고, 링크 하나로 점수를 모아
+          순위를 바로 봐요.
         </StSubtitle>
       </StHeader>
 
@@ -114,7 +134,7 @@ export default function TennisHomePage() {
 
       <StCard>
         <StCardHead>
-          <StCardTitle>📌 진행 중인 교류전</StCardTitle>
+          <StCardTitle>📌 진행 중인 대회</StCardTitle>
         </StCardHead>
         {TOURNAMENTS.map((builtIn) => {
           const saved = savedCopies[builtIn.id];
@@ -130,7 +150,7 @@ export default function TennisHomePage() {
         })}
         {EVENTS.map((builtIn) => {
           const saved = savedCopies[builtIn.id];
-          const event = saved && !isTournament(saved) ? saved : builtIn;
+          const event = saved && !isTournament(saved) && !isGeneral(saved) ? saved : builtIn;
           return (
             <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
               <StEventTitle>🎾 {event.title}</StEventTitle>
@@ -143,11 +163,11 @@ export default function TennisHomePage() {
         {extraEvents.map((event) => (
           <StEventLink key={event.id} as={Link} href={`/tennis/${event.id}`}>
             <StEventTitle>{event.title}</StEventTitle>
-            <StEventMeta>{event.date} · 이 브라우저에서 만든 교류전</StEventMeta>
+            <StEventMeta>{event.date} · 이 브라우저에서 만든 대회</StEventMeta>
           </StEventLink>
         ))}
         <StCardHint>
-          로그인해 두면 다른 기기에서 만든 교류전도 여기에 모아서 보여요. 로그인 전에는 만들 때 받은 링크로 들어가면 돼요.
+          로그인해 두면 다른 기기에서 만든 대회도 여기에 모아서 보여요. 로그인 전에는 만들 때 받은 링크로 들어가면 돼요.
         </StCardHint>
       </StCard>
 
@@ -162,17 +182,28 @@ export default function TennisHomePage() {
           <StTab type="button" $active={kind === "tournament"} onClick={() => setKind("tournament")}>
             🏆 팀 토너먼트 (8팀 더블 엘리미네이션)
           </StTab>
+          <StTab type="button" $active={kind === "general"} onClick={() => setKind("general")}>
+            🏟️ 일반 대회 (2인 복식 팀 · 리그/토너먼트)
+          </StTab>
         </StTabRow>
         <StCardHint>
           {kind === "exchange"
             ? "한화 교류전처럼 개인이 짝을 바꿔가며 뛰고 개인 승점으로 순위를 매겨요. 선수 명단만 넣으면 대진표를 자동으로 짜요."
-            : "63OPEN처럼 4명이 한 팀이 되어 팀끼리 붙어요. 두 번 지면 탈락, 순위결정전으로 1~8위를 정해요."}
+            : kind === "tournament"
+              ? "63OPEN처럼 4명이 한 팀이 되어 팀끼리 붙어요. 두 번 지면 탈락, 순위결정전으로 1~8위를 정해요."
+              : "두 명이 한 팀이 되어 팀끼리 붙어요. 팀 수가 자유롭고, 풀리그·조별 리그·토너먼트 중에 골라요."}
         </StCardHint>
       </StCard>
 
-      {kind === "exchange" ? <EventSetupForm onCreate={create} /> : (
+      {kind === "exchange" ? (
+        <EventSetupForm onCreate={create} />
+      ) : kind === "tournament" ? (
         <StCard>
           <TournamentSetupForm onCreate={createT} />
+        </StCard>
+      ) : (
+        <StCard>
+          <GeneralSetupForm onCreate={createG} />
         </StCard>
       )}
 

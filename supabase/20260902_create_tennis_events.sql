@@ -8,7 +8,7 @@
 create table if not exists tennis_events (
   -- 화면에서 만든 교류전은 uuid 문자열, 코드에 든 교류전(예: hanwha-2026-09-19)은 그 id 그대로 저장한다
   id text primary key default gen_random_uuid()::text,
-  kind text not null default 'exchange' check (kind in ('exchange', 'tournament')), -- 교류전 / 팀 토너먼트
+  kind text not null default 'exchange' check (kind in ('exchange', 'tournament', 'general')), -- 교류전 / 팀 토너먼트 / 일반 대회(2인 복식 팀)
   title text not null,
   date text not null,            -- YYYY-MM-DD
   start_time text not null,      -- HH:mm
@@ -18,10 +18,10 @@ create table if not exists tennis_events (
   after_note text not null default '',
   players jsonb not null default '[]'::jsonb,   -- [{name, gender, years}]
   rounds jsonb not null default '[]'::jsonb,    -- [{no, label, time}]
-  matches jsonb not null default '[]'::jsonb,   -- [{no, type, teamA, teamB, round?, court?}] 배열 순서 = 진행 순서
+  matches jsonb not null default '[]'::jsonb,   -- 교류전 [{no, type, teamA, teamB, round?, court?}] / 일반 대회 [{no, stage, round, label, block, court, a, b}]
   rules jsonb not null default '{}'::jsonb,     -- 대진표 규칙 {balanced, noRepeatPair, maxRest, balancedYears, noBackToBack, teamMatch}
-  teams jsonb not null default '[]'::jsonb,     -- 토너먼트: [{seed, name, players:[{name, seed}]}]
-  config jsonb not null default '{}'::jsonb,    -- 토너먼트 설정 {gamesToWin, timeTbd, beforeNote}
+  teams jsonb not null default '[]'::jsonb,     -- 토너먼트: [{seed, name, players:[{name, seed}]}] / 일반 대회: [{id, seed, name, players:[이름]}]
+  config jsonb not null default '{}'::jsonb,    -- 토너먼트 설정 {gamesToWin, timeTbd, beforeNote} / 일반 대회 {settings, groups, knockoutBuilt}
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
