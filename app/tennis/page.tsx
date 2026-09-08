@@ -45,7 +45,7 @@ export default function TennisHomePage() {
   const router = useRouter();
   const [myEvents, setMyEvents] = useState<MyEvent[]>([]);
   const [error, setError] = useState("");
-  const [kind, setKind] = useState<"exchange" | "tournament" | "general">("exchange");
+  const [kind, setKind] = useState<"exchange" | "tournament" | "general">("general");
   // 코드에 든 대회의 저장본(화면에서 편집해 DB에 남은 최신본). 있으면 명단·경기 수를 이걸로 보여준다.
   const [savedCopies, setSavedCopies] = useState<Record<string, AnyTennisEvent>>({});
 
@@ -176,14 +176,15 @@ export default function TennisHomePage() {
           <StCardTitle>🆕 새로 만들기 · 어떤 대회인가요?</StCardTitle>
         </StCardHead>
         <StTabRow>
+          {/* 일반 대회가 가장 흔한 형태라 맨 앞·기본 선택 (사용자 요청 2026-09-08) */}
+          <StTab type="button" $active={kind === "general"} onClick={() => setKind("general")}>
+            🏟️ 일반 대회 (2인 복식 팀 · 리그/토너먼트)
+          </StTab>
           <StTab type="button" $active={kind === "exchange"} onClick={() => setKind("exchange")}>
             🎾 교류전 (개인 승점 · 짝 바꿔가며)
           </StTab>
           <StTab type="button" $active={kind === "tournament"} onClick={() => setKind("tournament")}>
             🏆 팀 토너먼트 (8팀 더블 엘리미네이션)
-          </StTab>
-          <StTab type="button" $active={kind === "general"} onClick={() => setKind("general")}>
-            🏟️ 일반 대회 (2인 복식 팀 · 리그/토너먼트)
           </StTab>
         </StTabRow>
         <StCardHint>
