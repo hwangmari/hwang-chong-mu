@@ -20,9 +20,7 @@ import { ko } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { useModal } from "@/components/common/ModalProvider";
 import { SkeletonBlock, SkeletonCard } from "@/components/common/Skeleton";
-import MonthCalendar, {
-  type MonthCalendarEvent,
-} from "@/components/common/MonthCalendar";
+import { type MonthCalendarEvent } from "@/components/common/MonthCalendar";
 import { fetchAccountBookStore } from "@/app/account-book/repository";
 import {
   isSavingsCategory,
@@ -58,19 +56,36 @@ import { isUuid } from "@/lib/slug";
 import {
   ROOM_SECRET_NOTICE,
   ROOM_SERVICE_META,
-  ROOM_SERVICES,
   isRoomService,
-  type RoomService,
 } from "@/lib/roomServices";
 import QuickActionModal, {
   QUICK_ACTION_META,
   type QuickService,
 } from "@/components/home/QuickActionModal";
 import GuestDashboardPreview from "@/components/home/GuestDashboardPreview";
-
-// /my에서 서비스로 이동한 뒤 헤더 백키로 다시 /my로 돌아올 수 있게 하는 쿼리
-const withFromMy = (href: string) =>
-  `${href}${href.includes("?") ? "&" : "?"}from=my`;
+import {
+  CalendarBoard,
+  GaugeRing,
+  RoomBoard,
+  WidgetShell,
+  formatDday,
+  withFromMy,
+  StBoard,
+  StBoardHead,
+  StBoardNote,
+  StBoardManage,
+  StBoardTitle,
+  StBoardTitleWrap,
+  StGaugeStrip,
+  StSection,
+  StServiceList,
+  type DatedItem,
+  type GaugeItem,
+  type RoomRow,
+  type WidgetStatus,
+  type WidgetTone,
+  type WidgetView,
+} from "@/components/home/dashboardParts";
 
 // 통합 홈 대시보드: 로그인 사용자의 연결된 서비스 요약을 한 화면에 모은다.
 // - 비로그인: 로그인 유도 카드 하나 (홈은 정상 동작)
@@ -86,30 +101,6 @@ type LinkRow = {
   label: string;
 };
 
-// "내 방": 서비스당 여러 개일 수 있는 진행 중 방(약속·정산·장소·테니스·게임·야근·일일기록).
-// 아이콘·이름·링크는 lib/roomServices.ts에서 가져와 /account와 똑같이 보이게 한다.
-type RoomRow = {
-  id: string;
-  service: RoomService;
-  roomId: string;
-  label: string;
-  createdAt: string;
-  // 약속방의 확정된 약속 날짜(yyyy-MM-dd) — 클라에서 rooms 조회로 채운다
-  confirmedDate?: string;
-  // 테니스방의 예정 날짜(yyyy-MM-dd) — 달력에 칩으로 찍기 위해 채운다
-  eventDate?: string;
-};
-
-// 서비스 현황 한 줄의 표시 데이터. main은 핵심 수치 한 줄, sub는 보조 설명.
-type WidgetView = {
-  main: string;
-  sub?: string;
-  // 진행바(예산 대비 등) — 0~1 비율과 초과 여부. 없으면 미표시.
-  progress?: { ratio: number; over: boolean } | null;
-};
-
-type WidgetStatus = "loading" | "ready" | "empty" | "error";
-
 // 현황 줄 하나를 세우는 데 필요한 것. 연결된 서비스(link)와 야근 방을 같은 모양으로 다룬다.
 type ServiceRow = {
   // summaries 통에서 요약을 찾는 키(서비스 이름)
@@ -120,47 +111,6 @@ type ServiceRow = {
   tone: WidgetTone;
   // 우클릭 빠른 등록이 가능한 연결 서비스만 채워진다
   link?: LinkRow;
-};
-
-// 서비스별 아이콘 톤 (같은 파랑 반복 → 서비스마다 색 구분으로 생동감)
-export type WidgetTone =
-  | "blue"
-  | "amber"
-  | "green"
-  | "teal"
-  | "indigo"
-  | "rose"
-  | "orange";
-
-// 이번 달 게이지 띠의 한 칸. 달 단위 목표가 있는 서비스만 만든다.
-type GaugeItem = {
-  // 고리 안에 크게 쓰는 값 ("62%", "12일")
-  value: string;
-  // 고리 아래 서비스 이름
-  caption: string;
-  // 서비스 이름 아래 한 줄 설명 ("이달 예산 사용")
-  label: string;
-  // 고리를 채우는 비율(0~1로 잘라 쓴다)
-  ratio: number;
-  over: boolean;
-  icon: string;
-  tone: WidgetTone;
-  href: string;
-};
-
-// 달력 칩과 "다가오는 일정"이 함께 쓰는 항목.
-// 날짜 있는 방(약속·테니스)과 제목이 있는 서비스 기록(업무 할 일·야근)이 같은 모양으로 모인다.
-type DatedItem = {
-  id: string;
-  // yyyy-MM-dd
-  date: string;
-  // 칩·목록 앞에 붙는 갈래 이름 ("약속" · "테니스" · "업무" · "야근")
-  kind: string;
-  tone: WidgetTone;
-  label: string;
-  href: string;
-  // "다가오는 일정" 목록에 올릴 항목인지. 지난 기록인 야근은 false.
-  upcoming: boolean;
 };
 
 // 서비스 하나를 한 번 조회해서 얻는 모든 것 — 현황 줄 + 게이지 + 달력 칩
@@ -179,29 +129,6 @@ const DAY_FORMAT = "yyyy-MM-dd";
 
 function formatKrw(value: number) {
   return `${Math.round(value).toLocaleString("ko-KR")}원`;
-}
-
-export function clamp01(value: number) {
-  return Math.min(Math.max(value, 0), 1);
-}
-
-// 확정된 약속 날짜 표기: "📅 11월 14일 (토) 확정 · D-87" (지난 약속은 D-day 생략)
-function formatConfirmedDate(dateStr: string) {
-  const date = parseISO(dateStr);
-  if (isNaN(date.getTime())) return `📅 ${dateStr} 확정`;
-  const base = `📅 ${format(date, "M월 d일 (EEE)", { locale: ko })} 확정`;
-  const dday = differenceInCalendarDays(date, new Date());
-  if (dday > 0) return `${base} · D-${dday}`;
-  if (dday === 0) return `${base} · 오늘!`;
-  return base;
-}
-
-// D-day 배지 문구
-function formatDday(dateStr: string) {
-  const dday = differenceInCalendarDays(parseISO(dateStr), new Date());
-  if (dday === 0) return "오늘";
-  if (dday > 0) return `D-${dday}`;
-  return `D+${-dday}`;
 }
 
 // ── 서비스 메타: 아이콘·이름·톤·주소 (현황 줄과 게이지가 함께 쓴다) ──
@@ -688,91 +615,6 @@ const SERVICE_LOADERS: Record<
   schedule: loadSchedule,
 };
 
-// ── 이번 달 게이지 한 칸 ──
-export const GAUGE_RADIUS = 34;
-export const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
-
-function GaugeRing({ gauge }: { gauge: GaugeItem }) {
-  const filled = clamp01(gauge.ratio);
-  return (
-    <StGauge href={gauge.href}>
-      <StGaugeRingWrap>
-        <StGaugeSvg viewBox="0 0 80 80" aria-hidden="true">
-          <StGaugeTrack cx="40" cy="40" r={GAUGE_RADIUS} />
-          <StGaugeFill
-            cx="40"
-            cy="40"
-            r={GAUGE_RADIUS}
-            $tone={gauge.tone}
-            $over={gauge.over}
-            strokeDasharray={GAUGE_CIRCUMFERENCE}
-            strokeDashoffset={GAUGE_CIRCUMFERENCE * (1 - filled)}
-            transform="rotate(-90 40 40)"
-          />
-        </StGaugeSvg>
-        <StGaugeValue $over={gauge.over}>{gauge.value}</StGaugeValue>
-      </StGaugeRingWrap>
-      <StGaugeText>
-        <StGaugeCaption>
-          <span aria-hidden="true">{gauge.icon}</span> {gauge.caption}
-        </StGaugeCaption>
-        <StGaugeLabel>{gauge.label}</StGaugeLabel>
-      </StGaugeText>
-    </StGauge>
-  );
-}
-
-// ── 서비스 현황 한 줄: 왼쪽 아이콘·이름 / 가운데 수치 / 오른쪽 열기 ──
-function WidgetShell({
-  href,
-  icon,
-  name,
-  view,
-  status,
-  tone = "blue",
-  onContextMenu,
-}: {
-  href: string;
-  icon: string;
-  name: string;
-  view: WidgetView | null;
-  status: WidgetStatus;
-  tone?: WidgetTone;
-  onContextMenu?: (event: ReactMouseEvent<HTMLElement>) => void;
-}) {
-  const main =
-    status === "loading"
-      ? "불러오는 중…"
-      : status === "empty"
-        ? "기록 없음"
-        : view?.main || "기록 없음";
-  const sub = status === "ready" ? view?.sub : undefined;
-  const progress = status === "ready" ? view?.progress : null;
-
-  return (
-    <StServiceRow href={href} onContextMenu={onContextMenu}>
-      <StRowHead>
-        <StWidgetIcon $tone={tone}>{icon}</StWidgetIcon>
-        <StRowName>{name}</StRowName>
-      </StRowHead>
-      <StRowBody>
-        <StRowValue $muted={status !== "ready"}>{main}</StRowValue>
-        {sub ? <StRowSub>{sub}</StRowSub> : null}
-        {progress ? (
-          <StRowBar>
-            <StRowFill
-              $tone={tone}
-              $over={progress.over}
-              style={{ width: `${clamp01(progress.ratio) * 100}%` }}
-            />
-          </StRowBar>
-        ) : null}
-      </StRowBody>
-      <StRowOpen>열기 →</StRowOpen>
-    </StServiceRow>
-  );
-}
-
 // wide: 전용 페이지(/my)에서 PC 화면을 넓게 쓰는 레이아웃 (기본은 홈용 540~600px 폭)
 export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
   const { user, loading } = useAuth();
@@ -1247,99 +1089,19 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
 
       {/* ② 이번 달 달력 + 다가오는 일정 */}
       {hasCalendarSource ? (
-        <StBoard>
-          <StBoardHead>
-            <StBoardTitleWrap>
-              <StBoardTitle>🗓️ 이번 달 달력</StBoardTitle>
-            </StBoardTitleWrap>
-            <StBoardNote>이번 달 일정·기록을 한곳에 모았어요</StBoardNote>
-          </StBoardHead>
-          <StCalendarLayout>
-            <StCalendarPane>
-              <MonthCalendar
-                month={calendarMonth}
-                events={calendarEvents}
-                onMonthChange={setCalendarMonth}
-                summary={
-                  <StCalSummaryRow>
-                    <StCalSummaryItem>
-                      <b>{monthPlanCount}</b>건 일정
-                    </StCalSummaryItem>
-                    {workoutDates.length > 0 ? (
-                      <StCalSummaryItem>
-                        <b>{monthWorkoutDays}</b>일 운동
-                      </StCalSummaryItem>
-                    ) : null}
-                    {hasOvertimeItems ? (
-                      <StCalSummaryItem>
-                        <b>{monthOvertimeDays}</b>일 야근
-                      </StCalSummaryItem>
-                    ) : null}
-                  </StCalSummaryRow>
-                }
-                legend={
-                  <>
-                    <StLegendItem $tone="indigo">
-                      <StLegendDot $tone="indigo" />
-                      약속
-                    </StLegendItem>
-                    <StLegendItem $tone="green">
-                      <StLegendDot $tone="green" />
-                      테니스
-                    </StLegendItem>
-                    {workoutDates.length > 0 ? (
-                      <StLegendItem $tone="blue">
-                        <StLegendDot $tone="blue" />
-                        운동
-                      </StLegendItem>
-                    ) : null}
-                    {hasScheduleItems ? (
-                      <StLegendItem $tone="teal">
-                        <StLegendDot $tone="teal" />
-                        업무
-                      </StLegendItem>
-                    ) : null}
-                    {hasOvertimeItems ? (
-                      <StLegendItem $tone="orange">
-                        <StLegendDot $tone="orange" />
-                        야근
-                      </StLegendItem>
-                    ) : null}
-                  </>
-                }
-                emptyHint="이 달에는 표시할 일정이 없어요."
-              />
-            </StCalendarPane>
-            <StUpcomingPane>
-              <StUpcomingTitle>다가오는 일정</StUpcomingTitle>
-              {upcoming.length > 0 ? (
-                <StUpcomingList>
-                  {upcoming.map((item) => (
-                    <StUpcomingRow key={item.id} href={item.href}>
-                      <StUpcomingDday $tone={item.tone}>
-                        {formatDday(item.date)}
-                      </StUpcomingDday>
-                      <StUpcomingBody>
-                        <StUpcomingLabel>{item.label}</StUpcomingLabel>
-                        <StUpcomingDate>
-                          {item.kind} ·{" "}
-                          {format(parseISO(item.date), "M월 d일 (EEE)", {
-                            locale: ko,
-                          })}
-                        </StUpcomingDate>
-                      </StUpcomingBody>
-                    </StUpcomingRow>
-                  ))}
-                </StUpcomingList>
-              ) : (
-                <StUpcomingEmpty>
-                  아직 잡힌 약속이 없어요. 약속방에서 날짜를 확정하면 여기에
-                  떠요.
-                </StUpcomingEmpty>
-              )}
-            </StUpcomingPane>
-          </StCalendarLayout>
-        </StBoard>
+        <CalendarBoard
+          month={calendarMonth}
+          onMonthChange={setCalendarMonth}
+          events={calendarEvents}
+          note="이번 달 일정·기록을 한곳에 모았어요"
+          planCount={monthPlanCount}
+          workoutDays={monthWorkoutDays}
+          overtimeDays={monthOvertimeDays}
+          showWorkout={workoutDates.length > 0}
+          showSchedule={hasScheduleItems}
+          showOvertime={hasOvertimeItems}
+          upcoming={upcoming}
+        />
       ) : null}
 
       {/* ③ 서비스 현황 — 한 줄에 하나씩 넓게 */}
@@ -1411,60 +1173,12 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
 
       {/* ④ 내 방 */}
       {hasRooms ? (
-        <StBoard>
-          <StBoardHead>
-            <StBoardTitleWrap>
-              <StBoardTitle>🗓️ 내 방</StBoardTitle>
-            </StBoardTitleWrap>
-            <Link href={withFromMy("/account")} passHref>
-              <StBoardManage>관리</StBoardManage>
-            </Link>
-          </StBoardHead>
-          <StRoomNotice>{ROOM_SECRET_NOTICE}</StRoomNotice>
-          {/* 방은 여러 건일 수 있어 카드 대신 서비스별로 묶어 나열하고, 행에서 바로 해제한다 */}
-          {ROOM_SERVICES.map((service) => {
-            const group = rooms.filter((room) => room.service === service);
-            if (group.length === 0) return null;
-            const meta = ROOM_SERVICE_META[service];
-            return (
-              <StRoomGroup key={service}>
-                <StRoomGroupHead>
-                  {meta.icon} {meta.name}
-                </StRoomGroupHead>
-                <StRoomList>
-                  {group.map((room) => (
-                    <StRoomRow key={room.id}>
-                      <Link
-                        href={withFromMy(meta.href(room.roomId))}
-                        passHref
-                        style={{ flex: 1, minWidth: 0 }}
-                      >
-                        <StRoomLink>
-                          <StRoomIcon $tone={meta.tone}>{meta.icon}</StRoomIcon>
-                          <StRoomInfo>
-                            <StRoomLabel>{room.label || meta.name}</StRoomLabel>
-                            {room.confirmedDate ? (
-                              <StRoomDate>
-                                {formatConfirmedDate(room.confirmedDate)}
-                              </StRoomDate>
-                            ) : null}
-                          </StRoomInfo>
-                        </StRoomLink>
-                      </Link>
-                      <StRoomDelete
-                        type="button"
-                        aria-label="방 등록 해제"
-                        onClick={() => void handleDeleteRoom(room)}
-                      >
-                        ✕
-                      </StRoomDelete>
-                    </StRoomRow>
-                  ))}
-                </StRoomList>
-              </StRoomGroup>
-            );
-          })}
-        </StBoard>
+        <RoomBoard
+          rooms={rooms}
+          notice={ROOM_SECRET_NOTICE}
+          manageHref={withFromMy("/account")}
+          onDelete={(room) => void handleDeleteRoom(room)}
+        />
       ) : null}
 
       {/* 우클릭 컨텍스트 메뉴: 서비스별 대표 기능 바로 등록 */}
@@ -1502,97 +1216,6 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
     </StSection>
   );
 }
-
-// ── 톤 팔레트 (아이콘 배지·게이지·범례가 함께 쓴다) ──
-export const toneBg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
-  ({
-    blue: theme.colors.blue50,
-    amber: theme.colors.amber50,
-    green: theme.colors.green50,
-    teal: theme.colors.teal50,
-    indigo: theme.colors.indigo50,
-    rose: theme.colors.rose50,
-    orange: theme.colors.orange50,
-  })[tone];
-
-export const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
-  ({
-    blue: theme.colors.blue600,
-    amber: theme.colors.amber600,
-    green: theme.colors.green600,
-    teal: theme.colors.teal600,
-    indigo: theme.colors.indigo600,
-    rose: theme.colors.rose600,
-    orange: theme.colors.orange600,
-  })[tone];
-
-export const StSection = styled.section<{ $wide?: boolean }>`
-  width: 100%;
-  max-width: ${({ $wide }) => ($wide ? "100%" : "600px")};
-  margin-bottom: 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-`;
-
-// 대시보드 스타일: 회색 배경 위에 섹션 라벨 + 흰 판 (홈 메뉴와 같은 결)
-export const StBoard = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-`;
-
-export const StBoardHead = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0 0.25rem;
-`;
-
-export const StBoardTitle = styled.h2`
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray700};
-`;
-
-// 섹션 제목 아래(또는 옆)의 작은 설명 한 줄
-const StBoardNote = styled.p`
-  padding: 0 0.25rem;
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray400};
-  text-align: right;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    text-align: left;
-  }
-`;
-
-const StBoardManage = styled.span`
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.semantic.primary};
-  cursor: pointer;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.7;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-`;
-
-const StBoardTitleWrap = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-`;
 
 const StInfoWrap = styled.div`
   position: relative;
@@ -1702,65 +1325,6 @@ const StContextMenuItem = styled.button`
   }
 `;
 
-// ── ① 이번 달 게이지 띠 ──
-export const StGaugeStrip = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-
-  /* 칸이 늘어나도 한 줄에 욱여넣지 않고, 좁아지면 아랫줄로 접힌다 */
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 0.85rem;
-  }
-`;
-
-const StGauge = styled(Link)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 1rem 0.6rem 0.9rem;
-
-  /* 넓은 화면: 고리 왼쪽 · 이름/설명 오른쪽 (카드가 허전해지지 않게) */
-  @media (min-width: 640px) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0 0.9rem;
-    padding: 1.1rem 1rem;
-  }
-  border-radius: 1.25rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  text-decoration: none;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    border-color 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border-color: ${({ theme }) => theme.colors.blue200};
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.semantic.primary};
-    outline-offset: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    &:hover {
-      transform: none;
-    }
-  }
-`;
-
 const StGaugeSkeleton = styled.div`
   display: flex;
   flex-direction: column;
@@ -1770,489 +1334,6 @@ const StGaugeSkeleton = styled.div`
   border-radius: 1.25rem;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.gray100};
-`;
-
-export const StGaugeRingWrap = styled.div`
-  position: relative;
-  width: 5rem;
-  height: 5rem;
-`;
-
-export const StGaugeSvg = styled.svg`
-  width: 100%;
-  height: 100%;
-  display: block;
-`;
-
-export const StGaugeTrack = styled.circle`
-  fill: none;
-  stroke: ${({ theme }) => theme.colors.gray100};
-  stroke-width: 8;
-`;
-
-export const StGaugeFill = styled.circle<{ $tone: WidgetTone; $over: boolean }>`
-  fill: none;
-  stroke: ${({ $tone, $over, theme }) =>
-    $over ? theme.colors.rose600 : toneFg($tone)(theme)};
-  stroke-width: 8;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-export const StGaugeValue = styled.strong<{ $over: boolean }>`
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.05rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: ${({ $over, theme }) =>
-    $over ? theme.colors.rose600 : theme.colors.gray900};
-`;
-
-// 넓은 화면에서 고리 오른쪽에 붙는 글자 묶음
-export const StGaugeText = styled.span`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  min-width: 0;
-
-  @media (min-width: 640px) {
-    align-items: flex-start;
-  }
-`;
-
-export const StGaugeCaption = styled.span`
-  margin-top: 0.2rem;
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray800};
-
-  @media (min-width: 640px) {
-    margin-top: 0;
-  }
-`;
-
-export const StGaugeLabel = styled.span`
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.gray400};
-  text-align: center;
-
-  @media (min-width: 640px) {
-    text-align: left;
-  }
-`;
-
-// ── ② 달력 + 다가오는 일정 ──
-const StCalendarLayout = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1.1rem;
-  border-radius: 1.25rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-
-  @media (min-width: 900px) {
-    grid-template-columns: minmax(0, 1fr) 15rem;
-    gap: 1.5rem;
-  }
-`;
-
-const StCalendarPane = styled.div`
-  min-width: 0;
-`;
-
-const StCalSummaryRow = styled.div`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.2rem;
-`;
-
-const StCalSummaryItem = styled.span`
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray600};
-
-  b {
-    font-size: 1.05rem;
-    font-weight: 900;
-    color: ${({ theme }) => theme.colors.gray900};
-    margin-right: 0.15rem;
-  }
-`;
-
-const StLegendItem = styled.span<{ $tone: WidgetTone }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray600};
-`;
-
-const StLegendDot = styled.span<{ $tone: WidgetTone }>`
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: ${({ $tone, theme }) => toneFg($tone)(theme)};
-`;
-
-const StUpcomingPane = styled.div`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-
-  @media (min-width: 900px) {
-    border-left: 1px solid ${({ theme }) => theme.colors.gray100};
-    padding-left: 1.5rem;
-  }
-
-  @media (max-width: 899px) {
-    border-top: 1px solid ${({ theme }) => theme.colors.gray100};
-    padding-top: 1rem;
-  }
-`;
-
-const StUpcomingTitle = styled.p`
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray700};
-`;
-
-const StUpcomingList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-`;
-
-const StUpcomingRow = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.55rem 0.6rem;
-  border-radius: 0.85rem;
-  text-decoration: none;
-  transition: background 0.15s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray50};
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.semantic.primary};
-    outline-offset: 1px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-const StUpcomingDday = styled.span<{ $tone: WidgetTone }>`
-  flex-shrink: 0;
-  min-width: 3rem;
-  padding: 0.3rem 0.4rem;
-  border-radius: 0.55rem;
-  text-align: center;
-  font-size: 0.74rem;
-  font-weight: 900;
-  background: ${({ $tone, theme }) => toneBg($tone)(theme)};
-  color: ${({ $tone, theme }) => toneFg($tone)(theme)};
-`;
-
-const StUpcomingBody = styled.div`
-  min-width: 0;
-`;
-
-const StUpcomingLabel = styled.p`
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray900};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const StUpcomingDate = styled.p`
-  margin-top: 0.1rem;
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.colors.gray400};
-`;
-
-const StUpcomingEmpty = styled.p`
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: ${({ theme }) => theme.colors.gray400};
-`;
-
-// ── ③ 서비스 현황: 카드 대신 구분선으로 나눈 넓은 줄 ──
-const StServiceList = styled.div`
-  width: 100%;
-  border-radius: 1.25rem;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-`;
-
-export const StWidgetIcon = styled.div<{ $tone: WidgetTone }>`
-  width: 2.6rem;
-  height: 2.6rem;
-  background-color: ${({ $tone, theme }) => toneBg($tone)(theme)};
-  color: ${({ $tone, theme }) => toneFg($tone)(theme)};
-  border-radius: 0.8rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.35rem;
-  transition: transform 0.2s;
-  flex-shrink: 0;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-const StRowHead = styled.div`
-  grid-area: head;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
-`;
-
-export const StRowName = styled.span`
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray800};
-  white-space: nowrap;
-`;
-
-const StRowBody = styled.div`
-  grid-area: main;
-  min-width: 0;
-`;
-
-export const StRowValue = styled.strong<{ $muted?: boolean }>`
-  display: block;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  color: ${({ $muted, theme }) =>
-    $muted ? theme.colors.gray400 : theme.colors.gray900};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-export const StRowSub = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.78rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-export const StRowBar = styled.div`
-  margin-top: 0.45rem;
-  max-width: 18rem;
-  height: 0.4rem;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.gray100};
-  overflow: hidden;
-`;
-
-const StRowFill = styled.div<{ $tone: WidgetTone; $over?: boolean }>`
-  height: 100%;
-  border-radius: inherit;
-  background: ${({ $tone, $over, theme }) =>
-    $over ? theme.colors.rose600 : toneFg($tone)(theme)};
-  transition: width 0.2s ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-const StRowOpen = styled.span`
-  grid-area: open;
-  align-self: center;
-  flex-shrink: 0;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.semantic.primary};
-  white-space: nowrap;
-`;
-
-const StServiceRow = styled(Link)`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "head open"
-    "main main";
-  align-items: center;
-  gap: 0.5rem 0.9rem;
-  padding: 1rem 1.1rem;
-  text-decoration: none;
-  transition: background 0.15s;
-
-  & + & {
-    border-top: 1px solid ${({ theme }) => theme.colors.gray100};
-  }
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.gray50};
-
-    ${StWidgetIcon} {
-      transform: scale(1.06) rotate(4deg);
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.semantic.primary};
-    outline-offset: -2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-
-  @media (min-width: 720px) {
-    grid-template-columns: 11rem minmax(0, 1fr) auto;
-    grid-template-areas: "head main open";
-    gap: 0.9rem 1.2rem;
-    padding: 1.15rem 1.3rem;
-  }
-`;
-
-// ── 약속·정산방 리스트 ──
-const StRoomList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const StRoomRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 1rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  padding: 0.6rem 0.75rem;
-  transition: all 0.2s;
-
-  &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border-color: ${({ theme }) => theme.colors.blue200};
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-`;
-
-const StRoomLink = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
-  cursor: pointer;
-`;
-
-// 위젯 아이콘과 같은 톤, 리스트에 맞게 크기만 줄임
-const StRoomIcon = styled(StWidgetIcon)`
-  width: 2.4rem;
-  height: 2.4rem;
-  font-size: 1.2rem;
-  border-radius: 0.65rem;
-`;
-
-const StRoomInfo = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
-const StRoomNotice = styled.p`
-  margin-bottom: 0.75rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: ${({ theme }) => theme.colors.gray500};
-`;
-
-const StRoomGroup = styled.div`
-  & + & {
-    margin-top: 1rem;
-  }
-`;
-
-const StRoomGroupHead = styled.p`
-  margin-bottom: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.colors.gray500};
-`;
-
-const StRoomLabel = styled.p`
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray900};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const StRoomDate = styled.p`
-  margin-top: 0.15rem;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.indigo600};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const StRoomDelete = styled.button`
-  flex-shrink: 0;
-  width: 1.9rem;
-  height: 1.9rem;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  color: ${({ theme }) => theme.colors.gray300};
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.rose50};
-    color: ${({ theme }) => theme.colors.rose600};
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.semantic.primary};
-    outline-offset: 2px;
-  }
 `;
 
 const StPromptCard = styled.div`
