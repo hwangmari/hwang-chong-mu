@@ -148,10 +148,10 @@ function LoginContent() {
                   setNickname(e.target.value);
                   setError("");
                 }}
-                placeholder="2~20자"
                 autoComplete="username"
                 autoFocus
               />
+              <small>2~20자</small>
             </StField>
 
             {mode === "reset" ? (
@@ -165,9 +165,9 @@ function LoginContent() {
                       setEmail(e.target.value);
                       setError("");
                     }}
-                    placeholder="가입 때 입력한 이메일"
                     autoComplete="email"
                   />
+                  <small>가입 때 입력한 이메일</small>
                 </StField>
                 <StField>
                   <label>새 비밀번호</label>
@@ -178,9 +178,9 @@ function LoginContent() {
                       setPassword(e.target.value);
                       setError("");
                     }}
-                    placeholder="4자 이상"
                     autoComplete="new-password"
                   />
+                  <small>4자 이상</small>
                 </StField>
               </>
             ) : (
@@ -193,11 +193,11 @@ function LoginContent() {
                     setPassword(e.target.value);
                     setError("");
                   }}
-                  placeholder="4자 이상"
                   autoComplete={
                     mode === "login" ? "current-password" : "new-password"
                   }
                 />
+                <small>4자 이상</small>
               </StField>
             )}
 
@@ -211,9 +211,9 @@ function LoginContent() {
                     setEmail(e.target.value);
                     setError("");
                   }}
-                  placeholder="비번 찾을 때만 사용해요"
                   autoComplete="email"
                 />
+                <small>비밀번호를 찾을 때만 사용해요</small>
               </StField>
             )}
 
@@ -327,6 +327,13 @@ const StField = styled.div`
     font-size: 0.78rem;
     font-weight: 800;
     color: #6a6f78;
+  }
+
+  /* 입력 조건은 플레이스홀더 대신 칸 아래 안내문으로 — 값을 넣어도 계속 보인다 */
+  small {
+    font-size: 0.76rem;
+    color: ${({ theme }) => theme.semantic.subText};
+    padding-left: 0.2rem;
   }
 `;
 
