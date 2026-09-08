@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@hwangchongmu/ui";
 import ServiceLayout from "@/components/common/ServiceLayout";
+import { StSegmentButton, StSegmented } from "@/components/styled/layout.styled";
 import { StHighlight } from "@/components/common/PageIntro";
 import { GIFT_GUIDE_DATA } from "@/data/footerGuides";
 import GiftEntryForm, { type FormState } from "./components/GiftEntryForm";
@@ -75,6 +76,8 @@ export default function GiftLogPage() {
   const [entries, setEntries] = useState<GiftEntry[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   // 목록에서 "수정"을 누른 기록 — 있으면 수정 모달이 뜬다
+  // 입력 / 전체 내역 탭 (사용자 요청 2026-09-08). 찾기에서 '이 사람으로 새 기록'을 누르면 입력 탭으로 옮겨 준다
+  const [tab, setTab] = useState<"entry" | "history">("entry");
   const [editing, setEditing] = useState<GiftEntry | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -314,7 +317,7 @@ export default function GiftLogPage() {
 
   return (
     <ServiceLayout
-      width="wide"
+      width="tool"
       intro={{
         icon: INTRO_ICON,
         title: INTRO_TITLE,
@@ -328,12 +331,56 @@ export default function GiftLogPage() {
         ),
       }}
       guide={GUIDE}
-      mainRatio={1.1}
-      /* 오른쪽: 찾아보고 확인하는 칸 */
-      side={
-        <>
-          <PersonLookup entries={entries} onNewForPerson={startForPerson} />
+    >
+      {/* 찾기는 탭과 상관없이 항상 위에 */}
+      <PersonLookup
+        entries={entries}
+        onNewForPerson={(...args) => {
+          setTab("entry");
+          startForPerson(...args);
+        }}
+      />
 
+      <StSegmented role="tablist" aria-label="경조사비 장부 화면">
+        <StSegmentButton
+          type="button"
+          role="tab"
+          aria-selected={tab === "entry"}
+          $active={tab === "entry"}
+          onClick={() => setTab("entry")}
+        >
+          ✏️ 입력
+        </StSegmentButton>
+        <StSegmentButton
+          type="button"
+          role="tab"
+          aria-selected={tab === "history"}
+          $active={tab === "history"}
+          onClick={() => setTab("history")}
+        >
+          📒 전체 내역{entries.length > 0 ? ` ${entries.length}` : ""}
+        </StSegmentButton>
+      </StSegmented>
+
+      {tab === "entry" ? (
+        <>
+          <GiftEntryForm
+            form={form}
+            detailSuggestions={detailSuggestions}
+            error={error}
+            busy={busy}
+            onChange={patchForm}
+            onSubmit={submit}
+            onCancel={resetForm}
+          />
+
+          {/* 한 번 쓰고 끝나는 도구들은 폼 아래로 */}
+          <BulkAddForm defaultDate={formatDateKey(new Date())} onAddMany={addMany} />
+
+          <ImportFromAccountBook entries={entries} onImport={importEntry} />
+        </>
+      ) : (
+        <>
           <GiftSummary entries={entries} />
 
           <EntryHistory
@@ -346,23 +393,7 @@ export default function GiftLogPage() {
             onChangeRelationMany={changeRelationMany}
           />
         </>
-      }
-    >
-      {/* 왼쪽(본문): 적는 칸 */}
-      <GiftEntryForm
-        form={form}
-        detailSuggestions={detailSuggestions}
-        error={error}
-        busy={busy}
-        onChange={patchForm}
-        onSubmit={submit}
-        onCancel={resetForm}
-      />
-
-      {/* 한 번 쓰고 끝나는 도구들은 폼 아래로 */}
-      <BulkAddForm defaultDate={formatDateKey(new Date())} onAddMany={addMany} />
-
-      <ImportFromAccountBook entries={entries} onImport={importEntry} />
+      )}
 
       {editing ? (
         <EditEntryModal
