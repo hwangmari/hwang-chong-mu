@@ -1,164 +1,91 @@
+import Link from "next/link";
 import { OvertimeRoomInfo } from "@/hooks/useOvertimePersistence";
-import { StorageMode } from "@/app/overtime/types";
+import type { AppUser } from "@/hooks/useAuth";
 import {
-  ConnectedRoomCard,
-  ConnectedRoomInfo,
-  DangerGhostButton,
   SecondaryButton,
   StorageActions,
   StorageCard,
   StorageDescription,
   StorageHeader,
   StorageHint,
-  StorageInlineField,
-  StorageInput,
-  StorageLabel,
-  StorageModeTabs,
-  StorageSetupCard,
-  StorageSetupGrid,
+  StorageLoginLink,
   StorageTitle,
 } from "@/app/overtime/components/styles";
-import { StSegmentButton } from "@/components/styled/layout.styled";
 
 interface StorageModeCardProps {
-  storageMode: StorageMode;
+  user: AppUser | null;
+  authLoading: boolean;
   serverRoom: OvertimeRoomInfo | null;
-  roomNameInput: string;
-  roomCodeInput: string;
   isServerLoading: boolean;
-  onChangeStorageMode: (mode: StorageMode) => void;
-  onChangeRoomNameInput: (value: string) => void;
-  onChangeRoomCodeInput: (value: string) => void;
-  onCreateServerRoom: () => void;
-  onConnectServerRoom: () => void;
-  onCopyRoomCode: () => void;
-  onDisconnectServerRoom: () => void;
+  onReloadServerRoom: () => void;
 }
 
+// 기록이 어디에 저장되는지 알려 주는 카드.
+// 로그인 전: 이 브라우저에만 저장 + 로그인 유도. 로그인 후: 계정에 자동 저장 (방 이름·코드 없음).
 export default function StorageModeCard({
-  storageMode,
+  user,
+  authLoading,
   serverRoom,
-  roomNameInput,
-  roomCodeInput,
   isServerLoading,
-  onChangeStorageMode,
-  onChangeRoomNameInput,
-  onChangeRoomCodeInput,
-  onCreateServerRoom,
-  onConnectServerRoom,
-  onCopyRoomCode,
-  onDisconnectServerRoom,
+  onReloadServerRoom,
 }: StorageModeCardProps) {
+  if (authLoading) {
+    return (
+      <StorageCard aria-busy="true">
+        <StorageHeader>
+          <div>
+            <StorageTitle>기록 저장</StorageTitle>
+            <StorageDescription>계정을 확인하고 있어요…</StorageDescription>
+          </div>
+        </StorageHeader>
+      </StorageCard>
+    );
+  }
+
+  if (!user) {
+    return (
+      <StorageCard>
+        <StorageHeader>
+          <div>
+            <StorageTitle>기록 저장</StorageTitle>
+            <StorageDescription>
+              지금은 이 브라우저에만 저장돼요. 로그인하면 내 계정에 저장돼 폰과 PC에서 이어서 볼 수 있어요.
+            </StorageDescription>
+          </div>
+          <StorageLoginLink as={Link} href="/login">
+            로그인하고 이어서 쓰기
+          </StorageLoginLink>
+        </StorageHeader>
+        <StorageHint>
+          로그인하면 이 브라우저에 적어 둔 기록도 계정으로 함께 옮겨져요.
+        </StorageHint>
+      </StorageCard>
+    );
+  }
+
   return (
     <StorageCard>
       <StorageHeader>
         <div>
-          <StorageTitle>기록 저장 방식</StorageTitle>
+          <StorageTitle>내 계정에 저장 중</StorageTitle>
           <StorageDescription>
-            {storageMode === "local"
-              ? "바로 기록하고 이 브라우저에만 저장할 수 있어요."
-              : serverRoom
-                ? "서버 저장 방에 연결되어 있어서 다른 브라우저에서도 같은 기록을 불러올 수 있어요."
-                : "서버 저장 방을 만들거나 방 코드로 연결하면 기록을 서버에 저장할 수 있어요."}
+            {serverRoom
+              ? `${user.nickname} 계정에 저장돼요. 어느 기기에서 로그인해도 같은 기록이 보여요.`
+              : "계정의 기록장을 연결하고 있어요…"}
           </StorageDescription>
         </div>
-        <StorageModeTabs>
-          <StSegmentButton
-            type="button"
-            $active={storageMode === "local"}
-            onClick={() => onChangeStorageMode("local")}
-          >
-            로컬 저장
-          </StSegmentButton>
-          <StSegmentButton
-            type="button"
-            $active={storageMode === "server"}
-            onClick={() => onChangeStorageMode("server")}
-          >
-            서버 저장
-          </StSegmentButton>
-        </StorageModeTabs>
+        {serverRoom && (
+          <StorageActions>
+            <SecondaryButton
+              type="button"
+              onClick={onReloadServerRoom}
+              disabled={isServerLoading}
+            >
+              다시 불러오기
+            </SecondaryButton>
+          </StorageActions>
+        )}
       </StorageHeader>
-
-      {storageMode === "server" ? (
-        serverRoom ? (
-          <ConnectedRoomCard>
-            <ConnectedRoomInfo>
-              <span>연결된 방</span>
-              <strong>{serverRoom.roomName}</strong>
-              <small>{serverRoom.roomRef}</small>
-            </ConnectedRoomInfo>
-            <StorageActions>
-              <SecondaryButton
-                type="button"
-                onClick={onCopyRoomCode}
-                disabled={isServerLoading}
-              >
-                코드 복사
-              </SecondaryButton>
-              <SecondaryButton
-                type="button"
-                onClick={onConnectServerRoom}
-                disabled={isServerLoading}
-              >
-                다시 불러오기
-              </SecondaryButton>
-              <DangerGhostButton
-                type="button"
-                onClick={onDisconnectServerRoom}
-                disabled={isServerLoading}
-              >
-                연결 해제
-              </DangerGhostButton>
-            </StorageActions>
-          </ConnectedRoomCard>
-        ) : (
-          <StorageSetupGrid>
-            <StorageSetupCard>
-              <StorageLabel>새 서버 방 만들기</StorageLabel>
-              <StorageInlineField>
-                <StorageInput
-                  placeholder="예: 2026년 야근 기록"
-                  value={roomNameInput}
-                  onChange={(event) => onChangeRoomNameInput(event.target.value)}
-                  disabled={isServerLoading}
-                />
-                <SecondaryButton
-                  type="button"
-                  onClick={onCreateServerRoom}
-                  disabled={isServerLoading}
-                >
-                  방 만들기
-                </SecondaryButton>
-              </StorageInlineField>
-            </StorageSetupCard>
-
-            <StorageSetupCard>
-              <StorageLabel>기존 서버 방 불러오기</StorageLabel>
-              <StorageInlineField>
-                <StorageInput
-                  placeholder="방 코드 입력"
-                  value={roomCodeInput}
-                  onChange={(event) => onChangeRoomCodeInput(event.target.value)}
-                  disabled={isServerLoading}
-                />
-                <SecondaryButton
-                  type="button"
-                  onClick={onConnectServerRoom}
-                  disabled={isServerLoading}
-                >
-                  불러오기
-                </SecondaryButton>
-              </StorageInlineField>
-            </StorageSetupCard>
-          </StorageSetupGrid>
-        )
-      ) : (
-        <StorageHint>
-          로컬 저장은 지금 쓰고 있는 브라우저에서만 유지돼요. 다른 기기에서도
-          이어서 보고 싶다면 서버 저장 방을 연결해보세요.
-        </StorageHint>
-      )}
     </StorageCard>
   );
 }

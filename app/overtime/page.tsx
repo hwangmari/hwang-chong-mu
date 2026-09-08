@@ -128,13 +128,6 @@ export default function OvertimePage() {
     forms.resetQuickAddForm();
   };
 
-  const handleSwitchStorageMode = (
-    nextMode: Parameters<typeof storage.setStorageMode>[0],
-  ) => {
-    storage.setStorageMode(nextMode);
-    forms.resetQuickAddForm();
-  };
-
   const handleChangeRule = (nextRuleId: OvertimeRuleId) => {
     setRuleId(nextRuleId);
     forms.resetCalcForm();
@@ -258,9 +251,9 @@ export default function OvertimePage() {
             displayedRecords={view.displayedRecords}
             storageMode={storage.storageMode}
             serverRoom={storage.serverRoom}
-            roomNameInput={storage.roomNameInput}
-            roomCodeInput={storage.roomCodeInput}
             isServerLoading={storage.isServerLoading}
+            user={storage.user}
+            authLoading={storage.authLoading}
             onChangeTargetUsableDays={view.setTargetUsableDays}
             onMoveMonth={handleMoveMonth}
             onGoToday={handleGoToday}
@@ -292,13 +285,7 @@ export default function OvertimePage() {
             onSaveQuickRecord={handleQuickAddRecord}
             onToggleRecordsExpanded={view.toggleRecordsExpanded}
             onClearRecords={handleClearRecords}
-            onChangeStorageMode={handleSwitchStorageMode}
-            onChangeRoomNameInput={storage.setRoomNameInput}
-            onChangeRoomCodeInput={storage.setRoomCodeInput}
-            onCreateServerRoom={storage.handleCreateServerRoom}
-            onConnectServerRoom={storage.handleConnectServerRoom}
-            onCopyRoomCode={storage.handleCopyRoomCode}
-            onDisconnectServerRoom={storage.handleDisconnectServerRoom}
+            onReloadServerRoom={storage.handleReloadServerRoom}
           />
         )}
         <SectionDivider />

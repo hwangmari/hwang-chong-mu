@@ -89,6 +89,11 @@ export const DurationInputs = styled.div`
   gap: 0.4rem;
   flex-wrap: nowrap;
   margin-top: 0.45rem;
+
+  /* '시간' 짝과 '분' 짝 사이는 더 띄워 두 덩어리로 읽히게 (사용자 요청 2026-09-08) */
+  & > :nth-child(3) {
+    margin-left: 0.6rem;
+  }
 `;
 
 export const CompactInput = styled.input`
@@ -258,6 +263,26 @@ export const StorageDescription = styled.p`
   color: ${({ theme }) => theme.colors.gray500};
   font-size: 0.9rem;
   line-height: 1.55;
+`;
+
+export const StorageLoginLink = styled.a`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 0.9rem;
+  border-radius: 0.75rem;
+  background: ${({ theme }) => theme.semantic.primary};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.semantic.primary};
+    outline-offset: 2px;
+  }
 `;
 
 export const StorageModeTabs = styled(StSegmented)`
@@ -785,7 +810,7 @@ export const GuidePanel = styled.div`
 export const GuideTitle = styled.h3`
   margin: 0;
   color: ${({ theme }) => theme.semantic.text};
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
 `;
 
@@ -801,7 +826,8 @@ export const GuideItem = styled.li`
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem 0;
+  padding: 0.55rem 0;
+  font-size: 0.88rem; /* 카드 본문(0.85~0.9rem)과 같은 크기로 — 표만 커 보이던 문제 */
   color: ${({ theme }) => theme.colors.gray700};
 
   & + & {
@@ -822,7 +848,8 @@ export const RuleItem = styled.li`
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem 0;
+  padding: 0.55rem 0;
+  font-size: 0.88rem; /* 카드 본문(0.85~0.9rem)과 같은 크기로 — 표만 커 보이던 문제 */
   color: ${({ theme }) => theme.colors.gray700};
 
   & + & {

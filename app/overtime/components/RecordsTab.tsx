@@ -16,6 +16,7 @@ import MonthlySummaryStats from "@/app/overtime/components/MonthlySummaryStats";
 import OvertimeCalendar from "@/app/overtime/components/OvertimeCalendar";
 import SelectedDayPanel from "@/app/overtime/components/SelectedDayPanel";
 import StorageModeCard from "@/app/overtime/components/StorageModeCard";
+import type { AppUser } from "@/hooks/useAuth";
 
 interface RecordsTabProps {
   currentMonth: Date;
@@ -43,9 +44,9 @@ interface RecordsTabProps {
   displayedRecords: OvertimeRecord[];
   storageMode: StorageMode;
   serverRoom: OvertimeRoomInfo | null;
-  roomNameInput: string;
-  roomCodeInput: string;
   isServerLoading: boolean;
+  user: AppUser | null;
+  authLoading: boolean;
   onChangeTargetUsableDays: (days: number) => void;
   onMoveMonth: (amount: number) => void;
   onGoToday: () => void;
@@ -63,13 +64,7 @@ interface RecordsTabProps {
   onSaveQuickRecord: () => void;
   onToggleRecordsExpanded: () => void;
   onClearRecords: () => void;
-  onChangeStorageMode: (mode: StorageMode) => void;
-  onChangeRoomNameInput: (value: string) => void;
-  onChangeRoomCodeInput: (value: string) => void;
-  onCreateServerRoom: () => void;
-  onConnectServerRoom: () => void;
-  onCopyRoomCode: () => void;
-  onDisconnectServerRoom: () => void;
+  onReloadServerRoom: () => void;
 }
 
 export default function RecordsTab({
@@ -94,9 +89,9 @@ export default function RecordsTab({
   displayedRecords,
   storageMode,
   serverRoom,
-  roomNameInput,
-  roomCodeInput,
   isServerLoading,
+  user,
+  authLoading,
   onChangeTargetUsableDays,
   onMoveMonth,
   onGoToday,
@@ -114,13 +109,7 @@ export default function RecordsTab({
   onSaveQuickRecord,
   onToggleRecordsExpanded,
   onClearRecords,
-  onChangeStorageMode,
-  onChangeRoomNameInput,
-  onChangeRoomCodeInput,
-  onCreateServerRoom,
-  onConnectServerRoom,
-  onCopyRoomCode,
-  onDisconnectServerRoom,
+  onReloadServerRoom,
 }: RecordsTabProps) {
   return (
     <TabPanel>
@@ -196,18 +185,11 @@ export default function RecordsTab({
       </DangerButton>
 
       <StorageModeCard
-        storageMode={storageMode}
+        user={user}
+        authLoading={authLoading}
         serverRoom={serverRoom}
-        roomNameInput={roomNameInput}
-        roomCodeInput={roomCodeInput}
         isServerLoading={isServerLoading}
-        onChangeStorageMode={onChangeStorageMode}
-        onChangeRoomNameInput={onChangeRoomNameInput}
-        onChangeRoomCodeInput={onChangeRoomCodeInput}
-        onCreateServerRoom={onCreateServerRoom}
-        onConnectServerRoom={onConnectServerRoom}
-        onCopyRoomCode={onCopyRoomCode}
-        onDisconnectServerRoom={onDisconnectServerRoom}
+        onReloadServerRoom={onReloadServerRoom}
       />
     </TabPanel>
   );
