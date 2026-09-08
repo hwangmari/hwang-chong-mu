@@ -806,15 +806,15 @@ export const StServiceList = styled.div`
 `;
 
 export const StWidgetIcon = styled.div<{ $tone: WidgetTone }>`
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.1rem;
+  height: 2.1rem;
   background-color: ${({ $tone, theme }) => toneBg($tone)(theme)};
   color: ${({ $tone, theme }) => toneFg($tone)(theme)};
-  border-radius: 0.8rem;
+  border-radius: 0.65rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   transition: transform 0.2s;
   flex-shrink: 0;
 
@@ -832,7 +832,7 @@ export const StRowHead = styled.div`
 `;
 
 export const StRowName = styled.span`
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray800};
   white-space: nowrap;
@@ -845,7 +845,7 @@ export const StRowBody = styled.div`
 
 export const StRowValue = styled.strong<{ $muted?: boolean }>`
   display: block;
-  font-size: 1.15rem;
+  font-size: 0.98rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.3;
@@ -857,8 +857,8 @@ export const StRowValue = styled.strong<{ $muted?: boolean }>`
 `;
 
 export const StRowSub = styled.p`
-  margin-top: 0.2rem;
-  font-size: 0.78rem;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.gray400};
   overflow: hidden;
   text-overflow: ellipsis;
@@ -870,9 +870,9 @@ export const StRowBenefit = styled.p`
   display: flex;
   align-items: flex-start;
   gap: 0.3rem;
-  margin-top: 0.4rem;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  margin-top: 0.25rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
   font-weight: 600;
   color: ${({ theme }) => theme.semantic.primary};
   word-break: keep-all;
@@ -897,9 +897,9 @@ export const StSampleBadge = styled.span`
 `;
 
 export const StRowBar = styled.div`
-  margin-top: 0.45rem;
-  max-width: 18rem;
-  height: 0.4rem;
+  margin-top: 0.35rem;
+  max-width: 16rem;
+  height: 0.32rem;
   border-radius: 999px;
   background: ${({ theme }) => theme.colors.gray100};
   overflow: hidden;
@@ -934,8 +934,8 @@ export const StServiceRow = styled(Link)`
     "head open"
     "main main";
   align-items: center;
-  gap: 0.5rem 0.9rem;
-  padding: 1rem 1.1rem;
+  gap: 0.35rem 0.75rem;
+  padding: 0.65rem 0.9rem; /* 줄이 너무 커 보인다는 피드백(2026-09-08)으로 축소 */
   text-decoration: none;
   transition: background 0.15s;
 
@@ -961,10 +961,10 @@ export const StServiceRow = styled(Link)`
   }
 
   @media (min-width: 720px) {
-    grid-template-columns: 11rem minmax(0, 1fr) auto;
+    grid-template-columns: 9.5rem minmax(0, 1fr) auto;
     grid-template-areas: "head main open";
-    gap: 0.9rem 1.2rem;
-    padding: 1.15rem 1.3rem;
+    gap: 0.6rem 1rem;
+    padding: 0.7rem 1rem;
   }
 `;
 
