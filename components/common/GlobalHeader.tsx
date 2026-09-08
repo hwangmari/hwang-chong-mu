@@ -41,6 +41,12 @@ const EXPERIENCE_NAMES: Record<string, string> = {
   hivelab: "하이브랩",
 };
 
+// 메뉴 열: 분류의 column 값(1~3)으로 묶는다. 4번째 열은 '그 외'
+const MENU_COLUMNS = ([1, 2, 3] as const).map((column) => ({
+  column,
+  categories: MENU_CATEGORIES.filter((category) => category.column === column),
+}));
+
 export default function GlobalHeader() {
   const router = useRouter();
   const pathname = usePathname();
@@ -219,27 +225,32 @@ export default function GlobalHeader() {
             </StMenuTop>
 
             <StMenuGrid>
-            {MENU_CATEGORIES.map((category) => (
-              <StCategoryBlock key={category.title}>
-                <StCategoryLabel>
-                  <span>{category.emoji}</span>
-                  {category.title}
-                </StCategoryLabel>
-                {category.items.map((item) => (
-                  <Link key={item.href} href={item.href} passHref>
-                    <StMenuItem
-                      $isActive={pathname.startsWith(item.href)}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <span className="icon">{item.icon}</span>
-                      <span className="text">
-                        {item.title}
-                        <small>{item.desc}</small>
-                      </span>
-                    </StMenuItem>
-                  </Link>
+            {/* 홈 '모든 도구'와 같은 배치: 열 번호가 같은 분류(일과 시간·돈 관리)는 위아래로 */}
+            {MENU_COLUMNS.map((column) => (
+              <StMenuColumn key={column.column}>
+                {column.categories.map((category) => (
+                  <StCategoryBlock key={category.title}>
+                    <StCategoryLabel>
+                      <span>{category.emoji}</span>
+                      {category.title}
+                    </StCategoryLabel>
+                    {category.items.map((item) => (
+                      <Link key={item.href} href={item.href} passHref>
+                        <StMenuItem
+                          $isActive={pathname.startsWith(item.href)}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <span className="icon">{item.icon}</span>
+                          <span className="text">
+                            {item.title}
+                            <small>{item.desc}</small>
+                          </span>
+                        </StMenuItem>
+                      </Link>
+                    ))}
+                  </StCategoryBlock>
                 ))}
-              </StCategoryBlock>
+              </StMenuColumn>
             ))}
 
             <StCategoryBlock>
@@ -398,7 +409,7 @@ const StMenuGrid = styled.div`
 
   @media ${({ theme }) => theme.media.desktop} {
     display: grid;
-    grid-template-columns: 1.1fr 0.95fr 0.95fr 1.1fr 0.8fr;
+    grid-template-columns: 1.1fr 1fr 1.1fr 0.8fr;
     gap: 0.5rem;
     align-items: start;
   }
@@ -484,6 +495,12 @@ const StAccountAction = styled.button<{ $primary?: boolean }>`
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+`;
+
+const StMenuColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 `;
 
 const StCategoryBlock = styled.div`

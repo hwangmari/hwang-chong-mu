@@ -196,6 +196,21 @@ export const StChip = styled.button<{ $active: boolean; $color: string }>`
   }
 `;
 
+/* 대진표 규칙: 일반 대회 폼과 같은 "이름 + 스위치" 필드를 2~3열로 */
+export const StRuleGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem 0.9rem;
+  align-items: start;
+`;
+
+export const StRuleDesc = styled.span`
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: ${({ theme }) => theme.colors.gray500};
+  word-break: keep-all;
+`;
+
 /* 규칙 칩 묶음: "항상 지켜요" / "취향대로" 라벨 + 칩 줄 */
 export const StRuleGroups = styled.div`
   display: flex;
