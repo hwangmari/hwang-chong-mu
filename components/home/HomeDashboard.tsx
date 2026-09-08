@@ -66,6 +66,7 @@ import QuickActionModal, {
   QUICK_ACTION_META,
   type QuickService,
 } from "@/components/home/QuickActionModal";
+import GuestDashboardPreview from "@/components/home/GuestDashboardPreview";
 
 // /my에서 서비스로 이동한 뒤 헤더 백키로 다시 /my로 돌아올 수 있게 하는 쿼리
 const withFromMy = (href: string) =>
@@ -122,7 +123,7 @@ type ServiceRow = {
 };
 
 // 서비스별 아이콘 톤 (같은 파랑 반복 → 서비스마다 색 구분으로 생동감)
-type WidgetTone =
+export type WidgetTone =
   | "blue"
   | "amber"
   | "green"
@@ -180,7 +181,7 @@ function formatKrw(value: number) {
   return `${Math.round(value).toLocaleString("ko-KR")}원`;
 }
 
-function clamp01(value: number) {
+export function clamp01(value: number) {
   return Math.min(Math.max(value, 0), 1);
 }
 
@@ -688,8 +689,8 @@ const SERVICE_LOADERS: Record<
 };
 
 // ── 이번 달 게이지 한 칸 ──
-const GAUGE_RADIUS = 34;
-const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
+export const GAUGE_RADIUS = 34;
+export const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
 
 function GaugeRing({ gauge }: { gauge: GaugeItem }) {
   const filled = clamp01(gauge.ratio);
@@ -1173,20 +1174,9 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
     );
   }
 
-  // 비로그인: 로그인 유도 카드
+  // 비로그인: 로그인하면 뭐가 보이는지 서비스별 예시 미리보기
   if (!user) {
-    return (
-      <StSection $wide={wide}>
-        <StPromptCard>
-          <StPromptText>
-            로그인하면 내 서비스 요약을 한눈에 볼 수 있어요.
-          </StPromptText>
-          <Link href="/login" passHref>
-            <StPromptButton>로그인하러 가기</StPromptButton>
-          </Link>
-        </StPromptCard>
-      </StSection>
-    );
+    return <GuestDashboardPreview wide={wide} />;
   }
 
   // 로그인했지만 링크 로딩 중
@@ -1514,7 +1504,7 @@ export default function HomeDashboard({ wide = false }: { wide?: boolean }) {
 }
 
 // ── 톤 팔레트 (아이콘 배지·게이지·범례가 함께 쓴다) ──
-const toneBg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
+export const toneBg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
   ({
     blue: theme.colors.blue50,
     amber: theme.colors.amber50,
@@ -1525,7 +1515,7 @@ const toneBg = (tone: WidgetTone) => (theme: { colors: Record<string, string> })
     orange: theme.colors.orange50,
   })[tone];
 
-const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
+export const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> }) =>
   ({
     blue: theme.colors.blue600,
     amber: theme.colors.amber600,
@@ -1536,7 +1526,7 @@ const toneFg = (tone: WidgetTone) => (theme: { colors: Record<string, string> })
     orange: theme.colors.orange600,
   })[tone];
 
-const StSection = styled.section<{ $wide?: boolean }>`
+export const StSection = styled.section<{ $wide?: boolean }>`
   width: 100%;
   max-width: ${({ $wide }) => ($wide ? "100%" : "600px")};
   margin-bottom: 3rem;
@@ -1546,14 +1536,14 @@ const StSection = styled.section<{ $wide?: boolean }>`
 `;
 
 // 대시보드 스타일: 회색 배경 위에 섹션 라벨 + 흰 판 (홈 메뉴와 같은 결)
-const StBoard = styled.div`
+export const StBoard = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 `;
 
-const StBoardHead = styled.div`
+export const StBoardHead = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1561,7 +1551,7 @@ const StBoardHead = styled.div`
   padding: 0 0.25rem;
 `;
 
-const StBoardTitle = styled.h2`
+export const StBoardTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -1713,7 +1703,7 @@ const StContextMenuItem = styled.button`
 `;
 
 // ── ① 이번 달 게이지 띠 ──
-const StGaugeStrip = styled.div`
+export const StGaugeStrip = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
@@ -1782,25 +1772,25 @@ const StGaugeSkeleton = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
-const StGaugeRingWrap = styled.div`
+export const StGaugeRingWrap = styled.div`
   position: relative;
   width: 5rem;
   height: 5rem;
 `;
 
-const StGaugeSvg = styled.svg`
+export const StGaugeSvg = styled.svg`
   width: 100%;
   height: 100%;
   display: block;
 `;
 
-const StGaugeTrack = styled.circle`
+export const StGaugeTrack = styled.circle`
   fill: none;
   stroke: ${({ theme }) => theme.colors.gray100};
   stroke-width: 8;
 `;
 
-const StGaugeFill = styled.circle<{ $tone: WidgetTone; $over: boolean }>`
+export const StGaugeFill = styled.circle<{ $tone: WidgetTone; $over: boolean }>`
   fill: none;
   stroke: ${({ $tone, $over, theme }) =>
     $over ? theme.colors.rose600 : toneFg($tone)(theme)};
@@ -1813,7 +1803,7 @@ const StGaugeFill = styled.circle<{ $tone: WidgetTone; $over: boolean }>`
   }
 `;
 
-const StGaugeValue = styled.strong<{ $over: boolean }>`
+export const StGaugeValue = styled.strong<{ $over: boolean }>`
   position: absolute;
   inset: 0;
   display: flex;
@@ -1827,7 +1817,7 @@ const StGaugeValue = styled.strong<{ $over: boolean }>`
 `;
 
 // 넓은 화면에서 고리 오른쪽에 붙는 글자 묶음
-const StGaugeText = styled.span`
+export const StGaugeText = styled.span`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1839,7 +1829,7 @@ const StGaugeText = styled.span`
   }
 `;
 
-const StGaugeCaption = styled.span`
+export const StGaugeCaption = styled.span`
   margin-top: 0.2rem;
   font-size: 0.88rem;
   font-weight: 800;
@@ -1850,7 +1840,7 @@ const StGaugeCaption = styled.span`
   }
 `;
 
-const StGaugeLabel = styled.span`
+export const StGaugeLabel = styled.span`
   font-size: 0.72rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.gray400};
@@ -2018,7 +2008,7 @@ const StServiceList = styled.div`
   overflow: hidden;
 `;
 
-const StWidgetIcon = styled.div<{ $tone: WidgetTone }>`
+export const StWidgetIcon = styled.div<{ $tone: WidgetTone }>`
   width: 2.6rem;
   height: 2.6rem;
   background-color: ${({ $tone, theme }) => toneBg($tone)(theme)};
@@ -2044,7 +2034,7 @@ const StRowHead = styled.div`
   min-width: 0;
 `;
 
-const StRowName = styled.span`
+export const StRowName = styled.span`
   font-size: 0.95rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray800};
@@ -2056,7 +2046,7 @@ const StRowBody = styled.div`
   min-width: 0;
 `;
 
-const StRowValue = styled.strong<{ $muted?: boolean }>`
+export const StRowValue = styled.strong<{ $muted?: boolean }>`
   display: block;
   font-size: 1.15rem;
   font-weight: 800;
@@ -2069,7 +2059,7 @@ const StRowValue = styled.strong<{ $muted?: boolean }>`
   white-space: nowrap;
 `;
 
-const StRowSub = styled.p`
+export const StRowSub = styled.p`
   margin-top: 0.2rem;
   font-size: 0.78rem;
   color: ${({ theme }) => theme.colors.gray400};
@@ -2078,7 +2068,7 @@ const StRowSub = styled.p`
   white-space: nowrap;
 `;
 
-const StRowBar = styled.div`
+export const StRowBar = styled.div`
   margin-top: 0.45rem;
   max-width: 18rem;
   height: 0.4rem;

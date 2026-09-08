@@ -16,10 +16,13 @@ export default function MyDashboardPage() {
       <StHeadRow>
         <StIntro>
           <StPageTitle>✨ 내 서비스 요약</StPageTitle>
-          <StPageDesc>
-            서비스를 하나의 계정으로 연동하면, 오늘·이번 주 현황을 한곳에서
-            모아 관리할 수 있어요.
-          </StPageDesc>
+          {/* 로그인 전에는 바로 아래 미리보기가 같은 말을 더 크게 하므로 설명을 숨긴다 */}
+          {user && (
+            <StPageDesc>
+              서비스를 하나의 계정으로 연동하면, 오늘·이번 주 현황을 한곳에서
+              모아 관리할 수 있어요.
+            </StPageDesc>
+          )}
         </StIntro>
         {!loading ? (
           user ? (
