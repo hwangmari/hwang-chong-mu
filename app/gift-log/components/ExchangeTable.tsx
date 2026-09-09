@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { buildPersonSummaries } from "../aggregate";
+import ReturnAmountForm from "./ReturnAmountForm";
+import { type ReturnPayment } from "../returned";
 import {
   StBadge,
   StCardHint,
@@ -48,92 +50,166 @@ function statusOf(p: PersonSummary): "given" | "marked" | "pending" | "none" {
 
 type Status = ReturnType<typeof statusOf>;
 
+// 사람 줄 하나에서 "냈음"을 켜고 끄는 두 동작. 목록 보기와 같은 함수를 쓴다.
+type ReturnHandlers = {
+  busy: boolean;
+  onMarkReturned: (
+    received: GiftEntry,
+    ids: string[],
+    paid: ReturnPayment | null,
+  ) => Promise<void>;
+  onUnmarkReturned: (received: GiftEntry, ids: string[]) => Promise<void>;
+};
+
+// 답례의 기준이 되는 받은 기록 = 가장 최근에 받은 것 (entries 는 날짜 내림차순)
+function latestReceived(p: PersonSummary): GiftEntry | null {
+  return p.entries.find((e) => e.direction === "received") ?? null;
+}
+
 // 한 묶음(아직 안 냄 / 답례 완료 / 내가 낸 것만)의 표
 function RowsTable({
   rows,
-  onToggleReturned,
-}: {
-  rows: PersonSummary[];
-  onToggleReturned: (ids: string[], returned: boolean) => void;
-}) {
+  busy,
+  onMarkReturned,
+  onUnmarkReturned,
+}: { rows: PersonSummary[] } & ReturnHandlers) {
+  // 금액 적기 폼을 연 사람. mark = 아직 표시 전, fill = 표시는 됐고 금액만 채우는 중
+  const [formFor, setFormFor] = useState<{
+    personName: string;
+    mode: "mark" | "fill";
+  } | null>(null);
+
   return (
     <StTableWrap>
-      <StTable>
+      <StTable $minWidth="40rem">
+        {/* 묶음마다 표를 따로 그리므로 열 너비를 여기서 못박아 서로 맞춘다.
+            관계는 바로 위 소제목("친구 · 대학 동기")에 이미 있어 칸을 두지 않는다.
+            답례 칸은 "✓ 냈음 + 금액 적기 + 취소"까지 들어가야 해서 가장 넓다. */}
+        <colgroup>
+          <col style={{ width: "22%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "15%" }} />
+          <col style={{ width: "17%" }} />
+          <col style={{ width: "30%" }} />
+        </colgroup>
         <thead>
           <tr>
             <th>이름</th>
-            <th>관계</th>
             <th className="amount">받은 돈</th>
             <th className="amount">낸 돈</th>
             <th className="amount">차액</th>
-            <th>답례</th>
+            <th className="actions">답례</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((p) => {
             const s = statusOf(p);
+            // 답례의 기준이 되는 받은 기록. 없으면 "냈음" 자체를 물어볼 게 없다
+            const received = latestReceived(p);
+            const formOpen = formFor?.personName === p.personName && received;
             return (
-              <tr key={p.personName}>
-                <td>
-                  <b>{p.personName}</b>
-                </td>
-                <td>
-                  {RELATION_LABEL[p.relation]}
-                  {p.relationDetail ? ` · ${p.relationDetail}` : ""}
-                </td>
-                <td className="amount received">
-                  {p.receivedTotal ? formatAmount(p.receivedTotal) : "–"}
-                </td>
-                <td className="amount given">
-                  {p.givenTotal
-                    ? formatAmount(p.givenTotal)
-                    : s === "marked"
-                      ? "냈음"
-                      : "–"}
-                </td>
-                <td className="amount">
-                  {s === "marked" ? (
-                    <StBadge $tone="neutral">금액 미기록</StBadge>
-                  ) : (
-                    <StBadge
-                      $tone={
-                        p.balance > 0
-                          ? "good"
-                          : p.balance < 0
-                            ? "bad"
-                            : "neutral"
-                      }
-                    >
-                      {formatBalance(p.balance)}
-                    </StBadge>
-                  )}
-                </td>
-                <td>
-                  {s === "given" ? (
-                    <StBadge $tone="good">✓ 냈음</StBadge>
-                  ) : s === "marked" ? (
-                    <>
+              <Fragment key={p.personName}>
+                <tr>
+                  <td title={p.personName}>
+                    <b>{p.personName}</b>
+                  </td>
+                  <td className="amount received">
+                    {p.receivedTotal ? formatAmount(p.receivedTotal) : "–"}
+                  </td>
+                  <td className="amount given">
+                    {p.givenTotal
+                      ? formatAmount(p.givenTotal)
+                      : s === "marked"
+                        ? "냈음"
+                        : "–"}
+                  </td>
+                  <td className="amount">
+                    {s === "marked" ? (
+                      <StBadge $tone="neutral">금액 미기록</StBadge>
+                    ) : (
+                      <StBadge
+                        $tone={
+                          p.balance > 0
+                            ? "good"
+                            : p.balance < 0
+                              ? "bad"
+                              : "neutral"
+                        }
+                      >
+                        {formatBalance(p.balance)}
+                      </StBadge>
+                    )}
+                  </td>
+                  <td className="actions">
+                    {s === "given" ? (
                       <StBadge $tone="good">✓ 냈음</StBadge>
+                    ) : s === "marked" ? (
+                      <>
+                        <StBadge $tone="good">✓ 냈음</StBadge>
+                        <StRowActionBtn
+                          type="button"
+                          $tone="blue"
+                          onClick={() =>
+                            setFormFor({
+                              personName: p.personName,
+                              mode: "fill",
+                            })
+                          }
+                        >
+                          금액 적기
+                        </StRowActionBtn>
+                        <StRowActionBtn
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            received &&
+                            onUnmarkReturned(received, p.receivedIds)
+                          }
+                        >
+                          취소
+                        </StRowActionBtn>
+                      </>
+                    ) : s === "pending" ? (
                       <StRowActionBtn
                         type="button"
-                        onClick={() => onToggleReturned(p.receivedIds, false)}
+                        $tone={DIRECTION_TONE.given}
+                        onClick={() =>
+                          setFormFor({ personName: p.personName, mode: "mark" })
+                        }
                       >
-                        취소
+                        냈음 표시
                       </StRowActionBtn>
-                    </>
-                  ) : s === "pending" ? (
-                    <StRowActionBtn
-                      type="button"
-                      $tone={DIRECTION_TONE.given}
-                      onClick={() => onToggleReturned(p.receivedIds, true)}
-                    >
-                      냈음 표시
-                    </StRowActionBtn>
-                  ) : (
-                    <StBadge $tone="neutral">받은 것 없음</StBadge>
-                  )}
-                </td>
-              </tr>
+                    ) : (
+                      <StBadge $tone="neutral">받은 것 없음</StBadge>
+                    )}
+                  </td>
+                </tr>
+                {formOpen && formFor && received ? (
+                  <tr>
+                    {/* 금액 입력은 줄 아래 한 칸을 통째로 쓴다 (목록 보기와 같은 폼) */}
+                    <td className="form" colSpan={5}>
+                      <ReturnAmountForm
+                        personName={p.personName}
+                        receivedDate={received.date}
+                        mode={formFor.mode}
+                        busy={busy}
+                        onSave={async (date, amount) => {
+                          await onMarkReturned(received, p.receivedIds, {
+                            date,
+                            amount,
+                          });
+                          setFormFor(null);
+                        }}
+                        onSkipAmount={async () => {
+                          await onMarkReturned(received, p.receivedIds, null);
+                          setFormFor(null);
+                        }}
+                        onClose={() => setFormFor(null)}
+                      />
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
             );
           })}
         </tbody>
@@ -160,13 +236,12 @@ function Group({
   title,
   rows,
   defaultOpen,
-  onToggleReturned,
+  ...handlers
 }: {
   title: string;
   rows: PersonSummary[];
   defaultOpen: boolean;
-  onToggleReturned: (ids: string[], returned: boolean) => void;
-}) {
+} & ReturnHandlers) {
   const [open, setOpen] = useState(defaultOpen);
   if (rows.length === 0) return null;
   const received = rows.reduce((s, p) => s + p.receivedTotal, 0);
@@ -194,7 +269,7 @@ function Group({
                   {formatAmount(list.reduce((s, p) => s + p.receivedTotal, 0))}
                 </StGroupMeta>
               </StGroupHead>
-              <RowsTable rows={list} onToggleReturned={onToggleReturned} />
+              <RowsTable rows={list} {...handlers} />
             </div>
           ))
         : null}
@@ -202,12 +277,9 @@ function Group({
   );
 }
 
-type Props = {
-  entries: GiftEntry[];
-  onToggleReturned: (ids: string[], returned: boolean) => void;
-};
+type Props = { entries: GiftEntry[] } & ReturnHandlers;
 
-export default function ExchangeTable({ entries, onToggleReturned }: Props) {
+export default function ExchangeTable({ entries, ...handlers }: Props) {
   // 기록이 있는 종류만 탭으로. 기본은 받은 기록이 가장 많은 종류
   const tabs = useMemo(() => {
     const count = new Map<GiftEventType, number>();
@@ -287,21 +359,21 @@ export default function ExchangeTable({ entries, onToggleReturned }: Props) {
         title="🔔 아직 안 냄"
         rows={pending}
         defaultOpen
-        onToggleReturned={onToggleReturned}
+        {...handlers}
       />
       <Group
         key={`${tab}-done`}
         title="✓ 답례 완료"
         rows={done}
         defaultOpen={false}
-        onToggleReturned={onToggleReturned}
+        {...handlers}
       />
       <Group
         key={`${tab}-given`}
         title="💸 내가 낸 것만 있음"
         rows={givenOnly}
         defaultOpen={false}
-        onToggleReturned={onToggleReturned}
+        {...handlers}
       />
     </>
   );

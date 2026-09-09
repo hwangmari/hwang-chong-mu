@@ -28,6 +28,8 @@ import {
   SkeletonList,
 } from "@/components/common/Skeleton";
 import { formatDateKey } from "@/utils/date";
+import { findReturnEntry, returnMemo, type ReturnPayment } from "./returned";
+import { formatAmount } from "./components/giftFormat";
 import type { GiftEntry, GiftEntryInput, GiftRelation } from "./types";
 import {
   StCard,
@@ -231,12 +233,53 @@ export default function GiftLogPage() {
     if (latest) setEntries(latest);
   }
 
-  // 대조표에서 "냈음" 표시/취소 (받은 기록들에 한 번에)
-  async function toggleReturned(ids: string[], returned: boolean) {
+  // "냈음" 표시를 켠다.
+  // paid 가 있으면 같은 사람·같은 종류로 "냈어요" 기록을 하나 만들어 답례 금액을 남긴다.
+  // (저장 구조는 그대로다 — 답례도 평범한 낸 기록일 뿐이고, returned.ts 가 둘을 이어 준다)
+  async function markReturned(
+    received: GiftEntry,
+    ids: string[],
+    paid: ReturnPayment | null,
+  ) {
     if (ids.length === 0) return;
     setBusy(true);
+    setError("");
     try {
-      setEntries(await setGiftReturned(ids, returned));
+      if (paid) {
+        await saveGiftEntry({
+          date: paid.date,
+          eventType: received.eventType,
+          direction: "given",
+          personName: received.personName,
+          relation: received.relation,
+          relationDetail: received.relationDetail,
+          amount: paid.amount,
+          memo: returnMemo(received.date),
+        });
+      }
+      setEntries(await setGiftReturned(ids, true));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "표시를 바꾸지 못했어요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // "냈음" 표시를 끈다. 짝지어 둔 "냈어요" 기록이 있으면 같이 지울지 먼저 물어본다.
+  async function unmarkReturned(received: GiftEntry, ids: string[]) {
+    if (ids.length === 0) return;
+    const paidBack = findReturnEntry(entries, received);
+    let dropPaidBack = false;
+    if (paidBack) {
+      dropPaidBack = await openConfirm(
+        `"냈음" 표시를 지울게요. 함께 적어둔 냈어요 기록(${paidBack.date} · ${formatAmount(paidBack.amount)})도 같이 지울까요?`,
+      );
+    }
+    setBusy(true);
+    setError("");
+    try {
+      if (paidBack && dropPaidBack) await deleteGiftEntry(paidBack.id);
+      setEntries(await setGiftReturned(ids, false));
     } catch (e) {
       setError(e instanceof Error ? e.message : "표시를 바꾸지 못했어요.");
     } finally {
@@ -348,7 +391,10 @@ export default function GiftLogPage() {
           role="tab"
           aria-selected={tab === "entry"}
           $active={tab === "entry"}
-          onClick={() => setTab("entry")}
+          onClick={() => {
+            setTab("entry");
+            setError("");
+          }}
         >
           ✏️ 입력
         </StSegmentButton>
@@ -357,7 +403,10 @@ export default function GiftLogPage() {
           role="tab"
           aria-selected={tab === "history"}
           $active={tab === "history"}
-          onClick={() => setTab("history")}
+          onClick={() => {
+            setTab("history");
+            setError("");
+          }}
         >
           📒 전체 내역{entries.length > 0 ? ` ${entries.length}` : ""}
         </StSegmentButton>
@@ -393,9 +442,12 @@ export default function GiftLogPage() {
             loading={loading}
             entries={entries}
             suggestDetails={suggestDetails}
+            busy={busy}
+            error={error}
             onEdit={editEntry}
             onRemove={removeEntry}
-            onToggleReturned={toggleReturned}
+            onMarkReturned={markReturned}
+            onUnmarkReturned={unmarkReturned}
             onChangeRelationMany={changeRelationMany}
           />
         </>

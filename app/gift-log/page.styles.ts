@@ -440,6 +440,10 @@ export const StTotalValue = styled.span<{ $tone?: GiftTone }>`
 export const StBadge = styled.span<{ $tone: "good" | "bad" | "neutral" }>`
   ${numeric};
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
   font-size: 0.78rem;
   font-weight: 700;
   padding: 0.15rem 0.45rem;
@@ -638,15 +642,22 @@ export const StRecordList = styled.div`
   flex-direction: column;
 `;
 
+/* 기록 한 건 = 줄 하나 + (열었을 때) 그 아래 답례 금액 폼.
+   실선은 이 바깥 상자가 그린다 — 폼이 열려도 줄 구분이 흐트러지지 않게. */
+export const StRecordItem = styled.div`
+  display: flex;
+  flex-direction: column;
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
+`;
+
 export const StRecordRow = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.7rem 0;
-
-  & + & {
-    border-top: 1px solid ${({ theme }) => theme.semantic.border};
-  }
 `;
 
 export const StRecordMain = styled.div`
@@ -853,16 +864,20 @@ export const StBulkRow = styled.div`
   }
 `;
 
-/* 세로줄 없이 가로 실선만. 금액은 오른쪽 정렬 + 자릿수 고정 */
-export const StTable = styled.table`
+/* 세로줄 없이 가로 실선만. 금액은 오른쪽 정렬 + 자릿수 고정.
+   열 너비는 내용이 아니라 <colgroup> 이 정한다(table-layout: fixed).
+   그래야 묶음마다 따로 그린 표들의 열이 서로 어긋나지 않는다.
+   좁은 화면에서는 $minWidth 만큼 유지하고 StTableWrap 안에서 옆으로 스크롤한다. */
+export const StTable = styled.table<{ $minWidth?: string }>`
   width: 100%;
+  min-width: ${({ $minWidth }) => $minWidth ?? "38rem"};
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.85rem;
   color: ${({ theme }) => theme.semantic.text};
 
   th.check,
   td.check {
-    width: 1.6rem;
     padding-right: 0;
   }
 
@@ -872,6 +887,8 @@ export const StTable = styled.table`
     border-bottom: 1px solid ${({ theme }) => theme.semantic.border};
     text-align: left;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     vertical-align: middle;
   }
 
@@ -901,9 +918,27 @@ export const StTable = styled.table`
 
   td.memo {
     white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
     line-height: 1.5;
     color: ${({ theme }) => theme.semantic.subText};
-    max-width: 16rem;
+  }
+
+  /* 버튼이 들어가는 칸 — 머리글도 같은 쪽으로 붙여야 줄이 맞는다 */
+  th.actions,
+  td.actions {
+    text-align: right;
+  }
+
+  td.actions {
+    overflow: visible;
+  }
+
+  /* 답례 금액 폼이 통째로 들어가는 칸 — 표의 한 줄 규칙(한 줄·잘라내기)에서 뺀다 */
+  td.form {
+    white-space: normal;
+    overflow: visible;
+    padding: 0 0 0.6rem;
   }
 
   tfoot td {
@@ -970,6 +1005,79 @@ export const StGhostDangerBtn = styled.button`
     color: ${({ theme }) => theme.semantic.danger};
     background: ${({ theme }) => theme.semantic.dangerBg};
   }
+`;
+
+/* === 답례("냈음") 표시와 금액 적기 === */
+
+/* 받은 기록 줄에 붙는 "냈음" 표시. 금액이 있으면 눌러서 고칠 수 있다.
+   카드 안이라 테두리 없이 옅은 바탕만 쓴다. */
+export const StReturnedChip = styled.button<{ $tone: GiftTone; $flat?: boolean }>`
+  ${numeric};
+  border: none;
+  background: ${({ $tone, theme }) => toneBg(theme, $tone)};
+  color: ${({ $tone, theme }) => toneInk(theme, $tone)};
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  cursor: ${({ $flat }) => ($flat ? "default" : "pointer")};
+`;
+
+/* "냈음" 칩 + 금액 적기 / 냈음 취소 글자 버튼을 담는 한 줄 */
+export const StReturnLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+`;
+
+/* 줄 아래에 펼쳐지는 금액 입력 띠. 카드 테두리 안이라 배경으로만 구분한다. */
+export const StReturnBand = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.semantic.bg};
+`;
+
+export const StReturnTitle = styled.div`
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.text};
+
+  span {
+    margin-left: 0.35rem;
+    font-weight: 500;
+    color: ${({ theme }) => theme.semantic.subText};
+  }
+`;
+
+export const StReturnRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex-direction: column;
+  }
+`;
+
+export const StReturnField = styled.label`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+export const StReturnActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
 `;
 
 /* === 수정 모달 (QuickActionModal과 같은 고정 오버레이 방식) === */

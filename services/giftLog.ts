@@ -15,12 +15,19 @@ function sortLedger(entries: GiftEntry[]): GiftEntry[] {
 }
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    });
+  } catch {
+    // 연결 자체가 끊긴 경우. 브라우저가 주는 영문 메시지("Failed to fetch")를
+    // 그대로 보여 주지 않는다 — 화면에 그대로 노출되는 문구다.
+    throw new Error("연결이 끊겼어요. 인터넷 상태를 확인하고 다시 눌러 주세요.");
+  }
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(payload?.error ?? "요청이 실패했습니다.");

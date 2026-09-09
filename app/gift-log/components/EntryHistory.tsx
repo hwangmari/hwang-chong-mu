@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ExchangeTable from "./ExchangeTable";
+import ReturnAmountForm from "./ReturnAmountForm";
 import {
   StBulkBar,
   StBulkRow,
@@ -27,10 +28,13 @@ import {
   StRecordList,
   StRecordMain,
   StRecordMemo,
+  StRecordItem,
   StRecordMeta,
   StRecordName,
   StRecordRow,
   StRecordTop,
+  StReturnedChip,
+  StReturnLine,
   StRowActionBtn,
   StSegmentBtn,
   StSegmentRow,
@@ -59,6 +63,7 @@ import {
   type GiftTone,
 } from "../types";
 import { formatAmount, formatSigned } from "./giftFormat";
+import { findReturnEntry, type ReturnPayment } from "../returned";
 
 type Filter = "all" | GiftDirection;
 type RelationFilter = "all" | GiftRelation;
@@ -119,9 +124,19 @@ type EntryHistoryProps = {
   loading: boolean;
   entries: GiftEntry[];
   suggestDetails: (relation: GiftRelation) => string[];
+  busy: boolean;
+  // 저장·표시 변경이 실패했을 때의 안내 (입력 탭과 같은 문구를 여기서도 보여 준다)
+  error: string;
   onEdit: (entry: GiftEntry) => void;
   onRemove: (id: string) => void;
-  onToggleReturned: (ids: string[], returned: boolean) => void;
+  // "냈음" 표시를 켠다. paid 가 있으면 그 금액으로 "냈어요" 기록도 함께 만든다
+  onMarkReturned: (
+    received: GiftEntry,
+    ids: string[],
+    paid: ReturnPayment | null,
+  ) => Promise<void>;
+  // "냈음" 표시를 끈다. 짝지어진 "냈어요" 기록이 있으면 같이 지울지 물어본다
+  onUnmarkReturned: (received: GiftEntry, ids: string[]) => Promise<void>;
   // 표에서 체크한 여러 명의 관계를 한 번에 바꾼다
   onChangeRelationMany: (
     ids: string[],
@@ -134,14 +149,22 @@ export default function EntryHistory({
   loading,
   entries,
   suggestDetails,
+  busy,
+  error,
   onEdit,
   onRemove,
-  onToggleReturned,
+  onMarkReturned,
+  onUnmarkReturned,
   onChangeRelationMany,
 }: EntryHistoryProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [relationFilter, setRelationFilter] = useState<RelationFilter>("all");
   const [view, setView] = useState<ViewMode>("list");
+  // 금액 적기 폼을 연 받은 기록. mark = 아직 표시 전, fill = 표시는 됐고 금액만 채우는 중
+  const [returnFor, setReturnFor] = useState<{
+    id: string;
+    mode: "mark" | "fill";
+  } | null>(null);
 
   // 표 편집 모드: 켜져 있을 때만 체크박스와 "관계 한번에 바꾸기" 상자가 보인다
   const [editMode, setEditMode] = useState(false);
@@ -228,6 +251,7 @@ export default function EntryHistory({
           ))}
         </StSegmentRow>
       </StCardHead>
+      {error ? <StError>{error}</StError> : null}
       {view === "exchange" ? null : (
         /* 방향은 토글 하나로, 관계는 작은 칩으로 — 한 줄에 */
         <StFilterRow>
@@ -269,7 +293,12 @@ export default function EntryHistory({
       )}
 
       {view === "exchange" ? (
-        <ExchangeTable entries={entries} onToggleReturned={onToggleReturned} />
+        <ExchangeTable
+          entries={entries}
+          busy={busy}
+          onMarkReturned={onMarkReturned}
+          onUnmarkReturned={onUnmarkReturned}
+        />
       ) : loading ? (
         <StEmpty>불러오는 중...</StEmpty>
       ) : visible.length === 0 ? (
@@ -366,7 +395,17 @@ export default function EntryHistory({
                 </StGroupMeta>
               </StGroupHead>
               <StTableWrap>
-                <StTable>
+                <StTable $minWidth="40rem">
+                  {/* 묶음마다 표가 따로 그려지므로 열 너비를 못박아 서로 맞춘다 */}
+                  <colgroup>
+                    {editMode ? <col style={{ width: "5%" }} /> : null}
+                    <col style={{ width: editMode ? "17%" : "18%" }} />
+                    <col style={{ width: editMode ? "17%" : "18%" }} />
+                    <col style={{ width: editMode ? "15%" : "16%" }} />
+                    <col style={{ width: editMode ? "16%" : "17%" }} />
+                    <col style={{ width: editMode ? "16%" : "17%" }} />
+                    <col style={{ width: "14%" }} />
+                  </colgroup>
                   <thead>
                     <tr>
                       {editMode ? (
@@ -384,7 +423,7 @@ export default function EntryHistory({
                       <th className="amount">금액</th>
                       <th>날짜</th>
                       <th>메모</th>
-                      <th aria-label="동작" />
+                      <th className="actions" aria-label="동작" />
                     </tr>
                   </thead>
                   <tbody>
@@ -400,16 +439,16 @@ export default function EntryHistory({
                             />
                           </td>
                         ) : null}
-                        <td>
+                        <td title={entry.personName}>
                           <b>{entry.personName}</b>
                         </td>
-                        <td>{relationText(entry)}</td>
+                        <td title={relationText(entry)}>{relationText(entry)}</td>
                         <td className={`amount ${entry.direction}`}>
                           {formatAmount(entry.amount)}
                         </td>
                         <td>{entry.date}</td>
                         <td className="memo">{entry.memo}</td>
-                        <td>
+                        <td className="actions">
                           <StRowActionBtn
                             type="button"
                             onClick={() => onEdit(entry)}
@@ -440,37 +479,120 @@ export default function EntryHistory({
         </>
       ) : (
         <StRecordList>
-          {visible.map((entry) => (
-            <StRecordRow key={entry.id}>
-              <StRecordMain>
-                <StRecordMeta>
-                  <StRecordDate dateTime={entry.date}>{entry.date}</StRecordDate>
-                  <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
-                    {EVENT_TYPE_ICON[entry.eventType]}{" "}
-                    {EVENT_TYPE_LABEL[entry.eventType]}
-                  </StTag>
-                  <StTag $tone={RELATION_TONE[entry.relation]}>
-                    {relationText(entry)}
-                  </StTag>
-                </StRecordMeta>
-                <StRecordTop>
-                  <StRecordName>{entry.personName}</StRecordName>
-                  <StRecordAmount $tone={DIRECTION_TONE[entry.direction]}>
-                    {formatSigned(entry.amount, entry.direction)}
-                  </StRecordAmount>
-                </StRecordTop>
-                {entry.memo ? <StRecordMemo>{entry.memo}</StRecordMemo> : null}
-              </StRecordMain>
-              <StRecordActions>
-                <StEditBtn type="button" onClick={() => onEdit(entry)}>
-                  수정
-                </StEditBtn>
-                <StDelBtn type="button" onClick={() => onRemove(entry.id)}>
-                  삭제
-                </StDelBtn>
-              </StRecordActions>
-            </StRecordRow>
-          ))}
+          {visible.map((entry) => {
+            const received = entry.direction === "received";
+            // 답례로 낸 기록(같은 사람·같은 종류·받은 날 이후 첫 건)
+            const paidBack =
+              received && entry.returned ? findReturnEntry(entries, entry) : null;
+            const formOpen = returnFor?.id === entry.id;
+            return (
+              <StRecordItem key={entry.id}>
+                <StRecordRow>
+                  <StRecordMain>
+                    <StRecordMeta>
+                      <StRecordDate dateTime={entry.date}>
+                        {entry.date}
+                      </StRecordDate>
+                      <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
+                        {EVENT_TYPE_ICON[entry.eventType]}{" "}
+                        {EVENT_TYPE_LABEL[entry.eventType]}
+                      </StTag>
+                      <StTag $tone={RELATION_TONE[entry.relation]}>
+                        {relationText(entry)}
+                      </StTag>
+                    </StRecordMeta>
+                    <StRecordTop>
+                      <StRecordName>{entry.personName}</StRecordName>
+                      <StRecordAmount $tone={DIRECTION_TONE[entry.direction]}>
+                        {formatSigned(entry.amount, entry.direction)}
+                      </StRecordAmount>
+                    </StRecordTop>
+                    {entry.memo ? (
+                      <StRecordMemo>{entry.memo}</StRecordMemo>
+                    ) : null}
+                    {received ? (
+                      <StReturnLine>
+                        {entry.returned ? (
+                          <>
+                            {paidBack ? (
+                              <StReturnedChip
+                                type="button"
+                                $tone="teal"
+                                title="금액·날짜 고치기"
+                                onClick={() => onEdit(paidBack)}
+                              >
+                                ✓ 냈음 · {formatAmount(paidBack.amount)}
+                              </StReturnedChip>
+                            ) : (
+                              <>
+                                <StReturnedChip as="span" $tone="gray" $flat>
+                                  ✓ 냈음 · 금액 미기록
+                                </StReturnedChip>
+                                <StRowActionBtn
+                                  type="button"
+                                  $tone="blue"
+                                  onClick={() =>
+                                    setReturnFor({ id: entry.id, mode: "fill" })
+                                  }
+                                >
+                                  금액 적기
+                                </StRowActionBtn>
+                              </>
+                            )}
+                            <StRowActionBtn
+                              type="button"
+                              disabled={busy}
+                              onClick={() => onUnmarkReturned(entry, [entry.id])}
+                            >
+                              냈음 취소
+                            </StRowActionBtn>
+                          </>
+                        ) : (
+                          /* 한 번 더 누르면 폼을 닫는다 — 잘못 눌렀을 때 빠져나올 길 */
+                          <StRowActionBtn
+                            type="button"
+                            $tone={DIRECTION_TONE.given}
+                            onClick={() =>
+                              setReturnFor(
+                                formOpen ? null : { id: entry.id, mode: "mark" },
+                              )
+                            }
+                          >
+                            💸 냈음 표시
+                          </StRowActionBtn>
+                        )}
+                      </StReturnLine>
+                    ) : null}
+                  </StRecordMain>
+                  <StRecordActions>
+                    <StEditBtn type="button" onClick={() => onEdit(entry)}>
+                      수정
+                    </StEditBtn>
+                    <StDelBtn type="button" onClick={() => onRemove(entry.id)}>
+                      삭제
+                    </StDelBtn>
+                  </StRecordActions>
+                </StRecordRow>
+                {formOpen && returnFor ? (
+                  <ReturnAmountForm
+                    personName={entry.personName}
+                    receivedDate={entry.date}
+                    mode={returnFor.mode}
+                    busy={busy}
+                    onSave={async (date, amount) => {
+                      await onMarkReturned(entry, [entry.id], { date, amount });
+                      setReturnFor(null);
+                    }}
+                    onSkipAmount={async () => {
+                      await onMarkReturned(entry, [entry.id], null);
+                      setReturnFor(null);
+                    }}
+                    onClose={() => setReturnFor(null)}
+                  />
+                ) : null}
+              </StRecordItem>
+            );
+          })}
         </StRecordList>
       )}
     </StCard>
