@@ -164,6 +164,18 @@ export const SERVICES: ServiceDef[] = [
     link: true,
   },
   {
+    id: "account-book",
+    href: "/account-book",
+    icon: "🧾",
+    name: "가계부",
+    desc: "수입/지출을 한눈에 관리",
+    category: "money",
+    seoTitle: "황총무 가계부",
+    seoDescription: "문장등록과 월별 흐름으로 빠르게 쓰는 가계부",
+    access: "room",
+    link: true,
+  },
+  {
     id: "gift-log",
     href: "/gift-log",
     icon: "🎁",
@@ -175,18 +187,6 @@ export const SERVICES: ServiceDef[] = [
     seoDescription:
       "축의금·부조금을 사람별로 기록하고, 얼마 해야 할지 바로 찾아보는 장부",
     access: "login",
-  },
-  {
-    id: "account-book",
-    href: "/account-book",
-    icon: "🧾",
-    name: "가계부",
-    desc: "수입/지출을 한눈에 관리",
-    category: "money",
-    seoTitle: "황총무 가계부",
-    seoDescription: "문장등록과 월별 흐름으로 빠르게 쓰는 가계부",
-    access: "room",
-    link: true,
   },
   {
     id: "habit",
