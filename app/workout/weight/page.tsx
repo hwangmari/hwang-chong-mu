@@ -1,5 +1,7 @@
 "use client";
 
+import styled from "styled-components";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -202,11 +204,14 @@ export default function WeightPage() {
       }
       return ex.name.trim() && ex.sets.some((s) => s.reps > 0);
     });
-    if (filled.length === 0) {
+    // 루틴이 기억 안 나는 날: 운동을 비워 두고 부위·시간·메모만 있어도 "운동함"으로 저장한다 (2026-09-11)
+    const hasSimpleInfo =
+      Boolean(form.bodyPart) ||
+      parseMinutesInput(form.durationMin) > 0 ||
+      Boolean(form.memo.trim());
+    if (filled.length === 0 && !hasSimpleInfo) {
       setError(
-        isFullbody
-          ? "운동/활동 이름을 최소 1개 이상 입력해 주세요."
-          : "운동 이름과 횟수 또는 시간이 입력된 세트를 최소 1개 이상 넣어주세요.",
+        "운동을 적거나, 세부가 기억 안 나면 부위·시간·메모 중 하나만이라도 넣어 주세요.",
       );
       return;
     }
@@ -777,6 +782,9 @@ export default function WeightPage() {
         {error ? <StError>{error}</StError> : null}
 
         <StActions>
+          <StSimpleHint>
+            루틴이 기억 안 나면 운동은 비워 두고 부위·시간만 적어도 저장돼요.
+          </StSimpleHint>
           {form.id ? (
             <StGhostButton type="button" onClick={resetForm}>
               취소
@@ -803,3 +811,14 @@ export default function WeightPage() {
     </StPage>
   );
 }
+
+/* 저장 버튼 옆 작은 안내 — 루틴 없이도 저장된다는 것 */
+const StSimpleHint = styled.p`
+  flex: 1 1 12rem;
+  min-width: 0;
+  align-self: center;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: ${({ theme }) => theme.semantic.subText};
+  word-break: keep-all;
+`;
