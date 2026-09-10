@@ -43,6 +43,7 @@ interface LayoutRule {
  * | narrow | 560px  | 가운데    | 1열     | 불가 |
  * | tool   | 760px  | 왼쪽      | 2열     | 불가 |
  * | wide   | 1025px | 왼쪽      | 3열     | 가능 |
+ * | full   | 1400px | 왼쪽      | 3열     | 가능 |
  *
  * 팁 카드 열 수는 FooterGuide 가 컨테이너 폭으로 스스로 정한다.
  * 여기서는 "본문 폭을 따라가라(full)" / "무조건 한 줄씩(compact)" 만 고른다.
@@ -68,6 +69,13 @@ export const LAYOUT_RULES = {
     guideLayout: "full",
     allowSide: true,
     description: "목록·지도·검색결과처럼 옆에 둘 내용이 진짜 있는 화면",
+  },
+  full: {
+    maxWidth: PAGE_WIDTHS.full,
+    introAlign: "left",
+    guideLayout: "full",
+    allowSide: true,
+    description: "표 여러 개를 나란히 두는 장부 — 넓은 모니터를 다 쓴다 (경조사비 장부)",
   },
 } as const satisfies Record<PageWidth, LayoutRule>;
 
@@ -116,7 +124,7 @@ export default function ServiceLayout({
   }
 
   return (
-    <StContainer>
+    <StContainer $width={width}>
       <StPageWrapper $width={width}>
         {intro && <PageIntro {...intro} align={rule.introAlign} />}
 

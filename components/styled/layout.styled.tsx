@@ -1,7 +1,8 @@
 import styled from "styled-components";
-export const StContainer = styled.div`
+/* 페이지 바깥 틀. $width 를 주면 안쪽 StPageWrapper 와 같은 폭 규칙을 따른다 (없으면 예전처럼 1024px) */
+export const StContainer = styled.div<{ $width?: PageWidth }>`
   padding: 2rem 1rem;
-  max-width: 1024px;
+  max-width: ${({ $width }) => ($width ? PAGE_WIDTHS[$width] : "1024px")};
   margin: 0 auto;
 `;
 
@@ -203,6 +204,8 @@ export const PAGE_WIDTHS = {
   narrow: "560px",
   tool: "760px",
   wide: "1025px",
+  /* 표가 많은 장부 화면 — 넓은 모니터에서 1025px가 좁게 보여 추가 (2026-09-10) */
+  full: "1400px",
 } as const;
 
 export type PageWidth = keyof typeof PAGE_WIDTHS;
