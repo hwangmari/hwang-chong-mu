@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import { createWorkoutRoom, joinWorkoutRoom } from "../repository";
 import { writeWorkoutSession } from "../storage";
+import { toRoomLabel } from "@/lib/roomServices";
+
+// 로그인 사용자면 방을 계정에 연결해 둔다 — 다른 기기에서 로그인만 하면 방 이름·비밀번호 없이 열린다.
+// 비밀번호는 보내지 않는다(roomId·이름만). 비로그인은 서버가 401 → 무시.
+function linkWorkoutRoomToAccount(roomId: string, roomName: string) {
+  void fetch("/api/auth/links", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      service: "workout",
+      resourceRef: { roomId, roomName },
+      label: toRoomLabel(roomName),
+    }),
+  }).catch(() => {});
+}
 import {
   useWorkoutSession,
   useWorkoutSessionReady,
@@ -58,6 +73,7 @@ export default function WorkoutAuthGate({ children }: Props) {
           ? await createWorkoutRoom(roomName, password)
           : await joinWorkoutRoom(roomName, password);
       writeWorkoutSession(next);
+      linkWorkoutRoomToAccount(next.roomId, next.roomName);
     } catch (e) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류가 발생했어요.");
     } finally {
@@ -75,6 +91,8 @@ export default function WorkoutAuthGate({ children }: Props) {
         <StTitle>운동 기록방</StTitle>
         <StDescription>
           내 러닝·헬스 기록을 모아둘 전용 방을 만들거나 기존 방에 입장하세요.
+          <br />
+          황총무 계정에 로그인해 두면 방이 계정에 연결돼, 다른 기기에서도 방 이름·비밀번호 없이 바로 열려요.
         </StDescription>
 
         <StTabs>
