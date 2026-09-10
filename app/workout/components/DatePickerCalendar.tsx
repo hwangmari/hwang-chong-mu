@@ -1,0 +1,205 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import styled from "styled-components";
+
+// 기록하기 폼의 날짜 칸 아래에 붙는 "한 주 띠".
+// 선택한 날짜가 든 주(일~토)를 한 줄로 보여 주고, ‹ › 로 한 주씩 옮긴다. 달 전체를 펼치지 않는다.
+// 점은 이미 기록이 있는 날. 날짜 입력 칸(달력 아이콘)은 그대로 두고 이건 빠른 선택용이다.
+type Props = {
+  value: string; // YYYY-MM-DD
+  onChange: (iso: string) => void;
+  markedDates?: ReadonlySet<string>;
+};
+
+const DAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function isoOf(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseIso(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return new Date();
+  return new Date(y, m - 1, d);
+}
+
+function startOfWeek(d: Date) {
+  const s = new Date(d);
+  s.setDate(d.getDate() - d.getDay()); // 일요일
+  s.setHours(0, 0, 0, 0);
+  return s;
+}
+
+export default function DatePickerCalendar({ value, onChange, markedDates }: Props) {
+  const todayIso = isoOf(new Date());
+  // 보고 있는 주: 선택한 날짜의 주에서 시작하고, 화살표로만 옮긴다
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(parseIso(value)));
+
+  const days = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        return { iso: isoOf(d), day: d.getDate(), month: d.getMonth() + 1, dow: i };
+      }),
+    [weekStart],
+  );
+
+  // 주가 두 달에 걸치면 "8월 31일 – 9월 6일"처럼, 아니면 "9월 7일 – 13일"
+  const first = days[0];
+  const last = days[6];
+  const rangeLabel =
+    first.month === last.month
+      ? `${first.month}월 ${first.day}일 – ${last.day}일`
+      : `${first.month}월 ${first.day}일 – ${last.month}월 ${last.day}일`;
+
+  const move = (weeks: number) =>
+    setWeekStart((s) => {
+      const n = new Date(s);
+      n.setDate(s.getDate() + weeks * 7);
+      return n;
+    });
+  const goToday = () => {
+    setWeekStart(startOfWeek(new Date()));
+    onChange(todayIso);
+  };
+
+  return (
+    <StWrap aria-label="날짜 빠르게 고르기">
+      <StHead>
+        <StNavBtn type="button" onClick={() => move(-1)} aria-label="지난주">‹</StNavBtn>
+        <StRange>{rangeLabel}</StRange>
+        <StNavBtn type="button" onClick={() => move(1)} aria-label="다음주">›</StNavBtn>
+        <StTodayBtn type="button" onClick={goToday}>오늘</StTodayBtn>
+      </StHead>
+      <StWeek>
+        {days.map((d) => (
+          <StDay
+            key={d.iso}
+            type="button"
+            $selected={d.iso === value}
+            $today={d.iso === todayIso}
+            $weekend={d.dow === 0 || d.dow === 6}
+            aria-pressed={d.iso === value}
+            aria-label={`${d.iso}${markedDates?.has(d.iso) ? " · 기록 있음" : ""}`}
+            onClick={() => onChange(d.iso)}
+          >
+            <small>{DAY_HEADERS[d.dow]}</small>
+            <strong>{d.day}</strong>
+            {markedDates?.has(d.iso) ? <StDot aria-hidden="true" /> : null}
+          </StDay>
+        ))}
+      </StWeek>
+    </StWrap>
+  );
+}
+
+const StWrap = styled.div`
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.55rem 0.55rem;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.semantic.bg};
+`;
+
+const StHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-bottom: 0.4rem;
+`;
+
+const StNavBtn = styled.button`
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.semantic.text};
+  }
+`;
+
+const StRange = styled.span`
+  min-width: 8.5rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+`;
+
+const StTodayBtn = styled.button`
+  margin-left: auto;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const StWeek = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.2rem;
+`;
+
+const StDay = styled.button<{ $selected: boolean; $today: boolean; $weekend: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 0 0.45rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: ${({ $selected, theme }) => ($selected ? theme.semantic.primary : "transparent")};
+  color: ${({ $selected, $weekend, theme }) =>
+    $selected ? theme.colors.white : $weekend ? theme.colors.gray500 : theme.semantic.text};
+  cursor: pointer;
+  box-shadow: ${({ $today, $selected, theme }) =>
+    $today && !$selected ? `inset 0 0 0 1px ${theme.semantic.primary}` : "none"};
+
+  small {
+    font-size: 0.66rem;
+    font-weight: 700;
+    opacity: ${({ $selected }) => ($selected ? 0.9 : 0.75)};
+  }
+
+  strong {
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  &:hover {
+    background: ${({ $selected, theme }) => ($selected ? theme.semantic.primary : theme.colors.white)};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.semantic.primary};
+    outline-offset: 1px;
+  }
+`;
+
+const StDot = styled.span`
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+`;

@@ -60,6 +60,7 @@ import { useWeightData } from "./useWeightData";
 import { RoutineSection } from "./components/RoutineSection";
 import { ExerciseEditor } from "./components/ExerciseEditor";
 import { RecordHistory } from "./components/RecordHistory";
+import DatePickerCalendar from "../components/DatePickerCalendar";
 
 type FormState = {
   id: string | null;
@@ -191,6 +192,9 @@ export default function WeightPage() {
   function resetForm() {
     setForm(emptyForm());
   }
+
+  // 달력 점: 이미 기록이 있는 날
+  const recordedDates = useMemo(() => new Set(records.map((r) => r.date)), [records]);
 
   async function submit() {
     if (!session) return;
@@ -682,6 +686,12 @@ export default function WeightPage() {
             </StSelect>
           </StLabel>
         </StRow>
+        {/* 한 주 띠로 날짜 빠르게 고르기 — 점은 이미 기록이 있는 날. 같은 줄 필드 높이를 맞추려 줄 아래에 둔다 (2026-09-11) */}
+        <DatePickerCalendar
+          value={form.date}
+          onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
+          markedDates={recordedDates}
+        />
 
         <StRow $cols={3}>
           <StLabel>
