@@ -487,25 +487,21 @@ export default function EntryHistory({
             const formOpen = returnFor?.id === entry.id;
             return (
               <StRecordItem key={entry.id}>
+                {/* 한 줄 = 날짜 | 이름·태그 | 금액 | 수정·삭제 고정 열 — 줄마다 같은 자리에 같은 것 (2026-09-10) */}
                 <StRecordRow>
+                  <StRecordDate dateTime={entry.date}>{entry.date}</StRecordDate>
                   <StRecordMain>
-                    <StRecordMeta>
-                      <StRecordDate dateTime={entry.date}>
-                        {entry.date}
-                      </StRecordDate>
-                      <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
-                        {EVENT_TYPE_ICON[entry.eventType]}{" "}
-                        {EVENT_TYPE_LABEL[entry.eventType]}
-                      </StTag>
-                      <StTag $tone={RELATION_TONE[entry.relation]}>
-                        {relationText(entry)}
-                      </StTag>
-                    </StRecordMeta>
                     <StRecordTop>
                       <StRecordName>{entry.personName}</StRecordName>
-                      <StRecordAmount $tone={DIRECTION_TONE[entry.direction]}>
-                        {formatSigned(entry.amount, entry.direction)}
-                      </StRecordAmount>
+                      <StRecordMeta>
+                        <StTag $tone={EVENT_TYPE_TONE[entry.eventType]}>
+                          {EVENT_TYPE_ICON[entry.eventType]}{" "}
+                          {EVENT_TYPE_LABEL[entry.eventType]}
+                        </StTag>
+                        <StTag $tone={RELATION_TONE[entry.relation]}>
+                          {relationText(entry)}
+                        </StTag>
+                      </StRecordMeta>
                     </StRecordTop>
                     {entry.memo ? (
                       <StRecordMemo>{entry.memo}</StRecordMemo>
@@ -564,6 +560,9 @@ export default function EntryHistory({
                       </StReturnLine>
                     ) : null}
                   </StRecordMain>
+                  <StRecordAmount $tone={DIRECTION_TONE[entry.direction]}>
+                    {formatSigned(entry.amount, entry.direction)}
+                  </StRecordAmount>
                   <StRecordActions>
                     <StEditBtn type="button" onClick={() => onEdit(entry)}>
                       수정

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@hwangchongmu/ui";
 import ServiceLayout from "@/components/common/ServiceLayout";
-import { StSegmentButton, StSegmented } from "@/components/styled/layout.styled";
 import { StHighlight } from "@/components/common/PageIntro";
 import { GIFT_GUIDE_DATA } from "@/data/footerGuides";
 import GiftEntryForm, { type FormState } from "./components/GiftEntryForm";
@@ -38,6 +37,9 @@ import {
   StLoginEmoji,
   StLoginTitle,
   StOwnerPill,
+  StPageTabs,
+  StPageTab,
+  StTabCount,
 } from "./page.styles";
 
 /* 세 가지 상태(불러오는 중·로그인 전·장부)가 같은 제목을 쓴다 */
@@ -385,8 +387,8 @@ export default function GiftLogPage() {
         }}
       />
 
-      <StSegmented role="tablist" aria-label="경조사비 장부 화면">
-        <StSegmentButton
+      <StPageTabs role="tablist" aria-label="경조사비 장부 화면">
+        <StPageTab
           type="button"
           role="tab"
           aria-selected={tab === "entry"}
@@ -396,9 +398,9 @@ export default function GiftLogPage() {
             setError("");
           }}
         >
-          ✏️ 입력
-        </StSegmentButton>
-        <StSegmentButton
+          <span aria-hidden="true">✏️</span> 입력
+        </StPageTab>
+        <StPageTab
           type="button"
           role="tab"
           aria-selected={tab === "history"}
@@ -408,9 +410,10 @@ export default function GiftLogPage() {
             setError("");
           }}
         >
-          📒 전체 내역{entries.length > 0 ? ` ${entries.length}` : ""}
-        </StSegmentButton>
-      </StSegmented>
+          <span aria-hidden="true">📒</span> 전체 내역
+          {entries.length > 0 ? <StTabCount>{entries.length}</StTabCount> : null}
+        </StPageTab>
+      </StPageTabs>
 
       {tab === "entry" ? (
         <>

@@ -87,6 +87,82 @@ export function toneBg(theme: DefaultTheme, tone: GiftTone) {
 }
 
 /* 이 장부가 누구 것인지 알려주는 작은 알약 — 소개 문단 첫 줄 */
+/* 페이지 탭(입력 | 전체 내역): 상자 대신 글자 + 밑줄. 활성 탭은 진한 글자 + 파란 밑줄이 옆으로 미끄러져 옴 */
+export const StPageTabs = styled.div`
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0.35rem;
+  border-bottom: 1px solid ${({ theme }) => theme.semantic.border};
+`;
+
+export const StPageTab = styled.button<{ $active: boolean }>`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 0.9rem 0.8rem;
+  margin-bottom: -1px;
+  border: 0;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: ${({ $active }) => ($active ? 800 : 700)};
+  color: ${({ $active, theme }) => ($active ? theme.semantic.text : theme.semantic.subText)};
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  /* 밑줄: 비활성은 0폭, 활성은 전체 폭 — 왼쪽에서 그어짐 */
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: ${({ theme }) => theme.semantic.primary};
+    transform: scaleX(${({ $active }) => ($active ? 1 : 0)});
+    transform-origin: left center;
+    transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.semantic.primary};
+    outline-offset: -2px;
+    border-radius: 0.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &::after {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    flex: 1;
+    justify-content: center;
+  }
+`;
+
+export const StTabCount = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.3rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: ${({ theme }) => theme.semantic.primary};
+  background: ${({ theme }) => theme.semantic.primaryLight};
+`;
+
 export const StOwnerPill = styled.span`
   display: inline-flex;
   align-items: center;
@@ -654,14 +730,24 @@ export const StRecordItem = styled.div`
 `;
 
 export const StRecordRow = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr) auto 4.6rem;
+  grid-template-areas: "date main amount actions";
+  align-items: start;
+  column-gap: 0.75rem;
   padding: 0.7rem 0;
+
+  @media (max-width: 560px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date actions"
+      "main amount";
+    row-gap: 0.2rem;
+  }
 `;
 
 export const StRecordMain = styled.div`
-  flex: 1;
+  grid-area: main;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -682,12 +768,19 @@ export const StRecordMeta = styled.div`
 /* 이름 ···· 금액 */
 export const StRecordTop = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
 `;
 
 export const StRecordDate = styled.time`
   ${numeric};
+  grid-area: date;
+  padding-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+  white-space: nowrap;
 `;
 
 export const StRecordName = styled.span`
@@ -701,7 +794,11 @@ export const StRecordName = styled.span`
 
 export const StRecordAmount = styled.span<{ $tone: GiftTone }>`
   ${numeric};
-  margin-left: auto;
+  grid-area: amount;
+  justify-self: end;
+  min-width: 7rem;
+  padding-top: 0.05rem;
+  text-align: right;
   font-size: 0.95rem;
   font-weight: 800;
   white-space: nowrap;
@@ -714,6 +811,8 @@ export const StRecordMemo = styled.p`
 `;
 
 export const StRecordActions = styled.div`
+  grid-area: actions;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 0.1rem;

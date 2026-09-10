@@ -125,9 +125,10 @@ export default function PersonLookup({
           기록이 쌓이면 여기서 이름만 쳐도 <b>지난번에 얼마 했는지</b> 바로
           나와요.
         </StEmpty>
-      ) : chips.length === 0 ? (
+      ) : !keyword.trim() ? null : chips.length === 0 ? (
         <StEmpty>&ldquo;{keyword}&rdquo; 이름으로 된 기록이 없어요.</StEmpty>
       ) : (
+        /* 이름 칩은 입력 중에만 후보로 보여 준다 — 처음부터 명단이 깔려 있으면 산만하다는 피드백(2026-09-10) */
         <StChipRow>
           {chips.map((summary) => (
             <StNameChip
