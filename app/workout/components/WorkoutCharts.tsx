@@ -902,7 +902,7 @@ type MonthlyCalendarProps = {
   activities: ActivityRecord[];
 };
 
-const DAY_HEADERS = ["월", "화", "수", "목", "금", "토", "일"];
+const DAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"]; // 일요일 시작 (사용자 요청 2026-09-11)
 
 function isoFromDate(d: Date) {
   const y = d.getFullYear();
@@ -1003,7 +1003,7 @@ export function WorkoutMonthlyCalendar({
     const month = cursor.getMonth();
     const firstOfMonth = new Date(year, month, 1);
     const lastOfMonth = new Date(year, month + 1, 0);
-    const firstDay = (firstOfMonth.getDay() + 6) % 7; // 월=0
+    const firstDay = firstOfMonth.getDay(); // 일=0
     const rows: Array<
       Array<{
         date: Date;
@@ -1279,7 +1279,7 @@ export function WorkoutMonthlyCalendar({
 
       <StCalDayHeaderRow>
         {DAY_HEADERS.map((label, i) => (
-          <StCalDayHeader key={label} $weekend={i >= 5}>
+          <StCalDayHeader key={label} $weekend={i === 0 || i === 6}>
             {label}
           </StCalDayHeader>
         ))}

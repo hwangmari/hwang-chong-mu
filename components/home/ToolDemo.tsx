@@ -41,7 +41,7 @@ const MEETING_FREE = 18;
 function MeetingScene() {
   return (
     <StCalendar>
-      {["월", "화", "수", "목", "금", "토", "일"].map((d) => (
+      {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
         <StDayName key={d}>{d}</StDayName>
       ))}
       {Array.from({ length: 28 }, (_, i) => {

@@ -47,7 +47,7 @@ type MonthCalendarProps = {
   className?: string;
 };
 
-const DAY_HEADERS = ["월", "화", "수", "목", "금", "토", "일"];
+const DAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"]; // 일요일 시작 (사용자 요청 2026-09-11)
 
 function isoFromDate(date: Date) {
   const year = date.getFullYear();
@@ -79,13 +79,13 @@ export default function MonthCalendar({
     return map;
   }, [events]);
 
-  // 월요일 시작 7칸 × N줄. 앞뒤로 남는 칸은 옆 달 날짜로 흐리게 채운다.
+  // 일요일 시작 7칸 × N줄. 앞뒤로 남는 칸은 옆 달 날짜로 흐리게 채운다.
   const cells = useMemo(() => {
     const year = month.getFullYear();
     const monthIndex = month.getMonth();
     const firstOfMonth = new Date(year, monthIndex, 1);
     const lastOfMonth = new Date(year, monthIndex + 1, 0);
-    const leading = (firstOfMonth.getDay() + 6) % 7; // 월=0
+    const leading = firstOfMonth.getDay(); // 일=0
     const start = new Date(firstOfMonth);
     start.setDate(start.getDate() - leading);
     const totalCells = Math.ceil((leading + lastOfMonth.getDate()) / 7) * 7;
@@ -148,7 +148,7 @@ export default function MonthCalendar({
 
       <StDayHeaderRow>
         {DAY_HEADERS.map((label, index) => (
-          <StDayHeader key={label} $weekend={index >= 5}>
+          <StDayHeader key={label} $weekend={index === 0 || index === 6}>
             {label}
           </StDayHeader>
         ))}
