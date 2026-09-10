@@ -204,8 +204,6 @@ export const PAGE_WIDTHS = {
   narrow: "560px",
   tool: "760px",
   wide: "1025px",
-  /* 표가 많은 장부 화면 — 넓은 모니터에서 1025px가 좁게 보여 추가 (2026-09-10) */
-  full: "1400px",
 } as const;
 
 export type PageWidth = keyof typeof PAGE_WIDTHS;
@@ -213,14 +211,12 @@ export type PageWidth = keyof typeof PAGE_WIDTHS;
 export const StPageWrapper = styled.div<{ $width?: PageWidth }>`
   min-width: 320px;
   width: 100%;
-  max-width: ${({ theme }) => theme.layout.narrowWidth};
+  /* 창이 1024px보다 좁으면 540px로 줄이던 규칙을 없앰 — 노트북 반쪽 창(900px대)에서 장부가 좁게 잘려 보였다 (2026-09-10).
+     폰에서는 width:100% 와 바깥 여백이 알아서 맞춘다 */
+  max-width: ${({ $width }) => PAGE_WIDTHS[$width ?? "wide"]};
   margin: 0 auto;
   color: ${({ theme }) => theme.colors.gray900};
   position: relative;
-
-  @media ${({ theme }) => theme.media.desktop} {
-    max-width: ${({ $width }) => PAGE_WIDTHS[$width ?? "wide"]};
-  }
 `;
 
 /* 블록이 하나뿐인 페이지 — 읽기 좋은 폭 */

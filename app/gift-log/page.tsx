@@ -363,7 +363,7 @@ export default function GiftLogPage() {
 
   return (
     <ServiceLayout
-      width="full" /* 표·대조가 잘리지 않게 가장 넓은 폭 1400px (사용자 요청 2026-09-10) */
+      width="wide" /* 표·대조가 잘리지 않게 가장 넓은 폭 (사용자 요청 2026-09-10) */
       intro={{
         icon: INTRO_ICON,
         title: INTRO_TITLE,
