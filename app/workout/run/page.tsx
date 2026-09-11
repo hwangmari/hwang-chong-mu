@@ -466,7 +466,7 @@ export default function RunPage() {
             />
           </StDateBlock>
           <StTopRight>
-            <StRow>
+            <StRow $cols={1}>
               <StLabel>
                 운동 종류
                 <StSelect
