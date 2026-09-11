@@ -30,7 +30,10 @@ import {
   type RunningType,
 } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
-import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import {
+  MonthAccordion,
+  useExpandedMonths,
+} from "../components/MonthAccordion";
 import { useModal } from "@/components/common/ModalProvider";
 import {
   StActions,
@@ -44,6 +47,9 @@ import {
   StRecordMemo,
   StSubtitle,
   StTitle,
+  StTopGrid,
+  StTopRight,
+  StDateBlock,
 } from "../components/WorkoutSharedStyles";
 import {
   StAddButton,
@@ -143,8 +149,7 @@ export default function RunPage() {
       const r = records[i];
       const prev = records[i + 1];
       if (!prev) continue;
-      const pace =
-        r.avgPaceSec ?? computePaceSec(r.distanceKm, r.durationSec);
+      const pace = r.avgPaceSec ?? computePaceSec(r.distanceKm, r.durationSec);
       const prevPace =
         prev.avgPaceSec ?? computePaceSec(prev.distanceKm, prev.durationSec);
       if (pace && prevPace) m.set(r.id, pace - prevPace);
@@ -152,10 +157,7 @@ export default function RunPage() {
     return m;
   }, [records]);
 
-  const monthGroups = useMemo(
-    () => groupRecordsByMonth(records),
-    [records],
-  );
+  const monthGroups = useMemo(() => groupRecordsByMonth(records), [records]);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -209,7 +211,10 @@ export default function RunPage() {
   }
 
   // 달력 점: 이미 기록이 있는 날
-  const recordedDates = useMemo(() => new Set(records.map((r) => r.date)), [records]);
+  const recordedDates = useMemo(
+    () => new Set(records.map((r) => r.date)),
+    [records],
+  );
 
   async function submit() {
     if (!session) return;
@@ -333,7 +338,9 @@ export default function RunPage() {
       environment: parsed.environment ?? prev.environment,
       runType: parsed.runType ?? prev.runType,
       distanceKm:
-        parsed.distanceKm !== undefined ? String(parsed.distanceKm) : prev.distanceKm,
+        parsed.distanceKm !== undefined
+          ? String(parsed.distanceKm)
+          : prev.distanceKm,
       durationInput:
         parsed.durationSec !== undefined
           ? formatDuration(parsed.durationSec)
@@ -376,8 +383,8 @@ export default function RunPage() {
         parsed.source === "apple-fitness"
           ? "Apple 피트니스"
           : parsed.source === "treadmill"
-          ? "러닝머신"
-          : "일반 텍스트";
+            ? "러닝머신"
+            : "일반 텍스트";
 
       if (filled.length === 0) {
         setError(
@@ -448,56 +455,62 @@ export default function RunPage() {
           ))}
         </StEnvToggle>
 
-        {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-        <StLabel as="div">
-          날짜
-          <DatePickerCalendar
-            value={form.date}
-            onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-            markedDates={recordedDates}
-          />
-        </StLabel>
-        <StRow>
-          <StLabel>
-            운동 종류
-            <StSelect
-              value={form.runType}
-              onChange={(e) =>
-                setForm({ ...form, runType: e.target.value as RunningType })
-              }
-            >
-              {Object.entries(RUNNING_TYPE_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </StSelect>
-          </StLabel>
-        </StRow>
+        <StTopGrid>
+          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+          <StDateBlock>
+            날짜
+            <DatePickerCalendar
+              value={form.date}
+              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
+              markedDates={recordedDates}
+            />
+          </StDateBlock>
+          <StTopRight>
+            <StRow>
+              <StLabel>
+                운동 종류
+                <StSelect
+                  value={form.runType}
+                  onChange={(e) =>
+                    setForm({ ...form, runType: e.target.value as RunningType })
+                  }
+                >
+                  {Object.entries(RUNNING_TYPE_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </StSelect>
+              </StLabel>
+            </StRow>
 
-        <StRow>
-          <StLabel>
-            거리 (km)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="예) 5.2"
-              value={form.distanceKm}
-              onChange={(e) => setForm({ ...form, distanceKm: e.target.value })}
-            />
-          </StLabel>
-          <StLabel>
-            시간 (분:초 또는 시:분:초)
-            <StInput
-              type="text"
-              placeholder="HH:MM:SS"
-              value={form.durationInput}
-              onChange={(e) =>
-                setForm({ ...form, durationInput: e.target.value })
-              }
-            />
-          </StLabel>
-        </StRow>
+            <StRow>
+              <StLabel>
+                거리 (km)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="예) 5.2"
+                  value={form.distanceKm}
+                  onChange={(e) =>
+                    setForm({ ...form, distanceKm: e.target.value })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                시간 (분:초 또는 시:분:초)
+                <StInput
+                  type="text"
+                  placeholder="HH:MM:SS"
+                  value={form.durationInput}
+                  onChange={(e) =>
+                    setForm({ ...form, durationInput: e.target.value })
+                  }
+                />
+              </StLabel>
+            </StRow>
+          </StTopRight>
+        </StTopGrid>
 
         <StPaceHint>
           평균 페이스: <b>{formatPace(computedPace)}</b>
@@ -511,7 +524,9 @@ export default function RunPage() {
               inputMode="decimal"
               placeholder="예) 152"
               value={form.avgHeartRate}
-              onChange={(e) => setForm({ ...form, avgHeartRate: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, avgHeartRate: e.target.value })
+              }
             />
           </StLabel>
           <StLabel>
@@ -557,7 +572,7 @@ export default function RunPage() {
                 <>
                   <StMiniInput
                     type="text"
-              inputMode="decimal"
+                    inputMode="decimal"
                     placeholder="속도 km/h"
                     value={it.speedKmh ?? ""}
                     onChange={(e) =>
@@ -568,7 +583,7 @@ export default function RunPage() {
                   />
                   <StMiniInput
                     type="text"
-              inputMode="decimal"
+                    inputMode="decimal"
                     placeholder="경사 %"
                     value={it.inclineLevel ?? ""}
                     onChange={(e) =>
@@ -581,7 +596,7 @@ export default function RunPage() {
               ) : (
                 <StMiniInput
                   type="text"
-              inputMode="decimal"
+                  inputMode="decimal"
                   placeholder="거리 km"
                   value={it.distanceKm ?? ""}
                   onChange={(e) =>
@@ -684,9 +699,7 @@ export default function RunPage() {
                           <StRecordTag>
                             {RUNNING_TYPE_LABEL[record.runType]}
                           </StRecordTag>
-                          <StEnvTag
-                            $indoor={record.environment === "indoor"}
-                          >
+                          <StEnvTag $indoor={record.environment === "indoor"}>
                             {record.environment === "indoor"
                               ? "🏃‍♂️ 실내"
                               : "🌳 실외"}
@@ -697,22 +710,19 @@ export default function RunPage() {
                           <StStat>
                             <b>{record.distanceKm.toFixed(1)}</b> km
                           </StStat>
-                          <StStat>
-                            {formatDuration(record.durationSec)}
-                          </StStat>
+                          <StStat>{formatDuration(record.durationSec)}</StStat>
                           <StStat>{formatPace(pace)}</StStat>
                           {paceDelta ? (
                             <StDelta $up={paceDelta > 0}>
-                              {paceDelta > 0 ? "▲" : "▼"}{" "}
-                              {Math.abs(paceDelta)}초 vs 직전
+                              {paceDelta > 0 ? "▲" : "▼"} {Math.abs(paceDelta)}
+                              초 vs 직전
                             </StDelta>
                           ) : null}
                         </StRecordStats>
                         {record.memo ? (
                           <StRecordMemo>{record.memo}</StRecordMemo>
                         ) : null}
-                        {record.intervals &&
-                        record.intervals.length > 0 ? (
+                        {record.intervals && record.intervals.length > 0 ? (
                           <>
                             <StIntervalToggle
                               type="button"
@@ -721,9 +731,7 @@ export default function RunPage() {
                                   id === record.id ? null : record.id,
                                 )
                               }
-                              aria-expanded={
-                                expandedIntervalId === record.id
-                              }
+                              aria-expanded={expandedIntervalId === record.id}
                             >
                               <StIntervalToggleIcon
                                 $open={expandedIntervalId === record.id}
@@ -749,9 +757,7 @@ export default function RunPage() {
                             {expandedIntervalId === record.id ? (
                               <WorkoutIntervalDetailChart
                                 intervals={record.intervals}
-                                environment={
-                                  record.environment ?? "outdoor"
-                                }
+                                environment={record.environment ?? "outdoor"}
                               />
                             ) : null}
                           </>
@@ -787,4 +793,3 @@ function toNumberOrUndefined(v: string): number | undefined {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
-

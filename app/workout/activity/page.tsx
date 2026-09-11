@@ -17,7 +17,10 @@ import {
 } from "../helpers";
 import { ACTIVITY_PRESETS, type ActivityRecord } from "../types";
 import { useWorkoutSession } from "../useWorkoutSession";
-import { MonthAccordion, useExpandedMonths } from "../components/MonthAccordion";
+import {
+  MonthAccordion,
+  useExpandedMonths,
+} from "../components/MonthAccordion";
 import { useModal } from "@/components/common/ModalProvider";
 import {
   StActions,
@@ -31,6 +34,9 @@ import {
   StRecordMemo,
   StSubtitle,
   StTitle,
+  StTopGrid,
+  StTopRight,
+  StDateBlock,
 } from "../components/WorkoutSharedStyles";
 import DatePickerCalendar from "../components/DatePickerCalendar";
 
@@ -72,10 +78,7 @@ export default function ActivityPage() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const { expandedMonths, toggleMonth } = useExpandedMonths();
 
-  const monthGroups = useMemo(
-    () => groupRecordsByMonth(records),
-    [records],
-  );
+  const monthGroups = useMemo(() => groupRecordsByMonth(records), [records]);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -123,7 +126,10 @@ export default function ActivityPage() {
   }
 
   // 달력 점: 이미 기록이 있는 날
-  const recordedDates = useMemo(() => new Set(records.map((r) => r.date)), [records]);
+  const recordedDates = useMemo(
+    () => new Set(records.map((r) => r.date)),
+    [records],
+  );
 
   async function submit() {
     if (!session) return;
@@ -234,56 +240,62 @@ export default function ActivityPage() {
           </StCustomHint>
         ) : null}
 
-        {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-        <StLabel as="div">
-          날짜
-          <DatePickerCalendar
-            value={form.date}
-            onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-            markedDates={recordedDates}
-          />
-        </StLabel>
-        <StRow>
-          <StLabel>
-            운동 시간 (분)
-            <StInput
-              type="text"
-              placeholder="예) 60 또는 1:30"
-              value={form.durationMin}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  durationMin: e.target.value.replace(/[^\d:]/g, ""),
-                })
-              }
+        <StTopGrid>
+          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+          <StDateBlock>
+            날짜
+            <DatePickerCalendar
+              value={form.date}
+              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
+              markedDates={recordedDates}
             />
-          </StLabel>
-        </StRow>
+          </StDateBlock>
+          <StTopRight>
+            <StRow>
+              <StLabel>
+                운동 시간 (분)
+                <StInput
+                  type="text"
+                  placeholder="예) 60 또는 1:30"
+                  value={form.durationMin}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      durationMin: e.target.value.replace(/[^\d:]/g, ""),
+                    })
+                  }
+                />
+              </StLabel>
+            </StRow>
 
-        <StRow>
-          <StLabel>
-            총 칼로리 (kcal)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="알면 입력, 몰라도 OK"
-              value={form.calories}
-              onChange={(e) => setForm({ ...form, calories: e.target.value })}
-            />
-          </StLabel>
-          <StLabel>
-            평균 심박 (bpm)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="알면 입력, 몰라도 OK"
-              value={form.avgHeartRate}
-              onChange={(e) =>
-                setForm({ ...form, avgHeartRate: e.target.value })
-              }
-            />
-          </StLabel>
-        </StRow>
+            <StRow>
+              <StLabel>
+                총 칼로리 (kcal)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="알면 입력, 몰라도 OK"
+                  value={form.calories}
+                  onChange={(e) =>
+                    setForm({ ...form, calories: e.target.value })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                평균 심박 (bpm)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="알면 입력, 몰라도 OK"
+                  value={form.avgHeartRate}
+                  onChange={(e) =>
+                    setForm({ ...form, avgHeartRate: e.target.value })
+                  }
+                />
+              </StLabel>
+            </StRow>
+          </StTopRight>
+        </StTopGrid>
 
         <StLabel>
           메모
@@ -314,9 +326,7 @@ export default function ActivityPage() {
         {loading ? (
           <StEmpty>불러오는 중...</StEmpty>
         ) : records.length === 0 ? (
-          <StEmpty>
-            아직 활동 기록이 없어요. 오늘 뭐 했는지 남겨보세요!
-          </StEmpty>
+          <StEmpty>아직 활동 기록이 없어요. 오늘 뭐 했는지 남겨보세요!</StEmpty>
         ) : (
           <MonthAccordion
             groups={monthGroups}
@@ -333,14 +343,10 @@ export default function ActivityPage() {
                       </StRecordTop>
                       <StRecordMeta>
                         {record.durationMin ? (
-                          <span>
-                            {formatDurationMin(record.durationMin)}
-                          </span>
+                          <span>{formatDurationMin(record.durationMin)}</span>
                         ) : null}
                         {record.calories ? (
-                          <span>
-                            {record.calories.toLocaleString()} kcal
-                          </span>
+                          <span>{record.calories.toLocaleString()} kcal</span>
                         ) : null}
                         {record.avgHeartRate ? (
                           <span>{record.avgHeartRate} bpm</span>

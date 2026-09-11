@@ -40,6 +40,9 @@ import {
   StPage,
   StSubtitle,
   StTitle,
+  StTopGrid,
+  StTopRight,
+  StDateBlock,
 } from "../components/WorkoutSharedStyles";
 import {
   StCardHead,
@@ -194,7 +197,10 @@ export default function WeightPage() {
   }
 
   // 달력 점: 이미 기록이 있는 날
-  const recordedDates = useMemo(() => new Set(records.map((r) => r.date)), [records]);
+  const recordedDates = useMemo(
+    () => new Set(records.map((r) => r.date)),
+    [records],
+  );
 
   async function submit() {
     if (!session) return;
@@ -417,9 +423,7 @@ export default function WeightPage() {
           ...prev,
           bodyPart,
           exercises: prev.exercises.map((ex) =>
-            ex.sets.length === 0
-              ? { ...ex, sets: [createSet("normal")] }
-              : ex,
+            ex.sets.length === 0 ? { ...ex, sets: [createSet("normal")] } : ex,
           ),
         };
       }
@@ -557,10 +561,7 @@ export default function WeightPage() {
                 s.id === setId
                   ? {
                       ...s,
-                      dropSets: [
-                        ...(s.dropSets || []),
-                        { weight: 0, reps: 0 },
-                      ],
+                      dropSets: [...(s.dropSets || []), { weight: 0, reps: 0 }],
                     }
                   : s,
               ),
@@ -625,9 +626,7 @@ export default function WeightPage() {
     <StPage>
       <StHeader>
         <StTitle>🏋️‍♂️ 웨이트 기록</StTitle>
-        <StSubtitle>
-          부위별 볼륨과 1RM으로 성장 추이를 확인해요.
-        </StSubtitle>
+        <StSubtitle>부위별 볼륨과 1RM으로 성장 추이를 확인해요.</StSubtitle>
       </StHeader>
 
       <StCard>
@@ -661,74 +660,80 @@ export default function WeightPage() {
           onRemove={removeRoutine}
         />
 
-        {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-        <StLabel as="div">
-          날짜
-          <DatePickerCalendar
-            value={form.date}
-            onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-            markedDates={recordedDates}
-          />
-        </StLabel>
+        <StTopGrid>
+          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+          <StDateBlock>
+            날짜
+            <DatePickerCalendar
+              value={form.date}
+              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
+              markedDates={recordedDates}
+            />
+          </StDateBlock>
 
-        <StRow $cols={4}>
-          <StLabel>
-            부위
-            <StSelect
-              value={form.bodyPart}
-              onChange={(e) =>
-                handleBodyPartChange(e.target.value as GymBodyPart)
-              }
-            >
-              {Object.entries(GYM_BODY_PART_LABEL).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
-            </StSelect>
-          </StLabel>
-          <StLabel>
-            운동 시간 (분)
-            <StInput
-              type="text"
-              placeholder="예) 60 또는 1:30"
-              value={form.durationMin}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  durationMin: e.target.value.replace(/[^\d:]/g, ""),
-                })
-              }
-            />
-          </StLabel>
-          <StLabel>
-            칼로리 (kcal)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="선택"
-              value={form.calories}
-              onChange={(e) => setForm({ ...form, calories: e.target.value })}
-            />
-          </StLabel>
-          <StLabel>
-            심박 (bpm)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="선택"
-              value={form.avgHeartRate}
-              onChange={(e) =>
-                setForm({ ...form, avgHeartRate: e.target.value })
-              }
-            />
-          </StLabel>
-        </StRow>
+          <StTopRight>
+            <StRow $cols={2}>
+              <StLabel>
+                부위
+                <StSelect
+                  value={form.bodyPart}
+                  onChange={(e) =>
+                    handleBodyPartChange(e.target.value as GymBodyPart)
+                  }
+                >
+                  {Object.entries(GYM_BODY_PART_LABEL).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </StSelect>
+              </StLabel>
+              <StLabel>
+                운동 시간 (분)
+                <StInput
+                  type="text"
+                  placeholder="예) 60 또는 1:30"
+                  value={form.durationMin}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      durationMin: e.target.value.replace(/[^\d:]/g, ""),
+                    })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                칼로리 (kcal)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="선택"
+                  value={form.calories}
+                  onChange={(e) =>
+                    setForm({ ...form, calories: e.target.value })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                심박 (bpm)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="선택"
+                  value={form.avgHeartRate}
+                  onChange={(e) =>
+                    setForm({ ...form, avgHeartRate: e.target.value })
+                  }
+                />
+              </StLabel>
+            </StRow>
+          </StTopRight>
+        </StTopGrid>
 
         {isFullbody ? (
           <StFullbodyHint>
-            전신은 무게·세트 없이 한 운동을 적어요. 스텝·폼롤러처럼 분할이
-            아닌 활동을 자유롭게 추가하세요.
+            전신은 무게·세트 없이 한 운동을 적어요. 스텝·폼롤러처럼 분할이 아닌
+            활동을 자유롭게 추가하세요.
           </StFullbodyHint>
         ) : null}
 
@@ -761,27 +766,26 @@ export default function WeightPage() {
         </StLabel>
 
         {isFullbody ? null : (
-        <StVolumeBox>
-          <StVolumeHint>
-            총 볼륨 <b>{Math.round(formVolume).toLocaleString()} kg</b>
-          </StVolumeHint>
-          <StVolumeHelp>
-            💡 <b>총 볼륨 = 무게 × 횟수</b>를 모든 세트에 대해 합한 값이에요.
-            무게를 못 올리더라도 세트·횟수를 늘리면 총 볼륨이 올라가서 성장
-            지표로 쓸 수 있어요. 워밍업·드랍셋도 전부 포함돼요.
-            <br />
-            🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
-            <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
-            자동으로 두 배 계산돼요.
-            <br />
-            🏋️ 바벨 운동은 <b>빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg</b> 토글을
-            켜면 원판 무게만 입력해도 빈 바벨{" "}
-            {DEFAULT_BARBELL_WEIGHT_KG}kg가 자동 합산돼요. <b>양쪽 ×2</b>와
-            같이 쓰면 한쪽 원판 무게만 입력해도 <b>원판 × 2 + 빈 바</b>로
-            계산돼요. (예: 원판 10kg × 2 + 빈 바 20kg ={" "}
-            <b>40kg</b>)
-          </StVolumeHelp>
-        </StVolumeBox>
+          <StVolumeBox>
+            <StVolumeHint>
+              총 볼륨 <b>{Math.round(formVolume).toLocaleString()} kg</b>
+            </StVolumeHint>
+            <StVolumeHelp>
+              💡 <b>총 볼륨 = 무게 × 횟수</b>를 모든 세트에 대해 합한 값이에요.
+              무게를 못 올리더라도 세트·횟수를 늘리면 총 볼륨이 올라가서 성장
+              지표로 쓸 수 있어요. 워밍업·드랍셋도 전부 포함돼요.
+              <br />
+              🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
+              <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
+              자동으로 두 배 계산돼요.
+              <br />
+              🏋️ 바벨 운동은 <b>빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg</b> 토글을
+              켜면 원판 무게만 입력해도 빈 바벨 {DEFAULT_BARBELL_WEIGHT_KG}kg가
+              자동 합산돼요. <b>양쪽 ×2</b>와 같이 쓰면 한쪽 원판 무게만
+              입력해도 <b>원판 × 2 + 빈 바</b>로 계산돼요. (예: 원판 10kg × 2 +
+              빈 바 20kg = <b>40kg</b>)
+            </StVolumeHelp>
+          </StVolumeBox>
         )}
 
         {error ? <StError>{error}</StError> : null}

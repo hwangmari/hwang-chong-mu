@@ -94,3 +94,34 @@ export const StRecordMemo = styled.p`
   color: ${({ theme }) => theme.colors.gray500};
   line-height: 1.45;
 `;
+
+/* 기록 폼 맨 위: 왼쪽 날짜 띠 | 오른쪽 기본 입력(부위·시간·칼로리·심박 등). 폰에서는 위아래로 (2026-09-11) */
+export const StTopGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 1.1rem;
+    align-items: start;
+  }
+`;
+
+export const StTopRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+`;
+
+/* 날짜 블록: 라벨 + 띠. 오른쪽 입력 묶음과 같은 높이가 되도록 띠가 남은 높이를 채운다 */
+export const StDateBlock = styled.div`
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.35rem;
+  height: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray600};
+`;

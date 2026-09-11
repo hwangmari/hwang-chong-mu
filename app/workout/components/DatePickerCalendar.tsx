@@ -175,7 +175,10 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
 }
 
 const StWrap = styled.div`
-  margin-top: 0.15rem;
+  /* 오른쪽 입력 묶음과 높이를 맞추기 위해 남은 높이를 채우고, 주 띠는 세로 가운데 */
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   padding: 0.5rem 0.55rem 0.55rem;
   border-radius: 0.8rem;
   background: ${({ theme }) => theme.semantic.bg};
@@ -280,6 +283,7 @@ const StWeek = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.2rem;
+  margin: auto 0; /* 세로 가운데 */
 `;
 
 const StDay = styled.button<{ $selected: boolean; $today: boolean; $weekend: boolean }>`
