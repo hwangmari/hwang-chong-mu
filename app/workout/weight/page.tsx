@@ -572,14 +572,6 @@ export default function WeightPage() {
           <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
         </StCardHead>
 
-        <RoutineSection
-          routines={routines}
-          busy={busy}
-          onSave={saveCurrentAsRoutine}
-          onLoad={loadRoutine}
-          onRemove={removeRoutine}
-        />
-
         <StTopGrid>
           {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
           <StDateBlock>
@@ -724,6 +716,15 @@ export default function WeightPage() {
             </StVolumeHelp>
           </StVolumeBox>
         )}
+
+        {/* 내 루틴은 카드 맨 아래로 — 입력을 마친 뒤 저장하거나, 다음에 불러오는 흐름 (사용자 요청 2026-09-11) */}
+        <RoutineSection
+          routines={routines}
+          busy={busy}
+          onSave={saveCurrentAsRoutine}
+          onLoad={loadRoutine}
+          onRemove={removeRoutine}
+        />
       </StCard>
 
       <RecordHistory
