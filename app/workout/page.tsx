@@ -158,7 +158,12 @@ export default function WorkoutHomePage() {
         </StCTAPlus>
       </StCTAGrid>
 
-      <WorkoutMonthlyCalendar runs={runs} gyms={gyms} activities={activities} />
+      <WorkoutMonthlyCalendar
+        runs={runs}
+        gyms={gyms}
+        activities={activities}
+        onSaved={load}
+      />
 
       <StSection>
         <StSectionTitle>📝 최근 기록</StSectionTitle>

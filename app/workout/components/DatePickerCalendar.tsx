@@ -46,6 +46,20 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
 
+  // 바깥에서 날짜가 바뀌면(달력에서 넘어온 ?date= prefill, 기록 수정 등)
+  // 보고 있던 주·달도 그 날짜로 따라간다. 안 그러면 고른 날이 띠 밖에 있어
+  // 아무 날도 선택돼 보이지 않는다. (렌더 중 state 조정 — effect보다 재렌더가 적다)
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    const nextWeek = startOfWeek(parseIso(value));
+    if (nextWeek.getTime() !== weekStart.getTime()) {
+      setWeekStart(nextWeek);
+      const d = parseIso(value);
+      setViewMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }
+
   const monthCells = useMemo(() => {
     if (!monthOpen) return [];
     const base = viewMonth;

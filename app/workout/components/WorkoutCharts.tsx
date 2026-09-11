@@ -22,6 +22,8 @@ import {
   type RunningRecord,
   type RunningType,
 } from "../types";
+import { useWorkoutSession } from "../useWorkoutSession";
+import QuickEntryModal from "./QuickEntryModal";
 import {
   StCalCell,
   StCalDayHeader,
@@ -900,6 +902,8 @@ type MonthlyCalendarProps = {
   runs: RunningRecord[];
   gyms: GymRecord[];
   activities: ActivityRecord[];
+  /** 빠른 기록 저장 후 개요 데이터를 다시 불러오는 함수 */
+  onSaved?: () => void | Promise<void>;
 };
 
 const DAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"]; // 일요일 시작 (사용자 요청 2026-09-11)
@@ -929,8 +933,10 @@ export function WorkoutMonthlyCalendar({
   runs,
   gyms,
   activities,
+  onSaved,
 }: MonthlyCalendarProps) {
   const router = useRouter();
+  const session = useWorkoutSession();
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -945,6 +951,8 @@ export function WorkoutMonthlyCalendar({
   const [menu, setMenu] = useState<{ iso: string; x: number; y: number } | null>(
     null,
   );
+  // 날짜를 클릭하면 뜨는 빠른 기록 팝업의 대상 날짜
+  const [quickIso, setQuickIso] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const popoverRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
@@ -1115,37 +1123,6 @@ export function WorkoutMonthlyCalendar({
     setCursor(next);
   }
 
-  function handleCellPin(iso: string) {
-    if (pinnedIso === iso) {
-      setPinnedIso(null);
-      setPinnedShift(0);
-      return;
-    }
-    const gridEl = gridRef.current;
-    const cellEl = cellRefs.current.get(iso);
-    const popEl = popoverRefs.current.get(iso);
-    if (!gridEl || !cellEl || !popEl) {
-      setPinnedShift(0);
-      setPinnedIso(iso);
-      return;
-    }
-    const gridRect = gridEl.getBoundingClientRect();
-    const cellRect = cellEl.getBoundingClientRect();
-    const popWidth = popEl.offsetWidth;
-    const cellCenter = cellRect.left + cellRect.width / 2;
-    const idealLeft = cellCenter - popWidth / 2;
-    const idealRight = cellCenter + popWidth / 2;
-    const padding = 8;
-    let shift = 0;
-    if (idealLeft < gridRect.left + padding) {
-      shift = gridRect.left + padding - idealLeft;
-    } else if (idealRight > gridRect.right - padding) {
-      shift = gridRect.right - padding - idealRight;
-    }
-    setPinnedShift(shift);
-    setPinnedIso(iso);
-  }
-
   // 우클릭 → 해당 날짜로 기록 추가 메뉴
   function handleCellContextMenu(e: React.MouseEvent, iso: string) {
     e.preventDefault();
@@ -1309,11 +1286,14 @@ export function WorkoutMonthlyCalendar({
               $active={hasAny}
               $pinned={isPinned}
               onClick={() => {
-                if (!hasAny) return;
-                handleCellPin(cell.iso);
+                // 날짜를 누르면 빠른 기록 팝업. 말풍선을 같이 고정하면 팝업 뒤에 가려지므로 풀어 둔다 (2026-09-11)
+                setPinnedIso(null);
+                setPinnedShift(0);
+                setMenu(null);
+                setQuickIso(cell.iso);
               }}
               onContextMenu={(e) => handleCellContextMenu(e, cell.iso)}
-              title="우클릭하여 기록 추가"
+              title="클릭하면 빠른 기록, 우클릭하면 자세히 입력"
             >
               <StCalDayNum $today={isToday}>{cell.date.getDate()}</StCalDayNum>
               <StCalTags>
@@ -1405,7 +1385,9 @@ export function WorkoutMonthlyCalendar({
       </StCalGrid>
 
       <StCalFooter>
-        <StCalHint>날짜를 우클릭하면 기록을 추가할 수 있어요</StCalHint>
+        <StCalHint>
+          날짜를 누르면 바로 적을 수 있고, 우클릭하면 자세히 입력할 수 있어요
+        </StCalHint>
       </StCalFooter>
 
       {menu ? (
@@ -1436,6 +1418,17 @@ export function WorkoutMonthlyCalendar({
             🤸 활동
           </StContextMenuItem>
         </StContextMenu>
+      ) : null}
+
+      {quickIso && session ? (
+        <QuickEntryModal
+          date={quickIso}
+          roomId={session.roomId}
+          onClose={() => setQuickIso(null)}
+          onSaved={async () => {
+            await onSaved?.();
+          }}
+        />
       ) : null}
     </StWrap>
   );
