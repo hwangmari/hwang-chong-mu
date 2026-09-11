@@ -2,10 +2,7 @@ import styled from "styled-components";
 
 export const StRow = styled.div<{ $cols?: number }>`
   display: grid;
-  grid-template-columns: repeat(
-    ${({ $cols = 2 }) => $cols},
-    minmax(0, 1fr)
-  );
+  grid-template-columns: repeat(${({ $cols = 2 }) => $cols}, minmax(0, 1fr));
   gap: 0.7rem;
 
   @media (max-width: 360px) {
@@ -173,39 +170,6 @@ export const StCardHead = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-`;
-
-export const StOcrButton = styled.button`
-  align-self: flex-start;
-  border: 1px dashed ${({ theme }) => theme.colors.blue200};
-  background: ${({ theme }) => theme.colors.blue50};
-  color: ${({ theme }) => theme.colors.blue600};
-  font-size: 0.84rem;
-  font-weight: 800;
-  padding: 0.65rem 1rem;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.blue100};
-    border-color: ${({ theme }) => theme.colors.blue500};
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: progress;
-  }
-`;
-
-export const StOcrSuccess = styled.p`
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.green600};
-  background: ${({ theme }) => theme.colors.green50};
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.55rem;
-  line-height: 1.4;
 `;
 
 export const StExercisesWrap = styled.div`
@@ -678,7 +642,6 @@ export const StPrimary = styled.button`
     cursor: not-allowed;
   }
 `;
-
 
 export const StRecordList = styled.div`
   display: flex;

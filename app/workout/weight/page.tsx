@@ -11,7 +11,6 @@ import {
   upsertGymRecord,
   upsertWorkoutRoutine,
 } from "../repository";
-import { parseGymFromText, runWorkoutOcr, type ParsedGym } from "../ocr";
 import {
   DEFAULT_BARBELL_WEIGHT_KG,
   parseMinutesInput,
@@ -49,8 +48,6 @@ import {
   StFullbodyHint,
   StInput,
   StLabel,
-  StOcrButton,
-  StOcrSuccess,
   StPrimary,
   StRow,
   StSelect,
@@ -144,10 +141,6 @@ export default function WeightPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { expandedMonths, toggleMonth } = useExpandedMonths();
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [ocrProgress, setOcrProgress] = useState<number | null>(null);
-  const [ocrSummary, setOcrSummary] = useState<string>("");
 
   const [cloneCounts, setCloneCounts] = useState<Record<string, string>>({});
 
@@ -275,61 +268,6 @@ export default function WeightPage() {
     });
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }
-
-  function applyParsedGym(parsed: ParsedGym) {
-    setForm((prev) => ({
-      ...prev,
-      durationMin:
-        parsed.durationMin !== undefined
-          ? String(parsed.durationMin)
-          : prev.durationMin,
-      calories:
-        parsed.calories !== undefined ? String(parsed.calories) : prev.calories,
-      avgHeartRate:
-        parsed.avgHeartRate !== undefined
-          ? String(parsed.avgHeartRate)
-          : prev.avgHeartRate,
-    }));
-  }
-
-  async function handleFilePick(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setError("");
-    setOcrSummary("");
-    setOcrProgress(0);
-    try {
-      const text = await runWorkoutOcr(file, (ratio) => setOcrProgress(ratio));
-      const parsed = parseGymFromText(text);
-      applyParsedGym(parsed);
-
-      const filled = [
-        parsed.durationMin !== undefined && "운동 시간",
-        parsed.calories !== undefined && "칼로리",
-        parsed.avgHeartRate !== undefined && "평균 심박",
-      ].filter(Boolean) as string[];
-
-      const sourceLabel =
-        parsed.source === "apple-fitness" ? "Apple 피트니스" : "일반 텍스트";
-
-      if (filled.length === 0) {
-        setError(
-          `${sourceLabel} 에서 값을 못 뽑았어요. 원문: ${text
-            .slice(0, 120)
-            .replace(/\s+/g, " ")}...`,
-        );
-      } else {
-        setOcrSummary(
-          `${sourceLabel}에서 ${filled.join("·")} 자동 채움 완료. 운동 종목은 직접 입력해 주세요.`,
-        );
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "이미지 인식에 실패했어요.");
-    } finally {
-      setOcrProgress(null);
     }
   }
 
@@ -632,25 +570,7 @@ export default function WeightPage() {
       <StCard>
         <StCardHead>
           <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
-          <StOcrButton
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={ocrProgress !== null}
-          >
-            📷{" "}
-            {ocrProgress !== null
-              ? `인식 중 ${Math.round((ocrProgress || 0) * 100)}%`
-              : "사진으로 채우기"}
-          </StOcrButton>
         </StCardHead>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleFilePick}
-        />
-        {ocrSummary ? <StOcrSuccess>{ocrSummary}</StOcrSuccess> : null}
 
         <RoutineSection
           routines={routines}

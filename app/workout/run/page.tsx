@@ -8,7 +8,6 @@ import {
   fetchRunningRecords,
   upsertRunningRecord,
 } from "../repository";
-import { parseRunFromText, runWorkoutOcr, type ParsedRun } from "../ocr";
 import {
   computePaceSec,
   formatDuration,
@@ -71,8 +70,6 @@ import {
   StIntervalsHeadHint,
   StLabel,
   StMiniInput,
-  StOcrButton,
-  StOcrSuccess,
   StPaceHint,
   StPrimary,
   StRecordActions,
@@ -135,9 +132,6 @@ export default function RunPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [ocrProgress, setOcrProgress] = useState<number | null>(null);
-  const [ocrSummary, setOcrSummary] = useState<string>("");
   const [expandedIntervalId, setExpandedIntervalId] = useState<string | null>(
     null,
   );
@@ -332,78 +326,6 @@ export default function RunPage() {
     }));
   }
 
-  function applyParsedRun(parsed: ParsedRun) {
-    setForm((prev) => ({
-      ...prev,
-      environment: parsed.environment ?? prev.environment,
-      runType: parsed.runType ?? prev.runType,
-      distanceKm:
-        parsed.distanceKm !== undefined
-          ? String(parsed.distanceKm)
-          : prev.distanceKm,
-      durationInput:
-        parsed.durationSec !== undefined
-          ? formatDuration(parsed.durationSec)
-          : prev.durationInput,
-      avgHeartRate:
-        parsed.avgHeartRate !== undefined
-          ? String(parsed.avgHeartRate)
-          : prev.avgHeartRate,
-      avgCadence:
-        parsed.avgCadence !== undefined
-          ? String(parsed.avgCadence)
-          : prev.avgCadence,
-      calories:
-        parsed.calories !== undefined ? String(parsed.calories) : prev.calories,
-    }));
-  }
-
-  async function handleFilePick(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = ""; // 같은 파일 재선택 허용
-    if (!file) return;
-    setError("");
-    setOcrSummary("");
-    setOcrProgress(0);
-    try {
-      const text = await runWorkoutOcr(file, (ratio) => setOcrProgress(ratio));
-      const parsed = parseRunFromText(text);
-      applyParsedRun(parsed);
-
-      const filled = [
-        parsed.distanceKm !== undefined && "거리",
-        parsed.durationSec !== undefined && "시간",
-        parsed.avgPaceSec !== undefined && "페이스",
-        parsed.avgHeartRate !== undefined && "심박",
-        parsed.avgCadence !== undefined && "케이던스",
-        parsed.calories !== undefined && "칼로리",
-      ].filter(Boolean) as string[];
-
-      const sourceLabel =
-        parsed.source === "apple-fitness"
-          ? "Apple 피트니스"
-          : parsed.source === "treadmill"
-            ? "러닝머신"
-            : "일반 텍스트";
-
-      if (filled.length === 0) {
-        setError(
-          `${sourceLabel} 포맷으로 감지됐지만 값을 못 뽑았어요. 원문: ${text
-            .slice(0, 120)
-            .replace(/\s+/g, " ")}...`,
-        );
-      } else {
-        setOcrSummary(
-          `${sourceLabel}에서 ${filled.join("·")} 자동 채움 완료. 확인 후 저장하세요.`,
-        );
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "이미지 인식에 실패했어요.");
-    } finally {
-      setOcrProgress(null);
-    }
-  }
-
   if (!session) return null;
 
   return (
@@ -416,25 +338,7 @@ export default function RunPage() {
       <StCard>
         <StCardHead>
           <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
-          <StOcrButton
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={ocrProgress !== null}
-          >
-            📷{" "}
-            {ocrProgress !== null
-              ? `인식 중 ${Math.round((ocrProgress || 0) * 100)}%`
-              : "사진으로 채우기"}
-          </StOcrButton>
         </StCardHead>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleFilePick}
-        />
-        {ocrSummary ? <StOcrSuccess>{ocrSummary}</StOcrSuccess> : null}
 
         <StEnvToggle>
           {(

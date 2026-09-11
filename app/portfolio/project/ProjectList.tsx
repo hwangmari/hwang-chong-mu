@@ -761,10 +761,6 @@ export default function ProjectList() {
             <>
               <StDetailList>
                 <li>
-                  <b>tesseract.js OCR</b>로 Apple 피트니스·러닝머신 결과 화면을
-                  인식해 입력 자동화
-                </li>
-                <li>
                   볼륨·페이스·PR 등 파생 통계를 <b>순수 함수로 분리</b>해 차트와
                   월별 요약에서 재사용
                 </li>
