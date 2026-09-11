@@ -500,15 +500,23 @@ const StInput = styled.input`
   }
 `;
 
+/* 기록하기 폼의 선택 칸과 같은 모양: 브라우저 기본 화살표 대신 같은 쉐브론, 오른쪽 여백 2rem */
 const StSelect = styled.select`
   width: 100%;
+  min-width: 0;
   min-height: 2.6rem;
-  padding: 0 0.5rem;
+  box-sizing: border-box;
+  padding: 0 2rem 0 0.75rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
   border-radius: 0.6rem;
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.semantic.text};
   font-size: 0.95rem;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath d='M1 1l4 4 4-4' stroke='%237d8593' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
 
   &:focus {
     outline: none;
