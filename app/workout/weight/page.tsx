@@ -765,6 +765,23 @@ export default function WeightPage() {
           />
         </StLabel>
 
+        {error ? <StError>{error}</StError> : null}
+
+        <StActions>
+          <StSimpleHint>
+            루틴이 기억 안 나면 운동은 비워 두고 부위·시간만 적어도 저장돼요.
+          </StSimpleHint>
+          {form.id ? (
+            <StGhostButton type="button" onClick={resetForm}>
+              취소
+            </StGhostButton>
+          ) : null}
+          <StPrimary type="button" onClick={submit} disabled={busy}>
+            {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
+          </StPrimary>
+        </StActions>
+
+        {/* 총 볼륨 설명은 저장 버튼 아래로 (사용자 요청 2026-09-11) */}
         {isFullbody ? null : (
           <StVolumeBox>
             <StVolumeHint>
@@ -787,22 +804,6 @@ export default function WeightPage() {
             </StVolumeHelp>
           </StVolumeBox>
         )}
-
-        {error ? <StError>{error}</StError> : null}
-
-        <StActions>
-          <StSimpleHint>
-            루틴이 기억 안 나면 운동은 비워 두고 부위·시간만 적어도 저장돼요.
-          </StSimpleHint>
-          {form.id ? (
-            <StGhostButton type="button" onClick={resetForm}>
-              취소
-            </StGhostButton>
-          ) : null}
-          <StPrimary type="button" onClick={submit} disabled={busy}>
-            {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
-          </StPrimary>
-        </StActions>
       </StCard>
 
       <RecordHistory
