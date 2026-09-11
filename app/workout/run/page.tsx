@@ -558,7 +558,6 @@ export default function RunPage() {
                   <StMiniInput
                     type="text"
               inputMode="decimal"
-                    step="0.1"
                     placeholder="속도 km/h"
                     value={it.speedKmh ?? ""}
                     onChange={(e) =>
@@ -570,7 +569,6 @@ export default function RunPage() {
                   <StMiniInput
                     type="text"
               inputMode="decimal"
-                    step="0.5"
                     placeholder="경사 %"
                     value={it.inclineLevel ?? ""}
                     onChange={(e) =>
@@ -584,7 +582,6 @@ export default function RunPage() {
                 <StMiniInput
                   type="text"
               inputMode="decimal"
-                  step="0.01"
                   placeholder="거리 km"
                   value={it.distanceKm ?? ""}
                   onChange={(e) =>
