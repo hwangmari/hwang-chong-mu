@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { StSection } from "@/components/styled/layout.styled";
 import ServiceLayout from "@/components/common/ServiceLayout";
+import { DIET_GUIDE_DATA } from "@/data/footerGuides";
 // import BlogGuideLink from "@/components/common/BlogGuideLink";
 import CreateButton from "@/components/common/CreateButton";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -48,6 +49,11 @@ export default function CreateDietPage() {
   return (
     <ServiceLayout
       width="narrow"
+      guide={{
+        title: DIET_GUIDE_DATA.title,
+        story: DIET_GUIDE_DATA.story,
+        tips: DIET_GUIDE_DATA.tips,
+      }}
       intro={{
         icon: <span>🥗</span>,
         title: "건강한 다이어트",

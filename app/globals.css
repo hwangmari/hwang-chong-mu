@@ -16,3 +16,18 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* 본문이 짧아도 푸터가 화면 맨 아래에 붙도록: body 세로 플렉스, 본문 셸이 남는 높이를 채움 (2026-09-11) */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.page-shell {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.page-shell > * {
+  flex: 1 0 auto;
+}

@@ -378,9 +378,11 @@ const StSubmit = styled.button`
 
 const StTextButton = styled.button`
   margin-top: 0.3rem;
+  min-height: 2.5rem; /* 폰에서 누르기 쉬운 크기 (2026-09-11) */
+  padding: 0 0.75rem;
   border: none;
   background: transparent;
-  color: #3182f6;
+  color: ${({ theme }) => theme.semantic.primary};
   font-size: 0.84rem;
   font-weight: 800;
   cursor: pointer;

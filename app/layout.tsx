@@ -79,7 +79,8 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <GoogleAnalytics />
             </Suspense>
-            {children}
+            {/* 짧은 화면에서도 푸터가 맨 아래에 붙도록 본문이 남는 높이를 채운다 (2026-09-11) */}
+            <div className="page-shell">{children}</div>
             <GlobalFooter />
           </ModalProvider>
         </StyledComponentsRegistry>

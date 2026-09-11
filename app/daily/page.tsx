@@ -47,10 +47,8 @@ export default function DailyCreatePage() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      setMyNotebooks([]);
-      return;
-    }
+    // 로그아웃 상태에선 아래 렌더에서 user 로 가리므로 상태를 여기서 비우지 않는다 (effect 안 setState 경고 회피)
+    if (!user) return;
     let active = true;
     fetch("/api/auth/rooms")
       .then((res) => (res.ok ? res.json() : { rooms: [] }))
@@ -355,6 +353,8 @@ const ItemIndex = styled.span`
 `;
 
 const TextButton = styled.button`
+  min-height: 2.5rem; /* 폰에서 누르기 쉬운 크기 (2026-09-11) */
+  padding: 0 0.6rem;
   color: ${({ theme }) => theme.semantic.primary};
   font-size: 0.8rem;
   font-weight: 700;
@@ -363,6 +363,8 @@ const TextButton = styled.button`
 `;
 
 const DeleteButton = styled.button`
+  min-height: 2.5rem; /* 폰에서 누르기 쉬운 크기 (2026-09-11) */
+  padding: 0 0.6rem;
   color: ${({ theme }) => theme.semantic.subText};
   font-size: 0.8rem;
   font-weight: 600;
