@@ -519,15 +519,15 @@ const StPage = styled.main`
   display: grid;
   place-items: start center;
   padding: 1.25rem;
-  background: #f6f6f6;
+  background: ${({ theme }) => theme.semantic.bg};
 `;
 
 const StCard = styled.section`
   width: min(100%, 30rem);
   padding: 1.4rem;
   border-radius: 1.4rem;
-  border: 1px solid #e4e5e6;
-  background: #ffffff;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.white};
   box-shadow: 0 18px 50px rgba(56, 58, 61, 0.1);
 `;
 

@@ -48,7 +48,8 @@ const StWrap = styled.nav`
   position: sticky;
   top: 0;
   z-index: 5;
-  background: rgba(255, 255, 255, 0.94);
+  background: ${({ theme }) => theme.colors.white};
+  opacity: 0.97;
   backdrop-filter: saturate(180%) blur(10px);
   border-bottom: 1px solid ${({ theme }) => theme.colors.gray100};
 `;

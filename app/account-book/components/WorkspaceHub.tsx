@@ -665,9 +665,9 @@ export default function WorkspaceHub({
 }
 
 const StPage = styled.main`
-  min-height: 100vh;
+  /* min-height 100vh 는 방이 없을 때 704px 빈 여백을 만들어 제거 (2026-09-11) */
   padding: 1.25rem 1.25rem 2rem;
-  background: #ffffff;
+  background: ${({ theme }) => theme.colors.white};
 
   @media (max-width: 720px) {
     padding: 0.9rem 0.85rem 1.4rem;
@@ -676,7 +676,8 @@ const StPage = styled.main`
 
 const StPageInner = styled.div`
   width: 100%;
-  max-width: 1025px;
+  /* 아래 가이드(993px)와 같은 폭으로 — 1025px 이면 좌우 16px 어긋남 */
+  max-width: 993px;
   margin: 0 auto;
 `;
 
@@ -859,7 +860,7 @@ const StGhostButton = styled.button`
 const StHeroPanel = styled.section`
   border: 1px solid #e3e4e6;
   border-radius: 22px;
-  background: #fdfdfe;
+  background: ${({ theme }) => theme.colors.white};
   box-shadow: 0 6px 16px rgba(125, 129, 137, 0.05);
   padding: 0.95rem 1.05rem;
   display: flex;
@@ -947,7 +948,7 @@ const StCard = styled.button`
   border: 1px solid #e3e4e6;
   border-radius: 22px;
   padding: 1rem 1.05rem;
-  background: #fdfdfe;
+  background: ${({ theme }) => theme.colors.white};
   box-shadow: 0 6px 16px rgba(125, 129, 137, 0.05);
   cursor: pointer;
   transition:
@@ -1122,7 +1123,7 @@ const StEmptyCard = styled.div`
   margin-top: 0.6rem;
   border-radius: 22px;
   border: 1px dashed #e3e4e6;
-  background: #fdfdfe;
+  background: ${({ theme }) => theme.colors.white};
   color: #95999f;
   font-size: 0.84rem;
   line-height: 1.55;

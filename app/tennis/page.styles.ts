@@ -631,9 +631,17 @@ export const StQueueList = styled.div<{ $single?: boolean }>`
   gap: 0.6rem;
   align-items: start;
 
+  /* PC 두 열은 그리드 대신 흐르는 열(columns) — 타임 블록 높이가 제각각이라 그리드면 옆 칸 아래에 큰 구멍이 생김 (2026-09-11) */
   @media ${({ theme }) => theme.media.desktop} {
-    grid-template-columns: ${({ $single }) => ($single ? "1fr" : "repeat(2, minmax(0, 1fr))")};
+    display: ${({ $single }) => ($single ? "grid" : "block")};
+    columns: ${({ $single }) => ($single ? "auto" : "2")};
+    column-gap: 0.75rem;
     gap: 0.75rem;
+
+    & > * {
+      break-inside: avoid;
+      margin-bottom: 0.75rem;
+    }
   }
 `;
 

@@ -240,7 +240,8 @@ export const StToolColumn = styled.div`
 
 export const StFlexBox = styled.div<{ $leftRatio?: number; $sticky?: boolean }>`
   width: 100%;
-  max-width: ${({ theme }) => theme.layout.narrowWidth};
+  /* 1024px 아래에서 540px로 좁히던 규칙 제거 — 945px 창에서 본문만 가운데 540px로 떠 보였음 (2026-09-11) */
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
 
   .flex-rgt-box {

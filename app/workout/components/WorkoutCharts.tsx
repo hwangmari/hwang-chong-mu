@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTheme } from "styled-components";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
@@ -258,6 +259,7 @@ const LEFT_GUTTER = 20;
 const TOP_GUTTER = 14;
 
 export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
+  const theme = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const colCount = columns.length;
   const workoutCount = columns.reduce(
@@ -340,7 +342,7 @@ export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
                 width={CELL_SIZE}
                 height={CELL_SIZE}
                 rx={2}
-                fill={colorByIntensity(cell.intensity)}
+                fill={colorByIntensity(cell.intensity, theme.colors.gray100)}
               >
                 <title>
                   {cell.iso}
@@ -354,7 +356,7 @@ export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
       <StLegendRow>
         <span>적게</span>
         {[0, 2, 3].map((lv) => (
-          <StLegendDot key={lv} $color={colorByIntensity(lv as 0 | 2 | 3)} />
+          <StLegendDot key={lv} $color={colorByIntensity(lv as 0 | 2 | 3, theme.colors.gray100)} />
         ))}
         <span>많이</span>
         <StLegendSpacer />
@@ -366,7 +368,8 @@ export function WorkoutCalendarHeatmap({ columns }: CalendarProps) {
   );
 }
 
-function colorByIntensity(level: CalendarCell["intensity"]): string {
+// 빈 날 칸은 테마 색을 써야 다크 모드에서 하얀 덩어리로 보이지 않는다 (2026-09-11)
+function colorByIntensity(level: CalendarCell["intensity"], emptyColor: string): string {
   switch (level) {
     case 3:
       return "#1f8a54"; // 짙은 초록
@@ -375,7 +378,7 @@ function colorByIntensity(level: CalendarCell["intensity"]): string {
     case 1:
       return "#a2d9b9";
     default:
-      return "#eef2f6";
+      return emptyColor;
   }
 }
 
