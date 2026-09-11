@@ -448,15 +448,16 @@ export default function RunPage() {
           ))}
         </StEnvToggle>
 
+        {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+        <StLabel as="div">
+          날짜
+          <DatePickerCalendar
+            value={form.date}
+            onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
+            markedDates={recordedDates}
+          />
+        </StLabel>
         <StRow>
-          <StLabel>
-            날짜
-            <StInput
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-            />
-          </StLabel>
           <StLabel>
             운동 종류
             <StSelect
@@ -473,12 +474,6 @@ export default function RunPage() {
             </StSelect>
           </StLabel>
         </StRow>
-        {/* 한 주 띠로 날짜 빠르게 고르기 — 점은 이미 기록이 있는 날. 같은 줄 필드 높이를 맞추려 줄 아래에 둔다 (2026-09-11) */}
-        <DatePickerCalendar
-          value={form.date}
-          onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-          markedDates={recordedDates}
-        />
 
         <StRow>
           <StLabel>

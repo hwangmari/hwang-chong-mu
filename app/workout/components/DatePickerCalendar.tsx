@@ -175,7 +175,7 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
 }
 
 const StWrap = styled.div`
-  margin-top: 0.5rem;
+  margin-top: 0.15rem;
   padding: 0.5rem 0.55rem 0.55rem;
   border-radius: 0.8rem;
   background: ${({ theme }) => theme.semantic.bg};
