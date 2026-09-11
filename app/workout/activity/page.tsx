@@ -66,6 +66,8 @@ export default function ActivityPage() {
   const editParam = searchParams?.get("edit") ?? null;
   const dateParam = searchParams?.get("date") ?? null;
   const appliedEditRef = useRef<string | null>(null);
+  // '+ 직접 입력'을 누르면 종목 칸으로 커서를 보낸다
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const appliedDateRef = useRef(false);
   const { openConfirm } = useModal();
 
@@ -205,6 +207,7 @@ export default function ActivityPage() {
         <StLabel>
           종목
           <StInput
+            ref={nameInputRef}
             type="text"
             placeholder="예) 자전거, 등산, 테니스"
             value={form.activityName}
@@ -229,6 +232,8 @@ export default function ActivityPage() {
             onClick={() => {
               setShowCustomInput(true);
               setForm({ ...form, activityName: "" });
+              // 상태 반영 뒤 포커스 (같은 틱에 하면 값 비우기와 겹쳐 커서가 안 갈 수 있음)
+              window.setTimeout(() => nameInputRef.current?.focus(), 0);
             }}
           >
             + 직접 입력
@@ -274,7 +279,7 @@ export default function ActivityPage() {
                 <StInput
                   type="text"
                   inputMode="decimal"
-                  placeholder="알면 입력, 몰라도 OK"
+                  placeholder="선택"
                   value={form.calories}
                   onChange={(e) =>
                     setForm({ ...form, calories: e.target.value })
@@ -286,7 +291,7 @@ export default function ActivityPage() {
                 <StInput
                   type="text"
                   inputMode="decimal"
-                  placeholder="알면 입력, 몰라도 OK"
+                  placeholder="선택"
                   value={form.avgHeartRate}
                   onChange={(e) =>
                     setForm({ ...form, avgHeartRate: e.target.value })
