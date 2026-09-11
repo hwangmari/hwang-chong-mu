@@ -704,7 +704,8 @@ export default function WeightPage() {
           <StLabel>
             칼로리 (kcal)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="선택"
               value={form.calories}
               onChange={(e) => setForm({ ...form, calories: e.target.value })}
@@ -713,7 +714,8 @@ export default function WeightPage() {
           <StLabel>
             심박 (bpm)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="선택"
               value={form.avgHeartRate}
               onChange={(e) =>

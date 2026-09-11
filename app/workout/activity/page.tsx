@@ -264,7 +264,8 @@ export default function ActivityPage() {
           <StLabel>
             총 칼로리 (kcal)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="알면 입력, 몰라도 OK"
               value={form.calories}
               onChange={(e) => setForm({ ...form, calories: e.target.value })}
@@ -273,7 +274,8 @@ export default function ActivityPage() {
           <StLabel>
             평균 심박 (bpm)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="알면 입력, 몰라도 OK"
               value={form.avgHeartRate}
               onChange={(e) =>

@@ -479,8 +479,7 @@ export default function RunPage() {
           <StLabel>
             거리 (km)
             <StInput
-              type="number"
-              step="0.01"
+              type="text"
               inputMode="decimal"
               placeholder="예) 5.2"
               value={form.distanceKm}
@@ -508,7 +507,8 @@ export default function RunPage() {
           <StLabel>
             평균 심박 (bpm)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="예) 152"
               value={form.avgHeartRate}
               onChange={(e) => setForm({ ...form, avgHeartRate: e.target.value })}
@@ -517,7 +517,8 @@ export default function RunPage() {
           <StLabel>
             케이던스 (spm)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="예) 172"
               value={form.avgCadence}
               onChange={(e) => setForm({ ...form, avgCadence: e.target.value })}
@@ -526,7 +527,8 @@ export default function RunPage() {
           <StLabel>
             칼로리 (kcal)
             <StInput
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="예) 340"
               value={form.calories}
               onChange={(e) => setForm({ ...form, calories: e.target.value })}
@@ -554,7 +556,8 @@ export default function RunPage() {
               {form.environment === "indoor" ? (
                 <>
                   <StMiniInput
-                    type="number"
+                    type="text"
+              inputMode="decimal"
                     step="0.1"
                     placeholder="속도 km/h"
                     value={it.speedKmh ?? ""}
@@ -565,7 +568,8 @@ export default function RunPage() {
                     }
                   />
                   <StMiniInput
-                    type="number"
+                    type="text"
+              inputMode="decimal"
                     step="0.5"
                     placeholder="경사 %"
                     value={it.inclineLevel ?? ""}
@@ -578,7 +582,8 @@ export default function RunPage() {
                 </>
               ) : (
                 <StMiniInput
-                  type="number"
+                  type="text"
+              inputMode="decimal"
                   step="0.01"
                   placeholder="거리 km"
                   value={it.distanceKm ?? ""}
