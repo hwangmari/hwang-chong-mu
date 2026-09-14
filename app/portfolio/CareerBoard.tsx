@@ -12,8 +12,7 @@ import { displayFont } from "@/lib/fonts";
 import { companyColor } from "./companyColor";
 import { useCareerFocus } from "./CareerFocusContext";
 import { SectionTitle } from "./motion";
-import CareerRibbon, { STICKY_RIBBON_OFFSET } from "./CareerRibbon";
-import CareerGraph from "./CareerGraph";
+import { STICKY_RIBBON_OFFSET } from "./CareerRibbon";
 
 export default function CareerBoard() {
   const { focused, scrollFocused, setScrollFocused, setCareerInView } = useCareerFocus();
@@ -53,11 +52,6 @@ export default function CareerBoard() {
 
   return (
     <StSection id="career" ref={sectionRef} className={displayFont.variable}>
-      {/* 경력을 보는 동안 위쪽에 붙어 따라오는 빠른 이동 바 */}
-      <StStickySlot>
-        <CareerRibbon variant="compact" />
-      </StStickySlot>
-
       <StInner>
         <SectionTitle title="경력" />
 
@@ -140,7 +134,6 @@ function GraphToggle() {
           <ExpandMoreIcon fontSize="inherit" />
         </StChevron>
       </StGraphButton>
-      {open && <CareerGraph />}
     </>
   );
 }
@@ -153,19 +146,6 @@ const StSection = styled.section`
 `;
 
 /* sticky 래퍼: 레이아웃을 밀지 않고 섹션 안에서만 따라온다 */
-const StStickySlot = styled.div`
-  position: sticky;
-  top: 3.5rem;
-  z-index: 15;
-  height: 0;
-  overflow: visible;
-  pointer-events: none;
-
-  > * {
-    pointer-events: auto;
-  }
-`;
-
 const StInner = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;

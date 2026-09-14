@@ -8,7 +8,6 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { displayFont } from "@/lib/fonts";
 import { careerYears } from "./careerFacts";
 import AnimatedTitle from "./AnimatedTitle";
-import CareerRibbon from "./CareerRibbon";
 
 export default function PortfolioHero() {
   return (
@@ -50,10 +49,6 @@ export default function PortfolioHero() {
           </StPhoto>
         </StTop>
 
-
-        <StRibbonSlot>
-          <CareerRibbon />
-        </StRibbonSlot>
 
       </StInner>
     </StHero>
@@ -236,6 +231,3 @@ const StPhoto = styled.div`
   }
 `;
 
-const StRibbonSlot = styled.div`
-  margin-top: 0.15rem;
-`;
