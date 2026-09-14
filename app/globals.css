@@ -23,6 +23,10 @@ body {
   flex-direction: column;
   min-height: 100dvh;
 }
+/* 플렉스 세로 배치에서 margin:auto 를 쓰는 헤더가 내용 폭으로 쪼그라들지 않게 — 직계 자식은 항상 전체 폭 */
+body > * {
+  width: 100%;
+}
 .page-shell {
   flex: 1 0 auto;
   display: flex;
