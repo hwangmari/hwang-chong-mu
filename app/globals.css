@@ -34,4 +34,5 @@ body > * {
 }
 .page-shell > * {
   flex: 1 0 auto;
+  width: 100%; /* margin:auto 를 쓰는 본문 틀(StContainer)이 내용 폭으로 줄지 않게 */
 }
