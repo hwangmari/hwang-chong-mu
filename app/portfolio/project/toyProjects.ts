@@ -8,8 +8,8 @@ export interface ToyProjectRef {
 }
 
 // ProjectList.tsx에 실제로 카드(anchorId)가 있는 서비스만, 카드가 놓인 순서대로 적는다.
-// 카드가 없는 서비스(테니스 교류전·경조사비 장부·야근 계산기)는 넣지 않는다 —
-// 넣으면 눌러도 갈 곳이 없다. 카드를 추가하면 여기에도 한 줄 넣어 주면 된다.
+// 2026-09-14에 테니스 대회·야근 계산기·경조사비 장부 카드를 추가해 지금은 서비스 전부에 카드가 있다.
+// 카드 없는 서비스를 여기에 넣으면 눌러도 갈 곳이 없으니, 카드를 먼저 만들고 여기에 한 줄 넣는다.
 const SERVICES_WITH_CARD: ServiceId[] = [
   "schedule",
   "meeting",
@@ -22,6 +22,9 @@ const SERVICES_WITH_CARD: ServiceId[] = [
   "workout",
   "inbody",
   "game",
+  "tennis",
+  "overtime",
+  "gift-log",
 ];
 
 export const TOY_PROJECTS: ToyProjectRef[] = [
