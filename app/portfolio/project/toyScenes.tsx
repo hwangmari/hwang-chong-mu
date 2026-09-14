@@ -339,11 +339,18 @@ const StPin = styled.span<{ $delay: number }>`
 const StVoteRow = styled.div<{ $delay: number }>`
   ${appear};
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) auto;
+  /* 표 수 칸은 고정 폭 — 'auto'면 ✓가 붙는 줄만 칸이 넓어져 막대 시작점이 어긋난다 (2026-09-15) */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) 3.4rem;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.72rem;
   color: ${({ theme }) => theme.semantic.text};
+
+  > b {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
 
   .name {
     overflow: hidden;
