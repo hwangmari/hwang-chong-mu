@@ -74,7 +74,7 @@ const fadeInUp = keyframes`
 `;
 
 const StPageContainer = styled.div`
-  z-index: 200;
+  /* z-index 200 이 있었으나 전역 메뉴(100)를 가려 햄버거가 열려도 안 보이던 원인이라 제거 (2026-09-15) */
   min-height: 100vh;
   background-color: ${({ theme }) => theme.colors.gray50};
   color: ${({ theme }) => theme.colors.gray900};

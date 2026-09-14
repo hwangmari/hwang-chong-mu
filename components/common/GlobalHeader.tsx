@@ -350,7 +350,7 @@ const StMenuOverlay = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 1000; /* 페이지가 자체 겹침 순서(최대 200)를 써도 전역 메뉴가 항상 위 */
   visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   transition:
