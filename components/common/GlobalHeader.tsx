@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useChromeHidden } from "./useChromeHidden";
 import Link from "next/link";
@@ -56,9 +56,15 @@ export default function GlobalHeader() {
   // 숨김 판단은 useChromeHidden 한 곳에서 (GlobalFooter와 동일 기준). 주소의 물음표 값은 렌더 중에 읽지 않는다.
   const shouldHideHeader = useChromeHidden();
 
+  // 화면을 옮길 때만 맨 위로. 첫 로드에서는 건드리지 않는다(로드 직후 스크롤이 튀던 문제, 2026-09-14),
+  // 주소에 #앵커가 있으면 브라우저가 그 위치로 가도록 둔다.
+  const lastPathRef = useRef<string | null>(null);
   useEffect(() => {
     setIsMenuOpen(false);
-    window.scrollTo(0, 0);
+    const isFirst = lastPathRef.current === null;
+    const changed = lastPathRef.current !== null && lastPathRef.current !== pathname;
+    lastPathRef.current = pathname;
+    if (changed && !isFirst && !window.location.hash) window.scrollTo(0, 0);
 
     if (pathname.startsWith("/game/")) {
       const parts = pathname.split("/");
