@@ -3,7 +3,6 @@
 import { ProjectImage } from "@/components/common/ProjectImageViewer";
 import ProjectCard from "./ProjectCard";
 import { StDetailList, StProjectList } from "./ProjectSection.styled";
-import ToySpotlight from "./ToySpotlight";
 
 export default function ProjectList() {
   const scheduleImages: ProjectImage[] = [
@@ -48,7 +47,6 @@ export default function ProjectList() {
   ];
 
   return (
-    <ToySpotlight>
     <StProjectList>
       {/* 내 서비스 요약(통합 대시보드) 프로젝트 */}
       <ProjectCard
@@ -1156,8 +1154,8 @@ export default function ProjectList() {
                   구분은 <b>세션 쿠키에서 확정</b>해 클라이언트가 위조할 수 없게 함
                 </li>
                 <li>
-                  이름·관계 세부·메모는 저장할 때 암호화하고 읽을 때 풀어 주어,
-                  저장 공간을 직접 열어도 <b>&quot;누가 얼마&quot;가 보이지 않음</b>
+                  상대방 이름·메모는 <b>서버에서 암호화해 저장</b>하고, 화면에서만
+                  풀어서 보여줍니다
                 </li>
                 <li>
                   답례 짝을 찾는 판단을 순수 함수 한 곳에 모아, 목록과 대조 표가
@@ -1170,6 +1168,5 @@ export default function ProjectList() {
         projectImages={giftLogImages}
       />
     </StProjectList>
-    </ToySpotlight>
   );
 }

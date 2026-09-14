@@ -3,7 +3,7 @@
 import { Typography } from "@hwangchongmu/ui";
 import Link from "next/link";
 import { ReactNode } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -11,6 +11,7 @@ import LogicFlowChart, { DevLog } from "./ProjectVisuals";
 import ProjectImageViewer, {
   ProjectImage,
 } from "@/components/common/ProjectImageViewer";
+import ToyPreview from "./ToyPreview";
 import { useCareerFocus } from "../CareerFocusContext";
 
 interface ProjectCardProps {
@@ -59,44 +60,61 @@ export default function ProjectCard({
   const panelId = `${anchorId ?? title}-panel`;
 
   return (
-    <StCardContainer id={anchorId} data-toy-card $open={open}>
-      {/* 상단: 제목 */}
-      <StHeader>
-        <div className="title-area">
-          <Typography variant="h3" as="h3">
-            {title}
-          </Typography>
-          <span className="period">{period}</span>
-        </div>
-      </StHeader>
+    <StToyRow id={anchorId}>
+      {/* 윗단: 왼쪽 설명 / 오른쪽 미리보기. 두 칸은 같은 줄에서 아래 끝이 맞는다 */}
+      <StRowMain>
+        <StRowText>
+          <StHeader>
+            <div className="title-area">
+              <Typography variant="h3" as="h3">
+                {title}
+              </Typography>
+              <span className="period">{period}</span>
+            </div>
+          </StHeader>
 
-      {/* 메인 설명은 항상 전부 보인다 */}
-      <StDescriptionBody>
-        <Typography variant="body2" color="gray700">
-          {description}
-        </Typography>
-      </StDescriptionBody>
+          {/* 메인 설명은 항상 전부 보인다 */}
+          <StDescriptionBody>
+            <Typography variant="body2" color="gray700">
+              {description}
+            </Typography>
+          </StDescriptionBody>
 
-      <StActions>
-        <StMoreButton
-          type="button"
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={() => toggleOpen(cardKey)}
-        >
-          {open ? "접기" : "자세히 보기"}
-          <StChevron $open={open} aria-hidden="true">
-            <ExpandMoreIcon fontSize="inherit" />
-          </StChevron>
-        </StMoreButton>
+          <StActions>
+            <StMoreButton
+              type="button"
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => toggleOpen(cardKey)}
+            >
+              {open ? "접기" : "자세히 보기"}
+              <StChevron $open={open} aria-hidden="true">
+                <ExpandMoreIcon fontSize="inherit" />
+              </StChevron>
+            </StMoreButton>
 
-        <StServiceLink href={linkUrl} target="_blank" rel="noopener noreferrer">
-          <span className="link-content">
-            바로가기 <OpenInNewIcon fontSize="inherit" />
-          </span>
-        </StServiceLink>
-      </StActions>
+            <StServiceLink
+              href={linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="link-content">
+                바로가기 <OpenInNewIcon fontSize="inherit" />
+              </span>
+            </StServiceLink>
+          </StActions>
+        </StRowText>
 
+        <StRowAside>
+          <ToyPreview
+            anchorId={anchorId}
+            title={title}
+            images={projectImages}
+          />
+        </StRowAside>
+      </StRowMain>
+
+      {/* 아랫단: 자세히 보기는 두 칸 아래에 줄 전체 너비로 열린다 */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -113,7 +131,9 @@ export default function ProjectCard({
                 {detailItems.map((item) => (
                   <StDetailsBox key={item.type}>
                     <StDetailRow>
-                      <StDetailLabel $type={item.type}>{item.label}</StDetailLabel>
+                      <StDetailLabel $type={item.type}>
+                        {item.label}
+                      </StDetailLabel>
                       <div className="content">{item.content}</div>
                     </StDetailRow>
                   </StDetailsBox>
@@ -132,17 +152,11 @@ export default function ProjectCard({
           </motion.div>
         )}
       </AnimatePresence>
-    </StCardContainer>
+    </StToyRow>
   );
 }
 
-const StCardContainer = styled.article<{ $open: boolean }>`
-  /* 펼친 카드는 격자 한 줄을 통째로 쓴다 */
-  ${({ $open }) =>
-    $open &&
-    css`
-      grid-column: 1 / -1;
-    `}
+const StToyRow = styled.article`
   display: flex;
   flex-direction: column;
   background-color: ${({ theme }) => theme.colors.white};
@@ -150,42 +164,67 @@ const StCardContainer = styled.article<{ $open: boolean }>`
   border-radius: 1rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
   position: relative;
-  z-index: 1;
   transition:
-    border-color 0.18s ease,
-    transform 0.18s ease;
-  overflow: hidden;
+    border-color 0.15s ease,
+    transform 0.15s ease;
   scroll-margin-top: 5rem;
 
-  /* 조명이 이 카드에 내려앉았을 때 */
-  &[data-spot="on"] {
+  &:hover,
+  &:focus-within {
+    border-color: ${({ theme }) => theme.semantic.primary};
     transform: translateY(-2px);
 
     h3 {
-      transform: scale(1.03);
+      text-decoration: underline;
+      text-decoration-color: ${({ theme }) => theme.semantic.primary};
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
     }
-  }
-
-  h3 {
-    transform-origin: left center;
-    transition: transform 0.15s ease;
   }
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
-    &[data-spot="on"] {
+    &:hover,
+    &:focus-within {
       transform: none;
-      h3 {
-        transform: none;
-      }
-    }
-    h3 {
-      transition: none;
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     padding: 1rem;
+  }
+`;
+
+/* 데스크톱: 설명 칸이 조금 더 넓고, 두 칸 아래 끝이 맞도록 stretch */
+const StRowMain = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1.25rem;
+
+  @media (max-width: 1023px) {
+    gap: 0.85rem;
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+`;
+
+const StRowText = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+`;
+
+const StRowAside = styled.div`
+  display: flex;
+  min-width: 0;
+
+  /* 모바일에서는 미리보기가 위, 설명이 아래 */
+  @media (max-width: 767px) {
+    order: -1;
   }
 `;
 
@@ -312,7 +351,7 @@ const StDetailRow = styled.div`
 
   .content {
     flex: 1;
-    color: #495057;
+    color: ${({ theme }) => theme.colors.gray700};
     max-width: 72ch;
     line-height: 1.75;
   }
@@ -328,10 +367,10 @@ const StDetailLabel = styled.div<{ $type: "problem" | "solution" | "tech" }>`
   min-width: 90px;
   flex-shrink: 0;
 
-  color: ${({ $type }) =>
+  color: ${({ $type, theme }) =>
     $type === "problem"
-      ? "#E53E3E"
+      ? theme.semantic.danger
       : $type === "solution"
-        ? "#3182CE"
-      : "#718096"};
+        ? theme.semantic.primary
+        : theme.semantic.subText};
 `;

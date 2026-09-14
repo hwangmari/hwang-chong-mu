@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import styled, { css, keyframes } from "styled-components";
 
 // 첫 화면 오른쪽 미니 데모: 지금 보이는 상황의 도구가 실제로 어떻게 움직이는지 4초짜리 장면으로 보여준다.
@@ -33,6 +34,16 @@ const SCENE_TITLE: Record<DemoScene, string> = {
   tennis: "테니스 · 대진표 자동 배정",
   gift: "경조사비 장부 · 이름으로 찾기",
 };
+
+// 장면만 따로 쓰는 곳(포트폴리오 토이 프로젝트 줄의 미리보기)을 위해 내보낸다.
+// 프레임(제목 바 있는 창) 없이 장면 하나만 필요할 때 이 표에서 꺼내 쓴다 — 장면 코드는 여기 한 벌만 둔다.
+export const DEMO_SCENES = {
+  meeting: MeetingScene,
+  overtime: OvertimeScene,
+  calc: CalcScene,
+  tennis: TennisScene,
+  gift: GiftScene,
+} as const satisfies Record<DemoScene, () => ReactElement>;
 
 /* ---------- 1. 약속 잡기: 달력에 X가 차례로 찍히고, 남은 날이 파랗게 ---------- */
 const MEETING_BLOCKED = [1, 4, 5, 8, 9, 10, 13, 16, 17, 20, 23, 24, 26, 27];
