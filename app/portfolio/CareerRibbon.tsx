@@ -3,9 +3,10 @@
 // 이 페이지의 시그니처: 2012년부터 지금까지를 한 줄로 이어 붙인 커리어 리본.
 // 처음 한 번 빛줄기가 좌→우로 풀리고, 그 선에서 회사 칸이 피어난다. 그 외 움직임은 없다.
 // 읽기 쉬움이 먼저라 칸은 모두 무채색이고, 회사 색은 왼쪽 6px 띠로만 남긴다.
-import { useEffect, useRef } from "react";
+// 날짜는 칸 안에 함께 적는다. 따로 있던 연도 눈금 줄은 선이 분리돼 읽기 어려워서 없앴다 (2026-09-14).
+import { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
-import { boundaryYears, careerSpans, totalCareerMonths } from "./careerFacts";
+import { careerSpans, totalCareerMonths } from "./careerFacts";
 import { companyColor } from "./companyColor";
 import { useCareerFocus } from "./CareerFocusContext";
 import { HERO_TIMING, OUT_EASE, bloomSegment, unrollLine } from "./heroChoreography";
@@ -13,12 +14,12 @@ import { HERO_TIMING, OUT_EASE, bloomSegment, unrollLine } from "./heroChoreogra
 /** 위에 붙은 리본에 카드 제목이 가리지 않도록 두는 여백 */
 export const STICKY_RIBBON_OFFSET = "7rem";
 
-/** 데스크톱 기준 칸 최소 폭(px). 재직 기간이 짧아도 회사명 + 재직 기간 한 줄이 들어갈 만큼은 준다 (2026-09-14) */
+/** 데스크톱 기준 칸 최소 폭(px). 재직 기간이 짧아도 회사명 + 날짜 + 기간 세 줄이 들어갈 만큼은 준다 (2026-09-14) */
 const MIN_SEGMENT_PX = 124;
-/** 이 폭 이상이면 칸 안에 재직 기간을 함께 적는다 — 최소 폭과 같게 두어 모든 칸에 정보가 들어간다 */
-const DURATION_MIN_PX = 124;
 /** 폭 계산에 쓰는 기준 캔버스 (theme.layout.maxWidth 안쪽) */
 const CANVAS_PX = 930;
+/** 아래 설명 카드에 이름표로 내보일 프로젝트 수. 나머지는 "외 N개"로 줄인다 */
+const MAX_CHIPS = 3;
 
 /** 각 칸이 데스크톱에서 대략 몇 px을 차지하는지 미리 계산해 둔다 */
 const flexible = careerSpans.filter((s) => (s.months / totalCareerMonths) * CANVAS_PX >= MIN_SEGMENT_PX);
@@ -53,6 +54,8 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
     setHeroRibbonVisible,
   } = useCareerFocus();
   const wrapperRef = useRef<HTMLElement>(null);
+  const slotRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const [caretX, setCaretX] = useState<number | null>(null);
   const compact = variant === "compact";
 
   // 첫 화면 리본이 화면 밖으로 나갔는지 알려 준다 (위쪽 고정 리본을 띄울 신호)
@@ -72,6 +75,25 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
   const active =
     careerSpans.find((span) => span.id === activeId) ?? careerSpans[careerSpans.length - 1];
   const shown = compact ? careerInView && !heroRibbonVisible : true;
+  const activeKey = active?.id ?? "";
+
+  // 지금 켜진 칸의 한가운데를 재서, 그 아래에 설명 카드로 이어지는 화살표를 놓는다.
+  // 칸 폭은 화면 폭에 따라 달라지므로 계산이 아니라 실제 위치를 잰다.
+  useEffect(() => {
+    if (compact) return;
+    const measure = () => {
+      const el = slotRefs.current.get(activeKey);
+      setCaretX(el ? el.offsetLeft + el.offsetWidth / 2 : null);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [compact, activeKey]);
 
   return (
     <StWrapper
@@ -90,11 +112,13 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
           {careerSpans.map((span, i) => {
             const width = estimatedWidth(span.months);
             const isActive = activeId === span.id;
-            const withDuration = !compact && width >= DURATION_MIN_PX && span.durationLabel;
             const label = width >= 110 ? span.company : shortName(span.company);
             return (
               <StSlot
                 key={span.id}
+                ref={(el) => {
+                  slotRefs.current.set(span.id, el);
+                }}
                 $months={span.months}
                 $delay={HERO_TIMING.ribbonBloom + i * 0.055}
                 $compact={compact}
@@ -104,7 +128,7 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
                   $active={isActive}
                   $compact={compact}
                   aria-current={isActive ? "true" : undefined}
-                  title={span.company}
+                  title={`${span.company} · ${span.period}`}
                   onMouseEnter={() => setFocused(span.id)}
                   onMouseLeave={() => setFocused(null)}
                   onFocus={() => setFocused(span.id)}
@@ -119,7 +143,12 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
                   />
                   <span className="text">
                     <span className="name">{label}</span>
-                    {withDuration && <span className="duration">{span.durationLabel}</span>}
+                    {!compact && (
+                      <>
+                        <span className="range">{span.rangeLabel}</span>
+                        <span className="tenure">{span.tenureLabel}</span>
+                      </>
+                    )}
                   </span>
                 </StSegment>
               </StSlot>
@@ -128,29 +157,40 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
         </StBar>
       </StBarArea>
 
-      {!compact && (
-        <StTicks aria-hidden="true">
-          {careerSpans.map((span, i) => (
-            <StTick key={span.id} $months={span.months}>
-              <i />
-              <span>{boundaryYears[i]}</span>
-            </StTick>
-          ))}
-          <StTickEnd>
-            <i />
-            <span>{boundaryYears[boundaryYears.length - 1]}</span>
-          </StTickEnd>
-        </StTicks>
+      {!compact && active && (
+        <StCaretRail aria-hidden="true">
+          {caretX !== null && (
+            <StCaret
+              data-testid="ribbon-caret"
+              $colorClass={active.colorClass}
+              style={{ left: `${caretX}px` }}
+            />
+          )}
+        </StCaretRail>
       )}
 
       {!compact && active && (
-        <StCallout>
-          <StBrandDot $colorClass={active.colorClass} aria-hidden="true" />
-          <strong>{active.company}</strong>
-          <span className="role">{active.role}</span>
-          <span className="meta">
-            {active.period} · 주요 프로젝트 {active.projectCount}개
-          </span>
+        <StCallout $colorClass={active.colorClass}>
+          <StCalloutHead>
+            <strong>{active.company}</strong>
+            <span className="role">{active.role}</span>
+          </StCalloutHead>
+
+          {active.projectTitles.length > 0 && (
+            <StChipRow data-testid="ribbon-chips">
+              {active.projectTitles.slice(0, MAX_CHIPS).map((title) => (
+                <StChip key={title}>{title}</StChip>
+              ))}
+              {active.projectTitles.length > MAX_CHIPS && (
+                <StChipMore>외 {active.projectTitles.length - MAX_CHIPS}개</StChipMore>
+              )}
+            </StChipRow>
+          )}
+
+          <StCalloutMeta>
+            <span className="range">{active.rangeLabel}</span>
+            <span className="tenure">{active.tenureLabel}</span>
+          </StCalloutMeta>
         </StCallout>
       )}
     </StWrapper>
@@ -270,13 +310,13 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
   position: relative;
   flex: 1;
   min-width: 0;
-  height: ${({ $compact }) => ($compact ? "2.15rem" : "3.25rem")};
+  height: ${({ $compact }) => ($compact ? "2.15rem" : "4rem")};
   border-radius: 0.55rem;
   cursor: pointer;
   overflow: hidden;
   display: flex;
   align-items: center;
-  padding: ${({ $compact }) => ($compact ? "0 0.6rem" : "0 0.5rem 0 0.85rem")};
+  padding: ${({ $compact }) => ($compact ? "0 0.6rem" : "0 0.35rem 0 0.72rem")};
   text-align: ${({ $compact }) => ($compact ? "center" : "left")};
   background: ${({ theme }) => theme.semantic.bg};
   border: 1px solid ${({ theme }) => theme.semantic.border};
@@ -291,7 +331,7 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
     flex-direction: column;
     min-width: 0;
     width: 100%;
-    line-height: 1.2;
+    line-height: 1.25;
     align-items: ${({ $compact }) => ($compact ? "center" : "flex-start")};
   }
 
@@ -302,12 +342,24 @@ const StSegment = styled.button<{ $active: boolean; $compact: boolean }>`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
   }
 
-  .duration {
-    margin-top: 0.1rem;
-    font-size: 0.68rem;
+  /* 날짜 구간과 재직 기간. 좁은 칸(더존 124px)에도 들어가도록 숫자를 조금 좁힌다 */
+  .range {
+    margin-top: 0.12rem;
+    font-size: 0.66rem;
+    color: ${({ theme }) => theme.colors.gray600};
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .tenure {
+    margin-top: 0.05rem;
+    font-size: 0.66rem;
     color: ${({ theme }) => theme.semantic.subText};
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
 
@@ -363,66 +415,65 @@ const StBrandStripe = styled.span<{ $colorClass: string; $compact: boolean }>`
   }
 `;
 
-const StTicks = styled.div`
-  display: flex;
+/* 켜진 칸과 아래 설명 카드를 잇는 화살표가 사는 줄 */
+const StCaretRail = styled.div`
   position: relative;
-  padding-top: 0.15rem;
-  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  height: 8px;
+  margin-top: -0.15rem;
+  pointer-events: none;
 `;
 
-const tickLabel = css`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.semantic.subText};
-  font-variant-numeric: tabular-nums;
+const StCaret = styled.span<{ $colorClass: string }>`
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-left: -7px;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 8px solid ${({ theme, $colorClass }) => companyColor(theme, $colorClass)};
+  transition:
+    left 0.15s ease,
+    border-bottom-color 0.15s ease;
 
-  i {
-    width: 1px;
-    height: 5px;
-    margin-bottom: 1px;
-    background: ${({ theme }) => theme.semantic.border};
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 
-const StTick = styled.div<{ $months: number }>`
-  ${tickLabel}
-  flex: ${({ $months }) => $months} 1 0;
-  min-width: ${MIN_SEGMENT_PX}px;
-
-  @media (max-width: 767px) {
-    min-width: 1.9rem;
-
-    span {
-      font-size: 0.62rem;
-    }
-  }
-`;
-
-const StTickEnd = styled.div`
-  ${tickLabel}
-  align-items: flex-end;
-  flex: 0 0 auto;
-
-  @media (max-width: 767px) {
-    span {
-      font-size: 0.62rem;
-    }
-  }
-`;
-
-const StCallout = styled.div`
+const StCallout = styled.div<{ $colorClass: string }>`
+  /* 좁은 화면: 회사·기간이 첫 줄, 프로젝트 이름표가 둘째 줄 */
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-top: 0.15rem;
-  padding: 0.65rem 0.85rem;
+  align-items: center;
+  gap: 0.45rem 0.9rem;
+  padding: 0.7rem 0.9rem;
+
+  /* 데스크톱: 회사 | 프로젝트 이름표 | 기간을 한 줄 세 칸으로 고정한다 */
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) max-content;
+    column-gap: 1rem;
+    row-gap: 0;
+  }
+
   border-radius: 0.75rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-top: 3px solid ${({ theme, $colorClass }) => companyColor(theme, $colorClass)};
   background: ${({ theme }) => theme.colors.white};
+  transition: border-top-color 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const StCalloutHead = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 0 1 auto;
 
   strong {
     font-size: 0.95rem;
@@ -430,32 +481,73 @@ const StCallout = styled.div`
   }
 
   .role {
-    font-size: 0.82rem;
-    color: ${({ theme }) => theme.colors.gray600};
-  }
-
-  .meta {
     font-size: 0.78rem;
-    color: ${({ theme }) => theme.semantic.subText};
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+    color: ${({ theme }) => theme.colors.gray600};
+    word-break: keep-all;
   }
 
   @media ${({ theme }) => theme.media.mobile} {
     .role {
       display: none;
     }
-    .meta {
-      margin-left: 0;
-      width: 100%;
-    }
   }
 `;
 
-const StBrandDot = styled.span<{ $colorClass: string }>`
-  width: 0.5rem;
-  height: 0.5rem;
+const StChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  /* 좁은 화면에서는 이름표가 한 줄을 통째로 쓰며 두 번째 줄로 내려간다 */
+  @media (max-width: 1023px) {
+    flex: 1 1 100%;
+    order: 3;
+  }
+`;
+
+const StChip = styled.span`
+  padding: 0.16rem 0.55rem;
   border-radius: 999px;
-  align-self: center;
-  background: ${({ theme, $colorClass }) => companyColor(theme, $colorClass)};
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  background: ${({ theme }) => theme.colors.gray50};
+  color: ${({ theme }) => theme.colors.gray600};
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: keep-all;
+`;
+
+const StChipMore = styled.span`
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+const StCalloutMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+
+  @media (min-width: 1024px) {
+    margin-left: 0;
+  }
+
+  .range {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  .tenure {
+    font-size: 0.72rem;
+    color: ${({ theme }) => theme.semantic.subText};
+  }
 `;

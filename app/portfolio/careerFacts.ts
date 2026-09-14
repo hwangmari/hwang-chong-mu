@@ -19,8 +19,12 @@ export interface CareerSpan {
   projectCount: number;
   startYear: number;
   endYear: number;
-  /** data의 period 괄호 안에 적힌 재직 기간. 없으면(재직 중) null */
-  durationLabel: string | null;
+  /** 괄호 안 재직 기간을 뗀 날짜 구간. 예: "2020.07 - 2023.08", "2023.08 - 재직 중" */
+  rangeLabel: string;
+  /** 재직 기간. data의 괄호 안 표기를 그대로 쓰고, 재직 중이면 오늘까지로 계산한다. 예: "3년 2개월" */
+  tenureLabel: string;
+  /** 이 회사에서 한 주요 프로젝트 이름들 (data/experiences.tsx 원문 그대로) */
+  projectTitles: string[];
 }
 
 const YEAR_MONTH = /(\d{4})\.(\d{1,2})/g;
@@ -75,11 +79,14 @@ export const careerSpans: CareerSpan[] = experiences
       colorClass: exp.color,
       summary: exp.summary,
       projectCount: exp.projects.length,
+      projectTitles: exp.projects.map((project) => project.title),
       months: Math.max(1, parsed.endMonth - parsed.startMonth),
-      // 괄호 안 기간이 있으면 그대로, 재직 중이면 시작~오늘을 계산해 "재직 중 · 3년 1개월"로 (사용자 요청: 상단 바에 재직 중 내용 포함)
-      durationLabel:
+      // 리본 칸 2번째 줄: "(3년 2개월)" 같은 괄호를 떼고 날짜 구간만 남긴다
+      rangeLabel: exp.period.replace(/\s*\([^)]*\)\s*$/, "").trim(),
+      // 리본 칸 3번째 줄: 괄호 안 기간이 있으면 그대로, 재직 중이면 시작~오늘을 계산한다
+      tenureLabel:
         exp.period.match(/\(([^)]+)\)/)?.[1] ??
-        (parsed.ongoing ? `재직 중 · ${formatTenure(parsed.endMonth - parsed.startMonth)}` : null),
+        formatTenure(parsed.endMonth - parsed.startMonth),
       ...parsed,
     };
   })
@@ -94,12 +101,6 @@ export const careerEndYear = new Date().getFullYear();
 export const companyCount = careerSpans.length;
 export const keyProjectCount = experiences.reduce((n, exp) => n + exp.projects.length, 0);
 export const toyProjectCount = TOY_PROJECTS.length;
-
-/** 리본 위 눈금이 될 연도들: 각 구간의 시작 연도 + 마지막 연도 */
-export const boundaryYears = [
-  ...careerSpans.map((span) => span.startYear),
-  new Date().getFullYear(),
-];
 
 export const totalCareerMonths = careerSpans.reduce((n, span) => n + span.months, 0);
 
