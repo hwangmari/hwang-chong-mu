@@ -227,21 +227,23 @@ const StTitleText = styled.span`
   color: ${({ theme }) => theme.semantic.subText};
 `;
 
-const pop = keyframes`
+/* 아래 네 가지는 포트폴리오 토이 프로젝트 줄의 장면(app/portfolio/project/toyScenes.tsx)도
+   같이 쓴다 — 나타나는 느낌(속도·곡선)을 한 벌로 맞추려고 여기서 내보낸다. */
+export const pop = keyframes`
   from { opacity: 0; transform: scale(0.6); }
   60% { transform: scale(1.15); }
   to { opacity: 1; transform: scale(1); }
 `;
-const fadeUp = keyframes`
+export const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 `;
-const appear = css<{ $delay: number }>`
+export const appear = css<{ $delay: number }>`
   opacity: 0;
   animation: ${fadeUp} 0.4s ease-out ${({ $delay }) => $delay}s forwards;
 `;
 /* 안쪽 선택자용: 지연은 각자 animation-delay로 준다 */
-const appearBase = css`
+export const appearBase = css`
   opacity: 0;
   animation: ${fadeUp} 0.4s ease-out 0s forwards;
 `;
