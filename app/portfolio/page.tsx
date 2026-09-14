@@ -31,7 +31,7 @@ export default function PortfolioPage() {
 
         {/* 3. 경력 — 위에 커리어 띠가 붙어 있고, 스크롤하면 헤더 아래에 고정된 채 회사 카드를 따라간다 (2026-09-14) */}
         <StCareerZone>
-          <StRibbonSticky>
+          <StRibbonSticky data-career-sticky>
             <StRibbonInner>
               <CareerRibbon />
             </StRibbonInner>

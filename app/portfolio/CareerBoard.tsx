@@ -285,10 +285,11 @@ const StProjectList = styled.div`
   border-top: 1px dashed ${({ theme }) => theme.semantic.border};
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem 1.5rem;
+  gap: 1.4rem 2.2rem; /* 항목 사이를 더 띄워 덩어리로 읽히게 (가독성, 2026-09-14) */
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    gap: 1.2rem;
   }
 `;
 
@@ -297,25 +298,26 @@ const StProjectRow = styled.div`
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: 0.35rem 0.6rem;
   }
 
   strong {
-    font-size: 0.95rem;
+    font-size: 1rem;
+    font-weight: 800;
     color: ${({ theme }) => theme.semantic.text};
   }
 
   .period {
-    font-size: 0.75rem;
-    color: ${({ theme }) => theme.semantic.subText};
+    font-size: 0.78rem;
+    color: ${({ theme }) => theme.colors.gray400};
     font-variant-numeric: tabular-nums;
   }
 
   .desc {
-    margin: 0.3rem 0 0;
-    font-size: 0.85rem;
-    line-height: 1.65;
-    color: ${({ theme }) => theme.colors.gray600};
+    margin: 0.4rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: ${({ theme }) => theme.colors.gray700};
     white-space: pre-line;
     word-break: keep-all;
   }

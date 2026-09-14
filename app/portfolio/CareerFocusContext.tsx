@@ -70,7 +70,14 @@ export function CareerFocusProvider({ children }: { children: ReactNode }) {
     if (typeof document === "undefined") return;
     const target = document.getElementById(`career-${id}`);
     if (!target) return;
-    const top = target.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET_PX;
+    // 위에 붙어 있는 커리어 띠(헤더 포함) 높이만큼 아래에 카드가 놓이도록, 고정값 대신 실제 높이를 잰다 (2026-09-14)
+    // 스크롤 위치와 무관하게 "헤더 높이 + 띠 자체 높이"로 계산 (띠가 아직 흐름 안에 있을 때 bottom을 재면 틀림)
+    const sticky = document.querySelector<HTMLElement>("[data-career-sticky]");
+    const header = document.querySelector<HTMLElement>("header");
+    const offset = sticky
+      ? (header?.getBoundingClientRect().height ?? 0) + sticky.offsetHeight + 12
+      : STICKY_OFFSET_PX;
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }, []);
 
