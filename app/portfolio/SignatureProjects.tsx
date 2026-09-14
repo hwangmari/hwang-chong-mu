@@ -14,8 +14,8 @@ import { Reveal, SectionTitle } from "./motion";
 
 /**
  * 어떤 회사의 어떤 프로젝트를 앞세울지.
- * 29CM 사이트 전면 개편은 data/experiences.tsx에 이미지가 없어, 같은 회사의
- * public/images/29cm_*.png 중 하나를 대신 쓴다(아래 fallbackImage).
+ * 29CM 사이트 전면 개편은 data/experiences.tsx에 이미지가 없어, 개편된 사이트 화면
+ * (헤더·메인 배너) 캡처 public/images/29cm_site.png 를 쓴다(아래 fallbackImage).
  */
 const PICKS: { companyId: string; projectTitle: string; fallbackImage?: string }[] = [
   { companyId: "hanwha", projectTitle: "HSP 상담 플랫폼 마이그레이션" },
@@ -23,7 +23,7 @@ const PICKS: { companyId: string; projectTitle: string; fallbackImage?: string }
   {
     companyId: "musinsa",
     projectTitle: "29CM 사이트 전면 개편 및 통합 운영",
-    fallbackImage: "/images/29cm_c.png",
+    fallbackImage: "/images/29cm_site.png",
   },
 ];
 
