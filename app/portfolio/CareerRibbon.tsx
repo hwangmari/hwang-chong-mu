@@ -13,10 +13,10 @@ import { HERO_TIMING, OUT_EASE, bloomSegment, unrollLine } from "./heroChoreogra
 /** 위에 붙은 리본에 카드 제목이 가리지 않도록 두는 여백 */
 export const STICKY_RIBBON_OFFSET = "7rem";
 
-/** 데스크톱 기준 칸 최소 폭(px). 재직 기간이 짧아도 이만큼은 준다. */
-const MIN_SEGMENT_PX = 88;
-/** 이 폭보다 넓을 때만 칸 안에 재직 기간을 함께 적는다 */
-const DURATION_MIN_PX = 140;
+/** 데스크톱 기준 칸 최소 폭(px). 재직 기간이 짧아도 회사명 + 재직 기간 한 줄이 들어갈 만큼은 준다 (2026-09-14) */
+const MIN_SEGMENT_PX = 124;
+/** 이 폭 이상이면 칸 안에 재직 기간을 함께 적는다 — 최소 폭과 같게 두어 모든 칸에 정보가 들어간다 */
+const DURATION_MIN_PX = 124;
 /** 폭 계산에 쓰는 기준 캔버스 (theme.layout.maxWidth 안쪽) */
 const CANVAS_PX = 930;
 
