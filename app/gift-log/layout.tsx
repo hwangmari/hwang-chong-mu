@@ -7,6 +7,9 @@ const service = byId("gift-log");
 export const metadata: Metadata = {
   title: service.seoTitle,
   description: service.seoDescription,
+  // 링크 공유 미리보기 제목·설명도 서비스 것으로
+  openGraph: { title: service.seoTitle, description: service.seoDescription },
+  twitter: { title: service.seoTitle, description: service.seoDescription },
   // 로그인해야만 쓰는 장부라 검색에 올리지 않는다.
   robots: { index: false, follow: false },
 };

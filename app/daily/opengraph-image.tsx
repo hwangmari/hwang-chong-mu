@@ -1,20 +1,12 @@
-import { OgTemplate } from "@/components/common/OgTemplate";
-import { ImageResponse } from "next/og";
+import { byId } from "@/lib/services";
+import { OG_CONTENT_TYPE, OG_SIZE, serviceOgImage } from "@/lib/og";
 
+// 링크를 공유했을 때 뜨는 미리보기 이미지. 그리는 방법은 lib/og.tsx 에 한 번만 적혀 있다.
 export const runtime = "edge";
-export const size = { width: 800, height: 420 };
-export const contentType = "image/png";
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
+export const alt = byId("daily").seoTitle;
 
 export default async function Image() {
-  return new ImageResponse(
-    <OgTemplate
-      title="일일 기록"
-      subtitle="한 줄 일기 + 체크리스트 그래프"
-      emoji="📓"
-      theme="amber"
-    />,
-    {
-      ...size,
-    },
-  );
+  return serviceOgImage("daily");
 }
