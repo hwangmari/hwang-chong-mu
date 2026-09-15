@@ -1,5 +1,6 @@
 "use client";
 
+import styled from "styled-components";
 import { buildPlayerSchedule } from "../standings";
 import { toClock } from "../format";
 import { playedMinutes, type Timeline } from "../timeline";
@@ -40,6 +41,11 @@ const OUTCOME_LABEL = { win: "승", loss: "패", draw: "무" } as const;
 
 export default function PlayerSchedule({ event, scores, timeline, selected, onSelect }: Props) {
   const schedule = selected ? buildPlayerSchedule(event, scores, selected) : [];
+  // 이름 옆에 붙는 경기 수 — 대진표에 든 확정 경기 기준 (당일 편성 빈 라운드는 포함되지 않는다)
+  const gameCount = new Map<string, number>();
+  for (const m of event.matches) {
+    for (const name of [...m.teamA, ...m.teamB]) gameCount.set(name, (gameCount.get(name) ?? 0) + 1);
+  }
 
   return (
     <StCard>
@@ -60,6 +66,9 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
             onClick={() => onSelect(player.name)}
           >
             {player.name}
+            <StChipCount aria-label={`${gameCount.get(player.name) ?? 0}경기`}>
+              {gameCount.get(player.name) ?? 0}
+            </StChipCount>
           </StChip>
         ))}
       </StChipRow>
@@ -132,3 +141,20 @@ export default function PlayerSchedule({ event, scores, timeline, selected, onSe
     </StCard>
   );
 }
+
+/* 이름 뒤 작은 숫자 = 그 선수의 확정 경기 수 */
+const StChipCount = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+`;
