@@ -1,5 +1,7 @@
 "use client";
 
+import styled from "styled-components";
+
 import { useState } from "react";
 import { outcomeForA } from "../standings";
 import { canStartOn, describeTiming, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
@@ -113,6 +115,8 @@ export default function MatchCard({
   const outcome = finished && score ? outcomeForA(score) : null;
   const color = MATCH_TYPE_COLOR[match.type];
   const state = timing.status;
+  // 지금 다른 코트에서 뛰고 있는 이 경기의 선수들 (대기 이유 표시용)
+  const playingNow = [...match.teamA, ...match.teamB].filter((n) => timeline.busyPlayers.has(n));
 
   function renderTeam(names: [string, string], side: "A" | "B") {
     const winner =
@@ -136,6 +140,9 @@ export default function MatchCard({
                     {player.years}년{player.team ? ` · ${player.team}` : ""}
                   </StYears>
                 </>
+              ) : null}
+              {state === "waiting" && timeline.busyPlayers.has(name) ? (
+                <StPlayingTag title="지금 다른 코트에서 경기 중이에요">🎾 경기 중</StPlayingTag>
               ) : null}
             </StPlayerLine>
           );
@@ -185,7 +192,11 @@ export default function MatchCard({
           state === "done" ? "done" : state === "playing" ? "playing" : state === "ready" ? "shifted" : "plain"
         }
       >
-        ⏱ {describeTiming(timing)}
+        ⏱ {state === "waiting" && playingNow.length > 0
+          ? `🎾 ${playingNow.join(", ")} 경기 중 · 끝나면 시작할 수 있어요`
+          : state === "waiting" && timeline.occupiedCourts.size >= courts.length
+            ? `코트가 모두 경기 중 · 비면 시작할 수 있어요 (예상 ${toClock(timing.expectedStart)})`
+            : describeTiming(timing)}
         {state === "done" && score
           ? (() => {
               const mins = playedMinutes(score);
@@ -237,7 +248,11 @@ export default function MatchCard({
                 }
                 onClick={() => void onStart(match.no, court)}
               >
-                ▶ 코트 {court}에서 시작
+                {timeline.occupiedCourts.has(court)
+                  ? `코트 ${court} · 경기 중`
+                  : ok
+                    ? `▶ 코트 ${court}에서 시작`
+                    : `코트 ${court} · 선수 경기 중`}
               </StCourtPick>
             );
           })}
@@ -268,25 +283,25 @@ export default function MatchCard({
       {showScoreInputs ? (
         <StScoreRow>
           <StScoreInput
-            type="number"
+            type="text"
             inputMode="numeric"
-            min={0}
-            max={99}
+            pattern="[0-9]*"
+            maxLength={2}
             placeholder="A"
             aria-label="A팀 게임 수"
             value={a}
-            onChange={(e) => setA(e.target.value)}
+            onChange={(e) => setA(e.target.value.replace(/\D/g, ""))}
           />
           <StScoreColon>:</StScoreColon>
           <StScoreInput
-            type="number"
+            type="text"
             inputMode="numeric"
-            min={0}
-            max={99}
+            pattern="[0-9]*"
+            maxLength={2}
             placeholder="B"
             aria-label="B팀 게임 수"
             value={b}
-            onChange={(e) => setB(e.target.value)}
+            onChange={(e) => setB(e.target.value.replace(/\D/g, ""))}
           />
           <StSaveBtn
             type="button"
@@ -311,3 +326,17 @@ export default function MatchCard({
     </StMatch>
   );
 }
+
+// 대기 중인 경기에서, 지금 다른 코트에서 뛰고 있는 선수 옆에 붙는 표시
+const StPlayingTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: ${({ theme }) => theme.colors.teal600};
+  background: ${({ theme }) => theme.colors.teal50};
+`;

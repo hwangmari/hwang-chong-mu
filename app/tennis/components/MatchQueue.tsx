@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import MatchCard from "./MatchCard";
 import { toClock } from "../format";
 import { courtLetters, elapsedOf, type Timeline } from "../timeline";
@@ -88,6 +88,7 @@ export default function MatchQueue({
   // ── 당일 편성: 빈 코트 칸에 선수를 넣어 경기를 만든다 ──
   type SlotKey = string; // `${round}-${court}`
   const [fillSlot, setFillSlot] = useState<SlotKey | null>(null);
+  const [editingNo, setEditingNo] = useState<number | null>(null);
   const [pick, setPick] = useState<{ a: string[]; b: string[] }>({ a: [], b: [] });
 
   const roster = [...players.values()];
@@ -104,8 +105,11 @@ export default function MatchQueue({
     pairSeen.add([...m.teamB].sort().join("|"));
   }
   // 같은 라운드에 이미 들어간 선수는 다른 코트에 넣을 수 없다
-  const busyInRound = (round: number) =>
-    new Set(event.matches.filter((m) => m.round === round).flatMap((m) => [...m.teamA, ...m.teamB]));
+  // 같은 라운드에 이미 들어간 선수 (선수를 바꾸는 중인 경기 자신은 뺀다)
+  const busyInRound = (round: number, exceptNo: number | null = null) =>
+    new Set(
+      event.matches.filter((m) => m.round === round && m.no !== exceptNo).flatMap((m) => [...m.teamA, ...m.teamB]),
+    );
 
   function typeOf(names: string[]): Match["type"] {
     const g = names.map((n) => players.get(n)?.gender);
@@ -146,20 +150,47 @@ export default function MatchQueue({
   }
 
   function openSlot(round: number, court: Court) {
+    setEditingNo(null);
     setFillSlot(`${round}-${court}`);
     setPick(recommend(round) ?? { a: [], b: [] });
+  }
+
+  // 이미 넣은(아직 시작 안 한) 당일 편성 경기의 선수를 다시 고른다
+  function openEdit(match: Match) {
+    setEditingNo(match.no);
+    setFillSlot(`${match.round ?? 0}-${match.court ?? "?"}`);
+    setPick({ a: [...match.teamA], b: [...match.teamB] });
+  }
+
+  function closePicker() {
+    setFillSlot(null);
+    setEditingNo(null);
+    setPick({ a: [], b: [] });
+  }
+
+  async function removeMatch(match: Match) {
+    if (!window.confirm(`${match.no}번 경기를 대진에서 뺄까요? 점수가 없는 경기만 뺄 수 있고, 다시 편성하면 새 번호가 붙어요.`)) return;
+    await onReorder(event.matches.filter((m) => m.no !== match.no));
+    closePicker();
   }
 
   function toggle(side: "a" | "b", name: string) {
     setPick((prev) => {
       const cur = prev[side];
-      const next = cur.includes(name) ? cur.filter((n) => n !== name) : cur.length < 2 ? [...cur, name] : cur;
+      // 이미 2명이면 먼저 고른 사람을 빼고 새 사람을 넣는다 (칩이 잠기지 않게, 2026-09-15)
+      const next = cur.includes(name) ? cur.filter((n) => n !== name) : cur.length < 2 ? [...cur, name] : [cur[1], name];
       return { ...prev, [side]: next };
     });
   }
 
-  async function saveSlot(round: number, court: Court) {
+  async function saveSlot(round: number, court: Court, editing: Match | null = null) {
     if (pick.a.length !== 2 || pick.b.length !== 2) return;
+    if (editing) {
+      const changed: Match = { ...editing, type: typeOf([...pick.a, ...pick.b]), teamA: [pick.a[0], pick.a[1]], teamB: [pick.b[0], pick.b[1]] };
+      await onReorder(event.matches.map((m) => (m.no === editing.no ? changed : m)));
+      closePicker();
+      return;
+    }
     const nextNo = Math.max(0, ...event.matches.map((m) => m.no)) + 1;
     const match: Match = {
       no: nextNo,
@@ -170,8 +201,7 @@ export default function MatchQueue({
       court,
     };
     await onReorder([...event.matches, match]);
-    setFillSlot(null);
-    setPick({ a: [], b: [] });
+    closePicker();
   }
 
   // 다음 순서: 아직 시작 안 한 경기 중 앞에서 3개 (코트는 그때 비는 곳으로 가므로 코트별로 나누지 않는다)
@@ -179,7 +209,10 @@ export default function MatchQueue({
     const t = timeline.byMatch.get(m.no);
     return t && (t.status === "ready" || t.status === "waiting");
   });
-  const nextThree = upcoming.slice(0, 3);
+  // 지금 시작 가능한 경기(뒤 라운드여도)를 앞에 두고, 나머지는 대진 순서대로
+  const nextThree = [...upcoming]
+    .sort((x, y) => Number(timeline.byMatch.get(y.no)?.status === "ready") - Number(timeline.byMatch.get(x.no)?.status === "ready"))
+    .slice(0, 3);
   const anyReady = upcoming.some((m) => timeline.byMatch.get(m.no)?.status === "ready");
   const allDone = timeline.courts.every((c) => !c.playing) && upcoming.length === 0;
 
@@ -358,47 +391,16 @@ export default function MatchQueue({
                   </StRoundTitle>
                   <StRoundTime>{group.round.time}</StRoundTime>
                 </StRoundHead>
-                {group.matches.length > 0 ? (
-                  <StQueueList>
-                    {group.matches.map((match) => {
-                      const timing = timeline.byMatch.get(match.no);
-                      if (!timing) return null;
-                      return (
-                        <MatchCard
-                          key={match.no}
-                          match={match}
-                          players={players}
-                          score={scores[match.no] ?? null}
-                          timing={timing}
-                          timeline={timeline}
-                          courts={courts}
-                          busy={busy}
-                          onStart={onStart}
-                          onSave={onSave}
-                          onClear={onClear}
-                        />
-                      );
-                    })}
-                  </StQueueList>
-                ) : (
-                  <StQueueList>
-                    {courts.map((court) => {
-                      const key = `${group.round.no}-${court}`;
-                      const open = fillSlot === key;
-                      const taken = busyInRound(group.round.no);
-                      return (
-                        <StEmptySlot key={court} $open={open}>
-                          <div className="head">
-                            <span className="court">코트 {court}</span>
-                            {canReorder && !open && (
-                              <StGhostBtn type="button" onClick={() => openSlot(group.round.no, court)} disabled={busy}>
-                                ✏️ 편성하기
-                              </StGhostBtn>
-                            )}
-                          </div>
-                          {!open ? (
-                            <span className="hint">당일 편성 · 아직 선수가 없어요</span>
-                          ) : (
+                {/* 코트마다 한 칸: 그 코트에 경기가 있으면 카드, 없으면 빈 칸(편성하기). 경기를 넣어도 옆 코트 칸은 그대로 남는다 (2026-09-15) */}
+                <StQueueList>
+                  {(() => {
+                    const roundNo = group.round.no;
+                    const taken = busyInRound(roundNo, editingNo);
+                    // 선수 바꾸기는 당일 편성 라운드에서만 (계획된 대진표는 그대로 둔다)
+                    const sameDay = /당일/.test(group.round.label ?? "");
+                    const placed = new Set<Court>();
+                    const cells: ReactNode[] = [];
+                    const renderPicker = (court: Court, editing: Match | null) => (
                             <StPicker>
                               {(["a", "b"] as const).map((side) => {
                                 const team = side === "a" ? sideA : sideB;
@@ -416,7 +418,7 @@ export default function MatchQueue({
                                               key={pl.name}
                                               type="button"
                                               className={on ? "chip on" : blocked ? "chip off" : "chip"}
-                                              disabled={blocked || (!on && pick[side].length >= 2)}
+                                              disabled={blocked}
                                               title={blocked ? "이 라운드에 이미 들어가 있어요" : undefined}
                                               onClick={() => toggle(side, pl.name)}
                                             >
@@ -430,28 +432,91 @@ export default function MatchQueue({
                                 );
                               })}
                               <div className="actions">
-                                <StGhostBtn type="button" onClick={() => setPick(recommend(group.round.no) ?? { a: [], b: [] })}>
+                                <StGhostBtn type="button" onClick={() => setPick(recommend(roundNo) ?? { a: [], b: [] })}>
                                   ✨ 추천으로 채우기
                                 </StGhostBtn>
-                                <StGhostBtn type="button" onClick={() => { setFillSlot(null); setPick({ a: [], b: [] }); }}>
+                                <StGhostBtn type="button" onClick={closePicker}>
                                   취소
                                 </StGhostBtn>
+                                {editing && (
+                                  <StGhostBtn type="button" disabled={busy} onClick={() => void removeMatch(editing)}>
+                                    이 경기 빼기
+                                  </StGhostBtn>
+                                )}
                                 <StPrimaryBtn
                                   type="button"
                                   disabled={busy || pick.a.length !== 2 || pick.b.length !== 2}
-                                  onClick={() => saveSlot(group.round.no, court)}
+                                  onClick={() => saveSlot(roundNo, court, editing)}
                                 >
-                                  이 코트에 넣기
+                                  {editing ? "이렇게 바꾸기" : "이 코트에 넣기"}
                                 </StPrimaryBtn>
                               </div>
                               <span className="hint">추천은 확정 경기가 적은 선수부터, 이미 짝이 됐던 조합은 피해서 골라요. 숫자는 지금까지 확정 경기 수예요.</span>
                             </StPicker>
+                    );
+                    for (const match of group.matches) {
+                      const timing = timeline.byMatch.get(match.no);
+                      if (!timing) continue;
+                      if (match.court) placed.add(match.court);
+                      const key = `${roundNo}-${match.court ?? "?"}`;
+                      const editable = canReorder && sameDay && !scores[match.no];
+                      if (editingNo === match.no && fillSlot === key) {
+                        cells.push(
+                          <StEmptySlot key={`m-${match.no}`} $open>
+                            <div className="head">
+                              <span className="court">코트 {match.court ?? "-"} · {match.no}번 경기 선수 바꾸기</span>
+                            </div>
+                            {renderPicker(match.court ?? courts[0], match)}
+                          </StEmptySlot>,
+                        );
+                        continue;
+                      }
+                      cells.push(
+                        <div key={`m-${match.no}`}>
+                          <MatchCard
+                            match={match}
+                            players={players}
+                            score={scores[match.no] ?? null}
+                            timing={timing}
+                            timeline={timeline}
+                            courts={courts}
+                            busy={busy}
+                            onStart={onStart}
+                            onSave={onSave}
+                            onClear={onClear}
+                          />
+                          {editable && (
+                            <StEditRow>
+                              <StGhostBtn type="button" disabled={busy} onClick={() => openEdit(match)}>
+                                ✏️ 선수 바꾸기
+                              </StGhostBtn>
+                            </StEditRow>
                           )}
-                        </StEmptySlot>
+                        </div>,
                       );
-                    })}
-                  </StQueueList>
-                )}
+                    }
+                    for (const court of courts) {
+                      if (placed.has(court)) continue;
+                      const key = `${roundNo}-${court}`;
+                      const open = fillSlot === key && editingNo === null;
+                      cells.push(
+                        <StEmptySlot key={court} $open={open}>
+                          <div className="head">
+                            <span className="court">코트 {court}</span>
+                            {canReorder && !open && (
+                              <StGhostBtn type="button" onClick={() => openSlot(roundNo, court)} disabled={busy}>
+                                ✏️ 편성하기
+                              </StGhostBtn>
+                            )}
+                          </div>
+                          {!open && <span className="hint">당일 편성 · 아직 선수가 없어요</span>}
+                          {open && renderPicker(court, null)}
+                        </StEmptySlot>,
+                      );
+                    }
+                    return cells;
+                  })()}
+                </StQueueList>
               </div>
             ))}
             {unrounded.length > 0 && (
@@ -523,6 +588,12 @@ const StEmptySlot = styled.div<{ $open?: boolean }>`
 `;
 
 /* 슬롯 안 선수 고르기: 팀별 칩 두 줄 + 버튼 */
+const StEditRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+`;
+
 const StPicker = styled.div`
   display: flex;
   flex-direction: column;

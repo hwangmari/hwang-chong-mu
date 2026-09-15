@@ -506,8 +506,10 @@ export const StCourtPick = styled.button<{ $primary?: boolean }>`
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.4;
     cursor: default;
+    border-color: ${({ theme }) => theme.colors.gray200};
+    background: ${({ theme }) => theme.colors.gray100};
+    color: ${({ theme }) => theme.colors.gray400};
   }
 `;
 

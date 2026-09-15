@@ -93,7 +93,7 @@ export function buildTimeline(
       if (score.court) playingOn.set(score.court, match);
     }
   }
-  let pendingAhead = 0; // 앞 순서에서 아직 시작 안 한(시작 가능/대기) 경기 수
+  let pendingAhead = 0; // 앞 순서에서 아직 시작 안 했고 선수가 모두 비어 있는(지금 코트만 있으면 뛸 수 있는) 경기 수
 
   event.matches.forEach((match, index) => {
     const people = [...match.teamA, ...match.teamB];
@@ -125,12 +125,14 @@ export function buildTimeline(
       start = Math.max(courtAt, playersAt, now ?? eventStart);
       end = start + dur;
       waitingPlayers = people.filter((n) => (playerFree.get(n) ?? eventStart) > courtAt);
-      // 빈 코트가 있고, 선수 4명이 지금 다른 경기 중이 아니고, 앞 순서 경기들이 코트를 다 잡지 않았으면 시작 가능
+      // 빈 코트가 있고, 선수 4명이 지금 다른 경기 중이 아니면 시작 가능. 라운드·순서는 상관없다.
+      // 단, 빈 코트 수만큼만 "시작 가능"으로 표시한다(앞 순서에서 선수가 비어 있는 경기가 먼저 코트를 잡는다).
+      // 선수가 다른 코트에서 뛰는 중인 경기는 코트를 잡아 두지 않으므로, 뒤 라운드 경기가 빈 코트에 바로 들어갈 수 있다 (2026-09-15).
       const freeCourtExists = courts.some((c) => !playingOn.has(c));
       const playersIdle = people.every((n) => !busyPlayers.has(n));
-      const queueAhead = pendingAhead < courts.length - playingOn.size; // 앞에서 대기 중인 경기 수가 빈 코트 수보다 적을 때
+      const queueAhead = pendingAhead < courts.length - playingOn.size;
       status = freeCourtExists && playersIdle && queueAhead ? "ready" : "waiting";
-      if (status === "ready" || status === "waiting") pendingAhead += 1;
+      if (playersIdle) pendingAhead += 1;
       if (!nextOn.has(court)) nextOn.set(court, match);
     }
 
