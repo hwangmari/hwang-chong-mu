@@ -18,6 +18,7 @@ import {
 import { AMOUNT_PRESETS, DIRECTION_TONE } from "../types";
 import { formatAmount, formatDateKo } from "./giftFormat";
 import { formatDateKey } from "@/utils/date";
+import { onlyDigits } from "@/utils/number";
 
 // 답례 금액은 자주 쓰는 세 개만 칩으로. 더 큰 금액은 숫자로 적으면 된다.
 const QUICK_AMOUNTS = AMOUNT_PRESETS.slice(0, 3);
@@ -93,14 +94,12 @@ export default function ReturnAmountForm({
         <StReturnField>
           <StFieldName as="span">낸 금액 (원)</StFieldName>
           <StSmallInput
-            type="number"
+            type="text"
             inputMode="numeric"
-            min={0}
-            step={10000}
             placeholder="예) 50000"
             value={amount}
             autoFocus
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(onlyDigits(e.target.value))}
           />
         </StReturnField>
       </StReturnRow>

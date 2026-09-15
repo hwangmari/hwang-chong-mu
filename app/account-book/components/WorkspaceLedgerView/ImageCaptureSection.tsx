@@ -8,6 +8,7 @@ import ModalCloseButton from "../ModalCloseButton";
 import type { PaymentType } from "../../types";
 import type { ExtractedImageEntryCandidate } from "./types";
 import { getExtractedImageCandidateDuplicateKey } from "./utils";
+import { onlyDigits } from "@/utils/number";
 
 type Props = {
   embedded?: boolean;
@@ -345,12 +346,12 @@ export default function ImageCaptureSection({
                         aria-label="항목"
                       />
                       <StCompactNumberInput
-                        type="number"
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
                         value={entry.amount > 0 ? String(entry.amount) : ""}
                         onChange={(event) =>
                           updateDraftEntry(entry.id, {
-                            amount: Number(event.target.value) || 0,
+                            amount: Number(onlyDigits(event.target.value)) || 0,
                           })
                         }
                         placeholder="금액"

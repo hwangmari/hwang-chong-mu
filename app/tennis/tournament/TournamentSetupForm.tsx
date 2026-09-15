@@ -19,6 +19,7 @@ import {
 } from "../page.styles";
 import { formatDateKey } from "@/utils/date";
 import { parseRosterText, rosterSummary } from "./roster";
+import { onlyDigits } from "@/utils/number";
 
 type Props = {
   onCreate: (event: Omit<TournamentEvent, "id" | "builtIn">) => Promise<void>;
@@ -118,11 +119,10 @@ export default function TournamentSetupForm({ onCreate }: Props) {
         <StLabel>
           <StFieldName>경기당 시간(분)</StFieldName>
           <StInput
-            type="number"
-            min={10}
-            max={120}
+            type="text"
+            inputMode="numeric"
             value={minutesPerMatch}
-            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(120, Number(e.target.value) || 30)))}
+            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(120, Number(onlyDigits(e.target.value)) || 30)))}
           />
         </StLabel>
       </StRow>

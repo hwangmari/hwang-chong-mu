@@ -35,6 +35,7 @@ import {
   type GiftRelation,
 } from "../types";
 import { formatAmount } from "./giftFormat";
+import { onlyDigits } from "@/utils/number";
 
 export type FormState = {
   id: string | null;
@@ -170,13 +171,11 @@ export default function GiftEntryForm({
       <StLabel>
         <StFieldName>금액 (원)</StFieldName>
         <StInput
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={0}
-          step={10000}
           placeholder="예) 50000"
           value={form.amount}
-          onChange={(e) => onChange({ amount: e.target.value })}
+          onChange={(e) => onChange({ amount: onlyDigits(e.target.value) })}
         />
         <StChipRow>
           {AMOUNT_PRESETS.map((preset) => (

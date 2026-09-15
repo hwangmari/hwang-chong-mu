@@ -6,6 +6,7 @@ import Card from "./ui/Card";
 import SectionTitle from "./ui/SectionTitle";
 import { ExpenseType } from "@/types";
 import { useModal } from "@/components/common/ModalProvider";
+import { onlyDigits } from "@/utils/number";
 
 interface Props {
   members: string[];
@@ -95,11 +96,12 @@ export default function ExpenseInput({ members, onAddExpense }: Props) {
             onChange={(e) => setDesc(e.target.value)}
           />
           <StInput
-            type="number"
+            type="text"
+            inputMode="numeric"
             className="amount-input"
             placeholder="금액"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(onlyDigits(e.target.value))}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           />
         </StInputRow>

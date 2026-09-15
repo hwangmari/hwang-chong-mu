@@ -16,6 +16,7 @@ import {
   StTag,
 } from "../page.styles";
 import { GENDER_COLOR, GENDER_LABEL, type Gender, type Match, type Player } from "../types";
+import { onlyDecimal } from "@/utils/number";
 
 type Props = {
   players: Player[];
@@ -154,13 +155,11 @@ export default function PlayerRoster({ players, matches, editable, busy, onSave,
                 <option value="F">여</option>
               </StSelect>
               <StInput
-                type="number"
-                min={0}
-                max={60}
-                step={0.5}
+                type="text"
+                inputMode="decimal"
                 placeholder="구력"
                 value={row.years}
-                onChange={(e) => patch(row.key, { years: e.target.value })}
+                onChange={(e) => patch(row.key, { years: onlyDecimal(e.target.value) })}
               />
               <StInput
                 type="text"

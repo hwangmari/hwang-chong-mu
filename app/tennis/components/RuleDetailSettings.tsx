@@ -39,6 +39,7 @@ import {
   StTableWrap,
 } from "../page.styles";
 import { MATCH_TYPE_SHORT, type MatchType, type Player } from "../types";
+import { onlyDigits } from "@/utils/number";
 
 type Props = {
   players: Player[];
@@ -233,41 +234,37 @@ export default function RuleDetailSettings({
                   <label>
                     <StFieldName>남자 복식</StFieldName>
                     <StMiniInput
-                      type="number"
-                      min={0}
-                      max={60}
+                      type="text"
+                      inputMode="numeric"
                       value={manualSplit.menMatches}
-                      onChange={(e) => setManual("menMatches", Number(e.target.value) || 0)}
+                      onChange={(e) => setManual("menMatches", Number(onlyDigits(e.target.value)) || 0)}
                     />
                   </label>
                   <label>
                     <StFieldName>여자 복식</StFieldName>
                     <StMiniInput
-                      type="number"
-                      min={0}
-                      max={60}
+                      type="text"
+                      inputMode="numeric"
                       value={manualSplit.womenMatches}
-                      onChange={(e) => setManual("womenMatches", Number(e.target.value) || 0)}
+                      onChange={(e) => setManual("womenMatches", Number(onlyDigits(e.target.value)) || 0)}
                     />
                   </label>
                   <label>
                     <StFieldName>혼합 복식</StFieldName>
                     <StMiniInput
-                      type="number"
-                      min={0}
-                      max={60}
+                      type="text"
+                      inputMode="numeric"
                       value={manualSplit.mixedMatches}
-                      onChange={(e) => setManual("mixedMatches", Number(e.target.value) || 0)}
+                      onChange={(e) => setManual("mixedMatches", Number(onlyDigits(e.target.value)) || 0)}
                     />
                   </label>
                   <label>
                     <StFieldName>잡복(성별 무관)</StFieldName>
                     <StMiniInput
-                      type="number"
-                      min={0}
-                      max={60}
+                      type="text"
+                      inputMode="numeric"
                       value={manualSplit.openMatches}
-                      onChange={(e) => setManual("openMatches", Number(e.target.value) || 0)}
+                      onChange={(e) => setManual("openMatches", Number(onlyDigits(e.target.value)) || 0)}
                     />
                   </label>
                 </StPairRow>
@@ -341,11 +338,10 @@ export default function RuleDetailSettings({
                 <label>
                   <StFieldName>최대 연속 휴식 (묶음)</StFieldName>
                   <StMiniInput
-                    type="number"
-                    min={1}
-                    max={5}
+                    type="text"
+                    inputMode="numeric"
                     value={rules.maxRest}
-                    onChange={(e) => patch({ maxRest: Math.max(1, Math.min(5, Number(e.target.value) || 1)) })}
+                    onChange={(e) => patch({ maxRest: Math.max(1, Math.min(5, Number(onlyDigits(e.target.value)) || 1)) })}
                   />
                 </label>
               </StPairRow>
@@ -360,13 +356,12 @@ export default function RuleDetailSettings({
               <label>
                 <StFieldName>전원 출전 상한 (비우면 없음)</StFieldName>
                 <StMiniInput
-                  type="number"
-                  min={1}
-                  max={99}
+                  type="text"
+                  inputMode="numeric"
                   value={rules.appearanceCap ?? ""}
                   onChange={(e) =>
                     patch({
-                      appearanceCap: e.target.value.trim() === "" ? null : Math.max(1, Math.min(99, Number(e.target.value) || 1)),
+                      appearanceCap: onlyDigits(e.target.value).trim() === "" ? null : Math.max(1, Math.min(99, Number(onlyDigits(e.target.value)) || 1)),
                     })
                   }
                 />
@@ -402,22 +397,20 @@ export default function RuleDetailSettings({
                             <td>{p.name}</td>
                             <td>
                               <StMiniInput
-                                type="number"
-                                min={0}
-                                max={99}
+                                type="text"
+                                inputMode="numeric"
                                 value={rules.playerLimits[p.name]?.min ?? ""}
                                 aria-label={`${p.name} 최소 출전`}
-                                onChange={(e) => setLimit(p.name, "min", e.target.value)}
+                                onChange={(e) => setLimit(p.name, "min", onlyDigits(e.target.value))}
                               />
                             </td>
                             <td>
                               <StMiniInput
-                                type="number"
-                                min={0}
-                                max={99}
+                                type="text"
+                                inputMode="numeric"
                                 value={rules.playerLimits[p.name]?.max ?? ""}
                                 aria-label={`${p.name} 최대 출전`}
-                                onChange={(e) => setLimit(p.name, "max", e.target.value)}
+                                onChange={(e) => setLimit(p.name, "max", onlyDigits(e.target.value))}
                               />
                             </td>
                             <td className="right">
@@ -513,14 +506,13 @@ export default function RuleDetailSettings({
                   <label>
                     <StFieldName>허용 구력 차</StFieldName>
                     <StMiniInput
-                      type="number"
-                      min={0}
-                      max={30}
+                      type="text"
+                      inputMode="numeric"
                       value={rules.yearsTolerance ?? ""}
                       onChange={(e) =>
                         patch({
                           yearsTolerance:
-                            e.target.value.trim() === "" ? null : Math.max(0, Math.min(30, Number(e.target.value) || 0)),
+                            onlyDigits(e.target.value).trim() === "" ? null : Math.max(0, Math.min(30, Number(onlyDigits(e.target.value)) || 0)),
                         })
                       }
                     />

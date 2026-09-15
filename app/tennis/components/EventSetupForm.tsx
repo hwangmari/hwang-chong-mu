@@ -43,6 +43,7 @@ import { StSegmentButton, StSegmented } from "@/components/styled/layout.styled"
 import type { EventDraft, Match, Player } from "../types";
 import type { NewTennisEvent } from "@/services/tennis";
 import { formatDateKey } from "@/utils/date";
+import { onlyDigits } from "@/utils/number";
 
 type Props = {
   onCreate: (event: NewTennisEvent) => Promise<void>;
@@ -233,11 +234,10 @@ export default function EventSetupForm({ onCreate }: Props) {
         <StLabel>
           <StFieldName>경기당 시간(분)</StFieldName>
           <StInput
-            type="number"
-            min={10}
-            max={180}
+            type="text"
+            inputMode="numeric"
             value={minutesPerMatch}
-            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(180, Number(e.target.value) || 45)))}
+            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(180, Number(onlyDigits(e.target.value)) || 45)))}
           />
         </StLabel>
       </StRow>
@@ -246,21 +246,19 @@ export default function EventSetupForm({ onCreate }: Props) {
         <StLabel>
           <StFieldName>코트 수 (최대 2면)</StFieldName>
           <StInput
-            type="number"
-            min={1}
-            max={2}
+            type="text"
+            inputMode="numeric"
             value={courts}
-            onChange={(e) => setCourts(Math.max(1, Math.min(2, Number(e.target.value) || 1)))}
+            onChange={(e) => setCourts(Math.max(1, Math.min(2, Number(onlyDigits(e.target.value)) || 1)))}
           />
         </StLabel>
         <StLabel>
           <StFieldName>총 경기 수</StFieldName>
           <StInput
-            type="number"
-            min={1}
-            max={60}
+            type="text"
+            inputMode="numeric"
             value={totalMatches}
-            onChange={(e) => setTotalMatches(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+            onChange={(e) => setTotalMatches(Math.max(1, Math.min(60, Number(onlyDigits(e.target.value)) || 1)))}
           />
         </StLabel>
         <StLabel>

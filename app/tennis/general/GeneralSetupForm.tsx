@@ -20,6 +20,7 @@ import { StSegmentButton, StSegmented } from "@/components/styled/layout.styled"
 import { formatDateKey } from "@/utils/date";
 import { buildGeneralSchedule, groupCountOf, previewSchedule } from "./generate";
 import { parseTeamsText, teamLineErrors, teamsOf } from "./parseTeams";
+import { onlyDigits } from "@/utils/number";
 import {
   FORMAT_HINT,
   FORMAT_LABEL,
@@ -205,21 +206,19 @@ export default function GeneralSetupForm({ onCreate }: Props) {
         <StLabel>
           <StFieldName>경기당 시간(분)</StFieldName>
           <StInput
-            type="number"
-            min={10}
-            max={120}
+            type="text"
+            inputMode="numeric"
             value={minutesPerMatch}
-            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(120, Number(e.target.value) || 30)))}
+            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(120, Number(onlyDigits(e.target.value)) || 30)))}
           />
         </StLabel>
         <StLabel>
           <StFieldName>코트 수 (1~4면)</StFieldName>
           <StInput
-            type="number"
-            min={1}
-            max={4}
+            type="text"
+            inputMode="numeric"
             value={courts}
-            onChange={(e) => setCourts(Math.max(1, Math.min(4, Number(e.target.value) || 2)))}
+            onChange={(e) => setCourts(Math.max(1, Math.min(4, Number(onlyDigits(e.target.value)) || 2)))}
           />
         </StLabel>
       </StRow>
@@ -261,19 +260,17 @@ export default function GeneralSetupForm({ onCreate }: Props) {
               <StFieldName>{groupBy === "size" ? "한 조 인원 (3~5팀)" : "조 개수 (2~8조)"}</StFieldName>
               {groupBy === "size" ? (
                 <StInput
-                  type="number"
-                  min={3}
-                  max={5}
+                  type="text"
+                  inputMode="numeric"
                   value={groupSize}
-                  onChange={(e) => setGroupSize(Math.max(3, Math.min(5, Number(e.target.value) || 4)))}
+                  onChange={(e) => setGroupSize(Math.max(3, Math.min(5, Number(onlyDigits(e.target.value)) || 4)))}
                 />
               ) : (
                 <StInput
-                  type="number"
-                  min={2}
-                  max={8}
+                  type="text"
+                  inputMode="numeric"
                   value={groupCount}
-                  onChange={(e) => setGroupCount(Math.max(2, Math.min(8, Number(e.target.value) || 2)))}
+                  onChange={(e) => setGroupCount(Math.max(2, Math.min(8, Number(onlyDigits(e.target.value)) || 2)))}
                 />
               )}
             </StLabel>

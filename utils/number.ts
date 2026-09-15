@@ -7,3 +7,14 @@ export function toNumberLoose(value: string | number | null | undefined): number
   const n = Number(cleaned);
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
+
+// 글자 칸에 숫자만 남긴다 (휴대폰 숫자 키패드 + 스피너 없는 입력용). 정수: onlyDigits, 소수 허용: onlyDecimal (2026-09-15)
+export function onlyDigits(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+export function onlyDecimal(value: string): string {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  const [head, ...rest] = cleaned.split(".");
+  return rest.length > 0 ? `${head}.${rest.join("")}` : head;
+}

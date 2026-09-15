@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@hwangchongmu/ui";
+import { onlyDecimal } from "@/utils/number";
 import {
   StActions,
   StCard,
@@ -25,7 +26,6 @@ import {
   METRIC_COLOR,
   METRIC_KEYS,
   METRIC_LABEL,
-  METRIC_STEP,
   METRIC_UNIT,
   type InBodyMetricKey,
   type VisibleMap,
@@ -126,12 +126,11 @@ export default function MeasurementForm({
               <StFieldUnit>{METRIC_UNIT[k]}</StFieldUnit>
             </StFieldHead>
             <StInput
-              type="number"
+              type="text"
               inputMode="decimal"
-              step={METRIC_STEP[k]}
               placeholder="예) 0"
               value={form[k]}
-              onChange={(e) => onFieldChange(k, e.target.value)}
+              onChange={(e) => onFieldChange(k, onlyDecimal(e.target.value))}
             />
           </StLabel>
         ))}

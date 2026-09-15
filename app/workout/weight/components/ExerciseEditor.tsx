@@ -2,6 +2,8 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { DEFAULT_BARBELL_WEIGHT_KG } from "../../helpers";
+import { onlyDigits } from "@/utils/number";
+import DecimalField from "@/components/common/DecimalField";
 import {
   GYM_EQUIPMENT_LABEL,
   GYM_SET_TYPE_LABEL,
@@ -245,38 +247,33 @@ export function ExerciseEditor({
             <div key={set.id}>
               <StSetRow>
                 <StSetIndex>{setIdx + 1}</StSetIndex>
-                <StMiniInput
-                  type="number"
-                  step="0.5"
-                  inputMode="decimal"
+                <DecimalField
+                  as={StMiniInput}
                   placeholder={ex.measure === "time" ? "kg(선택)" : "무게"}
-                  value={set.weight || ""}
-                  onChange={(e) =>
-                    onUpdateSet(ex.id, set.id, {
-                      weight: Number(e.target.value) || 0,
-                    })
-                  }
+                  value={set.weight || 0}
+                  onCommit={(weight) => onUpdateSet(ex.id, set.id, { weight })}
                 />
                 {ex.measure === "time" ? (
                   <StMiniInput
-                    type="number"
+                    type="text"
                     inputMode="numeric"
                     placeholder="초"
                     value={set.durationSec || ""}
                     onChange={(e) =>
                       onUpdateSet(ex.id, set.id, {
-                        durationSec: Number(e.target.value) || 0,
+                        durationSec: Number(onlyDigits(e.target.value)) || 0,
                       })
                     }
                   />
                 ) : (
                   <StMiniInput
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="횟수"
                     value={set.reps || ""}
                     onChange={(e) =>
                       onUpdateSet(ex.id, set.id, {
-                        reps: Number(e.target.value) || 0,
+                        reps: Number(onlyDigits(e.target.value)) || 0,
                       })
                     }
                   />
@@ -311,24 +308,20 @@ export function ExerciseEditor({
                   {(set.dropSets || []).map((d, dIdx) => (
                     <StDropRow key={dIdx}>
                       <span>↳ 드랍 {dIdx + 1}</span>
-                      <StMiniInput
-                        type="number"
-                        step="0.5"
+                      <DecimalField
+                        as={StMiniInput}
                         placeholder="kg"
-                        value={d.weight || ""}
-                        onChange={(e) =>
-                          onUpdateDropSet(ex.id, set.id, dIdx, {
-                            weight: Number(e.target.value) || 0,
-                          })
-                        }
+                        value={d.weight || 0}
+                        onCommit={(weight) => onUpdateDropSet(ex.id, set.id, dIdx, { weight })}
                       />
                       <StMiniInput
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="회"
                         value={d.reps || ""}
                         onChange={(e) =>
                           onUpdateDropSet(ex.id, set.id, dIdx, {
-                            reps: Number(e.target.value) || 0,
+                            reps: Number(onlyDigits(e.target.value)) || 0,
                           })
                         }
                       />
@@ -360,15 +353,14 @@ export function ExerciseEditor({
             <StCloneRow>
               <span>마지막 세트 ×</span>
               <StCloneInput
-                type="number"
-                min="1"
-                max="20"
+                type="text"
+                inputMode="numeric"
                 placeholder="3"
                 value={cloneCounts[ex.id] ?? ""}
                 onChange={(e) =>
                   setCloneCounts((prev) => ({
                     ...prev,
-                    [ex.id]: e.target.value,
+                    [ex.id]: onlyDigits(e.target.value),
                   }))
                 }
               />
