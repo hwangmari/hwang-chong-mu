@@ -27,7 +27,11 @@ import {
   StPrimaryBtn,
   StQueueList,
   StStateBadge,
+  StRoundHead,
+  StRoundTitle,
+  StRoundTime,
 } from "../page.styles";
+import styled from "styled-components";
 import type { Court, Match, Player, ScoreMap, TennisEvent } from "../types";
 
 type Props = {
@@ -89,6 +93,12 @@ export default function MatchQueue({
   const nextThree = upcoming.slice(0, 3);
   const anyReady = upcoming.some((m) => timeline.byMatch.get(m.no)?.status === "ready");
   const allDone = timeline.courts.every((c) => !c.playing) && upcoming.length === 0;
+
+  // 저장된 라운드 순서(no 오름차순)대로 경기를 묶는다. 라운드 번호가 없는 경기는 맨 뒤에.
+  const roundGroups = [...event.rounds]
+    .sort((a, b) => a.no - b.no)
+    .map((round) => ({ round, matches: list.filter((m) => m.round === round.no) }));
+  const unrounded = list.filter((m) => m.round == null || !event.rounds.some((r) => r.no === m.round));
 
   return (
     <>
@@ -215,38 +225,141 @@ export default function MatchQueue({
           {reordering ? " 아직 시작하지 않은 경기만 ▲▼로 옮길 수 있어요." : ""}
         </StCardHint>
 
-        <StQueueList $single={reordering}>
-          {list.map((match, index) => {
-            const timing = timeline.byMatch.get(match.no);
-            if (!timing) return null;
-            return (
-              <MatchCard
-                key={match.no}
-                match={match}
-                players={players}
-                score={scores[match.no] ?? null}
-                timing={reordering ? { ...timing, position: index + 1 } : timing}
-                timeline={timeline}
-                courts={courts}
-                busy={busy}
-                reorder={
-                  reordering && movable(match)
-                    ? {
-                        canUp: index > 0 && movable(list[index - 1]),
-                        canDown: index < list.length - 1 && movable(list[index + 1]),
-                        onUp: () => move(index, -1),
-                        onDown: () => move(index, 1),
-                      }
-                    : undefined
-                }
-                onStart={onStart}
-                onSave={onSave}
-                onClear={onClear}
-              />
-            );
-          })}
-        </StQueueList>
+        {reordering ? (
+          /* 순서 바꾸기 중에는 라운드 경계를 넘겨 옮길 수 있게 한 줄 목록으로 */
+          <StQueueList $single>
+            {list.map((match, index) => {
+              const timing = timeline.byMatch.get(match.no);
+              if (!timing) return null;
+              return (
+                <MatchCard
+                  key={match.no}
+                  match={match}
+                  players={players}
+                  score={scores[match.no] ?? null}
+                  timing={{ ...timing, position: index + 1 }}
+                  timeline={timeline}
+                  courts={courts}
+                  busy={busy}
+                  reorder={
+                    movable(match)
+                      ? {
+                          canUp: index > 0 && movable(list[index - 1]),
+                          canDown: index < list.length - 1 && movable(list[index + 1]),
+                          onUp: () => move(index, -1),
+                          onDown: () => move(index, 1),
+                        }
+                      : undefined
+                  }
+                  onStart={onStart}
+                  onSave={onSave}
+                  onClear={onClear}
+                />
+              );
+            })}
+          </StQueueList>
+        ) : (
+          /* 대진표(라운드) 순서대로 — 라운드마다 제목·시간을 달고, 경기가 없는 라운드(당일 편성)는 빈 칸으로 보여 준다 (2026-09-15) */
+          <StRoundStack>
+            {roundGroups.map((group) => (
+              <div key={group.round.no} style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                <StRoundHead>
+                  <StRoundTitle>
+                    R{group.round.no} · {group.round.label}
+                  </StRoundTitle>
+                  <StRoundTime>{group.round.time}</StRoundTime>
+                </StRoundHead>
+                {group.matches.length > 0 ? (
+                  <StQueueList>
+                    {group.matches.map((match) => {
+                      const timing = timeline.byMatch.get(match.no);
+                      if (!timing) return null;
+                      return (
+                        <MatchCard
+                          key={match.no}
+                          match={match}
+                          players={players}
+                          score={scores[match.no] ?? null}
+                          timing={timing}
+                          timeline={timeline}
+                          courts={courts}
+                          busy={busy}
+                          onStart={onStart}
+                          onSave={onSave}
+                          onClear={onClear}
+                        />
+                      );
+                    })}
+                  </StQueueList>
+                ) : (
+                  <StQueueList>
+                    {courts.map((court) => (
+                      <StEmptySlot key={court}>
+                        <span className="court">코트 {court}</span>
+                        <span className="hint">당일 편성 · 편집에서 선수를 넣어 주세요</span>
+                      </StEmptySlot>
+                    ))}
+                  </StQueueList>
+                )}
+              </div>
+            ))}
+            {unrounded.length > 0 && (
+              <StQueueList>
+                {unrounded.map((match) => {
+                  const timing = timeline.byMatch.get(match.no);
+                  if (!timing) return null;
+                  return (
+                    <MatchCard
+                      key={match.no}
+                      match={match}
+                      players={players}
+                      score={scores[match.no] ?? null}
+                      timing={timing}
+                      timeline={timeline}
+                      courts={courts}
+                      busy={busy}
+                      onStart={onStart}
+                      onSave={onSave}
+                      onClear={onClear}
+                    />
+                  );
+                })}
+              </StQueueList>
+            )}
+          </StRoundStack>
+        )}
       </StCard>
     </>
   );
 }
+
+/* 라운드 묶음을 세로로 쌓는다 */
+const StRoundStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+`;
+
+/* 당일 편성처럼 아직 선수가 없는 코트 칸 */
+const StEmptySlot = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 5.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed ${({ theme }) => theme.colors.gray300};
+  border-radius: 0.9rem;
+  color: ${({ theme }) => theme.colors.gray500};
+
+  .court {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.gray600};
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+`;
