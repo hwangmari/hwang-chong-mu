@@ -7,7 +7,7 @@ export const omcSkillsGuide: BlogPost = {
   emoji: "🧰",
   title: "OMC 스킬 정리: 클로드에게 역할을 나눠 맡기는 법",
   summary:
-    "oh-my-claudecode(OMC)의 기본 흐름 4단계, 역할 19개 중 실제로 쓴 9개, 그리고 개발 용어 없이 입력할 수 있는 키워드를 이 사이트 작업 사례와 함께 정리했습니다.",
+    "oh-my-claudecode(OMC)의 기본 흐름 4단계, 실제로 쓴 역할 9개, 그리고 그대로 붙여 쓰는 요청 예시를 카드로 정리했습니다. 이 사이트 작업 사례 기준입니다.",
   date: "2026-09-16",
   category: "만드는 이야기",
   content: [
@@ -47,20 +47,21 @@ export const omcSkillsGuide: BlogPost = {
     { type: "heading", text: "실제로 쓴 역할 9개" },
     {
       type: "paragraph",
-      text: "괄호 안은 2주 동안 부른 횟수입니다. 역할은 부를 때 모델도 고를 수 있어서, 설계·검토처럼 판단이 필요한 일은 큰 모델(opus)에, 단순 조사는 작은 모델에 맡겼습니다.",
+      text: "괄호 안은 2주 동안 부른 횟수입니다. 카드 아래 문장은 그대로 붙여 넣어 쓸 수 있는 요청 예시입니다. 역할은 부를 때 모델도 고를 수 있어서, 설계·검토처럼 판단이 필요한 일은 큰 모델(opus)에, 단순 조사는 작은 모델에 맡겼습니다.",
     },
     {
-      type: "list",
-      items: [
-        "executor (16): 구현 담당. 파일 여러 개를 고치는 일은 거의 전부 여기로 갔습니다.",
-        "designer (10): 화면 담당. 여백·글자 크기·정렬을 수치로 맞추고, 스크린샷을 찍어 좌우 카드 높이가 같은지까지 재서 보고합니다.",
-        "code-reviewer (4): 코드 검토 담당. 구현 담당과 다른 대화에서 코드만 읽습니다.",
-        "verifier (2): 검증 담당. 증거(명령 출력·측정값·스크린샷) 없이는 통과를 주지 않습니다.",
-        "planner (1): 설계 담당. 계획 문서를 씁니다.",
-        "architect (1): 구조 조언 담당. 읽기만 하고 고치지 않습니다.",
-        "security-reviewer (1): 보안 검토 담당. 비밀 정보 노출, 위험한 저장 방식을 봅니다.",
-        "explore (1): 코드 찾기 담당. '이 기능이 어디 있지?'를 대신 찾아 줍니다.",
-        "writer (2): 문서 담당. 커밋 메시지나 안내문 초안을 씁니다.",
+      type: "skillCards",
+      tone: "light",
+      cards: [
+        { name: "executor (16)", title: "구현 담당", desc: "파일 여러 개를 고치는 일은 거의 전부 여기로 갔습니다. 정해진 일을 코드로 만들고 검사까지 마칩니다.", example: "이 작업 executor로 끝까지 진행해줘" },
+        { name: "designer (10)", title: "화면 담당", desc: "여백·글자 크기·정렬을 수치로 맞추고, 스크린샷을 찍어 좌우 카드 높이가 같은지까지 재서 보고합니다.", example: "이 화면 designer한테 맡겨서 정돈해줘" },
+        { name: "code-reviewer (4)", title: "코드 검토 담당", desc: "구현 담당과 다른 대화에서 코드만 읽습니다. 일반 대회 코드에서 결함 7건을 찾은 게 이 역할입니다.", example: "방금 만든 거 code-reviewer로 검토해줘" },
+        { name: "verifier (2)", title: "검증 담당", desc: "명령 출력·측정값·스크린샷 같은 증거 없이는 통과를 주지 않습니다. 화면 26개 점검이 이 역할이었습니다.", example: "전체 화면 verifier로 점검해줘" },
+        { name: "planner (1)", title: "설계 담당", desc: "무엇을 어떻게 만들지 문서로 씁니다. 일반 대회 양식은 686줄짜리 계획을 먼저 썼습니다.", example: "이 기능 planner로 계획부터 세워줘" },
+        { name: "architect (1)", title: "구조 조언 담당", desc: "코드를 읽고 구조 문제와 방향을 짚어 줍니다. 읽기만 하고 고치지 않습니다.", example: "이 구조 architect 의견 들어봐줘" },
+        { name: "security-reviewer (1)", title: "보안 검토 담당", desc: "비밀 정보 노출, 위험한 저장 방식, 권한 문제를 봅니다.", example: "저장 방식 security-reviewer로 봐줘" },
+        { name: "explore (1)", title: "코드 찾기 담당", desc: "'이 기능이 어디 있지?'를 대신 넓게 찾아 줍니다. 결론만 돌려주고 파일을 쏟아내지 않습니다.", example: "달력 그리는 코드 explore로 찾아줘" },
+        { name: "writer (2)", title: "문서 담당", desc: "커밋 메시지, 안내문, 가이드 초안을 씁니다.", example: "이 변경 설명 writer로 써줘" },
       ],
     },
     {
@@ -68,23 +69,26 @@ export const omcSkillsGuide: BlogPost = {
       text: "쓰지 않은 역할도 열 개쯤 있습니다. 테스트 전문(test-engineer), 디버거(debugger), 데이터 분석(scientist), 깃 정리(git-master) 등인데, 이 사이트에는 자동 테스트가 없고 깃도 단순해서 필요하지 않았습니다. 필요한 것만 부르는 게 맞습니다.",
     },
 
-    { type: "heading", text: "개발 용어 없이 켜는 키워드" },
+    { type: "heading", text: "한마디로 끝까지 — 자동 실행 스킬" },
     {
       type: "paragraph",
-      text: "슬래시 명령을 외우지 않아도, 채팅에 아래 단어가 들어가면 OMC가 알아서 해당 흐름을 켭니다. 이 사이트 작업에서 실제로 쓴 것만 적습니다.",
+      text: "슬래시 명령을 외우지 않아도, 채팅에 이름이 들어가면 OMC가 해당 흐름을 켭니다. 큰 작업을 맡겨 두고 싶을 때 씁니다.",
     },
     {
-      type: "list",
-      items: [
-        "\"autopilot\": 한두 줄 아이디어를 주면 요구 정리 → 설계 → 구현 → 검사 → 검토까지 혼자 돕니다. 포트폴리오에 빠진 서비스 카드 3개를 이걸로 만들었고, 카드 문장 40여 개를 코드와 대조하는 검토까지 자동으로 붙었습니다.",
-        "\"ultrathink\": 어려운 판단이 필요할 때 더 깊이 생각하게 합니다.",
-        "\"deepsearch\": 코드 어디에 무엇이 있는지 넓게 찾을 때.",
-        "\"cancelomc\": 돌아가는 흐름을 멈춥니다.",
+      type: "skillCards",
+      tone: "dark",
+      cards: [
+        { name: "/autopilot", title: "아이디어 → 완성까지 자동", desc: "한두 줄 아이디어를 주면 요구 정리·설계·구현·검사·검토까지 혼자 돕니다. 포트폴리오 카드 3개를 이걸로 만들었습니다.", example: "포트폴리오에 빠진 카드 3개, autopilot으로 진행해줘" },
+        { name: "/plan", title: "계획부터 세우기", desc: "큰 일을 시작하기 전에 무엇을 어떻게 할지 먼저 정리합니다. 구현은 그 문서를 따릅니다.", example: "일반 대회 양식, plan으로 계획부터 세워줘" },
+        { name: "/execute", title: "맡긴 작업 끝까지 실행", desc: "승인된 계획을 구현하고, 실제로 동작하는지 검증까지 마친 상태로 끝냅니다.", example: "이 작업 execute로 끝까지 진행해줘" },
+        { name: "/review", title: "끝낸 작업 종합 점검", desc: "다 만든 작업의 결함·위험·개선 여지를 내보내기 전에 다른 클로드가 평가합니다.", example: "이 기능 마무리 전에 review로 점검해줘" },
+        { name: "/verify", title: "정말 됐는지 검증", desc: "\"다 됐어요\"를 그대로 믿지 않고 실제로 실행해 증거로 확인합니다.", example: "전반적인 레이아웃 verifier로 체크해줘" },
+        { name: "cancelomc", title: "돌아가는 흐름 멈추기", desc: "자동 실행 중인 흐름을 그 자리에서 끝냅니다. 진행 상태는 남아서 다시 이어갈 수 있습니다.", example: "cancelomc" },
       ],
     },
     {
       type: "paragraph",
-      text: "반대로 이번에 쓰지 않은 흐름도 있습니다. 끝날 때까지 스스로 반복하는 ralph, 여러 클로드가 한 목록을 나눠 드는 team, 애매한 요청을 문답으로 좁히는 deep-interview 같은 것들입니다. 요청이 대부분 스크린샷 한 장과 한 줄이라 그 정도까지 필요하지 않았습니다.",
+      text: "이번에 쓰지 않은 흐름도 있습니다. 끝날 때까지 스스로 반복하는 ralph, 여러 클로드가 한 목록을 나눠 드는 team, 애매한 요청을 문답으로 좁히는 deep-interview 같은 것들입니다. 요청이 대부분 스크린샷 한 장과 한 줄이라 그 정도까지 필요하지 않았습니다.",
     },
 
     { type: "heading", text: "규칙 파일이 하는 일" },

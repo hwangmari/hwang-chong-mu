@@ -61,6 +61,22 @@ export default function BlogArticleView({ post }: BlogArticleViewProps) {
                   </StImageBlock>
                 );
               }
+              if (block.type === "skillCards" && block.cards) {
+                return (
+                  <StSkillGrid key={i}>
+                    {block.cards.map((card) => (
+                      <StSkillCard key={card.name} $dark={block.tone === "dark"}>
+                        <code>{card.name}</code>
+                        <strong>{card.title}</strong>
+                        <p>{card.desc}</p>
+                        <StSkillExample $dark={block.tone === "dark"}>
+                          &ldquo;{card.example}&rdquo;
+                        </StSkillExample>
+                      </StSkillCard>
+                    ))}
+                  </StSkillGrid>
+                );
+              }
               if (block.type === "link" && block.href) {
                 return (
                   <StLinkButton
@@ -239,4 +255,59 @@ const StLinkButton = styled.a`
   &:active {
     transform: translateY(0);
   }
+`;
+
+/* 스킬 카드 격자: 1024px 이상 3열, 640px 이상 2열, 폰 1열 */
+const StSkillGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 0.5rem 0 1.5rem;
+`;
+
+const StSkillCard = styled.div<{ $dark: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.25rem 1.25rem 1.1rem;
+  border-radius: 1rem;
+  background: ${({ $dark, theme }) => ($dark ? theme.colors.gray900 : theme.colors.white)};
+  border: 1px solid ${({ $dark, theme }) => ($dark ? theme.colors.gray900 : theme.semantic.border)};
+  color: ${({ $dark, theme }) => ($dark ? theme.colors.white : theme.semantic.text)};
+
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: ${({ $dark, theme }) => ($dark ? theme.colors.green500 : theme.colors.orange600)};
+  }
+
+  strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: ${({ $dark, theme }) => ($dark ? theme.colors.gray300 : theme.colors.gray600)};
+    word-break: keep-all;
+  }
+`;
+
+/* 그대로 붙여 쓰는 예시 문장 — 어두운 상자에 초록 코드체 */
+const StSkillExample = styled.div<{ $dark: boolean }>`
+  margin-top: auto;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.6rem;
+  background: ${({ $dark, theme }) => ($dark ? theme.colors.gray800 : theme.colors.gray900)};
+  border: 1px solid ${({ $dark, theme }) => ($dark ? theme.colors.gray700 : theme.colors.gray900)};
+  color: ${({ theme }) => theme.colors.green500};
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  word-break: keep-all;
 `;
