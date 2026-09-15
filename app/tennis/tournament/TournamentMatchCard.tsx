@@ -20,7 +20,6 @@ import {
   StPlayedTime,
   StSaveBtn,
   StScoreColon,
-  StScoreInput,
   StScoreRow,
   StSeedTag,
   StStateBadge,
@@ -36,6 +35,7 @@ import { matchCardId } from "../jump";
 import type { Court, MatchScore } from "../types";
 import { validateGameScore } from "../score";
 import { PAIR_ROTATION, STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
+import ScoreInput from "../components/ScoreInput";
 
 type Props = {
   match: ResolvedMatch;
@@ -227,15 +227,15 @@ export default function TournamentMatchCard({
       {match.status === "playing" || (done && editing) ? (
         <>
           <StScoreRow>
-            <StScoreInput type="number" inputMode="numeric" min={0} max={20} placeholder="A" aria-label="A팀 게임" value={a} onChange={(e) => setA(e.target.value)} />
+            <ScoreInput placeholder="A" aria-label="A팀 게임" value={a} onChange={setA} />
             <StScoreColon>:</StScoreColon>
-            <StScoreInput type="number" inputMode="numeric" min={0} max={20} placeholder="B" aria-label="B팀 게임" value={b} onChange={(e) => setB(e.target.value)} />
+            <ScoreInput placeholder="B" aria-label="B팀 게임" value={b} onChange={setB} />
             {needsTiebreak ? (
               <>
                 <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#64748b" }}>타이브레이크</span>
-                <StScoreInput type="number" inputMode="numeric" min={0} max={30} placeholder="7" aria-label="A팀 타이브레이크" value={tbA} onChange={(e) => setTbA(e.target.value)} />
+                <ScoreInput placeholder="7" aria-label="A팀 타이브레이크" value={tbA} onChange={setTbA} />
                 <StScoreColon>-</StScoreColon>
-                <StScoreInput type="number" inputMode="numeric" min={0} max={30} placeholder="4" aria-label="B팀 타이브레이크" value={tbB} onChange={(e) => setTbB(e.target.value)} />
+                <ScoreInput placeholder="4" aria-label="B팀 타이브레이크" value={tbB} onChange={setTbB} />
               </>
             ) : null}
           </StScoreRow>

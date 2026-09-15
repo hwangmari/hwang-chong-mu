@@ -7,6 +7,7 @@ import { outcomeForA } from "../standings";
 import { canStartOn, describeTiming, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
 import { matchCardId } from "../jump";
 import { toClock } from "../format";
+import ScoreInput from "./ScoreInput";
 import {
   StBall,
   StCourtPick,
@@ -25,7 +26,6 @@ import {
   StReorderBtn,
   StSaveBtn,
   StScoreColon,
-  StScoreInput,
   StScoreRow,
   StStateBadge,
   StTag,
@@ -281,27 +281,9 @@ export default function MatchCard({
 
       {showScoreInputs ? (
         <StScoreRow>
-          <StScoreInput
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={2}
-            placeholder="A"
-            aria-label="A팀 게임 수"
-            value={a}
-            onChange={(e) => setA(e.target.value.replace(/\D/g, ""))}
-          />
+          <ScoreInput placeholder="A" aria-label="A팀 게임 수" value={a} onChange={setA} />
           <StScoreColon>:</StScoreColon>
-          <StScoreInput
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={2}
-            placeholder="B"
-            aria-label="B팀 게임 수"
-            value={b}
-            onChange={(e) => setB(e.target.value.replace(/\D/g, ""))}
-          />
+          <ScoreInput placeholder="B" aria-label="B팀 게임 수" value={b} onChange={setB} />
           <StSaveBtn
             type="button"
             disabled={busy || !dirty}
