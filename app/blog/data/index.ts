@@ -18,10 +18,12 @@ import { tennisDoubleEliminationGuide } from "./tennis-double-elimination-guide"
 import { splitBillTips } from "./split-bill-tips";
 import { compensatoryLeaveGuide } from "./compensatory-leave-guide";
 import { overtimePayBasics } from "./overtime-pay-basics";
+import { buildingWithClaude } from "./building-with-claude";
 
 export type { BlogPost, ContentBlock } from "./types";
 
 export const BLOG_POSTS: BlogPost[] = [
+  buildingWithClaude,
   habitTrackingThatSticks,
   companyChongmuChecklist,
   congratulatoryMoneyGuide,
