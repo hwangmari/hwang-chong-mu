@@ -10,6 +10,7 @@
 export type ServiceId =
   | "meeting"
   | "calc"
+  | "travel"
   | "place"
   | "game"
   | "tennis"
@@ -95,6 +96,19 @@ export const SERVICES: ServiceDef[] = [
     seoTitle: "황총무 여행 경비 계산기",
     seoDescription:
       "여행·모임에서 각자 낸 돈을 적으면 송금 횟수를 줄여 정산해 주는 계산기",
+    access: "room",
+    room: true,
+  },
+  {
+    id: "travel",
+    href: "/travel",
+    icon: "🧳",
+    name: "여행 플랜",
+    desc: "날짜별 동선을 지도에 그리고 이동 시간까지",
+    category: "together",
+    seoTitle: "황총무 여행 플랜",
+    seoDescription:
+      "여행 일정을 날짜별로 적으면 지도에 동선과 이동 시간이 그려지고, 링크 하나로 같이 고치는 여행 플래너",
     access: "room",
     room: true,
   },

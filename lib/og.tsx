@@ -22,6 +22,7 @@ const SITE = "hwang-lab.kr";
 const TONE_BY_SERVICE: Record<ServiceId, OgTone> = {
   meeting: "indigo",
   calc: "green",
+  travel: "lab",
   place: "rose",
   game: "violet",
   tennis: "lime",

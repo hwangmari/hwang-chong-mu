@@ -197,6 +197,44 @@ function MeetingFragment(c: TonePalette) {
   );
 }
 
+/** 여행 플랜 — 1·2·3 순서로 이어지는 하루 동선, 그리고 다음 곳까지 걸리는 시간 */
+function TravelFragment(c: TonePalette) {
+  // 동그란 순서 표시. 이 파일의 다른 조각(습관·게임)처럼 조각 안에서만 쓰는 작은 도우미로 둔다.
+  const step = (no: string, marginLeft = 0) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 38,
+        height: 38,
+        marginLeft,
+        borderRadius: 19,
+        background: WHITE,
+        color: c.tileDeep,
+        fontSize: 24,
+        fontWeight: 800,
+      }}
+    >
+      {no}
+    </div>
+  );
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <Row>
+        {step("1")}
+        <Bar width={26} height={10} background={GHOST_STRONG} marginLeft={8} />
+        {step("2", 8)}
+        <Bar width={26} height={10} background={GHOST_STRONG} marginLeft={8} />
+        {step("3", 8)}
+      </Row>
+      <Row marginTop={16}>
+        <GhostChip>🚶 도보 12분</GhostChip>
+      </Row>
+    </div>
+  );
+}
+
 /** 장소잡기 — 후보 두 곳의 득표 막대 */
 function PlaceFragment(c: TonePalette) {
   return (
@@ -539,6 +577,7 @@ function InbodyFragment(c: TonePalette) {
 const FRAGMENTS: Record<ServiceId, (c: TonePalette) => React.ReactNode> = {
   meeting: MeetingFragment,
   calc: CalcFragment,
+  travel: TravelFragment,
   place: PlaceFragment,
   game: GameFragment,
   tennis: TennisFragment,
@@ -564,6 +603,7 @@ export function fragmentFor(id: ServiceId, tone: OgTone): React.ReactNode {
 export const FRAGMENT_TEXT: Record<ServiceId, string> = {
   meeting: "✓✕6명 중 5명 가능",
   calc: "12,000원 8,000원 정산 완료 ✓",
+  travel: "123🚶 도보 12분",
   place: "7표 3표",
   game: "랜덤 뽑기",
   tennis: "결승 대진표 자동",

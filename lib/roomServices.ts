@@ -3,7 +3,7 @@
 // 아이콘·이름은 lib/services.ts(단일 출처)에서 가져온다. 좁은 칩이라 짧은 이름이 있으면 그걸 쓴다.
 import { byId, chipName } from "./services";
 
-// hwang_user_rooms.service 에 저장되는 값. SQL(supabase/20260903_extend_hwang_rooms_services.sql)과
+// hwang_user_rooms.service 에 저장되는 값. SQL(supabase/20260916_extend_hwang_rooms_services_travel.sql)과
 // API(app/api/auth/rooms/route.ts)의 허용 목록과 항상 같아야 한다.
 export const ROOM_SERVICES = [
   "meeting",
@@ -13,6 +13,7 @@ export const ROOM_SERVICES = [
   "game",
   "overtime",
   "daily",
+  "travel",
 ] as const;
 
 export type RoomService = (typeof ROOM_SERVICES)[number];
@@ -70,6 +71,11 @@ const DEFS: Record<RoomService, RoomServiceDef> = {
     tone: "green",
     href: (roomId) => `/daily/${roomId}`,
     emptyHint: "기록장을 만들거나 열면 자동으로 등록돼요.",
+  },
+  travel: {
+    tone: "blue",
+    href: (roomId) => `/travel/${roomId}`,
+    emptyHint: "여행 플랜을 만들면 자동으로 등록돼요.",
   },
 };
 
