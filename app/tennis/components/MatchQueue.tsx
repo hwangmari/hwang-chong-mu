@@ -354,11 +354,23 @@ export default function MatchQueue({
           const t = timeline.byMatch.get(m.no);
           if (!t) return null;
           return (
-            <StNextSticky $ready={t.status === "ready"} type="button" onClick={() => jumpToMatch(m.no)} title="이 경기 카드로 이동">
+            <StNextSticky $ready={t.status === "ready"} type="button" onClick={() => jumpToMatch(m.no)} aria-label={`${t.position}번 경기 카드로 이동`}>
               <span className="tag">{t.status === "ready" ? "▶ 다음 시작" : "다음"}</span>
               <b>{t.position}번</b>
               <span className="names">{teamText(m)}</span>
               <span className="why">{t.status === "ready" ? "지금 시작 가능" : waitReason(m, t)}</span>
+              {/* 코트 현황 한 줄: 비어 있음 / 몇 번 경기 몇 분 경과 */}
+              <span className="courts">
+                {timeline.courts.map((c) => {
+                  const pt = c.playing ? timeline.byMatch.get(c.playing.no) : null;
+                  const e = pt ? elapsedOf(timeline, pt) : null;
+                  return (
+                    <span key={c.court} className={c.playing ? "court busy" : "court free"}>
+                      코트 {c.court} · {c.playing && pt ? `${pt.position}번 ${e ? `${e.minutes}분 경과` : "진행 중"}` : "비어 있음"}
+                    </span>
+                  );
+                })}
+              </span>
             </StNextSticky>
           );
         })()}
@@ -615,8 +627,9 @@ const StNextSticky = styled.button<{ $ready: boolean }>`
   top: 3.9rem;
   z-index: 5;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem 0.5rem;
   width: 100%;
   margin: 0.25rem 0 0.75rem;
   padding: 0.55rem 0.8rem;
@@ -659,8 +672,28 @@ const StNextSticky = styled.button<{ $ready: boolean }>`
     opacity: 0.85;
   }
 
-  @media (max-width: 767px) {
+  .courts {
+    flex-basis: 100%;
+    display: flex;
     flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.1rem;
+  }
+
+  .court {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.16)" : theme.colors.gray100)};
+  }
+
+  .court.free {
+    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.28)" : theme.colors.teal50)};
+    color: ${({ $ready, theme }) => ($ready ? theme.colors.white : theme.colors.teal600)};
+  }
+
+  @media (max-width: 767px) {
     .why {
       flex-basis: 100%;
       margin-left: 0;
