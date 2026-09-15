@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StCard, StCardHead, StCardHint, StCardTitle, StGhostBtn, StGuide, StTable, StTableWrap } from "../page.styles";
 import type { TournamentEvent } from "./types";
+import { NoteLines } from "../noteLines";
 
 type Props = { event: TournamentEvent };
 
@@ -179,7 +180,7 @@ export default function TournamentGuide({ event }: Props) {
             <li>{event.beforeNote || "개회식 · 몸풀기"}</li>
             <li>1타임 1라운드(4코트) → 2타임 승자조 4강 + 패자조 1R(4코트) → 3타임 승자조 결승 + 패자조 2R + 7-8위전(4코트)</li>
             <li>4타임 패자조 준결승 + 5-6위전(2코트) → 5타임 패자조 결승(1코트) → 6타임 그랜드 파이널 + 3-4위전(2코트) → 필요하면 7타임 리셋 재경기</li>
-            <li>{event.afterNote || "시상식 · 폐회식"}</li>
+            <li>{event.afterNote ? <NoteLines text={event.afterNote} /> : "시상식 · 폐회식"}</li>
             <li>3타임까지는 4코트가 다 돌고, 그 뒤엔 남는 팀이 줄어 일부 코트가 쉬어요. 더블 엘리미네이션 구조상 어쩔 수 없는 부분이에요.</li>
           </ul>
 

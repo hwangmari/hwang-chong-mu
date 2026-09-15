@@ -46,8 +46,9 @@ import {
 } from "../page.styles";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import type { Court, Match, MatchScore, Player, ScoreMap, TennisEvent } from "../types";
+import { NoteLines } from "../noteLines";
 
-type Tab = "bracket" | "standings" | "players";
+type Tab = "bracket" | "standings" | "players" | "info";
 // cloud: Supabase에 저장(모두가 공유) / local: 이 브라우저에만 저장(표가 아직 없을 때 대비)
 type StorageMode = "cloud" | "local";
 
@@ -388,6 +389,9 @@ export default function ExchangeView({ initialEvent }: Props) {
             <StTab type="button" $active={tab === "players"} onClick={() => setTab("players")}>
               선수별 일정
             </StTab>
+            <StTab type="button" $active={tab === "info"} onClick={() => setTab("info")}>
+              대회 정보 · 규칙
+            </StTab>
           </StTabRow>
 
           {loading ? (
@@ -421,6 +425,68 @@ export default function ExchangeView({ initialEvent }: Props) {
                 onPickPlayer={pickPlayer}
               />
             </>
+          ) : tab === "info" ? (
+            /* 대회 정보·규칙·방식 안내·선수단·대진표 수정: 처음 세팅할 때 보는 내용이라 별도 탭 (2026-09-15) */
+          <StSetupInfo>
+            <StActions>
+              <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
+                👥 선수단 {editable ? "보기·편집" : "보기"}
+              </StGhostBtn>
+              {editable && !editing ? (
+                <StGhostBtn
+                  type="button"
+                  onClick={() => {
+                    setDraftMatches(event.matches);
+                    setEditing(true);
+                  }}
+                >
+                  ✏️ 대진표 수정
+                </StGhostBtn>
+              ) : null}
+            </StActions>
+            {showRoster ? (
+              <PlayerRoster
+                key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}:${p.team ?? ""}`).join("|")}
+                players={event.players}
+                matches={event.matches}
+                editable={editable}
+                busy={busy}
+                onSave={saveRoster}
+                onClose={() => setShowRoster(false)}
+              />
+            ) : null}
+            <StChipRow>
+              {FIXED_RULES.map((r) => (
+                <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
+                  🔒 {r.label}
+                </StRuleBadge>
+              ))}
+              {ruleBadges(event.rules).map((label) => (
+                <StRuleBadge key={label} $tone="on">
+                  ✓ {label}
+                </StRuleBadge>
+              ))}
+            </StChipRow>
+            <StStatGrid>
+              <StStatBox>
+                <StStatValue>{event.matches.length}</StStatValue>
+                <StStatLabel>총 경기 · 코트 {event.courts}면</StStatLabel>
+              </StStatBox>
+              <StStatBox>
+                <StStatValue>
+                  {finished}/{event.matches.length}
+                </StStatValue>
+                <StStatLabel>끝난 경기</StStatLabel>
+              </StStatBox>
+              <StStatBox>
+                <StStatValue>{event.players.length}</StStatValue>
+                <StStatLabel>
+                  선수 (남 {men} · 여 {women})
+                </StStatLabel>
+              </StStatBox>
+            </StStatGrid>
+            <ExchangeGuide event={event} />
+          </StSetupInfo>
           ) : (
             <PlayerSchedule
               event={event}
@@ -435,103 +501,32 @@ export default function ExchangeView({ initialEvent }: Props) {
 
       {event.afterNote ? (
         <StCard>
-          <StCardHint>🍽️ {event.afterNote}</StCardHint>
+          <StCardHint>
+            🍽️ <NoteLines text={event.afterNote} />
+          </StCardHint>
         </StCard>
       ) : null}
 
-      {/* 대회 정보·규칙·방식 안내: 처음 세팅할 때 보는 내용이라 경기 진행 아래로 내렸다 (2026-09-15) */}
-      <StSetupInfo>
-        <StSetupTitle>ℹ️ 대회 정보 · 규칙</StSetupTitle>
-        <StActions>
-          <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
-            👥 선수단 {editable ? "보기·편집" : "보기"}
-          </StGhostBtn>
-          {editable && !editing ? (
-            <StGhostBtn
-              type="button"
-              onClick={() => {
-                setDraftMatches(event.matches);
-                setEditing(true);
-                // 수정 화면은 경기 진행 자리에 뜨므로 위로 올려 준다
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              ✏️ 대진표 수정
-            </StGhostBtn>
-          ) : null}
-        </StActions>
-        {showRoster ? (
-          <PlayerRoster
-            key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}:${p.team ?? ""}`).join("|")}
-            players={event.players}
-            matches={event.matches}
-            editable={editable}
-            busy={busy}
-            onSave={saveRoster}
-            onClose={() => setShowRoster(false)}
-          />
-        ) : null}
-        <StChipRow>
-          {FIXED_RULES.map((r) => (
-            <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
-              🔒 {r.label}
-            </StRuleBadge>
-          ))}
-          {ruleBadges(event.rules).map((label) => (
-            <StRuleBadge key={label} $tone="on">
-              ✓ {label}
-            </StRuleBadge>
-          ))}
-        </StChipRow>
-        <StStatGrid>
-          <StStatBox>
-            <StStatValue>{event.matches.length}</StStatValue>
-            <StStatLabel>총 경기 · 코트 {event.courts}면</StStatLabel>
-          </StStatBox>
-          <StStatBox>
-            <StStatValue>
-              {finished}/{event.matches.length}
-            </StStatValue>
-            <StStatLabel>끝난 경기</StStatLabel>
-          </StStatBox>
-          <StStatBox>
-            <StStatValue>{event.players.length}</StStatValue>
-            <StStatLabel>
-              선수 (남 {men} · 여 {women})
-            </StStatLabel>
-          </StStatBox>
-        </StStatGrid>
-        <ExchangeGuide event={event} />
-      </StSetupInfo>
     </StPage>
   );
 }
 
 // 경기 진행 아래에 두는 '대회 정보' 묶음 (규칙 칩 · 숫자 타일 · 방식 안내)
+// '대회 정보 · 규칙' 탭 내용 묶음 (선수단·대진표 수정 버튼, 규칙 칩, 숫자 타일, 방식 안내)
 const StSetupInfo = styled.section`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin-top: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
 `;
 
 const StTitleRow = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* 제목 글줄과 링크 복사 버튼의 세로 중심을 맞춘다 */
   justify-content: space-between;
   gap: 0.75rem;
 
   > button {
     flex: none;
-    margin-top: 0.15rem;
   }
 `;
 
-const StSetupTitle = styled.h2`
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.semantic.subText};
-`;

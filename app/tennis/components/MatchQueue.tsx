@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import MatchCard from "./MatchCard";
+import NextUpBar from "./NextUpBar";
 import { toClock } from "../format";
 import type { MatchTiming } from "../timeline";
 import { courtLetters, elapsedOf, type Timeline } from "../timeline";
@@ -359,24 +360,22 @@ export default function MatchQueue({
           const t = timeline.byMatch.get(m.no);
           if (!t) return null;
           return (
-            <StNextSticky $ready={t.status === "ready"} type="button" onClick={() => jumpToMatch(m.no)} aria-label={`${t.position}번 경기 카드로 이동`}>
-              <span className="tag">{t.status === "ready" ? "▶ 다음 시작" : "다음"}</span>
-              <b>{t.position}번</b>
-              <span className="names">{teamText(m)}</span>
-              <span className="why">{t.status === "ready" ? "지금 시작 가능" : waitReason(m, t)}</span>
-              {/* 코트 현황 한 줄: 비어 있음 / 몇 번 경기 몇 분 경과 */}
-              <span className="courts">
-                {timeline.courts.map((c) => {
-                  const pt = c.playing ? timeline.byMatch.get(c.playing.no) : null;
-                  const e = pt ? elapsedOf(timeline, pt) : null;
-                  return (
-                    <span key={c.court} className={c.playing ? "court busy" : "court free"}>
-                      코트 {c.court} · {c.playing && pt ? `${pt.position}번 ${e ? `${e.minutes}분 경과` : "진행 중"}` : "비어 있음"}
-                    </span>
-                  );
-                })}
-              </span>
-            </StNextSticky>
+            <NextUpBar
+              ready={t.status === "ready"}
+              position={t.position}
+              names={teamText(m)}
+              why={t.status === "ready" ? "지금 시작 가능" : waitReason(m, t)}
+              courts={timeline.courts.map((c) => {
+                const pt = c.playing ? timeline.byMatch.get(c.playing.no) : null;
+                const e = pt ? elapsedOf(timeline, pt) : null;
+                return {
+                  court: c.court,
+                  free: !c.playing,
+                  label: c.playing && pt ? `${pt.position}번 ${e ? `${e.minutes}분 경과` : "진행 중"}` : "비어 있음",
+                };
+              })}
+              onJump={() => jumpToMatch(m.no)}
+            />
           );
         })()}
         <StCardHint>
@@ -631,85 +630,6 @@ const StEmptySlot = styled.div<{ $open?: boolean }>`
 `;
 
 /* 슬롯 안 선수 고르기: 팀별 칩 두 줄 + 버튼 */
-// 경기 순서 카드 맨 위에 붙는 띠. 헤더(3.5rem) 아래에 고정된다.
-const StNextSticky = styled.button<{ $ready: boolean }>`
-  position: sticky;
-  top: 3.9rem;
-  z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  width: 100%;
-  margin: 0.25rem 0 0.75rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 0.8rem;
-  border: 1px solid ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.gray200)};
-  background: ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.white)};
-  color: ${({ $ready, theme }) => ($ready ? theme.colors.white : theme.colors.gray900)};
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-  text-align: left;
-  cursor: pointer;
-  font-size: 0.85rem;
-
-  .tag {
-    flex: none;
-    font-size: 0.7rem;
-    font-weight: 900;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.22)" : theme.colors.gray100)};
-  }
-
-  b {
-    flex: none;
-    font-weight: 900;
-  }
-
-  .names {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 700;
-  }
-
-  .why {
-    flex: none;
-    margin-left: auto;
-    font-size: 0.75rem;
-    font-weight: 700;
-    opacity: 0.85;
-  }
-
-  .courts {
-    flex-basis: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    margin-top: 0.1rem;
-  }
-
-  .court {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.16)" : theme.colors.gray100)};
-  }
-
-  .court.free {
-    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.28)" : theme.colors.teal50)};
-    color: ${({ $ready, theme }) => ($ready ? theme.colors.white : theme.colors.teal600)};
-  }
-
-  @media (max-width: 767px) {
-    .why {
-      flex-basis: 100%;
-      margin-left: 0;
-    }
-  }
-`;
 
 const StEditRow = styled.div`
   display: flex;

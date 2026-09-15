@@ -5,6 +5,7 @@ import BracketTree from "./BracketTree";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
+import NextUpBar from "../components/NextUpBar";
 import { countFinishedTournament, pairBlocks, placements, resolveBracket, scheduleBlocks, teamPath, teamPlayerLoad } from "./resolve";
 import type { RosterPlayer, TeamEntry, TournamentEvent } from "./types";
 import { formatDate } from "../format";
@@ -45,7 +46,6 @@ import {
   StSeedTag,
   StStateBadge,
   StStatBox,
-  StStatButton,
   StStatGrid,
   StStatLabel,
   StStatValue,
@@ -60,11 +60,13 @@ import {
 } from "../page.styles";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import { isFinished, type Court, type MatchScore, type ScoreMap } from "../types";
+import styled from "styled-components";
 import { courtLetters } from "../timeline";
 import { jumpToMatch } from "../jump";
+import { NoteLines } from "../noteLines";
 
 type Props = { initialEvent: TournamentEvent };
-type Tab = "bracket" | "diagram" | "placements" | "teams";
+type Tab = "bracket" | "diagram" | "placements" | "teams" | "info";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -312,45 +314,19 @@ export default function TournamentView({ initialEvent }: Props) {
   return (
     <StPage>
       <StHeader>
-        <StTitle>🏆 {event.title}</StTitle>
+        {/* 교류전과 같은 구조: 제목 오른쪽에 링크 복사, 규칙·참가 팀·안내는 '대회 정보' 탭으로 (2026-09-15) */}
+        <StTitleRow>
+          <StTitle>🏆 {event.title}</StTitle>
+          <StGhostBtn type="button" onClick={copyLink}>
+            {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
+          </StGhostBtn>
+        </StTitleRow>
         <StSubtitle>
           {formatDate(event.date)} {event.timeTbd ? "· 시간 미정 (일정표는 13:00 시작 기준)" : `${event.startTime}부터`} · {event.place} · 코트{" "}
           {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
-        <StChipRow>
-          <StRuleBadge $tone="fixed" title="8팀 더블 엘리미네이션: 두 번 지면 탈락">🔒 더블 엘리미네이션</StRuleBadge>
-          <StRuleBadge $tone="fixed" title="3-4위전 · 5-6위전 · 7-8위전으로 1~8위를 모두 정해요">🔒 순위결정전</StRuleBadge>
-          <StRuleBadge $tone="on">✓ {event.gamesToWin}게임 선취</StRuleBadge>
-          <StRuleBadge $tone="on">✓ 5:5 → 7점 타이브레이크</StRuleBadge>
-          <StRuleBadge $tone="on" title="1~4게임 페어A(시드2+4) → 5~8 페어B(1+3) → 9~12 페어C(1+2)">✓ 4게임마다 페어 교체 A→B→C</StRuleBadge>
-          <StRuleBadge $tone="on" title="패자조 출신이 그랜드 파이널을 이기면 한 번 더">✓ 그랜드 파이널 리셋</StRuleBadge>
-        </StChipRow>
-        <StActions>
-          <StGhostBtn type="button" onClick={copyLink}>
-            {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
-          </StGhostBtn>
-          <StGhostBtn type="button" onClick={() => setShowTeams((v) => !v)}>
-            👥 참가 팀 보기·편집
-          </StGhostBtn>
-        </StActions>
       </StHeader>
 
-      <StStatGrid>
-        <StStatBox>
-          <StStatValue>{progress.total}</StStatValue>
-          <StStatLabel>총 경기 (리셋 재경기 제외)</StStatLabel>
-        </StStatBox>
-        <StStatBox>
-          <StStatValue>
-            {progress.done}/{progress.total}
-          </StStatValue>
-          <StStatLabel>끝난 경기</StStatLabel>
-        </StStatBox>
-        <StStatButton onClick={() => setShowTeams((v) => !v)} aria-expanded={showTeams}>
-          <StStatValue>{event.roster.length}</StStatValue>
-          <StStatLabel>참가자 · {event.teams.length}팀 × 4명 · {showTeams ? "닫기" : "누르면 명단"}</StStatLabel>
-        </StStatButton>
-      </StStatGrid>
 
       {teamsIncomplete && !showTeams ? (
         <StNotice $tone="info">
@@ -360,6 +336,7 @@ export default function TournamentView({ initialEvent }: Props) {
             onClick={() => {
               setTeamsEditOnOpen(true);
               setShowTeams(true);
+              setTab("info");
             }}
           >
             ✏️ 참가 팀 입력하기
@@ -367,23 +344,6 @@ export default function TournamentView({ initialEvent }: Props) {
         </StNotice>
       ) : null}
 
-      {showTeams ? (
-        <TeamEditor
-          key={`${event.roster.map((p) => `${p.name}/${p.gender ?? ""}/${p.years ?? ""}`).join(",")}#${event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}`}
-          teams={event.teams}
-          roster={event.roster}
-          locked={anyStarted}
-          busy={busy}
-          startEditing={teamsEditOnOpen}
-          onSave={saveTeams}
-          onClose={() => {
-            setShowTeams(false);
-            setTeamsEditOnOpen(false);
-          }}
-        />
-      ) : null}
-
-      <TournamentGuide event={event} />
 
       {mode === "local" ? (
         <StNotice $tone="warn">
@@ -395,7 +355,7 @@ export default function TournamentView({ initialEvent }: Props) {
 
       <StTabRow>
         <StTab type="button" $active={tab === "bracket"} onClick={() => setTab("bracket")}>
-          대진표 · 점수
+          경기 진행 · 점수
         </StTab>
         <StTab type="button" $active={tab === "diagram"} onClick={() => setTab("diagram")}>
           토너먼트 그림
@@ -405,6 +365,9 @@ export default function TournamentView({ initialEvent }: Props) {
         </StTab>
         <StTab type="button" $active={tab === "teams"} onClick={() => setTab("teams")}>
           팀별 여정
+        </StTab>
+        <StTab type="button" $active={tab === "info"} onClick={() => setTab("info")}>
+          대회 정보 · 규칙
         </StTab>
       </StTabRow>
 
@@ -417,6 +380,28 @@ export default function TournamentView({ initialEvent }: Props) {
         </StCard>
       ) : tab === "bracket" ? (
         <StCard>
+          {upNext[0] ? (
+            <NextUpBar
+              ready={upNext[0].status === "ready"}
+              position={upNext[0].template.no}
+              names={`${upNext[0].template.label} · ${upNext[0].teamA ? `#${upNext[0].teamA.seed} ${upNext[0].teamA.name}` : upNext[0].aLabel} vs ${upNext[0].teamB ? `#${upNext[0].teamB.seed} ${upNext[0].teamB.name}` : upNext[0].bLabel}`}
+              why={
+                upNext[0].status === "ready"
+                  ? occupied.size < courts.length
+                    ? "지금 시작 가능"
+                    : "코트가 비면 시작"
+                  : waitingReason(upNext[0])
+              }
+              courts={courts.map((court) => {
+                const m = playingByCourt.get(court);
+                const sc = m ? scores[m.template.no] : undefined;
+                const started = sc?.startedAt ? new Date(sc.startedAt) : null;
+                const mins = started ? Math.max(0, clock - (started.getHours() * 60 + started.getMinutes())) : null;
+                return { court, free: !m, label: m ? `${m.template.no}번${mins !== null ? ` ${mins}분 경과` : ""}` : "비어 있음" };
+              })}
+              onJump={() => jumpToMatch(upNext[0].template.no)}
+            />
+          ) : null}
           <StCardHead>
             <StCardTitle>🏟️ 코트별 진행</StCardTitle>
             <StCardHint>
@@ -496,7 +481,7 @@ export default function TournamentView({ initialEvent }: Props) {
             {event.beforeNote ? `${event.beforeNote} → ` : ""}타임는 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요.
             앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로 채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
           </StCardHint>
-          <StQueueList>
+          <StQueueList $single>
             {blocks.map((block) => {
               const list = matches.filter((m) => m.template.block === block.no && m.status !== "hidden");
               if (list.length === 0) return null;
@@ -533,7 +518,11 @@ export default function TournamentView({ initialEvent }: Props) {
               );
             })}
           </StQueueList>
-          {event.afterNote ? <StCardHint>🏅 {event.afterNote}</StCardHint> : null}
+          {event.afterNote ? (
+            <StCardHint>
+              🏅 <NoteLines text={event.afterNote} />
+            </StCardHint>
+          ) : null}
         </StCard>
       ) : tab === "diagram" ? (
         <StCard>
@@ -566,6 +555,54 @@ export default function TournamentView({ initialEvent }: Props) {
             ))}
           </StQueueList>
         </StCard>
+      ) : tab === "info" ? (
+        <StSetupInfo>
+          <StActions>
+            <StGhostBtn type="button" onClick={() => setShowTeams((v) => !v)}>
+              👥 참가 팀 {showTeams ? "닫기" : "보기·편집"}
+            </StGhostBtn>
+          </StActions>
+        {showTeams ? (
+          <TeamEditor
+            key={`${event.roster.map((p) => `${p.name}/${p.gender ?? ""}/${p.years ?? ""}`).join(",")}#${event.teams.map((t) => `${t.seed}:${t.name}:${t.players.map((p) => p.name).join(",")}`).join("|")}`}
+            teams={event.teams}
+            roster={event.roster}
+            locked={anyStarted}
+            busy={busy}
+            startEditing={teamsEditOnOpen}
+            onSave={saveTeams}
+            onClose={() => {
+              setShowTeams(false);
+              setTeamsEditOnOpen(false);
+            }}
+          />
+        ) : null}
+        <StChipRow>
+          <StRuleBadge $tone="fixed" title="8팀 더블 엘리미네이션: 두 번 지면 탈락">🔒 더블 엘리미네이션</StRuleBadge>
+          <StRuleBadge $tone="fixed" title="3-4위전 · 5-6위전 · 7-8위전으로 1~8위를 모두 정해요">🔒 순위결정전</StRuleBadge>
+          <StRuleBadge $tone="on">✓ {event.gamesToWin}게임 선취</StRuleBadge>
+          <StRuleBadge $tone="on">✓ 5:5 → 7점 타이브레이크</StRuleBadge>
+          <StRuleBadge $tone="on" title="1~4게임 페어A(시드2+4) → 5~8 페어B(1+3) → 9~12 페어C(1+2)">✓ 4게임마다 페어 교체 A→B→C</StRuleBadge>
+          <StRuleBadge $tone="on" title="패자조 출신이 그랜드 파이널을 이기면 한 번 더">✓ 그랜드 파이널 리셋</StRuleBadge>
+        </StChipRow>
+        <StStatGrid>
+          <StStatBox>
+            <StStatValue>{progress.total}</StStatValue>
+            <StStatLabel>총 경기 (리셋 재경기 제외)</StStatLabel>
+          </StStatBox>
+          <StStatBox>
+            <StStatValue>
+              {progress.done}/{progress.total}
+            </StStatValue>
+            <StStatLabel>끝난 경기</StStatLabel>
+          </StStatBox>
+          <StStatBox>
+            <StStatValue>{event.roster.length}</StStatValue>
+            <StStatLabel>참가자 · {event.teams.length}팀 × 4명</StStatLabel>
+          </StStatBox>
+        </StStatGrid>
+          <TournamentGuide event={event} />
+        </StSetupInfo>
       ) : (
         <StCard>
           <StCardHead>
@@ -684,3 +721,21 @@ export default function TournamentView({ initialEvent }: Props) {
     </StPage>
   );
 }
+
+const StTitleRow = styled.div`
+  display: flex;
+  align-items: center; /* 제목 글줄과 링크 복사 버튼의 세로 중심을 맞춘다 */
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  > button {
+    flex: none;
+  }
+`;
+
+// '대회 정보 · 규칙' 탭 내용 묶음 (참가 팀, 규칙 칩, 숫자 타일, 방식 안내)
+const StSetupInfo = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;

@@ -5,6 +5,7 @@ import { endTime } from "../format";
 import { FIXED_RULES, RULE_INFO, isRuleOn } from "../rules";
 import { StCard, StCardHead, StCardHint, StCardTitle, StGhostBtn, StGuide } from "../page.styles";
 import { MATCH_TYPE_LABEL, POINTS, type MatchType, type TennisEvent } from "../types";
+import { NoteLines } from "../noteLines";
 
 type Props = { event: TennisEvent };
 
@@ -109,7 +110,9 @@ export default function ExchangeGuide({ event }: Props) {
             <>
               <h4>🍽️ 경기 후</h4>
               <ul>
-                <li>{event.afterNote}</li>
+                <li>
+                  <NoteLines text={event.afterNote} />
+                </li>
               </ul>
             </>
           ) : null}
