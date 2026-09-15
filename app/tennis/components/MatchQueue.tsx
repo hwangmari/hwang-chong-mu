@@ -5,7 +5,7 @@ import MatchCard from "./MatchCard";
 import NextUpBar from "./NextUpBar";
 import { toClock } from "../format";
 import type { MatchTiming } from "../timeline";
-import { courtLetters, elapsedOf, type Timeline } from "../timeline";
+import { courtLetters, describeWait, elapsedOf, type Timeline } from "../timeline";
 import { jumpToMatch } from "../jump";
 import {
   StActions,
@@ -48,6 +48,7 @@ type Props = {
   onSave: (matchNo: number, scoreA: number, scoreB: number) => Promise<void>;
   onClear: (matchNo: number) => Promise<void>;
   onReorder: (matches: Match[]) => Promise<void>;
+  onRemove: (match: Match) => Promise<void>; // 당일 편성 경기 빼기 (점수 기록도 함께 지움)
 };
 
 export default function MatchQueue({
@@ -61,6 +62,7 @@ export default function MatchQueue({
   onSave,
   onClear,
   onReorder,
+  onRemove,
 }: Props) {
   const courts = courtLetters(event.courts);
   const [reordering, setReordering] = useState(false);
@@ -119,19 +121,30 @@ export default function MatchQueue({
       event.matches.filter((m) => m.round === round && m.no !== exceptNo).flatMap((m) => [...m.teamA, ...m.teamB]),
     );
 
-  function typeOf(names: string[]): Match["type"] {
-    const g = names.map((n) => players.get(n)?.gender);
-    if (g.every((x) => x === "M")) return "men";
-    if (g.every((x) => x === "F")) return "women";
-    return "mixed";
+  // 종목은 양쪽 짝의 구성으로 정한다: 남남 vs 남남 = 남자 복식, 여여 vs 여여 = 여자 복식,
+  // 남녀 vs 남녀 = 혼합 복식, 그 밖(남남 vs 여여 등) = 잡복 (리뷰 2026-09-15)
+  function typeOf(a: string[], b: string[]): Match["type"] {
+    const kindOf = (names: string[]) => {
+      const g = names.map((n) => players.get(n)?.gender);
+      if (g.every((x) => x === "M")) return "M";
+      if (g.every((x) => x === "F")) return "F";
+      return "X";
+    };
+    const ka = kindOf(a);
+    const kb = kindOf(b);
+    if (ka === "M" && kb === "M") return "men";
+    if (ka === "F" && kb === "F") return "women";
+    if (ka === "X" && kb === "X") return "mixed";
+    return "open";
   }
 
   // 추천: 출전 적은 순 → 같은 팀 안에서 짝 반복 없이 → 양쪽 성별 구성이 같도록(남남/여여/혼합)
   function recommend(round: number) {
     const taken = busyInRound(round);
-    const free = (team: string) =>
+    // 소속이 없는 대회면 전체 명단에서 고르되, A쪽에 뽑힌 사람은 B쪽 후보에서 뺀다
+    const free = (team: string, exclude: Set<string> = new Set()) =>
       roster
-        .filter((pl) => pl.team === team && !taken.has(pl.name))
+        .filter((pl) => (team ? pl.team === team : true) && !taken.has(pl.name) && !exclude.has(pl.name))
         .sort((x, y) => (gameCount.get(x.name) ?? 0) - (gameCount.get(y.name) ?? 0) || x.name.localeCompare(y.name));
     const pairFrom = (list: Player[], want: "M" | "F" | "mixed" | null) => {
       for (let x = 0; x < list.length; x += 1) {
@@ -147,10 +160,10 @@ export default function MatchQueue({
       return null;
     };
     const fa = free(sideA);
-    const fb = free(sideB);
     // A팀에서 출전 적은 두 명을 먼저 정하고, 그 구성(남남/여여/혼합)에 맞춰 B팀 짝을 찾는다
     const pa = pairFrom(fa, null);
     if (!pa) return null;
+    const fb = free(sideB, new Set([pa[0].name, pa[1].name]));
     const kind = pa[0].gender === pa[1].gender ? pa[0].gender : "mixed";
     const pb = pairFrom(fb, kind) ?? pairFrom(fb, null);
     if (!pb) return null;
@@ -177,8 +190,7 @@ export default function MatchQueue({
   }
 
   async function removeMatch(match: Match) {
-    if (!window.confirm(`${match.no}번 경기를 대진에서 뺄까요? 점수가 없는 경기만 뺄 수 있고, 다시 편성하면 새 번호가 붙어요.`)) return;
-    await onReorder(event.matches.filter((m) => m.no !== match.no));
+    await onRemove(match); // 확인창·기록 삭제·대진 저장은 ExchangeView가 한다
     closePicker();
   }
 
@@ -194,7 +206,7 @@ export default function MatchQueue({
   async function saveSlot(round: number, court: Court, editing: Match | null = null) {
     if (pick.a.length !== 2 || pick.b.length !== 2) return;
     if (editing) {
-      const changed: Match = { ...editing, type: typeOf([...pick.a, ...pick.b]), teamA: [pick.a[0], pick.a[1]], teamB: [pick.b[0], pick.b[1]] };
+      const changed: Match = { ...editing, type: typeOf(pick.a, pick.b), teamA: [pick.a[0], pick.a[1]], teamB: [pick.b[0], pick.b[1]] };
       await onReorder(event.matches.map((m) => (m.no === editing.no ? changed : m)));
       closePicker();
       return;
@@ -202,7 +214,7 @@ export default function MatchQueue({
     const nextNo = Math.max(0, ...event.matches.map((m) => m.no)) + 1;
     const match: Match = {
       no: nextNo,
-      type: typeOf([...pick.a, ...pick.b]),
+      type: typeOf(pick.a, pick.b),
       teamA: [pick.a[0], pick.a[1]],
       teamB: [pick.b[0], pick.b[1]],
       round,
@@ -223,13 +235,8 @@ export default function MatchQueue({
     .slice(0, 3);
   const anyReady = upcoming.some((m) => timeline.byMatch.get(m.no)?.status === "ready");
   const nextReady = nextThree.find((m) => timeline.byMatch.get(m.no)?.status === "ready") ?? null;
-  // 대기 이유: 지금 코트에서 뛰는 선수가 있으면 그 이름, 없으면 코트가 비기를 기다리는 것
-  const waitReason = (m: Match, t: MatchTiming) => {
-    const onCourt = [...m.teamA, ...m.teamB].filter((n) => timeline.busyPlayers.has(n));
-    if (onCourt.length > 0) return `🎾 ${onCourt.join(", ")} 경기 중 · 끝나면 시작`;
-    if (timeline.occupiedCourts.size >= courts.length) return `코트가 비면 시작 · 예상 ${toClock(t.expectedStart)}`;
-    return `예상 ${toClock(t.expectedStart)}`;
-  };
+  // 대기 이유 문구는 카드와 같은 함수(timeline.describeWait)로
+  const waitReason = (m: Match, t: MatchTiming) => describeWait(timeline, t, [...m.teamA, ...m.teamB], courts.length);
   const allDone = timeline.courts.every((c) => !c.playing) && upcoming.length === 0;
 
   // 저장된 라운드 순서(no 오름차순)대로 경기를 묶는다. 라운드 번호가 없는 경기는 맨 뒤에.
@@ -332,7 +339,8 @@ export default function MatchQueue({
       <StCard>
         <StCardHead>
           <StCardTitle>📋 경기 순서 · 점수 입력</StCardTitle>
-          {canReorder ? (
+          {/* 라운드가 있는 대진표는 카드가 라운드별로 묶여 있어 ▲▼ 순서와 어긋나므로 순서 바꾸기를 두지 않는다 (리뷰 2026-09-15) */}
+          {canReorder && event.rounds.length === 0 ? (
             reordering ? (
               <StActions>
                 <StPrimaryBtn type="button" onClick={saveOrder} disabled={busy}>
@@ -451,14 +459,16 @@ export default function MatchQueue({
                                         .filter((pl) => (team ? pl.team === team : true))
                                         .map((pl) => {
                                           const on = pick[side].includes(pl.name);
-                                          const blocked = taken.has(pl.name);
+                                          const otherSide = side === "a" ? "b" : "a";
+                                          const onOther = pick[otherSide].includes(pl.name);
+                                          const blocked = taken.has(pl.name) || onOther;
                                           return (
                                             <button
                                               key={pl.name}
                                               type="button"
                                               className={on ? "chip on" : blocked ? "chip off" : "chip"}
                                               disabled={blocked}
-                                              title={blocked ? "이 라운드에 이미 들어가 있어요" : undefined}
+                                              title={onOther ? "반대쪽에 이미 골랐어요" : blocked ? "이 라운드에 이미 들어가 있어요" : undefined}
                                               onClick={() => toggle(side, pl.name)}
                                             >
                                               <span className="who">

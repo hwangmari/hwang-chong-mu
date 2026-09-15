@@ -4,7 +4,7 @@ import styled from "styled-components";
 
 import { useState } from "react";
 import { outcomeForA } from "../standings";
-import { canStartOn, describeTiming, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
+import { canStartOn, describeTiming, describeWait, elapsedOf, playedMinutes, type MatchTiming, type Timeline } from "../timeline";
 import { matchCardId } from "../jump";
 import { toClock } from "../format";
 import ScoreInput from "./ScoreInput";
@@ -115,8 +115,6 @@ export default function MatchCard({
   const outcome = finished && score ? outcomeForA(score) : null;
   const color = MATCH_TYPE_COLOR[match.type];
   const state = timing.status;
-  // 지금 다른 코트에서 뛰고 있는 이 경기의 선수들 (대기 이유 표시용)
-  const playingNow = [...match.teamA, ...match.teamB].filter((n) => timeline.busyPlayers.has(n));
 
   function renderTeam(names: [string, string], side: "A" | "B") {
     const winner =
@@ -191,11 +189,7 @@ export default function MatchCard({
           state === "done" ? "done" : state === "playing" ? "playing" : state === "ready" ? "shifted" : "plain"
         }
       >
-        ⏱ {state === "waiting" && playingNow.length > 0
-          ? `🎾 ${playingNow.join(", ")} 경기 중 · 끝나면 시작할 수 있어요`
-          : state === "waiting" && timeline.occupiedCourts.size >= courts.length
-            ? `코트가 모두 경기 중 · 비면 시작할 수 있어요 (예상 ${toClock(timing.expectedStart)})`
-            : describeTiming(timing)}
+        ⏱ {state === "waiting" ? describeWait(timeline, timing, [...match.teamA, ...match.teamB], courts.length) : describeTiming(timing)}
         {state === "done" && score
           ? (() => {
               const mins = playedMinutes(score);

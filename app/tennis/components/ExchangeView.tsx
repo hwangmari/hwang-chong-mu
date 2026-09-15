@@ -3,6 +3,7 @@
 import styled from "styled-components";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useModal } from "@/components/common/ModalProvider";
 import BracketEditor from "./BracketEditor";
 import ExchangeGuide from "./ExchangeGuide";
 import MatchQueue from "./MatchQueue";
@@ -95,6 +96,8 @@ export default function ExchangeView({ initialEvent }: Props) {
   }, [initialEvent]);
 
   const [tab, setTab] = useState<Tab>("bracket");
+
+  const { openConfirm } = useModal();
   const [scores, setScores] = useState<ScoreMap>({});
   const [mode, setMode] = useState<StorageMode>("cloud");
   const [loading, setLoading] = useState(true);
@@ -238,6 +241,19 @@ export default function ExchangeView({ initialEvent }: Props) {
         `🏁 ${position}번 경기 완료 · ${scoreA} : ${scoreB}${mins !== null ? ` · ${mins}분 플레이` : " · 플레이 시간은 시작 버튼을 누른 경기만 기록돼요"}`,
       );
     }
+  }
+
+  // 당일 편성 경기를 대진에서 뺀다. 시작·점수 기록이 있으면 같이 지워, 같은 번호로 다시 넣은 경기에 옛 기록이 붙지 않게 (리뷰 2026-09-15)
+  async function removeMatch(match: Match) {
+    if (!event) return;
+    const ok = await openConfirm(`${match.no}번 경기를 대진에서 뺄까요? 이 경기의 시작·점수 기록도 함께 지워져요.`);
+    if (!ok) return;
+    if (scores[match.no]) {
+      const next = { ...scores };
+      delete next[match.no];
+      await persist(next, () => deleteTennisScore(eventId, match.no), "기록을 지우지 못했어요. 다시 눌러 주세요.");
+    }
+    await saveBracketParts({ matches: event.matches.filter((m) => m.no !== match.no) });
   }
 
   async function clearScore(matchNo: number) {
@@ -423,11 +439,12 @@ export default function ExchangeView({ initialEvent }: Props) {
               onSave={saveScore}
               onClear={clearScore}
               onReorder={saveOrder}
+              onRemove={removeMatch}
             />
           ) : tab === "standings" ? (
             <>
               {/* 팀 대항이면 개인 순위 위에 팀 승패를 먼저 보여 준다 (2026-09-15) */}
-              <TeamScoreboard event={event} scores={scores} players={players} />
+              {event.rules.teamMatch ? <TeamScoreboard event={event} scores={scores} players={players} /> : null}
               <StandingsTable
                 standings={standings}
                 finished={finished}
@@ -435,8 +452,17 @@ export default function ExchangeView({ initialEvent }: Props) {
                 onPickPlayer={pickPlayer}
               />
             </>
-          ) : tab === "info" ? (
-            /* 대회 정보·규칙·방식 안내·선수단·대진표 수정: 처음 세팅할 때 보는 내용이라 별도 탭 (2026-09-15) */
+          ) : tab === "players" ? (
+            <PlayerSchedule
+              event={event}
+              scores={scores}
+              timeline={timeline}
+              selected={selectedPlayer}
+              onSelect={setSelectedPlayer}
+            />
+          ) : null}
+          {/* 대회 정보·규칙·방식 안내·선수단·대진표 수정: 다른 탭을 보고 와도 입력 중이던 내용이 남도록 늘 그려 두고 숨긴다 (리뷰 2026-09-15) */}
+          <div hidden={tab !== "info"}>
           <StSetupInfo>
             <StActions>
               <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
@@ -497,15 +523,7 @@ export default function ExchangeView({ initialEvent }: Props) {
             </StStatGrid>
             <ExchangeGuide event={event} />
           </StSetupInfo>
-          ) : (
-            <PlayerSchedule
-              event={event}
-              scores={scores}
-              timeline={timeline}
-              selected={selectedPlayer}
-              onSelect={setSelectedPlayer}
-            />
-          )}
+          </div>
         </>
       )}
 

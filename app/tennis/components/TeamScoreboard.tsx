@@ -2,6 +2,7 @@
 
 import styled from "styled-components";
 import { outcomeForA } from "../standings";
+import { isFinished } from "../types";
 import type { MatchScore, Player, ScoreMap, TennisEvent } from "../types";
 import { StCard, StCardHead, StCardHint, StCardTitle } from "../page.styles";
 
@@ -22,7 +23,8 @@ export default function TeamScoreboard({ event, scores, players }: Props) {
   let finished = 0;
   for (const m of event.matches) {
     const score: MatchScore | undefined = scores[m.no];
-    if (!score) continue;
+    // 시작만 한 경기(0:0, 아직 안 끝남)는 세지 않는다 — 아래 개인 순위표(countFinished)와 같은 기준 (리뷰 2026-09-15)
+    if (!score || !isFinished(score)) continue;
     // 경기의 A쪽이 어느 팀인지는 첫 선수의 소속으로 정한다 (편성은 항상 팀별로 갈린다)
     const sideTeam = players.get(m.teamA[0])?.team;
     if (!sideTeam || !tally[sideTeam]) continue;

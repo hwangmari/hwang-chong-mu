@@ -93,9 +93,29 @@ export function buildTimeline(
       if (score.court) playingOn.set(score.court, match);
     }
   }
-  let pendingAhead = 0; // 앞 순서에서 아직 시작 안 했고 선수가 모두 비어 있는(지금 코트만 있으면 뛸 수 있는) 경기 수
+  // 1단계: 아직 시작 안 한 경기의 상태를 대진 순서대로 정한다.
+  //  - 선수 4명이 모두 비어 있고 빈 코트가 있으면 '시작 가능'. 단 빈 코트 수만큼만(앞 순서부터).
+  //  - 선수가 코트에 있는 경기는 코트를 잡아 두지 않는다 → 뒤 라운드 경기가 먼저 들어갈 수 있다 (2026-09-15).
+  const freeCourtCount = courts.length - playingOn.size;
+  let idleAhead = 0;
+  const pendingStatus = new Map<number, MatchStatus>();
+  for (const match of event.matches) {
+    const score = scores[match.no];
+    if (score && (isFinished(score) || score.startedAt)) continue;
+    const playersIdle = [...match.teamA, ...match.teamB].every((n) => !busyPlayers.has(n));
+    pendingStatus.set(match.no, playersIdle && idleAhead < freeCourtCount ? "ready" : "waiting");
+    if (playersIdle) idleAhead += 1;
+  }
 
-  event.matches.forEach((match, index) => {
+  // 2단계: 시간표 흉내. 끝난/진행 중 → 시작 가능(지금 비어 있는 코트로) → 대기 순으로 코트를 배정한다.
+  // 대기 경기가 먼저 코트를 잡아 두면 시작 가능한 경기가 '경기 중인 코트'로 표시되고 예상 시각이 한 경기 밀리던 문제를 막는다 (리뷰 2026-09-15).
+  const rank = (m: Match) => {
+    const s = pendingStatus.get(m.no);
+    return s === undefined ? 0 : s === "ready" ? 1 : 2;
+  };
+  const ordered = event.matches.map((match, index) => ({ match, index })).sort((x, y) => rank(x.match) - rank(y.match) || x.index - y.index);
+
+  for (const { match, index } of ordered) {
     const people = [...match.teamA, ...match.teamB];
     const score = scores[match.no];
     const playersAt = Math.max(eventStart, ...people.map((n) => playerFree.get(n) ?? eventStart));
@@ -119,20 +139,14 @@ export function buildTimeline(
       playingOn.set(court, match);
       for (const n of people) busyPlayers.add(n);
     } else {
-      court = earliestCourt(courtFree);
+      status = pendingStatus.get(match.no) ?? "waiting";
+      // 시작 가능한 경기는 지금 비어 있는 코트 중 하나로, 대기 경기는 가장 먼저 비는 코트로
+      court = status === "ready" ? earliestCourt(courtFree, courts.filter((c) => !playingOn.has(c))) : earliestCourt(courtFree);
       const courtAt = courtFree.get(court) ?? eventStart;
-      // 아직 시작 안 한 경기는 아무리 빨라도 "지금" 이후에 시작한다 (과거로 잡히면 뒤 경기까지 시작 가능으로 보임)
+      // 아직 시작 안 한 경기는 아무리 빨라도 "지금" 이후에 시작한다
       start = Math.max(courtAt, playersAt, now ?? eventStart);
       end = start + dur;
       waitingPlayers = people.filter((n) => (playerFree.get(n) ?? eventStart) > courtAt);
-      // 빈 코트가 있고, 선수 4명이 지금 다른 경기 중이 아니면 시작 가능. 라운드·순서는 상관없다.
-      // 단, 빈 코트 수만큼만 "시작 가능"으로 표시한다(앞 순서에서 선수가 비어 있는 경기가 먼저 코트를 잡는다).
-      // 선수가 다른 코트에서 뛰는 중인 경기는 코트를 잡아 두지 않으므로, 뒤 라운드 경기가 빈 코트에 바로 들어갈 수 있다 (2026-09-15).
-      const freeCourtExists = courts.some((c) => !playingOn.has(c));
-      const playersIdle = people.every((n) => !busyPlayers.has(n));
-      const queueAhead = pendingAhead < courts.length - playingOn.size;
-      status = freeCourtExists && playersIdle && queueAhead ? "ready" : "waiting";
-      if (playersIdle) pendingAhead += 1;
       if (!nextOn.has(court)) nextOn.set(court, match);
     }
 
@@ -148,7 +162,7 @@ export function buildTimeline(
 
     courtFree.set(court, Math.max(courtFree.get(court) ?? eventStart, end));
     for (const n of people) playerFree.set(n, Math.max(playerFree.get(n) ?? eventStart, end));
-  });
+  }
 
   const courtStatus: CourtStatus[] = courts.map((court) => ({
     court,
@@ -171,10 +185,11 @@ export function buildTimeline(
   };
 }
 
-function earliestCourt(courtFree: Map<Court, number>): Court {
-  let best: Court = "A";
+function earliestCourt(courtFree: Map<Court, number>, only?: Court[]): Court {
+  let best: Court = only?.[0] ?? "A";
   let bestAt = Number.POSITIVE_INFINITY;
   for (const [court, at] of courtFree) {
+    if (only && !only.includes(court)) continue;
     if (at < bestAt) {
       bestAt = at;
       best = court;
@@ -190,6 +205,15 @@ export function nowMinutesIfEventDay(eventDate: string, at = new Date()): number
   const d = String(at.getDate()).padStart(2, "0");
   if (`${y}-${m}-${d}` !== eventDate) return null;
   return at.getHours() * 60 + at.getMinutes();
+}
+
+// 대기 중인 경기가 왜 기다리는지 한 줄로. 카드·다음 순서 목록·위에 붙는 띠가 같은 문구를 쓴다 (2026-09-15)
+export function describeWait(timeline: Timeline, t: MatchTiming, people: string[], courtCount: number): string {
+  const onCourt = people.filter((n) => timeline.busyPlayers.has(n));
+  if (onCourt.length > 0) return `🎾 ${onCourt.join(", ")} 경기 중 · 끝나면 시작`;
+  if (timeline.occupiedCourts.size >= courtCount) return `코트가 모두 경기 중 · 비면 시작 (예상 ${toClock(t.expectedStart)})`;
+  if (t.waitingPlayers.length > 0) return `${t.waitingPlayers.join(", ")} 경기 끝나면 시작 (예상 ${toClock(t.expectedStart)})`;
+  return `예상 ${toClock(t.expectedStart)}`;
 }
 
 export function describeTiming(t: MatchTiming): string {
