@@ -18,6 +18,13 @@ export const pokeTokenBar: BlogPost = {
       type: "paragraph",
       text: "클로드와 하루 종일 붙어 일하다 보면 토큰을 얼마나 쓰는지 무뎌집니다. 숫자로 보면 실감이 안 나는데, 알이 하나 놓여 있고 그 알이 조금씩 금이 가는 걸 보면 이야기가 달라집니다. PokeTokenBar는 바로 그걸 해 주는 맥 메뉴 막대 앱입니다. 위 문장은 저장소의 한 줄 소개를 그대로 옮긴 것입니다.",
     },
+    {
+      type: "image",
+      src: "/images/blog/poke_token_bar_ninetales.png",
+      alt: "PokeTokenBar에서 자란 나인테일 도트 그림",
+      width: 322,
+      caption: "제 메뉴 막대에서 자란 나인테일이에요. 토큰을 쓸수록 알에서 이렇게까지 커집니다.",
+    },
 
     { type: "heading", text: "어떻게 크나" },
     {

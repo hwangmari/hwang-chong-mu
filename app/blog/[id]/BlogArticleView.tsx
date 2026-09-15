@@ -52,7 +52,7 @@ export default function BlogArticleView({ post }: BlogArticleViewProps) {
                 return (
                   <StImageBlock key={i}>
                     {block.src ? (
-                      <StImage src={block.src} alt={block.alt ?? ""} />
+                      <StImage src={block.src} alt={block.alt ?? ""} $width={block.width} />
                     ) : (
                       <StImagePlaceholder>
                         🖼️ {block.alt ?? "이미지 자리"}
@@ -199,11 +199,15 @@ const StImageBlock = styled.figure`
   gap: 0.5rem;
 `;
 
-const StImage = styled.img`
+const StImage = styled.img<{ $width?: number }>`
   width: 100%;
+  max-width: ${({ $width }) => ($width ? `${$width}px` : "100%")};
   height: auto;
+  margin: 0 auto;
   border-radius: 0.75rem;
   border: 1px solid ${({ theme }) => theme.colors.gray100};
+  /* 폭을 지정한 작은 그림은 도트가 뭉개지지 않게 */
+  image-rendering: ${({ $width }) => ($width ? "pixelated" : "auto")};
 `;
 
 const StImagePlaceholder = styled.div`

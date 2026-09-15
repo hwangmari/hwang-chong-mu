@@ -2,6 +2,7 @@ import { serviceOgImage } from "@/lib/og";
 import { fetchTennisEvent } from "@/services/tennis";
 
 export const runtime = "edge";
+export const alt = "황총무 테니스 대회 공유 이미지";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
