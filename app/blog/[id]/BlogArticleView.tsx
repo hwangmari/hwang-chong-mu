@@ -1,6 +1,7 @@
 "use client";
 
 import styled from "styled-components";
+import { useState } from "react";
 import {
   StContainer,
   StWrapper,
@@ -69,9 +70,7 @@ export default function BlogArticleView({ post }: BlogArticleViewProps) {
                         <code>{card.name}</code>
                         <strong>{card.title}</strong>
                         <p>{card.desc}</p>
-                        <StSkillExample $dark={block.tone === "dark"}>
-                          &ldquo;{card.example}&rdquo;
-                        </StSkillExample>
+                        <CopyExample text={card.example} dark={block.tone === "dark"} />
                       </StSkillCard>
                     ))}
                   </StSkillGrid>
@@ -257,6 +256,31 @@ const StLinkButton = styled.a`
   }
 `;
 
+/* 예시 문장: 누르면 그대로 복사되고 1.5초 동안 '복사됨'을 보여 준다 */
+function CopyExample({ text, dark }: { text: string; dark: boolean }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <StSkillExample
+      type="button"
+      $dark={dark}
+      $copied={copied}
+      title="누르면 복사돼요"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1500);
+        } catch {
+          /* 클립보드를 못 쓰는 환경이면 그냥 둔다 */
+        }
+      }}
+    >
+      <span className="text">{text}</span>
+      <span className="hint" aria-live="polite">{copied ? "복사됨 ✓" : "복사"}</span>
+    </StSkillExample>
+  );
+}
+
 /* 스킬 카드 격자: 1024px 이상 3열, 640px 이상 2열, 폰 1열 */
 const StSkillGrid = styled.div`
   display: grid;
@@ -298,16 +322,47 @@ const StSkillCard = styled.div<{ $dark: boolean }>`
   }
 `;
 
-/* 그대로 붙여 쓰는 예시 문장 — 어두운 상자에 초록 코드체 */
-const StSkillExample = styled.div<{ $dark: boolean }>`
+/* 그대로 붙여 쓰는 예시 문장 — 어두운 상자에 초록 코드체. 버튼이라 누르면 복사된다 */
+const StSkillExample = styled.button<{ $dark: boolean; $copied: boolean }>`
   margin-top: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
   padding: 0.75rem 0.9rem;
   border-radius: 0.6rem;
   background: ${({ $dark, theme }) => ($dark ? theme.colors.gray800 : theme.colors.gray900)};
-  border: 1px solid ${({ $dark, theme }) => ($dark ? theme.colors.gray700 : theme.colors.gray900)};
+  border: 1px solid ${({ $copied, $dark, theme }) =>
+    $copied ? theme.colors.green500 : $dark ? theme.colors.gray700 : theme.colors.gray900};
   color: ${({ theme }) => theme.colors.green500};
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.82rem;
   line-height: 1.5;
+  text-align: left;
   word-break: keep-all;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  .text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hint {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: ${({ $copied, theme }) => ($copied ? theme.colors.green500 : theme.colors.gray400)};
+    font-family: inherit;
+  }
+
+  &:hover .hint {
+    color: ${({ theme }) => theme.colors.green500};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.green500};
+    outline-offset: 2px;
+  }
 `;
