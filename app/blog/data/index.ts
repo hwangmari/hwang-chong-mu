@@ -20,10 +20,12 @@ import { compensatoryLeaveGuide } from "./compensatory-leave-guide";
 import { overtimePayBasics } from "./overtime-pay-basics";
 import { buildingWithClaude } from "./building-with-claude";
 import { omcSkillsGuide } from "./omc-skills-guide";
+import { pokeTokenBar } from "./poke-token-bar";
 
 export type { BlogPost, ContentBlock } from "./types";
 
 export const BLOG_POSTS: BlogPost[] = [
+  pokeTokenBar,
   omcSkillsGuide,
   buildingWithClaude,
   habitTrackingThatSticks,

@@ -112,30 +112,6 @@ export const omcSkillsGuide: BlogPost = {
       text: "규칙이 파일에 있으면 대화가 길어져 앞 내용을 잊어도, 새 역할이 투입돼도 같은 선을 지킵니다. 이번에 헤더가 쪼그라든 사고 뒤에 검사 폭에 945px를 추가한 것도 규칙 파일이 아니라 기억 파일에 적어 두었고, 그 뒤 검사에서는 그 폭이 포함됐습니다.",
     },
 
-    { type: "heading", text: "함께 쓰면 즐거운 도구 — PokeTokenBar" },
-    {
-      type: "paragraph",
-      text: "클로드와 하루 종일 붙어 있으면 토큰을 얼마나 쓰는지 무뎌집니다. PokeTokenBar는 그 사용량을 포켓몬 키우기로 바꿔 맥 메뉴 막대에 띄워 주는 작은 앱입니다. 소개 문구 그대로 옮기면 \"Your AI coding tokens, hatched into Pokémon — right in your menu bar\" 입니다.",
-    },
-    {
-      type: "list",
-      items: [
-        "어떻게 크나: 토큰을 쓰면 알이 부화하고, 계속 쓰면 실제 진화 계보대로 진화합니다. 마지막 형태까지 크면 도감에 들어가고 새 알이 나옵니다. 흔한 종은 열심히 쓸 때 사흘쯤, 전설급은 24일쯤 걸린다고 적혀 있고, 드물게(약 129분의 1) 색이 다른 개체가 나옵니다.",
-        "무엇을 읽나: 클로드 코드를 비롯해 Codex·Gemini CLI·Cursor 등 여러 코딩 도구의 로컬 사용 기록을 자동으로 읽습니다. 따로 연결할 것이 없습니다.",
-        "설치: macOS 14 이상에서 Homebrew로 `brew install --cask chattymin/tap/poke-token-bar`, 또는 배포 페이지에서 받아 응용 프로그램 폴더에 넣으면 됩니다. 한국어 화면을 지원하고, 성장 난이도와 메뉴 막대에 보일 항목(토큰·비용·한도 비율)을 고를 수 있습니다.",
-        "알아둘 것: 공식 제품이 아니라 팬이 만든 비영리 프로젝트(MIT)이고, 포켓몬 이미지는 앱에 들어 있지 않고 실행할 때 공개 API에서 가져옵니다.",
-      ],
-    },
-    {
-      type: "paragraph",
-      text: "실용적인 기능은 아니지만, 오늘 토큰을 얼마나 썼는지 메뉴 막대의 알 하나로 감이 잡히는 건 꽤 쓸모가 있습니다. 클로드에게 큰 일을 맡겨 두고 기다리는 동안 보는 재미도 있고요.",
-    },
-    {
-      type: "link",
-      href: "https://github.com/chattymin/PokeTokenBar",
-      label: "PokeTokenBar 저장소 보기 →",
-    },
-
     { type: "heading", text: "비용과 한계" },
     {
       type: "list",
@@ -155,6 +131,11 @@ export const omcSkillsGuide: BlogPost = {
       type: "link",
       href: "/blog/building-with-claude",
       label: "앞 글: 프론트 개발자 혼자, 클로드와 둘이서 →",
+    },
+    {
+      type: "link",
+      href: "/blog/poke-token-bar",
+      label: "곁들이 글: 토큰을 포켓몬으로 키우는 PokeTokenBar →",
     },
   ],
 };
