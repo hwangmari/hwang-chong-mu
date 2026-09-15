@@ -24,6 +24,7 @@ import {
   StElapsedFill,
   StElapsedTrack,
   StGhostBtn,
+  StMatchGrid,
   StLiveBadge,
   StLiveDot,
   StPrimaryBtn,
@@ -429,7 +430,8 @@ export default function MatchQueue({
                   <StRoundTime>{group.round.time}</StRoundTime>
                 </StRoundHead>
                 {/* 코트마다 한 칸: 그 코트에 경기가 있으면 카드, 없으면 빈 칸(편성하기). 경기를 넣어도 옆 코트 칸은 그대로 남는다 (2026-09-15) */}
-                <StQueueList>
+                {/* 라운드 카드는 한 줄에 두 장(토너먼트와 동일). 한 장씩 내려오는 건 휴대폰 폭(767px 이하)에서만 (2026-09-15) */}
+                <StMatchGrid>
                   {(() => {
                     const roundNo = group.round.no;
                     const taken = busyInRound(roundNo, editingNo);
@@ -558,11 +560,11 @@ export default function MatchQueue({
                     }
                     return cells;
                   })()}
-                </StQueueList>
+                </StMatchGrid>
               </div>
             ))}
             {unrounded.length > 0 && (
-              <StQueueList>
+              <StMatchGrid>
                 {unrounded.map((match) => {
                   const timing = timeline.byMatch.get(match.no);
                   if (!timing) return null;
@@ -582,7 +584,7 @@ export default function MatchQueue({
                     />
                   );
                 })}
-              </StQueueList>
+              </StMatchGrid>
             )}
           </StRoundStack>
         )}
