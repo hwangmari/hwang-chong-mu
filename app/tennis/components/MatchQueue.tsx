@@ -99,9 +99,14 @@ export default function MatchQueue({
 
   // 확정 경기 수(적은 사람 우선 추천) · 이미 짝이 된 조합(반복 피하기)
   const gameCount = new Map<string, number>();
+  const playedCount = new Map<string, number>(); // 점수까지 저장된(끝난) 경기 수
   const pairSeen = new Set<string>();
   for (const m of event.matches) {
-    for (const n of [...m.teamA, ...m.teamB]) gameCount.set(n, (gameCount.get(n) ?? 0) + 1);
+    const done = Boolean(scores[m.no]?.finishedAt);
+    for (const n of [...m.teamA, ...m.teamB]) {
+      gameCount.set(n, (gameCount.get(n) ?? 0) + 1);
+      if (done) playedCount.set(n, (playedCount.get(n) ?? 0) + 1);
+    }
     pairSeen.add([...m.teamA].sort().join("|"));
     pairSeen.add([...m.teamB].sort().join("|"));
   }
@@ -455,8 +460,13 @@ export default function MatchQueue({
                                               title={blocked ? "이 라운드에 이미 들어가 있어요" : undefined}
                                               onClick={() => toggle(side, pl.name)}
                                             >
-                                              {pl.name}
-                                              <small>{gameCount.get(pl.name) ?? 0}</small>
+                                              <span className="who">
+                                                {pl.name}
+                                                <i className={pl.gender === "F" ? "g f" : "g m"}>{pl.gender === "F" ? "여" : "남"}</i>
+                                              </span>
+                                              <small>
+                                                {pl.years}년 · 뛴 {playedCount.get(pl.name) ?? 0}/{gameCount.get(pl.name) ?? 0}
+                                              </small>
                                             </button>
                                           );
                                         })}
@@ -484,7 +494,7 @@ export default function MatchQueue({
                                   {editing ? "이렇게 바꾸기" : "이 코트에 넣기"}
                                 </StPrimaryBtn>
                               </div>
-                              <span className="hint">추천은 확정 경기가 적은 선수부터, 이미 짝이 됐던 조합은 피해서 골라요. 숫자는 지금까지 확정 경기 수예요.</span>
+                              <span className="hint">추천은 확정 경기가 적은 선수부터, 이미 짝이 됐던 조합은 피해서 골라요. &ldquo;뛴 2/5&rdquo;는 끝난 경기 2 / 확정 경기 5예요.</span>
                             </StPicker>
                     );
                     for (const match of group.matches) {
@@ -732,21 +742,47 @@ const StPicker = styled.div`
 
   .chip {
     display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    min-height: 1.9rem;
-    padding: 0 0.6rem;
-    border-radius: 999px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.7rem;
     border: 1px solid transparent;
     background: ${({ theme }) => theme.semantic.bg};
     color: ${({ theme }) => theme.semantic.text};
     font-size: 0.8rem;
     font-weight: 700;
+    line-height: 1.2;
     cursor: pointer;
+    text-align: left;
+
+    .who {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .g {
+      font-style: normal;
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 0.05rem 0.3rem;
+      border-radius: 999px;
+    }
+
+    .g.m {
+      color: ${({ theme }) => theme.colors.blue600};
+      background: ${({ theme }) => theme.colors.blue50};
+    }
+
+    .g.f {
+      color: ${({ theme }) => theme.colors.rose600};
+      background: ${({ theme }) => theme.colors.rose50};
+    }
 
     small {
       font-size: 0.66rem;
-      font-weight: 800;
+      font-weight: 700;
       color: ${({ theme }) => theme.colors.gray500};
       font-variant-numeric: tabular-nums;
     }
@@ -758,6 +794,11 @@ const StPicker = styled.div`
 
     small {
       color: rgba(255, 255, 255, 0.85);
+    }
+
+    .g {
+      color: ${({ theme }) => theme.colors.white};
+      background: rgba(255, 255, 255, 0.22);
     }
   }
 
