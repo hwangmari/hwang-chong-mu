@@ -125,8 +125,12 @@ export const StCard = styled.section`
   flex-direction: column;
   gap: 0.85rem;
 
+  /* 휴대폰: 카드가 화면 좌우 끝까지(테두리·둥근 모서리 없이) — 바깥 여백과 카드 여백이 겹치지 않게, 운동 기록 화면과 같은 방식 (2026-09-15) */
   @media ${({ theme }) => theme.media.mobile} {
-    padding: 0.85rem;
+    margin: 0 -0.75rem;
+    border: none;
+    border-radius: 0;
+    padding: 0.9rem 1rem;
     gap: 0.7rem;
   }
 `;
