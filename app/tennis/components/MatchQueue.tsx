@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import MatchCard from "./MatchCard";
 import { toClock } from "../format";
+import type { MatchTiming } from "../timeline";
 import { courtLetters, elapsedOf, type Timeline } from "../timeline";
 import { jumpToMatch } from "../jump";
 import {
@@ -214,6 +215,14 @@ export default function MatchQueue({
     .sort((x, y) => Number(timeline.byMatch.get(y.no)?.status === "ready") - Number(timeline.byMatch.get(x.no)?.status === "ready"))
     .slice(0, 3);
   const anyReady = upcoming.some((m) => timeline.byMatch.get(m.no)?.status === "ready");
+  const nextReady = nextThree.find((m) => timeline.byMatch.get(m.no)?.status === "ready") ?? null;
+  // 대기 이유: 지금 코트에서 뛰는 선수가 있으면 그 이름, 없으면 코트가 비기를 기다리는 것
+  const waitReason = (m: Match, t: MatchTiming) => {
+    const onCourt = [...m.teamA, ...m.teamB].filter((n) => timeline.busyPlayers.has(n));
+    if (onCourt.length > 0) return `🎾 ${onCourt.join(", ")} 경기 중 · 끝나면 시작`;
+    if (timeline.occupiedCourts.size >= courts.length) return `코트가 비면 시작 · 예상 ${toClock(t.expectedStart)}`;
+    return `예상 ${toClock(t.expectedStart)}`;
+  };
   const allDone = timeline.courts.every((c) => !c.playing) && upcoming.length === 0;
 
   // 저장된 라운드 순서(no 오름차순)대로 경기를 묶는다. 라운드 번호가 없는 경기는 맨 뒤에.
@@ -303,9 +312,7 @@ export default function MatchQueue({
                       {t.position}번 · {teamText(m)}
                     </b>
                     <em>
-                      {t.status === "ready"
-                        ? "▶ 지금 시작 가능 · 빈 코트를 골라 시작"
-                        : `예상 ${toClock(t.expectedStart)}${t.waitingPlayers.length > 0 ? ` · ${t.waitingPlayers.join(", ")} 경기 끝나면` : ""}`}
+                      {t.status === "ready" ? "▶ 지금 시작 가능 · 빈 코트를 골라 시작" : waitReason(m, t)}
                     </em>
                   </StCourtSlotMain>
                 </StCourtSlot>
@@ -341,6 +348,20 @@ export default function MatchQueue({
             )
           ) : null}
         </StCardHead>
+        {/* 스크롤해도 위에 붙어 있는 '다음 시작' 띠: 지금 시작 가능한 경기 번호를 바로 보고 카드로 이동 (2026-09-15) */}
+        {!reordering && (nextReady || nextThree[0]) && (() => {
+          const m = nextReady ?? nextThree[0];
+          const t = timeline.byMatch.get(m.no);
+          if (!t) return null;
+          return (
+            <StNextSticky $ready={t.status === "ready"} type="button" onClick={() => jumpToMatch(m.no)} title="이 경기 카드로 이동">
+              <span className="tag">{t.status === "ready" ? "▶ 다음 시작" : "다음"}</span>
+              <b>{t.position}번</b>
+              <span className="names">{teamText(m)}</span>
+              <span className="why">{t.status === "ready" ? "지금 시작 가능" : waitReason(m, t)}</span>
+            </StNextSticky>
+          );
+        })()}
         <StCardHint>
           위에서부터 순서대로, 비는 코트에 들어가요. 코트와 선수가 비면 &ldquo;지금 시작 가능&rdquo;이
           되고, 시작 버튼을 눌러 코트를 정한 뒤 경기가 끝나면 게임 수(예: 6 : 4)를 저장하세요.
@@ -588,6 +609,65 @@ const StEmptySlot = styled.div<{ $open?: boolean }>`
 `;
 
 /* 슬롯 안 선수 고르기: 팀별 칩 두 줄 + 버튼 */
+// 경기 순서 카드 맨 위에 붙는 띠. 헤더(3.5rem) 아래에 고정된다.
+const StNextSticky = styled.button<{ $ready: boolean }>`
+  position: sticky;
+  top: 3.9rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1px solid ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.gray200)};
+  background: ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.white)};
+  color: ${({ $ready, theme }) => ($ready ? theme.colors.white : theme.colors.gray900)};
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  .tag {
+    flex: none;
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.22)" : theme.colors.gray100)};
+  }
+
+  b {
+    flex: none;
+    font-weight: 900;
+  }
+
+  .names {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .why {
+    flex: none;
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 767px) {
+    flex-wrap: wrap;
+    .why {
+      flex-basis: 100%;
+      margin-left: 0;
+    }
+  }
+`;
+
 const StEditRow = styled.div`
   display: flex;
   justify-content: flex-end;

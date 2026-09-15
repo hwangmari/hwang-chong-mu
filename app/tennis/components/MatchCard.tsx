@@ -331,10 +331,12 @@ export default function MatchCard({
 const StPlayingTag = styled.span`
   display: inline-flex;
   align-items: center;
-  margin-left: 0.35rem;
-  padding: 0.05rem 0.45rem;
+  white-space: nowrap;
+  margin-left: 0.1rem;
+  padding: 0.05rem 0.4rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
+  line-height: 1.3;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: ${({ theme }) => theme.colors.teal600};

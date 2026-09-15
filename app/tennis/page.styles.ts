@@ -681,14 +681,16 @@ export const StTeamLabel = styled.span<{ $color: string }>`
 
 export const StPlayerLine = styled.span<{ $strong: boolean }>`
   display: inline-flex;
+  flex-wrap: wrap; /* 좁으면 '경기 중' 태그만 다음 줄로 (연차·팀 글자는 중간에 끊지 않는다) */
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.2rem 0.3rem;
   font-size: 0.9rem;
   font-weight: ${({ $strong }) => ($strong ? 900 : 700)};
   color: ${({ theme }) => theme.colors.gray900};
 `;
 
 export const StYears = styled.span`
+  white-space: nowrap;
   font-size: 0.68rem;
   color: ${({ theme }) => theme.colors.gray400};
   font-weight: 600;
