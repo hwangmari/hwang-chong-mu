@@ -19,10 +19,12 @@ import { splitBillTips } from "./split-bill-tips";
 import { compensatoryLeaveGuide } from "./compensatory-leave-guide";
 import { overtimePayBasics } from "./overtime-pay-basics";
 import { buildingWithClaude } from "./building-with-claude";
+import { omcSkillsGuide } from "./omc-skills-guide";
 
 export type { BlogPost, ContentBlock } from "./types";
 
 export const BLOG_POSTS: BlogPost[] = [
+  omcSkillsGuide,
   buildingWithClaude,
   habitTrackingThatSticks,
   companyChongmuChecklist,
