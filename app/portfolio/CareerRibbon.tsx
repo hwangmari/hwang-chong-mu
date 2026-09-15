@@ -22,6 +22,8 @@ const CANVAS_PX = 930;
 const MAX_CHIPS = 3;
 
 /** 각 칸이 데스크톱에서 대략 몇 px을 차지하는지 미리 계산해 둔다 */
+/* 띠 표시 순서: 최신 회사가 왼쪽 */
+const ribbonSpans = [...careerSpans].reverse();
 const flexible = careerSpans.filter((s) => (s.months / totalCareerMonths) * CANVAS_PX >= MIN_SEGMENT_PX);
 const fixedCount = careerSpans.length - flexible.length;
 const flexibleMonths = flexible.reduce((n, s) => n + s.months, 0);
@@ -109,7 +111,8 @@ export default function CareerRibbon({ variant = "full" }: CareerRibbonProps) {
         {!compact && <StUnroll aria-hidden="true" />}
 
         <StBar $compact={compact}>
-          {careerSpans.map((span, i) => {
+          {/* 아래 경력 카드가 최신순이라 띠도 최신→과거로 두어 스크롤 방향과 하이라이트 이동 방향을 맞춘다 (2026-09-15) */}
+          {ribbonSpans.map((span, i) => {
             const width = estimatedWidth(span.months);
             const isActive = activeId === span.id;
             const label = width >= 110 ? span.company : shortName(span.company);
