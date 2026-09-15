@@ -29,6 +29,10 @@ export default function ExchangeGuide({ event }: Props) {
     .filter((x) => x.n > 0);
   const onRules = RULE_INFO.filter((r) => isRuleOn(event.rules, r.id));
   const teams = [...new Set(event.players.map((p) => p.team?.trim()).filter(Boolean))];
+  // 팀 대항(같은 소속끼리 짝, 다른 소속과 대결)인지 / 라운드 시간표가 있는지 / 당일 편성 라운드(경기 없는 라운드)가 몇 개인지 — 2026-09-15
+  const teamMatch = event.rules.teamMatch && teams.length === 2;
+  const plannedRounds = event.rounds.filter((r) => event.matches.some((m) => m.round === r.no));
+  const sameDayRounds = event.rounds.filter((r) => !event.matches.some((m) => m.round === r.no));
 
   return (
     <StCard>
@@ -67,7 +71,12 @@ export default function ExchangeGuide({ event }: Props) {
               <b>승점</b>은 승 {POINTS.win}점 · 무 {POINTS.draw}점 · 패 {POINTS.loss}점이고, 같으면 득실(딴 게임 − 내준 게임) → 딴 게임 순으로 순위를 가려요.
               개인 순위표라서 짝이 바뀌어도 내 점수는 나에게 쌓여요.
             </li>
-            {teams.length > 0 ? (
+            {teamMatch ? (
+              <li>
+                <b>{teams[0]} vs {teams[1]} 팀 대항</b>이에요. 짝은 늘 같은 팀끼리, 상대는 늘 다른 팀이에요. 경기마다 이긴 팀에 1승이 쌓이고, 순위 탭 맨 위에서
+                팀 승패를 봐요. 그 아래 개인 순위표는 그대로 있어요.
+              </li>
+            ) : teams.length > 0 ? (
               <li>
                 소속은 {teams.join(" · ")}이고, 이 교류전은 소속을 섞어서 짝을 짜는 교류 방식이에요. 순위표에서 소속별로도 볼 수 있어요.
               </li>
@@ -89,11 +98,24 @@ export default function ExchangeGuide({ event }: Props) {
 
           <h4>🏟️ 진행 방식 — 순서 목록 + 빈 코트</h4>
           <ul>
+            {plannedRounds.length > 0 ? (
+              <li>
+                코트는 <b>{event.courts}면</b>이고, 대진표는 <b>R1~R{plannedRounds[plannedRounds.length - 1].no}</b> 라운드로 짜여 있어요(라운드 옆 시간은 계획).
+                실제로는 <b>빈 코트가 생기고 선수 4명이 모두 비어 있으면 라운드 순서와 상관없이</b> 바로 시작할 수 있어요. 앞 라운드 선수가 아직 코트에 있으면 그 경기는 기다리고, 뒤 라운드 경기가 먼저 들어가도 돼요.
+              </li>
+            ) : (
+              <li>
+                코트는 <b>{event.courts}면</b>이고, 경기는 <b>목록 순서대로 비는 코트</b>에 들어가요. 정해진 코트나 시간이 있는 게 아니라, 앞 경기가 끝나면 다음 경기가 바로 들어가요.
+              </li>
+            )}
+            {sameDayRounds.length > 0 ? (
+              <li>
+                <b>R{sameDayRounds[0].no}~R{sameDayRounds[sameDayRounds.length - 1].no}({sameDayRounds.length * event.courts}경기)는 당일 편성</b>이에요. 빈 칸의
+                &ldquo;편성하기&rdquo;에서 선수를 고르거나 &ldquo;추천으로 채우기&rdquo;(확정 경기가 적은 사람부터)를 누르면 돼요. 넣은 뒤에도 시작 전이면 &ldquo;선수 바꾸기&rdquo;로 고칠 수 있어요.
+              </li>
+            ) : null}
             <li>
-              코트는 <b>{event.courts}면</b>이고, 경기는 <b>목록 순서대로 비는 코트</b>에 들어가요. 정해진 코트나 시간이 있는 게 아니라, 앞 경기가 끝나면 다음 경기가 바로 들어가요.
-            </li>
-            <li>
-              카드가 파란 <b>&ldquo;지금 시작 가능&rdquo;</b>이 되면 코트를 골라 시작 버튼을 눌러요. 선수 4명이 다른 경기 중이 아니고 빈 코트가 있어야 해요.
+              카드가 파란 <b>&ldquo;지금 시작 가능&rdquo;</b>이 되면 코트를 골라 시작 버튼을 눌러요. 선수 4명이 다른 경기 중이 아니고 빈 코트가 있어야 해요. 기다리는 카드에는 누가 코트에 있는지(&ldquo;🎾 ○○ 경기 중&rdquo;)가 적혀요. 스크롤해도 위에 붙어 있는 파란 띠가 다음 시작할 경기와 코트 현황을 알려 줘요.
             </li>
             <li>
               화면의 시간은 <b>예상</b>이에요. {event.startTime}에 시작해 순조로우면 {endTime(event)}쯤 끝나고, 실제 진행에 맞춰 계속 다시 계산돼요.

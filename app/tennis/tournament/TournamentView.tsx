@@ -484,8 +484,14 @@ export default function TournamentView({ initialEvent }: Props) {
             <StCardTitle>🗂️ 대진표 · 점수 입력</StCardTitle>
           </StCardHead>
           <StCardHint>
-            {event.beforeNote ? `${event.beforeNote} → ` : ""}타임는 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요.
-            앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로 채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
+            {event.beforeNote ? (
+              <>
+                <NoteLines text={event.beforeNote} />
+                <br />
+              </>
+            ) : null}
+            타임 시간은 계획이에요. 두 팀이 정해지면 빈 코트 아무 데서나 시작할 수 있어요. 앞 경기 점수가 들어오면 다음 경기에 팀이 자동으로
+            채워져요. 이긴 팀 {event.gamesToWin}게임, 5:5면 7점 타이브레이크.
           </StCardHint>
           <StQueueList $single>
             {blocks.map((block) => {
