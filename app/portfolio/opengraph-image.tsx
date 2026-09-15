@@ -2,7 +2,7 @@ import { OgTemplate, TONES } from "@/components/common/OgTemplate";
 import { ImageResponse } from "next/og";
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og";
 import { loadOgFonts } from "@/lib/og-font";
-import { careerYears, companyCount, keyProjectCount } from "./careerFacts";
+import { companyCount, keyProjectCount } from "./careerFacts";
 
 // 포트폴리오를 공유했을 때 뜨는 미리보기 이미지.
 // 숫자는 careerFacts.ts 가 data/experiences.tsx 에서 계산해 온 값이라
@@ -18,11 +18,10 @@ export default async function Image() {
 
   const title = "황혜경";
   const brand = "황총무의 실험실";
-  const subtitle = `프론트엔드 개발자 · ${careerYears}년차`;
+  const subtitle = "프론트엔드 개발자";
   const url = "hwang-lab.kr/portfolio";
 
   const facts: [string, string][] = [
-    ["경력", `${careerYears}년`],
     ["회사", `${companyCount}곳`],
     ["주요 프로젝트", `${keyProjectCount}개`],
   ];

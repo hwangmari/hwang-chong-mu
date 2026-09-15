@@ -6,7 +6,6 @@ import Link from "next/link";
 import styled from "styled-components";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { displayFont } from "@/lib/fonts";
-import { careerYears } from "./careerFacts";
 import AnimatedTitle from "./AnimatedTitle";
 
 export default function PortfolioHero() {
@@ -24,8 +23,8 @@ export default function PortfolioHero() {
 
             {/* 아래 한 줄은 data/experiences.tsx의 회사·역할·요약에서 뽑아 만든 문장입니다 */}
             <StTagline>
-              웹 표준 마크업에서 시작해 프론트엔드로, 포털·커머스·협업·보험 서비스를{" "}
-              <b>{careerYears}년째</b> 만들고 있습니다.
+              웹 표준 마크업에서 시작해 프론트엔드로, 포털·커머스·협업·보험 서비스를
+              만들어 왔습니다.
             </StTagline>
 
             <StCtaRow>
