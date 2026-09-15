@@ -7,6 +7,7 @@ import MatchQueue from "./MatchQueue";
 import PlayerRoster from "./PlayerRoster";
 import PlayerSchedule from "./PlayerSchedule";
 import StandingsTable from "./StandingsTable";
+import TeamScoreboard from "./TeamScoreboard";
 import { formatEventDate } from "../format";
 import { FIXED_RULES, ruleBadges } from "../rules";
 import { buildStandings, countFinished } from "../standings";
@@ -466,12 +467,16 @@ export default function ExchangeView({ initialEvent }: Props) {
               onReorder={saveOrder}
             />
           ) : tab === "standings" ? (
-            <StandingsTable
-              standings={standings}
-              finished={finished}
-              total={event.matches.length}
-              onPickPlayer={pickPlayer}
-            />
+            <>
+              {/* 팀 대항이면 개인 순위 위에 팀 승패를 먼저 보여 준다 (2026-09-15) */}
+              <TeamScoreboard event={event} scores={scores} players={players} />
+              <StandingsTable
+                standings={standings}
+                finished={finished}
+                total={event.matches.length}
+                onPickPlayer={pickPlayer}
+              />
+            </>
           ) : (
             <PlayerSchedule
               event={event}
