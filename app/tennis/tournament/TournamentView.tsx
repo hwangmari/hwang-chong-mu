@@ -34,6 +34,7 @@ import {
   StCourtTitle,
   StGhostBtn,
   StHeader,
+  StInfoLine,
   StMatchGrid,
   StNotice,
   StPage,
@@ -325,6 +326,11 @@ export default function TournamentView({ initialEvent }: Props) {
           {formatDate(event.date)} {event.timeTbd ? "· 시간 미정 (일정표는 13:00 시작 기준)" : `${event.startTime}부터`} · {event.place} · 코트{" "}
           {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
+        {/* 처음 온 사람이 대회 방식을 바로 찾도록: 한 줄 요약 + 대회 정보 탭 링크 */}
+        <StInfoLine type="button" onClick={() => setTab("info")}>
+          {event.teams.length}팀 더블 엘리미네이션 · {progress.total}경기 · 참가자 {event.roster.length}명 ·{" "}
+          <span className="link">규칙과 방식 보기 →</span>
+        </StInfoLine>
       </StHeader>
 
 

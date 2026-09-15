@@ -30,6 +30,7 @@ import {
   StCardTitle,
   StChipRow,
   StGhostBtn,
+  StInfoLine,
   StHeader,
   StNotice,
   StPage,
@@ -158,6 +159,10 @@ export default function ExchangeView({ initialEvent }: Props) {
   const players = useMemo(
     () => new Map((event?.players ?? []).map((player) => [player.name, player])),
     [event],
+  );
+  const teamNames = useMemo(
+    () => [...new Set([...players.values()].map((p) => p.team).filter(Boolean))] as string[],
+    [players],
   );
   const standings = useMemo(() => (event ? buildStandings(event, scores) : []), [event, scores]);
   const finished = event ? countFinished(event, scores) : 0;
@@ -338,6 +343,11 @@ export default function ExchangeView({ initialEvent }: Props) {
           {formatEventDate(event)}
           {event.place ? ` · ${event.place}` : ""} · 코트 {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
+        {/* 처음 온 사람이 대회 방식을 바로 찾도록: 한 줄 요약 + 대회 정보 탭 링크 */}
+        <StInfoLine type="button" onClick={() => setTab("info")}>
+          {teamNames.length === 2 ? `${teamNames[0]} vs ${teamNames[1]}` : "개인전"} · {event.matches.length}경기 · 선수 {event.players.length}명 ·{" "}
+          <span className="link">규칙과 방식 보기 →</span>
+        </StInfoLine>
       </StHeader>
 
 

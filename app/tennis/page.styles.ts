@@ -62,6 +62,32 @@ export const StSubtitle = styled.p`
   line-height: 1.5;
 `;
 
+/* 날짜 줄 아래 한 줄 요약 + '규칙과 방식 보기 →' 글자 링크. 테두리·배경 없이 글자만 (2026-09-15) */
+export const StInfoLine = styled.button`
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.colors.gray500};
+  cursor: pointer;
+
+  .link {
+    white-space: nowrap;
+    color: ${({ theme }) => theme.semantic.primary};
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  &:hover .link {
+    color: ${({ theme }) => theme.colors.blue700};
+  }
+`;
+
 /* 상단 숫자 요약 (라운드·경기·선수) */
 export const StStatGrid = styled.div`
   display: grid;
