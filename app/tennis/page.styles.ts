@@ -35,6 +35,12 @@ export const StPage = styled.div`
   max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 1rem 1rem 2.5rem;
+
+  /* 휴대폰: 바깥 여백 → 카드 여백 → 코트 칸 여백이 세 겹으로 쌓이지 않게 한 단계씩 줄인다 (2026-09-15) */
+  @media ${({ theme }) => theme.media.mobile} {
+    padding: 0.75rem 0.75rem 2rem;
+    gap: 0.75rem;
+  }
 `;
 
 export const StHeader = styled.header`
@@ -92,6 +98,11 @@ export const StCard = styled.section`
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    padding: 0.85rem;
+    gap: 0.7rem;
+  }
 `;
 
 export const StCardHead = styled.div`
@@ -548,6 +559,10 @@ export const StCourtCard = styled.div<{ $live: boolean }>`
   padding: 0.9rem 1rem;
   border-radius: 1rem;
   border: 2px solid ${({ $live, theme }) => ($live ? theme.colors.teal500 : theme.colors.gray200)};
+
+  @media ${({ theme }) => theme.media.mobile} {
+    padding: 0.7rem 0.8rem;
+  }
   background: ${({ $live, theme }) => ($live ? theme.colors.teal50 : theme.colors.white)};
   ${({ $live }) =>
     $live
@@ -681,9 +696,14 @@ export const StTeamLabel = styled.span<{ $color: string }>`
 
 export const StPlayerLine = styled.span<{ $strong: boolean }>`
   display: inline-flex;
-  flex-wrap: wrap; /* 좁으면 '경기 중' 태그만 다음 줄로 (연차·팀 글자는 중간에 끊지 않는다) */
+  flex-wrap: nowrap; /* 한 줄 유지: 좁으면 연차·팀 글자가 …로 줄어들고 '경기 중' 태그는 떨어지지 않는다 */
   align-items: center;
+  max-width: 100%;
   gap: 0.2rem 0.3rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    flex-wrap: wrap; /* 휴대폰은 폭이 좁아 연차·팀을 이름 아래 줄로 */
+  }
   font-size: 0.9rem;
   font-weight: ${({ $strong }) => ($strong ? 900 : 700)};
   color: ${({ theme }) => theme.colors.gray900};
@@ -691,6 +711,9 @@ export const StPlayerLine = styled.span<{ $strong: boolean }>`
 
 export const StYears = styled.span`
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 0.68rem;
   color: ${({ theme }) => theme.colors.gray400};
   font-weight: 600;

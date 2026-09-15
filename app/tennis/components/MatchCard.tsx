@@ -136,9 +136,8 @@ export default function MatchCard({
                   <StTag $color={GENDER_COLOR[player.gender]}>
                     {GENDER_LABEL[player.gender]}
                   </StTag>
-                  <StYears>
-                    {player.years}년{player.team ? ` · ${player.team}` : ""}
-                  </StYears>
+                  {/* 팀은 A/B 칸으로 이미 갈려 있으니 구력만 (2026-09-15) */}
+                  <StYears>{player.years}년</StYears>
                 </>
               ) : null}
               {state === "waiting" && timeline.busyPlayers.has(name) ? (
@@ -331,11 +330,12 @@ export default function MatchCard({
 const StPlayingTag = styled.span`
   display: inline-flex;
   align-items: center;
+  flex: none;
   white-space: nowrap;
   margin-left: 0.1rem;
-  padding: 0.05rem 0.4rem;
+  padding: 0.05rem 0.35rem;
   border-radius: 999px;
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   line-height: 1.3;
   font-weight: 800;
   letter-spacing: -0.01em;

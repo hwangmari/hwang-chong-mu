@@ -1,5 +1,7 @@
 "use client";
 
+import styled from "styled-components";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BracketEditor from "./BracketEditor";
 import ExchangeGuide from "./ExchangeGuide";
@@ -34,7 +36,6 @@ import {
   StPrimaryBtn,
   StRuleBadge,
   StStatBox,
-  StStatButton,
   StStatGrid,
   StStatLabel,
   StStatValue,
@@ -325,76 +326,19 @@ export default function ExchangeView({ initialEvent }: Props) {
   return (
     <StPage>
       <StHeader>
-        <StTitle>🎾 {event.title}</StTitle>
+        {/* 제목 오른쪽에 링크 복사. 선수단·대진표 수정은 세팅용이라 맨 아래 '대회 정보'로 (2026-09-15) */}
+        <StTitleRow>
+          <StTitle>🎾 {event.title}</StTitle>
+          <StGhostBtn type="button" onClick={copyLink}>
+            {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
+          </StGhostBtn>
+        </StTitleRow>
         <StSubtitle>
           {formatEventDate(event)}
           {event.place ? ` · ${event.place}` : ""} · 코트 {event.courts}면 · 경기당 {event.minutesPerMatch}분
         </StSubtitle>
-        <StChipRow>
-          {FIXED_RULES.map((r) => (
-            <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
-              🔒 {r.label}
-            </StRuleBadge>
-          ))}
-          {ruleBadges(event.rules).map((label) => (
-            <StRuleBadge key={label} $tone="on">
-              ✓ {label}
-            </StRuleBadge>
-          ))}
-        </StChipRow>
-        <StActions>
-          <StGhostBtn type="button" onClick={copyLink}>
-            {copied ? "✅ 복사됐어요" : "🔗 링크 복사"}
-          </StGhostBtn>
-          <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
-            👥 선수단 {editable ? "보기·편집" : "보기"}
-          </StGhostBtn>
-          {editable && !editing ? (
-            <StGhostBtn
-              type="button"
-              onClick={() => {
-                setDraftMatches(event.matches);
-                setEditing(true);
-              }}
-            >
-              ✏️ 대진표 수정
-            </StGhostBtn>
-          ) : null}
-        </StActions>
       </StHeader>
 
-      <StStatGrid>
-        <StStatBox>
-          <StStatValue>{event.matches.length}</StStatValue>
-          <StStatLabel>총 경기 · 코트 {event.courts}면</StStatLabel>
-        </StStatBox>
-        <StStatBox>
-          <StStatValue>
-            {finished}/{event.matches.length}
-          </StStatValue>
-          <StStatLabel>끝난 경기</StStatLabel>
-        </StStatBox>
-        <StStatButton onClick={() => setShowRoster((v) => !v)} aria-expanded={showRoster}>
-          <StStatValue>{event.players.length}</StStatValue>
-          <StStatLabel>
-            선수 (남 {men} · 여 {women}) · {showRoster ? "명단 닫기" : "누르면 명단"}
-          </StStatLabel>
-        </StStatButton>
-      </StStatGrid>
-
-      {showRoster ? (
-        <PlayerRoster
-          key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}:${p.team ?? ""}`).join("|")}
-          players={event.players}
-          matches={event.matches}
-          editable={editable}
-          busy={busy}
-          onSave={saveRoster}
-          onClose={() => setShowRoster(false)}
-        />
-      ) : null}
-
-      <ExchangeGuide event={event} />
 
       {mode === "local" ? (
         <StNotice $tone="warn">
@@ -494,6 +438,100 @@ export default function ExchangeView({ initialEvent }: Props) {
           <StCardHint>🍽️ {event.afterNote}</StCardHint>
         </StCard>
       ) : null}
+
+      {/* 대회 정보·규칙·방식 안내: 처음 세팅할 때 보는 내용이라 경기 진행 아래로 내렸다 (2026-09-15) */}
+      <StSetupInfo>
+        <StSetupTitle>ℹ️ 대회 정보 · 규칙</StSetupTitle>
+        <StActions>
+          <StGhostBtn type="button" onClick={() => setShowRoster((v) => !v)}>
+            👥 선수단 {editable ? "보기·편집" : "보기"}
+          </StGhostBtn>
+          {editable && !editing ? (
+            <StGhostBtn
+              type="button"
+              onClick={() => {
+                setDraftMatches(event.matches);
+                setEditing(true);
+                // 수정 화면은 경기 진행 자리에 뜨므로 위로 올려 준다
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              ✏️ 대진표 수정
+            </StGhostBtn>
+          ) : null}
+        </StActions>
+        {showRoster ? (
+          <PlayerRoster
+            key={event.players.map((p) => `${p.name}:${p.gender}:${p.years}:${p.team ?? ""}`).join("|")}
+            players={event.players}
+            matches={event.matches}
+            editable={editable}
+            busy={busy}
+            onSave={saveRoster}
+            onClose={() => setShowRoster(false)}
+          />
+        ) : null}
+        <StChipRow>
+          {FIXED_RULES.map((r) => (
+            <StRuleBadge key={r.label} $tone="fixed" title={r.description}>
+              🔒 {r.label}
+            </StRuleBadge>
+          ))}
+          {ruleBadges(event.rules).map((label) => (
+            <StRuleBadge key={label} $tone="on">
+              ✓ {label}
+            </StRuleBadge>
+          ))}
+        </StChipRow>
+        <StStatGrid>
+          <StStatBox>
+            <StStatValue>{event.matches.length}</StStatValue>
+            <StStatLabel>총 경기 · 코트 {event.courts}면</StStatLabel>
+          </StStatBox>
+          <StStatBox>
+            <StStatValue>
+              {finished}/{event.matches.length}
+            </StStatValue>
+            <StStatLabel>끝난 경기</StStatLabel>
+          </StStatBox>
+          <StStatBox>
+            <StStatValue>{event.players.length}</StStatValue>
+            <StStatLabel>
+              선수 (남 {men} · 여 {women})
+            </StStatLabel>
+          </StStatBox>
+        </StStatGrid>
+        <ExchangeGuide event={event} />
+      </StSetupInfo>
     </StPage>
   );
 }
+
+// 경기 진행 아래에 두는 '대회 정보' 묶음 (규칙 칩 · 숫자 타일 · 방식 안내)
+const StSetupInfo = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.gray100};
+`;
+
+const StTitleRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  > button {
+    flex: none;
+    margin-top: 0.15rem;
+  }
+`;
+
+const StSetupTitle = styled.h2`
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
