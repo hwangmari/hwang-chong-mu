@@ -192,15 +192,17 @@ export default function ExchangeView({ initialEvent }: Props) {
     [event, scores, now, clock],
   );
 
-  async function persist(next: ScoreMap, action: () => Promise<void>, failMessage: string) {
+  async function persist(next: ScoreMap, action: () => Promise<void>, failMessage: string): Promise<boolean> {
     setBusy(true);
     setError("");
     try {
       if (mode === "cloud") await action();
       else saveLocal(eventId, next);
       setScores(next);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : failMessage);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -251,9 +253,14 @@ export default function ExchangeView({ initialEvent }: Props) {
     if (scores[match.no]) {
       const next = { ...scores };
       delete next[match.no];
-      await persist(next, () => deleteTennisScore(eventId, match.no), "기록을 지우지 못했어요. 다시 눌러 주세요.");
+      const ok2 = await persist(next, () => deleteTennisScore(eventId, match.no), "기록을 지우지 못했어요. 다시 눌러 주세요.");
+      if (!ok2) return; // 기록이 남아 있으면 대진에서도 빼지 않는다 (같은 번호에 옛 기록이 붙는 사고 방지)
     }
-    await saveBracketParts({ matches: event.matches.filter((m) => m.no !== match.no) });
+    try {
+      await saveBracketParts({ matches: event.matches.filter((m) => m.no !== match.no) });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "대진을 저장하지 못했어요.");
+    }
   }
 
   async function clearScore(matchNo: number) {

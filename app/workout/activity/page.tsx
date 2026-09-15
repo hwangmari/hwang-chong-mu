@@ -39,6 +39,7 @@ import {
   StDateBlock,
 } from "../components/WorkoutSharedStyles";
 import DatePickerCalendar from "../components/DatePickerCalendar";
+import { toNumberLoose } from "@/utils/number";
 
 type FormState = {
   id: string | null;
@@ -148,8 +149,8 @@ export default function ActivityPage() {
         date: form.date,
         activityName: form.activityName.trim(),
         durationMin: parseMinutesInput(form.durationMin) || undefined,
-        calories: Number(form.calories) || undefined,
-        avgHeartRate: Number(form.avgHeartRate) || undefined,
+        calories: toNumberLoose(form.calories),
+        avgHeartRate: toNumberLoose(form.avgHeartRate),
         memo: form.memo || undefined,
       });
       // 등록 후에도 방금 입력한 날짜(달)를 유지해 연속 입력이 편하게

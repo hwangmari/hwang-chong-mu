@@ -61,6 +61,7 @@ import { RoutineSection } from "./components/RoutineSection";
 import { ExerciseEditor } from "./components/ExerciseEditor";
 import { RecordHistory } from "./components/RecordHistory";
 import DatePickerCalendar from "../components/DatePickerCalendar";
+import { toNumberLoose } from "@/utils/number";
 
 type FormState = {
   id: string | null;
@@ -208,13 +209,11 @@ export default function WeightPage() {
       return ex.name.trim() && ex.sets.some((s) => s.reps > 0);
     });
     // 루틴이 기억 안 나는 날: 운동을 비워 두고 부위·시간·메모만 있어도 "운동함"으로 저장한다 (2026-09-11)
-    const hasSimpleInfo =
-      Boolean(form.bodyPart) ||
-      parseMinutesInput(form.durationMin) > 0 ||
-      Boolean(form.memo.trim());
+    // 부위는 기본값(가슴)이 늘 차 있으니 근거가 못 된다 — 시간이나 메모가 있어야 "운동함"으로 친다 (리뷰 2026-09-15)
+    const hasSimpleInfo = parseMinutesInput(form.durationMin) > 0 || Boolean(form.memo.trim());
     if (filled.length === 0 && !hasSimpleInfo) {
       setError(
-        "운동을 적거나, 세부가 기억 안 나면 부위·시간·메모 중 하나만이라도 넣어 주세요.",
+        "운동을 적거나, 세부가 기억 안 나면 시간·메모 중 하나만이라도 넣어 주세요.",
       );
       return;
     }
@@ -235,8 +234,8 @@ export default function WeightPage() {
         date: form.date,
         bodyPart: form.bodyPart,
         durationMin: parseMinutesInput(form.durationMin) || undefined,
-        calories: Number(form.calories) || undefined,
-        avgHeartRate: Number(form.avgHeartRate) || undefined,
+        calories: toNumberLoose(form.calories),
+        avgHeartRate: toNumberLoose(form.avgHeartRate),
         exercises: cleaned,
         memo: form.memo || undefined,
       });

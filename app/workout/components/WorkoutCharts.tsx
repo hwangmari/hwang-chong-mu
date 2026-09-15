@@ -950,6 +950,22 @@ export function WorkoutMonthlyCalendar({
   );
   const [pinnedIso, setPinnedIso] = useState<string | null>(null);
   const [pinnedShift, setPinnedShift] = useState(0);
+  // 기록이 있는 날에 마우스를 올리면 그날 요약 말풍선. 달력 밖으로 삐져나가지 않게 좌우로 밀어 준다 (리뷰 2026-09-15: 클릭이 빠른 기록 팝업으로 바뀌며 말풍선이 안 뜨던 것 복구)
+  const pinCell = (iso: string) => {
+    const cell = cellRefs.current.get(iso);
+    const grid = gridRef.current;
+    let shift = 0;
+    if (cell && grid) {
+      const c = cell.getBoundingClientRect();
+      const g = grid.getBoundingClientRect();
+      const half = 120; // 말풍선 최대 폭 240px의 절반
+      const center = c.left + c.width / 2;
+      if (center - half < g.left + 4) shift = g.left + 4 - (center - half);
+      else if (center + half > g.right - 4) shift = g.right - 4 - (center + half);
+    }
+    setPinnedShift(Math.round(shift));
+    setPinnedIso(iso);
+  };
   const [filter, setFilter] = useState<"run" | "gym" | "activity" | null>(null);
   const [menu, setMenu] = useState<{ iso: string; x: number; y: number } | null>(
     null,
@@ -1288,6 +1304,8 @@ export function WorkoutMonthlyCalendar({
               $today={isToday}
               $active={hasAny}
               $pinned={isPinned}
+              onMouseEnter={() => (hasAny ? pinCell(cell.iso) : undefined)}
+              onMouseLeave={() => setPinnedIso(null)}
               onClick={() => {
                 // 날짜를 누르면 빠른 기록 팝업. 말풍선을 같이 고정하면 팝업 뒤에 가려지므로 풀어 둔다 (2026-09-11)
                 setPinnedIso(null);

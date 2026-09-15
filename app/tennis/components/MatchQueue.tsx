@@ -139,8 +139,8 @@ export default function MatchQueue({
   }
 
   // 추천: 출전 적은 순 → 같은 팀 안에서 짝 반복 없이 → 양쪽 성별 구성이 같도록(남남/여여/혼합)
-  function recommend(round: number) {
-    const taken = busyInRound(round);
+  function recommend(round: number, exceptNo: number | null = null) {
+    const taken = busyInRound(round, exceptNo);
     // 소속이 없는 대회면 전체 명단에서 고르되, A쪽에 뽑힌 사람은 B쪽 후보에서 뺀다
     const free = (team: string, exclude: Set<string> = new Set()) =>
       roster
@@ -443,8 +443,6 @@ export default function MatchQueue({
                   {(() => {
                     const roundNo = group.round.no;
                     const taken = busyInRound(roundNo, editingNo);
-                    // 선수 바꾸기는 당일 편성 라운드에서만 (계획된 대진표는 그대로 둔다)
-                    const sameDay = /당일/.test(group.round.label ?? "");
                     const placed = new Set<Court>();
                     const cells: ReactNode[] = [];
                     const renderPicker = (court: Court, editing: Match | null) => (
@@ -486,7 +484,7 @@ export default function MatchQueue({
                                 );
                               })}
                               <div className="actions">
-                                <StGhostBtn type="button" onClick={() => setPick(recommend(roundNo) ?? { a: [], b: [] })}>
+                                <StGhostBtn type="button" onClick={() => setPick(recommend(roundNo, editingNo) ?? { a: [], b: [] })}>
                                   ✨ 추천으로 채우기
                                 </StGhostBtn>
                                 <StGhostBtn type="button" onClick={closePicker}>
@@ -513,7 +511,8 @@ export default function MatchQueue({
                       if (!timing) continue;
                       if (match.court) placed.add(match.court);
                       const key = `${roundNo}-${match.court ?? "?"}`;
-                      const editable = canReorder && sameDay && !scores[match.no];
+                      // 아직 시작·점수 기록이 없는 경기는 어느 라운드든 선수를 바꾸거나 뺄 수 있다 (리뷰 2026-09-15: '당일' 이름으로 가리던 조건 제거)
+                      const editable = canReorder && !scores[match.no];
                       if (editingNo === match.no && fillSlot === key) {
                         cells.push(
                           <StEmptySlot key={`m-${match.no}`} $open>

@@ -84,7 +84,8 @@ function load(weight: number, text: string) {
  * 이미지에 실제로 쓰이는 글자만 담은 한글 글꼴을 굵기별로 가져온다.
  * 네트워크가 막혀 못 받아도 이미지 자체는 나와야 하므로, 실패하면 빈 배열을 준다.
  */
-export async function loadOgFonts(text: string): Promise<OgFont[]> {
+// 글꼴을 못 받아오면 undefined를 돌려준다. 빈 배열 []을 넘기면 next/og가 기본 글꼴로 안 바꾸고 "No fonts are loaded"로 터진다 (리뷰 2026-09-15)
+export async function loadOgFonts(text: string): Promise<OgFont[] | undefined> {
   const glyphs = collectGlyphs(text);
   try {
     const buffers = await Promise.all(
@@ -97,6 +98,6 @@ export async function loadOgFonts(text: string): Promise<OgFont[]> {
       style: "normal" as const,
     }));
   } catch {
-    return [];
+    return undefined;
   }
 }

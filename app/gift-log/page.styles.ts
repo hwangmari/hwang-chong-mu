@@ -100,7 +100,7 @@ export const StPageTab = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.7rem 0.9rem 0.8rem;
+  padding: 0.75rem 1rem; /* 12px 16px — 글자가 탭 세로 중앙에 오게 위아래 같게 */
   margin-bottom: -1px;
   border: 0;
   background: none;
@@ -624,8 +624,8 @@ export const StYearBtn = styled.button`
   border: none;
   background: ${({ theme }) => theme.semantic.bg};
   color: ${({ theme }) => theme.semantic.subText};
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2rem; /* 32px */
+  height: 2rem;
   border-radius: 0.5rem;
   font-size: 0.78rem;
   font-weight: 700;

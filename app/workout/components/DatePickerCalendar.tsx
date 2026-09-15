@@ -201,13 +201,13 @@ const StWrap = styled.div`
 const StHead = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  margin-bottom: 0.4rem;
+  gap: 0.25rem; /* 4px — 줄 안 요소는 짝수 픽셀로 맞춘다 (2026-09-15) */
+  margin-bottom: 0.5rem;
 `;
 
 const StNavBtn = styled.button`
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 1.75rem; /* 28px */
+  height: 1.75rem;
   border: 0;
   border-radius: 0.5rem;
   background: transparent;
@@ -234,7 +234,8 @@ const StRange = styled.span`
 
 const StTodayBtn = styled.button<{ $active?: boolean; $push?: boolean }>`
   margin-left: ${({ $push }) => ($push ? "auto" : "0")};
-  padding: 0.25rem 0.55rem;
+  height: 1.75rem; /* 28px — 옆의 ‹ › 버튼과 같은 높이 */
+  padding: 0 0.5rem;
   border: 1px solid ${({ $active, theme }) => ($active ? theme.semantic.primary : theme.semantic.border)};
   border-radius: 999px;
   background: ${({ $active, theme }) => ($active ? theme.semantic.primaryLight : theme.colors.white)};
@@ -248,14 +249,14 @@ const StTodayBtn = styled.button<{ $active?: boolean; $push?: boolean }>`
 const StMonthGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.15rem;
+  gap: 0.25rem; /* 4px */
 `;
 
 const StDow = styled.span<{ $weekend: boolean }>`
   text-align: center;
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.1rem 0 0.2rem;
+  padding: 0.125rem 0 0.25rem;
   color: ${({ $weekend, theme }) => ($weekend ? theme.colors.gray400 : theme.colors.gray500)};
 `;
 
@@ -264,7 +265,7 @@ const StMonthDay = styled.button<{ $selected: boolean; $inMonth: boolean; $today
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 2.1rem;
+  height: 2rem; /* 32px */
   border: 0;
   border-radius: 0.5rem;
   background: ${({ $selected, theme }) => ($selected ? theme.semantic.primary : "transparent")};
@@ -288,15 +289,15 @@ const StMonthDay = styled.button<{ $selected: boolean; $inMonth: boolean; $today
   > span {
     position: absolute;
     left: 50%;
-    bottom: 0.15rem;
-    margin-left: -0.15rem;
+    bottom: 0.125rem;
+    margin-left: -0.125rem;
   }
 `;
 
 const StWeek = styled.div`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.2rem;
+  gap: 0.25rem;
   margin: auto 0; /* 세로 가운데 */
 `;
 
@@ -306,7 +307,7 @@ const StDay = styled.button<{ $selected: boolean; $today: boolean; $weekend: boo
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
-  padding: 0.35rem 0 0.45rem;
+  padding: 0.375rem 0 0.5rem; /* 6px / 8px */
   border: 0;
   border-radius: 0.6rem;
   background: ${({ $selected, theme }) => ($selected ? theme.semantic.primary : "transparent")};

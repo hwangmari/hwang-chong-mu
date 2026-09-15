@@ -2,7 +2,8 @@ import styled from "styled-components";
 /* 페이지 바깥 틀. $width 를 주면 안쪽 StPageWrapper 와 같은 폭 규칙을 따른다 (없으면 예전처럼 1024px) */
 export const StContainer = styled.div<{ $width?: PageWidth }>`
   padding: 2rem 1rem;
-  max-width: ${({ $width }) => ($width ? PAGE_WIDTHS[$width] : "1024px")};
+  /* 좌우 여백(1rem×2)을 더해, 안쪽 StPageWrapper가 정확히 PAGE_WIDTHS 폭을 갖게 한다 (리뷰 2026-09-15: 528/728px로 줄던 문제) */
+  max-width: ${({ $width }) => ($width ? `calc(${PAGE_WIDTHS[$width]} + 2rem)` : "1024px")};
   margin: 0 auto;
 `;
 

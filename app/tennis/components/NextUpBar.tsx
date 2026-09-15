@@ -36,15 +36,15 @@ export default function NextUpBar({ ready, position, names, why, courts, onJump 
 
 const StNextSticky = styled.button<{ $ready: boolean }>`
   position: sticky;
-  top: 3.9rem;
+  top: 3.5rem; /* 56px = 헤더 높이. 사이가 뜨면 그 틈으로 내용이 지나가 보인다 */
   z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem 0.5rem;
+  gap: 0.375rem 0.5rem; /* 6px 8px */
   width: 100%;
   margin: 0.25rem 0 0.75rem;
-  padding: 0.55rem 0.8rem;
+  padding: 0.5rem 0.75rem; /* 8px 12px */
   border-radius: 0.8rem;
   border: 1px solid ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.gray200)};
   background: ${({ $ready, theme }) => ($ready ? theme.colors.blue600 : theme.colors.white)};
@@ -58,7 +58,7 @@ const StNextSticky = styled.button<{ $ready: boolean }>`
     flex: none;
     font-size: 0.7rem;
     font-weight: 900;
-    padding: 0.1rem 0.5rem;
+    padding: 0.125rem 0.5rem;
     border-radius: 999px;
     background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.22)" : theme.colors.gray100)};
   }
@@ -95,7 +95,7 @@ const StNextSticky = styled.button<{ $ready: boolean }>`
   .court {
     font-size: 0.7rem;
     font-weight: 700;
-    padding: 0.1rem 0.5rem;
+    padding: 0.125rem 0.5rem;
     border-radius: 999px;
     background: ${({ $ready, theme }) => ($ready ? "rgba(255,255,255,0.16)" : theme.colors.gray100)};
   }

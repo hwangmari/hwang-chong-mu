@@ -436,8 +436,8 @@ const StDateLine = styled.p`
 `;
 
 const StCloseIcon = styled.button`
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2rem; /* 32px */
+  height: 2rem;
   flex-shrink: 0;
   border: none;
   background: transparent;
@@ -567,7 +567,7 @@ const StChip = styled.button<{ $active: boolean }>`
     $active ? theme.colors.indigo600 : theme.semantic.subText};
   font-size: 0.74rem;
   font-weight: 800;
-  padding: 0.32rem 0.6rem;
+  padding: 0.375rem 0.625rem; /* 6px 10px */
   border-radius: 0.5rem;
   cursor: pointer;
   transition:
@@ -597,13 +597,13 @@ const StError = styled.p`
 const StActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.1rem;
+  gap: 0.5rem; /* 8px */
+  margin-top: 0.125rem;
 `;
 
 const StPrimary = styled.button`
   flex: 1;
-  min-height: 2.9rem;
+  min-height: 3rem; /* 48px */
   padding: 0 1rem;
   border: none;
   border-radius: 0.8rem;
@@ -620,7 +620,7 @@ const StPrimary = styled.button`
 `;
 
 const StGhost = styled.button`
-  min-height: 2.9rem;
+  min-height: 3rem; /* 48px */
   padding: 0 0.9rem;
   border: 1px solid ${({ theme }) => theme.semantic.border};
   border-radius: 0.8rem;
@@ -638,7 +638,7 @@ const StGhost = styled.button`
 `;
 
 const StText = styled.button`
-  min-height: 2.9rem;
+  min-height: 3rem; /* 48px */
   padding: 0 0.5rem;
   border: none;
   background: transparent;
