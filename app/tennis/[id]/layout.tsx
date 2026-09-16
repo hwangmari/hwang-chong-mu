@@ -25,11 +25,13 @@ export async function generateMetadata({
   } catch {
     // 저장 공간을 못 읽으면 서비스 기본 제목으로
   }
+  // 공유 이미지는 파일 규칙(opengraph-image.tsx)으로도 붙지만, 카카오처럼 첫 태그만 읽는 크롤러를 위해 절대 주소로 한 번 더 명시한다 (2026-09-16)
+  const image = { url: `/tennis/${id}/opengraph-image`, width: 1200, height: 630, alt: title };
   return {
     title,
     description,
-    openGraph: { title, description },
-    twitter: { title, description },
+    openGraph: { title, description, type: "website", siteName: "황총무의 실험실", locale: "ko_KR", url: `/tennis/${id}`, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }
 

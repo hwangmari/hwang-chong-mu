@@ -1,7 +1,8 @@
 import { serviceOgImage } from "@/lib/og";
 import { fetchTennisEvent } from "@/services/tennis";
 
-export const runtime = "edge";
+// 2026-09-16: Edge 런타임은 Next 16에서 폐기 예고라 기본(nodejs)으로. 카카오 미리보기가 비어 보이던 문제 대응.
+export const runtime = "nodejs";
 export const alt = "황총무 테니스 대회 공유 이미지";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

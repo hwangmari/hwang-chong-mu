@@ -48,7 +48,9 @@ export function collectGlyphs(...parts: (string | undefined | null)[]) {
 
 async function fetchSubset(weight: number, text: string): Promise<ArrayBuffer> {
   const url = `${CSS_ENDPOINT}?family=Noto+Sans+KR:wght@${weight}&text=${encodeURIComponent(text)}&display=swap`;
+  // 글꼴 CSS·파일은 바뀌지 않으니 캐시에 두어 공유 이미지를 매번 새로 받지 않게 (2026-09-16: 카카오 미리보기 지연 대응)
   const cssResponse = await fetch(url, {
+    cache: "force-cache",
     // 단순한 User-Agent여야 truetype(.ttf)으로 내려온다. 최신 브라우저처럼 보이면 woff2가 와서 못 읽는다.
     headers: { "User-Agent": "Mozilla/5.0" },
   });
@@ -60,7 +62,7 @@ async function fetchSubset(weight: number, text: string): Promise<ArrayBuffer> {
   if (!match) {
     throw new Error("글꼴 주소를 CSS에서 찾지 못했습니다");
   }
-  const fontResponse = await fetch(match[1]);
+  const fontResponse = await fetch(match[1], { cache: "force-cache" });
   if (!fontResponse.ok) {
     throw new Error(`글꼴 파일을 못 받았습니다 (${fontResponse.status})`);
   }
