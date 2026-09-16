@@ -39,7 +39,8 @@ import {
 
 export default function TravelPlanPage() {
   const params = useParams();
-  const id = typeof params?.id === "string" ? params.id : "";
+  // 주소의 한글 슬러그("상하이3박4일-ZMM5QU")는 퍼센트 부호로 오므로 풀어서 조회한다 (2026-09-16: 만든 여행이 "찾지 못했어요"로 뜨던 문제)
+  const id = typeof params?.id === "string" ? safeDecode(params.id) : "";
   const { openConfirm } = useModal();
 
   const {
@@ -237,4 +238,12 @@ export default function TravelPlanPage() {
       {exportOpen && <ExportModal plan={plan} onClose={() => setExportOpen(false)} />}
     </StContainer>
   );
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }

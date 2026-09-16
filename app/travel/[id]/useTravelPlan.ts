@@ -94,7 +94,7 @@ export function useTravelPlan(id: string) {
 
         // 코드 6자리로 들어왔으면 정식 주소(<이름>-<코드>)로 바꿔 준다. 물음표 뒤 값은 그대로 들고 간다.
         if (BARE_CODE.test(id) && next.id !== id) {
-          router.replace(`/travel/${next.id}${window.location.search}`);
+          router.replace(`/travel/${encodeURIComponent(next.id)}${window.location.search}`);
         }
 
         if (linkedRef.current !== next.id) {
