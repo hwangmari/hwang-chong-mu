@@ -6,7 +6,6 @@ import type { TravelDay } from "../../types";
 import type { NewPlaceInput } from "../useTravelPlan";
 import {
   StCategoryChip,
-  StGhostBtn,
   StPlaceAddr,
   StPlaceName,
   StNameBox,
@@ -15,6 +14,7 @@ import {
   StStayForm,
   StStayIcon,
   StStayQuiet,
+  StRowBtn,
   StSwitchLabel,
 } from "../page.styles";
 import AddPlaceForm from "./AddPlaceForm";
@@ -72,17 +72,17 @@ export default function StayRow({ day, busy, onSetStay, onToggleStayInRoute }: S
               />
               동선에 포함
             </StSwitchLabel>
-            <StGhostBtn type="button" onClick={() => setEditing((prev) => !prev)}>
+            <StRowBtn type="button" title="숙소 바꾸기" onClick={() => setEditing((prev) => !prev)}>
               바꾸기
-            </StGhostBtn>
-            <StGhostBtn type="button" $tone="danger" onClick={handleRemove}>
+            </StRowBtn>
+            <StRowBtn type="button" $tone="danger" title="숙소 빼기" onClick={handleRemove}>
               빼기
-            </StGhostBtn>
+            </StRowBtn>
           </>
         ) : (
-          <StGhostBtn type="button" onClick={() => setEditing(true)}>
+          <StRowBtn type="button" onClick={() => setEditing(true)}>
             숙소 넣기
-          </StGhostBtn>
+          </StRowBtn>
         )}
       </StStayActions>
 

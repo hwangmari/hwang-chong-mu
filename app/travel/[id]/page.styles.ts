@@ -20,12 +20,17 @@ export const StPage = styled.div`
 `;
 
 /* 데스크톱에서만 오른쪽 지도 칸을 화면에 붙여 둔다(왼쪽 목록을 길게 내려도 지도가 따라온다). */
-/* 방 화면 바깥 틀: 가계부처럼 폭을 넓게(최대 1280px) 쓴다. 목록과 지도가 나란히 서는 화면이라 1025 캡을 쓰지 않는다 (2026-09-16) */
+/* 방 화면 바깥 틀: 목록과 지도가 나란히 서는 화면이라 PC 에서는 폭 제한 없이 창을 다 쓴다.
+   (넓은 화면일수록 지도와 동선이 같이 보여 좋다 — 주인 요청 2026-09-16) */
 export const StWideShell = styled.div`
   width: 100%;
-  max-width: calc(1280px + 2rem);
+  max-width: none;
   margin: 0 auto;
   padding: 2rem 1rem 2.5rem;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    padding: 1.5rem 2rem 2.5rem;
+  }
 
   @media ${({ theme }) => theme.media.mobile} {
     padding: 1rem 1rem 2rem; /* 카드의 휴대폰 규칙(margin 0 -1rem)과 맞춰 좌우가 딱 맞게 */
@@ -338,7 +343,7 @@ export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
   column-gap: 0.5rem;
   row-gap: 0.375rem;
   align-items: center;
-  padding: 0.5rem;
+  padding: 0.75rem 0.5rem;
   border-radius: 0.75rem;
   background: ${({ $over, theme }) =>
     $over ? theme.semantic.primaryLight : "transparent"};
@@ -352,7 +357,7 @@ export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
 
   @media ${({ theme }) => theme.media.mobile} {
     grid-template-columns: 2rem 4.5rem minmax(0, 1fr) auto;
-    padding: 0.5rem 0.25rem;
+    padding: 0.75rem 0.25rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -369,7 +374,7 @@ export const StNumBadge = styled.span`
   border-radius: 0.5rem;
   background: ${({ theme }) => theme.semantic.bg};
   color: ${({ theme }) => theme.semantic.subText};
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -417,125 +422,177 @@ export const StPlaceAddr = styled.span`
   white-space: nowrap;
 `;
 
+/* 줄 안의 모든 조작은 이 버튼 한 식구로만 만든다 —
+   상세정보 · ▲ · ▼ · 삭제 · 메모 편집 · 바꾸기 · 빼기 모두 높이 32px, 테두리 없음.
+   테두리는 카드가 이미 갖고 있으므로 버튼은 면(hover 배경)으로만 눌린 티를 낸다. */
+export const StRowBtn = styled.button<{
+  $tone?: "primary" | "danger" | "dangerQuiet";
+  $icon?: boolean;
+}>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  height: 2rem;
+  min-width: 2rem;
+  width: ${({ $icon }) => ($icon ? "2rem" : "auto")};
+  padding: ${({ $icon }) => ($icon ? "0" : "0 0.625rem")};
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: ${({ $tone, theme }) =>
+    $tone === "danger"
+      ? theme.semantic.danger
+      : $tone === "primary"
+        ? theme.semantic.primary
+        : theme.semantic.subText};
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  /* 위험한 버튼(삭제·빼기)만 손을 올렸을 때 빨갛게 — 평소에는 목록이 조용하도록 */
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: ${({ $tone, theme }) =>
+      $tone === "danger" || $tone === "dangerQuiet"
+        ? theme.semantic.dangerBg
+        : theme.semantic.bg};
+    color: ${({ $tone, theme }) =>
+      $tone === "danger" || $tone === "dangerQuiet"
+        ? theme.semantic.danger
+        : $tone === "primary"
+          ? theme.semantic.primary
+          : theme.semantic.text};
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &:disabled:hover {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+/* 휴대폰에서는 글자를 접고 아이콘만 남긴다 (상세정보) */
+export const StRowBtnLabel = styled.span`
+  @media ${({ theme }) => theme.media.mobile} {
+    display: none;
+  }
+`;
+
+/* 조작 칸 — 폭을 고정해 줄마다 상세정보·▲·▼·삭제가 같은 x 에 선다 */
 export const StRowActions = styled.div`
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
+  width: 14rem;
   flex-shrink: 0;
-`;
-
-export const StDetailLink = styled.a`
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.semantic.primary};
-  padding: 0 0.375rem;
-  white-space: nowrap;
-
-  &:hover {
-    text-decoration: underline;
-  }
 
   @media ${({ theme }) => theme.media.mobile} {
-    display: none;
+    width: auto;
   }
 `;
 
 /* 끌어 옮기는 손잡이 — 손가락으로는 잡기 어려우므로 휴대폰에서는 숨기고 ▲▼ 만 쓴다 */
 export const StDragHandle = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   font-size: 1rem;
+  line-height: 1;
   color: ${({ theme }) => theme.colors.gray300};
   user-select: none;
   cursor: grab;
-  padding: 0 0.25rem;
 
   @media ${({ theme }) => theme.media.mobile} {
     display: none;
   }
 `;
 
-export const StReorderBtn = styled.button`
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.5rem;
-  background: none;
-  font-size: 0.75rem;
-  font-weight: 900;
-  color: ${({ theme }) => theme.semantic.subText};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.semantic.bg};
-    color: ${({ theme }) => theme.semantic.text};
-  }
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
-`;
-
-export const StIconBtn = styled.button`
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.5rem;
-  background: none;
-  font-size: 0.9rem;
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.semantic.dangerBg};
-  }
-`;
-
-/* 메모 줄 — 이름과 같은 x 에서 시작하도록 3번째 칸부터 */
+/* 메모 줄 — 이름과 같은 x 에서 시작하도록 3번째 칸부터.
+   메모 손보는 버튼도 조작 칸이 아니라 이 줄 안에 둔다. */
 export const StMemoArea = styled.div`
   grid-column: 3 / -1;
   display: flex;
   align-items: flex-start;
-  gap: 0.375rem;
+  gap: 0.25rem;
   min-width: 0;
 `;
 
+/* 메모 본문 — 테두리 없이 옅은 띠로만 구분 */
 export const StMemoText = styled.span`
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: ${({ theme }) => theme.semantic.bg};
   font-size: 0.86rem;
-  line-height: 1.5;
-  color: ${({ theme }) => theme.semantic.subText};
+  line-height: 1.6;
+  color: ${({ theme }) => theme.semantic.text};
   white-space: pre-wrap;
   word-break: break-word;
-  min-width: 0;
-  flex: 0 1 auto;
 `;
 
+/* 메모 고치는 칸 — 평소엔 같은 띠, 글을 쓰는 동안에만 테두리 한 줄 */
 export const StMemoInput = styled.textarea`
   width: 100%;
   min-height: 2.5rem;
   resize: none;
   overflow: hidden;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid ${({ theme }) => theme.semantic.border};
-  border-radius: 0.625rem;
-  background: ${({ theme }) => theme.colors.white};
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: ${({ theme }) => theme.semantic.bg};
   color: ${({ theme }) => theme.semantic.text};
   font-size: 0.86rem;
-  line-height: 1.5;
+  line-height: 1.6;
   font-family: inherit;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.semantic.primary};
+    border-color: ${({ theme }) => theme.semantic.border};
   }
 `;
 
-/* 두 장소 사이의 이동 시간 한 줄 */
+/* 두 장소 사이의 이동 시간 한 줄 — 양옆에 머리카락 선을 그어 '잇는 줄'로 읽히게 */
 export const StTransitLine = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   font-size: 0.78rem;
   font-weight: 700;
   color: ${({ theme }) => theme.semantic.subText};
-  padding: 0.125rem 0;
+  padding: 0.25rem 0.5rem;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: ${({ theme }) => theme.semantic.border};
+  }
 `;
 
 /* ===== 숙소 줄 ===== */
@@ -581,12 +638,6 @@ export const StStayActions = styled.div`
   /* 메모 줄과 같이 이름이 시작하는 칸(3번째)부터 한 줄 아래로 내려 놓는다 */
   @media ${({ theme }) => theme.media.mobile} {
     grid-column: 3 / -1;
-    gap: 0.125rem;
-
-    ${StGhostBtn} {
-      height: 1.75rem;
-      padding: 0 0.4375rem;
-    }
   }
 `;
 
@@ -599,6 +650,8 @@ export const StSwitchLabel = styled.label`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.25rem;
   font-size: 0.78rem;
   font-weight: 700;
   color: ${({ theme }) => theme.semantic.subText};
