@@ -23,7 +23,7 @@ export type TravelDay = { date: string; stayInRoute: boolean; places: TravelPlac
 export type TravelPlan = { id: string; slug: string; shortCode: string; title: string; startDate: string; endDate: string; region: string; days: TravelDay[]; pool: TravelPlace[]; createdAt: string; updatedAt: string };
 
 /** 구글 장소 검색에 넘기는 나라 코드. 빈 값은 "나라를 좁히지 않음". */
-export const REGIONS: { code: string; label: string }[] = [ { code: "KR", label: "한국" }, { code: "JP", label: "일본" }, { code: "TW", label: "대만" }, { code: "TH", label: "태국" }, { code: "VN", label: "베트남" }, { code: "SG", label: "싱가포르" }, { code: "US", label: "미국" }, { code: "", label: "유럽·기타" } ];
+export const REGIONS: { code: string; label: string }[] = [ { code: "KR", label: "한국" }, { code: "JP", label: "일본" }, { code: "CN", label: "중국" }, { code: "TW", label: "대만" }, { code: "TH", label: "태국" }, { code: "VN", label: "베트남" }, { code: "SG", label: "싱가포르" }, { code: "US", label: "미국" }, { code: "", label: "유럽·기타" } ];
 
 /** 한 여행의 최대 일수 (days 칸이 끝없이 늘어나지 않게) */
 export const MAX_TRIP_DAYS = 30;
