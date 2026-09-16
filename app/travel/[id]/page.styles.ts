@@ -516,9 +516,11 @@ export const StStayBand = styled.div`
   border-radius: 0.75rem;
   background: ${({ theme }) => theme.semantic.bg};
 
+  /* 휴대폰에서는 이름이 뭉개지지 않게 두 줄로 — 1줄: 🏨·칩·이름, 2줄: 조작 버튼들 */
   @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: 2rem 4.5rem minmax(0, 1fr) auto;
+    grid-template-columns: 2rem 4.5rem minmax(0, 1fr);
     padding: 0.625rem 0.375rem;
+    row-gap: 0.25rem;
   }
 `;
 
@@ -541,6 +543,17 @@ export const StStayActions = styled.div`
   align-items: center;
   gap: 0.25rem;
   flex-wrap: wrap;
+
+  /* 메모 줄과 같이 이름이 시작하는 칸(3번째)부터 한 줄 아래로 내려 놓는다 */
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-column: 3 / -1;
+    gap: 0.125rem;
+
+    ${StGhostBtn} {
+      height: 1.75rem;
+      padding: 0 0.4375rem;
+    }
+  }
 `;
 
 export const StStayForm = styled.div`

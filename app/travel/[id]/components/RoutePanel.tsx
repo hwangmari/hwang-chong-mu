@@ -76,6 +76,21 @@ export default function RoutePanel({
   const route = useMemo(() => routePlaces(day), [day]);
   const requests = useMemo(() => buildLegRequests(route, mode), [route, mode]);
 
+  // 왼쪽 목록과 같은 표시를 쓴다 — 숙소는 번호 없이 🏨, 나머지는 숙소를 뺀 1부터
+  const marks = useMemo(() => {
+    const labels: string[] = [];
+    let number = 0;
+    for (const place of route) {
+      if (place.isStay) {
+        labels.push("🏨");
+      } else {
+        number += 1;
+        labels.push(String(number));
+      }
+    }
+    return labels;
+  }, [route]);
+
   // 마지막 장소에는 "다음 구간"이 없으므로 구간 수는 장소 수보다 하나 적다
   const legs = route.slice(0, -1).map((place) => place.transitToNext ?? null);
   const hasAny = legs.some((leg) => leg !== null);
@@ -135,7 +150,7 @@ export default function RoutePanel({
             {legs.map((leg, index) => (
               <StLegRow key={route[index].id}>
                 <StLegLabel>
-                  {index + 1} → {index + 2}
+                  {marks[index]} → {marks[index + 1]}
                 </StLegLabel>
                 <StLegMain $quiet={!leg}>
                   {leg

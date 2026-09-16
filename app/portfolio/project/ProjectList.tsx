@@ -471,7 +471,8 @@ export default function ProjectList() {
                   골라서 조회
                 </li>
                 <li>
-                  일정을 글로 내보내 메신저에 그대로 붙여 넣기
+                  일정을 글로 복사하거나 <b>.ics 달력 파일</b>로 내려받고, 링크로
+                  바로 공유
                 </li>
               </StDetailList>
             </>
@@ -496,6 +497,9 @@ export default function ProjectList() {
                 <li>
                   순서 바꾸기는 <b>HTML5 드래그</b>와 ▲▼ 버튼 두 갈래로 구현해
                   터치 기기에서도 같은 결과
+                </li>
+                <li>
+                  <b>.ics 생성</b>(하루당 종일 일정, RFC 5545 줄 접기)
                 </li>
               </StDetailList>
             </>
