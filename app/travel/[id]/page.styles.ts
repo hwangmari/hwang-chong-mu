@@ -37,7 +37,7 @@ export const StColumns = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch; /* 오른쪽 열이 왼쪽 목록만큼 길어야 그 안의 지도 패널이 sticky로 따라온다 (2026-09-16) */
 
   @media ${({ theme }) => theme.media.desktop} {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
@@ -51,6 +51,7 @@ export const StMainCol = styled.div`
 
 export const StSideCol = styled.div`
   min-width: 0;
+  align-self: stretch;
 `;
 
 export const StStickyPanel = styled.div`
