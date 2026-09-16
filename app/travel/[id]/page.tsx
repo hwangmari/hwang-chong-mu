@@ -5,11 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import { useModal } from "@/components/common/ModalProvider";
-import {
-  StContainer,
-  StFlexBox,
-  StPageWrapper,
-} from "@/components/styled/layout.styled";
 import { dayCountLabel, routePlaces } from "../lib/plan";
 import { dayTransitTotal, formatMinutes } from "../lib/routeLegs";
 import AddPlaceForm from "./components/AddPlaceForm";
@@ -32,6 +27,10 @@ import {
   StSkeletonRow,
   StSkeletonTabs,
   StStickyPanel,
+  StWideShell,
+  StColumns,
+  StMainCol,
+  StSideCol,
 } from "./page.styles";
 
 // 여행 방 화면. 왼쪽은 날짜별 목록(고치는 곳), 오른쪽은 그 날 도는 순서(보는 곳).
@@ -91,10 +90,9 @@ export default function TravelPlanPage() {
 
   if (loading) {
     return (
-      <StContainer $width="wide">
-        <StPageWrapper $width="wide">
-          <StFlexBox $leftRatio={1.4}>
-            <div className="flex-lft-box">
+      <StWideShell>
+        <StColumns>
+          <StMainCol>
               <StPage>
                 <StCard>
                   <SkeletonBlock width="min(100%, 18rem)" height="1.75rem" radius="0.6rem" />
@@ -117,8 +115,8 @@ export default function TravelPlanPage() {
                   <SkeletonBlock width="100%" height="2.75rem" radius="0.75rem" />
                 </StCard>
               </StPage>
-            </div>
-            <div className="flex-rgt-box">
+          </StMainCol>
+          <StSideCol>
               <StStickyPanel>
                 <StMapCard>
                   <SkeletonBlock width="10rem" height="1.1rem" radius="0.5rem" />
@@ -127,17 +125,15 @@ export default function TravelPlanPage() {
                   <SkeletonBlock height="1rem" width="70%" />
                 </StMapCard>
               </StStickyPanel>
-            </div>
-          </StFlexBox>
-        </StPageWrapper>
-      </StContainer>
+          </StSideCol>
+        </StColumns>
+      </StWideShell>
     );
   }
 
   if (notFound || !plan || !day) {
     return (
-      <StContainer $width="wide">
-        <StPageWrapper $width="wide">
+      <StWideShell>
           <StPage>
             <StCard>
               <StCardTitle>🧳 여행 플랜</StCardTitle>
@@ -149,8 +145,7 @@ export default function TravelPlanPage() {
               </StHint>
             </StCard>
           </StPage>
-        </StPageWrapper>
-      </StContainer>
+      </StWideShell>
     );
   }
 
@@ -161,10 +156,9 @@ export default function TravelPlanPage() {
   };
 
   return (
-    <StContainer $width="wide">
-      <StPageWrapper $width="wide">
-        <StFlexBox $leftRatio={1.4}>
-          <div className="flex-lft-box">
+    <StWideShell>
+      <StColumns>
+        <StMainCol>
             <StPage>
               <TripHeader
                 plan={plan}
@@ -217,9 +211,9 @@ export default function TravelPlanPage() {
                 <StDayTotal>{totalText}</StDayTotal>
               </StCard>
             </StPage>
-          </div>
+        </StMainCol>
 
-          <div className="flex-rgt-box">
+        <StSideCol>
             <StStickyPanel>
               {/* 구간 이동 시간은 동선 순서 그대로 넘긴다. 아직 못 구한 칸은 비어 있다. */}
               <RouteMap
@@ -231,12 +225,11 @@ export default function TravelPlanPage() {
                 region={plan.region}
               />
             </StStickyPanel>
-          </div>
-        </StFlexBox>
-      </StPageWrapper>
+        </StSideCol>
+      </StColumns>
 
       {exportOpen && <ExportModal plan={plan} onClose={() => setExportOpen(false)} />}
-    </StContainer>
+    </StWideShell>
   );
 }
 

@@ -20,6 +20,39 @@ export const StPage = styled.div`
 `;
 
 /* 데스크톱에서만 오른쪽 지도 칸을 화면에 붙여 둔다(왼쪽 목록을 길게 내려도 지도가 따라온다). */
+/* 방 화면 바깥 틀: 가계부처럼 폭을 넓게(최대 1280px) 쓴다. 목록과 지도가 나란히 서는 화면이라 1025 캡을 쓰지 않는다 (2026-09-16) */
+export const StWideShell = styled.div`
+  width: 100%;
+  max-width: calc(1280px + 2rem);
+  margin: 0 auto;
+  padding: 2rem 1rem 2.5rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    padding: 1rem 1rem 2rem; /* 카드의 휴대폰 규칙(margin 0 -1rem)과 맞춰 좌우가 딱 맞게 */
+  }
+`;
+
+/* 1024px 이상: 목록 1.5 : 지도 1 두 열. 그보다 좁으면 한 열(지도는 목록 아래) */
+export const StColumns = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+
+  @media ${({ theme }) => theme.media.desktop} {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+`;
+
+export const StMainCol = styled.div`
+  min-width: 0;
+`;
+
+export const StSideCol = styled.div`
+  min-width: 0;
+`;
+
 export const StStickyPanel = styled.div`
   @media ${({ theme }) => theme.media.desktop} {
     position: sticky;
