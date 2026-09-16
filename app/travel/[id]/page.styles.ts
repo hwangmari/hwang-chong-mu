@@ -644,6 +644,153 @@ export const StDayTotal = styled.p`
   font-variant-numeric: tabular-nums;
 `;
 
+/* ===== RoutePanel (이동 시간) =====
+   하루 카드 안의 한 칸이다. 상자를 또 두르지 않고 머리카락 한 줄로만 나눈다.
+   구간 이름 칸(56px)은 폭을 고정해 "1 → 2"와 "9 → 10"의 오른쪽 글자 시작 위치가 같게 한다. */
+
+export const StRouteCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+`;
+
+export const StRouteHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+/* 이동 수단 고르기 — 서로 하나만 고르는 칸이라 테두리를 남겨 둔다(조작하는 것이므로) */
+/* 오른쪽 조작 묶음 (수단 고르기 + 조회 버튼) */
+export const StRouteControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+export const StModeSeg = styled.div`
+  display: inline-flex;
+  height: 2.25rem;
+  padding: 0.125rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.625rem;
+  background: ${({ theme }) => theme.semantic.bg};
+`;
+
+export const StModeBtn = styled.button<{ $active: boolean }>`
+  padding: 0 0.625rem;
+  border-radius: 0.5rem;
+  background: ${({ $active, theme }) => ($active ? theme.colors.white : "transparent")};
+  color: ${({ $active, theme }) =>
+    $active ? theme.semantic.text : theme.semantic.subText};
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.semantic.text};
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+/* 조회 버튼 — 하루 카드 안쪽이라 장소 추가 버튼(2.75rem)보다 한 단계 작게 */
+export const StRouteBtn = styled.button`
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 0.625rem;
+  background: ${({ theme }) => theme.semantic.primary};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.blue700};
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.gray200};
+    color: ${({ theme }) => theme.colors.gray500};
+    cursor: not-allowed;
+  }
+`;
+
+export const StLegList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+`;
+
+export const StLegRow = styled.li`
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  align-items: center;
+  padding: 0.375rem 0;
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
+`;
+
+export const StLegLabel = styled.span`
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.subText};
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+`;
+
+export const StLegMain = styled.span<{ $quiet?: boolean }>`
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: ${({ $quiet, theme }) =>
+    $quiet ? theme.colors.gray400 : theme.semantic.text};
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const StLegSummary = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 11rem;
+`;
+
+export const StRouteFoot = styled.p`
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+  font-variant-numeric: tabular-nums;
+`;
+
+export const StRouteLegend = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
 /* ===== 오른쪽 동선 칸 ===== */
 
 export const StMapCard = styled(StCard)`

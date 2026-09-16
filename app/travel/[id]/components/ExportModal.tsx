@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { buildTravelText } from "../../lib/export";
+import { useModal } from "@/components/common/ModalProvider";
+import { buildTravelIcs, buildTravelText, downloadTextFile } from "../../lib/export";
 import type { TravelPlan } from "../../types";
 import {
+  StCopiedTag,
   StExportText,
-  StHint,
   StModal,
   StModalActions,
   StModalBtn,
@@ -13,8 +14,8 @@ import {
   StOverlay,
 } from "../page.styles";
 
-// 일정 내보내기. 링크를 못 여는 사람에게도 통째로 보낼 수 있게 글자만 남긴다.
-// 달력 파일(.ics)과 링크 공유는 다음 단계에서 열린다. (2026-09-16)
+// 일정 내보내기. 세 가지 길 — 글자로 복사 / 달력 파일(.ics) / 링크 공유.
+// 링크를 못 여는 사람에게도 통째로 보낼 수 있게 글자 칸을 맨 위에 둔다. (2026-09-16)
 
 type ExportModalProps = {
   plan: TravelPlan;
@@ -22,7 +23,9 @@ type ExportModalProps = {
 };
 
 export default function ExportModal({ plan, onClose }: ExportModalProps) {
+  const { openAlert } = useModal();
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const text = buildTravelText(plan);
 
   useEffect(() => {
@@ -31,12 +34,44 @@ export default function ExportModal({ plan, onClose }: ExportModalProps) {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
+  useEffect(() => {
+    if (!shared) return;
+    const timer = window.setTimeout(() => setShared(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [shared]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
     } catch {
       setCopied(false);
+    }
+  };
+
+  const handleIcs = () => {
+    downloadTextFile(`${plan.title}.ics`, buildTravelIcs(plan), "text/calendar;charset=utf-8");
+  };
+
+  // 휴대폰은 기기의 공유 창을, 컴퓨터는 링크 복사를 쓴다 (KakaoCalendarShare 와 같은 방식)
+  const handleShare = async () => {
+    const url = window.location.href;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
+      try {
+        await navigator.share({ title: plan.title, text: "여행 플랜 같이 볼래요?", url });
+      } catch {
+        // 공유 창을 그냥 닫은 경우 — 아무 일도 하지 않는다
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+    } catch {
+      await openAlert("링크 복사에 실패했어요.");
     }
   };
 
@@ -57,14 +92,15 @@ export default function ExportModal({ plan, onClose }: ExportModalProps) {
         </StModalActions>
 
         <StModalActions>
-          <StModalBtn type="button" disabled>
+          <StModalBtn type="button" onClick={handleIcs}>
             .ics 달력 파일
           </StModalBtn>
-          <StModalBtn type="button" disabled>
+          <StModalBtn type="button" onClick={() => void handleShare()}>
             링크 공유
           </StModalBtn>
         </StModalActions>
-        <StHint>다음 단계에서 열려요.</StHint>
+
+        {shared && <StCopiedTag>복사됐어요</StCopiedTag>}
       </StModal>
     </StOverlay>
   );

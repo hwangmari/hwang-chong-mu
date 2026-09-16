@@ -11,14 +11,17 @@ import {
   StPageWrapper,
 } from "@/components/styled/layout.styled";
 import { dayCountLabel, routePlaces } from "../lib/plan";
+import { dayTransitTotal, formatMinutes } from "../lib/routeLegs";
 import AddPlaceForm from "./components/AddPlaceForm";
 import DayTabs from "./components/DayTabs";
 import ExportModal from "./components/ExportModal";
 import PlaceList from "./components/PlaceList";
 import RouteMap from "./components/RouteMap";
+import RoutePanel from "./components/RoutePanel";
 import StayRow from "./components/StayRow";
 import TripHeader from "./components/TripHeader";
 import { useTravelPlan } from "./useTravelPlan";
+import type { TransitLeg } from "../types";
 import {
   StCard,
   StCardTitle,
@@ -53,6 +56,7 @@ export default function TravelPlanPage() {
     setMemo,
     setStay,
     toggleStayInRoute,
+    setTransit,
     renameTrip,
     changeRange,
     daysThatWouldDrop,
@@ -68,15 +72,20 @@ export default function TravelPlanPage() {
 
   const routeList = useMemo(() => (day ? routePlaces(day) : []), [day]);
 
+  // 장소 검색의 기준점 — 그 날 좌표가 있는 첫 장소. 가까운 곳이 먼저 나오게 한다.
+  const searchBias = useMemo(() => {
+    const found = day?.places.find(
+      (place) => typeof place.lat === "number" && typeof place.lng === "number",
+    );
+    return found ? { lat: found.lat as number, lng: found.lng as number } : undefined;
+  }, [day]);
+
   const totalText = useMemo(() => {
     if (!day) return "";
     const count = day.places.filter((place) => !place.isStay).length;
-    const minutes = day.places.reduce(
-      (sum, place) => sum + (place.transitToNext?.minutes ?? 0),
-      0,
-    );
+    const minutes = dayTransitTotal(day);
     return minutes > 0
-      ? `오늘 ${dayCountLabel(count)} · 이동 ${minutes}분`
+      ? `오늘 ${dayCountLabel(count)} · 이동 ${formatMinutes(minutes)}`
       : `오늘 ${dayCountLabel(count)}`;
   }, [day]);
 
@@ -193,6 +202,16 @@ export default function TravelPlanPage() {
                   mode="place"
                   busy={busy}
                   onAdd={(input) => void addPlace(safeDayIndex, input)}
+                  region={plan.region}
+                  bias={searchBias}
+                />
+
+                <RoutePanel
+                  day={day}
+                  dayIndex={safeDayIndex}
+                  region={plan.region}
+                  busy={busy}
+                  onApply={setTransit}
                 />
 
                 <StDayTotal>{totalText}</StDayTotal>
@@ -202,7 +221,15 @@ export default function TravelPlanPage() {
 
           <div className="flex-rgt-box">
             <StStickyPanel>
-              <RouteMap places={routeList} focusedId={focusedId} onFocus={setFocusedId} />
+              {/* 구간 이동 시간은 동선 순서 그대로 넘긴다. 아직 못 구한 칸은 비어 있다. */}
+              <RouteMap
+                places={routeList}
+                focusedId={focusedId}
+                onFocus={setFocusedId}
+                /* 아직 못 구한 칸은 비어 있다 — 순서가 어긋나면 안 되므로 빈칸을 빼지 않고 그대로 둔다 */
+                legs={routeList.map((place) => place.transitToNext ?? undefined) as TransitLeg[]}
+                region={plan.region}
+              />
             </StStickyPanel>
           </div>
         </StFlexBox>
