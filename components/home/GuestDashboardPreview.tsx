@@ -125,6 +125,11 @@ const SAMPLE_ROWS: SampleRow[] = [
     view: { main: "받을 돈 12,000원", sub: "정산 1건 남음", progress: { ratio: 0.75, over: false } },
   },
   {
+    id: "travel",
+    tone: "blue",
+    view: { main: "도쿄 여행 2박 3일", sub: "DAY 01 · 7곳 · 이동 1시간 25분" },
+  },
+  {
     id: "place",
     tone: "teal",
     view: { main: "1위 홍대 고기집", sub: "장소 투표 진행 중 · 3표" },

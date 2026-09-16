@@ -3,9 +3,9 @@
 // 토이 프로젝트 한 줄의 오른쪽에 놓이는 미리보기 칸.
 // "자세히 보기"를 누르기 전에도 그 서비스가 무엇을 하는지 움직임으로 보여 준다.
 //
-// 열다섯 줄 전부가 움직이는 장면을 갖는다.
+// 열여섯 줄 전부가 움직이는 장면을 갖는다.
 //   - 다섯 줄은 첫 화면에서 쓰는 장면을 그대로 가져다 쓴다 (components/home/ToolDemo.tsx)
-//   - 나머지 열 줄은 이 폴더의 toyScenes.tsx에 있다
+//   - 나머지 열한 줄은 이 폴더의 toyScenes.tsx에 있다
 // 예전에는 장면이 없는 줄에 스크린샷(느린 확대)이나 아이콘 타일을 넣었는데,
 // 이제 쓰는 줄이 하나도 없어서 그 두 갈래는 걷어냈다.
 //
@@ -19,13 +19,14 @@ import { DEMO_SCENES } from "@/components/home/ToolDemo";
 import { TOY_SCENES } from "./toyScenes";
 import type { ProjectImage } from "@/components/common/ProjectImageViewer";
 
-// 카드 앵커 → 장면. ProjectList.tsx의 anchorId 열다섯 개와 일대일로 맞춰 둔다.
+// 카드 앵커 → 장면. ProjectList.tsx의 anchorId 열여섯 개와 일대일로 맞춰 둔다.
 const SCENE_BY_ANCHOR: Record<string, () => ReactElement> = {
   "toy-my": TOY_SCENES.my,
   "toy-schedule": TOY_SCENES.schedule,
   "toy-meeting": DEMO_SCENES.meeting,
   "toy-place": TOY_SCENES.place,
   "toy-calc": DEMO_SCENES.calc,
+  "toy-travel": TOY_SCENES.travel,
   "toy-account-book": TOY_SCENES.accountBook,
   "toy-habit": TOY_SCENES.habit,
   "toy-daily": TOY_SCENES.daily,

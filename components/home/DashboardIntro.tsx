@@ -30,6 +30,7 @@ const BENEFITS = [
 export const SERVICE_BENEFITS: Record<string, string> = {
   meeting: "확정되면 달력에 자동으로",
   calc: "남은 정산만 골라 보여줘요",
+  travel: "날짜별 동선과 이동 시간이 한 링크에 모여요",
   place: "투표 결과가 바로바로 모여요",
   tennis: "다음 경기 D-day가 늘 보여요",
   daily: "며칠째 쓰고 있는지 이어져요",

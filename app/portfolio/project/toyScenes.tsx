@@ -25,7 +25,8 @@ export type ToyScene =
   | "game"
   | "schedule"
   | "habit"
-  | "diet";
+  | "diet"
+  | "travel";
 
 /* ===== 색 이름 한 벌 ===== */
 type Tone = "primary" | "success" | "warning" | "danger" | "sub";
@@ -909,6 +910,96 @@ const StDietFoot = styled.div`
   }
 `;
 
+/* ===== 11. 여행 플랜: 핀 셋이 차례로 찍히고 그 사이를 점선이 한 번 잇는다 ===== */
+// 점선은 자라는 네모(clipPath)로 왼쪽부터 드러낸다.
+// 점선은 stroke-dasharray로 모양을 만들고 있어, 체중 그래프처럼 dashoffset으로 그릴 수 없다.
+const TRAVEL_PINS = [
+  { n: "1", x: 18, y: 36 },
+  { n: "2", x: 70, y: 15 },
+  { n: "3", x: 122, y: 40 },
+] as const;
+
+const TRAVEL_WIPE_ID = "toy-travel-wipe";
+
+function TravelScene() {
+  return (
+    <StScene>
+      <StTravelCard>
+        <StTravelMap viewBox="0 0 140 52" aria-hidden="true">
+          <defs>
+            <clipPath id={TRAVEL_WIPE_ID}>
+              <rect className="wipe" x="0" y="0" width="140" height="52" />
+            </clipPath>
+          </defs>
+          <polyline
+            className="route"
+            clipPath={`url(#${TRAVEL_WIPE_ID})`}
+            points={TRAVEL_PINS.map((p) => `${p.x},${p.y}`).join(" ")}
+          />
+          {TRAVEL_PINS.map((p, i) => (
+            <g
+              key={p.n}
+              className="pin"
+              style={{ animationDelay: `${0.35 + i * 0.4}s` }}
+            >
+              <circle cx={p.x} cy={p.y} r="8.5" />
+              <text x={p.x} y={p.y}>
+                {p.n}
+              </text>
+            </g>
+          ))}
+        </StTravelMap>
+      </StTravelCard>
+      <StChip $delay={2.9}>🚶 12분</StChip>
+    </StScene>
+  );
+}
+
+const StTravelCard = styled.div`
+  ${appearBase};
+  animation-delay: 0.15s;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.semantic.primaryLight};
+`;
+const StTravelMap = styled.svg`
+  display: block;
+  width: 100%;
+  height: auto;
+
+  .route {
+    fill: none;
+    stroke: ${({ theme }) => theme.semantic.primary};
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 4 3.5;
+  }
+  /* 점선을 왼쪽부터 드러내는 네모. 핀이 다 찍힌 뒤 한 번만 자란다 */
+  .wipe {
+    transform: scaleX(0);
+    transform-box: fill-box;
+    transform-origin: left;
+    animation: ${growX} 1.1s cubic-bezier(0.22, 0.61, 0.36, 1) 1.55s forwards;
+  }
+  .pin {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ${pop} 0.36s ease-out forwards;
+  }
+  .pin circle {
+    fill: ${({ theme }) => theme.semantic.primary};
+  }
+  .pin text {
+    fill: ${({ theme }) => theme.colors.white};
+    font-size: 9px;
+    font-weight: 800;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+`;
+
 /* 앵커 → 장면을 이어 주는 표. ToyPreview가 여기서 꺼내 쓴다. */
 export const TOY_SCENES = {
   my: MyScene,
@@ -921,4 +1012,5 @@ export const TOY_SCENES = {
   schedule: ScheduleScene,
   habit: HabitScene,
   diet: DietScene,
+  travel: TravelScene,
 } as const satisfies Record<ToyScene, () => ReactElement>;
