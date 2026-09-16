@@ -22,16 +22,20 @@ import {
   StModeBtn,
   StModeSeg,
   StNotice,
+  StQuietTag,
   StRouteBtn,
   StRouteCard,
   StRouteControls,
+  StRowBtn,
   StRouteFoot,
   StRouteHead,
   StRouteLegend,
 } from "../page.styles";
 
 // 하루 카드 안의 "이동 시간" 칸. 동선 순서대로 구간을 늘어놓고, 한 번 눌러 통째로 채운다.
-// 상자를 또 두르지 않으려고 카드가 아니라 머리카락 한 줄로 나눈 칸으로 만들었다. (2026-09-16)
+// 상자를 또 두르지 않으려고 카드가 아니라 머리카락 한 줄로 나눈 칸으로 만들었다.
+// 수단 고르는 칸(자동/도보/대중교통/차량)은 평소 접어 둔다 — 거의 늘 "자동"이라 조회 버튼만 보이면 된다.
+// "수단 직접 고르기"를 눌러야 펼쳐지고, 자동이 아닌 수단을 골라 접으면 "도보 기준" 꼬리표로 알려 준다. (2026-09-16)
 
 type RoutePanelProps = {
   day: TravelDay;
@@ -70,8 +74,13 @@ export default function RoutePanel({
   onApply,
 }: RoutePanelProps) {
   const [mode, setMode] = useState<RouteMode>("AUTO");
+  // 수단 고르는 칸을 펼쳤는지. 기본은 접힌 상태이고 수단은 "자동"이다.
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [failText, setFailText] = useState("");
+
+  // 꼬리표에 쓸 이름 ("도보" / "대중교통" / "차량")
+  const modeLabel = MODE_OPTIONS.find((option) => option.value === mode)?.label ?? "";
 
   const route = useMemo(() => routePlaces(day), [day]);
   const requests = useMemo(() => buildLegRequests(route, mode), [route, mode]);
@@ -119,24 +128,42 @@ export default function RoutePanel({
         <StCardTitle>🚌 이동 시간</StCardTitle>
 
         <StRouteControls>
-          <StModeSeg role="group" aria-label="이동 수단">
-            {MODE_OPTIONS.map((option) => (
-              <StModeBtn
-                key={option.value}
-                type="button"
-                $active={mode === option.value}
-                aria-pressed={mode === option.value}
-                disabled={fetching}
-                onClick={() => setMode(option.value)}
-              >
-                {option.label}
-              </StModeBtn>
-            ))}
-          </StModeSeg>
-
           <StRouteBtn type="button" disabled={!canFetch} onClick={() => void handleFetch()}>
             {fetching ? "조회 중…" : hasAny ? "다시 조회" : "AI 교통편 적용"}
           </StRouteBtn>
+
+          {/* 자동이 아닌 수단을 골라 두었으면 그 사실만 조용히 알려 준다 (칸을 접어도 남는다) */}
+          {mode !== "AUTO" && <StQuietTag data-testid="mode-tag">{modeLabel} 기준</StQuietTag>}
+
+          {pickerOpen && (
+            <StModeSeg role="group" aria-label="이동 수단" data-testid="mode-seg">
+              {MODE_OPTIONS.map((option) => (
+                <StModeBtn
+                  key={option.value}
+                  type="button"
+                  $active={mode === option.value}
+                  aria-pressed={mode === option.value}
+                  disabled={fetching}
+                  onClick={() => setMode(option.value)}
+                >
+                  {option.label}
+                </StModeBtn>
+              ))}
+            </StModeSeg>
+          )}
+
+          <StRowBtn
+            type="button"
+            aria-expanded={pickerOpen}
+            data-testid="mode-toggle"
+            onClick={() => {
+              // 접을 때는 "자동으로" 되돌린다 — 접힌 채 다른 수단이 남아 있으면 헷갈린다
+              if (pickerOpen) setMode("AUTO");
+              setPickerOpen((prev) => !prev);
+            }}
+          >
+            {pickerOpen ? "자동으로" : "수단 직접 고르기"}
+          </StRowBtn>
         </StRouteControls>
       </StRouteHead>
 

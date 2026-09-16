@@ -5,8 +5,8 @@ import styled, { keyframes } from "styled-components";
 /* 여행 방 화면 전용 스타일 (2026-09-16).
    규칙 두 가지만 지킨다.
    1) 테두리는 한 단계에 하나 — 카드가 테두리를 갖고, 안쪽은 여백과 semantic.bg 띠로만 나눈다.
-   2) 한 줄에 있는 것은 줄을 맞춘다 — 번호(32px)·분류 칩(96px) 칸의 폭을 고정해,
-      이름이 긴 장소가 있어도 옆 줄의 이름 시작 위치가 흔들리지 않게 한다. */
+   2) 한 줄에 있는 것은 줄을 맞춘다 — 번호 칸(28px)만 폭을 고정해 모든 줄의 번호가 같은 x 에 선다.
+      분류 칩은 글자만큼만 차지하고 이름과 같은 줄에 붙는다(칩 칸을 96px 로 비워 두면 이름 칸이 너무 좁아졌다 — 주인 요청 2026-09-16). */
 
 export const StPage = styled.div`
   display: flex;
@@ -37,7 +37,7 @@ export const StWideShell = styled.div`
   }
 `;
 
-/* 1024px 이상: 목록 1.5 : 지도 1 두 열. 그보다 좁으면 한 열(지도는 목록 아래) */
+/* 1024px 이상: 목록과 지도가 정확히 반반(5:5) 두 열. 그보다 좁으면 한 열(지도는 목록 아래) */
 export const StColumns = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -45,7 +45,7 @@ export const StColumns = styled.div`
   align-items: stretch; /* 오른쪽 열이 왼쪽 목록만큼 길어야 그 안의 지도 패널이 sticky로 따라온다 (2026-09-16) */
 
   @media ${({ theme }) => theme.media.desktop} {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.5rem;
   }
 `;
@@ -336,10 +336,10 @@ export const StDayHead = styled.div`
   flex-wrap: wrap;
 `;
 
-/* 장소 한 줄. 번호(32px) · 분류(96px) 칸 폭을 고정해 이름이 언제나 같은 x 에서 시작한다. */
+/* 장소 한 줄. 번호 칸(28px)만 폭을 고정한다 — 분류 칩은 이름과 한 줄에 붙어 글자만큼만 차지한다. */
 export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
   display: grid;
-  grid-template-columns: 2rem 6rem minmax(0, 1fr) auto;
+  grid-template-columns: 1.75rem minmax(0, 1fr) auto;
   column-gap: 0.5rem;
   row-gap: 0.375rem;
   align-items: center;
@@ -356,7 +356,6 @@ export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
   }
 
   @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: 2rem 4.5rem minmax(0, 1fr) auto;
     padding: 0.75rem 0.25rem;
   }
 
@@ -366,8 +365,8 @@ export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
 `;
 
 export const StNumBadge = styled.span`
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -380,12 +379,15 @@ export const StNumBadge = styled.span`
   flex-shrink: 0;
 `;
 
-/* 분류 칩 — 테두리 없이 회색 면만 (선택 상태가 아니므로) */
+/* 분류 칩 — 테두리 없이 회색 면만 (선택 상태가 아니므로).
+   글자만큼만 차지한다(폭 고정 없음) — 이름 칸을 넓게 쓰기 위해 (2026-09-16) */
 export const StCategoryChip = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+  flex-shrink: 0;
+  width: auto;
   height: 1.5rem;
   padding: 0 0.5rem;
   border-radius: 0.5rem;
@@ -394,8 +396,6 @@ export const StCategoryChip = styled.span`
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 export const StNameBox = styled.div`
@@ -405,7 +405,16 @@ export const StNameBox = styled.div`
   gap: 0.125rem;
 `;
 
+/* 칩과 이름은 한 줄에 — 칩이 먼저, 8px 띄고 이름 */
+export const StNameLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+`;
+
 export const StPlaceName = styled.span`
+  min-width: 0;
   font-size: 0.95rem;
   font-weight: 700;
   color: ${({ theme }) => theme.semantic.text};
@@ -498,13 +507,14 @@ export const StRowBtnLabel = styled.span`
   }
 `;
 
-/* 조작 칸 — 폭을 고정해 줄마다 상세정보·▲·▼·삭제가 같은 x 에 선다 */
-export const StRowActions = styled.div`
+/* 조작 칸 — 고칠 때는 폭을 고정해 줄마다 ▲·▼·삭제가 같은 x 에 서고,
+   볼 때는 상세정보 하나뿐이라 글자만큼만 차지한다(오른쪽 끝은 어차피 같다). (2026-09-16) */
+export const StRowActions = styled.div<{ $editing?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
-  width: 14rem;
+  width: ${({ $editing }) => ($editing ? "14rem" : "auto")};
   flex-shrink: 0;
 
   @media ${({ theme }) => theme.media.mobile} {
@@ -530,10 +540,10 @@ export const StDragHandle = styled.span`
   }
 `;
 
-/* 메모 줄 — 이름과 같은 x 에서 시작하도록 3번째 칸부터.
+/* 메모 줄 — 이름과 같은 x 에서 시작하도록 2번째 칸부터.
    메모 손보는 버튼도 조작 칸이 아니라 이 줄 안에 둔다. */
 export const StMemoArea = styled.div`
-  grid-column: 3 / -1;
+  grid-column: 2 / -1;
   display: flex;
   align-items: flex-start;
   gap: 0.25rem;
@@ -599,7 +609,7 @@ export const StTransitLine = styled.div`
 
 export const StStayBand = styled.div`
   display: grid;
-  grid-template-columns: 2rem 6rem minmax(0, 1fr) auto;
+  grid-template-columns: 1.75rem minmax(0, 1fr) auto;
   column-gap: 0.5rem;
   row-gap: 0.5rem;
   align-items: center;
@@ -609,15 +619,14 @@ export const StStayBand = styled.div`
 
   /* 휴대폰에서는 이름이 뭉개지지 않게 두 줄로 — 1줄: 🏨·칩·이름, 2줄: 조작 버튼들 */
   @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: 2rem 4.5rem minmax(0, 1fr);
     padding: 0.625rem 0.375rem;
     row-gap: 0.25rem;
   }
 `;
 
 export const StStayIcon = styled.span`
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -629,15 +638,30 @@ export const StStayQuiet = styled.span`
   color: ${({ theme }) => theme.semantic.subText};
 `;
 
+/* 누를 수 없는 조용한 꼬리표 — "동선 포함 / 도보 기준"처럼 지금 상태만 알려 준다.
+   테두리 없이 분류 칩과 같은 모양으로 둔다(칩과 같은 무게로 읽히게). (2026-09-16) */
+export const StQuietTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  color: ${({ theme }) => theme.semantic.subText};
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+`;
+
 export const StStayActions = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
   flex-wrap: wrap;
 
-  /* 메모 줄과 같이 이름이 시작하는 칸(3번째)부터 한 줄 아래로 내려 놓는다 */
+  /* 메모 줄과 같이 이름이 시작하는 칸(2번째)부터 한 줄 아래로 내려 놓는다 */
   @media ${({ theme }) => theme.media.mobile} {
-    grid-column: 3 / -1;
+    grid-column: 2 / -1;
   }
 `;
 
@@ -1081,7 +1105,7 @@ export const StExportText = styled.textarea`
 
 export const StSkeletonRow = styled.div`
   display: grid;
-  grid-template-columns: 2rem 6rem minmax(0, 1fr);
+  grid-template-columns: 1.75rem 4rem minmax(0, 1fr);
   column-gap: 0.5rem;
   align-items: center;
   padding: 0.5rem;

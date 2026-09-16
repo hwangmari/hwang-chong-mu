@@ -6,7 +6,8 @@ import { StHint, StTransitLine } from "../page.styles";
 import PlaceRow from "./PlaceRow";
 
 // 하루치 장소 목록. 순서 바꾸기는 마우스로 끌기(HTML5 드래그)와 ▲▼ 버튼 두 가지로 할 수 있다.
-// 숙소는 늘 맨 앞에 고정돼 있어 이 목록에서는 빼고, 자리 번호(index)만 한 칸씩 밀어 계산한다. (2026-09-16)
+// 숙소는 늘 맨 앞에 고정돼 있어 이 목록에서는 빼고, 자리 번호(index)만 한 칸씩 밀어 계산한다.
+// 순서를 바꾸는 길은 "편집" 을 켠 동안에만 열린다(editing). (2026-09-16)
 
 const TRANSIT_TEXT: Record<TransitLeg["mode"], string> = {
   WALK: "🚶 도보",
@@ -16,6 +17,8 @@ const TRANSIT_TEXT: Record<TransitLeg["mode"], string> = {
 
 type PlaceListProps = {
   day: TravelDay;
+  /** 고치는 중인지 — 꺼져 있으면 순서 바꾸기·삭제·메모 버튼이 모두 숨는다 */
+  editing: boolean;
   focusedId: string | null;
   onMove: (from: number, to: number) => void;
   onRemove: (placeId: string) => void;
@@ -26,6 +29,7 @@ type PlaceListProps = {
 
 export default function PlaceList({
   day,
+  editing,
   focusedId,
   onMove,
   onRemove,
@@ -89,6 +93,7 @@ export default function PlaceList({
               index={index}
               canMoveUp={i > 0}
               canMoveDown={i < rows.length - 1}
+              editing={editing}
               dragging={dragIndex === index}
               over={overIndex === index && dragIndex !== null && dragIndex !== index}
               focused={focusedId === place.id}

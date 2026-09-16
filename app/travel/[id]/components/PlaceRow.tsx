@@ -9,6 +9,7 @@ import {
   StMemoInput,
   StMemoText,
   StNameBox,
+  StNameLine,
   StNumBadge,
   StPlaceAddr,
   StPlaceName,
@@ -18,10 +19,11 @@ import {
   StRowBtnLabel,
 } from "../page.styles";
 
-// 장소 한 줄. 번호·분류 칸 폭이 고정이라 이름이 길든 짧든 모든 줄의 이름이 같은 자리에서 시작한다.
-// 줄 안의 조작은 모두 같은 버튼 한 식구(StRowBtn, 높이 32px)로 만들고, 조작 칸 폭도 고정해
-// 줄마다 상세정보·▲·▼·삭제가 같은 x 에 선다. 메모를 손보는 버튼만 메모 줄 안으로 내려 두었다.
-// 끌어 옮기기(⠿)는 마우스용이고, 휴대폰에서는 ▲▼ 버튼만 보인다. (2026-09-16)
+// 장소 한 줄. 번호 칸(28px)만 폭이 고정이고 분류 칩은 이름과 같은 줄에 붙어 글자만큼만 차지한다.
+// 줄 안의 조작은 모두 같은 버튼 한 식구(StRowBtn, 높이 32px)로 만들고, 고칠 때만 조작 칸 폭을 고정해
+// 줄마다 ▲·▼·삭제가 같은 x 에 선다. 메모를 손보는 버튼만 메모 줄 안으로 내려 두었다.
+// editing 이 꺼져 있으면(보기만 하는 상태) 상세정보와 메모 글만 남고 고치는 버튼은 모두 숨는다.
+// 끌어 옮기기(⠿)도 고치는 중에만 열린다. 휴대폰에서는 ▲▼ 버튼만 보인다. (2026-09-16)
 
 type PlaceRowProps = {
   place: TravelPlace;
@@ -31,6 +33,8 @@ type PlaceRowProps = {
   index: number;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  /** 고치는 중인지. 꺼져 있으면 순서·삭제·메모 버튼이 모두 숨는다 */
+  editing: boolean;
   dragging: boolean;
   over: boolean;
   focused: boolean;
@@ -121,6 +125,7 @@ export default function PlaceRow({
   index,
   canMoveUp,
   canMoveDown,
+  editing,
   dragging,
   over,
   focused,
@@ -138,13 +143,16 @@ export default function PlaceRow({
   const [draft, setDraft] = useState(place.memo ?? "");
   const memoRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // 메모 칸은 고치는 중일 때만 실제로 열린다 — 편집을 끄면 저절로 닫힌다
+  const memoOpen = editing && editingMemo;
+
   // 글이 길어지면 칸이 따라 늘어나게 (스크롤 대신)
   useEffect(() => {
     const node = memoRef.current;
     if (!node) return;
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight}px`;
-  }, [draft, editingMemo]);
+  }, [draft, memoOpen]);
 
   const startMemo = () => {
     setDraft(place.memo ?? "");
@@ -162,7 +170,7 @@ export default function PlaceRow({
     <StRow
       $dragging={dragging}
       $over={over}
-      draggable
+      draggable={editing}
       onDragStart={(event) => onDragStart(event, index)}
       onDragOver={(event) => onDragOverRow(event, index)}
       onDrop={(event) => onDropRow(event, index)}
@@ -173,14 +181,16 @@ export default function PlaceRow({
       data-focused={focused ? "true" : undefined}
     >
       <StNumBadge data-testid="place-number">{number}</StNumBadge>
-      <StCategoryChip>{CATEGORY_LABEL[place.category]}</StCategoryChip>
 
       <StNameBox>
-        <StPlaceName>{place.name}</StPlaceName>
+        <StNameLine>
+          <StCategoryChip data-testid="place-chip">{CATEGORY_LABEL[place.category]}</StCategoryChip>
+          <StPlaceName>{place.name}</StPlaceName>
+        </StNameLine>
         {place.address && <StPlaceAddr>{place.address}</StPlaceAddr>}
       </StNameBox>
 
-      <StRowActions>
+      <StRowActions $editing={editing}>
         <StRowBtn
           as="a"
           $tone="primary"
@@ -194,78 +204,87 @@ export default function PlaceRow({
           <StRowBtnLabel>상세정보</StRowBtnLabel>
           <IconOut />
         </StRowBtn>
-        <StDragHandle aria-hidden="true">⠿</StDragHandle>
-        <StRowBtn
-          type="button"
-          $icon
-          title="한 칸 위로"
-          aria-label={`${place.name} 한 칸 위로`}
-          disabled={!canMoveUp}
-          onClick={() => onMove(index, index - 1)}
-          data-testid="up-btn"
-        >
-          ▲
-        </StRowBtn>
-        <StRowBtn
-          type="button"
-          $icon
-          title="한 칸 아래로"
-          aria-label={`${place.name} 한 칸 아래로`}
-          disabled={!canMoveDown}
-          onClick={() => onMove(index, index + 1)}
-          data-testid="down-btn"
-        >
-          ▼
-        </StRowBtn>
-        <StRowBtn
-          type="button"
-          $icon
-          $tone="dangerQuiet"
-          title="삭제"
-          aria-label={`${place.name} 삭제`}
-          onClick={() => onRemove(place.id)}
-          data-testid="del-btn"
-        >
-          <IconTrash />
-        </StRowBtn>
-      </StRowActions>
-
-      <StMemoArea>
-        {editingMemo ? (
-          <StMemoInput
-            ref={memoRef}
-            value={draft}
-            autoFocus
-            placeholder="여기서 뭘 할지 적어 두세요"
-            aria-label={`${place.name} 메모`}
-            onChange={(event) => setDraft(event.target.value)}
-            onBlur={finishMemo}
-          />
-        ) : place.memo ? (
+        {editing && (
           <>
-            <StMemoText data-testid="memo-text">{place.memo}</StMemoText>
+            <StDragHandle aria-hidden="true">⠿</StDragHandle>
             <StRowBtn
               type="button"
-              title="메모 편집"
-              aria-label={`${place.name} 메모 편집`}
+              $icon
+              title="한 칸 위로"
+              aria-label={`${place.name} 한 칸 위로`}
+              disabled={!canMoveUp}
+              onClick={() => onMove(index, index - 1)}
+              data-testid="up-btn"
+            >
+              ▲
+            </StRowBtn>
+            <StRowBtn
+              type="button"
+              $icon
+              title="한 칸 아래로"
+              aria-label={`${place.name} 한 칸 아래로`}
+              disabled={!canMoveDown}
+              onClick={() => onMove(index, index + 1)}
+              data-testid="down-btn"
+            >
+              ▼
+            </StRowBtn>
+            <StRowBtn
+              type="button"
+              $icon
+              $tone="dangerQuiet"
+              title="삭제"
+              aria-label={`${place.name} 삭제`}
+              onClick={() => onRemove(place.id)}
+              data-testid="del-btn"
+            >
+              <IconTrash />
+            </StRowBtn>
+          </>
+        )}
+      </StRowActions>
+
+      {/* 볼 때는 적어 둔 메모만 남긴다 — 메모가 없으면 줄 자체를 만들지 않아 빈 칸이 생기지 않는다 */}
+      {(editing || place.memo) && (
+        <StMemoArea>
+          {memoOpen ? (
+            <StMemoInput
+              ref={memoRef}
+              value={draft}
+              autoFocus
+              placeholder="여기서 뭘 할지 적어 두세요"
+              aria-label={`${place.name} 메모`}
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={finishMemo}
+            />
+          ) : place.memo ? (
+            <>
+              <StMemoText data-testid="memo-text">{place.memo}</StMemoText>
+              {editing && (
+                <StRowBtn
+                  type="button"
+                  title="메모 편집"
+                  aria-label={`${place.name} 메모 편집`}
+                  onClick={startMemo}
+                >
+                  <IconPencil />
+                  메모 편집
+                </StRowBtn>
+              )}
+            </>
+          ) : (
+            <StRowBtn
+              type="button"
+              title="메모 추가"
+              aria-label={`${place.name} 메모 추가`}
               onClick={startMemo}
             >
               <IconPencil />
-              메모 편집
+              메모 추가
             </StRowBtn>
-          </>
-        ) : (
-          <StRowBtn
-            type="button"
-            title="메모 추가"
-            aria-label={`${place.name} 메모 추가`}
-            onClick={startMemo}
-          >
-            <IconPencil />
-            메모 추가
-          </StRowBtn>
-        )}
-      </StMemoArea>
+          )}
+        </StMemoArea>
+      )}
     </StRow>
   );
 }
