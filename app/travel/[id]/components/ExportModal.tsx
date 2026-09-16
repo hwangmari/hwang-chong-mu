@@ -46,6 +46,8 @@ export default function ExportModal({ plan, onClose }: ExportModalProps) {
       setCopied(true);
     } catch {
       setCopied(false);
+      // 아무 일도 안 일어난 것처럼 보이면 사람은 계속 누르기만 한다 — 직접 복사하는 길을 알려 준다 (리뷰 반영 2026-09-16)
+      await openAlert("복사에 실패했어요. 아래 글을 직접 선택해 복사해 주세요.");
     }
   };
 

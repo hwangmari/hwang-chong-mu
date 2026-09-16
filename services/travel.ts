@@ -32,9 +32,10 @@ function toPlan(row: PlanRow): TravelPlan {
     startDate: row.start_date,
     endDate: row.end_date,
     region: row.region ?? "",
-    // 예전 저장본이나 다른 사람이 동시에 고친 결과라도 숙소 자리·id 규칙을 여기서 한 번 맞춰 둔다
-    days: (row.days ?? []).map(normalizeDay),
-    pool: row.pool ?? [],
+    // 예전 저장본이나 다른 사람이 동시에 고친 결과라도 숙소 자리·id 규칙을 여기서 한 번 맞춰 둔다.
+    // 저장본이 배열이 아닐 수도 있어(직접 고쳤거나 예전 모양) 먼저 배열인지 본다 (리뷰 반영 2026-09-16)
+    days: (Array.isArray(row.days) ? row.days : []).map(normalizeDay),
+    pool: Array.isArray(row.pool) ? row.pool : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -132,6 +133,12 @@ export async function setTravelDay(
     p_index: index,
     p_day: normalizeDay(day),
   });
-  if (error) throw error;
+  if (error) {
+    // 저장 공간이 "그 날 칸이 없다"고 답한 경우 — 다른 사람이 기간을 줄인 것이라 화면이 알아볼 이름으로 바꿔 던진다 (리뷰 반영 2026-09-16)
+    if (typeof error.message === "string" && error.message.includes("INDEX_OUT_OF_RANGE")) {
+      throw new Error("RANGE_CHANGED");
+    }
+    throw error;
+  }
   return ((data as TravelDay[] | null) ?? []).map(normalizeDay);
 }

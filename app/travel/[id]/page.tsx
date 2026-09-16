@@ -21,7 +21,6 @@ import RoutePanel from "./components/RoutePanel";
 import StayRow from "./components/StayRow";
 import TripHeader from "./components/TripHeader";
 import { useTravelPlan } from "./useTravelPlan";
-import type { TransitLeg } from "../types";
 import {
   StCard,
   StCardTitle,
@@ -227,7 +226,7 @@ export default function TravelPlanPage() {
                 focusedId={focusedId}
                 onFocus={setFocusedId}
                 /* 아직 못 구한 칸은 비어 있다 — 순서가 어긋나면 안 되므로 빈칸을 빼지 않고 그대로 둔다 */
-                legs={routeList.map((place) => place.transitToNext ?? undefined) as TransitLeg[]}
+                legs={routeList.map((place) => place.transitToNext ?? undefined)}
                 region={plan.region}
               />
             </StStickyPanel>

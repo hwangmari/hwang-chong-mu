@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 import {
   loadGoogleMaps,
   type GmapsListener,
@@ -32,7 +32,8 @@ type RouteMapProps = {
   places: TravelPlace[];
   focusedId: string | null;
   onFocus: (id: string | null) => void;
-  legs?: TransitLeg[];
+  /** 장소 순서 그대로. 아직 못 구한 칸은 비어 있다(순서가 어긋나면 안 되므로 빈칸을 빼지 않는다). */
+  legs?: (TransitLeg | undefined)[];
   /** 나라 코드(JP 등). 지도 글자·검색 기준을 그 나라에 맞춘다. page.tsx 가 plan.region 을 넘겨 주면 된다. */
   region?: string;
 };
@@ -54,13 +55,26 @@ type PinHandle = {
 const SEOUL = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 12;
 
+// 구글 지도에 넘기는 색은 구글이 직접 읽는다. 우리 색표(theme)는 oklch() 라서 구글이 못 읽고
+// 선·핀이 검게 나오므로, 지도로 넘어가는 색만 16진수로 적어 둔다. 화면(styled-components) 쪽은 그대로 theme 을 쓴다. (리뷰 반영 2026-09-16)
+/** 이동선 색: 걷기 초록 / 대중교통 파랑 / 차 주황 */
+const STROKE_COLOR: Record<TransitMode, string> = {
+  WALK: "#22c55e",
+  TRANSIT: "#2563eb",
+  DRIVE: "#f97316",
+};
+/** 길찾기 결과가 없을 때 긋는 직선 */
+const LINE_FALLBACK = "#2563eb";
+const PIN_FILL = "#2563eb";
+const PIN_STAY_FILL = "#f59e0b";
+const PIN_TEXT = "#ffffff";
+
 function isReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export default function RouteMap({ places, focusedId, onFocus, legs, region }: RouteMapProps) {
-  const theme = useTheme();
   const [api, setApi] = useState<GoogleMapsApi | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,16 +88,6 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
   useEffect(() => {
     onFocusRef.current = onFocus;
   }, [onFocus]);
-
-  // 이동선 색: 걷기 초록 / 대중교통 파랑 / 차 주황.
-  const strokeColor = useMemo<Record<TransitMode, string>>(
-    () => ({
-      WALK: theme.colors.green500,
-      TRANSIT: theme.semantic.primary,
-      DRIVE: theme.colors.orange500,
-    }),
-    [theme],
-  );
 
   /** 좌표가 있는 장소만, 왼쪽 목록과 같은 번호를 달아서 (숙소는 번호 대신 🏨) */
   const pins = useMemo<Pin[]>(() => {
@@ -192,8 +196,8 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
           "align-items:center",
           "justify-content:center",
           "border-radius:50%",
-          `background:${pin.isStay ? theme.colors.amber500 : theme.semantic.primary}`,
-          `color:${theme.colors.white}`,
+          `background:${pin.isStay ? PIN_STAY_FILL : PIN_FILL}`,
+          `color:${PIN_TEXT}`,
           "font-size:0.78rem",
           "font-weight:800",
           "line-height:1",
@@ -214,7 +218,7 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
           position: { lat: pin.lat, lng: pin.lng },
           title: pin.name,
           zIndex: pin.isStay ? 2 : 1,
-          label: { text: pin.label, color: "#fff", fontWeight: "800" },
+          label: { text: pin.label, color: PIN_TEXT, fontWeight: "800" },
         });
         const listener = marker.addListener("click", () => onFocusRef.current(pin.id));
         handles.set(pin.id, { legacy: marker, lat: pin.lat, lng: pin.lng, label: pin.label, listener });
@@ -228,7 +232,7 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
       if (handle.advanced) handle.advanced.map = null;
       handles.delete(id);
     }
-  }, [api, pins, theme]);
+  }, [api, pins]);
 
   // ── 이동선: 장소나 길찾기 결과가 바뀌면 지우고 다시 긋는다
   useEffect(() => {
@@ -246,7 +250,7 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
           new api.maps.Polyline({
             map,
             path,
-            strokeColor: strokeColor[stroke.mode],
+            strokeColor: STROKE_COLOR[stroke.mode],
             strokeWeight: 4,
             strokeOpacity: 0.9,
           }),
@@ -261,12 +265,12 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
         map,
         path: pins.map((pin) => ({ lat: pin.lat, lng: pin.lng })),
         geodesic: true,
-        strokeColor: theme.semantic.primary,
+        strokeColor: LINE_FALLBACK,
         strokeWeight: 3,
         strokeOpacity: 0.85,
       }),
     );
-  }, [api, pins, strokes, strokeColor, theme]);
+  }, [api, pins, strokes]);
 
   // ── 장소 목록이 바뀌면 전부 보이게 맞춘다 (같은 목록이면 화면을 건드리지 않는다)
   useEffect(() => {

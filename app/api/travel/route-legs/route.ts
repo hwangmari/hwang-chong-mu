@@ -6,6 +6,8 @@ import type { TransitLeg, TransitMode } from "@/app/travel/types";
 
 const NO_KEY = { error: "구글 지도 열쇠가 아직 설정되지 않았어요." };
 const TOO_MANY = { error: "검색이 너무 잦아요. 잠시 후 다시 해 주세요." };
+// 한 사람이 아니라 창구 전체가 몰릴 때 (리뷰 반영 2026-09-16)
+const TOO_BUSY = { error: "지금은 조회가 몰려 있어요. 잠시 후 다시 해 주세요." };
 const BAD_BODY = { error: "요청 내용을 확인해 주세요." };
 
 const TIMEOUT_MS = 8000;
@@ -133,13 +135,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "나라 코드가 올바르지 않아요." }, { status: 400 });
   }
 
-  const departure =
-    typeof b.departure === "string" && b.departure.length > 0 && b.departure.length <= 40
-      ? b.departure
-      : "";
-
   if (!checkRateLimit(`travel-routes:${getClientIp(req)}`, 10, 60_000)) {
     return NextResponse.json(TOO_MANY, { status: 429 });
+  }
+  // 사람별 제한은 주소를 바꿔 가며 피할 수 있다. 구글 요금이 한 번에 새어 나가지 않게 창구 전체 상한도 둔다. (리뷰 반영 2026-09-16)
+  if (!checkRateLimit("travel-routes:global", 60, 60_000)) {
+    return NextResponse.json(TOO_BUSY, { status: 429 });
   }
 
   const key = process.env.GOOGLE_MAPS_SERVER_KEY;
@@ -153,9 +154,7 @@ export async function POST(req: Request) {
     console.error("[travel route-legs]", detail);
   };
 
-  const results = await Promise.all(
-    legs.map((leg) => fetchLeg(leg, key, region, departure, logOnce)),
-  );
+  const results = await Promise.all(legs.map((leg) => fetchLeg(leg, key, region, logOnce)));
 
   return NextResponse.json({ legs: results });
 }
@@ -164,7 +163,6 @@ async function fetchLeg(
   leg: LegInput,
   key: string,
   region: string,
-  departure: string,
   logOnce: (detail: string | number) => void,
 ): Promise<LegResult> {
   try {
@@ -184,10 +182,7 @@ async function fetchLeg(
         languageCode: "ko",
         ...(region ? { regionCode: region } : {}),
         ...(leg.mode === "TRANSIT"
-          ? {
-              transitPreferences: { routingPreference: "FEWER_TRANSFERS" },
-              ...(departure ? { departureTime: departure } : {}),
-            }
+          ? { transitPreferences: { routingPreference: "FEWER_TRANSFERS" } }
           : {}),
         ...(leg.mode === "DRIVE" ? { routingPreference: "TRAFFIC_UNAWARE" } : {}),
       }),

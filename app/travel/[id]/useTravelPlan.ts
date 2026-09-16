@@ -55,18 +55,29 @@ export function useTravelPlan(id: string) {
   const dirtyRef = useRef(false);
   // 계정의 "내 방"에 한 번만 등록하려는 표시
   const linkedRef = useRef<string | null>(null);
+  // 읽기 요청마다 붙이는 번호. 늦게 도착한 옛 응답이 새 결과를 덮어쓰지 않게 한다 (리뷰 반영 2026-09-16)
+  const reqIdRef = useRef(0);
 
   const applyPlan = useCallback((next: TravelPlan) => {
     planRef.current = next;
     setPlan(next);
   }, []);
 
+  /** 저장이 시작/끝날 때 번호를 올린다 — 그 전에 떠난 폴링 결과는 낡은 것이므로 버려진다. */
+  const bumpReq = useCallback(() => {
+    reqIdRef.current += 1;
+  }, []);
+
   // 처음 열 때 loading 은 이미 true 로 시작하므로 여기서 다시 켜지 않는다.
   // (효과 안에서 상태를 바로 바꾸면 화면을 한 번 더 그리게 되어 React 규칙에 걸린다)
   const load = useCallback(
     async (quiet = false) => {
+      const reqId = (reqIdRef.current += 1);
       try {
         const next = await fetchTravelPlan(id);
+
+        // 내가 떠난 뒤에 더 새로운 읽기·저장이 있었으면 이 결과는 낡은 것이라 버린다 (리뷰 반영 2026-09-16)
+        if (reqId !== reqIdRef.current) return;
 
         // 조용한 새로고침 결과는 입력 중이면 버린다 — 쓰던 메모가 남의 저장본으로 덮이지 않게
         if (quiet && dirtyRef.current) return;
@@ -97,6 +108,7 @@ export function useTravelPlan(id: string) {
           });
         }
       } catch {
+        if (reqId !== reqIdRef.current) return;
         if (!quiet) setError("여행을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.");
       } finally {
         if (!quiet) setLoading(false);
@@ -112,8 +124,10 @@ export function useTravelPlan(id: string) {
   }, [load]);
 
   // 여럿이 같이 고치는 화면이라 주기적으로 다시 읽는다. 보고 있지 않은 탭에서는 쉬게 둔다.
+  // 여행이 "있다/없다"만 보고 켠다 — plan 을 그대로 보면 글자 하나 고칠 때마다 20초 시계가 처음부터 다시 간다 (리뷰 반영 2026-09-16)
+  const hasPlan = plan !== null;
   useEffect(() => {
-    if (!plan) return;
+    if (!hasPlan) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void load(true);
     }, POLL_MS);
@@ -125,7 +139,7 @@ export function useTravelPlan(id: string) {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [plan, load]);
+  }, [hasPlan, load]);
 
   /** 메모 입력·끌어 옮기기가 시작/끝날 때 알려 준다(폴링이 끼어들지 않게). */
   const setDirty = useCallback((value: boolean) => {
@@ -143,6 +157,8 @@ export function useTravelPlan(id: string) {
 
       const normalized = normalizeDay(nextDay);
       const before = current.days;
+      // 저장을 시작하는 순간 번호를 올린다 — 이 저장 전에 떠난 폴링 결과가 뒤늦게 와도 내 저장을 덮지 못한다
+      bumpReq();
       applyPlan({
         ...current,
         days: current.days.map((day, i) => (i === dayIndex ? normalized : day)),
@@ -151,18 +167,32 @@ export function useTravelPlan(id: string) {
       setError("");
       try {
         const days = await setTravelDay(current.id, dayIndex, normalized);
+        // 저장 도중에 떠난 폴링 결과도 낡은 것이므로 한 번 더 올린다 (리뷰 반영 2026-09-16)
+        bumpReq();
         const latest = planRef.current;
         if (latest) applyPlan({ ...latest, days });
-      } catch {
+      } catch (e) {
+        bumpReq();
         const latest = planRef.current;
-        if (latest) applyPlan({ ...latest, days: before });
-        setError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.");
+        // 되돌리는 건 내가 고치던 하루뿐 — days 를 통째로 되돌리면 그 사이 받아 온 다른 날 내용까지 옛것이 된다 (리뷰 반영 2026-09-16)
+        if (latest) {
+          applyPlan({
+            ...latest,
+            days: latest.days.map((day, i) => (i === dayIndex ? before[dayIndex] : day)),
+          });
+        }
+        // 다른 사람이 기간을 줄여 그 날 칸이 사라진 경우 — 저장 실패가 아니라 "칸이 없어졌다"를 알려 준다
+        setError(
+          e instanceof Error && e.message === "RANGE_CHANGED"
+            ? "다른 사람이 날짜 범위를 바꿨어요. 최신 내용을 다시 불러왔어요."
+            : "저장하지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.",
+        );
         void load(true);
       } finally {
         setBusy(false);
       }
     },
-    [applyPlan, load],
+    [applyPlan, bumpReq, load],
   );
 
   /** 그 날의 하루치를 꺼내 준다(없으면 null). */
@@ -318,22 +348,30 @@ export function useTravelPlan(id: string) {
         return;
       }
 
+      bumpReq();
       applyPlan({ ...current, title: name });
       setBusy(true);
       setError("");
       try {
-        applyPlan(await updateTravelMeta(current.id, { title: name }));
+        const saved = await updateTravelMeta(current.id, { title: name });
+        bumpReq();
+        applyPlan(saved);
       } catch {
+        bumpReq();
         applyPlan(current);
         setError("여행 이름을 저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
       } finally {
         setBusy(false);
       }
     },
-    [applyPlan],
+    [applyPlan, bumpReq],
   );
 
-  /** 기간을 줄였을 때 통째로 사라지는 날들(적어 둔 장소가 있는 것만). 물어보고 지우려고 미리 알려 준다. */
+  /**
+   * 기간을 줄였을 때 통째로 사라지는 날들(적어 둔 장소가 있는 것만). 물어보고 지우려고 미리 알려 준다.
+   * 화면에 든 사본으로 세는 어림수다 — 묻는 창을 바로 띄워야 해서 저장 공간을 다시 읽지 않는다.
+   * 실제로 지워지는 내용은 changeRange 가 저장 직전에 최신본으로 다시 계산한다. (리뷰 반영 2026-09-16)
+   */
   const daysThatWouldDrop = useCallback((start: string, end: string): TravelDay[] => {
     const current = planRef.current;
     if (!current) return [];
@@ -353,22 +391,27 @@ export function useTravelPlan(id: string) {
         return false;
       }
 
+      bumpReq();
       setBusy(true);
       setError("");
       try {
-        const days = buildDays(start, end, current.days);
-        applyPlan(
-          await updateTravelMeta(current.id, { startDate: start, endDate: end, days }),
-        );
+        // 화면에 든 사본은 몇 분 전 것일 수 있다. 그대로 days 를 다시 만들어 저장하면
+        // 그 사이 다른 사람이 적어 넣은 장소가 통째로 지워지므로, 저장 직전에 최신본을 한 번 더 읽는다 (리뷰 반영 2026-09-16)
+        const fresh = (await fetchTravelPlan(current.id)) ?? current;
+        const days = buildDays(start, end, fresh.days);
+        const saved = await updateTravelMeta(current.id, { startDate: start, endDate: end, days });
+        bumpReq();
+        applyPlan(saved);
         return true;
       } catch {
+        bumpReq();
         setError("기간을 저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
         return false;
       } finally {
         setBusy(false);
       }
     },
-    [applyPlan],
+    [applyPlan, bumpReq],
   );
 
   return {

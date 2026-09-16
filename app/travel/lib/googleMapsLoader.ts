@@ -91,8 +91,12 @@ declare global {
 const SCRIPT_FLAG = "data-hwang-gmaps";
 
 let loading: Promise<GoogleMapsApi | null> | null = null;
+// 한 번 막히면(열쇠가 잘못됐거나 차단) 이 창에서는 다시 묻지 않는다 — 다시 시도하면 기다리기만 하다 멈춘다.
+// 새로고침하면 처음부터 다시 시도한다. (리뷰 반영 2026-09-16)
+let failed = false;
 
 export function loadGoogleMaps(region?: string): Promise<GoogleMapsApi | null> {
+  if (failed) return Promise.resolve(null);
   if (loading) return loading;
   if (typeof window === "undefined") return Promise.resolve(null);
 
@@ -110,8 +114,14 @@ export function loadGoogleMaps(region?: string): Promise<GoogleMapsApi | null> {
     const finish = (api: GoogleMapsApi | null) => {
       if (settled) return;
       settled = true;
-      // 실패하면 다음에 다시 시도할 수 있게 기억을 지운다.
-      if (!api) loading = null;
+      if (!api) {
+        // 실패한 흔적을 남겨 두면(스크립트 태그·콜백) 다음 호출이 "이미 넣었다"고 보고 오지 않을 콜백을 영영 기다린다.
+        // 넣어 둔 것을 치우고, 이 창에서는 더 묻지 않는 표시를 남긴다. (리뷰 반영 2026-09-16)
+        failed = true;
+        loading = null;
+        document.querySelector(`script[${SCRIPT_FLAG}]`)?.remove();
+        delete window.__hwangGmapsReady;
+      }
       resolve(api);
     };
 

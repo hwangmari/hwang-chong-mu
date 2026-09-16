@@ -32,8 +32,20 @@ export function checkRateLimit(
 }
 
 // 프록시 뒤의 클라이언트 IP 추출(없으면 "unknown").
+// x-forwarded-for 의 맨 앞 칸은 부르는 쪽이 아무 값이나 적어 넣을 수 있어(횟수 제한을 매번 새 이름으로 피해 간다)
+// 믿을 수 있는 x-real-ip 를 먼저 보고, 없으면 우리 쪽 프록시가 마지막에 붙인 맨 뒤 칸을 쓴다. (리뷰 반영 2026-09-16)
 export function getClientIp(req: Request): string {
+  const real = req.headers.get("x-real-ip")?.trim();
+  if (real) return real;
+
   const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  if (xff) {
+    const parts = xff
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return last;
+  }
+  return "unknown";
 }

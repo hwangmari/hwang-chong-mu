@@ -18,7 +18,9 @@ function formatRange(startDate: string, endDate: string): string {
   }
   const head = format(start, "yyyy. MM. dd (E)", { locale: ko });
   if (startDate === endDate) return head;
-  return `${head} – ${format(end, "MM. dd (E)", { locale: ko })}`;
+  // 해를 넘기는 여행은 뒤쪽 연도를 지우면 안 된다 (리뷰 반영 2026-09-16)
+  const tail = startDate.slice(0, 4) === endDate.slice(0, 4) ? "MM. dd (E)" : "yyyy. MM. dd (E)";
+  return `${head} – ${format(end, tail, { locale: ko })}`;
 }
 
 export async function generateMetadata({

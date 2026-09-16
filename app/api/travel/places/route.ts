@@ -7,6 +7,8 @@ import type { PlaceCategory } from "@/app/travel/types";
 const NO_KEY = { error: "구글 지도 열쇠가 아직 설정되지 않았어요." };
 const UPSTREAM_FAIL = { error: "장소 검색에 실패했어요. 잠시 후 다시 해 주세요." };
 const TOO_MANY = { error: "검색이 너무 잦아요. 잠시 후 다시 해 주세요." };
+// 한 사람이 아니라 창구 전체가 몰릴 때 (리뷰 반영 2026-09-16)
+const TOO_BUSY = { error: "지금은 조회가 몰려 있어요. 잠시 후 다시 해 주세요." };
 const BAD_BODY = { error: "요청 내용을 확인해 주세요." };
 
 const TIMEOUT_MS = 8000;
@@ -120,6 +122,12 @@ export async function POST(req: Request) {
     return NextResponse.json(BAD_BODY, { status: 400 });
   }
   const b = body as Record<string, unknown>;
+
+  // 사람별 제한은 주소를 바꿔 가며 피할 수 있다. 구글 요금이 한 번에 새어 나가지 않게 창구 전체 상한도 둔다.
+  // 자동완성·상세를 합쳐서 센다. (리뷰 반영 2026-09-16)
+  if (!checkRateLimit("travel-places:global", 200, 60_000)) {
+    return NextResponse.json(TOO_BUSY, { status: 429 });
+  }
 
   if (b.kind === "autocomplete") return autocomplete(req, b);
   if (b.kind === "details") return details(req, b);

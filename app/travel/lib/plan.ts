@@ -5,7 +5,16 @@
 // 날짜 계산은 date-fns 로만 한다. (2026-09-16)
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
-import { MAX_TRIP_DAYS, type TravelDay, type TravelPlace } from "../types";
+import {
+  CATEGORY_LABEL,
+  MAX_TRIP_DAYS,
+  type PlaceCategory,
+  type TravelDay,
+  type TravelPlace,
+} from "../types";
+
+/** 저장본에 들어 있어도 되는 장소 분류. 여기 없는 값은 "기타"로 본다. */
+const CATEGORIES = new Set(Object.keys(CATEGORY_LABEL));
 
 /** 장소 id. 저장 전에도 화면에서 구분해야 해서 브라우저에서 만든다. */
 export function newPlaceId(): string {
@@ -17,14 +26,26 @@ export function newPlaceId(): string {
  * 하루치를 규칙에 맞게 다듬는다.
  * - 숙소(isStay)는 하루에 하나뿐이고 항상 맨 앞(places[0])에 둔다 — "이 날은 여기서 잔다"를 먼저 보여주려고.
  * - id가 빠진 장소에는 id를 채운다(예전 저장본 대비).
+ * - 저장본이 깨져 있어도(빈 칸·모양이 다름) 화면 전체가 멈추지 않게 빈 하루로 바꿔 준다 (리뷰 반영 2026-09-16)
  */
-export function normalizeDay(day: TravelDay): TravelDay {
-  const places = (day.places ?? []).map((place) => (place.id ? place : { ...place, id: newPlaceId() }));
+export function normalizeDay(day: TravelDay | null | undefined): TravelDay {
+  if (!day || typeof day !== "object" || !Array.isArray(day.places)) {
+    return { date: typeof day?.date === "string" ? day.date : "", stayInRoute: true, places: [] };
+  }
+
+  const places: TravelPlace[] = day.places
+    .filter((place): place is TravelPlace => Boolean(place) && typeof place === "object")
+    .map((place) => ({
+      ...place,
+      id: place.id || newPlaceId(),
+      name: typeof place.name === "string" ? place.name : String(place.name ?? ""),
+      category: (CATEGORIES.has(place.category) ? place.category : "etc") as PlaceCategory,
+    }));
   const stayIndex = places.findIndex((place) => place.isStay);
   const ordered =
     stayIndex > 0 ? [places[stayIndex], ...places.filter((_, i) => i !== stayIndex)] : places;
   return {
-    date: day.date,
+    date: typeof day.date === "string" ? day.date : "",
     stayInRoute: day.stayInRoute !== false,
     places: ordered.map((place, index) => {
       if (stayIndex >= 0 && index === 0) return place.isStay ? place : { ...place, isStay: true };
@@ -84,6 +105,16 @@ export function nightsLabel(start: string, end: string): string {
   const nights = differenceInCalendarDays(parseISO(end), parseISO(start));
   if (!Number.isFinite(nights) || nights <= 0) return "당일";
   return `${nights}박 ${nights + 1}일`;
+}
+
+/**
+ * "2026-10-16" ~ "2026-10-18" → "2026.10.16–10.18" (같은 해라 뒤쪽 연도는 생략)
+ * 해를 넘기면 뒤쪽 연도를 그대로 둔다 → "2026.12.30–2027.01.02" (리뷰 반영 2026-09-16)
+ */
+export function rangeLabel(start: string, end: string): string {
+  const sameYear = start.slice(0, 4) === end.slice(0, 4);
+  const tail = sameYear ? end.slice(5) : end;
+  return `${start.replace(/-/g, ".")}–${tail.replace(/-/g, ".")}`;
 }
 
 /** "2026-10-16" → "10.16 (금)" */

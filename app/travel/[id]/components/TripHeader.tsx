@@ -45,7 +45,9 @@ function rangeText(start: string, end: string): string {
   const to = parseISO(end);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return `${start}–${end}`;
   const head = format(from, "yyyy.MM.dd");
-  return start === end ? head : `${head}–${format(to, "MM.dd")}`;
+  if (start === end) return head;
+  // 해를 넘기는 여행은 뒤쪽 연도를 지우면 안 된다 ("2026.12.30–2027.01.02") (리뷰 반영 2026-09-16)
+  return `${head}–${format(to, start.slice(0, 4) === end.slice(0, 4) ? "MM.dd" : "yyyy.MM.dd")}`;
 }
 
 export default function TripHeader({

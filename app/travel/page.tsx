@@ -10,7 +10,7 @@ import { useModal } from "@/components/common/ModalProvider";
 import { TRAVEL_GUIDE_DATA } from "@/data/footerGuides";
 import { byId } from "@/lib/services";
 import useCreateTravelPlan from "./useCreateTravelPlan";
-import { nightsLabel } from "./lib/plan";
+import { nightsLabel, rangeLabel } from "./lib/plan";
 import { forgetMyPlan, loadMyPlans, type MyPlanItem } from "./myPlans";
 import { REGIONS } from "./types";
 import {
@@ -36,11 +36,6 @@ import {
 const service = byId("travel");
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-/** "2026-10-16" ~ "2026-10-18" → "2026.10.16–10.18" (같은 해라 뒤쪽 연도는 생략) */
-function rangeLabel(start: string, end: string): string {
-  return `${start.replace(/-/g, ".")}–${end.slice(5).replace("-", ".")}`;
-}
 
 export default function TravelHomePage() {
   const { openConfirm } = useModal();

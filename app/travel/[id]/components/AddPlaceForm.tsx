@@ -60,13 +60,17 @@ export default function AddPlaceForm({
 
   const [items, setItems] = useState<Suggestion[]>([]);
   const [dismissed, setDismissed] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // -1 = 아직 아무 후보도 고르지 않음. 이때 Enter 는 손으로 적은 이름을 그대로 넣는다 (리뷰 반영 2026-09-16)
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [hint, setHint] = useState("");
   const [detailsBusy, setDetailsBusy] = useState(false);
   const [suggestOff, setSuggestOff] = useState(false);
 
   const tokenRef = useRef(newSessionToken());
   const abortRef = useRef<AbortController | null>(null);
+  // 상세 조회는 자동완성과 따로 끊는다(자동완성이 끊긴다고 고르던 장소까지 끊기면 안 되므로) (리뷰 반영 2026-09-16)
+  const detailsAbortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
   const skipNextRef = useRef(false);
 
   const isStay = mode === "stay";
@@ -81,7 +85,7 @@ export default function AddPlaceForm({
   const closeList = useCallback(() => {
     setDismissed(true);
     setItems([]);
-    setActiveIndex(0);
+    setActiveIndex(-1);
   }, []);
 
   // ── 타자가 멈춘 뒤 0.3초에 한 번만 물어본다
@@ -134,7 +138,8 @@ export default function AddPlaceForm({
           const next = (data.items ?? []).filter((item) => item && item.placeId).slice(0, 6);
           setHint("");
           setItems(next);
-          setActiveIndex(0);
+          // 새 후보가 와도 저절로 고르지 않는다 — 방향키로 고를 때만 골라진다
+          setActiveIndex(-1);
           setDismissed(false);
         } catch {
           // 검색이 안 되는 것뿐이라 화면에는 아무 일도 일어나지 않는다
@@ -145,8 +150,16 @@ export default function AddPlaceForm({
     return () => clearTimeout(timer);
   }, [query, region, biasLat, biasLng, suggestOff]);
 
-  // ── 화면을 떠나면 보내던 요청을 끊는다
-  useEffect(() => () => abortRef.current?.abort(), []);
+  // ── 화면을 떠나면 보내던 요청을 끊고, 늦게 온 답이 사라진 화면을 건드리지 않게 표시해 둔다
+  // 표시를 켜는 일도 여기서 한다 — 개발 모드는 효과를 일부러 한 번 껐다 켜므로 켜 두지 않으면 계속 "떠난 상태"로 남는다
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      detailsAbortRef.current?.abort();
+    };
+  }, []);
 
   const resetForm = () => {
     skipNextRef.current = true;
@@ -159,17 +172,24 @@ export default function AddPlaceForm({
   const pick = async (item: Suggestion) => {
     setDismissed(true);
     setDetailsBusy(true);
+    detailsAbortRef.current?.abort();
+    const controller = new AbortController();
+    detailsAbortRef.current = controller;
     try {
       const res = await fetch("/api/travel/places", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ kind: "details", placeId: item.placeId, sessionToken: tokenRef.current }),
       });
+      if (!mountedRef.current) return;
       if (!res.ok) {
         // 상세를 못 받으면 이름만 채워 두고 사람이 마저 적게 한다
         skipNextRef.current = true;
         setName(item.mainText);
         setHint(res.status === 429 ? TOO_MANY_HINT : "자세한 정보를 못 받아왔어요 — 직접 적어 넣어요");
+        // 이 검색 묶음은 여기서 끝난다 — 다음 검색은 새 묶음 값으로 세도록 바꿔 둔다 (리뷰 반영 2026-09-16)
+        tokenRef.current = newSessionToken();
         return;
       }
       const detail = (await res.json()) as {
@@ -181,6 +201,7 @@ export default function AddPlaceForm({
         url?: string;
         category?: PlaceCategory;
       };
+      if (!mountedRef.current) return;
       await onAdd({
         name: (detail.name || item.mainText).trim(),
         category: isStay ? "stay" : (detail.category ?? category),
@@ -191,11 +212,14 @@ export default function AddPlaceForm({
         url: detail.url || undefined,
         isStay,
       });
+      if (!mountedRef.current) return;
       resetForm();
     } catch {
+      // 새로 고른 장소 때문에 끊긴 경우거나 화면을 떠난 경우 — 안내를 띄우지 않는다
+      if (controller.signal.aborted || !mountedRef.current) return;
       setHint("자세한 정보를 못 받아왔어요 — 직접 적어 넣어요");
     } finally {
-      setDetailsBusy(false);
+      if (mountedRef.current) setDetailsBusy(false);
     }
   };
 
@@ -211,7 +235,8 @@ export default function AddPlaceForm({
     }
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((index) => (index - 1 + items.length) % items.length);
+      // 아무것도 안 고른 상태(-1)에서 위로 가면 맨 아래부터
+      setActiveIndex((index) => (index <= 0 ? items.length - 1 : index - 1));
       return;
     }
     if (event.key === "Escape") {
@@ -220,6 +245,9 @@ export default function AddPlaceForm({
       return;
     }
     if (event.key === "Enter") {
+      // 방향키로 후보를 고른 적이 있을 때만 그 후보를 넣는다.
+      // 그냥 적고 Enter 를 누른 경우에는 막지 않고 흘려 보내 적은 이름 그대로 추가되게 한다. (리뷰 반영 2026-09-16)
+      if (activeIndex < 0) return;
       const item = items[activeIndex];
       if (!item) return;
       event.preventDefault();
@@ -267,8 +295,8 @@ export default function AddPlaceForm({
                 key={item.placeId}
                 type="button"
                 role="option"
-                aria-selected={index === activeIndex}
-                $active={index === activeIndex}
+                aria-selected={activeIndex >= 0 && index === activeIndex}
+                $active={activeIndex >= 0 && index === activeIndex}
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => void pick(item)}
               >
