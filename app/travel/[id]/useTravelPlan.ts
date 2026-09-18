@@ -14,11 +14,19 @@ import {
 import { rememberMyPlan } from "../myPlans";
 import type {
   PlaceCategory,
+  PlaceStep,
   TransitLeg,
   TravelDay,
   TravelPlace,
   TravelPlan,
 } from "../types";
+
+/** 마지막 장소의 "다음 구간"(= 숙소 복귀)만 지운다. 숙소가 바뀌거나 동선에서 빠질 때 쓴다. */
+function clearLastLeg(places: TravelPlace[]): TravelPlace[] {
+  return places.map((place, i) =>
+    i === places.length - 1 ? { ...place, transitToNext: null } : place,
+  );
+}
 
 /** 다른 사람이 같은 여행을 고쳤는지 확인하는 주기 (테니스 교환전 화면과 같은 20초) */
 const POLL_MS = 20_000;
@@ -35,6 +43,7 @@ export type NewPlaceInput = {
   lng?: number;
   placeId?: string;
   url?: string;
+  memo?: string;
   isStay?: boolean;
 };
 
@@ -149,11 +158,13 @@ export function useTravelPlan(id: string) {
   /**
    * 하루치만 저장한다. 화면은 먼저 바꾸고(기다리지 않게), 저장에 실패하면 되돌린 뒤 안내 문구를 띄운다.
    * days 전체가 아니라 그 칸만 바꾸는 저장 함수를 쓰므로 다른 날을 고치던 사람의 내용이 지워지지 않는다.
+   * 성공하면 null, 실패하면 사람이 읽을 안내 문구를 돌려준다 — 화면을 덮은 창(추천 장소 고르기)이
+   * 그 문구를 제자리에서 보여 준다. (error 상태는 창 뒤에 가려 안 보이고, 한 박자 늦게 바뀐다) (리뷰 반영 2026-09-17)
    */
   const saveDay = useCallback(
-    async (dayIndex: number, nextDay: TravelDay) => {
+    async (dayIndex: number, nextDay: TravelDay): Promise<string | null> => {
       const current = planRef.current;
-      if (!current || !current.days[dayIndex]) return;
+      if (!current || !current.days[dayIndex]) return "담을 날짜를 찾지 못했어요. 창을 닫고 다시 열어 주세요.";
 
       const normalized = normalizeDay(nextDay);
       const before = current.days;
@@ -171,6 +182,7 @@ export function useTravelPlan(id: string) {
         bumpReq();
         const latest = planRef.current;
         if (latest) applyPlan({ ...latest, days });
+        return null;
       } catch (e) {
         bumpReq();
         const latest = planRef.current;
@@ -182,12 +194,13 @@ export function useTravelPlan(id: string) {
           });
         }
         // 다른 사람이 기간을 줄여 그 날 칸이 사라진 경우 — 저장 실패가 아니라 "칸이 없어졌다"를 알려 준다
-        setError(
+        const message =
           e instanceof Error && e.message === "RANGE_CHANGED"
             ? "다른 사람이 날짜 범위를 바꿨어요. 최신 내용을 다시 불러왔어요."
-            : "저장하지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.",
-        );
+            : "저장하지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.";
+        setError(message);
         void load(true);
+        return message;
       } finally {
         setBusy(false);
       }
@@ -205,14 +218,11 @@ export function useTravelPlan(id: string) {
     async (dayIndex: number, input: NewPlaceInput | null) => {
       const day = dayAt(dayIndex);
       if (!day) return;
-      const rest = day.places.filter((place) => !place.isStay);
+      // 숙소는 동선의 "끝"이라, 숙소가 바뀌면 마지막 장소 → 숙소 복귀 구간만 다시 구해야 한다
+      const rest = clearLastLeg(day.places.filter((place) => !place.isStay));
 
       if (!input) {
-        // 숙소가 빠지면 숙소 → 첫 장소 구간의 이동 시간이 사라진다
-        await saveDay(dayIndex, {
-          ...day,
-          places: rest.map((place, i) => (i === 0 ? { ...place, transitToNext: null } : place)),
-        });
+        await saveDay(dayIndex, { ...day, places: rest });
         return;
       }
 
@@ -254,6 +264,124 @@ export function useTravelPlan(id: string) {
       await saveDay(dayIndex, clearTransitAround(appended, appended.places.length - 1));
     },
     [dayAt, saveDay, setStay],
+  );
+
+  /**
+   * 여러 곳을 한 번에 맨 뒤에 붙인다(추천 장소에서 고른 것). 저장은 한 번만 — 다섯 곳을 고르고 다섯 번 저장하면
+   * 그 사이 폴링이 끼어들거나 중간에 실패해 반만 들어가는 일이 생긴다. 숙소(isStay)는 여기서 받지 않는다. (2026-09-17)
+   */
+  const addPlaces = useCallback(
+    async (dayIndex: number, inputs: NewPlaceInput[]): Promise<string | null> => {
+      const day = dayAt(dayIndex);
+      if (!day) return "담을 날짜를 찾지 못했어요. 창을 닫고 다시 열어 주세요.";
+      const fresh: TravelPlace[] = inputs
+        .filter((input) => input.name.trim() && !input.isStay)
+        .map((input) => ({
+          ...input,
+          name: input.name.trim(),
+          address: input.address?.trim() || undefined,
+          id: newPlaceId(),
+        }));
+      if (fresh.length === 0) return "담을 곳이 없어요.";
+      const appended: TravelDay = { ...day, places: [...day.places, ...fresh] };
+      // 틀어지는 구간은 "원래 마지막 장소 → 첫 새 장소" 하나뿐(새 장소끼리는 아직 이동 시간이 없다)
+      return saveDay(dayIndex, clearTransitAround(appended, day.places.length));
+    },
+    [dayAt, saveDay],
+  );
+
+  /**
+   * 어떤 장소 "바로 뒤"에 한 곳을 끼워 넣는다(주변 추천에서 담을 때 — 주변이니 이어서 들르는 순서).
+   * 기준 장소가 그 사이 사라졌으면 맨 뒤에 붙인다. 성공하면 null, 실패하면 안내 문구. (2026-09-17)
+   */
+  const insertPlaceAfter = useCallback(
+    async (dayIndex: number, afterId: string, input: NewPlaceInput): Promise<string | null> => {
+      const day = dayAt(dayIndex);
+      if (!day) return "담을 날짜를 찾지 못했어요. 창을 닫고 다시 열어 주세요.";
+      const name = input.name.trim();
+      if (!name || input.isStay) return "담을 곳이 없어요.";
+      const place: TravelPlace = {
+        ...input,
+        name,
+        address: input.address?.trim() || undefined,
+        id: newPlaceId(),
+      };
+      const anchor = day.places.findIndex((item) => item.id === afterId);
+      const at = anchor >= 0 ? anchor + 1 : day.places.length;
+      const places = [...day.places.slice(0, at), place, ...day.places.slice(at)];
+      // 끼어든 자리의 앞 구간(기준 → 새 장소)과 새 장소의 다음 구간이 모두 틀어진다
+      return saveDay(dayIndex, clearTransitAround({ ...day, places }, at));
+    },
+    [dayAt, saveDay],
+  );
+
+  /**
+   * 후보(pool) 목록만 저장한다. 화면을 먼저 바꾸고, 실패하면 후보만 되돌린다.
+   * 저장 공간이 돌려준 여행에서 pool 만 받아 쓴다 — days 는 하루 단위 저장이 따로 맡고 있어서 섞지 않는다. (2026-09-17)
+   */
+  const savePool = useCallback(
+    async (nextPool: TravelPlace[]): Promise<string | null> => {
+      const current = planRef.current;
+      if (!current) return "여행을 찾지 못했어요. 새로고침해 주세요.";
+      const before = current.pool;
+      bumpReq();
+      applyPlan({ ...current, pool: nextPool });
+      setBusy(true);
+      setError("");
+      try {
+        const saved = await updateTravelMeta(current.id, { pool: nextPool });
+        bumpReq();
+        const latest = planRef.current;
+        if (latest) applyPlan({ ...latest, pool: saved.pool });
+        return null;
+      } catch {
+        bumpReq();
+        const latest = planRef.current;
+        if (latest) applyPlan({ ...latest, pool: before });
+        const message = "후보 목록을 저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
+        setError(message);
+        void load(true);
+        return message;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [applyPlan, bumpReq, load],
+  );
+
+  /** 후보 한 곳을 그 날 맨 뒤에 담고 후보에서 뺀다. 하루 저장이 실패하면 후보는 그대로 둔다. */
+  const movePoolToDay = useCallback(
+    async (poolId: string, dayIndex: number): Promise<string | null> => {
+      const current = planRef.current;
+      const day = dayAt(dayIndex);
+      const target = current?.pool.find((place) => place.id === poolId);
+      if (!current || !day || !target) return "담을 곳을 찾지 못했어요. 새로고침해 주세요.";
+      // 새 id 로 담는다 — 후보 저장이 실패해 두 곳에 남아도 같은 id 가 둘이 되지 않게
+      const place: TravelPlace = { ...target, id: newPlaceId(), isStay: false, transitToNext: null };
+      const appended: TravelDay = { ...day, places: [...day.places, place] };
+      const failure = await saveDay(dayIndex, clearTransitAround(appended, appended.places.length - 1));
+      if (failure) return failure;
+      const latest = planRef.current ?? current;
+      const poolFailure = await savePool(latest.pool.filter((item) => item.id !== poolId));
+      // 날에는 이미 담겼으니 다시 "담기"를 누르면 두 번 들어간다 — 빼기로 안내한다
+      if (poolFailure) {
+        const message = `DAY ${String(dayIndex + 1).padStart(2, "0")}에는 담았지만 후보에서 빼지 못했어요. '빼기'를 눌러 주세요.`;
+        setError(message);
+        return message;
+      }
+      return null;
+    },
+    [dayAt, saveDay, savePool],
+  );
+
+  /** 후보에서 지운다(일정에는 영향 없음). */
+  const removeFromPool = useCallback(
+    async (poolId: string): Promise<string | null> => {
+      const current = planRef.current;
+      if (!current) return "여행을 찾지 못했어요. 새로고침해 주세요.";
+      return savePool(current.pool.filter((item) => item.id !== poolId));
+    },
+    [savePool],
   );
 
   const removePlace = useCallback(
@@ -300,15 +428,33 @@ export function useTravelPlan(id: string) {
     [dayAt, saveDay],
   );
 
+  /** 한 장소 안의 세부 일정 목록을 통째로 바꾼다. 이동 시간(transitToNext)은 그대로 둔다. (2026-09-18) */
+  const setSteps = useCallback(
+    async (dayIndex: number, placeId: string, steps: PlaceStep[]) => {
+      const day = dayAt(dayIndex);
+      if (!day) return;
+      const target = day.places.find((place) => place.id === placeId);
+      if (!target) return;
+      await saveDay(dayIndex, {
+        ...day,
+        places: day.places.map((place) => (place.id === placeId ? { ...place, steps } : place)),
+      });
+    },
+    [dayAt, saveDay],
+  );
+
   const toggleStayInRoute = useCallback(
     async (dayIndex: number) => {
       const day = dayAt(dayIndex);
       if (!day) return;
-      // 동선에서 넣고 빼면 이어지는 구간이 통째로 달라지므로 계산해 둔 이동 시간을 모두 버린다
+      // 숙소는 동선의 끝(복귀)이라, 넣고 빼도 장소끼리의 구간(1→2→…)은 그대로다.
+      // 달라지는 건 마지막 장소의 "다음 구간"뿐이라 그것만 버린다.
+      const stay = day.places.find((place) => place.isStay);
+      const rest = clearLastLeg(day.places.filter((place) => !place.isStay));
       await saveDay(dayIndex, {
         ...day,
         stayInRoute: !day.stayInRoute,
-        places: day.places.map((place) => ({ ...place, transitToNext: null })),
+        places: stay ? [{ ...stay, transitToNext: null }, ...rest] : rest,
       });
     },
     [dayAt, saveDay],
@@ -323,9 +469,11 @@ export function useTravelPlan(id: string) {
       if (ids.length === 0) return;
       await saveDay(dayIndex, {
         ...day,
-        places: day.places.map((place) =>
-          place.id in updates ? { ...place, transitToNext: updates[place.id] } : place,
-        ),
+        places: day.places.map((place) => {
+          // 숙소는 동선의 끝이라 "다음 구간"이 없다. 예전 저장본에 값이 남아 있어도 여기서 null 로 지운다.
+          if (place.isStay) return { ...place, transitToNext: null };
+          return place.id in updates ? { ...place, transitToNext: updates[place.id] } : place;
+        }),
       });
     },
     [dayAt, saveDay],
@@ -424,9 +572,14 @@ export function useTravelPlan(id: string) {
     setDirty,
     reload: load,
     addPlace,
+    addPlaces,
+    insertPlaceAfter,
+    movePoolToDay,
+    removeFromPool,
     removePlace,
     movePlace,
     setMemo,
+    setSteps,
     setStay,
     toggleStayInRoute,
     setTransit,

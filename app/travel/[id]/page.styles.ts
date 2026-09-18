@@ -63,6 +63,9 @@ export const StStickyPanel = styled.div`
   @media ${({ theme }) => theme.media.desktop} {
     position: sticky;
     top: 4.5rem;
+    /* 지도 + 주변 추천이 창보다 길어지면 이 칸 안에서만 스크롤 — 붙박이라 페이지 스크롤로는 아래를 못 본다 (리뷰 반영 2026-09-17) */
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: auto;
   }
 `;
 
@@ -131,7 +134,9 @@ export const StTitleRow = styled.div`
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  flex: 1;
+  /* 제목이 12rem 보다 좁아지면 옆 버튼(링크 공유·내보내기)이 아래 줄로 내려간다 —
+     휴대폰에서 "상하이3박4일"이 글자 중간에서 끊기던 문제 (2026-09-17) */
+  flex: 1 1 12rem;
 `;
 
 export const StTitleText = styled.h1`
@@ -337,7 +342,7 @@ export const StDayHead = styled.div`
 `;
 
 /* 장소 한 줄. 번호 칸(28px)만 폭을 고정한다 — 분류 칩은 이름과 한 줄에 붙어 글자만큼만 차지한다. */
-export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
+export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean; $selected?: boolean }>`
   display: grid;
   grid-template-columns: 1.75rem minmax(0, 1fr) auto;
   column-gap: 0.5rem;
@@ -345,8 +350,11 @@ export const StRow = styled.div<{ $dragging?: boolean; $over?: boolean }>`
   align-items: center;
   padding: 0.75rem 0.5rem;
   border-radius: 0.75rem;
-  background: ${({ $over, theme }) =>
-    $over ? theme.semantic.primaryLight : "transparent"};
+  /* 클릭으로 고른 줄은 연한 파란 면 + 왼쪽 3px 표시선(그림자로 그려 폭을 안 먹음) — 테두리는 안 두른다 (2026-09-17) */
+  background: ${({ $over, $selected, theme }) =>
+    $over || $selected ? theme.semantic.primaryLight : "transparent"};
+  box-shadow: ${({ $selected, theme }) =>
+    $selected ? `inset 3px 0 0 ${theme.semantic.primary}` : "none"};
   opacity: ${({ $dragging }) => ($dragging ? 0.45 : 1)};
   transition: background-color 0.15s ease;
 
@@ -403,6 +411,22 @@ export const StNameBox = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+`;
+
+/* 장소 줄의 이름 상자 — 누르면 지도가 그곳으로 확대된다. 손을 올리면 밑줄, 키보드 초점은 테두리로 (리뷰 반영 2026-09-17) */
+export const StNameBtn = styled(StNameBox)`
+  cursor: pointer;
+  border-radius: 0.5rem;
+
+  &:hover ${() => StPlaceName} {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.semantic.primary};
+    outline-offset: 2px;
+  }
 `;
 
 /* 칩과 이름은 한 줄에 — 칩이 먼저, 8px 띄고 이름 */
@@ -761,6 +785,18 @@ export const StPrimaryBtn = styled.button`
   }
 `;
 
+/* 추천 장소 버튼 한 줄 — 장소 넣는 줄(StAddForm) 바로 아래.
+   버튼(StRowBtn)의 안쪽 여백만큼 왼쪽으로 당겨 글자 시작을 입력 칸의 글자 시작(0.75rem)과 맞춘다 (리뷰 반영 2026-09-17) */
+export const StPickerRow = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: -0.25rem;
+
+  > button {
+    margin-left: 0.125rem;
+  }
+`;
+
 export const StDayTotal = styled.p`
   font-size: 0.86rem;
   font-weight: 700;
@@ -954,6 +990,162 @@ export const StMapItemText = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+/* ===== 안내서 장소 한 줄의 공용 조각 (추천 창 SpotPicker · 주변 추천 NearbyPanel 이 같이 쓴다) ===== */
+
+export const StSpotIcon = styled.span`
+  display: inline-flex;
+  justify-content: center;
+  width: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.4;
+`;
+
+export const StSpotBody = styled.span`
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+`;
+
+export const StSpotTip = styled.span`
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+/* ===== 후보 카드 (날짜 미정·일정에서 뺀 곳) =====
+   줄: 아이콘 · 이름(분류 칩)+메모 한 줄 · 버튼. 줄 사이는 여백만, 테두리는 카드 한 겹 (2026-09-17) */
+
+export const StPoolRow = styled.div`
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.625rem;
+
+  &:hover {
+    background: ${({ theme }) => theme.semantic.bg};
+  }
+
+  /* 휴대폰: 버튼 두 개가 이름을 누르지 않게 아래 줄로 */
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    row-gap: 0.25rem;
+  }
+`;
+
+export const StPoolName = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.semantic.text};
+
+  > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+export const StPoolMemo = styled.span`
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.semantic.subText};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const StPoolActions = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-column: 2 / -1;
+  }
+`;
+
+/* ===== 주변 추천 (장소를 클릭하면 지도 카드 안, 지도 아래에 열리는 칸) =====
+   카드가 이미 테두리를 갖고 있으므로 여기는 머리카락 한 줄로만 나눈다 (리뷰 반영 2026-09-17) */
+
+export const StNearbyBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+`;
+
+export const StNearbyHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+/* 줄: 아이콘(1.5rem) · 이름+팁 · 거리(3.5rem, 숫자 폭 고정) · 담기. 줄 사이 테두리 없이 여백만 */
+export const StNearbyRow = styled.div<{ $active?: boolean }>`
+  display: grid;
+  /* 아이콘 · 이름+팁 · 거리 · 지도 · 담기 */
+  grid-template-columns: 1.5rem minmax(0, 1fr) 3.5rem auto auto;
+  column-gap: 0.25rem;
+  align-items: center;
+  padding: 0.5rem 0.5rem;
+
+  /* 휴대폰: 이름 칸을 넓게 — 거리·지도·담기는 이름 아래 한 줄로 */
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1.5rem auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "icon body body body"
+      ". meters map add";
+    row-gap: 0.125rem;
+
+    > :nth-child(1) { grid-area: icon; }
+    > :nth-child(2) { grid-area: body; }
+    > :nth-child(3) { grid-area: meters; text-align: left; }
+    > :nth-child(4) { grid-area: map; }
+    > :nth-child(5) { grid-area: add; justify-self: start; }
+  }
+  border-radius: 0.625rem;
+  /* 지도 핀에 손을 올려 가리킨 줄(active)은 손을 올린 줄(hover)보다 한 단계 진하게 — 둘이 같은 색이면 핀↔줄 연결이 안 보인다 */
+  background: ${({ $active, theme }) => ($active ? theme.semantic.primaryLight : "transparent")};
+
+  &:hover {
+    background: ${({ $active, theme }) => ($active ? theme.semantic.primaryLight : theme.semantic.bg)};
+  }
+`;
+
+export const StNearbyName = styled.span`
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.semantic.text};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+/* 주변 줄의 팁은 한 줄로 자른다(줄이 길어져 담기 버튼이 멀어지지 않게) */
+export const StNearbyTip = styled(StSpotTip)`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const StNearbyMeters = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: ${({ theme }) => theme.semantic.subText};
 `;
 
 export const StMapLegend = styled.div`

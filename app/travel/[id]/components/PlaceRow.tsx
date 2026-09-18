@@ -8,7 +8,7 @@ import {
   StMemoArea,
   StMemoInput,
   StMemoText,
-  StNameBox,
+  StNameBtn,
   StNameLine,
   StNumBadge,
   StPlaceAddr,
@@ -38,6 +38,9 @@ type PlaceRowProps = {
   dragging: boolean;
   over: boolean;
   focused: boolean;
+  /** 클릭으로 고른 줄인지 — 지도가 이곳으로 확대되고 주변 추천이 열린다 (2026-09-17) */
+  selected: boolean;
+  onSelect: (id: string) => void;
   onMove: (from: number, to: number) => void;
   onRemove: (placeId: string) => void;
   onMemo: (placeId: string, memo: string) => void;
@@ -129,6 +132,8 @@ export default function PlaceRow({
   dragging,
   over,
   focused,
+  selected,
+  onSelect,
   onMove,
   onRemove,
   onMemo,
@@ -170,6 +175,7 @@ export default function PlaceRow({
     <StRow
       $dragging={dragging}
       $over={over}
+      $selected={selected}
       draggable={editing}
       onDragStart={(event) => onDragStart(event, index)}
       onDragOver={(event) => onDragOverRow(event, index)}
@@ -179,16 +185,36 @@ export default function PlaceRow({
       onMouseLeave={() => onFocus(null)}
       data-place-id={place.id}
       data-focused={focused ? "true" : undefined}
+      data-selected={selected ? "true" : undefined}
     >
       <StNumBadge data-testid="place-number">{number}</StNumBadge>
 
-      <StNameBox>
+      {/* 이름 상자를 누르면 이 줄이 "선택"된다 — 끌어 옮기는 중에는 무시한다. 버튼처럼 키보드로도 고를 수 있다 */}
+      <StNameBtn
+        role="button"
+        tabIndex={0}
+        aria-pressed={selected}
+        title="지도에서 보기 · 주변 추천"
+        data-testid="place-select"
+        onClick={() => {
+          if (!dragging) onSelect(place.id);
+        }}
+        /* 키보드로 초점이 와도 마우스를 올린 것처럼 지도가 따라온다 */
+        onFocus={() => onFocus(place.id)}
+        onBlur={() => onFocus(null)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onSelect(place.id);
+          }
+        }}
+      >
         <StNameLine>
           <StCategoryChip data-testid="place-chip">{CATEGORY_LABEL[place.category]}</StCategoryChip>
           <StPlaceName>{place.name}</StPlaceName>
         </StNameLine>
         {place.address && <StPlaceAddr>{place.address}</StPlaceAddr>}
-      </StNameBox>
+      </StNameBtn>
 
       <StRowActions $editing={editing}>
         <StRowBtn

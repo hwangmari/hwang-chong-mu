@@ -8,6 +8,7 @@ import {
   formatDistance,
   formatMinutes,
   type RouteMode,
+  type SideOf,
 } from "../../lib/routeLegs";
 import { routePlaces } from "../../lib/plan";
 import type { TransitLeg, TransitMode, TravelDay } from "../../types";
@@ -43,7 +44,9 @@ type RoutePanelProps = {
   /** 나라 코드(길찾기 정확도를 올린다). 빈 값이면 나라를 좁히지 않는다. */
   region?: string;
   busy?: boolean;
-  onApply: (dayIndex: number, updates: Record<string, TransitLeg | null>) => void | Promise<void>;
+  /** 도시를 가르는 강이 있으면 좌표가 어느 쪽인지 — 강 건너는 구간을 도보로 계산하지 않게 (2026-09-17) */
+  sideOf?: SideOf;
+  onApply: (dayIndex: number, updates: Record<string, TransitLeg | null>) => unknown;
 };
 
 const MODE_OPTIONS: { value: RouteMode; label: string }[] = [
@@ -71,6 +74,7 @@ export default function RoutePanel({
   dayIndex,
   region,
   busy = false,
+  sideOf,
   onApply,
 }: RoutePanelProps) {
   const [mode, setMode] = useState<RouteMode>("AUTO");
@@ -83,9 +87,10 @@ export default function RoutePanel({
   const modeLabel = MODE_OPTIONS.find((option) => option.value === mode)?.label ?? "";
 
   const route = useMemo(() => routePlaces(day), [day]);
-  const requests = useMemo(() => buildLegRequests(route, mode), [route, mode]);
+  const requests = useMemo(() => buildLegRequests(route, mode, sideOf), [route, mode, sideOf]);
 
-  // 왼쪽 목록과 같은 표시를 쓴다 — 숙소는 번호 없이 🏨, 나머지는 숙소를 뺀 1부터
+  // 왼쪽 목록과 같은 표시를 쓴다 — 숙소는 번호 없이 🏨, 나머지는 숙소를 뺀 1부터.
+  // 숙소는 동선의 끝이라 마지막 구간 이름이 "n → 🏨"(숙소 복귀)이 된다.
   const marks = useMemo(() => {
     const labels: string[] = [];
     let number = 0;
@@ -112,7 +117,7 @@ export default function RoutePanel({
     setFailText("");
     try {
       // 못 구한 구간은 null 로 함께 저장한다 — 예전 값이 남아 있으면 지금 동선과 맞지 않는다
-      const updates = await fetchRouteLegs(requests, region);
+      const updates = await fetchRouteLegs(requests, region, sideOf);
       await onApply(dayIndex, updates);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "FAIL";
@@ -166,6 +171,15 @@ export default function RoutePanel({
           </StRowBtn>
         </StRouteControls>
       </StRouteHead>
+
+      {/* 중국은 구글 지도가 대중교통 노선을 아예 갖고 있지 않아(2026-09-17 직접 확인: 상하이 전 구간 "길 없음")
+          자동 모드는 차량으로 대신 계산되고, 대중교통을 직접 고르면 비어 있다. 현지 앱을 보라고 늘 알려 준다. (주인 요청 2026-09-17) */}
+      {region === "CN" && (
+        <StHint data-testid="cn-hint">
+          중국은 구글 지도에 대중교통 정보가 없어 이동 시간이 정확하지 않을 수 있어요. 현지 이동은
+          고덕지도(高德地图) 앱을 참고해 주세요.
+        </StHint>
+      )}
 
       {requests.length === 0 ? (
         <StHint>좌표 있는 장소가 2곳 이상이면 이동 시간을 계산해요.</StHint>

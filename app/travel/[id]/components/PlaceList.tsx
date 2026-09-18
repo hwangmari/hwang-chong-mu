@@ -7,6 +7,8 @@ import PlaceRow from "./PlaceRow";
 
 // 하루치 장소 목록. 순서 바꾸기는 마우스로 끌기(HTML5 드래그)와 ▲▼ 버튼 두 가지로 할 수 있다.
 // 숙소는 늘 맨 앞에 고정돼 있어 이 목록에서는 빼고, 자리 번호(index)만 한 칸씩 밀어 계산한다.
+// 실제로 도는 순서는 1 → 2 → … → n → 숙소(복귀)라, 이동 줄은 장소 줄 "아래"에 붙고
+// 마지막 장소 밑의 줄에만 "· 숙소로"를 덧붙인다. 맨 위 숙소 줄에는 이동 줄이 붙지 않는다.
 // 순서를 바꾸는 길은 "편집" 을 켠 동안에만 열린다(editing). (2026-09-16)
 
 const TRANSIT_TEXT: Record<TransitLeg["mode"], string> = {
@@ -20,6 +22,9 @@ type PlaceListProps = {
   /** 고치는 중인지 — 꺼져 있으면 순서 바꾸기·삭제·메모 버튼이 모두 숨는다 */
   editing: boolean;
   focusedId: string | null;
+  /** 클릭으로 고른 장소(지도 확대·주변 추천). 없으면 null */
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   onMove: (from: number, to: number) => void;
   onRemove: (placeId: string) => void;
   onMemo: (placeId: string, memo: string) => void;
@@ -31,6 +36,8 @@ export default function PlaceList({
   day,
   editing,
   focusedId,
+  selectedId,
+  onSelect,
   onMove,
   onRemove,
   onMemo,
@@ -75,16 +82,12 @@ export default function PlaceList({
 
   return (
     <div>
-      {/* 숙소를 동선에 넣은 날이면 숙소 → 첫 장소 이동 시간이 맨 위에 온다 */}
-      {stay?.transitToNext && day.stayInRoute && (
-        <StTransitLine>
-          {TRANSIT_TEXT[stay.transitToNext.mode]} {stay.transitToNext.minutes}분
-        </StTransitLine>
-      )}
-
       {rows.map((place, i) => {
         const index = offset + i;
         const leg = place.transitToNext;
+        // 마지막 장소 밑의 이동 줄은 "숙소로 돌아가는 구간"이다. 숙소가 없거나 동선에서 뺀 날에는 줄 자체를 만들지 않는다.
+        const backToStay = i === rows.length - 1;
+        const showLeg = Boolean(leg) && (!backToStay || Boolean(stay && day.stayInRoute));
         return (
           <Fragment key={place.id}>
             <PlaceRow
@@ -97,6 +100,8 @@ export default function PlaceList({
               dragging={dragIndex === index}
               over={overIndex === index && dragIndex !== null && dragIndex !== index}
               focused={focusedId === place.id}
+              selected={selectedId === place.id}
+              onSelect={onSelect}
               onMove={onMove}
               onRemove={onRemove}
               onMemo={onMemo}
@@ -107,9 +112,9 @@ export default function PlaceList({
               onDropRow={handleDrop}
               onDragEnd={resetDrag}
             />
-            {leg && i < rows.length - 1 && (
-              <StTransitLine>
-                {TRANSIT_TEXT[leg.mode]} {leg.minutes}분
+            {showLeg && leg && (
+              <StTransitLine data-testid="transit-line">
+                {TRANSIT_TEXT[leg.mode]} {leg.minutes}분{backToStay ? " · 숙소로" : ""}
               </StTransitLine>
             )}
           </Fragment>

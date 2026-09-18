@@ -44,6 +44,7 @@ export interface GmapsMap {
 export interface GmapsMarker {
   setMap(map: GmapsMap | null): void;
   setPosition(position: GmapsLatLngInput): void;
+  setIcon(icon: GmapsOptions | string): void;
   addListener(eventName: string, handler: () => void): GmapsListener;
 }
 

@@ -4,7 +4,9 @@
 import { supabase } from "@/lib/supabase";
 import { createShortCode, toSlug } from "@/lib/slug";
 import { buildDays, normalizeDay } from "@/app/travel/lib/plan";
-import type { TravelDay, TravelPlace, TravelPlan } from "@/app/travel/types";
+import { normalizeExtras } from "@/app/travel/lib/extras";
+import type { ExtraKey } from "@/app/travel/lib/extras";
+import type { TravelDay, TravelExtras, TravelPlace, TravelPlan } from "@/app/travel/types";
 
 type PlanRow = {
   id: string;
@@ -16,12 +18,13 @@ type PlanRow = {
   region: string;
   days: TravelDay[] | null;
   pool: TravelPlace[] | null;
+  extras: unknown;
   created_at: string;
   updated_at: string;
 };
 
 const PLAN_COLUMNS =
-  "id, slug, short_code, title, start_date, end_date, region, days, pool, created_at, updated_at";
+  "id, slug, short_code, title, start_date, end_date, region, days, pool, extras, created_at, updated_at";
 
 function toPlan(row: PlanRow): TravelPlan {
   return {
@@ -36,6 +39,8 @@ function toPlan(row: PlanRow): TravelPlan {
     // 저장본이 배열이 아닐 수도 있어(직접 고쳤거나 예전 모양) 먼저 배열인지 본다 (리뷰 반영 2026-09-16)
     days: (Array.isArray(row.days) ? row.days : []).map(normalizeDay),
     pool: Array.isArray(row.pool) ? row.pool : [],
+    // 여행 준비(비행·준비물·살 거·경비 연결). 예전 저장본에는 이 칸이 없어서 빈 모양으로 채운다 (2026-09-16)
+    extras: normalizeExtras(row.extras),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -141,4 +146,20 @@ export async function setTravelDay(
     throw error;
   }
   return ((data as TravelDay[] | null) ?? []).map(normalizeDay);
+}
+
+// 여행 준비(extras) 의 열쇠 하나만 바꾼다. days 와 같은 이유로 통째 덮어쓰기를 피한다 —
+// 한 명이 준비물을 적는 동안 다른 사람이 비행 정보를 고쳐도 서로 지워지지 않게 저장 공간 쪽 함수가 그 칸만 바꾼다.
+export async function setTravelExtra(
+  id: string,
+  key: ExtraKey,
+  value: unknown,
+): Promise<TravelExtras> {
+  const { data, error } = await supabase.rpc("travel_plans_set_extra", {
+    p_id: id,
+    p_key: key,
+    p_value: value ?? null,
+  });
+  if (error) throw error;
+  return normalizeExtras(data);
 }

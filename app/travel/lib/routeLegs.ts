@@ -3,7 +3,9 @@
 // 규칙 세 가지.
 // 1) 좌표가 없는 장소는 길찾기를 물어볼 수 없으므로 그 앞뒤 구간은 아예 빼고 만든다.
 // 2) "자동"은 두 곳이 가까우면 걸어가고(1.2km 이하), 멀면 대중교통으로 본다.
-//    대중교통 길이 없다고 나오면 그때만 차량으로 한 번 더 물어본다.
+//    대중교통 길이 없다고 나오면 한 번 더 묻는다 — 2.5km 안쪽이면 도보, 더 멀면 차량.
+//    강을 건너는 구간(상하이 황푸강)은 걸어서 못 가니 거리와 상관없이 차량.
+//    (중국은 구글에 대중교통이 아예 없어 1.4km 산책길도 차량으로 잡히던 문제 — 2026-09-17)
 // 3) 길찾기 대행 창구(/api/travel/route-legs)는 한 번에 15구간까지라 넘치면 나눠 보낸다. (2026-09-16)
 import type { TransitLeg, TransitMode, TravelDay, TravelPlace } from "../types";
 import { routePlaces } from "./plan";
@@ -13,6 +15,12 @@ const MAX_PER_CALL = 15;
 
 /** 이 거리까지는 "걸어가는 게 낫다"고 본다. */
 const WALK_LIMIT_M = 1200;
+
+/** 대중교통 길이 없을 때, 이 거리까지는 차 대신 걸어가는 것으로 다시 묻는다 (걸어서 30분 남짓) */
+const WALK_FALLBACK_M = 2500;
+
+/** 좌표가 강의 어느 쪽인지 알려 주는 함수. 강 정보가 없는 도시면 넘기지 않는다. */
+export type SideOf = (point: Coord) => string;
 
 /** 화면에서 고르는 이동 수단. AUTO 는 구간마다 알아서 고른다는 뜻. */
 export type RouteMode = "AUTO" | TransitMode;
@@ -42,8 +50,15 @@ export function haversineMeters(a: Coord, b: Coord): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** "자동"일 때 이 구간을 어떻게 갈지 고른다. 가까우면 도보, 아니면 대중교통. */
-export function pickAutoMode(o: Coord, d: Coord): TransitMode {
+/** 대중교통 길이 없을 때 대신 물어볼 수단. 강을 건너면 차량, 걸을 만하면 도보, 아니면 차량. */
+export function fallbackMode(o: Coord, d: Coord, sideOf?: SideOf): TransitMode {
+  if (sideOf && sideOf(o) !== sideOf(d)) return "DRIVE";
+  return haversineMeters(o, d) <= WALK_FALLBACK_M ? "WALK" : "DRIVE";
+}
+
+/** "자동"일 때 이 구간을 어떻게 갈지 고른다. 강을 건너면 대중교통, 가까우면 도보, 아니면 대중교통. */
+export function pickAutoMode(o: Coord, d: Coord, sideOf?: SideOf): TransitMode {
+  if (sideOf && sideOf(o) !== sideOf(d)) return "TRANSIT";
   return haversineMeters(o, d) <= WALK_LIMIT_M ? "WALK" : "TRANSIT";
 }
 
@@ -57,7 +72,11 @@ function coordOf(place: TravelPlace): Coord | null {
  * 동선 순서대로 이어지는 구간 목록을 만든다.
  * 앞이든 뒤든 좌표가 없는 짝은 물어볼 수 없으므로 건너뛴다.
  */
-export function buildLegRequests(places: TravelPlace[], mode: RouteMode): LegRequest[] {
+export function buildLegRequests(
+  places: TravelPlace[],
+  mode: RouteMode,
+  sideOf?: SideOf,
+): LegRequest[] {
   const requests: LegRequest[] = [];
   for (let i = 0; i < places.length - 1; i += 1) {
     const o = coordOf(places[i]);
@@ -65,7 +84,7 @@ export function buildLegRequests(places: TravelPlace[], mode: RouteMode): LegReq
     if (!o || !d) continue;
     requests.push(
       mode === "AUTO"
-        ? { fromId: places[i].id, o, d, mode: pickAutoMode(o, d), auto: true }
+        ? { fromId: places[i].id, o, d, mode: pickAutoMode(o, d, sideOf), auto: true }
         : { fromId: places[i].id, o, d, mode },
     );
   }
@@ -84,19 +103,20 @@ type LegResult = TransitLeg | { error: "NO_ROUTE" };
 export async function fetchRouteLegs(
   requests: LegRequest[],
   region?: string,
+  sideOf?: SideOf,
 ): Promise<Record<string, TransitLeg | null>> {
   const found: Record<string, TransitLeg | null> = {};
   if (requests.length === 0) return found;
 
   const first = await postLegs(requests, region);
 
-  // 자동으로 고른 대중교통 구간이 "길 없음"이면 차량으로 딱 한 번 더 물어본다
+  // 자동으로 고른 대중교통 구간이 "길 없음"이면 딱 한 번 더 물어본다 — 강을 건너면 차량, 2.5km 안쪽은 도보, 그 밖은 차량
   const retry: LegRequest[] = [];
   requests.forEach((request, index) => {
     const leg = first[index];
     found[request.fromId] = leg;
     if (!leg && request.auto && request.mode === "TRANSIT") {
-      retry.push({ ...request, mode: "DRIVE" });
+      retry.push({ ...request, mode: fallbackMode(request.o, request.d, sideOf) });
     }
   });
 
@@ -153,9 +173,15 @@ async function readError(res: Response): Promise<Error> {
   return new Error("FAIL");
 }
 
-/** 그 날 동선을 도는 데 걸리는 시간(분)을 모두 더한다. 동선에서 뺀 숙소는 세지 않는다. */
+/**
+ * 그 날 동선을 도는 데 걸리는 시간(분)을 모두 더한다. 동선에서 뺀 숙소는 세지 않는다.
+ * 마지막 정거장에는 "다음 구간"이 없으므로 맨 뒤 한 칸은 빼고 더한다 —
+ * 숙소가 동선에 있으면 맨 뒤가 숙소(복귀 지점)이고, 예전 저장본에 숙소의 transitToNext 가 남아 있어도 이렇게 자동으로 무시된다.
+ */
 export function dayTransitTotal(day: TravelDay): number {
-  return routePlaces(day).reduce((sum, place) => sum + (place.transitToNext?.minutes ?? 0), 0);
+  return routePlaces(day)
+    .slice(0, -1)
+    .reduce((sum, place) => sum + (place.transitToNext?.minutes ?? 0), 0);
 }
 
 /** 95 → "1시간 35분", 46 → "46분" */

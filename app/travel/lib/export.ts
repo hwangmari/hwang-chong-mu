@@ -33,20 +33,24 @@ export function buildTravelText(plan: TravelPlan): string {
 function buildDayLines(day: TravelDay): string[] {
   const lines: string[] = [];
 
-  // 숙소는 그날의 기준점이라 번호 없이 맨 위에 한 줄로 따로 적는다
+  // 숙소는 그날의 기준점이라 번호 없이 맨 위에 한 줄로 따로 적는다.
+  // 다만 실제로 가는 순서는 1 → 2 → … → 숙소(복귀)라, 숙소 줄 밑에는 이동 줄을 붙이지 않는다.
+  // (예전 저장본에 숙소의 transitToNext 가 남아 있어도 읽지 않는다 — 2026-09-16)
   const stay = day.places.find((place) => place.isStay);
-  if (stay) {
-    lines.push(`🏨 숙소: ${stay.name}`);
-    if (stay.transitToNext) lines.push(transitLine(stay.transitToNext));
-  }
+  if (stay) lines.push(`🏨 숙소: ${stay.name}`);
 
-  day.places
-    .filter((place) => !place.isStay)
-    .forEach((place, i) => {
-      const memo = place.memo?.trim() ? ` (메모: ${place.memo.trim()})` : "";
-      lines.push(`${i + 1}. ${CATEGORY_LABEL[place.category]} · ${place.name}${memo}`);
-      if (place.transitToNext) lines.push(transitLine(place.transitToNext));
-    });
+  const rest = day.places.filter((place) => !place.isStay);
+  rest.forEach((place, i) => {
+    const memo = place.memo?.trim() ? ` (메모: ${place.memo.trim()})` : "";
+    lines.push(`${i + 1}. ${CATEGORY_LABEL[place.category]} · ${place.name}${memo}`);
+    if (!place.transitToNext) return;
+    // 마지막 장소의 이동 줄은 "숙소로 돌아가는 구간"이다. 숙소를 동선에서 뺀 날에는 적지 않는다.
+    if (i < rest.length - 1) {
+      lines.push(transitLine(place.transitToNext));
+    } else if (stay && day.stayInRoute) {
+      lines.push(`${transitLine(place.transitToNext)} → 숙소 복귀`);
+    }
+  });
 
   return lines;
 }

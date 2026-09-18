@@ -7,8 +7,10 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
   CATEGORY_LABEL,
+  MAX_PLACE_STEPS,
   MAX_TRIP_DAYS,
   type PlaceCategory,
+  type PlaceStep,
   type TravelDay,
   type TravelPlace,
 } from "../types";
@@ -20,6 +22,25 @@ const CATEGORIES = new Set(Object.keys(CATEGORY_LABEL));
 export function newPlaceId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * 장소 안의 세부 일정을 다듬는다. 저장본을 사람이 직접 고쳤거나 예전 모양이어도 화면이 멈추지 않게,
+ * 모양이 아닌 항목은 버리고 내용이 빈 줄도 버린다. (2026-09-18)
+ */
+export function normalizeSteps(steps: unknown): PlaceStep[] {
+  if (!Array.isArray(steps)) return [];
+  const out: PlaceStep[] = [];
+  for (const step of steps) {
+    if (!step || typeof step !== "object") continue;
+    const { id, text, time } = step as Partial<PlaceStep>;
+    const body = typeof text === "string" ? text.trim() : "";
+    if (!body) continue;
+    const at = typeof time === "string" ? time.trim() : "";
+    out.push({ id: typeof id === "string" && id ? id : newPlaceId(), text: body, ...(at ? { time: at } : {}) });
+    if (out.length >= MAX_PLACE_STEPS) break;
+  }
+  return out;
 }
 
 /**
@@ -35,12 +56,19 @@ export function normalizeDay(day: TravelDay | null | undefined): TravelDay {
 
   const places: TravelPlace[] = day.places
     .filter((place): place is TravelPlace => Boolean(place) && typeof place === "object")
-    .map((place) => ({
-      ...place,
-      id: place.id || newPlaceId(),
-      name: typeof place.name === "string" ? place.name : String(place.name ?? ""),
-      category: (CATEGORIES.has(place.category) ? place.category : "etc") as PlaceCategory,
-    }));
+    .map((place) => {
+      const steps = normalizeSteps(place.steps);
+      const next: TravelPlace = {
+        ...place,
+        id: place.id || newPlaceId(),
+        name: typeof place.name === "string" ? place.name : String(place.name ?? ""),
+        category: (CATEGORIES.has(place.category) ? place.category : "etc") as PlaceCategory,
+      };
+      // 비어 있으면 steps 칸 자체를 두지 않는다 — 예전 저장본과 같은 모양을 지키려고
+      if (steps.length > 0) next.steps = steps;
+      else delete next.steps;
+      return next;
+    });
   const stayIndex = places.findIndex((place) => place.isStay);
   const ordered =
     stayIndex > 0 ? [places[stayIndex], ...places.filter((_, i) => i !== stayIndex)] : places;
@@ -85,18 +113,46 @@ export function movePlace(day: TravelDay, from: number, to: number): TravelDay {
   return { ...day, places };
 }
 
-/** 이동 시간을 이어 그릴 장소들. 숙소를 동선에서 뺀 날(stayInRoute=false)은 숙소를 건너뛴다. */
+/**
+ * 이동 시간을 이어 그릴 순서. 숙소는 "그 날 마지막에 돌아가는 곳"이라 맨 뒤에 붙인다.
+ * → 1 → 2 → … → n → 🏨(복귀). 목록 맨 위에 붙박이로 있는 숙소에서 1번으로 가는 선은 긋지 않는다.
+ * 숙소를 동선에서 뺀 날(stayInRoute=false)은 숙소를 아예 넣지 않는다. (2026-09-16 주인 요청: "6번은 다시 숙소로 간 거잖아")
+ */
 export function routePlaces(day: TravelDay): TravelPlace[] {
-  return day.places.filter((place) => !place.isStay || day.stayInRoute);
+  const rest = day.places.filter((place) => !place.isStay);
+  const stay = day.places.find((place) => place.isStay);
+  return day.stayInRoute && stay ? [...rest, stay] : rest;
 }
 
-/** 어떤 장소를 넣거나 빼면 그 앞뒤 구간의 이동 시간이 더 이상 맞지 않으므로 지운다. */
+/**
+ * 어떤 장소를 넣거나 빼면 그 앞뒤 구간의 이동 시간이 더 이상 맞지 않으므로 지운다.
+ * day.places 는 [숙소, 1번, 2번 …] 순서이고 숙소의 transitToNext 는 이제 뜻이 없으므로(항상 null)
+ * index-1 이 숙소로 잡혀도 아무 일도 일어나지 않는다.
+ */
 export function clearTransitAround(day: TravelDay, index: number): TravelDay {
   return {
     ...day,
     places: day.places.map((place, i) =>
       i === index - 1 || i === index ? { ...place, transitToNext: null } : place,
     ),
+  };
+}
+
+/**
+ * 동선 중간에 "숙소에 들르는" 정거장. 아침에 짐을 맡기거나, 마지막 날 놀다가 짐을 찾고 공항으로 갈 때 쓴다.
+ * 맨 위 붙박이 숙소(isStay)와 달리 보통 장소처럼 번호가 붙고 순서도 옮길 수 있다 — 분류만 "숙소"라 🏨 로 보인다.
+ * 마지막 날처럼 이 뒤에 공항이 오면 "마지막에 숙소로 복귀"는 꺼 두어야 공항 → 숙소 구간이 생기지 않는다. (주인 요청 2026-09-17)
+ */
+export function stayStopInput(stay: TravelPlace): Omit<TravelPlace, "id" | "isStay" | "transitToNext"> {
+  return {
+    name: "숙소 들르기 (짐 맡기기·찾기)",
+    category: "stay",
+    ...(stay.address ? { address: stay.address } : {}),
+    ...(typeof stay.lat === "number" ? { lat: stay.lat } : {}),
+    ...(typeof stay.lng === "number" ? { lng: stay.lng } : {}),
+    ...(stay.placeId ? { placeId: stay.placeId } : {}),
+    ...(stay.url ? { url: stay.url } : {}),
+    memo: stay.name,
   };
 }
 

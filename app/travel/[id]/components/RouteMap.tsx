@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styled from "styled-components";
 import {
   loadGoogleMaps,
@@ -11,7 +11,9 @@ import {
   type GmapsPolyline,
   type GoogleMapsApi,
 } from "../../lib/googleMapsLoader";
-import { CATEGORY_LABEL, type TransitMode, type TransitLeg, type TravelPlace } from "../../types";
+import type { NearbySpot } from "../../lib/guides";
+import { haversineMeters } from "../../lib/routeLegs";
+import { CATEGORY_ICON, CATEGORY_LABEL, type TransitMode, type TransitLeg, type TravelPlace } from "../../types";
 import {
   StCardTitle,
   StHint,
@@ -26,6 +28,7 @@ import {
 
 // 오른쪽 "오늘의 동선" 카드.
 // 구글 열쇠가 있으면 진짜 지도를, 없으면 도는 순서만 적은 요약 카드를 보여준다(열쇠 없는 상태도 정상 화면이다).
+// places 는 도는 순서 그대로 온다 — 1 → 2 → … → n → 🏨(숙소 복귀). 마지막 "숙소로" 구간만 점선이다.
 // (2026-09-16)
 
 type RouteMapProps = {
@@ -36,10 +39,30 @@ type RouteMapProps = {
   legs?: (TransitLeg | undefined)[];
   /** 나라 코드(JP 등). 지도 글자·검색 기준을 그 나라에 맞춘다. page.tsx 가 plan.region 을 넘겨 주면 된다. */
   region?: string;
+  /** 클릭으로 고른 장소 — 있으면 그곳으로 확대(SELECT_ZOOM)하고, 풀리면 전체 보기로 돌아간다 (2026-09-17) */
+  selectedId?: string | null;
+  /** 고른 장소 주변의 추천 장소 — 연한 작은 핀으로 찍는다 */
+  nearby?: NearbySpot[];
+  /** 주변 핀에 손을 올리거나(id) 떼면(null) 알려 준다 — 아래 주변 칸의 줄과 같이 밝아지게 */
+  onNearbyHover?: (id: string | null) => void;
+  /** 주변 칸에서 가리키는 장소 id — 그 핀만 진하게 */
+  nearbyActiveId?: string | null;
+  /** 지도 아래에 붙는 칸(주변 추천). 카드 안에 넣어 테두리가 두 겹 되지 않게 한다 */
+  children?: ReactNode;
 };
 
 /** 지도에 찍을 한 점. 좌표가 있는 장소만 여기에 들어온다. */
-type Pin = { id: string; name: string; lat: number; lng: number; isStay: boolean; label: string };
+type Pin = { id: string; name: string; lat: number; lng: number; isStay: boolean; isAirport: boolean; label: string };
+
+/** 주변 추천 핀 하나. 고른 장소가 바뀌면 통째로 지우고 다시 찍는다 — 손을 올릴 때는 테두리 색만 바꾼다. */
+type NearbyHandle = {
+  legacy?: GmapsMarker;
+  advanced?: GmapsAdvancedMarker;
+  /** 테두리 색을 바꾼다(가리키는 핀만 진하게) */
+  setRing: (ring: string) => void;
+  /** 붙여 둔 손잡이·핀을 모두 뗀다 */
+  dispose: () => void;
+};
 
 /** 이미 그려 둔 핀 하나. 같은 장소는 다시 만들지 않고 이 기록을 고쳐 쓴다. */
 type PinHandle = {
@@ -54,6 +77,8 @@ type PinHandle = {
 
 const SEOUL = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 12;
+/** 장소 하나를 클릭해 확대할 때의 배율 — 1.5km 반경이 한 화면에 들어오는 정도 */
+const SELECT_ZOOM = 15;
 
 // 구글 지도에 넘기는 색은 구글이 직접 읽는다. 우리 색표(theme)는 oklch() 라서 구글이 못 읽고
 // 선·핀이 검게 나오므로, 지도로 넘어가는 색만 16진수로 적어 둔다. 화면(styled-components) 쪽은 그대로 theme 을 쓴다. (리뷰 반영 2026-09-16)
@@ -65,16 +90,76 @@ const STROKE_COLOR: Record<TransitMode, string> = {
 };
 /** 길찾기 결과가 없을 때 긋는 직선 */
 const LINE_FALLBACK = "#2563eb";
+
+// 마지막 "숙소로 돌아가는" 구간은 점선으로 긋는다 — 다른 구간과 성격이 달라서.
+// 구글 지도에는 점선 옵션이 따로 없어서, 선 자체는 투명하게(strokeOpacity: 0) 두고
+// 짧은 세로 막대(M 0,-1 0,1)를 12px 간격으로 반복해 찍는 공식 문서의 방법을 쓴다.
+const DASH_OPTIONS = {
+  strokeOpacity: 0,
+  icons: [
+    { icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3 }, offset: "0", repeat: "12px" },
+  ],
+};
 const PIN_FILL = "#2563eb";
 const PIN_STAY_FILL = "#f59e0b";
 const PIN_TEXT = "#ffffff";
+/** 주변 추천 핀 — 흰 바탕에 파란 테두리(번호 핀과 한눈에 구분되게) */
+const NEARBY_FILL = "#ffffff";
+const NEARBY_RING = "#93c5fd";
+const NEARBY_RING_ACTIVE = "#2563eb";
+const NEARBY_TEXT = "#1f2937";
+/** 옛 지도 핀(Marker)용 동그라미 모양 — 기본 빨간 핀 대신 쓴다. 반지름 10px 원 */
+const NEARBY_SYMBOL_PATH = "M -10,0 a 10,10 0 1,0 20,0 a 10,10 0 1,0 -20,0";
+
+/** 공항이 시내에서 이만큼 넘게 떨어져 있으면 화면 맞춤에서 뺀다 */
+const FAR_AIRPORT_M = 15000;
+
+/**
+ * 화면을 맞출 때 쓸 핀. 도착·출발 날에는 50km 밖 공항 때문에 지도가 도시 전체로 줄어들어
+ * 시내 동선이 한 점에 뭉친다 — 나머지 핀의 가운데에서 15km 넘게 떨어진 공항만 뺀다(핀·선은 그대로 그린다). (2026-09-17)
+ */
+function framePins(pins: Pin[]): Pin[] {
+  const city = pins.filter((pin) => !pin.isAirport);
+  if (city.length === 0 || city.length === pins.length) return pins;
+  const center = {
+    lat: city.reduce((sum, pin) => sum + pin.lat, 0) / city.length,
+    lng: city.reduce((sum, pin) => sum + pin.lng, 0) / city.length,
+  };
+  const kept = pins.filter((pin) => !pin.isAirport || haversineMeters(center, pin) <= FAR_AIRPORT_M);
+  return kept;
+}
+
+/** 옛 지도 핀(Marker)에 주는 동그라미 아이콘. 테두리 색만 바꿔 다시 넘긴다 */
+function nearbyIcon(ring: string) {
+  return {
+    path: NEARBY_SYMBOL_PATH,
+    fillColor: NEARBY_FILL,
+    fillOpacity: 1,
+    strokeColor: ring,
+    strokeWeight: 2,
+    scale: 1,
+    // path 의 (0,0)이 원 중심이라 좌표 위에 딱 앉는다. 글자(이모지)도 중심에 온다
+    labelOrigin: { x: 0, y: 0 },
+  };
+}
 
 function isReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export default function RouteMap({ places, focusedId, onFocus, legs, region }: RouteMapProps) {
+export default function RouteMap({
+  places,
+  focusedId,
+  onFocus,
+  legs,
+  region,
+  selectedId = null,
+  nearby,
+  onNearbyHover,
+  nearbyActiveId = null,
+  children,
+}: RouteMapProps) {
   const [api, setApi] = useState<GoogleMapsApi | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,12 +167,16 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
   const mapRef = useRef<GmapsMap | null>(null);
   const pinsRef = useRef(new Map<string, PinHandle>());
   const linesRef = useRef<GmapsPolyline[]>([]);
+  // 주변 추천 핀은 번호 핀과 따로 관리한다(고를 때마다 통째로 갈리는 값이라 고쳐 쓰지 않고 지우고 다시 찍는다)
+  const nearbyRef = useRef(new Map<string, NearbyHandle>());
   const boundsKeyRef = useRef("");
   const onFocusRef = useRef(onFocus);
+  const onNearbyHoverRef = useRef(onNearbyHover);
   // 핀을 누를 때 쓸 최신 손잡이. 핀을 다시 만들지 않으려고 따로 담아 둔다.
   useEffect(() => {
     onFocusRef.current = onFocus;
-  }, [onFocus]);
+    onNearbyHoverRef.current = onNearbyHover;
+  }, [onFocus, onNearbyHover]);
 
   /** 좌표가 있는 장소만, 왼쪽 목록과 같은 번호를 달아서 (숙소는 번호 대신 🏨) */
   const pins = useMemo<Pin[]>(() => {
@@ -99,7 +188,15 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
       const { lat, lng } = place;
       if (typeof lat !== "number" || typeof lng !== "number") continue;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      out.push({ id: place.id, name: place.name, lat, lng, isStay, label: isStay ? "🏨" : String(counter) });
+      out.push({
+        id: place.id,
+        name: place.name,
+        lat,
+        lng,
+        isStay,
+        isAirport: place.category === "airport",
+        label: isStay ? "🏨" : String(counter),
+      });
     }
     return out;
   }, [places]);
@@ -107,16 +204,22 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
   const missingCount = places.length - pins.length;
   const boundsKey = useMemo(() => pins.map((pin) => pin.id).join("|"), [pins]);
 
+  /** 동선의 끝이 숙소인지(= 마지막 구간이 "숙소 복귀"라 점선으로 긋는다) */
+  const endsAtStay = places.length > 1 && places[places.length - 1]?.isStay === true;
+
   /** 길찾기 결과가 있으면 그 선을 그대로 그린다. 하나도 없으면 아래에서 직선 하나만 긋는다. */
   const strokes = useMemo(() => {
-    const out: { polyline: string; mode: TransitMode }[] = [];
+    const out: { polyline: string; mode: TransitMode; dashed: boolean }[] = [];
     if (!legs) return out;
+    const lastIndex = places.length - 2;
     for (let i = 0; i < places.length - 1; i += 1) {
       const leg = legs[i];
-      if (leg?.polyline) out.push({ polyline: leg.polyline, mode: leg.mode });
+      if (leg?.polyline) {
+        out.push({ polyline: leg.polyline, mode: leg.mode, dashed: endsAtStay && i === lastIndex });
+      }
     }
     return out;
-  }, [legs, places]);
+  }, [endsAtStay, legs, places]);
 
   // page.tsx 는 순서를 맞추려고 아직 못 구한 칸을 빈칸으로 남겨 보내므로, 진짜 값이 하나라도 있을 때만 보여 준다
   const hasModeLegend = (legs ?? []).some((leg) => Boolean(leg));
@@ -177,7 +280,7 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
             before.label = pin.label;
           } else {
             // 옛 지도 핀은 번호를 바꿀 방법이 없어 그 핀만 새로 만든다
-            before.listener.remove();
+            before.listener?.remove();
             before.legacy?.setMap(null);
             handles.delete(pin.id);
           }
@@ -227,7 +330,8 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
 
     for (const [id, handle] of handles) {
       if (alive.has(id)) continue;
-      handle.listener.remove();
+      // 지도가 오류 상태(열쇠 거부 등)면 addListener 가 빈 값을 줄 때가 있다 — 그때 화면 전체가 죽지 않게 (2026-09-17)
+      handle.listener?.remove();
       handle.legacy?.setMap(null);
       if (handle.advanced) handle.advanced.map = null;
       handles.delete(id);
@@ -252,7 +356,7 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
             path,
             strokeColor: STROKE_COLOR[stroke.mode],
             strokeWeight: 4,
-            strokeOpacity: 0.9,
+            ...(stroke.dashed ? DASH_OPTIONS : { strokeOpacity: 0.9 }),
           }),
         );
       }
@@ -260,32 +364,176 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
     }
 
     if (pins.length < 2) return;
-    linesRef.current.push(
-      new api.maps.Polyline({
-        map,
-        path: pins.map((pin) => ({ lat: pin.lat, lng: pin.lng })),
-        geodesic: true,
-        strokeColor: LINE_FALLBACK,
-        strokeWeight: 3,
-        strokeOpacity: 0.85,
-      }),
-    );
-  }, [api, pins, strokes]);
+    const path = pins.map((pin) => ({ lat: pin.lat, lng: pin.lng }));
+    // 마지막 핀이 숙소면 "돌아가는" 구간만 떼어 점선으로 긋는다
+    const backToStay = endsAtStay && pins[pins.length - 1].isStay;
+    const solid = backToStay ? path.slice(0, -1) : path;
+    if (solid.length >= 2) {
+      linesRef.current.push(
+        new api.maps.Polyline({
+          map,
+          path: solid,
+          geodesic: true,
+          strokeColor: LINE_FALLBACK,
+          strokeWeight: 3,
+          strokeOpacity: 0.85,
+        }),
+      );
+    }
+    if (backToStay) {
+      linesRef.current.push(
+        new api.maps.Polyline({
+          map,
+          path: path.slice(-2),
+          geodesic: true,
+          strokeColor: LINE_FALLBACK,
+          strokeWeight: 3,
+          ...DASH_OPTIONS,
+        }),
+      );
+    }
+  }, [api, endsAtStay, pins, strokes]);
 
   // ── 장소 목록이 바뀌면 전부 보이게 맞춘다 (같은 목록이면 화면을 건드리지 않는다)
+  // 고른 장소가 풀릴 때(selectedId → null)도 전체 보기로 돌아온다 — 그때는 목록이 같아도 다시 맞춘다 (2026-09-17)
   useEffect(() => {
     const map = mapRef.current;
-    if (!api || !map || boundsKeyRef.current === boundsKey) return;
-    boundsKeyRef.current = boundsKey;
+    if (!api || !map) return;
+    const key = `${boundsKey}#${selectedId ?? ""}`;
+    if (boundsKeyRef.current === key) return;
+    boundsKeyRef.current = key;
+    // 고른 장소가 있으면 확대 효과(아래)가 화면을 맡는다
+    if (selectedId) return;
     if (pins.length === 0) return;
     if (pins.length === 1) {
       map.setCenter({ lat: pins[0].lat, lng: pins[0].lng });
       return;
     }
+    const framed = framePins(pins);
+    // 공항을 빼고 한 곳만 남으면 fitBounds 가 한계까지 확대해 버린다 — 그때는 동네가 보이는 배율로
+    if (framed.length === 1) {
+      map.setCenter({ lat: framed[0].lat, lng: framed[0].lng });
+      map.setZoom(SELECT_ZOOM);
+      return;
+    }
     const bounds = new api.maps.LatLngBounds();
-    for (const pin of pins) bounds.extend({ lat: pin.lat, lng: pin.lng });
+    for (const pin of framed) bounds.extend({ lat: pin.lat, lng: pin.lng });
     map.fitBounds(bounds, 40);
-  }, [api, boundsKey, pins]);
+  }, [api, boundsKey, pins, selectedId]);
+
+  // ── 지금 배율을 상자에 적어 둔다(화면 점검용). 사람 눈엔 안 보인다
+  useEffect(() => {
+    const map = mapRef.current;
+    const box = boxRef.current;
+    if (!api || !map || !box) return;
+    const write = () => box.setAttribute("data-zoom", String(map.getZoom() ?? ""));
+    write();
+    const listener = map.addListener("zoom_changed", write);
+    return () => listener.remove();
+  }, [api]);
+
+  // ── 클릭으로 고른 장소가 있으면 그곳으로 확대한다 (주변 1.5km 가 한 화면에)
+  // 같은 장소·같은 좌표면 다시 하지 않는다 — 20초 폴링마다 목록이 새로 와도 사람이 옮겨 둔 지도를 되돌리지 않게 (리뷰 반영 2026-09-17)
+  const selectedPin = selectedId ? pins.find((pin) => pin.id === selectedId) : undefined;
+  const selectedKey = selectedPin ? `${selectedPin.id}@${selectedPin.lat},${selectedPin.lng}` : "";
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!api || !map || !selectedKey) return;
+    const [, coords] = selectedKey.split("@");
+    const [lat, lng] = coords.split(",").map(Number);
+    const to = { lat, lng };
+    map.setZoom(SELECT_ZOOM);
+    if (isReducedMotion()) map.setCenter(to);
+    else map.panTo(to);
+  }, [api, selectedKey]);
+
+  // ── 주변 추천 핀: 고른 장소·목록이 바뀔 때만 지우고 다시 찍는다 (손을 올릴 때는 아래 효과가 색만 바꾼다)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!api || !map) return;
+    const handles = nearbyRef.current;
+    for (const handle of handles.values()) handle.dispose();
+    handles.clear();
+    if (!selectedId || !nearby || nearby.length === 0) return;
+
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+    const AdvancedMarker = api.maps.marker?.AdvancedMarkerElement;
+    const useAdvanced = Boolean(AdvancedMarker && mapId);
+
+    for (const spot of nearby) {
+      const ring = NEARBY_RING;
+      const hover = () => onNearbyHoverRef.current?.(spot.id);
+      const leave = () => onNearbyHoverRef.current?.(null);
+      if (useAdvanced && AdvancedMarker) {
+        const content = document.createElement("div");
+        content.textContent = CATEGORY_ICON[spot.category];
+        content.style.cssText = [
+          "width:22px",
+          "height:22px",
+          "display:flex",
+          "align-items:center",
+          "justify-content:center",
+          "border-radius:50%",
+          `background:${NEARBY_FILL}`,
+          `border:2px solid ${ring}`,
+          "font-size:0.7rem",
+          "line-height:1",
+          "box-shadow:0 1px 3px rgba(0,0,0,0.2)",
+          "cursor:pointer",
+        ].join(";");
+        content.addEventListener("mouseenter", hover);
+        content.addEventListener("mouseleave", leave);
+        const marker = new AdvancedMarker({
+          map,
+          position: { lat: spot.lat, lng: spot.lng },
+          content,
+          title: spot.name,
+          zIndex: 0,
+        });
+        const listener = marker.addListener("click", hover);
+        handles.set(spot.id, {
+          advanced: marker,
+          setRing: (color) => {
+            content.style.borderColor = color;
+          },
+          dispose: () => {
+            listener.remove();
+            content.removeEventListener("mouseenter", hover);
+            content.removeEventListener("mouseleave", leave);
+            marker.map = null;
+          },
+        });
+      } else {
+        const marker = new api.maps.Marker({
+          map,
+          position: { lat: spot.lat, lng: spot.lng },
+          title: spot.name,
+          zIndex: 0,
+          icon: nearbyIcon(ring),
+          label: { text: CATEGORY_ICON[spot.category], color: NEARBY_TEXT, fontSize: "11px" },
+        });
+        // 옛 핀은 mouseover/mouseout 이름을 쓴다. 손잡이 여러 개라 한꺼번에 떼는 함수로 정리한다
+        marker.addListener("click", hover);
+        marker.addListener("mouseover", hover);
+        marker.addListener("mouseout", leave);
+        handles.set(spot.id, {
+          legacy: marker,
+          setRing: (color) => marker.setIcon(nearbyIcon(color)),
+          dispose: () => {
+            api.maps.event.clearInstanceListeners(marker);
+            marker.setMap(null);
+          },
+        });
+      }
+    }
+  }, [api, selectedId, nearby]);
+
+  // ── 가리키는 주변 핀만 진한 테두리 — 핀을 다시 만들지 않고 색만 바꾼다
+  useEffect(() => {
+    for (const [id, handle] of nearbyRef.current) {
+      handle.setRing(id === nearbyActiveId ? NEARBY_RING_ACTIVE : NEARBY_RING);
+    }
+  }, [nearbyActiveId, nearby]);
 
   // ── 왼쪽 목록에 손을 올리면 그 핀으로 살짝 옮긴다 (확대 배율은 그대로)
   useEffect(() => {
@@ -301,14 +549,17 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
   // ── 화면을 떠날 때 붙여 둔 것들을 정리한다
   useEffect(() => {
     const handles = pinsRef.current;
+    const nearbyHandles = nearbyRef.current;
     const lines = linesRef.current;
     return () => {
       for (const handle of handles.values()) {
-        handle.listener.remove();
+        handle.listener?.remove();
         handle.legacy?.setMap(null);
         if (handle.advanced) handle.advanced.map = null;
       }
       handles.clear();
+      for (const handle of nearbyHandles.values()) handle.dispose();
+      nearbyHandles.clear();
       for (const line of lines) line.setMap(null);
       lines.length = 0;
     };
@@ -366,9 +617,13 @@ export default function RouteMap({ places, focusedId, onFocus, legs, region }: R
       <StMapLegend>
         <StLegendDot $tone="stay">숙소</StLegendDot>
         <StLegendDot $tone="place">장소</StLegendDot>
+        {selectedId && nearby && nearby.length > 0 && <span>○ 주변 추천</span>}
         <span>— 이동선</span>
+        {endsAtStay && <span>┈ 숙소 복귀</span>}
         {hasModeLegend && <span>🚶 도보 🚆 대중교통 🚗 차량</span>}
       </StMapLegend>
+
+      {children}
     </StMapCard>
   );
 }
