@@ -5,9 +5,19 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import { useModal } from "@/components/common/ModalProvider";
-import { NEARBY_RADIUS_M, findGuide, nearbySpots, placedDayByName, sideAt, spotNameKey } from "../lib/guides";
+import {
+  NEARBY_LIMIT,
+  NEARBY_RADIUS_M,
+  findGuide,
+  findSpotByName,
+  nearbySpots,
+  placedDayByName,
+  sideAt,
+  spotNameKey,
+} from "../lib/guides";
 import type { NearbySpot } from "../lib/guides";
-import { dayCountLabel, dayLabel, routePlaces, stayStopInput } from "../lib/plan";
+import { MAX_PLACE_STEPS, MEAL_CATEGORIES, type PlaceCategory } from "../types";
+import { dayCountLabel, dayLabel, newPlaceId, routePlaces, stayStopInput } from "../lib/plan";
 import { dayTransitTotal, formatMinutes } from "../lib/routeLegs";
 import AddPlaceForm from "./components/AddPlaceForm";
 import DayTabs from "./components/DayTabs";
@@ -16,6 +26,7 @@ import NearbyPanel from "./components/NearbyPanel";
 import PoolCard from "./components/PoolCard";
 import PlaceList from "./components/PlaceList";
 import RouteMap from "./components/RouteMap";
+import type { MapSpot } from "./components/RouteMap";
 import RoutePanel from "./components/RoutePanel";
 import SpotPicker from "./components/SpotPicker";
 import StayRow from "./components/StayRow";
@@ -38,6 +49,7 @@ import {
   StWideShell,
   StColumns,
   StMainCol,
+  StNearbyCol,
   StSideCol,
 } from "./page.styles";
 
@@ -45,6 +57,9 @@ import {
 // 1024px 아래에서는 오른쪽 칸이 왼쪽 아래로 내려온다.
 // 평소에는 "보기" 상태라 목록이 조용하고, 오른쪽 위 "편집"을 눌러야 순서·삭제·추가 버튼이 나온다.
 // 편집 상태는 날짜 탭을 옮겨도 그대로 유지된다(하루씩 다시 켜지 않아도 되게). (2026-09-16)
+
+/* 분류로 추리기 전에 반경 안에서 받아 두는 최대 개수 — 추린 뒤 NEARBY_LIMIT 만큼만 보여 준다 */
+const NEARBY_POOL_LIMIT = 60;
 
 export default function TravelPlanPage() {
   const params = useParams();
@@ -67,6 +82,7 @@ export default function TravelPlanPage() {
     removePlace,
     movePlace,
     setMemo,
+    setSteps,
     setStay,
     toggleStayInRoute,
     setTransit,
@@ -77,10 +93,14 @@ export default function TravelPlanPage() {
 
   const [dayIndex, setDayIndex] = useState(0);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  // 주변 추천을 어떤 분류로 추릴지. "auto" 는 아직 사람이 안 고른 상태(고른 장소와 같은 분류로 알아서 추린다) (2026-09-18)
+  const [nearbyFilter, setNearbyFilter] = useState<PlaceCategory | null | "auto">("auto");
   // 클릭으로 고른 장소 — 지도가 그곳으로 확대되고 아래에 "주변 추천" 칸이 열린다. 손 올리기(focusedId)와는 별개 (2026-09-17)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // 주변 칸 줄 ↔ 지도 핀이 서로 가리키는 장소
   const [nearbyActiveId, setNearbyActiveId] = useState<string | null>(null);
+  // "위치"를 누른 자리 — 누를 때마다 n 이 올라가서 지도가 그때마다 한 번씩 따라간다
+  const [spotFocus, setSpotFocus] = useState<{ id: string; n: number } | null>(null);
   const sideColRef = useRef<HTMLDivElement | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   // 하루 카드를 고치는 중인지. 날짜 탭을 옮겨도 그대로 둔다.
@@ -110,7 +130,8 @@ export default function TravelPlanPage() {
   );
   const selectedHasCoords =
     !!selectedPlace && typeof selectedPlace.lat === "number" && typeof selectedPlace.lng === "number";
-  const nearby = useMemo<NearbySpot[]>(() => {
+  // 반경 안의 추천을 넉넉히 받아 둔다 — 분류로 추린 뒤에 8곳을 자르려고(먼저 자르면 식당이 하나도 안 남는다)
+  const nearbyAll = useMemo<NearbySpot[]>(() => {
     if (!guide || !plan || !selectedPlace || !selectedHasCoords) return [];
     // 일정에 있는 곳 + 일정에서 뺀 후보(pool)는 주변 추천에 다시 띄우지 않는다 — 방금 뺀 곳이 또 올라오면 헷갈린다 (주인 요청 2026-09-17)
     const skip = new Map(placedDayByName(plan));
@@ -118,14 +139,103 @@ export default function TravelPlanPage() {
       const key = spotNameKey(place.name);
       if (!skip.has(key)) skip.set(key, -1);
     }
-    return nearbySpots(guide, { lat: selectedPlace.lat as number, lng: selectedPlace.lng as number }, skip);
+    return nearbySpots(
+      guide,
+      { lat: selectedPlace.lat as number, lng: selectedPlace.lng as number },
+      skip,
+      { limit: NEARBY_POOL_LIMIT },
+    );
   }, [guide, plan, selectedPlace, selectedHasCoords]);
+
+  /** 이미 그 자리의 세부 일정으로 담아 둔 곳은 추천에서 뺀다 — 같은 집을 두 번 담지 않게 */
+  const nearbyLeft = useMemo(() => {
+    const inSteps = new Set((selectedPlace?.steps ?? []).map((step) => spotNameKey(step.text)));
+    return nearbyAll.filter((spot) => !inSteps.has(spotNameKey(spot.name)));
+  }, [nearbyAll, selectedPlace]);
+
+  /** 분류별로 몇 곳이 남았는지 — 단추의 숫자와 실제 목록이 어긋나지 않게 뺀 뒤에 센다 (2026-09-18) */
+  const nearbyCounts = useMemo(() => {
+    const counts = new Map<PlaceCategory, number>();
+    for (const spot of nearbyLeft) counts.set(spot.category, (counts.get(spot.category) ?? 0) + 1);
+    return counts;
+  }, [nearbyLeft]);
+
+  /**
+   * 실제로 쓸 분류. 사람이 단추를 누르면 그 값(nearbyFilter)을 쓰고,
+   * 아직 안 눌렀으면 "고른 장소와 같은 분류"로 알아서 추린다 — 점심 자리를 눌렀으면 식당만 (주인 요청 2026-09-18).
+   */
+  const nearbyFilterInUse = useMemo<PlaceCategory | null>(() => {
+    if (nearbyFilter !== "auto") return nearbyFilter;
+    const same = selectedPlace?.category;
+    return same && MEAL_CATEGORIES.has(same) && (nearbyCounts.get(same) ?? 0) > 0 ? same : null;
+  }, [nearbyFilter, selectedPlace, nearbyCounts]);
+
+  /** 밥 자리(식당·카페)를 고른 상태에서 밥 자리를 담으면, 새 줄이 아니라 그 자리의 세부 일정으로 넣는다 (주인 요청 2026-09-18) */
+  const addsAsStep = !!selectedPlace && MEAL_CATEGORIES.has(selectedPlace.category);
+
+  const nearby = useMemo<NearbySpot[]>(() => {
+    const picked = nearbyFilterInUse
+      ? nearbyLeft.filter((spot) => spot.category === nearbyFilterInUse)
+      : nearbyLeft;
+    return picked.slice(0, NEARBY_LIMIT);
+  }, [nearbyLeft, nearbyFilterInUse]);
+
+  /** 좌표를 아는 세부 일정의 위치 — 저장된 좌표가 없으면 안내서에서 같은 이름을 찾아 채운다 */
+  const stepCoords = useCallback(
+    (step: { text: string; lat?: number; lng?: number }) => {
+      if (typeof step.lat === "number" && typeof step.lng === "number") {
+        return { lat: step.lat, lng: step.lng };
+      }
+      const known = guide ? findSpotByName(guide, step.text) : undefined;
+      return known ? { lat: known.lat, lng: known.lng } : null;
+    },
+    [guide],
+  );
+
+  /** 그 날 세부 일정 중 지도에서 자리를 보여 줄 수 있는 것 — 이 줄에만 "위치" 단추가 뜬다 (2026-09-18) */
+  const pinnedStepIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const place of day?.places ?? []) {
+      for (const step of place.steps ?? []) if (stepCoords(step)) ids.add(step.id);
+    }
+    return ids;
+  }, [day, stepCoords]);
+
+  /**
+   * 지도에 곁들일 핀 — 이미 그 장소 아래(세부 일정)에 담아 둔 곳(초록)과 아직 안 담은 주변 추천.
+   * 담고 나면 지도에서 사라져 위치를 알 수 없던 걸 고쳤다 (주인 요청 2026-09-18).
+   */
+  const mapSpots = useMemo<MapSpot[]>(() => {
+    const picked: MapSpot[] = [];
+    for (const step of selectedPlace?.steps ?? []) {
+      const at = stepCoords(step);
+      if (!at) continue;
+      picked.push({
+        id: step.id,
+        name: step.text,
+        category: selectedPlace?.category ?? "etc",
+        ...at,
+        picked: true,
+      });
+    }
+    return [...picked, ...nearby];
+  }, [selectedPlace, nearby, stepCoords]);
 
   // 지도에 넘길 구간 목록 — 매번 새 배열을 만들면 지도가 선을 매번 다시 긋는다 (리뷰 반영 2026-09-17)
   const routeLegs = useMemo(() => routeList.map((place) => place.transitToNext ?? undefined), [routeList]);
 
+  /** 세부 일정의 "위치" — 그 장소를 고르고(핀이 그려지게) 지도를 그 자리로 옮긴다 (주인 요청 2026-09-18) */
+  const handleShowStep = useCallback((placeId: string, stepId: string) => {
+    setNearbyFilter("auto");
+    setSelectedId(placeId);
+    setNearbyActiveId(stepId);
+    setSpotFocus((prev) => ({ id: stepId, n: (prev?.n ?? 0) + 1 }));
+  }, []);
+
   /** 줄 클릭: 같은 줄이면 해제. (상태만 바꾼다 — 스크롤 같은 부수 효과는 아래 효과가 맡는다) */
   const handleSelect = useCallback((id: string) => {
+    // 다른 장소를 고르면 추리기는 다시 "알아서"로 — 식당을 누르면 식당, 관광지를 누르면 전체 (2026-09-18)
+    setNearbyFilter("auto");
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
@@ -215,6 +325,15 @@ export default function TravelPlanPage() {
                 </StMapCard>
               </StStickyPanel>
           </StSideCol>
+          <StNearbyCol>
+              <StStickyPanel>
+                <StCard>
+                  <SkeletonBlock width="7rem" height="1.1rem" radius="0.5rem" />
+                  <SkeletonBlock height="1rem" />
+                  <SkeletonBlock height="1rem" width="80%" />
+                </StCard>
+              </StStickyPanel>
+          </StNearbyCol>
         </StColumns>
       </StWideShell>
     );
@@ -308,6 +427,10 @@ export default function TravelPlanPage() {
                   onMove={(from, to) => void movePlace(safeDayIndex, from, to)}
                   onRemove={handleRemovePlace}
                   onMemo={(placeId, memo) => void setMemo(safeDayIndex, placeId, memo)}
+                  onSteps={(placeId, steps) => void setSteps(safeDayIndex, placeId, steps)}
+                  city={guide?.city ?? ""}
+                  pinnedStepIds={pinnedStepIds}
+                  onShowStep={handleShowStep}
                   onFocus={setFocusedId}
                   onDirty={setDirty}
                 />
@@ -372,11 +495,19 @@ export default function TravelPlanPage() {
                 legs={routeLegs}
                 region={plan.region}
                 selectedId={selectedPlace ? selectedPlace.id : null}
-                nearby={nearby}
+                nearby={mapSpots}
+                spotFocus={spotFocus}
                 nearbyActiveId={nearbyActiveId}
                 onNearbyHover={setNearbyActiveId}
-              >
-              {selectedPlace && (
+              />
+            </StStickyPanel>
+        </StSideCol>
+
+        {/* 세 번째 칸 — 주변 추천. 고른 장소가 없으면 무엇을 하면 되는지 한 줄로 알려 준다 (주인 요청 2026-09-18) */}
+        <StNearbyCol>
+            <StStickyPanel>
+              <StCard>
+              {selectedPlace ? (
                 <NearbyPanel
                   anchor={selectedPlace}
                   nearby={nearby}
@@ -384,25 +515,45 @@ export default function TravelPlanPage() {
                   city={guide?.city ?? ""}
                   hasCoords={selectedHasCoords}
                   radiusM={NEARBY_RADIUS_M}
+                  counts={nearbyCounts}
+                  filter={nearbyFilterInUse}
+                  onFilter={setNearbyFilter}
                   activeId={nearbyActiveId}
                   onHover={setNearbyActiveId}
                   busy={busy}
-                  onAdd={(spot) =>
-                    insertPlaceAfter(safeDayIndex, selectedPlace.id, {
+                  addsAsStep={addsAsStep}
+                  onAdd={(spot, where) => {
+                    // "아래"는 고른 장소의 세부 일정으로, "동선"은 바로 다음 줄에 새 장소로
+                    if (where === "step") {
+                      const steps = selectedPlace.steps ?? [];
+                      if (steps.length >= MAX_PLACE_STEPS) {
+                        return Promise.resolve(`세부 일정은 ${MAX_PLACE_STEPS}개까지예요.`);
+                      }
+                      return setSteps(safeDayIndex, selectedPlace.id, [
+                        ...steps,
+                        { id: newPlaceId(), text: spot.name, lat: spot.lat, lng: spot.lng },
+                      ]);
+                    }
+                    return insertPlaceAfter(safeDayIndex, selectedPlace.id, {
                       name: spot.name,
                       category: spot.category,
                       lat: spot.lat,
                       lng: spot.lng,
                       address: spot.address,
                       memo: spot.tip,
-                    })
-                  }
+                    });
+                  }}
                   onClose={clearSelection}
                 />
+              ) : (
+                <>
+                  <StCardTitle>📍 주변 추천</StCardTitle>
+                  <StHint>왼쪽에서 장소를 누르면 그 둘레의 추천 장소가 여기에 나와요.</StHint>
+                </>
               )}
-              </RouteMap>
+              </StCard>
             </StStickyPanel>
-        </StSideCol>
+        </StNearbyCol>
       </StColumns>
 
       {exportOpen && <ExportModal plan={plan} onClose={() => setExportOpen(false)} />}

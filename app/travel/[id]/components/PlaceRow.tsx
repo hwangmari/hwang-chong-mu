@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { CATEGORY_LABEL, type TravelPlace } from "../../types";
+import { CATEGORY_LABEL, type PlaceStep, type TravelPlace } from "../../types";
 import {
   StCategoryChip,
   StDragHandle,
@@ -18,6 +18,7 @@ import {
   StRowBtn,
   StRowBtnLabel,
 } from "../page.styles";
+import PlaceSteps from "./PlaceSteps";
 
 // 장소 한 줄. 번호 칸(28px)만 폭이 고정이고 분류 칩은 이름과 같은 줄에 붙어 글자만큼만 차지한다.
 // 줄 안의 조작은 모두 같은 버튼 한 식구(StRowBtn, 높이 32px)로 만들고, 고칠 때만 조작 칸 폭을 고정해
@@ -44,6 +45,14 @@ type PlaceRowProps = {
   onMove: (from: number, to: number) => void;
   onRemove: (placeId: string) => void;
   onMemo: (placeId: string, memo: string) => void;
+  /** 구글 지도 검색에 붙일 도시 이름 */
+  city: string;
+  /** 지도에 자리를 아는 세부 일정 id 들 */
+  pinnedStepIds?: Set<string>;
+  /** 세부 일정의 "위치"를 눌렀을 때 — 이 장소를 고르고 지도를 그 자리로 옮긴다 */
+  onShowStep?: (placeId: string, stepId: string) => void;
+  /** 장소 안의 세부 일정 목록을 통째로 바꾼다 (2026-09-18) */
+  onSteps: (placeId: string, steps: PlaceStep[]) => void;
   onFocus: (id: string | null) => void;
   onDirty: (value: boolean) => void;
   onDragStart: (event: DragEvent, index: number) => void;
@@ -136,7 +145,11 @@ export default function PlaceRow({
   onSelect,
   onMove,
   onRemove,
+  city,
+  pinnedStepIds,
+  onShowStep,
   onMemo,
+  onSteps,
   onFocus,
   onDirty,
   onDragStart,
@@ -311,6 +324,18 @@ export default function PlaceRow({
           )}
         </StMemoArea>
       )}
+
+      {/* 세부 일정 — 메모 아래, 같은 x 에서 시작한다. 담은 게 없고 편집도 꺼져 있으면 그려지지 않는다 */}
+      <PlaceSteps
+        placeName={place.name}
+        city={city}
+        pinnedIds={pinnedStepIds}
+        onShow={onShowStep ? (stepId) => onShowStep(place.id, stepId) : undefined}
+        steps={place.steps ?? []}
+        editing={editing}
+        onChange={(steps) => onSteps(place.id, steps)}
+        onDirty={onDirty}
+      />
     </StRow>
   );
 }

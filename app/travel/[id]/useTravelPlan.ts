@@ -430,12 +430,12 @@ export function useTravelPlan(id: string) {
 
   /** 한 장소 안의 세부 일정 목록을 통째로 바꾼다. 이동 시간(transitToNext)은 그대로 둔다. (2026-09-18) */
   const setSteps = useCallback(
-    async (dayIndex: number, placeId: string, steps: PlaceStep[]) => {
+    async (dayIndex: number, placeId: string, steps: PlaceStep[]): Promise<string | null> => {
       const day = dayAt(dayIndex);
-      if (!day) return;
+      if (!day) return "담을 날짜를 찾지 못했어요. 창을 닫고 다시 열어 주세요.";
       const target = day.places.find((place) => place.id === placeId);
-      if (!target) return;
-      await saveDay(dayIndex, {
+      if (!target) return "담을 곳을 찾지 못했어요. 새로고침해 주세요.";
+      return saveDay(dayIndex, {
         ...day,
         places: day.places.map((place) => (place.id === placeId ? { ...place, steps } : place)),
       });

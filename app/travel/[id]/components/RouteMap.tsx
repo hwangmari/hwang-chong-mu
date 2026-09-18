@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   loadGoogleMaps,
@@ -31,6 +31,12 @@ import {
 // places 는 도는 순서 그대로 온다 — 1 → 2 → … → n → 🏨(숙소 복귀). 마지막 "숙소로" 구간만 점선이다.
 // (2026-09-16)
 
+/** 지도에 곁들여 찍는 핀 — 주변 추천(NearbySpot)과 이미 담아 둔 세부 일정이 같은 모양을 쓴다 */
+export type MapSpot = Pick<NearbySpot, "id" | "name" | "category" | "lat" | "lng"> & {
+  /** 이미 담아 둔 곳이면 true — 핀 테두리가 초록 */
+  picked?: boolean;
+};
+
 type RouteMapProps = {
   places: TravelPlace[];
   focusedId: string | null;
@@ -42,13 +48,15 @@ type RouteMapProps = {
   /** 클릭으로 고른 장소 — 있으면 그곳으로 확대(SELECT_ZOOM)하고, 풀리면 전체 보기로 돌아간다 (2026-09-17) */
   selectedId?: string | null;
   /** 고른 장소 주변의 추천 장소 — 연한 작은 핀으로 찍는다 */
-  nearby?: NearbySpot[];
+  /** 주변 추천 핀 + 이미 담아 둔 세부 일정 핀(picked). 고른 장소가 있을 때만 그린다 */
+  nearby?: MapSpot[];
+  /** "이 곳을 지도에서 보여 줘" — 누를 때마다 n 이 올라가고, 그때마다 그 핀으로 옮긴다 (2026-09-18) */
+  spotFocus?: { id: string; n: number } | null;
   /** 주변 핀에 손을 올리거나(id) 떼면(null) 알려 준다 — 아래 주변 칸의 줄과 같이 밝아지게 */
   onNearbyHover?: (id: string | null) => void;
   /** 주변 칸에서 가리키는 장소 id — 그 핀만 진하게 */
   nearbyActiveId?: string | null;
   /** 지도 아래에 붙는 칸(주변 추천). 카드 안에 넣어 테두리가 두 겹 되지 않게 한다 */
-  children?: ReactNode;
 };
 
 /** 지도에 찍을 한 점. 좌표가 있는 장소만 여기에 들어온다. */
@@ -107,6 +115,8 @@ const PIN_TEXT = "#ffffff";
 const NEARBY_FILL = "#ffffff";
 const NEARBY_RING = "#93c5fd";
 const NEARBY_RING_ACTIVE = "#2563eb";
+/* 이미 그 장소 아래(세부 일정)에 담아 둔 곳 — 아직 안 담은 추천과 색으로 구분한다 (주인 요청 2026-09-18) */
+const PICKED_RING = "#16a34a";
 const NEARBY_TEXT = "#1f2937";
 /** 옛 지도 핀(Marker)용 동그라미 모양 — 기본 빨간 핀 대신 쓴다. 반지름 10px 원 */
 const NEARBY_SYMBOL_PATH = "M -10,0 a 10,10 0 1,0 20,0 a 10,10 0 1,0 -20,0";
@@ -156,9 +166,9 @@ export default function RouteMap({
   region,
   selectedId = null,
   nearby,
+  spotFocus = null,
   onNearbyHover,
   nearbyActiveId = null,
-  children,
 }: RouteMapProps) {
   const [api, setApi] = useState<GoogleMapsApi | null>(null);
   const [loading, setLoading] = useState(true);
@@ -421,15 +431,19 @@ export default function RouteMap({
     map.fitBounds(bounds, 40);
   }, [api, boundsKey, pins, selectedId]);
 
-  // ── 지금 배율을 상자에 적어 둔다(화면 점검용). 사람 눈엔 안 보인다
+  // ── 지금 배율과 한가운데 좌표를 상자에 적어 둔다(화면 점검용). 사람 눈엔 안 보인다
   useEffect(() => {
     const map = mapRef.current;
     const box = boxRef.current;
     if (!api || !map || !box) return;
-    const write = () => box.setAttribute("data-zoom", String(map.getZoom() ?? ""));
+    const write = () => {
+      box.setAttribute("data-zoom", String(map.getZoom() ?? ""));
+      const center = map.getCenter();
+      if (center) box.setAttribute("data-center", `${center.lat().toFixed(5)},${center.lng().toFixed(5)}`);
+    };
     write();
-    const listener = map.addListener("zoom_changed", write);
-    return () => listener.remove();
+    const listeners = [map.addListener("zoom_changed", write), map.addListener("idle", write)];
+    return () => listeners.forEach((listener) => listener.remove());
   }, [api]);
 
   // ── 클릭으로 고른 장소가 있으면 그곳으로 확대한다 (주변 1.5km 가 한 화면에)
@@ -447,6 +461,21 @@ export default function RouteMap({
     else map.panTo(to);
   }, [api, selectedKey]);
 
+  // ── 세부 일정·추천 줄에서 "위치"를 누르면 그 핀으로 옮긴다. 한 번 누르면 한 번만 옮긴다
+  //    (핀 목록이 20초 폴링으로 새로 와도 사람이 옮겨 둔 지도를 되돌리지 않게) (2026-09-18)
+  const focusDoneRef = useRef(0);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!api || !map || !spotFocus || spotFocus.n === focusDoneRef.current) return;
+    const target = nearby?.find((spot) => spot.id === spotFocus.id);
+    if (!target) return;
+    focusDoneRef.current = spotFocus.n;
+    const to = { lat: target.lat, lng: target.lng };
+    if ((map.getZoom() ?? 0) < SELECT_ZOOM) map.setZoom(SELECT_ZOOM);
+    if (isReducedMotion()) map.setCenter(to);
+    else map.panTo(to);
+  }, [api, spotFocus, nearby]);
+
   // ── 주변 추천 핀: 고른 장소·목록이 바뀔 때만 지우고 다시 찍는다 (손을 올릴 때는 아래 효과가 색만 바꾼다)
   useEffect(() => {
     const map = mapRef.current;
@@ -461,7 +490,7 @@ export default function RouteMap({
     const useAdvanced = Boolean(AdvancedMarker && mapId);
 
     for (const spot of nearby) {
-      const ring = NEARBY_RING;
+      const ring = spot.picked ? PICKED_RING : NEARBY_RING;
       const hover = () => onNearbyHoverRef.current?.(spot.id);
       const leave = () => onNearbyHoverRef.current?.(null);
       if (useAdvanced && AdvancedMarker) {
@@ -531,20 +560,16 @@ export default function RouteMap({
   // ── 가리키는 주변 핀만 진한 테두리 — 핀을 다시 만들지 않고 색만 바꾼다
   useEffect(() => {
     for (const [id, handle] of nearbyRef.current) {
-      handle.setRing(id === nearbyActiveId ? NEARBY_RING_ACTIVE : NEARBY_RING);
+      const spot = nearby?.find((item) => item.id === id);
+      handle.setRing(
+        id === nearbyActiveId ? NEARBY_RING_ACTIVE : spot?.picked ? PICKED_RING : NEARBY_RING,
+      );
     }
   }, [nearbyActiveId, nearby]);
 
-  // ── 왼쪽 목록에 손을 올리면 그 핀으로 살짝 옮긴다 (확대 배율은 그대로)
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!api || !map || !focusedId) return;
-    const target = pins.find((pin) => pin.id === focusedId);
-    if (!target) return;
-    const to = { lat: target.lat, lng: target.lng };
-    if (isReducedMotion()) map.setCenter(to);
-    else map.panTo(to);
-  }, [api, focusedId, pins]);
+  // 손을 올린 것만으로는 지도를 옮기지 않는다 — 목록을 훑을 때마다 지도가 움직여 정신없다는
+  // 주인 요청으로 뺐다(2026-09-18). 지도가 따라가는 건 "클릭해서 고른 장소" 하나뿐이다.
+  // 손을 올린 줄은 핀 색만 밝아진다(아래 $focused).
 
   // ── 화면을 떠날 때 붙여 둔 것들을 정리한다
   useEffect(() => {
@@ -617,16 +642,34 @@ export default function RouteMap({
       <StMapLegend>
         <StLegendDot $tone="stay">숙소</StLegendDot>
         <StLegendDot $tone="place">장소</StLegendDot>
-        {selectedId && nearby && nearby.length > 0 && <span>○ 주변 추천</span>}
+        {selectedId && nearby?.some((spot) => !spot.picked) && <span>○ 주변 추천</span>}
+        {selectedId && nearby?.some((spot) => spot.picked) && (
+          <StLegendPicked>담아 둔 곳</StLegendPicked>
+        )}
         <span>— 이동선</span>
         {endsAtStay && <span>┈ 숙소 복귀</span>}
         {hasModeLegend && <span>🚶 도보 🚆 대중교통 🚗 차량</span>}
       </StMapLegend>
 
-      {children}
     </StMapCard>
   );
 }
+
+/* 세부 일정으로 담아 둔 곳 — 지도의 초록 테두리 핀과 같은 색 동그라미 */
+const StLegendPicked = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    border: 2px solid ${PICKED_RING};
+    background: ${NEARBY_FILL};
+  }
+`;
 
 /* 지도가 들어가는 칸. 카드가 이미 테두리를 갖고 있어 여기에는 테두리를 두지 않는다. */
 const StMapBox = styled.div`

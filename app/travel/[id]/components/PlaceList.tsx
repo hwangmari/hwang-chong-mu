@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, type DragEvent } from "react";
-import type { TransitLeg, TravelDay } from "../../types";
+import type { PlaceStep, TransitLeg, TravelDay } from "../../types";
 import { StHint, StTransitLine } from "../page.styles";
 import PlaceRow from "./PlaceRow";
 
@@ -28,6 +28,12 @@ type PlaceListProps = {
   onMove: (from: number, to: number) => void;
   onRemove: (placeId: string) => void;
   onMemo: (placeId: string, memo: string) => void;
+  onSteps: (placeId: string, steps: PlaceStep[]) => void;
+  /** 구글 지도 검색에 붙일 도시 이름 */
+  city: string;
+  /** 지도에 자리를 아는 세부 일정 id 들 */
+  pinnedStepIds?: Set<string>;
+  onShowStep?: (placeId: string, stepId: string) => void;
   onFocus: (id: string | null) => void;
   onDirty: (value: boolean) => void;
 };
@@ -41,6 +47,10 @@ export default function PlaceList({
   onMove,
   onRemove,
   onMemo,
+  onSteps,
+  city,
+  pinnedStepIds,
+  onShowStep,
   onFocus,
   onDirty,
 }: PlaceListProps) {
@@ -105,6 +115,10 @@ export default function PlaceList({
               onMove={onMove}
               onRemove={onRemove}
               onMemo={onMemo}
+              onSteps={onSteps}
+              city={city}
+              pinnedStepIds={pinnedStepIds}
+              onShowStep={onShowStep}
               onFocus={onFocus}
               onDirty={onDirty}
               onDragStart={handleDragStart}

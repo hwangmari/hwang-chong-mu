@@ -37,7 +37,14 @@ export function normalizeSteps(steps: unknown): PlaceStep[] {
     const body = typeof text === "string" ? text.trim() : "";
     if (!body) continue;
     const at = typeof time === "string" ? time.trim() : "";
-    out.push({ id: typeof id === "string" && id ? id : newPlaceId(), text: body, ...(at ? { time: at } : {}) });
+    const { lat, lng } = step as Partial<PlaceStep>;
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+    out.push({
+      id: typeof id === "string" && id ? id : newPlaceId(),
+      text: body,
+      ...(at ? { time: at } : {}),
+      ...(hasCoords ? { lat: lat as number, lng: lng as number } : {}),
+    });
     if (out.length >= MAX_PLACE_STEPS) break;
   }
   return out;
@@ -100,17 +107,23 @@ export function buildDays(start: string, end: string, prev?: TravelDay[]): Trave
   return days;
 }
 
+/** 목록 한 칸을 다른 자리로 옮긴 새 목록. 자리가 목록 밖이면 원래 목록을 그대로 돌려준다. */
+export function moveItem<T>(list: T[], from: number, to: number): T[] {
+  if (from === to) return list;
+  if (from < 0 || from >= list.length) return list;
+  if (to < 0 || to >= list.length) return list;
+  const next = [...list];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
 /** 순서 바꾸기. 맨 앞에 고정된 숙소는 자리를 내주지도, 옮기지도 않는다. */
 export function movePlace(day: TravelDay, from: number, to: number): TravelDay {
-  const places = [...day.places];
-  if (from === to) return day;
-  if (from < 0 || from >= places.length) return day;
-  if (to < 0 || to >= places.length) return day;
-  const locked = places[0]?.isStay ? 1 : 0;
+  const locked = day.places[0]?.isStay ? 1 : 0;
   if (from < locked || to < locked) return day;
-  const [moved] = places.splice(from, 1);
-  places.splice(to, 0, moved);
-  return { ...day, places };
+  const places = moveItem(day.places, from, to);
+  return places === day.places ? day : { ...day, places };
 }
 
 /**

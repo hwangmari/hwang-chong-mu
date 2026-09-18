@@ -33,6 +33,8 @@ export type GmapsOptions = Record<string, unknown>;
 
 export interface GmapsMap {
   setCenter(position: GmapsLatLngInput): void;
+  /** 지금 한가운데 좌표 — 화면 점검용으로 상자에 적어 둔다 (2026-09-18) */
+  getCenter(): { lat(): number; lng(): number } | undefined;
   setZoom(zoom: number): void;
   getZoom(): number | undefined;
   panTo(position: GmapsLatLngInput): void;

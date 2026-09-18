@@ -1,6 +1,6 @@
 "use client";
 
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 
 /* 여행 방 화면 전용 스타일 (2026-09-16).
    규칙 두 가지만 지킨다.
@@ -44,8 +44,9 @@ export const StColumns = styled.div`
   gap: 1.25rem;
   align-items: stretch; /* 오른쪽 열이 왼쪽 목록만큼 길어야 그 안의 지도 패널이 sticky로 따라온다 (2026-09-16) */
 
+  /* 넓은 화면은 일정 4 : 지도 4 : 주변 추천 2 (주인 요청 2026-09-18) */
   @media ${({ theme }) => theme.media.desktop} {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 4fr) minmax(0, 4fr) minmax(0, 2fr);
     gap: 1.5rem;
   }
 `;
@@ -55,6 +56,12 @@ export const StMainCol = styled.div`
 `;
 
 export const StSideCol = styled.div`
+  min-width: 0;
+  align-self: stretch;
+`;
+
+/* 세 번째 칸(주변 추천). 지도 열과 같은 방식으로 스크롤을 따라온다 (2026-09-18) */
+export const StNearbyCol = styled.div`
   min-width: 0;
   align-self: stretch;
 `;
@@ -609,6 +616,107 @@ export const StMemoInput = styled.textarea`
   }
 `;
 
+/* ===== 장소 안의 세부 일정 (2026-09-18) =====
+   메모 줄과 같은 자리(2번째 칸부터)에서 시작해 장소 이름과 x 가 맞는다.
+   새 상자를 두르지 않고, 목록 왼쪽의 머리카락 선 하나로만 "이 장소 안쪽"임을 보인다. */
+export const StStepsArea = styled.div`
+  grid-column: 2 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+`;
+
+/* 펼침 버튼 — 다른 줄 조작과 같은 식구(테두리 없음). 글자만큼만 차지해 왼쪽에 붙는다 */
+export const StStepsToggle = styled(StRowBtn)`
+  align-self: flex-start;
+  padding: 0 0.5rem;
+  gap: 0.375rem;
+`;
+
+export const StStepList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid ${({ theme }) => theme.semantic.border};
+`;
+
+export const StStepRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+`;
+
+/* 시각 칸은 폭이 고정 — 시각을 안 적은 줄이 섞여도 내용 글자가 같은 x 에서 시작한다 */
+export const StStepTime = styled.span`
+  width: 3rem;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+export const StStepText = styled.span`
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: ${({ theme }) => theme.semantic.text};
+  word-break: break-word;
+`;
+
+/* 담는 줄 — 입력 칸은 조작이라 테두리를 지킨다 */
+export const StStepAdd = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  /* 위 목록과 글자 시작 x 를 맞춘다 — 선은 긋지 않고 자리만 차지한다 */
+  border-left: 1px solid transparent;
+  padding-left: 0.75rem;
+  min-width: 0;
+`;
+
+const stepInput = css`
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid ${({ theme }) => theme.semantic.border};
+  border-radius: 0.5rem;
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.semantic.text};
+  font-size: 0.86rem;
+  font-family: inherit;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.semantic.subText};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.semantic.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+`;
+
+export const StStepTimeInput = styled.input`
+  ${stepInput};
+  /* 보기 모드의 시각 칸(StStepTime)과 같은 폭 — 편집을 켜고 꺼도 내용 글자가 움직이지 않게 */
+  width: 3rem;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+`;
+
+export const StStepTextInput = styled.input`
+  ${stepInput};
+  flex: 1;
+  min-width: 0;
+`;
+
 /* 두 장소 사이의 이동 시간 한 줄 — 양옆에 머리카락 선을 그어 '잇는 줄'로 읽히게 */
 export const StTransitLine = styled.div`
   display: flex;
@@ -1076,12 +1184,12 @@ export const StPoolActions = styled.span`
 /* ===== 주변 추천 (장소를 클릭하면 지도 카드 안, 지도 아래에 열리는 칸) =====
    카드가 이미 테두리를 갖고 있으므로 여기는 머리카락 한 줄로만 나눈다 (리뷰 반영 2026-09-17) */
 
+/* 주변 추천 목록. 지도 카드 안에 붙어 있다가 2026-09-18 부터 제 칸(카드)을 쓰므로 구분선을 두지 않는다 */
 export const StNearbyBlock = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  min-width: 0;
 `;
 
 export const StNearbyHead = styled.div`
@@ -1092,28 +1200,50 @@ export const StNearbyHead = styled.div`
 `;
 
 /* 줄: 아이콘(1.5rem) · 이름+팁 · 거리(3.5rem, 숫자 폭 고정) · 담기. 줄 사이 테두리 없이 여백만 */
-export const StNearbyRow = styled.div<{ $active?: boolean }>`
-  display: grid;
-  /* 아이콘 · 이름+팁 · 거리 · 지도 · 담기 */
-  grid-template-columns: 1.5rem minmax(0, 1fr) 3.5rem auto auto;
-  column-gap: 0.25rem;
-  align-items: center;
-  padding: 0.5rem 0.5rem;
+/* 기준 장소 이름 — 제목 아래 한 줄. 길면 말줄임 */
+export const StNearbyAnchor = styled.p`
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
 
-  /* 휴대폰: 이름 칸을 넓게 — 거리·지도·담기는 이름 아래 한 줄로 */
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: 1.5rem auto auto minmax(0, 1fr);
-    grid-template-areas:
-      "icon body body body"
-      ". meters map add";
-    row-gap: 0.125rem;
+/* 분류 추리기 단추 줄 — 칩은 고른 것만 색이 찬다(CLAUDE.md: 칩은 선택됐을 때만 테두리/색) */
+export const StNearbyFilters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+`;
 
-    > :nth-child(1) { grid-area: icon; }
-    > :nth-child(2) { grid-area: body; }
-    > :nth-child(3) { grid-area: meters; text-align: left; }
-    > :nth-child(4) { grid-area: map; }
-    > :nth-child(5) { grid-area: add; justify-self: start; }
+export const StNearbyChip = styled.button<{ $on?: boolean }>`
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: ${({ $on, theme }) => ($on ? theme.semantic.primary : theme.semantic.bg)};
+  color: ${({ $on, theme }) => ($on ? theme.colors.white : theme.semantic.subText)};
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${({ $on, theme }) => ($on ? theme.semantic.primary : theme.semantic.primaryLight)};
+    color: ${({ $on, theme }) => ($on ? theme.colors.white : theme.semantic.primary)};
   }
+`;
+
+export const StNearbyRow = styled.div<{ $active?: boolean }>`
+  /* 세 번째 칸(좁음)에 들어가므로 이름이 한 줄을 다 쓰고, 거리·지도·담기는 그 아래 줄에 모인다 (2026-09-18) */
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  column-gap: 0.25rem;
+  row-gap: 0.125rem;
+  align-items: center;
+  padding: 0.5rem;
   border-radius: 0.625rem;
   /* 지도 핀에 손을 올려 가리킨 줄(active)은 손을 올린 줄(hover)보다 한 단계 진하게 — 둘이 같은 색이면 핀↔줄 연결이 안 보인다 */
   background: ${({ $active, theme }) => ($active ? theme.semantic.primaryLight : "transparent")};
@@ -1123,14 +1253,26 @@ export const StNearbyRow = styled.div<{ $active?: boolean }>`
   }
 `;
 
+/* 거리·지도·담기 — 이름 아래 줄. 칸이 좁으면 다음 줄로 넘어간다 */
+export const StNearbyActions = styled.div`
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
 export const StNearbyName = styled.span`
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.4;
   color: ${({ theme }) => theme.semantic.text};
+  /* 좁은 칸이라 한 줄로 자르지 않고 두 줄까지 보여 준다 (2026-09-18) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
 `;
 
 /* 주변 줄의 팁은 한 줄로 자른다(줄이 길어져 담기 버튼이 멀어지지 않게) */
@@ -1144,14 +1286,23 @@ export const StNearbyMeters = styled.span`
   font-size: 0.78rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  /* 아래 줄 맨 앞이라 왼쪽 기준으로 선다 (2026-09-18) */
+  width: 3.25rem;
+  text-align: left;
   color: ${({ theme }) => theme.semantic.subText};
 `;
 
 export const StMapLegend = styled.div`
   display: flex;
   align-items: center;
+  /* 지도 칸이 좁아지면 줄이 바뀌되, 한 항목이 글자 중간에서 끊기지는 않게 (2026-09-18) */
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
   gap: 0.75rem;
+
+  > * {
+    white-space: nowrap;
+  }
   padding-top: 0.5rem;
   border-top: 1px solid ${({ theme }) => theme.semantic.border};
   font-size: 0.78rem;

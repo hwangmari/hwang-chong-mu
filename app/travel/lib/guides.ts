@@ -74,6 +74,21 @@ function spotSide(area: GuideArea, spot: GuideSpot): "east" | "west" {
 }
 
 /**
+ * 안내서에서 이름이 같은 장소를 찾는다. 좌표 없이 담아 둔 세부 일정(이름만 있는 줄)의
+ * 자리를 지도에 다시 띄우려고 쓴다. (2026-09-18)
+ */
+export function findSpotByName(guide: CityGuide, name: string): GuideSpot | undefined {
+  const key = spotNameKey(name);
+  if (!key) return undefined;
+  for (const area of guide.areas) {
+    for (const spot of area.spots) {
+      if (spotNameKey(spot.name) === key) return spot;
+    }
+  }
+  return undefined;
+}
+
+/**
  * 어떤 좌표가 강의 어느 쪽인지 — 안내서에서 가장 가까운 장소의 쪽을 따른다.
  * 안내서 장소는 강가 양쪽에 촘촘히 있어서, 강 한가운데가 아니면 가장 가까운 곳이 같은 쪽이다.
  */

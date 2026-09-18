@@ -7,14 +7,20 @@ export const CATEGORY_LABEL: Record<PlaceCategory, string> = { airport: "공항"
 
 export const CATEGORY_ICON: Record<PlaceCategory, string> = { airport: "✈️", stay: "🏨", outdoor: "🛍️", food: "🍽️", cafe: "☕", sight: "📷", etc: "📍" };
 
+/** 밥 자리로 보는 분류 — 주변 추천을 알아서 추리고, 담을 때 세부 일정으로 넣는 기준 (2026-09-18) */
+export const MEAL_CATEGORIES = new Set<PlaceCategory>(["food", "cafe"]);
+
 /** 이동 수단. 구글 길찾기에 그대로 넘기는 값이라 대문자를 지킨다. */
 export type TransitMode = "WALK" | "TRANSIT" | "DRIVE";
 
 /** 한 장소에서 다음 장소까지의 이동 한 구간. 길찾기 결과를 그대로 담아 둔다(매번 다시 묻지 않으려고). */
 export type TransitLeg = { mode: TransitMode; minutes: number; meters: number; summary?: string; polyline?: string; fetchedAt: string };
 
-/** 장소 안의 세부 일정 한 줄. time 은 "10:30" 같은 자유 글자라 비워 둘 수 있다. (2026-09-18) */
-export type PlaceStep = { id: string; text: string; time?: string };
+/**
+ * 장소 안의 세부 일정 한 줄. time 은 "10:30" 같은 자유 글자라 비워 둘 수 있다. (2026-09-18)
+ * 주변 추천에서 담은 줄은 그 가게 좌표(lat·lng)를 같이 들고 있어, 고른 장소를 누르면 지도에 그 자리가 뜬다.
+ */
+export type PlaceStep = { id: string; text: string; time?: string; lat?: number; lng?: number };
 
 /** 한 장소가 가질 수 있는 세부 일정 개수 — 목록이 끝없이 길어지지 않게 */
 export const MAX_PLACE_STEPS = 20;

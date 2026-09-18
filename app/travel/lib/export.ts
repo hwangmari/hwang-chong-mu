@@ -2,7 +2,7 @@
 // 링크를 못 여는 사람에게도 일정을 통째로 보내 주려고 만든 것이라, 그림 없이 글자만 쓴다. (2026-09-16)
 // 같은 글을 달력 파일(.ics)의 하루 설명으로도 쓴다 — 두 곳의 내용이 갈라지지 않게 한 군데서만 만든다.
 import { addDays, format, parseISO } from "date-fns";
-import { CATEGORY_LABEL, type TransitLeg, type TravelDay, type TravelPlan } from "../types";
+import { CATEGORY_LABEL, type TransitLeg, type TravelDay, type TravelPlace, type TravelPlan } from "../types";
 import { dayLabel, nightsLabel } from "./plan";
 
 // 이동 수단별 표시 (아이콘 + 이름)
@@ -37,12 +37,16 @@ function buildDayLines(day: TravelDay): string[] {
   // 다만 실제로 가는 순서는 1 → 2 → … → 숙소(복귀)라, 숙소 줄 밑에는 이동 줄을 붙이지 않는다.
   // (예전 저장본에 숙소의 transitToNext 가 남아 있어도 읽지 않는다 — 2026-09-16)
   const stay = day.places.find((place) => place.isStay);
-  if (stay) lines.push(`🏨 숙소: ${stay.name}`);
+  if (stay) {
+    lines.push(`🏨 숙소: ${stay.name}`);
+    lines.push(...stepLines(stay));
+  }
 
   const rest = day.places.filter((place) => !place.isStay);
   rest.forEach((place, i) => {
     const memo = place.memo?.trim() ? ` (메모: ${place.memo.trim()})` : "";
     lines.push(`${i + 1}. ${CATEGORY_LABEL[place.category]} · ${place.name}${memo}`);
+    lines.push(...stepLines(place));
     if (!place.transitToNext) return;
     // 마지막 장소의 이동 줄은 "숙소로 돌아가는 구간"이다. 숙소를 동선에서 뺀 날에는 적지 않는다.
     if (i < rest.length - 1) {
@@ -53,6 +57,11 @@ function buildDayLines(day: TravelDay): string[] {
   });
 
   return lines;
+}
+
+/** 장소 안의 세부 일정 — 장소 줄 아래에 들여쓴 줄로. 없으면 줄을 만들지 않는다 (2026-09-18) */
+function stepLines(place: TravelPlace): string[] {
+  return (place.steps ?? []).map((step) => `   · ${step.time ? `${step.time} ` : ""}${step.text}`);
 }
 
 function transitLine(leg: TransitLeg): string {
