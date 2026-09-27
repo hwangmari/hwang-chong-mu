@@ -37,6 +37,17 @@ import {
   StTopGrid,
   StTopRight,
   StDateBlock,
+  StCol,
+  StTwoCol,
+  StRecordList,
+  StRecordRow,
+  StRecordMain,
+  StRecordTop,
+  StRecordDate,
+  StRecordActions,
+  StEditBtn,
+  StDelBtn,
+  StStatGrid,
 } from "../components/WorkoutSharedStyles";
 import DatePickerCalendar from "../components/DatePickerCalendar";
 import { toNumberLoose } from "@/utils/number";
@@ -202,187 +213,208 @@ export default function ActivityPage() {
         </StSubtitle>
       </StHeader>
 
-      <StCard>
-        <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
+      <StTwoCol>
+        <StCol>
+          <StCard>
+            <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
 
-        <StLabel>
-          종목
-          <StInput
-            ref={nameInputRef}
-            type="text"
-            placeholder="예) 자전거, 등산, 테니스"
-            value={form.activityName}
-            onChange={(e) => setForm({ ...form, activityName: e.target.value })}
-          />
-        </StLabel>
+            <StLabel>
+              종목
+              <StInput
+                ref={nameInputRef}
+                type="text"
+                placeholder="예) 자전거, 등산, 테니스"
+                value={form.activityName}
+                onChange={(e) =>
+                  setForm({ ...form, activityName: e.target.value })
+                }
+              />
+            </StLabel>
 
-        <StPresetRow>
-          {ACTIVITY_PRESETS.map((name) => (
-            <StPresetChip
-              key={name}
-              type="button"
-              $active={form.activityName === name}
-              onClick={() => setForm({ ...form, activityName: name })}
-            >
-              {name}
-            </StPresetChip>
-          ))}
-          <StPresetChip
-            type="button"
-            $active={false}
-            onClick={() => {
-              setShowCustomInput(true);
-              setForm({ ...form, activityName: "" });
-              // 상태 반영 뒤 포커스 (같은 틱에 하면 값 비우기와 겹쳐 커서가 안 갈 수 있음)
-              window.setTimeout(() => nameInputRef.current?.focus(), 0);
-            }}
-          >
-            + 직접 입력
-          </StPresetChip>
-        </StPresetRow>
-        {showCustomInput ? (
-          <StCustomHint>
-            위 입력 칸에 원하는 종목을 자유롭게 적어주세요 :)
-          </StCustomHint>
-        ) : null}
+            <StPresetRow>
+              {ACTIVITY_PRESETS.map((name) => (
+                <StPresetChip
+                  key={name}
+                  type="button"
+                  $active={form.activityName === name}
+                  onClick={() => setForm({ ...form, activityName: name })}
+                >
+                  {name}
+                </StPresetChip>
+              ))}
+              <StPresetChip
+                type="button"
+                $active={false}
+                onClick={() => {
+                  setShowCustomInput(true);
+                  setForm({ ...form, activityName: "" });
+                  // 상태 반영 뒤 포커스 (같은 틱에 하면 값 비우기와 겹쳐 커서가 안 갈 수 있음)
+                  window.setTimeout(() => nameInputRef.current?.focus(), 0);
+                }}
+              >
+                + 직접 입력
+              </StPresetChip>
+            </StPresetRow>
+            {showCustomInput ? (
+              <StCustomHint>
+                위 입력 칸에 원하는 종목을 자유롭게 적어주세요 :)
+              </StCustomHint>
+            ) : null}
 
-        <StTopGrid>
-          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-          <StDateBlock>
-            날짜
-            <DatePickerCalendar
-              value={form.date}
-              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-              markedDates={recordedDates}
-            />
-          </StDateBlock>
-          <StTopRight>
-            <StRow>
-              <StLabel>
-                운동 시간 (분)
-                <StInput
-                  type="text"
-                  placeholder="예) 60 또는 1:30"
-                  value={form.durationMin}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      durationMin: e.target.value.replace(/[^\d:]/g, ""),
-                    })
+            <StTopGrid>
+              {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+              <StDateBlock>
+                날짜
+                <DatePickerCalendar
+                  value={form.date}
+                  onChange={(iso) =>
+                    setForm((prev) => ({ ...prev, date: iso }))
                   }
+                  markedDates={recordedDates}
                 />
-              </StLabel>
-            </StRow>
+              </StDateBlock>
+              <StTopRight>
+                <StRow>
+                  <StLabel>
+                    운동 시간 (분)
+                    <StInput
+                      type="text"
+                      placeholder="예) 60 또는 1:30"
+                      value={form.durationMin}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          durationMin: e.target.value.replace(/[^\d:]/g, ""),
+                        })
+                      }
+                    />
+                  </StLabel>
+                </StRow>
 
-            <StRow>
-              <StLabel>
-                총 칼로리 (kcal)
-                <StInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="선택"
-                  value={form.calories}
-                  onChange={(e) =>
-                    setForm({ ...form, calories: e.target.value })
-                  }
-                />
-              </StLabel>
-              <StLabel>
-                평균 심박 (bpm)
-                <StInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="선택"
-                  value={form.avgHeartRate}
-                  onChange={(e) =>
-                    setForm({ ...form, avgHeartRate: e.target.value })
-                  }
-                />
-              </StLabel>
-            </StRow>
-          </StTopRight>
-        </StTopGrid>
+                <StRow>
+                  <StLabel>
+                    총 칼로리 (kcal)
+                    <StInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="선택"
+                      value={form.calories}
+                      onChange={(e) =>
+                        setForm({ ...form, calories: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                  <StLabel>
+                    평균 심박 (bpm)
+                    <StInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="선택"
+                      value={form.avgHeartRate}
+                      onChange={(e) =>
+                        setForm({ ...form, avgHeartRate: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                </StRow>
+              </StTopRight>
+            </StTopGrid>
 
-        <StLabel>
-          메모
-          <StTextarea
-            rows={2}
-            placeholder="코스·컨디션·같이 한 사람 등"
-            value={form.memo}
-            onChange={(e) => setForm({ ...form, memo: e.target.value })}
-          />
-        </StLabel>
+            <StLabel>
+              메모
+              <StTextarea
+                rows={2}
+                placeholder="코스·컨디션·같이 한 사람 등"
+                value={form.memo}
+                onChange={(e) => setForm({ ...form, memo: e.target.value })}
+              />
+            </StLabel>
 
-        {error ? <StError>{error}</StError> : null}
+            {error ? <StError>{error}</StError> : null}
 
-        <StActions>
-          {form.id ? (
-            <StGhostButton type="button" onClick={() => resetForm()}>
-              취소
-            </StGhostButton>
-          ) : null}
-          <StPrimary type="button" onClick={submit} disabled={busy}>
-            {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
-          </StPrimary>
-        </StActions>
-      </StCard>
-
-      <StCard>
-        <StCardTitle>최근 기록</StCardTitle>
-        {loading ? (
-          <StEmpty>불러오는 중...</StEmpty>
-        ) : records.length === 0 ? (
-          <StEmpty>아직 활동 기록이 없어요. 오늘 뭐 했는지 남겨보세요!</StEmpty>
-        ) : (
-          <MonthAccordion
-            groups={monthGroups}
-            expandedMonths={expandedMonths}
-            onToggle={toggleMonth}
-            renderItems={(items) => (
-              <StRecordList>
-                {items.map((record) => (
-                  <StRecordRow key={record.id}>
-                    <StRecordMain>
-                      <StRecordTop>
-                        <StRecordTag>{record.activityName}</StRecordTag>
-                        <StRecordDate>{record.date}</StRecordDate>
-                      </StRecordTop>
-                      <StRecordMeta>
-                        {record.durationMin ? (
-                          <span>{formatDurationMin(record.durationMin)}</span>
-                        ) : null}
-                        {record.calories ? (
-                          <span>{record.calories.toLocaleString()} kcal</span>
-                        ) : null}
-                        {record.avgHeartRate ? (
-                          <span>{record.avgHeartRate} bpm</span>
-                        ) : null}
-                      </StRecordMeta>
-                      {record.memo ? (
-                        <StRecordMemo>{record.memo}</StRecordMemo>
-                      ) : null}
-                    </StRecordMain>
-                    <StRecordActions>
-                      <StEditBtn
-                        type="button"
-                        onClick={() => editRecord(record)}
-                      >
-                        수정
-                      </StEditBtn>
-                      <StDelBtn
-                        type="button"
-                        onClick={() => removeRecord(record.id)}
-                      >
-                        삭제
-                      </StDelBtn>
-                    </StRecordActions>
-                  </StRecordRow>
-                ))}
-              </StRecordList>
+            <StActions>
+              {form.id ? (
+                <StGhostButton type="button" onClick={() => resetForm()}>
+                  취소
+                </StGhostButton>
+              ) : null}
+              <StPrimary type="button" onClick={submit} disabled={busy}>
+                {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
+              </StPrimary>
+            </StActions>
+          </StCard>
+        </StCol>
+        <StCol>
+          <StCard>
+            <StCardTitle>최근 기록</StCardTitle>
+            {loading ? (
+              <StEmpty>불러오는 중...</StEmpty>
+            ) : records.length === 0 ? (
+              <StEmpty>
+                아직 활동 기록이 없어요. 오늘 뭐 했는지 남겨보세요!
+              </StEmpty>
+            ) : (
+              <MonthAccordion
+                groups={monthGroups}
+                expandedMonths={expandedMonths}
+                onToggle={toggleMonth}
+                renderItems={(items) => (
+                  <StRecordList>
+                    {items.map((record) => (
+                      <StRecordRow key={record.id}>
+                        <StRecordMain>
+                          <StRecordTop>
+                            <StRecordTag>{record.activityName}</StRecordTag>
+                            <StRecordDate>{record.date}</StRecordDate>
+                          </StRecordTop>
+                          {/* 시간 | 칼로리 | 심박 — 칸 폭 고정이라 행끼리 세로줄이 맞는다 */}
+                          <StStatGrid
+                            $cols="5.6rem 5.6rem 4.6rem"
+                            $colsNarrow="repeat(3, minmax(0, 1fr))"
+                          >
+                            <span>
+                              {record.durationMin
+                                ? formatDurationMin(record.durationMin)
+                                : ""}
+                            </span>
+                            <span>
+                              {record.calories
+                                ? `${record.calories.toLocaleString()} kcal`
+                                : ""}
+                            </span>
+                            <span>
+                              {record.avgHeartRate
+                                ? `${record.avgHeartRate} bpm`
+                                : ""}
+                            </span>
+                          </StStatGrid>
+                          {record.memo ? (
+                            <StRecordMemo>{record.memo}</StRecordMemo>
+                          ) : null}
+                        </StRecordMain>
+                        <StRecordActions>
+                          <StEditBtn
+                            type="button"
+                            onClick={() => editRecord(record)}
+                          >
+                            수정
+                          </StEditBtn>
+                          <StDelBtn
+                            type="button"
+                            onClick={() => removeRecord(record.id)}
+                          >
+                            삭제
+                          </StDelBtn>
+                        </StRecordActions>
+                      </StRecordRow>
+                    ))}
+                  </StRecordList>
+                )}
+              />
             )}
-          />
-        )}
-      </StCard>
+          </StCard>
+        </StCol>
+      </StTwoCol>
     </StPage>
   );
 }
@@ -482,34 +514,6 @@ const StPrimary = styled.button`
   }
 `;
 
-const StRecordList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-`;
-
-const StRecordRow = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.9rem;
-`;
-
-const StRecordMain = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-`;
-
-const StRecordTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
 const StRecordTag = styled.span`
   font-size: 0.78rem;
   font-weight: 800;
@@ -519,45 +523,3 @@ const StRecordTag = styled.span`
   border-radius: 0.5rem;
 `;
 
-const StRecordDate = styled.span`
-  font-size: 0.78rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  font-weight: 700;
-`;
-
-const StRecordMeta = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  font-size: 0.84rem;
-  color: ${({ theme }) => theme.colors.gray700};
-  font-weight: 700;
-`;
-
-const StRecordActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-`;
-
-const StEditBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-const StDelBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.rose200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.rose600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-`;

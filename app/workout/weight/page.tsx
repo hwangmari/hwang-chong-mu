@@ -42,6 +42,8 @@ import {
   StTopGrid,
   StTopRight,
   StDateBlock,
+  StCol,
+  StTwoCol,
 } from "../components/WorkoutSharedStyles";
 import {
   StCardHead,
@@ -210,7 +212,8 @@ export default function WeightPage() {
     });
     // 루틴이 기억 안 나는 날: 운동을 비워 두고 부위·시간·메모만 있어도 "운동함"으로 저장한다 (2026-09-11)
     // 부위는 기본값(가슴)이 늘 차 있으니 근거가 못 된다 — 시간이나 메모가 있어야 "운동함"으로 친다 (리뷰 2026-09-15)
-    const hasSimpleInfo = parseMinutesInput(form.durationMin) > 0 || Boolean(form.memo.trim());
+    const hasSimpleInfo =
+      parseMinutesInput(form.durationMin) > 0 || Boolean(form.memo.trim());
     if (filled.length === 0 && !hasSimpleInfo) {
       setError(
         "운동을 적거나, 세부가 기억 안 나면 시간·메모 중 하나만이라도 넣어 주세요.",
@@ -566,178 +569,189 @@ export default function WeightPage() {
         <StSubtitle>부위별 볼륨과 1RM으로 성장 추이를 확인해요.</StSubtitle>
       </StHeader>
 
-      <StCard>
-        <StCardHead>
-          <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
-        </StCardHead>
+      <StTwoCol>
+        <StCol>
+          <StCard>
+            <StCardHead>
+              <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
+            </StCardHead>
 
-        <StTopGrid>
-          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-          <StDateBlock>
-            날짜
-            <DatePickerCalendar
-              value={form.date}
-              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-              markedDates={recordedDates}
+            <StTopGrid>
+              {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+              <StDateBlock>
+                날짜
+                <DatePickerCalendar
+                  value={form.date}
+                  onChange={(iso) =>
+                    setForm((prev) => ({ ...prev, date: iso }))
+                  }
+                  markedDates={recordedDates}
+                />
+              </StDateBlock>
+
+              <StTopRight>
+                <StRow $cols={2}>
+                  <StLabel>
+                    부위
+                    <StSelect
+                      value={form.bodyPart}
+                      onChange={(e) =>
+                        handleBodyPartChange(e.target.value as GymBodyPart)
+                      }
+                    >
+                      {Object.entries(GYM_BODY_PART_LABEL).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </StSelect>
+                  </StLabel>
+                  <StLabel>
+                    운동 시간 (분)
+                    <StInput
+                      type="text"
+                      placeholder="예) 60 또는 1:30"
+                      value={form.durationMin}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          durationMin: e.target.value.replace(/[^\d:]/g, ""),
+                        })
+                      }
+                    />
+                  </StLabel>
+                  <StLabel>
+                    칼로리 (kcal)
+                    <StInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="선택"
+                      value={form.calories}
+                      onChange={(e) =>
+                        setForm({ ...form, calories: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                  <StLabel>
+                    심박 (bpm)
+                    <StInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="선택"
+                      value={form.avgHeartRate}
+                      onChange={(e) =>
+                        setForm({ ...form, avgHeartRate: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                </StRow>
+              </StTopRight>
+            </StTopGrid>
+
+            {isFullbody ? (
+              <StFullbodyHint>
+                전신은 무게·세트 없이 한 운동을 적어요. 스텝·폼롤러처럼 분할이
+                아닌 활동을 자유롭게 추가하세요.
+              </StFullbodyHint>
+            ) : null}
+
+            <ExerciseEditor
+              exercises={form.exercises}
+              isFullbody={isFullbody}
+              cloneCounts={cloneCounts}
+              setCloneCounts={setCloneCounts}
+              onAddExercise={addExercise}
+              onRemoveExercise={removeExercise}
+              onUpdateExercise={updateExercise}
+              onMoveExercise={moveExercise}
+              onAddSet={addSet}
+              onCloneLastSet={cloneLastSet}
+              onUpdateSet={updateSet}
+              onRemoveSet={removeSet}
+              onAddDropSet={addDropSet}
+              onUpdateDropSet={updateDropSet}
+              onRemoveDropSet={removeDropSet}
             />
-          </StDateBlock>
 
-          <StTopRight>
-            <StRow $cols={2}>
-              <StLabel>
-                부위
-                <StSelect
-                  value={form.bodyPart}
-                  onChange={(e) =>
-                    handleBodyPartChange(e.target.value as GymBodyPart)
-                  }
-                >
-                  {Object.entries(GYM_BODY_PART_LABEL).map(([v, l]) => (
-                    <option key={v} value={v}>
-                      {l}
-                    </option>
-                  ))}
-                </StSelect>
-              </StLabel>
-              <StLabel>
-                운동 시간 (분)
-                <StInput
-                  type="text"
-                  placeholder="예) 60 또는 1:30"
-                  value={form.durationMin}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      durationMin: e.target.value.replace(/[^\d:]/g, ""),
-                    })
-                  }
-                />
-              </StLabel>
-              <StLabel>
-                칼로리 (kcal)
-                <StInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="선택"
-                  value={form.calories}
-                  onChange={(e) =>
-                    setForm({ ...form, calories: e.target.value })
-                  }
-                />
-              </StLabel>
-              <StLabel>
-                심박 (bpm)
-                <StInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="선택"
-                  value={form.avgHeartRate}
-                  onChange={(e) =>
-                    setForm({ ...form, avgHeartRate: e.target.value })
-                  }
-                />
-              </StLabel>
-            </StRow>
-          </StTopRight>
-        </StTopGrid>
+            <StLabel>
+              메모
+              <StTextarea
+                rows={2}
+                placeholder="컨디션, 집중 부위, 다음에 시도할 것"
+                value={form.memo}
+                onChange={(e) => setForm({ ...form, memo: e.target.value })}
+              />
+            </StLabel>
 
-        {isFullbody ? (
-          <StFullbodyHint>
-            전신은 무게·세트 없이 한 운동을 적어요. 스텝·폼롤러처럼 분할이 아닌
-            활동을 자유롭게 추가하세요.
-          </StFullbodyHint>
-        ) : null}
+            {error ? <StError>{error}</StError> : null}
 
-        <ExerciseEditor
-          exercises={form.exercises}
-          isFullbody={isFullbody}
-          cloneCounts={cloneCounts}
-          setCloneCounts={setCloneCounts}
-          onAddExercise={addExercise}
-          onRemoveExercise={removeExercise}
-          onUpdateExercise={updateExercise}
-          onMoveExercise={moveExercise}
-          onAddSet={addSet}
-          onCloneLastSet={cloneLastSet}
-          onUpdateSet={updateSet}
-          onRemoveSet={removeSet}
-          onAddDropSet={addDropSet}
-          onUpdateDropSet={updateDropSet}
-          onRemoveDropSet={removeDropSet}
-        />
+            <StActions>
+              <StSimpleHint>
+                루틴이 기억 안 나면 운동은 비워 두고 부위·시간만 적어도
+                저장돼요.
+              </StSimpleHint>
+              {form.id ? (
+                <StGhostButton type="button" onClick={resetForm}>
+                  취소
+                </StGhostButton>
+              ) : null}
+              <StPrimary type="button" onClick={submit} disabled={busy}>
+                {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
+              </StPrimary>
+            </StActions>
 
-        <StLabel>
-          메모
-          <StTextarea
-            rows={2}
-            placeholder="컨디션, 집중 부위, 다음에 시도할 것"
-            value={form.memo}
-            onChange={(e) => setForm({ ...form, memo: e.target.value })}
+            {/* 내 루틴은 저장 버튼 바로 아래, 총 볼륨 설명보다 위 — 저장·불러오기를 설명 글보다 먼저 (사용자 요청 2026-09-22) */}
+            <RoutineSection
+              routines={routines}
+              busy={busy}
+              onSave={saveCurrentAsRoutine}
+              onLoad={loadRoutine}
+              onRemove={removeRoutine}
+            />
+
+            {/* 총 볼륨 설명은 맨 아래 (사용자 요청 2026-09-11, 루틴 아래로 2026-09-22) */}
+            {isFullbody ? null : (
+              <StVolumeBox>
+                <StVolumeHint>
+                  총 볼륨 <b>{Math.round(formVolume).toLocaleString()} kg</b>
+                </StVolumeHint>
+                <StVolumeHelp>
+                  💡 <b>총 볼륨 = 무게 × 횟수</b>를 모든 세트에 대해 합한
+                  값이에요. 무게를 못 올리더라도 세트·횟수를 늘리면 총 볼륨이
+                  올라가서 성장 지표로 쓸 수 있어요. 워밍업·드랍셋도 전부
+                  포함돼요.
+                  <br />
+                  🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
+                  <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
+                  자동으로 두 배 계산돼요.
+                  <br />
+                  🏋️ 바벨 운동은 <b>
+                    빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg
+                  </b>{" "}
+                  토글을 켜면 원판 무게만 입력해도 빈 바벨{" "}
+                  {DEFAULT_BARBELL_WEIGHT_KG}kg가 자동 합산돼요. <b>양쪽 ×2</b>
+                  와 같이 쓰면 한쪽 원판 무게만 입력해도 <b>원판 × 2 + 빈 바</b>
+                  로 계산돼요. (예: 원판 10kg × 2 + 빈 바 20kg = <b>40kg</b>)
+                </StVolumeHelp>
+              </StVolumeBox>
+            )}
+          </StCard>
+        </StCol>
+        <StCol>
+          <RecordHistory
+            loading={loading}
+            records={records}
+            monthGroups={monthGroups}
+            expandedMonths={expandedMonths}
+            onToggleMonth={toggleMonth}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
+            prMap={prMap}
+            onEdit={editRecord}
+            onRemove={removeRecord}
           />
-        </StLabel>
-
-        {error ? <StError>{error}</StError> : null}
-
-        <StActions>
-          <StSimpleHint>
-            루틴이 기억 안 나면 운동은 비워 두고 부위·시간만 적어도 저장돼요.
-          </StSimpleHint>
-          {form.id ? (
-            <StGhostButton type="button" onClick={resetForm}>
-              취소
-            </StGhostButton>
-          ) : null}
-          <StPrimary type="button" onClick={submit} disabled={busy}>
-            {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
-          </StPrimary>
-        </StActions>
-
-        {/* 총 볼륨 설명은 저장 버튼 아래로 (사용자 요청 2026-09-11) */}
-        {isFullbody ? null : (
-          <StVolumeBox>
-            <StVolumeHint>
-              총 볼륨 <b>{Math.round(formVolume).toLocaleString()} kg</b>
-            </StVolumeHint>
-            <StVolumeHelp>
-              💡 <b>총 볼륨 = 무게 × 횟수</b>를 모든 세트에 대해 합한 값이에요.
-              무게를 못 올리더라도 세트·횟수를 늘리면 총 볼륨이 올라가서 성장
-              지표로 쓸 수 있어요. 워밍업·드랍셋도 전부 포함돼요.
-              <br />
-              🏋️ 덤벨/레그프레스처럼 양쪽에 같은 무게가 걸리면 운동마다{" "}
-              <b>양쪽 ×2</b> 토글을 켜세요. 한쪽 무게 그대로 입력해도 볼륨이
-              자동으로 두 배 계산돼요.
-              <br />
-              🏋️ 바벨 운동은 <b>빈 바 +{DEFAULT_BARBELL_WEIGHT_KG}kg</b> 토글을
-              켜면 원판 무게만 입력해도 빈 바벨 {DEFAULT_BARBELL_WEIGHT_KG}kg가
-              자동 합산돼요. <b>양쪽 ×2</b>와 같이 쓰면 한쪽 원판 무게만
-              입력해도 <b>원판 × 2 + 빈 바</b>로 계산돼요. (예: 원판 10kg × 2 +
-              빈 바 20kg = <b>40kg</b>)
-            </StVolumeHelp>
-          </StVolumeBox>
-        )}
-
-        {/* 내 루틴은 카드 맨 아래로 — 입력을 마친 뒤 저장하거나, 다음에 불러오는 흐름 (사용자 요청 2026-09-11) */}
-        <RoutineSection
-          routines={routines}
-          busy={busy}
-          onSave={saveCurrentAsRoutine}
-          onLoad={loadRoutine}
-          onRemove={removeRoutine}
-        />
-      </StCard>
-
-      <RecordHistory
-        loading={loading}
-        records={records}
-        monthGroups={monthGroups}
-        expandedMonths={expandedMonths}
-        onToggleMonth={toggleMonth}
-        expandedId={expandedId}
-        setExpandedId={setExpandedId}
-        prMap={prMap}
-        onEdit={editRecord}
-        onRemove={removeRecord}
-      />
+        </StCol>
+      </StTwoCol>
     </StPage>
   );
 }

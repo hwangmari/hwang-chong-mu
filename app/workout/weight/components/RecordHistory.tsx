@@ -18,10 +18,13 @@ import {
   StCardTitle,
   StEmpty,
   StRecordMemo,
+  StStatGrid,
+  StRecordList,
+  StRecordDate,
+  StEditBtn,
+  StDelBtn,
 } from "../../components/WorkoutSharedStyles";
 import {
-  StDelBtn,
-  StEditBtn,
   StExBarTag,
   StExEquipTag,
   StExName,
@@ -32,12 +35,9 @@ import {
   StExpandedActions,
   StPRBadge,
   StRecordCard,
-  StRecordDate,
   StRecordHead,
-  StRecordList,
-  StRecordMeta,
   StRecordTag,
-  StRecordTop,
+  StRecordCardHead,
   StSetChip,
   StSetList,
   StSetType,
@@ -89,7 +89,7 @@ export function RecordHistory({
                 const expanded = expandedId === record.id;
                 return (
               <StRecordCard key={record.id}>
-                <StRecordTop
+                <StRecordCardHead
                   onClick={() =>
                     setExpandedId(expanded ? null : record.id)
                   }
@@ -102,26 +102,34 @@ export function RecordHistory({
                     </StRecordTag>
                     <StRecordDate>{record.date}</StRecordDate>
                   </StRecordHead>
-                  <StRecordMeta>
+                  {/* 운동 수 | 볼륨 | 시간 | 칼로리 | 심박 — 칸 폭 고정이라 행끼리 세로줄이 맞는다 */}
+                  <StStatGrid
+                    $cols="4.6rem 5.6rem 5.6rem 5.2rem 4.4rem"
+                    $colsNarrow="repeat(3, minmax(0, 1fr))"
+                  >
                     <span>
                       <b>{record.exercises.length}</b>개 운동
                     </span>
-                    {volume > 0 ? (
-                      <span>
-                        <b>{Math.round(volume).toLocaleString()}</b> kg
-                      </span>
-                    ) : null}
-                    {record.durationMin ? (
-                      <span>{formatDurationMin(record.durationMin)}</span>
-                    ) : null}
-                    {record.calories ? (
-                      <span>{record.calories} kcal</span>
-                    ) : null}
-                    {record.avgHeartRate ? (
-                      <span>{record.avgHeartRate} bpm</span>
-                    ) : null}
-                  </StRecordMeta>
-                </StRecordTop>
+                    <span>
+                      {volume > 0 ? (
+                        <>
+                          <b>{Math.round(volume).toLocaleString()}</b> kg
+                        </>
+                      ) : null}
+                    </span>
+                    <span>
+                      {record.durationMin
+                        ? formatDurationMin(record.durationMin)
+                        : null}
+                    </span>
+                    <span>
+                      {record.calories ? `${record.calories} kcal` : null}
+                    </span>
+                    <span>
+                      {record.avgHeartRate ? `${record.avgHeartRate} bpm` : null}
+                    </span>
+                  </StStatGrid>
+                </StRecordCardHead>
 
                 {expanded ? (
                   <StExpanded>

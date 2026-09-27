@@ -23,7 +23,8 @@ const StWrap = styled.div`
 `;
 
 const StContent = styled.div`
-  max-width: 720px;
+  /* 운동기록은 PC 창 폭을 넓게 쓴다 — 본문도 사이트 최대 폭(1024)까지 (주인 요청 2026-09-22) */
+  max-width: ${({ theme }) => theme.layout.maxWidth};
   margin: 0 auto;
   padding: 1.25rem 1rem 4rem;
   min-width: 0;

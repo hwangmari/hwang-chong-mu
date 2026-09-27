@@ -643,19 +643,14 @@ export const StPrimary = styled.button`
   }
 `;
 
-export const StRecordList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-`;
-
 export const StRecordCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
   border-radius: 0.9rem;
   overflow: hidden;
 `;
 
-export const StRecordTop = styled.div`
+/* 공용 StRecordTag 줄(StRecordTop)과 다른 물건 — 눌러서 펼치는 기록 카드의 머리 전체다 */
+export const StRecordCardHead = styled.div`
   padding: 0.8rem;
   display: flex;
   flex-direction: column;
@@ -680,24 +675,6 @@ export const StRecordTag = styled.span`
   background: ${({ theme }) => theme.colors.orange50};
   padding: 0.22rem 0.55rem;
   border-radius: 0.5rem;
-`;
-
-export const StRecordDate = styled.span`
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.gray400};
-`;
-
-export const StRecordMeta = styled.div`
-  display: flex;
-  gap: 1rem;
-  font-size: 0.82rem;
-  color: ${({ theme }) => theme.colors.gray600};
-
-  b {
-    color: ${({ theme }) => theme.colors.gray900};
-    font-weight: 900;
-  }
 `;
 
 export const StExpanded = styled.div`
@@ -790,24 +767,3 @@ export const StExpandedActions = styled.div`
   justify-content: flex-end;
 `;
 
-export const StEditBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  padding: 0.35rem 0.9rem;
-  border-radius: 0.5rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-export const StDelBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.rose200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.rose600};
-  padding: 0.35rem 0.9rem;
-  border-radius: 0.5rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-`;

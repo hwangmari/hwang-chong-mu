@@ -16,10 +16,7 @@ import {
   parseDurationInput,
   todayISO,
 } from "../helpers";
-import {
-  WorkoutIntervalDetailChart,
-  WorkoutPaceTrendByTypeChart,
-} from "../components/WorkoutCharts";
+import { WorkoutIntervalDetailChart } from "../components/WorkoutCharts";
 import {
   RUNNING_ENVIRONMENT_LABEL,
   RUNNING_TYPE_LABEL,
@@ -49,13 +46,23 @@ import {
   StTopGrid,
   StTopRight,
   StDateBlock,
+  StCol,
+  StTwoCol,
+  StRecordList,
+  StRecordRow,
+  StRecordMain,
+  StRecordTop,
+  StRecordDate,
+  StRecordActions,
+  StEditBtn,
+  StDelBtn,
+  StStatGrid,
+  StStatFull,
 } from "../components/WorkoutSharedStyles";
 import {
   StAddButton,
   StCardHead,
-  StDelBtn,
   StDelta,
-  StEditBtn,
   StEnvButton,
   StEnvTag,
   StEnvToggle,
@@ -72,18 +79,10 @@ import {
   StMiniInput,
   StPaceHint,
   StPrimary,
-  StRecordActions,
-  StRecordDate,
-  StRecordList,
-  StRecordMain,
-  StRecordRow,
-  StRecordStats,
   StRecordTag,
-  StRecordTop,
   StRemoveInterval,
   StRow,
   StSelect,
-  StStat,
   StTextarea,
 } from "./page.styles";
 import DatePickerCalendar from "../components/DatePickerCalendar";
@@ -335,360 +334,401 @@ export default function RunPage() {
         <StSubtitle>오늘의 런을 남기고 지난 페이스와 비교해 보세요.</StSubtitle>
       </StHeader>
 
-      <StCard>
-        <StCardHead>
-          <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
-        </StCardHead>
+      <StTwoCol>
+        <StCol>
+          <StCard>
+            <StCardHead>
+              <StCardTitle>{form.id ? "기록 수정" : "새 기록"}</StCardTitle>
+            </StCardHead>
 
-        <StEnvToggle>
-          {(
-            Object.entries(RUNNING_ENVIRONMENT_LABEL) as [
-              RunningEnvironment,
-              string,
-            ][]
-          ).map(([value, label]) => (
-            <StEnvButton
-              key={value}
-              type="button"
-              $active={form.environment === value}
-              onClick={() => setForm({ ...form, environment: value })}
-            >
-              {value === "outdoor" ? "🌳 " : "🏃‍♂️ "}
-              {label}
-            </StEnvButton>
-          ))}
-        </StEnvToggle>
-
-        <StTopGrid>
-          {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
-          <StDateBlock>
-            날짜
-            <DatePickerCalendar
-              value={form.date}
-              onChange={(iso) => setForm((prev) => ({ ...prev, date: iso }))}
-              markedDates={recordedDates}
-            />
-          </StDateBlock>
-          <StTopRight>
-            <StRow $cols={1}>
-              <StLabel>
-                운동 종류
-                <StSelect
-                  value={form.runType}
-                  onChange={(e) =>
-                    setForm({ ...form, runType: e.target.value as RunningType })
+            <StTopGrid>
+              {/* 날짜: 입력 칸 없이 한 주 띠(📅 달력으로 달 전체)만 — 점은 이미 기록이 있는 날 (2026-09-11) */}
+              <StDateBlock>
+                날짜
+                <DatePickerCalendar
+                  value={form.date}
+                  onChange={(iso) =>
+                    setForm((prev) => ({ ...prev, date: iso }))
                   }
+                  markedDates={recordedDates}
+                />
+              </StDateBlock>
+              {/* 웨이트 기록과 같은 모양: 왼쪽 날짜 → 오른쪽 장소(실외/실내)·종류·거리·시간 (주인 요청 2026-09-22) */}
+              <StTopRight>
+                <StRow $cols={2}>
+                  <StLabel as="div">
+                    장소
+                    <StEnvToggle role="group" aria-label="장소">
+                      {(
+                        Object.entries(RUNNING_ENVIRONMENT_LABEL) as [
+                          RunningEnvironment,
+                          string,
+                        ][]
+                      ).map(([value, label]) => (
+                        <StEnvButton
+                          key={value}
+                          type="button"
+                          title={label}
+                          aria-pressed={form.environment === value}
+                          $active={form.environment === value}
+                          onClick={() =>
+                            setForm({ ...form, environment: value })
+                          }
+                        >
+                          {value === "outdoor" ? "🌳 " : "🏃‍♂️ "}
+                          {/* 반 칸이라 괄호 설명(러닝머신)은 뺀다 — 버튼 제목에 전체 이름 */}
+                          {label.replace(/\s*\(.*\)$/, "")}
+                        </StEnvButton>
+                      ))}
+                    </StEnvToggle>
+                  </StLabel>
+                  <StLabel>
+                    운동 종류
+                    <StSelect
+                      value={form.runType}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          runType: e.target.value as RunningType,
+                        })
+                      }
+                    >
+                      {Object.entries(RUNNING_TYPE_LABEL).map(
+                        ([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </StSelect>
+                  </StLabel>
+                </StRow>
+
+                <StRow $cols={2}>
+                  <StLabel>
+                    거리 (km)
+                    <StInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="예) 5.2"
+                      value={form.distanceKm}
+                      onChange={(e) =>
+                        setForm({ ...form, distanceKm: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                  <StLabel>
+                    시간 (분:초 또는 시:분:초)
+                    <StInput
+                      type="text"
+                      placeholder="HH:MM:SS"
+                      value={form.durationInput}
+                      onChange={(e) =>
+                        setForm({ ...form, durationInput: e.target.value })
+                      }
+                    />
+                  </StLabel>
+                </StRow>
+              </StTopRight>
+            </StTopGrid>
+
+            <StPaceHint>
+              평균 페이스: <b>{formatPace(computedPace)}</b>
+            </StPaceHint>
+
+            <StRow $cols={3}>
+              <StLabel>
+                평균 심박 (bpm)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="예) 152"
+                  value={form.avgHeartRate}
+                  onChange={(e) =>
+                    setForm({ ...form, avgHeartRate: e.target.value })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                케이던스 (spm)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="예) 172"
+                  value={form.avgCadence}
+                  onChange={(e) =>
+                    setForm({ ...form, avgCadence: e.target.value })
+                  }
+                />
+              </StLabel>
+              <StLabel>
+                칼로리 (kcal)
+                <StInput
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="예) 340"
+                  value={form.calories}
+                  onChange={(e) =>
+                    setForm({ ...form, calories: e.target.value })
+                  }
+                />
+              </StLabel>
+            </StRow>
+
+            <StIntervals>
+              <StIntervalsHead>
+                <span>
+                  구간(인터벌){" "}
+                  <StIntervalsHeadHint>
+                    {form.environment === "indoor"
+                      ? "속도 · 경사 · 시간"
+                      : "거리 · 페이스"}
+                  </StIntervalsHeadHint>
+                </span>
+                <StAddButton type="button" onClick={addInterval}>
+                  + 구간 추가
+                </StAddButton>
+              </StIntervalsHead>
+              {form.intervals.map((it, idx) => (
+                <StIntervalRow
+                  key={it.id}
+                  $indoor={form.environment === "indoor"}
                 >
-                  {Object.entries(RUNNING_TYPE_LABEL).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </StSelect>
-              </StLabel>
-            </StRow>
+                  <StIntervalIndex>{idx + 1}</StIntervalIndex>
+                  {form.environment === "indoor" ? (
+                    <>
+                      <StMiniInput
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="속도 km/h"
+                        value={it.speedKmh ?? ""}
+                        onChange={(e) =>
+                          updateInterval(it.id, {
+                            speedKmh: toNumberOrUndefined(e.target.value),
+                          })
+                        }
+                      />
+                      <StMiniInput
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="경사 %"
+                        value={it.inclineLevel ?? ""}
+                        onChange={(e) =>
+                          updateInterval(it.id, {
+                            inclineLevel: toNumberOrUndefined(e.target.value),
+                          })
+                        }
+                      />
+                    </>
+                  ) : (
+                    <StMiniInput
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="거리 km"
+                      value={it.distanceKm ?? ""}
+                      onChange={(e) =>
+                        updateInterval(it.id, {
+                          distanceKm: toNumberOrUndefined(e.target.value),
+                        })
+                      }
+                    />
+                  )}
+                  {form.environment === "indoor" ? (
+                    <StMiniInput
+                      type="text"
+                      placeholder="시간 mm:ss"
+                      defaultValue={
+                        it.durationSec ? formatDuration(it.durationSec) : ""
+                      }
+                      onBlur={(e) =>
+                        updateInterval(it.id, {
+                          durationSec: parseDurationInput(e.target.value),
+                        })
+                      }
+                    />
+                  ) : (
+                    <StMiniInput
+                      type="text"
+                      placeholder="페이스 mm:ss"
+                      defaultValue={
+                        it.paceSec ? formatDuration(it.paceSec) : ""
+                      }
+                      onBlur={(e) =>
+                        updateInterval(it.id, {
+                          paceSec: parseDurationInput(e.target.value),
+                        })
+                      }
+                    />
+                  )}
+                  <StRemoveInterval
+                    type="button"
+                    onClick={() => removeInterval(it.id)}
+                  >
+                    ✕
+                  </StRemoveInterval>
+                </StIntervalRow>
+              ))}
+              {form.intervals.length === 0 ? (
+                <StIntervalEmpty>
+                  {form.environment === "indoor"
+                    ? "예) 10분 10km/h 평지 → 5분 6km/h 경사 8% → 3분 12km/h 평지"
+                    : "예) 1km 7:50 페이스 → 3km 7:00 페이스 → 1km 5:00 페이스"}
+                </StIntervalEmpty>
+              ) : null}
+            </StIntervals>
 
-            <StRow>
-              <StLabel>
-                거리 (km)
-                <StInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="예) 5.2"
-                  value={form.distanceKm}
-                  onChange={(e) =>
-                    setForm({ ...form, distanceKm: e.target.value })
-                  }
-                />
-              </StLabel>
-              <StLabel>
-                시간 (분:초 또는 시:분:초)
-                <StInput
-                  type="text"
-                  placeholder="HH:MM:SS"
-                  value={form.durationInput}
-                  onChange={(e) =>
-                    setForm({ ...form, durationInput: e.target.value })
-                  }
-                />
-              </StLabel>
-            </StRow>
-          </StTopRight>
-        </StTopGrid>
+            <StLabel>
+              메모
+              <StTextarea
+                rows={2}
+                placeholder="컨디션, 날씨, 코스 등"
+                value={form.memo}
+                onChange={(e) => setForm({ ...form, memo: e.target.value })}
+              />
+            </StLabel>
 
-        <StPaceHint>
-          평균 페이스: <b>{formatPace(computedPace)}</b>
-        </StPaceHint>
+            {error ? <StError>{error}</StError> : null}
 
-        <StRow $cols={3}>
-          <StLabel>
-            평균 심박 (bpm)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="예) 152"
-              value={form.avgHeartRate}
-              onChange={(e) =>
-                setForm({ ...form, avgHeartRate: e.target.value })
-              }
-            />
-          </StLabel>
-          <StLabel>
-            케이던스 (spm)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="예) 172"
-              value={form.avgCadence}
-              onChange={(e) => setForm({ ...form, avgCadence: e.target.value })}
-            />
-          </StLabel>
-          <StLabel>
-            칼로리 (kcal)
-            <StInput
-              type="text"
-              inputMode="decimal"
-              placeholder="예) 340"
-              value={form.calories}
-              onChange={(e) => setForm({ ...form, calories: e.target.value })}
-            />
-          </StLabel>
-        </StRow>
-
-        <StIntervals>
-          <StIntervalsHead>
-            <span>
-              구간(인터벌){" "}
-              <StIntervalsHeadHint>
-                {form.environment === "indoor"
-                  ? "속도 · 경사 · 시간"
-                  : "거리 · 페이스"}
-              </StIntervalsHeadHint>
-            </span>
-            <StAddButton type="button" onClick={addInterval}>
-              + 구간 추가
-            </StAddButton>
-          </StIntervalsHead>
-          {form.intervals.map((it, idx) => (
-            <StIntervalRow key={it.id} $indoor={form.environment === "indoor"}>
-              <StIntervalIndex>{idx + 1}</StIntervalIndex>
-              {form.environment === "indoor" ? (
-                <>
-                  <StMiniInput
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="속도 km/h"
-                    value={it.speedKmh ?? ""}
-                    onChange={(e) =>
-                      updateInterval(it.id, {
-                        speedKmh: toNumberOrUndefined(e.target.value),
-                      })
-                    }
-                  />
-                  <StMiniInput
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="경사 %"
-                    value={it.inclineLevel ?? ""}
-                    onChange={(e) =>
-                      updateInterval(it.id, {
-                        inclineLevel: toNumberOrUndefined(e.target.value),
-                      })
-                    }
-                  />
-                </>
-              ) : (
-                <StMiniInput
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="거리 km"
-                  value={it.distanceKm ?? ""}
-                  onChange={(e) =>
-                    updateInterval(it.id, {
-                      distanceKm: toNumberOrUndefined(e.target.value),
-                    })
-                  }
-                />
-              )}
-              {form.environment === "indoor" ? (
-                <StMiniInput
-                  type="text"
-                  placeholder="시간 mm:ss"
-                  defaultValue={
-                    it.durationSec ? formatDuration(it.durationSec) : ""
-                  }
-                  onBlur={(e) =>
-                    updateInterval(it.id, {
-                      durationSec: parseDurationInput(e.target.value),
-                    })
-                  }
-                />
-              ) : (
-                <StMiniInput
-                  type="text"
-                  placeholder="페이스 mm:ss"
-                  defaultValue={it.paceSec ? formatDuration(it.paceSec) : ""}
-                  onBlur={(e) =>
-                    updateInterval(it.id, {
-                      paceSec: parseDurationInput(e.target.value),
-                    })
-                  }
-                />
-              )}
-              <StRemoveInterval
-                type="button"
-                onClick={() => removeInterval(it.id)}
-              >
-                ✕
-              </StRemoveInterval>
-            </StIntervalRow>
-          ))}
-          {form.intervals.length === 0 ? (
-            <StIntervalEmpty>
-              {form.environment === "indoor"
-                ? "예) 10분 10km/h 평지 → 5분 6km/h 경사 8% → 3분 12km/h 평지"
-                : "예) 1km 7:50 페이스 → 3km 7:00 페이스 → 1km 5:00 페이스"}
-            </StIntervalEmpty>
-          ) : null}
-        </StIntervals>
-
-        <StLabel>
-          메모
-          <StTextarea
-            rows={2}
-            placeholder="컨디션, 날씨, 코스 등"
-            value={form.memo}
-            onChange={(e) => setForm({ ...form, memo: e.target.value })}
-          />
-        </StLabel>
-
-        {error ? <StError>{error}</StError> : null}
-
-        <StActions>
-          {form.id ? (
-            <StGhostButton type="button" onClick={resetForm}>
-              취소
-            </StGhostButton>
-          ) : null}
-          <StPrimary type="button" onClick={submit} disabled={busy}>
-            {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
-          </StPrimary>
-        </StActions>
-      </StCard>
-
-      <WorkoutPaceTrendByTypeChart records={records} />
-
-      <StCard>
-        <StCardTitle>최근 기록</StCardTitle>
-        {loading ? (
-          <StEmpty>불러오는 중...</StEmpty>
-        ) : records.length === 0 ? (
-          <StEmpty>아직 기록이 없어요. 오늘의 첫 런을 남겨보세요!</StEmpty>
-        ) : (
-          <MonthAccordion
-            groups={monthGroups}
-            expandedMonths={expandedMonths}
-            onToggle={toggleMonth}
-            renderItems={(items) => (
-              <StRecordList>
-                {items.map((record) => {
-                  const pace =
-                    record.avgPaceSec ??
-                    computePaceSec(record.distanceKm, record.durationSec);
-                  const paceDelta = paceDeltaMap.get(record.id);
-                  return (
-                    <StRecordRow key={record.id}>
-                      <StRecordMain>
-                        <StRecordTop>
-                          <StRecordTag>
-                            {RUNNING_TYPE_LABEL[record.runType]}
-                          </StRecordTag>
-                          <StEnvTag $indoor={record.environment === "indoor"}>
-                            {record.environment === "indoor"
-                              ? "🏃‍♂️ 실내"
-                              : "🌳 실외"}
-                          </StEnvTag>
-                          <StRecordDate>{record.date}</StRecordDate>
-                        </StRecordTop>
-                        <StRecordStats>
-                          <StStat>
-                            <b>{record.distanceKm.toFixed(1)}</b> km
-                          </StStat>
-                          <StStat>{formatDuration(record.durationSec)}</StStat>
-                          <StStat>{formatPace(pace)}</StStat>
-                          {paceDelta ? (
-                            <StDelta $up={paceDelta > 0}>
-                              {paceDelta > 0 ? "▲" : "▼"} {Math.abs(paceDelta)}
-                              초 vs 직전
-                            </StDelta>
-                          ) : null}
-                        </StRecordStats>
-                        {record.memo ? (
-                          <StRecordMemo>{record.memo}</StRecordMemo>
-                        ) : null}
-                        {record.intervals && record.intervals.length > 0 ? (
-                          <>
-                            <StIntervalToggle
-                              type="button"
-                              onClick={() =>
-                                setExpandedIntervalId((id) =>
-                                  id === record.id ? null : record.id,
-                                )
-                              }
-                              aria-expanded={expandedIntervalId === record.id}
-                            >
-                              <StIntervalToggleIcon
-                                $open={expandedIntervalId === record.id}
-                                aria-hidden
+            <StActions>
+              {form.id ? (
+                <StGhostButton type="button" onClick={resetForm}>
+                  취소
+                </StGhostButton>
+              ) : null}
+              <StPrimary type="button" onClick={submit} disabled={busy}>
+                {busy ? "저장 중..." : form.id ? "수정 저장" : "기록 저장"}
+              </StPrimary>
+            </StActions>
+          </StCard>
+        </StCol>
+        <StCol>
+          {/* 종류별 페이스 추이 그래프는 뺐다 — 무엇에 쓰는지 알기 어렵다는 주인 의견 (2026-09-22). 다시 넣을 땐 WorkoutPaceTrendByTypeChart */}
+          <StCard>
+            <StCardTitle>최근 기록</StCardTitle>
+            {loading ? (
+              <StEmpty>불러오는 중...</StEmpty>
+            ) : records.length === 0 ? (
+              <StEmpty>아직 기록이 없어요. 오늘의 첫 런을 남겨보세요!</StEmpty>
+            ) : (
+              <MonthAccordion
+                groups={monthGroups}
+                expandedMonths={expandedMonths}
+                onToggle={toggleMonth}
+                renderItems={(items) => (
+                  <StRecordList>
+                    {items.map((record) => {
+                      const pace =
+                        record.avgPaceSec ??
+                        computePaceSec(record.distanceKm, record.durationSec);
+                      const paceDelta = paceDeltaMap.get(record.id);
+                      return (
+                        <StRecordRow key={record.id}>
+                          <StRecordMain>
+                            <StRecordTop>
+                              <StRecordTag>
+                                {RUNNING_TYPE_LABEL[record.runType]}
+                              </StRecordTag>
+                              <StEnvTag
+                                $indoor={record.environment === "indoor"}
                               >
-                                <svg
-                                  width="12"
-                                  height="12"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="9 6 15 12 9 18" />
-                                </svg>
-                              </StIntervalToggleIcon>
-                              {expandedIntervalId === record.id
-                                ? "구간 차트 닫기"
-                                : `구간 차트 보기 (${record.intervals.length}구간)`}
-                            </StIntervalToggle>
-                            {expandedIntervalId === record.id ? (
-                              <WorkoutIntervalDetailChart
-                                intervals={record.intervals}
-                                environment={record.environment ?? "outdoor"}
-                              />
+                                {record.environment === "indoor"
+                                  ? "🏃‍♂️ 실내"
+                                  : "🌳 실외"}
+                              </StEnvTag>
+                              <StRecordDate>{record.date}</StRecordDate>
+                            </StRecordTop>
+                            {/* 거리 | 시간 | 페이스 — 칸 폭 고정이라 행끼리 세로줄이 맞는다.
+                                직전 대비 뱃지는 길이가 들쭉날쭉해서 늘 다음 줄에 둔다 */}
+                            <StStatGrid
+                              $cols="4.8rem 5rem 5.2rem"
+                              $colsNarrow="repeat(3, minmax(0, 1fr))"
+                            >
+                              <span>
+                                <b>{record.distanceKm.toFixed(1)}</b> km
+                              </span>
+                              <span>{formatDuration(record.durationSec)}</span>
+                              <span>{formatPace(pace)}</span>
+                              {paceDelta ? (
+                                <StStatFull>
+                                  <StDelta $up={paceDelta > 0}>
+                                    {paceDelta > 0 ? "▲" : "▼"}{" "}
+                                    {Math.abs(paceDelta)}초 vs 직전
+                                  </StDelta>
+                                </StStatFull>
+                              ) : null}
+                            </StStatGrid>
+                            {record.memo ? (
+                              <StRecordMemo>{record.memo}</StRecordMemo>
                             ) : null}
-                          </>
-                        ) : null}
-                      </StRecordMain>
-                      <StRecordActions>
-                        <StEditBtn
-                          type="button"
-                          onClick={() => editRecord(record)}
-                        >
-                          수정
-                        </StEditBtn>
-                        <StDelBtn
-                          type="button"
-                          onClick={() => removeRecord(record.id)}
-                        >
-                          삭제
-                        </StDelBtn>
-                      </StRecordActions>
-                    </StRecordRow>
-                  );
-                })}
-              </StRecordList>
+                            {record.intervals && record.intervals.length > 0 ? (
+                              <>
+                                <StIntervalToggle
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedIntervalId((id) =>
+                                      id === record.id ? null : record.id,
+                                    )
+                                  }
+                                  aria-expanded={
+                                    expandedIntervalId === record.id
+                                  }
+                                >
+                                  <StIntervalToggleIcon
+                                    $open={expandedIntervalId === record.id}
+                                    aria-hidden
+                                  >
+                                    <svg
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="9 6 15 12 9 18" />
+                                    </svg>
+                                  </StIntervalToggleIcon>
+                                  {expandedIntervalId === record.id
+                                    ? "구간 차트 닫기"
+                                    : `구간 차트 보기 (${record.intervals.length}구간)`}
+                                </StIntervalToggle>
+                                {expandedIntervalId === record.id ? (
+                                  <WorkoutIntervalDetailChart
+                                    intervals={record.intervals}
+                                    environment={
+                                      record.environment ?? "outdoor"
+                                    }
+                                  />
+                                ) : null}
+                              </>
+                            ) : null}
+                          </StRecordMain>
+                          <StRecordActions>
+                            <StEditBtn
+                              type="button"
+                              onClick={() => editRecord(record)}
+                            >
+                              수정
+                            </StEditBtn>
+                            <StDelBtn
+                              type="button"
+                              onClick={() => removeRecord(record.id)}
+                            >
+                              삭제
+                            </StDelBtn>
+                          </StRecordActions>
+                        </StRecordRow>
+                      );
+                    })}
+                  </StRecordList>
+                )}
+              />
             )}
-          />
-        )}
-      </StCard>
+          </StCard>
+        </StCol>
+      </StTwoCol>
     </StPage>
   );
 }

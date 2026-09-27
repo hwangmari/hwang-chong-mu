@@ -106,11 +106,14 @@ export const StCardHead = styled.div`
   gap: 0.6rem;
 `;
 
+/* 옆 칸의 '운동 종류' 셀렉트와 아래 끝을 맞춘다 — 입력 칸 높이(2.75rem)로 고정 */
 export const StEnvToggle = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.4rem;
-  padding: 0.3rem;
+  height: 2.75rem;
+  box-sizing: border-box;
+  padding: 0.25rem;
   background: ${({ theme }) => theme.colors.gray100};
   border-radius: 0.8rem;
 `;
@@ -118,7 +121,7 @@ export const StEnvToggle = styled.div`
 export const StEnvButton = styled.button<{ $active: boolean }>`
   border: none;
   border-radius: 0.6rem;
-  padding: 0.65rem 0.5rem;
+  padding: 0 0.5rem;
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;
@@ -245,34 +248,6 @@ export const StPrimary = styled.button`
   }
 `;
 
-export const StRecordList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-`;
-
-export const StRecordRow = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.8rem;
-  border: 1px solid ${({ theme }) => theme.colors.gray100};
-  border-radius: 0.9rem;
-`;
-
-export const StRecordMain = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-`;
-
-export const StRecordTop = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
 export const StRecordTag = styled.span`
   font-size: 0.7rem;
   font-weight: 800;
@@ -291,30 +266,6 @@ export const StEnvTag = styled.span<{ $indoor: boolean }>`
     $indoor ? theme.colors.amber50 : theme.colors.green50};
   color: ${({ $indoor, theme }) =>
     $indoor ? theme.colors.amber600 : theme.colors.green600};
-`;
-
-export const StRecordDate = styled.span`
-  font-size: 0.78rem;
-  color: ${({ theme }) => theme.colors.gray400};
-  font-weight: 700;
-`;
-
-export const StRecordStats = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.gray700};
-`;
-
-export const StStat = styled.span`
-  font-weight: 700;
-
-  b {
-    font-size: 1rem;
-    font-weight: 900;
-    color: ${({ theme }) => theme.colors.gray900};
-  }
 `;
 
 export const StDelta = styled.span<{ $up: boolean }>`
@@ -354,30 +305,3 @@ export const StIntervalToggleIcon = styled.span<{ $open: boolean }>`
   transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
 `;
 
-export const StRecordActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-`;
-
-export const StEditBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.gray200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.gray600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
-
-export const StDelBtn = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.rose200};
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.rose600};
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
