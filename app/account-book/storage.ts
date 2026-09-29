@@ -64,6 +64,19 @@ function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/**
+ * 옛 이름 → 새 이름. 저장된 기록을 손대지 않고 읽을 때만 바꾼다.
+ * 2026-09-29 "네이버하나머니"를 "네이버페이"로 바꿨는데, 이미 적어 둔 기록에는
+ * 옛 이름이 글자 그대로 들어 있어서 그대로 두면 같은 수단이 둘로 갈라진다.
+ */
+const CARD_COMPANY_RENAMES: Record<string, string> = {
+  네이버하나머니: "네이버페이",
+};
+
+function renameCardCompany(value: string) {
+  return CARD_COMPANY_RENAMES[value] ?? value;
+}
+
 function mapLegacyCategory(category?: string) {
   if (!category) return "기타";
   if (category === "실적 인정") return "결제/플랫폼";
@@ -100,7 +113,9 @@ function normalizeLegacyEntry(
           ? "check_card"
           : "card",
     cardCompany:
-      raw.payment === "cash" ? "" : raw.cardCompany || "현대카드",
+      raw.payment === "cash"
+        ? ""
+        : renameCardCompany(raw.cardCompany || "현대카드"),
     memo: raw.memo || "",
     rawText: raw.rawText || "",
     // 화이트리스트 재조립이라 새 optional 플래그는 명시적으로 보존해야 한다.
@@ -318,7 +333,9 @@ function normalizeStore(raw: Partial<AccountBookStore>): AccountBookStore {
             ? "check_card"
             : "card",
       cardCompany:
-        entry.payment === "cash" ? "" : entry.cardCompany || "현대카드",
+        entry.payment === "cash"
+          ? ""
+          : renameCardCompany(entry.cardCompany || "현대카드"),
       memo: entry.memo || "",
       rawText: entry.rawText || "",
       // 화이트리스트 재조립이라 새 optional 플래그는 명시적으로 보존해야 한다.

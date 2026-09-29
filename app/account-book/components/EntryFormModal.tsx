@@ -123,7 +123,7 @@ export default function EntryFormModal({
   const shouldShowCardCompany = type === "expense" && payment !== "cash";
   const cardCompanyLabel = payment === "check_card" ? "체크 항목" : "카드사";
   const cardCompanyPlaceholder =
-    payment === "check_card" ? "예: 네이버하나머니" : "예: 삼성카드";
+    payment === "check_card" ? "예: 네이버페이" : "예: 삼성카드";
 
   return (
     <StModalBackdrop

@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 export const CARD_COMPANY_DEFAULT = "현대카드";
-export const CHECK_CARD_BRAND_DEFAULT = "네이버하나머니";
+export const CHECK_CARD_BRAND_DEFAULT = "네이버페이";
 export const WELFARE_CARD_LABEL = "복지카드";
 export const MEMBER_FALLBACK = "사용자1";
 export const ALL_PARTICIPANTS_ID = "all";
@@ -34,7 +34,7 @@ export const CARD_COMPANY_OPTIONS = [
   WELFARE_CARD_LABEL,
 ] as const;
 export const CHECK_CARD_BRAND_OPTIONS = [
-  "네이버하나머니",
+  "네이버페이",
   "카카오",
   "토스",
   "페이코",
@@ -464,7 +464,8 @@ const CARD_COMPANY_PATTERNS = [
   [/\bbc카드\b|\bbccard\b/i, "BC카드"],
 ] as const;
 const CHECK_CARD_BRAND_PATTERNS = [
-  [/네이버하나머니|하나머니/i, "네이버하나머니"],
+  // 옛 이름(하나머니)으로 적어도 알아듣고, 적힐 때는 새 이름으로 (2026-09-29 이름 변경)
+  [/네이버페이|네이버\s*pay|네이버하나머니|하나머니/i, "네이버페이"],
   [/카카오페이|카카오\s*pay/i, "카카오"],
   [/토스페이|토스\s*pay|토스결제/i, "토스"],
   [/페이코|\bpayco\b/i, "페이코"],
@@ -1051,7 +1052,7 @@ function detectEntryType(text: string): EntryType {
 function detectPayment(text: string, type: EntryType): PaymentType {
   if (type === "income") return "cash";
   if (
-    /네이버하나머니|하나머니|카카오페이|카카오\s*pay|토스페이|토스\s*pay|페이코|payco/i.test(
+    /네이버페이|네이버\s*pay|네이버하나머니|하나머니|카카오페이|카카오\s*pay|토스페이|토스\s*pay|페이코|payco/i.test(
       text,
     )
   ) {
