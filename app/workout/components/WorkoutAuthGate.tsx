@@ -47,12 +47,22 @@ export default function WorkoutAuthGate({ children }: Props) {
 
   // 저장된 방 정보를 아직 읽지 못한 찰나엔 입장 폼 대신 뼈대를 보여 준다.
   // (바로 로그인 폼이 번쩍였다가 사라지는 걸 막는다)
+  //
+  // 설명글은 뼈대와 함께 항상 내보낸다. 서버가 화면을 만들 때는 로그인 여부를 알 수 없어
+  // 늘 이 가지를 타는데, 예전에는 뼈대만 있어서 검색엔진 눈에 글자가 하나도 없는
+  // 빈 페이지로 보였다 (2026-09-29 애드센스 "가치가 별로 없는 콘텐츠" 판정의 원인).
   if (!sessionReady) {
     return (
       <StSkeletonPage>
         <StSkeletonContent>
           <SkeletonBlock width="min(100%, 18rem)" height="2.4rem" radius="0.9rem" />
           <SkeletonList count={3} height="7.5rem" lines={2} />
+          <FooterGuide
+            title={WORKOUT_GUIDE_DATA.title}
+            story={WORKOUT_GUIDE_DATA.story}
+            tips={WORKOUT_GUIDE_DATA.tips}
+            blogGuideId="workout-guide"
+          />
         </StSkeletonContent>
       </StSkeletonPage>
     );

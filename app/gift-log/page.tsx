@@ -305,6 +305,8 @@ export default function GiftLogPage() {
   }
 
   // 로그인 확인 중엔 빈 화면 대신 같은 자리를 차지하는 뼈대를 보여 준다.
+  // 설명(guide)도 같이 내보낸다 — 서버가 화면을 만들 때는 늘 이 가지를 타서,
+  // 예전에는 검색엔진 눈에 글자가 없는 빈 페이지로 보였다 (2026-09-29 애드센스 판정 원인).
   if (authLoading) {
     return (
       <ServiceLayout
@@ -314,6 +316,7 @@ export default function GiftLogPage() {
           title: INTRO_TITLE,
           description: "주고받은 축의금·부조금을 사람별로 기록해요.",
         }}
+        guide={GUIDE}
         mainRatio={1.1}
         side={
           <>
