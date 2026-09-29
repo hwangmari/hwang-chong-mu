@@ -64,7 +64,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     headline: post.title,
     description: post.summary,
     datePublished: post.date,
-    dateModified: post.date,
+    dateModified: post.updatedAt ?? post.date,
     author: {
       "@type": "Person",
       name: "황총무",

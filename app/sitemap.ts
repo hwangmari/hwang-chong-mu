@@ -30,7 +30,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
     url: `${SITE_URL}/blog/${post.id}`,
-    lastModified: new Date(post.date),
+    // 크게 고쳐 쓴 글은 그 날짜로 — 재크롤 힌트는 사이트맵 쪽이 실제로 전달한다
+    lastModified: new Date(post.updatedAt ?? post.date),
     changeFrequency: "monthly",
     priority: post.category === "사용 가이드" ? 0.85 : 0.7,
   }));

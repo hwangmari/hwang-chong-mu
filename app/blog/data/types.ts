@@ -22,6 +22,12 @@ export interface ContentBlock {
   alt?: string;
   caption?: string;
   width?: number; // 이미지 블록: 작은 그림(도트 등)은 본문 폭까지 늘리지 않고 이 픽셀 폭으로 가운데에 (2026-09-16)
+  /**
+   * 도트 그림처럼 픽셀이 또렷해야 하는 그림만 true.
+   * 예전에는 width 가 있으면 무조건 pixelated 였는데, 폭만 줄인 일반 스크린샷까지
+   * 계단처럼 깨졌다 (2026-09-29).
+   */
+  pixelated?: boolean;
   href?: string;
   label?: string;
   /** skillCards 전용. tone "dark" = 검은 카드(강조), "light" = 흰 카드 */
@@ -35,6 +41,8 @@ export interface BlogPost {
   title: string;
   summary: string;
   date: string;
+  /** 크게 고쳐 쓴 날. 없으면 발행일과 같게 본다 (검색엔진 dateModified) */
+  updatedAt?: string;
   category: string;
   content: ContentBlock[];
 }
