@@ -574,6 +574,19 @@ function InbodyFragment(c: TonePalette) {
   );
 }
 
+/** 근육 도감 — 우리말 이름과 한자식 이름을 나란히 */
+function MuscleFragment(c: TonePalette) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      <Chip color={c.tileDeep}>큰가슴근</Chip>
+      <Row marginTop={12}>
+        <GhostChip>대흉근</GhostChip>
+        <GhostChip marginLeft={12}>가슴</GhostChip>
+      </Row>
+    </div>
+  );
+}
+
 const FRAGMENTS: Record<ServiceId, (c: TonePalette) => React.ReactNode> = {
   meeting: MeetingFragment,
   calc: CalcFragment,
@@ -590,6 +603,7 @@ const FRAGMENTS: Record<ServiceId, (c: TonePalette) => React.ReactNode> = {
   diet: DietFragment,
   workout: WorkoutFragment,
   inbody: InbodyFragment,
+  muscle: MuscleFragment,
 };
 
 /** 서비스에 맞는 장식 조각을 그린다. */
@@ -616,4 +630,5 @@ export const FRAGMENT_TEXT: Record<ServiceId, string> = {
   diet: "-1.2kg",
   workout: "3주째 증가",
   inbody: "골격근 ↑ 체지방 ↓",
+  muscle: "큰가슴근 대흉근 가슴",
 };

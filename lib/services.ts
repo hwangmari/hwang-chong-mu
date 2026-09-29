@@ -22,7 +22,8 @@ export type ServiceId =
   | "daily"
   | "diet"
   | "workout"
-  | "inbody";
+  | "inbody"
+  | "muscle";
 
 export type ServiceCategoryId = "together" | "work" | "money" | "daily";
 
@@ -251,6 +252,18 @@ export const SERVICES: ServiceDef[] = [
     seoDescription: "러닝과 웨이트 기록을 모아 성장 그래프로 보여주는 운동 수첩",
     access: "room",
     link: true,
+  },
+  {
+    id: "muscle",
+    href: "/muscle",
+    icon: "💪",
+    name: "근육 도감",
+    desc: "어느 근육이 무슨 일을 하는지",
+    category: "daily",
+    seoTitle: "황총무 근육 도감",
+    seoDescription:
+      "부위별 근육 이름과 하는 일, 대표 운동과 스트레칭을 쉬운 말로 정리한 근육 도감",
+    access: "open",
   },
   {
     id: "inbody",

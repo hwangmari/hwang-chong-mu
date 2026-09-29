@@ -35,6 +35,7 @@ const TONE_BY_SERVICE: Record<ServiceId, OgTone> = {
   diet: "cyan",
   workout: "red",
   inbody: "teal",
+  muscle: "plum",
 };
 
 /**
