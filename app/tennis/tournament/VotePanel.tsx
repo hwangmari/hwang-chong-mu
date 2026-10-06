@@ -201,7 +201,7 @@ export default function VotePanel({ event, matches }: Props) {
         <StCardTitle>🗳️ 대회 투표</StCardTitle>
       </StCardHead>
       <StCardHint>
-        한 사람 한 표예요. 마감 전에는 몇 번이든 고칠 수 있어요.
+        한 사람 한 표. 마감 전에는 몇 번이든 고칠 수 있어요.
       </StCardHint>
 
       {/* 이름과 비번을 통과해야 연다 — 비번이 없으면 남의 이름을 골라 그 사람 표를 볼 수 있다 */}
@@ -261,10 +261,7 @@ export default function VotePanel({ event, matches }: Props) {
                 {checking ? "확인 중…" : "열기"}
               </StGoBtn>
             </StGateRow>
-            <StGateHint>
-              처음이면 쓰고 싶은 네 자리를 넣으면 그게 내 비번이 돼요.
-              다음부터는 같은 번호예요.
-            </StGateHint>
+            <StGateHint>처음 넣은 네 자리가 내 비번이 돼요.</StGateHint>
           </>
         )}
         {gateMsg ? <StGateMsg>{gateMsg}</StGateMsg> : null}
@@ -277,17 +274,13 @@ export default function VotePanel({ event, matches }: Props) {
         title="🏆 우승팀 토토"
         hint={
           revealed.champion
-            ? "대회가 끝나 결과를 공개해요."
+            ? "결과 공개!"
             : locked.champion
-              ? "경기가 시작돼 마감됐어요. 결과는 모든 경기가 끝나면 공개돼요."
-              : "어느 팀이 우승할까요? 첫 경기가 시작되면 마감돼요."
+              ? "마감됐어요. 결과는 대회가 끝나면 공개돼요."
+              : "어느 팀이 우승할까요?"
         }
-        warn={
-          locked.champion
-            ? ""
-            : "첫 경기가 시작되면 더는 고칠 수 없어요. 신중하게 고르세요."
-        }
-        reveal="누가 어느 팀에 걸었는지는 모든 경기가 끝난 뒤에 공개돼요. 맞춘 사람을 가려야 하니까요."
+        warn={locked.champion ? "" : "첫 경기가 시작되면 못 고쳐요."}
+        reveal="맞춘 사람은 대회가 끝난 뒤 공개돼요."
         options={event.teams.map((t) => ({
           value: String(t.seed),
           label: `${t.seed}팀`,
@@ -306,12 +299,8 @@ export default function VotePanel({ event, matches }: Props) {
       <Section
         kind="dresser_m"
         title="👔 베스트드레서 남성부"
-        hint={
-          revealed.dresser_m
-            ? "대회가 끝나 결과를 공개해요."
-            : "모든 경기가 끝나면 공개돼요."
-        }
-        reveal="누가 누구를 골랐는지는 끝까지 보여 주지 않아요. 표 수만 나와요."
+        hint={revealed.dresser_m ? "결과 공개!" : "대회가 끝나면 공개돼요."}
+        reveal="누가 골랐는지는 공개하지 않아요. 표 수만 나와요."
         options={men.map((name) => ({
           value: name,
           label: name,
@@ -328,12 +317,8 @@ export default function VotePanel({ event, matches }: Props) {
       <Section
         kind="dresser_f"
         title="👗 베스트드레서 여성부"
-        hint={
-          revealed.dresser_f
-            ? "대회가 끝나 결과를 공개해요."
-            : "모든 경기가 끝나면 공개돼요."
-        }
-        reveal="누가 누구를 골랐는지는 끝까지 보여 주지 않아요. 표 수만 나와요."
+        hint={revealed.dresser_f ? "결과 공개!" : "대회가 끝나면 공개돼요."}
+        reveal="누가 골랐는지는 공개하지 않아요. 표 수만 나와요."
         options={women.map((name) => ({
           value: name,
           label: name,
@@ -412,13 +397,11 @@ function Section({
       {/* 토토 정답 발표 — 우승팀이 정해진 뒤에만 */}
       {showNames && revealed && winnerValue ? (
         <StResult>
-          <b>우승은 {winnerValue}팀!</b>{" "}
+          <b>🏆 {winnerValue}팀 우승</b>
           {correct.length > 0 ? (
-            <>
-              맞춘 사람 {correct.length}명 — {correct.join(" · ")}
-            </>
+            <> · 맞춘 사람 {correct.length}명</>
           ) : (
-            <>맞춘 사람이 없어요.</>
+            <> · 맞춘 사람 없음</>
           )}
         </StResult>
       ) : null}
@@ -434,8 +417,8 @@ function Section({
           const best = revealed && votes > 0 && votes === top;
           const isWinner =
             showNames && revealed && winnerValue === option.value;
-          const who =
-            showNames && revealed ? (tally.names[option.value] ?? []) : [];
+          // 이름은 우승팀 칸에만 보여 준다. 모든 칸에 깔면 눈이 갈 데를 잃는다
+          const who = isWinner ? (tally.names[option.value] ?? []) : [];
           return (
             <StOption
               key={option.value}
