@@ -39,7 +39,9 @@ export async function fetchVoteTallies(
     .eq("event_id", eventId);
   if (error) throw error;
 
-  const rows = (data ?? []) as Row[];
+  // 이름을 고르기 전(익명 방식)에 들어온 표는 세지 않는다.
+  // 같은 사람이 예전 방식과 새 방식으로 각각 한 줄씩 남기면 두 명으로 세어진다.
+  const rows = ((data ?? []) as Row[]).filter((r) => playerNameFromKey(r.voter_key) !== null);
   const empty = (kind: VoteKind): VoteTally => ({
     kind,
     total: 0,
