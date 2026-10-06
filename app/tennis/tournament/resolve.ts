@@ -1,6 +1,7 @@
 // 템플릿 + 지금까지의 점수 → 각 경기의 팀·상태·승자, 최종 순위 (순수 함수)
 import { isFinished, type MatchScore, type ScoreMap } from "../types";
 import { BLOCKS, DOUBLE_ELIM_8 } from "./template";
+import { playerAtSeed } from "./types";
 import type {
   Placement,
   ResolvedMatch,
@@ -10,7 +11,7 @@ import type {
   TemplateMatch,
   TournamentEvent,
 } from "./types";
-import { roundTime } from "../format";
+import { toClock, toMinutes } from "../format";
 
 function winnerOf(score: MatchScore | undefined): "A" | "B" | null {
   if (!score || !isFinished(score)) return null;
@@ -18,22 +19,32 @@ function winnerOf(score: MatchScore | undefined): "A" | "B" | null {
   return score.scoreA > score.scoreB ? "A" : "B";
 }
 
-export function resolveBracket(event: TournamentEvent, scores: ScoreMap): ResolvedMatch[] {
+export function resolveBracket(
+  event: TournamentEvent,
+  scores: ScoreMap,
+): ResolvedMatch[] {
   const bySeed = new Map(event.teams.map((t) => [t.seed, t]));
   const resolved = new Map<number, ResolvedMatch>();
   // 지금 뛰고 있는 팀은 다른 경기를 시작할 수 없다 (뒤에서 status를 정할 때 쓴다)
   const playingTeams = new Set<number>();
-  const labelOf = (m: TemplateMatch | undefined) => (m ? `${m.label} ${m.no}번` : "?");
+  const labelOf = (m: TemplateMatch | undefined) =>
+    m ? `${m.label} ${m.no}번` : "?";
 
   const refTeam = (ref: SlotRef): { team: TeamEntry | null; label: string } => {
     if (ref.kind === "seed") {
-      return { team: bySeed.get(ref.seed) ?? null, label: `${ref.seed}번 시드` };
+      return {
+        team: bySeed.get(ref.seed) ?? null,
+        label: `${ref.seed}번 시드`,
+      };
     }
     const prev = resolved.get(ref.of);
     const prevTemplate = DOUBLE_ELIM_8.find((m) => m.no === ref.of);
     if (!prev) return { team: null, label: labelOf(prevTemplate) };
     const team = ref.kind === "winner" ? prev.winner : prev.loser;
-    return { team, label: `${labelOf(prevTemplate)} ${ref.kind === "winner" ? "승자" : "패자"}` };
+    return {
+      team,
+      label: `${labelOf(prevTemplate)} ${ref.kind === "winner" ? "승자" : "패자"}`,
+    };
   };
 
   for (const template of DOUBLE_ELIM_8) {
@@ -43,17 +54,15 @@ export function resolveBracket(event: TournamentEvent, scores: ScoreMap): Resolv
     const w = winnerOf(score);
 
     let status: ResolvedMatch["status"];
-    if (template.conditional === "reset") {
-      // 그랜드 파이널을 패자조 출신(B팀)이 이겼을 때만 열린다
-      const gf = resolved.get(16);
-      const needed = gf?.winner !== null && gf?.winner === gf?.teamB;
-      if (!needed) status = "hidden";
-      else if (w) status = "done";
-      else if (score?.startedAt) status = "playing";
-      else status = "ready";
-    } else if (w) status = "done";
+    if (w) status = "done";
     else if (score?.startedAt) status = "playing";
-    else if (a.team && b.team && !playingTeams.has(a.team.seed) && !playingTeams.has(b.team.seed)) status = "ready";
+    else if (
+      a.team &&
+      b.team &&
+      !playingTeams.has(a.team.seed) &&
+      !playingTeams.has(b.team.seed)
+    )
+      status = "ready";
     else status = "waiting";
 
     const teamA = a.team;
@@ -80,20 +89,19 @@ export function resolveBracket(event: TournamentEvent, scores: ScoreMap): Resolv
 
 export function placements(matches: ResolvedMatch[]): Placement[] {
   const by = new Map(matches.map((m) => [m.template.no, m]));
+  // 2026 규칙: 그랜드 파이널 한 판으로 1·2위. 3·4위는 패자조에서 떨어진 순서대로.
   const gf = by.get(16);
-  const reset = by.get(18);
-  // 리셋이 열렸으면 리셋 결과가 최종, 아니면 그랜드 파이널 결과
-  const finalMatch = reset && reset.status !== "hidden" ? reset : gf;
-  const champion = finalMatch?.status === "done" ? finalMatch.winner : null;
-  const runnerUp = finalMatch?.status === "done" ? finalMatch.loser : null;
-  const m17 = by.get(17);
+  const champion = gf?.status === "done" ? gf.winner : null;
+  const runnerUp = gf?.status === "done" ? gf.loser : null;
+  const m15 = by.get(15); // 패자조 결승
+  const m13 = by.get(13); // 패자조 준결승
   const m14 = by.get(14);
   const m12 = by.get(12);
   return [
-    { rank: 1, team: champion, how: reset && reset.status !== "hidden" ? "리셋 재경기 승" : "그랜드 파이널 승" },
+    { rank: 1, team: champion, how: "그랜드 파이널 승" },
     { rank: 2, team: runnerUp, how: "그랜드 파이널 패" },
-    { rank: 3, team: m17?.winner ?? null, how: "3-4위전 승" },
-    { rank: 4, team: m17?.loser ?? null, how: "3-4위전 패" },
+    { rank: 3, team: m15?.loser ?? null, how: "패자조 결승 패" },
+    { rank: 4, team: m13?.loser ?? null, how: "패자조 준결승 패" },
     { rank: 5, team: m14?.winner ?? null, how: "5-6위전 승" },
     { rank: 6, team: m14?.loser ?? null, how: "5-6위전 패" },
     { rank: 7, team: m12?.winner ?? null, how: "7-8위전 승" },
@@ -102,26 +110,44 @@ export function placements(matches: ResolvedMatch[]): Placement[] {
 }
 
 export function scheduleBlocks(event: TournamentEvent): ScheduleBlock[] {
-  return BLOCKS.map((b, i) => ({ ...b, time: roundTime(event.startTime, event.minutesPerMatch, i) }));
+  // 타임마다 경기 시간을 쌓되, breakBefore 가 있으면 그 앞에서 쉬는 시간만큼 밀린다
+  let cursor = toMinutes(event.startTime);
+  return BLOCKS.map((b) => {
+    cursor += b.breakBefore ?? 0;
+    const start = cursor;
+    cursor += event.minutesPerMatch;
+    return { ...b, time: `${toClock(start)} — ${toClock(cursor)}` };
+  });
 }
 
 // 한 팀의 여정: 참가한 경기와 결과
 export function teamPath(matches: ResolvedMatch[], team: TeamEntry) {
   return matches
-    .filter((m) => m.status !== "hidden" && (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed))
+    .filter(
+      (m) =>
+        m.status !== "hidden" &&
+        (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
+    )
     .map((m) => {
       const side = m.teamA?.seed === team.seed ? "A" : "B";
       const opponent = side === "A" ? m.teamB : m.teamA;
-      const outcome = m.status !== "done" ? null : m.winner?.seed === team.seed ? "win" : "loss";
+      const outcome =
+        m.status !== "done"
+          ? null
+          : m.winner?.seed === team.seed
+            ? "win"
+            : "loss";
       return { match: m, side, opponent, outcome } as const;
     });
 }
 
 export function countFinishedTournament(matches: ResolvedMatch[]) {
   const visible = matches.filter((m) => m.status !== "hidden");
-  return { done: visible.filter((m) => m.status === "done").length, total: visible.length };
+  return {
+    done: visible.filter((m) => m.status === "done").length,
+    total: visible.length,
+  };
 }
-
 
 // === 선수별 실제 뛴 게임 수 ===
 // 페어 교체 규칙(4게임 단위 A→B→C)에 총 게임 수를 대입한다. 6:4면 10게임 → 1~4 페어A, 5~8 페어B, 9~10 페어C
@@ -138,7 +164,10 @@ export function seedGamesForMatch(scoreA: number, scoreB: number): SeedGames {
 }
 
 // 한 경기에서 페어 블록별로 뛴 게임 수 (A: 1~4, B: 5~8, C: 9~12)
-export function pairBlocks(scoreA: number, scoreB: number): { a: number; b: number; c: number; total: number } {
+export function pairBlocks(
+  scoreA: number,
+  scoreB: number,
+): { a: number; b: number; c: number; total: number } {
   const total = scoreA + scoreB;
   const clamp = (n: number) => Math.max(0, Math.min(4, n));
   return { a: clamp(total), b: clamp(total - 4), c: clamp(total - 8), total };
@@ -152,13 +181,20 @@ export type PlayerLoad = {
   perMatch: { matchNo: number; label: string; games: number }[];
 };
 
-export function teamPlayerLoad(matches: ResolvedMatch[], team: TeamEntry): PlayerLoad[] {
+export function teamPlayerLoad(
+  matches: ResolvedMatch[],
+  team: TeamEntry,
+): PlayerLoad[] {
   const done = matches.filter(
-    (m) => m.status === "done" && m.scoreA !== null && m.scoreB !== null && (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
+    (m) =>
+      m.status === "done" &&
+      m.scoreA !== null &&
+      m.scoreB !== null &&
+      (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
   );
   const teamGames = done.reduce((sum, m) => sum + m.scoreA! + m.scoreB!, 0);
   return ([1, 2, 3, 4] as const).map((seed) => {
-    const player = team.players.find((p) => p.seed === seed);
+    const player = playerAtSeed(team, seed);
     const perMatch = done.map((m) => ({
       matchNo: m.template.no,
       label: m.template.label,

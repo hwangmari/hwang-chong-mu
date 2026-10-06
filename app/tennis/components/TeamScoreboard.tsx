@@ -2,7 +2,7 @@
 
 import styled from "styled-components";
 import { outcomeForA } from "../standings";
-import { isFinished } from "../types";
+import { GENDER_COLOR, GENDER_LABEL, isFinished } from "../types";
 import type { MatchScore, Player, ScoreMap, TennisEvent } from "../types";
 import { StCard, StCardHead, StCardHint, StCardTitle } from "../page.styles";
 
@@ -40,6 +40,12 @@ export default function TeamScoreboard({ event, scores, players }: Props) {
     b.gamesFor += score.scoreB; b.gamesAgainst += score.scoreA;
   }
 
+  // 팀마다 소속 선수 명단(남자 먼저, 같은 성별은 명단 순서 그대로) — 누가 어느 팀인지 한눈에 (주인 요청 2026-09-17)
+  const membersOf = (team: string) =>
+    [...players.values()]
+      .filter((p) => p.team === team)
+      .sort((x, y) => (x.gender === y.gender ? 0 : x.gender === "M" ? -1 : 1));
+
   const A = tally[nameA];
   const B = tally[nameB];
   const lead = A.win === B.win ? (A.gamesFor - A.gamesAgainst > B.gamesFor - B.gamesAgainst ? nameA : A.gamesFor - A.gamesAgainst < B.gamesFor - B.gamesAgainst ? nameB : null) : A.win > B.win ? nameA : nameB;
@@ -57,6 +63,25 @@ export default function TeamScoreboard({ event, scores, players }: Props) {
             <span className="meta">
               {t.loss}패{t.draw > 0 ? ` · ${t.draw}무` : ""} · 게임 {t.gamesFor}:{t.gamesAgainst}
             </span>
+            {(() => {
+              const members = membersOf(t.name);
+              const men = members.filter((p) => p.gender === "M").length;
+              return (
+                <div className="members">
+                  <span className="count">
+                    {members.length}명 · 남 {men} · 여 {members.length - men}
+                  </span>
+                  <ul aria-label={`${t.name} 선수`}>
+                    {members.map((p) => (
+                      <li key={p.name}>
+                        {p.name}
+                        <StGender $color={GENDER_COLOR[p.gender]}>{GENDER_LABEL[p.gender]}</StGender>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </StTeam>
         ))}
       </StBoard>
@@ -109,4 +134,54 @@ const StTeam = styled.div<{ $lead: boolean }>`
     color: ${({ theme }) => theme.semantic.subText};
     font-variant-numeric: tabular-nums;
   }
+
+  /* 선수 명단 — 승패 숫자 아래 머리카락 한 줄로 나누고, 칩은 테두리 없이 흰 면만 */
+  .members {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid ${({ theme }) => theme.semantic.border};
+  }
+
+  .count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.subText};
+    font-variant-numeric: tabular-nums;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.colors.white};
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.semantic.text};
+    white-space: nowrap;
+  }
+`;
+
+/* 이름 옆 성별 글자 — 선수단 표(StTag)와 같은 색 */
+const StGender = styled.span<{ $color: string }>`
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: ${({ $color }) => $color};
 `;

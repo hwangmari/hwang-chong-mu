@@ -31,7 +31,15 @@ export type Match = {
   teamB: [string, string];
   round?: number;
   court?: Court;
+  // 당일 편성 칸에서 "편성하기"로 그날 넣은 경기. 이 경기만 카드에서 바로 "선수 바꾸기"를 할 수 있다.
+  // 미리 짜 둔 경기의 선수는 '대회 정보 · 규칙' 탭에서 고친다 (주인 요청 2026-09-17)
+  sameDay?: boolean;
 };
+
+/** 그날 편성한 경기인지 */
+export function isSameDayMatch(match: Match): boolean {
+  return match.sameDay === true;
+}
 
 export type TennisEvent = {
   id: string; // 저장소 키 (event_id). 코드에 든 이벤트는 고정 문자열, 화면에서 만든 건 uuid

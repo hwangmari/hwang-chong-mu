@@ -22,6 +22,28 @@ export type TeamEntry = {
   players: TeamPlayer[]; // 4명
 };
 
+/**
+ * 팀 안에서 시드 번호로 선수를 찾는다.
+ *
+ * 3명만 있는 팀(63OPEN 7·8팀)은 4번 시드 자리가 비는데, 대회 규칙상
+ * 3번 시드가 4번 자리까지 맡는다 (주인 확인 2026-10-01).
+ * 그래서 4번을 찾는데 없으면 3번을 돌려준다.
+ */
+export function playerAtSeed(
+  team: TeamEntry,
+  seed: number,
+): TeamPlayer | undefined {
+  const exact = team.players.find((p) => p.seed === seed);
+  if (exact) return exact;
+  if (seed === 4) return team.players.find((p) => p.seed === 3);
+  return undefined;
+}
+
+/** 그 팀이 실제로 몇 명인지 (4번 자리를 3번이 겸하는 팀은 3) */
+export function teamSize(team: TeamEntry): number {
+  return team.players.length;
+}
+
 // 경기 자리에 누가 오는지: 시드팀 / 앞 경기 승자 / 앞 경기 패자
 export type SlotRef =
   | { kind: "seed"; seed: number }
@@ -37,10 +59,8 @@ export type Stage =
   | "lb-semi" // 패자조 준결승
   | "lb-final" // 패자조 결승
   | "grand-final" // 그랜드 파이널
-  | "reset" // 리셋 재경기 (패자조 출신이 그랜드 파이널을 이기면)
   | "place-7-8"
-  | "place-5-6"
-  | "place-3-4";
+  | "place-5-6";
 
 export type TemplateMatch = {
   no: number;
@@ -50,14 +70,14 @@ export type TemplateMatch = {
   court: "A" | "B" | "C" | "D";
   a: SlotRef;
   b: SlotRef;
-  // 리셋 재경기는 조건부: 그랜드 파이널을 패자조 출신이 이겼을 때만 열린다
-  conditional?: "reset";
 };
 
 export type ScheduleBlock = {
   no: number;
   title: string; // 예) "승자조 4강 + 패자조 1R"
   time: string; // "13:30 — 14:00"
+  /** 이 타임 앞에 다 같이 쉬는 시간(분). 그랜드 파이널 앞 30분 휴식 같은 것 */
+  breakBefore?: number;
   note?: string;
 };
 
@@ -97,7 +117,11 @@ export type ResolvedMatch = {
 export type Placement = { rank: number; team: TeamEntry | null; how: string };
 
 // 매치 내 페어 교체 규칙 (4게임 단위, A→B→C 고정)
-export const PAIR_ROTATION: { key: "A" | "B" | "C"; seeds: [1 | 2 | 3 | 4, 1 | 2 | 3 | 4]; games: string }[] = [
+export const PAIR_ROTATION: {
+  key: "A" | "B" | "C";
+  seeds: [1 | 2 | 3 | 4, 1 | 2 | 3 | 4];
+  games: string;
+}[] = [
   { key: "A", seeds: [2, 4], games: "1~4게임" },
   { key: "B", seeds: [1, 3], games: "5~8게임" },
   { key: "C", seeds: [1, 2], games: "9~12게임 (연장 시)" },
@@ -112,8 +136,6 @@ export const STAGE_COLOR: Record<Stage, string> = {
   "lb-semi": "#be123c",
   "lb-final": "#be123c",
   "grand-final": "#b45309",
-  reset: "#b45309",
   "place-7-8": "#64748b",
   "place-5-6": "#64748b",
-  "place-3-4": "#64748b",
 };

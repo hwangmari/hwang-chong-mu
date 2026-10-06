@@ -36,7 +36,7 @@ export default function NextUpBar({ ready, position, names, why, courts, onJump 
 
 const StNextSticky = styled.button<{ $ready: boolean }>`
   position: sticky;
-  top: 3.5rem; /* 56px = 헤더 높이. 사이가 뜨면 그 틈으로 내용이 지나가 보인다 */
+  top: calc(3.5rem + 5px); /* 61px = 헤더 56px + 헤더 아래 선 1px + 띄움 4px (주인 요청 2026-09-17). 이 4px 틈으로 아래 내용이 살짝 지나가 보인다 */
   z-index: 5;
   display: flex;
   flex-wrap: wrap;

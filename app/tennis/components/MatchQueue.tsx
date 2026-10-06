@@ -35,7 +35,7 @@ import {
   StRoundTime,
 } from "../page.styles";
 import styled from "styled-components";
-import type { Court, Match, Player, ScoreMap, TennisEvent } from "../types";
+import { isSameDayMatch, type Court, type Match, type Player, type ScoreMap, type TennisEvent } from "../types";
 
 type Props = {
   event: TennisEvent;
@@ -205,9 +205,14 @@ export default function MatchQueue({
 
   async function saveSlot(round: number, court: Court, editing: Match | null = null) {
     if (pick.a.length !== 2 || pick.b.length !== 2) return;
+    // 저장에 실패하면 ExchangeView 가 위에 안내를 띄우고 에러를 다시 던진다 — 여기서 받아 고르던 칸을 그대로 열어 둔다 (2026-09-17)
     if (editing) {
       const changed: Match = { ...editing, type: typeOf(pick.a, pick.b), teamA: [pick.a[0], pick.a[1]], teamB: [pick.b[0], pick.b[1]] };
-      await onReorder(event.matches.map((m) => (m.no === editing.no ? changed : m)));
+      try {
+        await onReorder(event.matches.map((m) => (m.no === editing.no ? changed : m)));
+      } catch {
+        return;
+      }
       closePicker();
       return;
     }
@@ -219,8 +224,13 @@ export default function MatchQueue({
       teamB: [pick.b[0], pick.b[1]],
       round,
       court,
+      sameDay: true,
     };
-    await onReorder([...event.matches, match]);
+    try {
+      await onReorder([...event.matches, match]);
+    } catch {
+      return;
+    }
     closePicker();
   }
 
@@ -391,6 +401,10 @@ export default function MatchQueue({
           위에서부터 순서대로, 비는 코트에 들어가요. 코트와 선수가 비면 &ldquo;지금 시작 가능&rdquo;이
           되고, 시작 버튼을 눌러 코트를 정한 뒤 경기가 끝나면 게임 수(예: 6 : 4)를 저장하세요.
           {reordering ? " 아직 시작하지 않은 경기만 ▲▼로 옮길 수 있어요." : ""}
+          {/* 선수 바꾸기는 당일 편성 경기에만 있다 — 미리 짠 경기는 어디서 고치는지 알려 준다 (주인 요청 2026-09-17) */}
+          {canReorder && event.rounds.length > 0
+            ? " 카드의 “선수 바꾸기”는 당일 편성 경기에만 있어요. 미리 짜 둔 경기의 선수는 ‘대회 정보 · 규칙’ 탭 → “대진표 수정”에서 바꿔요."
+            : ""}
         </StCardHint>
 
         {reordering ? (
@@ -511,8 +525,9 @@ export default function MatchQueue({
                       if (!timing) continue;
                       if (match.court) placed.add(match.court);
                       const key = `${roundNo}-${match.court ?? "?"}`;
-                      // 아직 시작·점수 기록이 없는 경기는 어느 라운드든 선수를 바꾸거나 뺄 수 있다 (리뷰 2026-09-15: '당일' 이름으로 가리던 조건 제거)
-                      const editable = canReorder && !scores[match.no];
+                      // 카드에서 바로 선수를 바꾸거나 빼는 건 그날 편성한 경기만, 그것도 시작·점수 기록이 없을 때만.
+                      // 미리 짜 둔 경기는 '대회 정보 · 규칙' 탭에서 고친다 — 경기 중에 실수로 대진이 바뀌지 않게 (주인 요청 2026-09-17)
+                      const editable = canReorder && isSameDayMatch(match) && !scores[match.no];
                       if (editingNo === match.no && fillSlot === key) {
                         cells.push(
                           <StEmptySlot key={`m-${match.no}`} $open>

@@ -84,8 +84,8 @@ export default function TournamentSetupForm({ onCreate }: Props) {
   return (
     <>
       <StCardHint>
-        8팀 × 4명 더블 엘리미네이션이에요. 지금은 이름·날짜·장소·참가자 명단만 넣고, 팀 배정은 만든 뒤
-        &ldquo;참가 팀 입력하기&rdquo;에서 해요.
+        8팀 × 4명 더블 엘리미네이션이에요. 지금은 이름·날짜·장소·참가자 명단만
+        넣고, 팀 배정은 만든 뒤 &ldquo;참가 팀 입력하기&rdquo;에서 해요.
       </StCardHint>
       <StChipRow>
         <StRuleBadge $tone="fixed">🔒 8팀 더블 엘리미네이션</StRuleBadge>
@@ -99,36 +99,76 @@ export default function TournamentSetupForm({ onCreate }: Props) {
       <StRow>
         <StLabel>
           <StFieldName>대회 이름</StFieldName>
-          <StInput type="text" placeholder="예) 63OPEN 테니스 대회" value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} />
+          <StInput
+            type="text"
+            placeholder="예) 63OPEN 테니스 대회"
+            value={title}
+            maxLength={60}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </StLabel>
         <StLabel>
           <StFieldName>장소</StFieldName>
-          <StInput type="text" placeholder="예) 아식스테니스장" value={place} maxLength={60} onChange={(e) => setPlace(e.target.value)} />
+          <StInput
+            type="text"
+            placeholder="예) 아식스테니스장"
+            value={place}
+            maxLength={60}
+            onChange={(e) => setPlace(e.target.value)}
+          />
         </StLabel>
       </StRow>
 
       <StRow>
         <StLabel>
           <StFieldName>날짜</StFieldName>
-          <StInput type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <StInput
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </StLabel>
         <StLabel>
-          <StFieldName>첫 경기 시작 {timeTbd ? "(미정 · 일정표 계산용)" : ""}</StFieldName>
-          <StInput type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          <StFieldName>
+            첫 경기 시작 {timeTbd ? "(미정 · 일정표 계산용)" : ""}
+          </StFieldName>
+          <StInput
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+          />
         </StLabel>
         <StLabel>
-          <StFieldName>경기당 시간(분)</StFieldName>
+          <StFieldName>한 타임 시간(분)</StFieldName>
           <StInput
             type="text"
             inputMode="numeric"
             value={minutesPerMatch}
-            onChange={(e) => setMinutesPerMatch(Math.max(10, Math.min(120, Number(onlyDigits(e.target.value)) || 30)))}
+            onChange={(e) =>
+              setMinutesPerMatch(
+                Math.max(
+                  10,
+                  Math.min(120, Number(onlyDigits(e.target.value)) || 30),
+                ),
+              )
+            }
           />
         </StLabel>
       </StRow>
-      <StLabel as="div" style={{ flexDirection: "row", alignItems: "center", gap: "0.5rem" }}>
-        <input id="tournament-time-tbd" type="checkbox" checked={timeTbd} onChange={(e) => setTimeTbd(e.target.checked)} />
-        <label htmlFor="tournament-time-tbd" style={{ fontSize: "0.85rem", fontWeight: 700 }}>
+      <StLabel
+        as="div"
+        style={{ flexDirection: "row", alignItems: "center", gap: "0.5rem" }}
+      >
+        <input
+          id="tournament-time-tbd"
+          type="checkbox"
+          checked={timeTbd}
+          onChange={(e) => setTimeTbd(e.target.checked)}
+        />
+        <label
+          htmlFor="tournament-time-tbd"
+          style={{ fontSize: "0.85rem", fontWeight: 700 }}
+        >
           시간은 아직 미정이에요 (화면에 &ldquo;시간 미정&rdquo;으로 표시)
         </label>
       </StLabel>
@@ -136,19 +176,37 @@ export default function TournamentSetupForm({ onCreate }: Props) {
       <StRow>
         <StLabel>
           <StFieldName>경기 전 일정 (선택)</StFieldName>
-          <StInput type="text" placeholder="예) 12:00~13:00 개회식 · 몸풀기" value={beforeNote} maxLength={80} onChange={(e) => setBeforeNote(e.target.value)} />
+          <StInput
+            type="text"
+            placeholder="예) 12:00~13:00 개회식 · 몸풀기"
+            value={beforeNote}
+            maxLength={80}
+            onChange={(e) => setBeforeNote(e.target.value)}
+          />
         </StLabel>
         <StLabel>
           <StFieldName>경기 후 일정 (선택)</StFieldName>
-          <StInput type="text" placeholder="예) 시상식 · 폐회식" value={afterNote} maxLength={80} onChange={(e) => setAfterNote(e.target.value)} />
+          <StInput
+            type="text"
+            placeholder="예) 시상식 · 폐회식"
+            value={afterNote}
+            maxLength={80}
+            onChange={(e) => setAfterNote(e.target.value)}
+          />
         </StLabel>
       </StRow>
 
       <StLabel>
         <StFieldName>
-          참가자 명단 — {roster.length}명{roster.length > 0 ? ` (${rosterSummary(roster)})` : ""} · 8팀 × 4명 = 32명이 정원
+          참가자 명단 — {roster.length}명
+          {roster.length > 0 ? ` (${rosterSummary(roster)})` : ""} · 8팀 × 4명 =
+          32명이 정원
         </StFieldName>
-        <StTextarea placeholder={ROSTER_PLACEHOLDER} value={rosterText} onChange={(e) => setRosterText(e.target.value)} />
+        <StTextarea
+          placeholder={ROSTER_PLACEHOLDER}
+          value={rosterText}
+          onChange={(e) => setRosterText(e.target.value)}
+        />
       </StLabel>
 
       {error ? <StNotice $tone="error">{error}</StNotice> : null}

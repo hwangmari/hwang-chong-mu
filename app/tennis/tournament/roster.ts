@@ -36,7 +36,15 @@ export function parseRosterText(text: string): RosterPlayer[] {
 // 저장된 명단 → 편집용 텍스트
 export function rosterToText(roster: RosterPlayer[]): string {
   return roster
-    .map((p) => [p.name, p.gender ? GENDER_LABEL[p.gender] : "", p.years !== undefined ? String(p.years) : ""].filter(Boolean).join(" "))
+    .map((p) =>
+      [
+        p.name,
+        p.gender ? GENDER_LABEL[p.gender] : "",
+        p.years !== undefined ? String(p.years) : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    )
     .join("\n");
 }
 
@@ -54,7 +62,12 @@ export function normalizeRoster(raw: unknown): RosterPlayer[] {
     if (typeof obj.name !== "string" || !obj.name.trim()) continue;
     const entry: RosterPlayer = { name: obj.name.trim() };
     if (obj.gender === "M" || obj.gender === "F") entry.gender = obj.gender;
-    if (typeof obj.years === "number" && Number.isFinite(obj.years) && obj.years >= 0) entry.years = obj.years;
+    if (
+      typeof obj.years === "number" &&
+      Number.isFinite(obj.years) &&
+      obj.years >= 0
+    )
+      entry.years = obj.years;
     out.push(entry);
   }
   return out;
@@ -78,15 +91,27 @@ export function sortRoster(roster: RosterPlayer[]): RosterPlayer[] {
   });
 }
 
-export type RosterGroup = { key: RosterGroupKey; label: string; players: RosterPlayer[] };
+export type RosterGroup = {
+  key: RosterGroupKey;
+  label: string;
+  players: RosterPlayer[];
+};
 
-export const GROUP_LABEL: Record<RosterGroupKey, string> = { M: "남", F: "여", unknown: "성별 미입력" };
+export const GROUP_LABEL: Record<RosterGroupKey, string> = {
+  M: "남",
+  F: "여",
+  unknown: "성별 미입력",
+};
 
 // 성별별로 묶어서(각 묶음 안은 sortRoster 순서) 돌려준다. 비어 있는 묶음은 뺀다
 export function groupRoster(roster: RosterPlayer[]): RosterGroup[] {
   const sorted = sortRoster(roster);
   return (["M", "F", "unknown"] as RosterGroupKey[])
-    .map((key) => ({ key, label: GROUP_LABEL[key], players: sorted.filter((p) => rosterGroupKey(p) === key) }))
+    .map((key) => ({
+      key,
+      label: GROUP_LABEL[key],
+      players: sorted.filter((p) => rosterGroupKey(p) === key),
+    }))
     .filter((g) => g.players.length > 0);
 }
 

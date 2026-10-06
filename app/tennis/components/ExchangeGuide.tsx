@@ -4,7 +4,7 @@ import { useState } from "react";
 import { endTime } from "../format";
 import { FIXED_RULES, RULE_INFO, isRuleOn } from "../rules";
 import { StCard, StCardHead, StCardHint, StCardTitle, StGhostBtn, StGuide } from "../page.styles";
-import { MATCH_TYPE_LABEL, POINTS, type MatchType, type TennisEvent } from "../types";
+import { MATCH_TYPE_LABEL, POINTS, isSameDayMatch, type MatchType, type TennisEvent } from "../types";
 import { NoteLines } from "../noteLines";
 
 type Props = { event: TennisEvent };
@@ -31,8 +31,10 @@ export default function ExchangeGuide({ event }: Props) {
   const teams = [...new Set(event.players.map((p) => p.team?.trim()).filter(Boolean))];
   // 팀 대항(같은 소속끼리 짝, 다른 소속과 대결)인지 / 라운드 시간표가 있는지 / 당일 편성 라운드(경기 없는 라운드)가 몇 개인지 — 2026-09-15
   const teamMatch = event.rules.teamMatch && teams.length === 2;
-  const plannedRounds = event.rounds.filter((r) => event.matches.some((m) => m.round === r.no));
-  const sameDayRounds = event.rounds.filter((r) => !event.matches.some((m) => m.round === r.no));
+  // 당일 편성 라운드 = 미리 짠 경기가 하나도 없는 라운드 (그날 넣은 경기만 있거나 아직 비어 있음) — 2026-09-17
+  const isPlannedIn = (no: number) => event.matches.some((m) => m.round === no && !isSameDayMatch(m));
+  const plannedRounds = event.rounds.filter((r) => isPlannedIn(r.no));
+  const sameDayRounds = event.rounds.filter((r) => !isPlannedIn(r.no));
 
   return (
     <StCard>
@@ -111,7 +113,7 @@ export default function ExchangeGuide({ event }: Props) {
             {sameDayRounds.length > 0 ? (
               <li>
                 <b>R{sameDayRounds[0].no}~R{sameDayRounds[sameDayRounds.length - 1].no}({sameDayRounds.length * event.courts}경기)는 당일 편성</b>이에요. 빈 칸의
-                &ldquo;편성하기&rdquo;에서 선수를 고르거나 &ldquo;추천으로 채우기&rdquo;(확정 경기가 적은 사람부터)를 누르면 돼요. 넣은 뒤에도 시작 전이면 &ldquo;선수 바꾸기&rdquo;로 고칠 수 있어요.
+                &ldquo;편성하기&rdquo;에서 선수를 고르거나 &ldquo;추천으로 채우기&rdquo;(확정 경기가 적은 사람부터)를 누르면 돼요. 넣은 뒤에도 시작 전이면 &ldquo;선수 바꾸기&rdquo;로 고칠 수 있어요. 미리 짜 둔 경기의 선수는 이 탭의 &ldquo;대진표 수정&rdquo;에서 바꿔요.
               </li>
             ) : null}
             <li>

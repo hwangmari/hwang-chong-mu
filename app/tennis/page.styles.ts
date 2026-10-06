@@ -1683,3 +1683,108 @@ export const StSlotLabel = styled.span`
   font-weight: 800;
   color: ${({ theme }) => theme.colors.gray500};
 `;
+
+/* ===== 팀별 여정에서 고른 팀의 선수 명단 (주인 요청 2026-10-06) =====
+   카드가 이미 테두리를 갖고 있으니 여기서는 선을 더하지 않고 바탕색 띠로만 구분한다. */
+export const StRosterBand = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.semantic.bg};
+`;
+
+export const StRosterGrid = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  justify-items: start;
+  gap: 0.35rem 0.9rem;
+`;
+
+/* 번호·이름·성별이 줄마다 같은 자리에서 시작한다 */
+export const StRosterItem = styled.li`
+  display: grid;
+  grid-template-columns: 1.1rem 3.6rem 1.1rem;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
+export const StRosterSeed = styled.span`
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.gray400};
+  font-variant-numeric: tabular-nums;
+`;
+
+export const StRosterName = styled.span`
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray800};
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+`;
+
+export const StRosterGender = styled.span<{ $color: string }>`
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: ${({ $color }) => $color};
+`;
+
+/* ===== 참가 팀을 한 줄에 한 팀씩 보는 표 (주인 요청 2026-10-06) =====
+   팀 이름 칸과 1~4번 칸을 고정폭으로 잡아, 이름 길이가 달라도 세로줄이 흔들리지 않는다. */
+export const StRosterTable = styled(StTable)`
+  table-layout: fixed;
+  min-width: 44rem;
+
+  /* 맨 왼쪽은 1번~4번 자리 이름표, 나머지 여덟 칸이 1팀~8팀 */
+  col.slot {
+    width: 3.6rem;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  th {
+    font-size: 0.76rem;
+    color: ${({ theme }) => theme.colors.gray900};
+  }
+
+  /* 왼쪽 이름표 칸은 옅게 — 눈이 팀 쪽으로 먼저 가게 */
+  td.slot,
+  th.slot {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.gray400};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+`;
+
+export const StRosterCell = styled.span`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray800};
+`;
+
+export const StRosterCellGender = styled.span<{ $color: string }>`
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: ${({ $color }) => $color};
+`;
+
+/* 3명 팀의 비어 있는 4번 칸 */
+export const StRosterCellEmpty = styled.span`
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray400};
+`;
