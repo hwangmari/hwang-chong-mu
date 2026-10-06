@@ -5,6 +5,7 @@ import BracketTree from "./BracketTree";
 import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
+import VotePanel from "./VotePanel";
 import NextUpBar from "../components/NextUpBar";
 import {
   countFinishedTournament,
@@ -89,7 +90,7 @@ import { jumpToMatch } from "../jump";
 import { NoteLines } from "../noteLines";
 
 type Props = { initialEvent: TournamentEvent };
-type Tab = "bracket" | "diagram" | "placements" | "teams" | "info";
+type Tab = "bracket" | "diagram" | "placements" | "teams" | "vote" | "info";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -469,6 +470,13 @@ export default function TournamentView({ initialEvent }: Props) {
           onClick={() => setTab("teams")}
         >
           팀별 여정
+        </StTab>
+        <StTab
+          type="button"
+          $active={tab === "vote"}
+          onClick={() => setTab("vote")}
+        >
+          투표
         </StTab>
         <StTab
           type="button"
@@ -939,6 +947,8 @@ export default function TournamentView({ initialEvent }: Props) {
             <StCardHint>위에서 팀을 골라 주세요.</StCardHint>
           )}
         </StCard>
+      ) : tab === "vote" ? (
+        <VotePanel event={event} matches={matches} />
       ) : null}
       {/* 대회 정보·규칙·참가 팀·안내: 다른 탭을 보고 와도 입력 중이던 팀 이름이 남도록 늘 그려 두고 숨긴다 (리뷰 2026-09-15) */}
       <div hidden={tab !== "info"}>
