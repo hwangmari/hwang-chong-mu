@@ -5,12 +5,18 @@
 import { supabase } from "@/lib/supabase";
 import { playerNameFromKey } from "@/app/tennis/voterKey";
 
-export type VoteKind = "dresser_m" | "dresser_f" | "champion";
+export type VoteKind = "champion" | "dresser";
+
+/** 베스트드레서에서 한 사람이 고를 수 있는 사람 수 */
+export const DRESSER_PICKS = 3;
+/** 베스트드레서 수상 인원 (최다 득표 순) */
+export const DRESSER_WINNERS = 2;
+/** 여럿을 한 칸에 담을 때 쓰는 구분자 */
+const SEP = "|";
 
 export const VOTE_LABEL: Record<VoteKind, string> = {
-  dresser_m: "베스트드레서 남성부",
-  dresser_f: "베스트드레서 여성부",
   champion: "우승팀 토토",
+  dresser: "베스트드레서",
 };
 
 /** 한 분야의 집계: 고른 것별 표 수와, 내가 무엇을 골랐는지 */
@@ -18,7 +24,8 @@ export type VoteTally = {
   kind: VoteKind;
   total: number;
   counts: { choice: string; votes: number }[]; // 많이 받은 순
-  mine: string | null;
+  /** 내가 고른 것들. 토토는 한 개, 베스트드레서는 최대 세 개 */
+  mine: string[];
   /**
    * 고른 것별로 "누가 골랐는지". 식별값이 사람 이름인 투표(우승팀 토토)에서만 채워진다.
    * 베스트드레서는 익명이라 늘 빈 배열이다.
@@ -46,29 +53,34 @@ export async function fetchVoteTallies(
     kind,
     total: 0,
     counts: [],
-    mine: null,
+    mine: [],
     names: {},
   });
   const out: Record<VoteKind, VoteTally> = {
-    dresser_m: empty("dresser_m"),
-    dresser_f: empty("dresser_f"),
     champion: empty("champion"),
+    dresser: empty("dresser"),
   };
 
   for (const kind of Object.keys(out) as VoteKind[]) {
-    const mine = rows.find((r) => r.kind === kind && r.voter_key === voterKey)?.choice ?? null;
+    const myRow = rows.find((r) => r.kind === kind && r.voter_key === voterKey);
+    const mine = myRow ? myRow.choice.split(SEP).filter(Boolean) : [];
     const byChoice = new Map<string, number>();
     const names: Record<string, string[]> = {};
+    let voters = 0;
     for (const row of rows) {
       if (row.kind !== kind) continue;
-      byChoice.set(row.choice, (byChoice.get(row.choice) ?? 0) + 1);
+      voters += 1;
       const who = playerNameFromKey(row.voter_key);
-      if (who) (names[row.choice] ??= []).push(who);
+      // 한 줄에 여럿이 담겨 있을 수 있다 (베스트드레서는 최대 세 명)
+      for (const choice of row.choice.split(SEP).filter(Boolean)) {
+        byChoice.set(choice, (byChoice.get(choice) ?? 0) + 1);
+        if (who) (names[choice] ??= []).push(who);
+      }
     }
     for (const list of Object.values(names)) list.sort((a, b) => a.localeCompare(b, "ko"));
     out[kind] = {
       kind,
-      total: [...byChoice.values()].reduce((n, v) => n + v, 0),
+      total: voters, // 표 수가 아니라 참여한 사람 수
       // 표가 같으면 이름 순서로 — 새로고침할 때마다 줄 순서가 바뀌지 않게
       counts: [...byChoice.entries()]
         .map(([choice, votes]) => ({ choice, votes }))
@@ -80,13 +92,24 @@ export async function fetchVoteTallies(
   return out;
 }
 
-/** 한 표 넣기(또는 고치기). 같은 폰·같은 분야면 덮어쓴다 */
+/** 한 표 넣기(또는 고치기). 베스트드레서는 여럿을 한 번에 넘긴다. 빈 배열이면 표를 뺀다 */
 export async function castVote(
   eventId: string,
   kind: VoteKind,
   voterKey: string,
-  choice: string,
+  choices: string[],
 ): Promise<void> {
+  if (choices.length === 0) {
+    const { error: delErr } = await supabase
+      .from("tennis_votes")
+      .delete()
+      .eq("event_id", eventId)
+      .eq("kind", kind)
+      .eq("voter_key", voterKey);
+    if (delErr) throw delErr;
+    return;
+  }
+  const choice = choices.join(SEP);
   const { error } = await supabase.from("tennis_votes").upsert(
     {
       event_id: eventId,

@@ -14,6 +14,8 @@ import {
 import {
   castVote,
   checkOrCreatePin,
+  DRESSER_PICKS,
+  DRESSER_WINNERS,
   fetchVoteTallies,
   type VoteKind,
   type VoteTally,
@@ -84,14 +86,9 @@ export default function VotePanel({ event, matches }: Props) {
   //  · 베스트드레서는 대회가 끝나는 순간 마감과 공개가 같이 일어난다.
   const locked: Record<VoteKind, boolean> = {
     champion: started || dayPassed,
-    dresser_m: over,
-    dresser_f: over,
+    dresser: over,
   };
-  const revealed: Record<VoteKind, boolean> = {
-    champion: over,
-    dresser_m: over,
-    dresser_f: over,
-  };
+  const revealed: Record<VoteKind, boolean> = { champion: over, dresser: over };
 
   const winner = useMemo(
     () => placements(matches).find((p) => p.rank === 1)?.team ?? null,
@@ -146,10 +143,24 @@ export default function VotePanel({ event, matches }: Props) {
   }
 
   async function pick(kind: VoteKind, choice: string) {
-    if (locked[kind] || !myKey) return;
+    if (locked[kind] || !myKey || !tallies) return;
+    const now = tallies[kind].mine;
+    // 토토는 하나만 고른다. 베스트드레서는 눌러서 넣고 다시 눌러 뺀다(최대 세 명)
+    let next: string[];
+    if (kind === "champion") {
+      next = [choice];
+    } else if (now.includes(choice)) {
+      next = now.filter((c) => c !== choice);
+    } else if (now.length >= DRESSER_PICKS) {
+      return; // 세 명을 이미 골랐다 — 빼고 다시 고르게 둔다
+    } else {
+      next = [...now, choice];
+    }
+    // 화면에서 막아 두지만, 혹시 예전 표가 남아 있어도 본인은 빠지게 한 번 더 거른다
+    if (kind === "dresser") next = next.filter((name) => name !== myName);
     setBusy(kind);
     try {
-      await castVote(event.id, kind, myKey, choice);
+      await castVote(event.id, kind, myKey, next);
       await load();
       setError("");
     } catch {
@@ -297,38 +308,23 @@ export default function VotePanel({ event, matches }: Props) {
       />
 
       <Section
-        kind="dresser_m"
-        title="👔 베스트드레서 남성부"
-        hint={revealed.dresser_m ? "결과 공개!" : "대회가 끝나면 공개돼요."}
-        reveal="누가 골랐는지는 공개하지 않아요. 표 수만 나와요."
-        options={men.map((name) => ({
-          value: name,
-          label: name,
-          gender: genderOf(name),
+        kind="dresser"
+        title="👗 베스트드레서"
+        hint={revealed.dresser ? "결과 공개!" : "대회가 끝나면 공개돼요."}
+        reveal={`${DRESSER_PICKS}명까지 고를 수 있어요(나는 빼고). 최다 득표 ${DRESSER_WINNERS}명이 수상해요. 누가 골랐는지는 공개하지 않아요.`}
+        options={event.roster.map((r) => ({
+          value: r.name,
+          label: r.name,
+          gender: r.gender,
         }))}
-        tally={tallies.dresser_m}
-        locked={locked.dresser_m}
-        revealed={revealed.dresser_m}
-        busy={busy === "dresser_m"}
+        tally={tallies.dresser}
+        locked={locked.dresser}
+        revealed={revealed.dresser}
+        busy={busy === "dresser"}
         canVote={unlocked}
-        onPick={pick}
-      />
-
-      <Section
-        kind="dresser_f"
-        title="👗 베스트드레서 여성부"
-        hint={revealed.dresser_f ? "결과 공개!" : "대회가 끝나면 공개돼요."}
-        reveal="누가 골랐는지는 공개하지 않아요. 표 수만 나와요."
-        options={women.map((name) => ({
-          value: name,
-          label: name,
-          gender: genderOf(name),
-        }))}
-        tally={tallies.dresser_f}
-        locked={locked.dresser_f}
-        revealed={revealed.dresser_f}
-        busy={busy === "dresser_f"}
-        canVote={unlocked}
+        maxPicks={DRESSER_PICKS}
+        winnerCount={DRESSER_WINNERS}
+        excludeValue={myName}
         onPick={pick}
       />
     </StCard>
@@ -351,6 +347,9 @@ function Section({
   canVote,
   showNames = false,
   winnerValue = null,
+  maxPicks = 1,
+  winnerCount = 1,
+  excludeValue = "",
   onPick,
 }: {
   kind: VoteKind;
@@ -372,11 +371,25 @@ function Section({
   showNames?: boolean;
   /** 실제 우승팀 (토토 정답). 아직 안 정해졌으면 null */
   winnerValue?: string | null;
+  /** 한 사람이 고를 수 있는 수 */
+  maxPicks?: number;
+  /** 마감 뒤 수상자로 표시할 인원 (최다 득표 순) */
+  winnerCount?: number;
+  /** 고를 수 없는 값 — 본인은 본인을 뽑지 못한다 */
+  excludeValue?: string;
   onPick: (kind: VoteKind, choice: string) => void;
 }) {
   const votesOf = (value: string) =>
     tally.counts.find((c) => c.choice === value)?.votes ?? 0;
   const top = tally.counts[0]?.votes ?? 0;
+  // 최다 득표 순으로 수상 인원만큼 — 동점이면 함께 올린다
+  const cut = tally.counts[winnerCount - 1]?.votes ?? 0;
+  const awarded = new Set(
+    cut > 0
+      ? tally.counts.filter((c) => c.votes >= cut).map((c) => c.choice)
+      : [],
+  );
+  const full = tally.mine.length >= maxPicks;
   const correct = winnerValue ? (tally.names[winnerValue] ?? []) : [];
 
   return (
@@ -412,9 +425,10 @@ function Section({
 
       <StOptions>
         {options.map((option) => {
-          const mine = tally.mine === option.value;
+          const mine = tally.mine.includes(option.value);
+          const isMe = !!excludeValue && option.value === excludeValue;
           const votes = votesOf(option.value);
-          const best = revealed && votes > 0 && votes === top;
+          const best = revealed && awarded.has(option.value);
           const isWinner =
             showNames && revealed && winnerValue === option.value;
           // 이름은 우승팀 칸에만 보여 준다. 모든 칸에 깔면 눈이 갈 데를 잃는다
@@ -423,7 +437,8 @@ function Section({
             <StOption
               key={option.value}
               type="button"
-              disabled={locked || busy || !canVote}
+              disabled={locked || busy || !canVote || isMe || (!mine && full)}
+              data-me={isMe}
               $mine={mine}
               $highlight={isWinner || best}
               onClick={() => onPick(kind, option.value)}
@@ -441,6 +456,7 @@ function Section({
                       {GENDER_LABEL[option.gender]}
                     </StGender>
                   ) : null}
+                  {isMe ? <StMe>나</StMe> : null}
                 </StOptionName>
                 {who.length > 0 ? (
                   <StWho>{who.join(" · ")}</StWho>
@@ -689,6 +705,10 @@ const StOption = styled.button<{ $mine: boolean; $highlight: boolean }>`
   &:disabled {
     cursor: default;
   }
+
+  &[data-me="true"] {
+    opacity: 0.45;
+  }
 `;
 
 /* 득표율 막대는 글자 뒤에 깔린다 */
@@ -730,6 +750,16 @@ const StWho = styled.span`
   font-weight: 700;
   color: ${({ theme }) => theme.semantic.primary};
   word-break: keep-all;
+`;
+
+/* 본인 칸 — 고를 수 없다는 걸 글자로 알려 준다 */
+const StMe = styled.span`
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.3rem;
+  background: ${({ theme }) => theme.colors.gray100};
+  color: ${({ theme }) => theme.colors.gray400};
+  font-size: 0.62rem;
+  font-weight: 800;
 `;
 
 const StGender = styled.span<{ $color: string }>`

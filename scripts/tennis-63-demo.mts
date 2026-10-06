@@ -60,9 +60,14 @@ if (WIPE) {
 } else if (FILL) {
   await wipe(); // 겹치지 않게 먼저 비운다
 
-  const men = E.roster.filter((r) => r.gender === "M").map((r) => r.name);
-  const women = E.roster.filter((r) => r.gender === "F").map((r) => r.name);
-  const pick = (list: string[], i: number) => list[i % list.length];
+  const all = E.roster.map((r) => r.name);
+  // 본인은 빼고 세 명씩 고른다. 표가 고르게 퍼지면 전원 동점이 되어 연습이 되지 않으므로
+  // 앞쪽 몇 명에게 표가 몰리도록 섞는다 (실제 투표도 이렇게 쏠린다)
+  const picksFor = (i: number) => {
+    const hot = [all[0], all[1], all[2], all[3]]; // 인기 후보 네 명
+    const want = [hot[i % 2], hot[2 + (i % 2)], all[(i * 7 + 5) % all.length]];
+    return [...new Set(want)].filter((n) => n !== all[i]).slice(0, 3);
+  };
   // 비번은 명단 순서대로 1000부터. 연습용이라 규칙을 그대로 적어 둔다
   const pinOf = (i: number) => String(1000 + i);
 
@@ -72,8 +77,7 @@ if (WIPE) {
   })));
   await api("tennis_votes", "POST", E.roster.flatMap((r, i) => [
     { event_id: E.id, kind: "champion", voter_key: `player-${r.name}`, choice: String((i % E.teams.length) + 1) },
-    { event_id: E.id, kind: "dresser_m", voter_key: `player-${r.name}`, choice: pick(men, i * 3) },
-    { event_id: E.id, kind: "dresser_f", voter_key: `player-${r.name}`, choice: pick(women, i * 5) },
+    { event_id: E.id, kind: "dresser", voter_key: `player-${r.name}`, choice: picksFor(i).join("|") },
   ]));
   await api("tennis_scores", "POST", DOUBLE_ELIM_8.map((m) => {
     const upset = m.no % 4 === 3; // 몇 경기는 뒤집어 대진이 섞이게
