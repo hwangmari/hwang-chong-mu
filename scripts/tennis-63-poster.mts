@@ -210,7 +210,7 @@ const cards = [
        <li><b>3위는 패자조 결승에서 진 팀, 4위는 패자조 준결승에서 진 팀</b>이에요.</li>
        <li>5-6위전 · 7-8위전이 따로 있어 <b>8팀 순위가 모두 정해집니다</b>.</li>
      </ul></div>`,
-    `한 타임 ${E.minutesPerMatch}분 · 코트 ${E.courts}면을 동시에 씁니다. 경기는 30분쯤 걸리고, 남는 시간은 코트 정리·이동 여유예요.`,
+    `한 타임 ${E.minutesPerMatch}분. 경기는 30분쯤 걸리고, 남는 시간은 코트 정리·이동 여유예요.`,
   ),
 
   card(
@@ -245,7 +245,7 @@ const cards = [
   card(
     "05",
     "대진 순서",
-    `타임마다 ${E.courts}코트를 동시에 씁니다`,
+    "타임마다 같이 치는 경기예요",
     `<div class="sheet"><table class="draw">
        <thead><tr><th class="slot">타임</th>${COURTS.map((c) => `<th>${c}코트</th>`).join("")}</tr></thead>
        <tbody>${drawRows()}</tbody>

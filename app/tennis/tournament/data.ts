@@ -82,7 +82,7 @@ export const OPEN_63: TournamentEvent = {
       seed: 6,
       name: "6팀",
       players: [
-        { name: "장종명", seed: 1 },
+        { name: "윤여현", seed: 1 },
         { name: "조현서", seed: 2 },
         { name: "황혜경", seed: 3 },
         { name: "최재호", seed: 4 },
@@ -92,7 +92,7 @@ export const OPEN_63: TournamentEvent = {
       seed: 7,
       name: "7팀", // 3명 팀 — 3번 시드가 4번 자리까지 맡는다 (주인 확인 2026-10-01)
       players: [
-        { name: "윤여현", seed: 1 },
+        { name: "장종명", seed: 1 },
         { name: "이창하", seed: 2 },
         { name: "정현석", seed: 3 },
       ],
