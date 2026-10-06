@@ -32,6 +32,7 @@ const QR_SVG = readFileSync(new URL("./assets/63open-qr.svg", import.meta.url), 
 );
 
 const OUT = process.argv[2] ?? join(homedir(), "Downloads", "63OPEN-2026-공지.html");
+const WARMUP_OUT = process.argv[3] ?? join(homedir(), "Downloads", "63OPEN-2026-웜업게임.html");
 
 // 포스터에 적는 전체 시간대. 개회식은 beforeNote, 마무리는 afterNote 에 적혀 있다.
 const POSTER_TIME = "12:00~18:00";
@@ -40,6 +41,31 @@ const COURTS = ["A", "B", "C", "D"] as const;
 
 // 타임별 시각은 앱과 똑같은 계산을 쓴다 (휴식 시간까지 반영된다)
 const SCHEDULE = scheduleBlocks(E);
+
+/* ===== 개회식 때 하는 웜업 게임 "RACKET OUT" =====
+   대회 8팀을 둘씩 묶어 4팀으로 만든다. 8+8+7+7 = 30명. */
+const WARMUP_PAIRS = [
+  { name: "A", seeds: [1, 6], court: "COURT 1" },
+  { name: "B", seeds: [2, 5], court: "COURT 1" },
+  { name: "C", seeds: [3, 7], court: "COURT 2" },
+  { name: "D", seeds: [4, 8], court: "COURT 2" },
+] as const;
+
+const WARMUP_TEAMS = WARMUP_PAIRS.map((g) => {
+  const members = g.seeds.flatMap(
+    (seed) => E.teams.find((t) => t.seed === seed)?.players.map((p) => p.name) ?? [],
+  );
+  return { ...g, members };
+});
+
+const WARMUP_STEPS = [
+  ["서브", "각 팀의 1번 선수가 서브하며 경기를 시작합니다."],
+  ["리턴", "서브와 첫 리턴까지는 0카운트예요. 여기서 실수해도 라켓이 나가지 않아요."],
+  ["랠리 진행", "첫 리턴 이후부터 정상적으로 랠리가 진행됩니다."],
+  ["라켓 OUT", "에러가 나면 그 선수의 라켓이 OUT! 라켓만 빠지고 선수는 계속 뜁니다."],
+  ["경기 재개", "에러가 난 팀의 다음 순서 선수가 서브해 다시 시작해요. 또 서브·리턴은 0카운트."],
+  ["승리", "상대 팀의 라켓이 모두 OUT되면 승리!"],
+];
 
 // 표지 아래쪽 장소 글자는 오른쪽 끝(805)에 맞춘다. 이름 길이가 달라져도 잘리지 않게
 // 시작 위치를 뒤에서 계산한다 (한글 한 글자는 글자 크기 23px, 공백은 11px쯤 차지한다).
@@ -239,7 +265,56 @@ const cards = [
   ),
 ];
 
-const html = `<!doctype html>
+const warmupCards = [
+  card(
+    "01",
+    "웜업 게임",
+    "RACKET OUT · 개회식 때 다 같이",
+    `<div class="sheet">
+       <p class="lead">팀별로 순서대로 한 번씩 랠리를 이어가다가, <b>에러가 나면 그 선수의 라켓이 OUT!</b><br>
+       라켓이 나간 선수는 팀원의 라켓을 빌려 계속 뛰고, <b>라켓 1개가 남은 팀이 승리</b>합니다.</p>
+     </div>
+     <div class="sheet">
+       <table class="steps">
+         ${WARMUP_STEPS.map(
+           ([what, how], i) =>
+             `<tr><th><span>${i + 1}</span></th><td><b>${esc(what)}</b><span class="note">${esc(how)}</span></td></tr>`,
+         ).join("")}
+       </table>
+     </div>`,
+    "라켓만 OUT되고 선수는 끝까지 함께해요. 30명이 다 몸을 풀고 시작하려고 만든 게임이에요.",
+  ),
+
+  card(
+    "02",
+    "웜업 팀 구성",
+    `${E.roster.length}명을 ${WARMUP_TEAMS.length}팀으로 · 2코트 동시 진행`,
+    `<div class="sheet">
+       <table class="warm">
+         ${WARMUP_TEAMS.map(
+           (g) =>
+             `<tr><th class="slot">${g.name}팀<span class="note">${g.seeds.join("·")}팀 · ${g.members.length}명</span></th>
+              <td>${g.members.map((n) => nameCell(n)).join("<i class='dot'>·</i>")}</td></tr>`,
+         ).join("")}
+       </table>
+     </div>
+     <div class="sheet">
+       <h3>진행 흐름</h3>
+       <p class="flow">
+         <b>1차전</b> COURT 1 · A팀 vs B팀 &nbsp;|&nbsp; COURT 2 · C팀 vs D팀<br>
+         <b>결승</b> 각 코트 승리팀 2팀이 한 코트에서 맞붙어 <b>RACKET OUT CHAMPION</b> 결정
+       </p>
+     </div>
+     <div class="prize">
+       <span class="prize-tag">🏆 우승팀 혜택</span>
+       <p>최종 우승팀 <b>전원에게</b><br><em>메가커피 기프티콘 1매씩</em> 증정!</p>
+     </div>`,
+    "경기 전에 팀마다 타순(1번~8번)을 정해 두세요. 그 순서대로 돌아가며 칩니다.",
+  ),
+];
+
+function page(list: string[]) {
+  return `<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -306,6 +381,32 @@ const html = `<!doctype html>
         border-radius:14px; box-sizing:content-box; }
   .url { font-size:23px; font-weight:800; color:var(--purple); word-break:break-all; text-align:center; }
 
+  .lead { font-size:25px; font-weight:500; line-height:1.6; word-break:keep-all; }
+  .lead b { font-weight:900; color:var(--purple); }
+
+  .steps th { width:62px; text-align:center; vertical-align:top; padding-top:16px; }
+  .steps th span { display:inline-grid; place-items:center; width:38px; height:38px;
+                   border-radius:50%; background:var(--purple);
+                   color:#fff; font-size:20px; font-weight:900; }
+  .steps td { text-align:left; font-size:24px; word-break:keep-all; }
+  .steps tr + tr th, .steps tr + tr td { border-top:1px solid var(--line); }
+
+  .warm th.slot { width:130px; vertical-align:top; padding-top:16px; }
+  .warm td { text-align:left; font-size:23px; line-height:1.6; word-break:keep-all; }
+  .warm .dot { font-style:normal; color:#c9c4da; margin:0 6px; }
+  .warm tr + tr th, .warm tr + tr td { border-top:1px solid var(--line); }
+
+  /* 우승 혜택 — 눈에 띄어야 하니 종이 안에서 유일하게 색을 채운다 */
+  .prize { background:var(--purple); border-radius:16px; padding:22px 26px; text-align:center; }
+  .prize-tag { display:inline-block; margin-bottom:10px; padding:5px 14px; border-radius:999px;
+               background:rgba(255,255,255,.16); color:#fff; font-size:18px; font-weight:800; }
+  .prize p { color:#fff; font-size:25px; font-weight:500; line-height:1.55; word-break:keep-all; }
+  .prize b { font-weight:900; }
+  .prize em { font-style:normal; font-weight:900; font-size:29px; color:#ffe24a; }
+
+  .flow { font-size:23px; font-weight:500; line-height:1.8; word-break:keep-all; }
+  .flow b { font-weight:900; color:var(--purple); }
+
   .when { width:94%; }
   .when th { text-align:left; font-size:24px; font-weight:700; padding:15px 10px; word-break:keep-all; }
   .when td.time { text-align:right; font-size:24px; font-weight:800; color:var(--purple);
@@ -344,11 +445,16 @@ const html = `<!doctype html>
 </style>
 </head>
 <body>
-${cards.join("\n")}
+${list.join("\n")}
 </body>
 </html>
 `;
+}
 
-writeFileSync(OUT, html, "utf8");
-console.log(`만들었어요: ${OUT}`);
-console.log(`  카드 ${cards.length}장 · ${E.teams.length}팀 ${assigned}명 (남 ${men} · 여 ${women}) · ${SCHEDULE.length}타임`);
+writeFileSync(OUT, page(cards), "utf8");
+writeFileSync(WARMUP_OUT, page(warmupCards), "utf8");
+console.log(`밴드 공지 ${cards.length}장: ${OUT}`);
+console.log(`웜업 게임 ${warmupCards.length}장: ${WARMUP_OUT}`);
+console.log(
+  `  ${E.teams.length}팀 ${assigned}명 (남 ${men} · 여 ${women}) · ${SCHEDULE.length}타임 · 웜업 ${WARMUP_TEAMS.length}팀`,
+);

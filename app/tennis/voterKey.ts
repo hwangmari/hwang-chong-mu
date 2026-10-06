@@ -1,23 +1,38 @@
-// 익명 투표용 폰 식별값.
+// 대회 투표에서 "나"를 가리키는 값.
 //
-// 이름을 받지 않고도 "한 폰 한 표"를 지키려고 브라우저마다 임의 문자열을 하나 만들어 둔다.
-// 사람을 알아낼 수 있는 정보는 들어 있지 않고, 저장 공간에도 이 문자열만 올라간다.
-// 브라우저 기록을 지우면 새로 만들어지므로 다시 한 표를 넣을 수 있다 — 동호회 투표에는 충분하다.
-const KEY = "hwang-tennis-voter";
+// 처음에는 폰마다 임의 문자열을 만들어 익명으로 두려 했는데, 기록을 지우면 또 투표할 수 있어
+// 한 사람 한 표가 깨졌다. 그래서 참가자 명단에서 본인 이름을 고르는 방식으로 바꿨다
+// (주인 결정 2026-10-06).
+//
+// 이름이 저장 공간에 남지만, 화면에 누가 누구를 골랐는지 보여 주는 건 우승팀 토토뿐이다.
+// 베스트드레서는 득표 수만 보여 준다 — VotePanel 의 showNames 가 그 경계다.
+// 저장 공간 규칙이 식별값을 8자 이상으로 받으므로 이름 앞에 "player-"를 붙인다
+// (가장 짧은 이름이 2글자라 9자가 된다).
+const NAME_KEY = "hwang-tennis-voter-name";
 
-export function getVoterKey(): string {
+export function playerVoterKey(name: string): string {
+  return `player-${name}`;
+}
+
+export function playerNameFromKey(key: string): string | null {
+  return key.startsWith("player-") ? key.slice("player-".length) : null;
+}
+
+/** 이 폰에서 지난번에 고른 이름 (다시 들어와도 다시 안 고르게) */
+export function getVoterName(): string {
   if (typeof window === "undefined") return "";
   try {
-    const saved = window.localStorage.getItem(KEY);
-    if (saved && saved.length >= 8) return saved;
-    const made =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID().replace(/-/g, "")
-        : Math.random().toString(36).slice(2) + Date.now().toString(36);
-    window.localStorage.setItem(KEY, made);
-    return made;
+    return window.localStorage.getItem(NAME_KEY) ?? "";
   } catch {
-    // 사생활 보호 모드 등으로 저장이 막히면 이번 방문에만 쓰는 값으로 둔다
     return "";
+  }
+}
+
+export function setVoterName(name: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(NAME_KEY, name);
+  } catch {
+    // 저장이 막혀 있어도 이번 투표에는 지장이 없다
   }
 }
