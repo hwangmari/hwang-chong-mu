@@ -99,3 +99,52 @@ export async function castVote(
   );
   if (error) throw error;
 }
+
+// ───── 본인 확인용 4자리 비번 ─────
+// 이름만 고르면 남의 이름을 골라 그 사람이 무엇을 찍었는지 볼 수 있다.
+// 베스트드레서를 익명으로 두려면 본인 확인이 꼭 필요하다 (주인 지적 2026-10-06).
+// 비번 자체는 저장하지 않고, 대회·이름·비번을 섞어 되돌릴 수 없게 만든 값만 저장한다.
+
+async function hashPin(eventId: string, name: string, pin: string): Promise<string> {
+  const data = new TextEncoder().encode(`${eventId}|${name}|${pin}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export type PinCheck = "created" | "ok" | "wrong";
+
+/**
+ * 비번을 확인한다.
+ * 이 이름으로 처음이면 넣은 비번을 그 사람 것으로 정하고 "created",
+ * 이미 있으면 맞는지 보고 "ok" 또는 "wrong" 을 돌려준다.
+ */
+export async function checkOrCreatePin(
+  eventId: string,
+  name: string,
+  pin: string,
+): Promise<PinCheck> {
+  const hash = await hashPin(eventId, name, pin);
+  const { data, error } = await supabase
+    .from("tennis_vote_pins")
+    .select("pin_hash")
+    .eq("event_id", eventId)
+    .eq("name", name)
+    .maybeSingle();
+  if (error) throw error;
+
+  if (data) return data.pin_hash === hash ? "ok" : "wrong";
+
+  const { error: insErr } = await supabase
+    .from("tennis_vote_pins")
+    .insert({ event_id: eventId, name, pin_hash: hash });
+  if (!insErr) return "created";
+
+  // 두 기기에서 동시에 처음 넣으면 한쪽이 중복으로 막힌다. 그땐 맞는지 다시 본다
+  const { data: again } = await supabase
+    .from("tennis_vote_pins")
+    .select("pin_hash")
+    .eq("event_id", eventId)
+    .eq("name", name)
+    .maybeSingle();
+  return again?.pin_hash === hash ? "ok" : "wrong";
+}
