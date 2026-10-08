@@ -54,7 +54,7 @@ export const OPEN_63: TournamentEvent = {
       players: [
         { name: "나희성", seed: 1 },
         { name: "권혁", seed: 2 },
-        { name: "박동호", seed: 3 },
+        { name: "전강남", seed: 3 },
         { name: "최윤희", seed: 4 },
       ],
     },
@@ -64,7 +64,7 @@ export const OPEN_63: TournamentEvent = {
       players: [
         { name: "손종일", seed: 1 },
         { name: "김지혜", seed: 2 },
-        { name: "전강남", seed: 3 },
+        { name: "박동호", seed: 3 },
         { name: "신정호", seed: 4 },
       ],
     },
