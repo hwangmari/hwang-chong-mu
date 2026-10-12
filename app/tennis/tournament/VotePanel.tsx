@@ -389,7 +389,8 @@ function Section({
       ? tally.counts.filter((c) => c.votes >= cut).map((c) => c.choice)
       : [],
   );
-  const full = tally.mine.length >= maxPicks;
+  // 하나만 고르는 투표(토토)는 다른 걸 누르면 바뀌어야 하므로 "꽉 참"으로 막지 않는다
+  const full = maxPicks > 1 && tally.mine.length >= maxPicks;
   const correct = winnerValue ? (tally.names[winnerValue] ?? []) : [];
 
   return (
