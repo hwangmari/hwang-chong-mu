@@ -92,8 +92,9 @@ export default function VotePanel({ event, matches }: Props) {
   //    누가 어디에 걸었는지는 대회가 끝나야 보여 준다 — 응원이 한쪽으로 쏠리지 않게.
   //  · 베스트드레서는 관리자가 마감하는 순간 마감과 공개가 같이 일어난다.
   const closed = settings?.closed ?? { champion: false, dresser: false };
-  const admin = settings?.admin ?? "";
-  const isAdmin = unlocked && !!admin && myName === admin;
+  const admins = settings?.admins ?? [];
+  const adminLabel = admins.join("·");
+  const isAdmin = unlocked && admins.includes(myName);
   const locked: Record<VoteKind, boolean> = closed;
   const revealed: Record<VoteKind, boolean> = {
     champion: over,
@@ -161,10 +162,10 @@ export default function VotePanel({ event, matches }: Props) {
 
   async function assignAdmin(name: string) {
     if (!name) return;
-    if (!(await openConfirm(`${name}님을 투표 관리자로 정할까요? 정한 뒤에는 ${name}님만 바꿀 수 있어요.`))) return;
+    if (!(await openConfirm(`${name}님을 관리자로 정할까요? 투표 마감과 경기 진행(시작·점수)을 ${name}님만 할 수 있게 돼요.`))) return;
     setAdminBusy(true);
     try {
-      setSettings(await saveVoteSettings(event.id, { admin: name }));
+      setSettings(await saveVoteSettings(event.id, { admins: [name] }));
       setAdminPick("");
       setError("");
     } catch {
@@ -277,7 +278,7 @@ export default function VotePanel({ event, matches }: Props) {
       </StCardHead>
       <StCardHint>
         한 사람 한 표. 마감 전에는 몇 번이든 고칠 수 있어요.
-        {admin ? ` 마감은 관리자 ${admin}님이 해요.` : ""}
+        {adminLabel ? ` 마감은 관리자 ${adminLabel}님이 해요.` : ""}
       </StCardHint>
 
       {/* 이름과 비번을 통과해야 연다 — 비번이 없으면 남의 이름을 골라 그 사람 표를 볼 수 있다 */}
@@ -375,7 +376,7 @@ export default function VotePanel({ event, matches }: Props) {
       ) : null}
 
       {/* 관리자가 아직 없는 대회 — 들어온 사람이 한 번 정한다. 정한 뒤에는 그 사람만 바꿀 수 있다 */}
-      {settings && !admin && unlocked ? (
+      {settings && admins.length === 0 && unlocked ? (
         <StAdmin>
           <StAdminTitle>🔐 투표 관리자가 아직 없어요</StAdminTitle>
           <StAdminRow>
@@ -417,7 +418,7 @@ export default function VotePanel({ event, matches }: Props) {
         warn={
           locked.champion
             ? ""
-            : `관리자${admin ? `(${admin})` : ""}가 마감하면 못 고쳐요.`
+            : `관리자${adminLabel ? `(${adminLabel})` : ""}가 마감하면 못 고쳐요.`
         }
         reveal="팀별 표 수·배당은 실시간으로 보여요. 누가 어디에 걸었는지는 대회가 끝난 뒤 공개돼요."
         live

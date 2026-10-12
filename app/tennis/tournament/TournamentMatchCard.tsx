@@ -52,6 +52,8 @@ type Props = {
   courts: Court[]; // 이 대회의 코트들
   occupied: Set<Court>; // 지금 경기 중인 코트
   busy: boolean;
+  /** 진행 요원이면 참. 아니면 시작·점수·고치기 버튼 없이 보기만 한다 */
+  canEdit: boolean;
   onStart: (matchNo: number, court: Court) => Promise<void>;
   onSave: (
     matchNo: number,
@@ -84,6 +86,7 @@ export default function TournamentMatchCard({
   courts,
   occupied,
   busy,
+  canEdit,
   onStart,
   onSave,
   onClear,
@@ -249,7 +252,7 @@ export default function TournamentMatchCard({
         </>
       ) : null}
 
-      {match.status === "ready" ? (
+      {match.status === "ready" && canEdit ? (
         <StScoreRow>
           {courts.map((court) => {
             const free = !occupied.has(court);
@@ -275,13 +278,15 @@ export default function TournamentMatchCard({
             <span>{match.scoreA}</span>
             <StScoreColon>:</StScoreColon>
             <span>{match.scoreB}</span>
-            <StGhostBtn
-              type="button"
-              disabled={busy}
-              onClick={() => setEditing(true)}
-            >
-              고치기
-            </StGhostBtn>
+            {canEdit ? (
+              <StGhostBtn
+                type="button"
+                disabled={busy}
+                onClick={() => setEditing(true)}
+              >
+                고치기
+              </StGhostBtn>
+            ) : null}
           </StFinalScore>
           {score?.tiebreakA !== undefined && score?.tiebreakB !== undefined ? (
             <StPlayedTime $known>
@@ -291,7 +296,7 @@ export default function TournamentMatchCard({
         </>
       ) : null}
 
-      {match.status === "playing" || (done && editing) ? (
+      {canEdit && (match.status === "playing" || (done && editing)) ? (
         <>
           <StScoreRow>
             <ScoreInput

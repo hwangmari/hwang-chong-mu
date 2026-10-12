@@ -123,26 +123,36 @@ export async function castVote(
   if (error) throw error;
 }
 
-// ───── 관리자와 마감 ─────
-// 마감은 경기 진행에서 자동으로 나오지 않고, 관리자 한 명이 직접 누른다 (주인 결정 2026-10-12).
-// 표를 새로 만들지 않고 대회 줄의 config 칸 안 vote 에 담는다.
+// ───── 관리자(진행 요원)와 마감 ─────
+// 마감은 경기 진행에서 자동으로 나오지 않고, 관리자가 직접 누른다 (주인 결정 2026-10-12).
+// 관리자는 경기 시작·점수 입력·팀 편집도 혼자 맡는다 — 아무나 미리 눌러 두는 일이 잦았다 (2026-10-13).
+// 표를 새로 만들지 않고 대회 줄의 config 칸에 담는다: config.admins, config.vote.closed.
 // 대회 편집(upsertTournament)은 config 를 합쳐 저장하므로 이 값을 지우지 않는다.
 
 export type VoteSettings = {
-  /** 마감할 수 있는 사람 (참가자 명단의 이름). 빈 문자열이면 아직 안 정했다 */
-  admin: string;
+  /** 관리자(참가자 명단의 이름들). 비어 있으면 아직 안 정했다 — 그땐 누구나 진행할 수 있다 */
+  admins: string[];
   closed: Record<VoteKind, boolean>;
 };
 
 const DEFAULT_SETTINGS: VoteSettings = {
-  admin: "",
+  admins: [],
   closed: { champion: false, dresser: false },
 };
 
 function readSettings(config: unknown): VoteSettings {
-  const vote = (config as { vote?: Partial<VoteSettings> } | null)?.vote;
+  const cfg = config as {
+    admins?: unknown;
+    vote?: { admin?: unknown; closed?: Partial<Record<VoteKind, boolean>> };
+  } | null;
+  const vote = cfg?.vote;
+  const admins = Array.isArray(cfg?.admins)
+    ? cfg.admins.filter((n): n is string => typeof n === "string" && n !== "")
+    : typeof vote?.admin === "string" && vote.admin // 한 명만 두던 때(2026-10-12) 저장분
+      ? [vote.admin]
+      : [];
   return {
-    admin: typeof vote?.admin === "string" ? vote.admin : "",
+    admins,
     closed: {
       champion: vote?.closed?.champion === true,
       dresser: vote?.closed?.dresser === true,
@@ -169,18 +179,21 @@ export async function fetchVoteSettings(eventId: string): Promise<VoteSettings> 
 /** 관리자·마감 상태 바꾸기. 저장 직전에 다시 읽어 합치므로 다른 칸은 건드리지 않는다 */
 export async function saveVoteSettings(
   eventId: string,
-  patch: { admin?: string; closed?: Partial<Record<VoteKind, boolean>> },
+  patch: { admins?: string[]; closed?: Partial<Record<VoteKind, boolean>> },
 ): Promise<VoteSettings> {
   const config = await fetchConfig(eventId);
   if (!config) throw new Error("저장 공간에 이 대회가 없어요.");
   const now = readSettings(config);
   const next: VoteSettings = {
-    admin: patch.admin ?? now.admin,
+    admins: patch.admins ?? now.admins,
     closed: { ...now.closed, ...patch.closed },
   };
   const { error } = await supabase
     .from("tennis_events")
-    .update({ config: { ...config, vote: next }, updated_at: new Date().toISOString() })
+    .update({
+      config: { ...config, admins: next.admins, vote: { closed: next.closed } },
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", eventId);
   if (error) throw error;
   return next;
@@ -198,6 +211,26 @@ async function hashPin(eventId: string, name: string, pin: string): Promise<stri
 }
 
 export type PinCheck = "created" | "ok" | "wrong";
+
+/**
+ * 비번이 맞는지만 본다. 아직 비번이 없으면 "none" — 새로 만들지 않는다.
+ * 관리자 들어가기에 쓴다. 남이 관리자 이름으로 먼저 비번을 정해 버리는 걸 막는다.
+ */
+export async function verifyPin(
+  eventId: string,
+  name: string,
+  pin: string,
+): Promise<"ok" | "wrong" | "none"> {
+  const { data, error } = await supabase
+    .from("tennis_vote_pins")
+    .select("pin_hash")
+    .eq("event_id", eventId)
+    .eq("name", name)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return "none";
+  return data.pin_hash === (await hashPin(eventId, name, pin)) ? "ok" : "wrong";
+}
 
 /**
  * 비번을 확인한다.

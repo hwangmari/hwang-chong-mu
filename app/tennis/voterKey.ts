@@ -54,3 +54,39 @@ export function clearSavedVoter() {
     // 지우지 못해도 화면에서는 잠긴 상태로 돌아간다
   }
 }
+
+// ───── 이 폰에서 들어온 관리자(진행 요원) ─────
+// 투표 칸의 "나"와 따로 둔다. 투표에서 "다른 사람"을 눌러도 진행 요원 모드는 풀리지 않게.
+// 열 때마다 저장 공간의 비번과 다시 맞춰 보므로 여기 적힌 것만으로는 관리자가 되지 않는다.
+const STAFF_KEY = "hwang-tennis-staff";
+
+export function getSavedStaff(eventId: string): { name: string; pin: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`${STAFF_KEY}:${eventId}`);
+    const parsed = raw ? (JSON.parse(raw) as { name?: unknown; pin?: unknown }) : null;
+    return typeof parsed?.name === "string" && typeof parsed.pin === "string"
+      ? { name: parsed.name, pin: parsed.pin }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStaff(eventId: string, name: string, pin: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`${STAFF_KEY}:${eventId}`, JSON.stringify({ name, pin }));
+  } catch {
+    // 저장이 막혀 있으면 새로고침할 때 다시 넣으면 된다
+  }
+}
+
+export function clearSavedStaff(eventId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(`${STAFF_KEY}:${eventId}`);
+  } catch {
+    // 지우지 못해도 화면에서는 진행 요원 모드가 꺼진다
+  }
+}
