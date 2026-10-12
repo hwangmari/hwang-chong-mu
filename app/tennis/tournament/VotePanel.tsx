@@ -16,10 +16,14 @@ import {
   checkOrCreatePin,
   DRESSER_PICKS,
   DRESSER_WINNERS,
+  fetchVoteSettings,
   fetchVoteTallies,
+  saveVoteSettings,
   type VoteKind,
+  type VoteSettings,
   type VoteTally,
 } from "@/services/tennisVotes";
+import { useModal } from "@/components/common/ModalProvider";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import {
   StCard,
@@ -39,10 +43,12 @@ type Props = { event: TournamentEvent; matches: ResolvedMatch[] };
  *  · 우승팀 토토는 맞춘 사람에게 상을 줘야 해서 마감 뒤 누가 어느 팀에 걸었는지 보여 준다.
  *  · 베스트드레서는 득표 수만 보여 주고 누가 누구를 골랐는지는 화면에 절대 띄우지 않는다.
  *
- * 마감은 전부 경기 진행에서 자동으로 나온다. 버튼을 두면 링크를 아는 누구나 누를 수 있다.
- *  · 토토: 첫 경기가 시작되면. 공이 구른 뒤에 거는 건 공평하지 않다.
- *  · 베스트드레서: 그랜드 파이널이 끝나면. 그 뒤가 시상식이다.
+ * 마감은 관리자 한 명(참가자 명단 중)이 직접 누른다 (주인 결정 2026-10-12).
+ * 자동 마감은 없다. 관리자는 본인 이름·비번으로 들어왔을 때만 마감 버튼을 본다.
+ *  · 토토: 팀별 표 수·배당은 진짜 토토처럼 늘 보여 준다. 누가 어디에 걸었는지는 대회가 끝나야 공개.
+ *  · 베스트드레서: 관리자가 마감하는 순간 득표가 공개된다(시상식).
  */
+const POLL_MS = 15_000;
 export default function VotePanel({ event, matches }: Props) {
   const [myName, setMyName] = useState("");
   const [pin, setPin] = useState("");
@@ -55,6 +61,10 @@ export default function VotePanel({ event, matches }: Props) {
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<VoteKind | null>(null);
+  const [settings, setSettings] = useState<VoteSettings | null>(null);
+  const [adminPick, setAdminPick] = useState("");
+  const [adminBusy, setAdminBusy] = useState(false);
+  const { openConfirm } = useModal();
 
   // 이 폰에서 지난번에 통과한 이름·비번이 있으면 바로 연다
   useEffect(() => {
@@ -68,9 +78,6 @@ export default function VotePanel({ event, matches }: Props) {
   const myKey = unlocked && myName ? playerVoterKey(myName) : "";
 
   const visible = matches.filter((m) => m.status !== "hidden");
-  const started = visible.some(
-    (m) => m.status === "playing" || m.status === "done",
-  );
   // 그랜드 파이널이 끝나면 대회가 끝난 것으로 본다. "모든 경기"로 하면
   // 5-6위전 점수를 깜빡했을 때 시상식인데 결과를 영영 못 본다
   const finalDone = visible.some(
@@ -81,14 +88,17 @@ export default function VotePanel({ event, matches }: Props) {
   const over = finalDone || dayPassed;
 
   // "마감"과 "공개"는 다른 순간이다.
-  //  · 토토는 첫 경기가 시작되면 더 못 고치지만, 결과는 대회가 끝나야 보여 준다.
-  //    경기 중에 누가 어디에 걸었는지 보이면 응원이 한쪽으로 쏠린다.
-  //  · 베스트드레서는 대회가 끝나는 순간 마감과 공개가 같이 일어난다.
-  const locked: Record<VoteKind, boolean> = {
-    champion: started || dayPassed,
-    dresser: over,
+  //  · 토토는 관리자가 마감하면 더 못 고친다. 표 수·배당은 늘 보이지만
+  //    누가 어디에 걸었는지는 대회가 끝나야 보여 준다 — 응원이 한쪽으로 쏠리지 않게.
+  //  · 베스트드레서는 관리자가 마감하는 순간 마감과 공개가 같이 일어난다.
+  const closed = settings?.closed ?? { champion: false, dresser: false };
+  const admin = settings?.admin ?? "";
+  const isAdmin = unlocked && !!admin && myName === admin;
+  const locked: Record<VoteKind, boolean> = closed;
+  const revealed: Record<VoteKind, boolean> = {
+    champion: over,
+    dresser: closed.dresser,
   };
-  const revealed: Record<VoteKind, boolean> = { champion: over, dresser: over };
 
   const winner = useMemo(
     () => placements(matches).find((p) => p.rank === 1)?.team ?? null,
@@ -97,7 +107,12 @@ export default function VotePanel({ event, matches }: Props) {
 
   const load = useCallback(async () => {
     try {
-      setTallies(await fetchVoteTallies(event.id, myKey));
+      const [nextTallies, nextSettings] = await Promise.all([
+        fetchVoteTallies(event.id, myKey),
+        fetchVoteSettings(event.id),
+      ]);
+      setTallies(nextTallies);
+      setSettings(nextSettings);
       setError("");
     } catch {
       setError("투표를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.");
@@ -109,6 +124,55 @@ export default function VotePanel({ event, matches }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // 현황판이라 열어 둔 동안 표 수·마감 상태를 따라간다 (점수 화면과 같은 방식)
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [load]);
+
+  async function setClosed(kind: VoteKind, value: boolean) {
+    const label = kind === "champion" ? "우승팀 토토" : "베스트드레서";
+    const message = value
+      ? kind === "champion"
+        ? `${label}를 마감할까요? 마감하면 아무도 표를 고칠 수 없어요.`
+        : `${label}를 마감하고 결과를 공개할까요?`
+      : `${label}를 다시 열까요? 다시 표를 고칠 수 있게 돼요.`;
+    if (!(await openConfirm(message))) return;
+    setAdminBusy(true);
+    try {
+      setSettings(await saveVoteSettings(event.id, { closed: { [kind]: value } }));
+      setError("");
+    } catch {
+      setError("마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
+  async function assignAdmin(name: string) {
+    if (!name) return;
+    if (!(await openConfirm(`${name}님을 투표 관리자로 정할까요? 정한 뒤에는 ${name}님만 바꿀 수 있어요.`))) return;
+    setAdminBusy(true);
+    try {
+      setSettings(await saveVoteSettings(event.id, { admin: name }));
+      setAdminPick("");
+      setError("");
+    } catch {
+      setError("관리자를 정하지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
 
   async function unlock() {
     if (!myName || pin.length !== 4) return;
@@ -213,6 +277,7 @@ export default function VotePanel({ event, matches }: Props) {
       </StCardHead>
       <StCardHint>
         한 사람 한 표. 마감 전에는 몇 번이든 고칠 수 있어요.
+        {admin ? ` 마감은 관리자 ${admin}님이 해요.` : ""}
       </StCardHint>
 
       {/* 이름과 비번을 통과해야 연다 — 비번이 없으면 남의 이름을 골라 그 사람 표를 볼 수 있다 */}
@@ -278,6 +343,65 @@ export default function VotePanel({ event, matches }: Props) {
         {gateMsg ? <StGateMsg>{gateMsg}</StGateMsg> : null}
       </StGate>
 
+      {/* 관리자 본인에게만 보이는 마감 버튼 */}
+      {isAdmin ? (
+        <StAdmin>
+          <StAdminTitle>🔐 관리자 · 투표 마감</StAdminTitle>
+          <StAdminRow>
+            <span>
+              우승팀 토토 <b>{closed.champion ? "마감됨" : "받는 중"}</b>
+            </span>
+            <StGhost
+              type="button"
+              disabled={adminBusy}
+              onClick={() => void setClosed("champion", !closed.champion)}
+            >
+              {closed.champion ? "다시 열기" : "마감하기"}
+            </StGhost>
+          </StAdminRow>
+          <StAdminRow>
+            <span>
+              베스트드레서 <b>{closed.dresser ? "마감·공개됨" : "받는 중"}</b>
+            </span>
+            <StGhost
+              type="button"
+              disabled={adminBusy}
+              onClick={() => void setClosed("dresser", !closed.dresser)}
+            >
+              {closed.dresser ? "다시 열기" : "마감하고 공개"}
+            </StGhost>
+          </StAdminRow>
+        </StAdmin>
+      ) : null}
+
+      {/* 관리자가 아직 없는 대회 — 들어온 사람이 한 번 정한다. 정한 뒤에는 그 사람만 바꿀 수 있다 */}
+      {settings && !admin && unlocked ? (
+        <StAdmin>
+          <StAdminTitle>🔐 투표 관리자가 아직 없어요</StAdminTitle>
+          <StAdminRow>
+            <StSelect
+              aria-label="투표 관리자"
+              value={adminPick}
+              onChange={(e) => setAdminPick(e.target.value)}
+            >
+              <option value="">관리자 고르기</option>
+              {byName.map((p) => (
+                <option key={p.name} value={p.name}>
+                  {p.name}
+                </option>
+              ))}
+            </StSelect>
+            <StGoBtn
+              type="button"
+              disabled={!adminPick || adminBusy}
+              onClick={() => void assignAdmin(adminPick)}
+            >
+              정하기
+            </StGoBtn>
+          </StAdminRow>
+        </StAdmin>
+      ) : null}
+
       {error ? <StNotice $tone="error">{error}</StNotice> : null}
 
       <Section
@@ -287,11 +411,16 @@ export default function VotePanel({ event, matches }: Props) {
           revealed.champion
             ? "결과 공개!"
             : locked.champion
-              ? "마감됐어요. 결과는 대회가 끝나면 공개돼요."
-              : "어느 팀이 우승할까요?"
+              ? "마감됐어요. 맞춘 사람은 대회가 끝나면 공개돼요."
+              : "어느 팀이 우승할까요? 적게 걸린 팀일수록 배당이 높아요."
         }
-        warn={locked.champion ? "" : "첫 경기가 시작되면 못 고쳐요."}
-        reveal="맞춘 사람은 대회가 끝난 뒤 공개돼요."
+        warn={
+          locked.champion
+            ? ""
+            : `관리자${admin ? `(${admin})` : ""}가 마감하면 못 고쳐요.`
+        }
+        reveal="팀별 표 수·배당은 실시간으로 보여요. 누가 어디에 걸었는지는 대회가 끝난 뒤 공개돼요."
+        live
         options={event.teams.map((t) => ({
           value: String(t.seed),
           label: `${t.seed}팀`,
@@ -310,7 +439,9 @@ export default function VotePanel({ event, matches }: Props) {
       <Section
         kind="dresser"
         title="👗 베스트드레서"
-        hint={revealed.dresser ? "결과 공개!" : "대회가 끝나면 공개돼요."}
+        hint={
+          revealed.dresser ? "결과 공개!" : "관리자가 마감하면 공개돼요."
+        }
         reveal={`${DRESSER_PICKS}명까지 고를 수 있어요(나는 빼고). 최다 득표 ${DRESSER_WINNERS}명이 수상해요. 누가 골랐는지는 공개하지 않아요.`}
         options={event.roster.map((r) => ({
           value: r.name,
@@ -346,6 +477,7 @@ function Section({
   busy,
   canVote,
   showNames = false,
+  live = false,
   winnerValue = null,
   maxPicks = 1,
   winnerCount = 1,
@@ -369,6 +501,8 @@ function Section({
   canVote: boolean;
   /** 마감 뒤 "누가 골랐는지"를 보여 줄지 (토토만 참) */
   showNames?: boolean;
+  /** 현황판: 공개 전에도 표 수·비율·배당을 늘 보여 준다 (토토만 참) */
+  live?: boolean;
   /** 실제 우승팀 (토토 정답). 아직 안 정해졌으면 null */
   winnerValue?: string | null;
   /** 한 사람이 고를 수 있는 수 */
@@ -382,6 +516,8 @@ function Section({
   const votesOf = (value: string) =>
     tally.counts.find((c) => c.choice === value)?.votes ?? 0;
   const top = tally.counts[0]?.votes ?? 0;
+  // 현황판이면 공개 전에도 숫자를 보여 준다
+  const showCounts = revealed || live;
   // 최다 득표 순으로 수상 인원만큼 — 동점이면 함께 올린다
   const cut = tally.counts[winnerCount - 1]?.votes ?? 0;
   const awarded = new Set(
@@ -420,8 +556,8 @@ function Section({
         </StResult>
       ) : null}
 
-      {revealed && tally.total === 0 ? (
-        <StEmpty>표가 하나도 없어요.</StEmpty>
+      {showCounts && tally.total === 0 ? (
+        <StEmpty>{live && !revealed ? "아직 건 사람이 없어요." : "표가 하나도 없어요."}</StEmpty>
       ) : null}
 
       <StOptions>
@@ -445,8 +581,13 @@ function Section({
               onClick={() => onPick(kind, option.value)}
               aria-label={`${title} ${option.label}${mine ? " (내가 고른 것)" : ""}`}
             >
-              {revealed && top > 0 ? (
-                <StBar style={{ width: `${(votes / top) * 100}%` }} />
+              {showCounts && top > 0 ? (
+                // 현황판은 전체 중 비율, 결과 공개는 1등 대비 길이
+                <StBar
+                  style={{
+                    width: `${(votes / (live ? tally.total : top)) * 100}%`,
+                  }}
+                />
               ) : null}
               <StOptionBody>
                 <StOptionName>
@@ -458,6 +599,7 @@ function Section({
                     </StGender>
                   ) : null}
                   {isMe ? <StMe>나</StMe> : null}
+                  {live && mine ? <StMine>내 표</StMine> : null}
                 </StOptionName>
                 {who.length > 0 ? (
                   <StWho>{who.join(" · ")}</StWho>
@@ -466,7 +608,17 @@ function Section({
                 ) : null}
               </StOptionBody>
               <StOptionRight>
-                {revealed ? (
+                {live ? (
+                  // 배당 = 전체 표 ÷ 이 팀 표. 적게 걸린 팀일수록 높다
+                  <StOdds>
+                    <StVotes>{votes}표</StVotes>
+                    <span>
+                      {votes > 0
+                        ? `${(tally.total / votes).toFixed(1)}배`
+                        : "-"}
+                    </span>
+                  </StOdds>
+                ) : revealed ? (
                   <StVotes>{votes}표</StVotes>
                 ) : mine ? (
                   <StMine>내 표</StMine>
@@ -779,6 +931,55 @@ const StVotes = styled.span`
   font-weight: 900;
   color: ${({ theme }) => theme.semantic.primary};
   font-variant-numeric: tabular-nums;
+`;
+
+/* 현황판 숫자 — 칸마다 같은 폭으로 오른쪽 정렬해 줄이 맞게 */
+const StOdds = styled.span`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 2.8rem;
+  font-variant-numeric: tabular-nums;
+
+  span:last-child {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.gray500};
+  }
+`;
+
+/* 관리자 칸 — 카드 안이라 테두리 없이 옅은 바탕 띠로 */
+const StAdmin = styled.div`
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.semantic.bg};
+`;
+
+const StAdminTitle = styled.p`
+  margin-bottom: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+const StAdminRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.gray600};
+
+  b {
+    font-weight: 800;
+    color: ${({ theme }) => theme.colors.gray900};
+  }
+
+  & + & {
+    margin-top: 0.4rem;
+  }
 `;
 
 const StMine = styled.span`

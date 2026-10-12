@@ -123,6 +123,69 @@ export async function castVote(
   if (error) throw error;
 }
 
+// ───── 관리자와 마감 ─────
+// 마감은 경기 진행에서 자동으로 나오지 않고, 관리자 한 명이 직접 누른다 (주인 결정 2026-10-12).
+// 표를 새로 만들지 않고 대회 줄의 config 칸 안 vote 에 담는다.
+// 대회 편집(upsertTournament)은 config 를 합쳐 저장하므로 이 값을 지우지 않는다.
+
+export type VoteSettings = {
+  /** 마감할 수 있는 사람 (참가자 명단의 이름). 빈 문자열이면 아직 안 정했다 */
+  admin: string;
+  closed: Record<VoteKind, boolean>;
+};
+
+const DEFAULT_SETTINGS: VoteSettings = {
+  admin: "",
+  closed: { champion: false, dresser: false },
+};
+
+function readSettings(config: unknown): VoteSettings {
+  const vote = (config as { vote?: Partial<VoteSettings> } | null)?.vote;
+  return {
+    admin: typeof vote?.admin === "string" ? vote.admin : "",
+    closed: {
+      champion: vote?.closed?.champion === true,
+      dresser: vote?.closed?.dresser === true,
+    },
+  };
+}
+
+async function fetchConfig(eventId: string): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabase
+    .from("tennis_events")
+    .select("config")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? ((data.config as Record<string, unknown> | null) ?? {}) : null;
+}
+
+/** 관리자·마감 상태 읽기. 저장 공간에 대회가 없으면(내장 대회) 기본값 */
+export async function fetchVoteSettings(eventId: string): Promise<VoteSettings> {
+  const config = await fetchConfig(eventId);
+  return config ? readSettings(config) : DEFAULT_SETTINGS;
+}
+
+/** 관리자·마감 상태 바꾸기. 저장 직전에 다시 읽어 합치므로 다른 칸은 건드리지 않는다 */
+export async function saveVoteSettings(
+  eventId: string,
+  patch: { admin?: string; closed?: Partial<Record<VoteKind, boolean>> },
+): Promise<VoteSettings> {
+  const config = await fetchConfig(eventId);
+  if (!config) throw new Error("저장 공간에 이 대회가 없어요.");
+  const now = readSettings(config);
+  const next: VoteSettings = {
+    admin: patch.admin ?? now.admin,
+    closed: { ...now.closed, ...patch.closed },
+  };
+  const { error } = await supabase
+    .from("tennis_events")
+    .update({ config: { ...config, vote: next }, updated_at: new Date().toISOString() })
+    .eq("id", eventId);
+  if (error) throw error;
+  return next;
+}
+
 // ───── 본인 확인용 4자리 비번 ─────
 // 이름만 고르면 남의 이름을 골라 그 사람이 무엇을 찍었는지 볼 수 있다.
 // 베스트드레서를 익명으로 두려면 본인 확인이 꼭 필요하다 (주인 지적 2026-10-06).

@@ -314,6 +314,12 @@ export async function createTournament(input: Omit<TournamentEvent, "id" | "buil
 
 // 토너먼트 저장 (코드에 든 대회를 처음 편집할 때도 같은 id로 통째로 저장)
 export async function upsertTournament(event: TournamentEvent): Promise<TournamentEvent> {
+  // config 에는 투표 관리자·마감(vote)도 들어 있다. 편집 화면은 그 값을 모르므로 지금 저장본에 합친다
+  const { data: current } = await supabase
+    .from("tennis_events")
+    .select("config")
+    .eq("id", event.id)
+    .maybeSingle();
   const { data, error } = await supabase
     .from("tennis_events")
     .upsert(
@@ -332,7 +338,13 @@ export async function upsertTournament(event: TournamentEvent): Promise<Tourname
         matches: [],
         rules: event.rules,
         teams: event.teams,
-        config: { gamesToWin: event.gamesToWin, timeTbd: event.timeTbd, beforeNote: event.beforeNote, roster: event.roster },
+        config: {
+          ...((current?.config as Record<string, unknown> | null) ?? {}),
+          gamesToWin: event.gamesToWin,
+          timeTbd: event.timeTbd,
+          beforeNote: event.beforeNote,
+          roster: event.roster,
+        },
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" },
