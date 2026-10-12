@@ -38,7 +38,6 @@ type Props = {
   teams: TeamEntry[];
   roster: RosterPlayer[]; // 참가자 명단 (팀 배정 전 풀)
   locked: boolean; // 경기가 하나라도 시작됐으면 시드 순서는 못 바꾸고 이름만 고친다
-  readOnly?: boolean; // 진행 요원이 아니면 보기만 한다
   busy: boolean;
   startEditing?: boolean; // 열자마자 편집 상태로
   onSave: (teams: TeamEntry[], roster: RosterPlayer[]) => Promise<void>;
@@ -49,13 +48,12 @@ export default function TeamEditor({
   teams,
   roster,
   locked,
-  readOnly = false,
   busy,
   startEditing = false,
   onSave,
   onClose,
 }: Props) {
-  const [editing, setEditing] = useState(startEditing && !readOnly);
+  const [editing, setEditing] = useState(startEditing);
   const [draft, setDraft] = useState<TeamEntry[]>(teams);
   const [rosterText, setRosterText] = useState(rosterToText(roster));
   const [showRoster, setShowRoster] = useState(false);
@@ -122,7 +120,7 @@ export default function TeamEditor({
           👥 참가 팀 · {teams.length}팀 {assignedCount}명
         </StCardTitle>
         <StActions>
-          {!editing && !readOnly ? (
+          {!editing ? (
             <StGhostBtn
               type="button"
               onClick={() => {

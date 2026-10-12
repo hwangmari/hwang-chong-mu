@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import styled from "styled-components";
-import { verifyPin } from "@/services/tennisVotes";
+import { useModal } from "@/components/common/ModalProvider";
+import { verifyPin, type TournamentPhase } from "@/services/tennisVotes";
 import { saveStaff } from "../voterKey";
 import {
   StGhostBtn,
@@ -16,19 +17,31 @@ type Props = {
   admins: string[];
   /** 지금 이 폰에서 들어온 관리자 이름. 없으면 빈 문자열 */
   staffName: string;
+  phase: TournamentPhase;
+  busy: boolean;
+  onPhase: (next: TournamentPhase) => Promise<void>;
   onEnter: (name: string) => void;
   onExit: () => void;
 };
 
+const PHASE_TEXT: Record<TournamentPhase, string> = {
+  before: "대회 시작 전 · 진행 요원이 시작하면 경기를 시작할 수 있어요.",
+  live: "대회 진행 중 · 경기 시작·점수는 누구나 넣을 수 있어요.",
+  ended: "대회가 끝났어요.",
+};
+
 /**
  * 진행 요원(관리자) 모드 띠. (주인 요청 2026-10-13 — "누가 미리 눌러놔서")
- * 관리자로 정한 사람만 투표 때 정한 이름·비번으로 들어와 경기 시작·점수·팀 편집을 한다.
- * 다른 사람에게는 누가 진행하는지만 보여 준다.
+ * 진행 요원은 "대회 시작"과 "대회 끝"만 누른다. 그 사이 경기 시작·점수는 누구나 한다.
+ * 대회 시작과 함께 우승팀 토토가 마감되고, 대회 끝과 함께 토토 결과가 공개된다.
  */
 export default function StaffBar({
   eventId,
   admins,
   staffName,
+  phase,
+  busy,
+  onPhase,
   onEnter,
   onExit,
 }: Props) {
@@ -37,6 +50,11 @@ export default function StaffBar({
   const [pin, setPin] = useState("");
   const [msg, setMsg] = useState("");
   const [checking, setChecking] = useState(false);
+  const { openConfirm } = useModal();
+
+  async function go(next: TournamentPhase, message: string) {
+    if (await openConfirm(message)) await onPhase(next);
+  }
 
   async function enter() {
     if (!name || pin.length !== 4) return;
@@ -66,12 +84,72 @@ export default function StaffBar({
   if (staffName) {
     return (
       <StBar $on>
-        <span>
-          🔐 진행 요원 모드 · <b>{staffName}</b>
-        </span>
-        <StGhostBtn type="button" onClick={onExit}>
-          나가기
-        </StGhostBtn>
+        <StRow>
+          <span>
+            🔐 진행 요원 · <b>{staffName}</b> · {PHASE_TEXT[phase]}
+          </span>
+          <StGhostBtn type="button" onClick={onExit}>
+            나가기
+          </StGhostBtn>
+        </StRow>
+        <StActionsRow>
+          {phase === "before" ? (
+            <StPrimaryBtn
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                void go(
+                  "live",
+                  "대회를 시작할까요? 우승팀 토토가 마감되고, 누구나 경기를 시작할 수 있게 돼요.",
+                )
+              }
+            >
+              ▶ 대회 시작
+            </StPrimaryBtn>
+          ) : null}
+          {phase === "live" ? (
+            <>
+              <StPrimaryBtn
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void go(
+                    "ended",
+                    "대회를 끝낼까요? 점수 입력이 닫히고 토토에서 누가 어디에 걸었는지 공개돼요.",
+                  )
+                }
+              >
+                🏁 대회 끝
+              </StPrimaryBtn>
+              <StGhostBtn
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void go(
+                    "before",
+                    "대회 시작을 취소할까요? 경기 시작이 다시 막히고 토토가 다시 열려요. 넣은 점수는 그대로 남아요.",
+                  )
+                }
+              >
+                시작 취소
+              </StGhostBtn>
+            </>
+          ) : null}
+          {phase === "ended" ? (
+            <StGhostBtn
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                void go(
+                  "live",
+                  "대회를 다시 진행 중으로 돌릴까요? 점수를 다시 고칠 수 있게 돼요.",
+                )
+              }
+            >
+              다시 진행 중으로
+            </StGhostBtn>
+          ) : null}
+        </StActionsRow>
       </StBar>
     );
   }
@@ -79,7 +157,9 @@ export default function StaffBar({
   return (
     <StBar>
       <StRow>
-        <span>경기 시작·점수는 진행 요원({admins.join("·")})만 넣어요.</span>
+        <span>
+          {PHASE_TEXT[phase]} (진행 요원 {admins.join("·")})
+        </span>
         <StGhostBtn
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -137,9 +217,7 @@ export default function StaffBar({
 
 const StBar = styled.div<{ $on?: boolean }>`
   display: flex;
-  flex-direction: ${({ $on }) => ($on ? "row" : "column")};
-  align-items: ${({ $on }) => ($on ? "center" : "stretch")};
-  justify-content: space-between;
+  flex-direction: column;
   gap: 0.5rem;
   padding: 0.6rem 0.9rem;
   border-radius: 0.8rem;
@@ -162,6 +240,12 @@ const StRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+`;
+
+const StActionsRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 `;
 
 const StForm = styled.div`

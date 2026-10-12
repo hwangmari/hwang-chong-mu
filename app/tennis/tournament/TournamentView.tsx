@@ -27,7 +27,12 @@ import {
   startTennisMatch,
   upsertTournament,
 } from "@/services/tennis";
-import { fetchVoteSettings, verifyPin } from "@/services/tennisVotes";
+import {
+  fetchVoteSettings,
+  saveVoteSettings,
+  verifyPin,
+  type TournamentPhase,
+} from "@/services/tennisVotes";
 import { clearSavedStaff, getSavedStaff } from "../voterKey";
 import {
   StActions,
@@ -144,6 +149,7 @@ export default function TournamentView({ initialEvent }: Props) {
   // 관리자(진행 요원) 명단과, 이 폰에서 들어온 진행 요원 이름
   const [admins, setAdmins] = useState<string[]>([]);
   const [staffName, setStaffName] = useState("");
+  const [phase, setPhase] = useState<TournamentPhase>("before");
 
   useEffect(() => {
     if (!notice) return;
@@ -174,6 +180,7 @@ export default function TournamentView({ initialEvent }: Props) {
         ]);
         setScores(toMap(list));
         setAdmins(settings.admins);
+        setPhase(settings.phase);
         setMode("cloud");
         setError("");
       } catch {
@@ -220,12 +227,25 @@ export default function TournamentView({ initialEvent }: Props) {
   }, [mode, reload]);
 
   const matches = useMemo(() => resolveBracket(event, scores), [event, scores]);
-  // 관리자를 정한 대회는 진행 요원만 경기 시작·점수·팀 편집을 한다.
-  // 관리자가 없거나 이 기기에만 저장하는 중이면 예전처럼 누구나.
-  const canEdit =
-    mode === "local" ||
-    admins.length === 0 ||
-    (!!staffName && admins.includes(staffName));
+  // 관리자를 정한 대회는 진행 요원이 "대회 시작"을 눌러야 경기를 시작·기록할 수 있다.
+  // 그 사이엔 누구나, "대회 끝" 뒤엔 아무도. 관리자가 없거나 이 기기에만 저장하는 중이면 예전처럼 늘 누구나.
+  const canEdit = mode === "local" || admins.length === 0 || phase === "live";
+  const lockedHint =
+    phase === "before"
+      ? "진행 요원이 대회를 시작하면 경기를 시작할 수 있어요."
+      : "대회가 끝났어요.";
+
+  async function changePhase(next: TournamentPhase) {
+    setBusy(true);
+    setError("");
+    try {
+      setPhase((await saveVoteSettings(eventId, { phase: next })).phase);
+    } catch {
+      setError("대회 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const blocks = useMemo(() => scheduleBlocks(event), [event]);
   const ranks = useMemo(() => placements(matches), [matches]);
   const progress = countFinishedTournament(matches);
@@ -472,6 +492,9 @@ export default function TournamentView({ initialEvent }: Props) {
           eventId={eventId}
           admins={admins}
           staffName={admins.includes(staffName) ? staffName : ""}
+          phase={phase}
+          busy={busy}
+          onPhase={changePhase}
           onEnter={setStaffName}
           onExit={() => {
             clearSavedStaff(eventId);
@@ -540,12 +563,16 @@ export default function TournamentView({ initialEvent }: Props) {
           {upNext[0] ? (
             <NextUpBar
               ready={
-                upNext[0].status === "ready" && occupied.size < courts.length
+                canEdit &&
+                upNext[0].status === "ready" &&
+                occupied.size < courts.length
               }
               position={upNext[0].template.no}
               names={`${upNext[0].template.label} · ${upNext[0].teamA ? `#${upNext[0].teamA.seed} ${upNext[0].teamA.name}` : upNext[0].aLabel} vs ${upNext[0].teamB ? `#${upNext[0].teamB.seed} ${upNext[0].teamB.name}` : upNext[0].bLabel}`}
               why={
-                upNext[0].status === "ready"
+                !canEdit
+                  ? lockedHint
+                  : upNext[0].status === "ready"
                   ? occupied.size < courts.length
                     ? "지금 시작 가능"
                     : "코트가 비면 시작"
@@ -616,7 +643,7 @@ export default function TournamentView({ initialEvent }: Props) {
                       {readyMatches.length > 0
                         ? canEdit
                           ? "아래 시작 가능한 경기에서 이 코트를 골라 시작하세요."
-                          : "진행 요원이 다음 경기를 시작하면 여기 떠요."
+                          : lockedHint
                         : "시작할 수 있는 경기가 없어요. 앞 경기 결과를 기다려요."}
                     </StCardHint>
                   )}
@@ -664,7 +691,7 @@ export default function TournamentView({ initialEvent }: Props) {
                           ? occupied.size < courts.length
                             ? canEdit
                               ? "▶ 빈 코트를 골라 지금 시작할 수 있어요"
-                              : "지금 시작할 수 있어요 · 진행 요원이 시작해요"
+                              : lockedHint
                             : "코트가 비면 시작할 수 있어요"
                           : waitingReason(m)}
                       </em>
@@ -1010,7 +1037,6 @@ export default function TournamentView({ initialEvent }: Props) {
               teams={event.teams}
               roster={event.roster}
               locked={anyStarted}
-              readOnly={!canEdit}
               busy={busy}
               startEditing={teamsEditOnOpen}
               onSave={saveTeams}

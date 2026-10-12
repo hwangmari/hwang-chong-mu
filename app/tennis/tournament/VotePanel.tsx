@@ -85,17 +85,20 @@ export default function VotePanel({ event, matches }: Props) {
   );
   // 아무도 점수를 안 넣은 경우까지 대비해, 대회 날짜가 지나면 무조건 연다
   const dayPassed = new Date(`${event.date}T23:59:59`) < new Date();
-  const over = finalDone || dayPassed;
+  const phase = settings?.phase ?? "before";
+  const over = finalDone || dayPassed || phase === "ended";
 
   // "마감"과 "공개"는 다른 순간이다.
-  //  · 토토는 관리자가 마감하면 더 못 고친다. 표 수·배당은 늘 보이지만
+  //  · 토토는 진행 요원이 대회를 시작하면 마감된다. 표 수·배당은 늘 보이지만
   //    누가 어디에 걸었는지는 대회가 끝나야 보여 준다 — 응원이 한쪽으로 쏠리지 않게.
   //  · 베스트드레서는 관리자가 마감하는 순간 마감과 공개가 같이 일어난다.
   const closed = settings?.closed ?? { champion: false, dresser: false };
   const admins = settings?.admins ?? [];
-  const adminLabel = admins.join("·");
   const isAdmin = unlocked && admins.includes(myName);
-  const locked: Record<VoteKind, boolean> = closed;
+  const locked: Record<VoteKind, boolean> = {
+    champion: phase !== "before" || closed.champion,
+    dresser: closed.dresser,
+  };
   const revealed: Record<VoteKind, boolean> = {
     champion: over,
     dresser: closed.dresser,
@@ -144,9 +147,7 @@ export default function VotePanel({ event, matches }: Props) {
   async function setClosed(kind: VoteKind, value: boolean) {
     const label = kind === "champion" ? "우승팀 토토" : "베스트드레서";
     const message = value
-      ? kind === "champion"
-        ? `${label}를 마감할까요? 마감하면 아무도 표를 고칠 수 없어요.`
-        : `${label}를 마감하고 결과를 공개할까요?`
+      ? `${label}를 마감하고 결과를 공개할까요?`
       : `${label}를 다시 열까요? 다시 표를 고칠 수 있게 돼요.`;
     if (!(await openConfirm(message))) return;
     setAdminBusy(true);
@@ -278,7 +279,6 @@ export default function VotePanel({ event, matches }: Props) {
       </StCardHead>
       <StCardHint>
         한 사람 한 표. 마감 전에는 몇 번이든 고칠 수 있어요.
-        {adminLabel ? ` 마감은 관리자 ${adminLabel}님이 해요.` : ""}
       </StCardHint>
 
       {/* 이름과 비번을 통과해야 연다 — 비번이 없으면 남의 이름을 골라 그 사람 표를 볼 수 있다 */}
@@ -347,19 +347,9 @@ export default function VotePanel({ event, matches }: Props) {
       {/* 관리자 본인에게만 보이는 마감 버튼 */}
       {isAdmin ? (
         <StAdmin>
-          <StAdminTitle>🔐 관리자 · 투표 마감</StAdminTitle>
-          <StAdminRow>
-            <span>
-              우승팀 토토 <b>{closed.champion ? "마감됨" : "받는 중"}</b>
-            </span>
-            <StGhost
-              type="button"
-              disabled={adminBusy}
-              onClick={() => void setClosed("champion", !closed.champion)}
-            >
-              {closed.champion ? "다시 열기" : "마감하기"}
-            </StGhost>
-          </StAdminRow>
+          <StAdminTitle>
+            🔐 관리자 · 베스트드레서 마감 (토토는 대회 시작과 함께 마감돼요)
+          </StAdminTitle>
           <StAdminRow>
             <span>
               베스트드레서 <b>{closed.dresser ? "마감·공개됨" : "받는 중"}</b>
@@ -412,13 +402,8 @@ export default function VotePanel({ event, matches }: Props) {
           revealed.champion
             ? "결과 공개!"
             : locked.champion
-              ? "마감됐어요. 맞춘 사람은 대회가 끝나면 공개돼요."
-              : "어느 팀이 우승할까요? 적게 걸린 팀일수록 배당이 높아요."
-        }
-        warn={
-          locked.champion
-            ? ""
-            : `관리자${adminLabel ? `(${adminLabel})` : ""}가 마감하면 못 고쳐요.`
+              ? "대회가 시작돼 마감됐어요. 맞춘 사람은 대회가 끝나면 공개돼요."
+              : "어느 팀이 우승할까요? 대회가 시작되면 마감돼요."
         }
         reveal="팀별 표 수·배당은 실시간으로 보여요. 누가 어디에 걸었는지는 대회가 끝난 뒤 공개돼요."
         live
@@ -469,7 +454,6 @@ function Section({
   kind,
   title,
   hint,
-  warn,
   reveal,
   options,
   tally,
@@ -488,8 +472,6 @@ function Section({
   kind: VoteKind;
   title: string;
   hint: string;
-  /** 되돌릴 수 없다는 경고. 빈 문자열이면 안 보인다 */
-  warn?: string;
   /** 누가 골랐는지를 공개하는지 숨기는지 한 줄로 */
   reveal: string;
   options: Option[];
@@ -538,12 +520,6 @@ function Section({
       </StSectionHead>
       <StSectionHint>{hint}</StSectionHint>
       <StReveal>{reveal}</StReveal>
-      {warn ? (
-        <StWarn>
-          <span aria-hidden="true">⚠️</span>
-          <span>{warn}</span>
-        </StWarn>
-      ) : null}
 
       {/* 토토 정답 발표 — 우승팀이 정해진 뒤에만 */}
       {showNames && revealed && winnerValue ? (
@@ -790,22 +766,6 @@ const StReveal = styled.p`
   font-weight: 600;
   line-height: 1.5;
   color: ${({ theme }) => theme.colors.gray400};
-  word-break: keep-all;
-`;
-
-/* 되돌릴 수 없다는 경고 */
-const StWarn = styled.p`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.35rem;
-  margin: 0 0 0.7rem;
-  padding: 0.5rem 0.65rem;
-  border-radius: 0.5rem;
-  background: ${({ theme }) => theme.colors.amber50 ?? "#fffbeb"};
-  color: ${({ theme }) => theme.colors.amber600 ?? "#b45309"};
-  font-size: 0.78rem;
-  font-weight: 700;
-  line-height: 1.5;
   word-break: keep-all;
 `;
 

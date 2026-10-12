@@ -125,17 +125,25 @@ export async function castVote(
 
 // ───── 관리자(진행 요원)와 마감 ─────
 // 마감은 경기 진행에서 자동으로 나오지 않고, 관리자가 직접 누른다 (주인 결정 2026-10-12).
-// 관리자는 경기 시작·점수 입력·팀 편집도 혼자 맡는다 — 아무나 미리 눌러 두는 일이 잦았다 (2026-10-13).
-// 표를 새로 만들지 않고 대회 줄의 config 칸에 담는다: config.admins, config.vote.closed.
+// 관리자(진행 요원)는 "대회 시작"과 "대회 끝"만 누른다 (2026-10-13).
+//  · 시작 전: 아무도 경기를 시작하지 못한다 — 아무나 미리 눌러 두는 일이 잦았다.
+//  · 진행 중: 경기 시작·점수는 누구나. 우승팀 토토는 시작과 함께 마감된다.
+//  · 끝: 점수 입력이 닫히고 토토에서 누가 어디에 걸었는지 공개된다.
+// 표를 새로 만들지 않고 대회 줄의 config 칸에 담는다: config.admins, config.phase, config.vote.closed.
 // 대회 편집(upsertTournament)은 config 를 합쳐 저장하므로 이 값을 지우지 않는다.
 
+export type TournamentPhase = "before" | "live" | "ended";
+
 export type VoteSettings = {
+  /** 대회 진행 단계. 관리자가 없는 대회에서는 쓰지 않는다 */
+  phase: TournamentPhase;
   /** 관리자(참가자 명단의 이름들). 비어 있으면 아직 안 정했다 — 그땐 누구나 진행할 수 있다 */
   admins: string[];
   closed: Record<VoteKind, boolean>;
 };
 
 const DEFAULT_SETTINGS: VoteSettings = {
+  phase: "before",
   admins: [],
   closed: { champion: false, dresser: false },
 };
@@ -143,6 +151,7 @@ const DEFAULT_SETTINGS: VoteSettings = {
 function readSettings(config: unknown): VoteSettings {
   const cfg = config as {
     admins?: unknown;
+    phase?: unknown;
     vote?: { admin?: unknown; closed?: Partial<Record<VoteKind, boolean>> };
   } | null;
   const vote = cfg?.vote;
@@ -151,7 +160,10 @@ function readSettings(config: unknown): VoteSettings {
     : typeof vote?.admin === "string" && vote.admin // 한 명만 두던 때(2026-10-12) 저장분
       ? [vote.admin]
       : [];
+  const phase: TournamentPhase =
+    cfg?.phase === "live" || cfg?.phase === "ended" ? cfg.phase : "before";
   return {
+    phase,
     admins,
     closed: {
       champion: vote?.closed?.champion === true,
@@ -179,19 +191,29 @@ export async function fetchVoteSettings(eventId: string): Promise<VoteSettings> 
 /** 관리자·마감 상태 바꾸기. 저장 직전에 다시 읽어 합치므로 다른 칸은 건드리지 않는다 */
 export async function saveVoteSettings(
   eventId: string,
-  patch: { admins?: string[]; closed?: Partial<Record<VoteKind, boolean>> },
+  patch: {
+    phase?: TournamentPhase;
+    admins?: string[];
+    closed?: Partial<Record<VoteKind, boolean>>;
+  },
 ): Promise<VoteSettings> {
   const config = await fetchConfig(eventId);
   if (!config) throw new Error("저장 공간에 이 대회가 없어요.");
   const now = readSettings(config);
   const next: VoteSettings = {
+    phase: patch.phase ?? now.phase,
     admins: patch.admins ?? now.admins,
     closed: { ...now.closed, ...patch.closed },
   };
   const { error } = await supabase
     .from("tennis_events")
     .update({
-      config: { ...config, admins: next.admins, vote: { closed: next.closed } },
+      config: {
+        ...config,
+        phase: next.phase,
+        admins: next.admins,
+        vote: { closed: next.closed },
+      },
       updated_at: new Date().toISOString(),
     })
     .eq("id", eventId);
