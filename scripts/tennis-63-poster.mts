@@ -4,7 +4,7 @@
  * 형식은 2025년 공지를 그대로 따른다 — 번호 붙은 섹션 카드를 한 장씩 넘겨 보는 구성.
  * 색만 2026년 코트(아식스 테니스 아카데미)에 맞춰 보라·파랑으로 바꿨다.
  *
- * 왜 만들었나 — 선수 30명과 대진·일정을 손으로 옮겨 적으면 오타가 난다.
+ * 왜 만들었나 — 선수 29명과 대진·일정을 손으로 옮겨 적으면 오타가 난다.
  * 이 명령은 app/tennis/tournament 의 실제 대회 데이터를 그대로 읽어 그리므로
  * 앱에서 팀 배정을 고치고 다시 돌리면 공지도 같이 바뀐다.
  *
@@ -43,7 +43,7 @@ const COURTS = ["A", "B", "C", "D"] as const;
 const SCHEDULE = scheduleBlocks(E);
 
 /* ===== 개회식 때 하는 웜업 게임 "RACKET OUT" =====
-   대회 8팀을 둘씩 묶어 4팀으로 만든다. 8+8+7+7 = 30명. */
+   대회 8팀을 둘씩 묶어 4팀으로 만든다. 7+8+7+7 = 29명. */
 const WARMUP_PAIRS = [
   { name: "A", seeds: [1, 6], court: "COURT 1" },
   { name: "B", seeds: [2, 5], court: "COURT 1" },
@@ -239,7 +239,7 @@ const cards = [
     `4인 1팀 ${E.teams.length}개 팀 · 총 ${assigned}명 (남 ${men} · 여 ${women})`,
     `<div class="sheet">${teamBlock(E.teams.slice(0, 4))}</div>
      <div class="sheet">${teamBlock(E.teams.slice(4))}</div>`,
-    "7·8팀은 3명이라 3번 시드가 4번 자리까지 맡습니다.",
+    "6·7·8팀은 3명이라 3번 시드가 4번 자리까지 맡습니다.",
   ),
 
   card(
@@ -282,7 +282,7 @@ const warmupCards = [
          ).join("")}
        </table>
      </div>`,
-    "라켓만 OUT되고 선수는 끝까지 함께해요. 30명이 다 몸을 풀고 시작하려고 만든 게임이에요.",
+    "라켓만 OUT되고 선수는 끝까지 함께해요. 29명이 다 몸을 풀고 시작하려고 만든 게임이에요.",
   ),
 
   card(

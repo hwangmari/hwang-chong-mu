@@ -26,7 +26,7 @@ export const OPEN_63: TournamentEvent = {
   gamesToWin: 6,
   courts: 4,
   // 최종 팀 배정 (주인이 보낸 배정표, 2026-10-01 확정).
-  // 6팀은 4명, 7·8팀은 3명 — 3명 팀은 3번 시드가 4번 자리도 맡는다.
+  // 6·7·8팀은 3명 — 3명 팀은 3번 시드가 4번 자리도 맡는다.
   teams: [
     {
       seed: 1,
@@ -54,7 +54,7 @@ export const OPEN_63: TournamentEvent = {
       players: [
         { name: "나희성", seed: 1 },
         { name: "권혁", seed: 2 },
-        { name: "전강남", seed: 3 },
+        { name: "최재호", seed: 3 }, // 2026-10-14 전강남 불참 → 6팀에서 이동
         { name: "최윤희", seed: 4 },
       ],
     },
@@ -80,12 +80,11 @@ export const OPEN_63: TournamentEvent = {
     },
     {
       seed: 6,
-      name: "6팀",
+      name: "6팀", // 3명 팀 — 3번 시드가 4번 자리까지 맡는다 (2026-10-14 최재호 3팀 이동)
       players: [
         { name: "윤여현", seed: 1 },
         { name: "조현서", seed: 2 },
         { name: "황혜경", seed: 3 },
-        { name: "최재호", seed: 4 },
       ],
     },
     {
@@ -107,8 +106,8 @@ export const OPEN_63: TournamentEvent = {
       ],
     },
   ],
-  // 최종 명단 30명 (2026-10-01). 김원주 합류, 송연호·강윤구·이성훈 불참으로 제외.
-  // 6팀은 4명, 7·8팀은 3명 — 배정표가 최종본이다 (주인 확인)
+  // 최종 명단 29명 (2026-10-14). 김원주 합류, 송연호·강윤구·이성훈·전강남 불참으로 제외.
+  // 1~5팀은 4명, 6·7·8팀은 3명 — 배정표가 최종본이다 (주인 확인)
   // 성별은 2026-09-03 황혜경 확인(여자 9명). 구력은 화면의 팀 편집에서 채운다 (예: "유태현 남 3")
   roster: [
     { name: "유태현", gender: "M" },
@@ -132,7 +131,6 @@ export const OPEN_63: TournamentEvent = {
     { name: "윤여현", gender: "M" },
     { name: "나희성", gender: "M" },
     { name: "손종일", gender: "M" },
-    { name: "전강남", gender: "M" },
     { name: "이필환", gender: "M" },
     { name: "김진환", gender: "M" },
     { name: "권혁", gender: "M" },
