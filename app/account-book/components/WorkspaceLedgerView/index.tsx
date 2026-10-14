@@ -23,6 +23,7 @@ import EntryFormModal from "../EntryFormModal";
 import WorkspaceHeader from "../WorkspaceHeader";
 import EntrySearchBar, {
   type EntryCategoryFilter,
+  type EntrySearchResult,
 } from "./EntrySearchBar";
 import NaturalInputSection from "./NaturalInputSection";
 import ShareConfirmDialog from "./ShareConfirmDialog";
@@ -410,6 +411,35 @@ export default function WorkspaceLedgerView({
       ),
     [displayMonthEntries],
   );
+
+  // 검색어가 있으면 이번 달만이 아니라 전체 기간에서 찾은 내역 — 누르면 그 날짜로 이동한다
+  const searchResults = useMemo<EntrySearchResult[]>(() => {
+    if (!normalizedSearchQuery) return [];
+    return visibleEntries
+      .filter((entry) => !isCardSettlementEntry(entry))
+      .filter(matchesEntryFilter)
+      .sort((a, b) => b.date.localeCompare(a.date) || b.amount - a.amount)
+      .map((entry) => ({
+        id: entry.resolvedId,
+        date: entry.date,
+        title: entry.merchant || entry.item || entry.category,
+        detail: [entry.merchant ? entry.item : "", entry.category]
+          .filter(Boolean)
+          .join(" · "),
+        amount: entry.amount,
+        isIncome: entry.type === "income",
+      }));
+  }, [matchesEntryFilter, normalizedSearchQuery, visibleEntries]);
+
+  const jumpToDate = (date: string) => {
+    const target = parseIsoDate(date);
+    if (!target) return;
+    setCurrentMonth(startOfMonth(target));
+    setSelectedDate(date);
+    setSelectedCalendarCardId(null);
+    setSelectedLedgerCardId(null);
+    setSelectedCardCompany(null);
+  };
 
   const monthTotals = useMemo(() => {
     return monthEntries.reduce(
@@ -1456,6 +1486,9 @@ export default function WorkspaceLedgerView({
               setCategoryFilter("all");
             }}
             formatAmount={formatAmount}
+            results={searchResults}
+            activeDate={selectedDate}
+            onPickResult={jumpToDate}
           />
         ) : null}
 

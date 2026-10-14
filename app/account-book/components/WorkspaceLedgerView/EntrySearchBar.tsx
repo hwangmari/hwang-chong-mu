@@ -30,6 +30,16 @@ export const ENTRY_CATEGORY_FILTERS: Array<{
   { id: "asset", label: "자산/저축" },
 ];
 
+/** 전체 기간에서 찾은 내역 한 줄 */
+export type EntrySearchResult = {
+  id: string;
+  date: string; // yyyy-MM-dd
+  title: string;
+  detail: string;
+  amount: number;
+  isIncome: boolean;
+};
+
 type Props = {
   query: string;
   onChangeQuery: (value: string) => void;
@@ -40,6 +50,10 @@ type Props = {
   isFiltering: boolean;
   onClear: () => void;
   formatAmount: (value: number) => string;
+  /** 검색어가 있을 때 전체 기간에서 찾은 내역. 누르면 그 날짜로 이동 */
+  results: EntrySearchResult[];
+  activeDate: string;
+  onPickResult: (date: string) => void;
 };
 
 export default function EntrySearchBar({
@@ -52,60 +66,209 @@ export default function EntrySearchBar({
   isFiltering,
   onClear,
   formatAmount,
+  results,
+  activeDate,
+  onPickResult,
 }: Props) {
+  const hasQuery = query.trim().length > 0;
   return (
-    <StWrap>
-      <StSearchField>
-        <StSearchIcon viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="9" cy="9" r="6" />
-          <path d="m13.5 13.5 4 4" />
-        </StSearchIcon>
-        <StInput
-          type="search"
-          placeholder="가맹점·품목·메모·카드사 검색"
-          value={query}
-          onChange={(event) => onChangeQuery(event.target.value)}
-          aria-label="내역 검색"
-        />
-        {query ? (
-          <StClearInputBtn
-            type="button"
-            onClick={() => onChangeQuery("")}
-            aria-label="검색어 지우기"
-          >
-            ✕
-          </StClearInputBtn>
+    <StOuter>
+      <StWrap>
+        <StSearchField>
+          <StSearchIcon viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="9" cy="9" r="6" />
+            <path d="m13.5 13.5 4 4" />
+          </StSearchIcon>
+          <StInput
+            type="search"
+            placeholder="가맹점·품목·메모·카드사 검색"
+            value={query}
+            onChange={(event) => onChangeQuery(event.target.value)}
+            aria-label="내역 검색"
+          />
+          {query ? (
+            <StClearInputBtn
+              type="button"
+              onClick={() => onChangeQuery("")}
+              aria-label="검색어 지우기"
+            >
+              ✕
+            </StClearInputBtn>
+          ) : null}
+        </StSearchField>
+        <StChipRow>
+          {ENTRY_CATEGORY_FILTERS.map((option) => (
+            <StChip
+              key={option.id}
+              type="button"
+              $active={category === option.id}
+              onClick={() => onChangeCategory(option.id)}
+            >
+              {option.label}
+            </StChip>
+          ))}
+        </StChipRow>
+        {isFiltering ? (
+          <StResult>
+            이번 달 <strong>{matchCount}</strong>건 ·{" "}
+            {formatAmount(totalAmount)}원
+            <StClearAllBtn type="button" onClick={onClear}>
+              필터 초기화
+            </StClearAllBtn>
+          </StResult>
         ) : null}
-      </StSearchField>
-      <StChipRow>
-        {ENTRY_CATEGORY_FILTERS.map((option) => (
-          <StChip
-            key={option.id}
-            type="button"
-            $active={category === option.id}
-            onClick={() => onChangeCategory(option.id)}
-          >
-            {option.label}
-          </StChip>
-        ))}
-      </StChipRow>
-      {isFiltering ? (
-        <StResult>
-          <strong>{matchCount}</strong>건 · {formatAmount(totalAmount)}원
-          <StClearAllBtn type="button" onClick={onClear}>
-            필터 초기화
-          </StClearAllBtn>
-        </StResult>
+      </StWrap>
+      {hasQuery ? (
+        <StResultPanel aria-label="전체 기간 검색 결과">
+          <StResultHead>
+            전체 기간 <strong>{results.length}</strong>건 · 누르면 그 날짜로
+            이동해요
+          </StResultHead>
+          {results.length === 0 ? (
+            <StEmpty>찾는 내역이 없어요.</StEmpty>
+          ) : (
+            <StResultList>
+              {results.map((result) => (
+                <li key={result.id}>
+                  <StResultRow
+                    type="button"
+                    $active={result.date === activeDate}
+                    onClick={() => onPickResult(result.date)}
+                  >
+                    <StResultDate>
+                      {result.date.replace(/-/g, ".")}
+                    </StResultDate>
+                    <StResultText>
+                      <b>{result.title}</b>
+                      {result.detail ? <span>{result.detail}</span> : null}
+                    </StResultText>
+                    <StResultAmount $income={result.isIncome}>
+                      {result.isIncome ? "+" : ""}
+                      {formatAmount(result.amount)}원
+                    </StResultAmount>
+                  </StResultRow>
+                </li>
+              ))}
+            </StResultList>
+          )}
+        </StResultPanel>
       ) : null}
-    </StWrap>
+    </StOuter>
   );
 }
+
+const StOuter = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const StResultPanel = styled.section`
+  border: 1px solid #e2e3e4;
+  border-radius: 0.8rem;
+  background: ${({ theme }) => theme.colors.white};
+  overflow: hidden;
+`;
+
+const StResultHead = styled.p`
+  padding: 0.55rem 0.9rem;
+  background: ${({ theme }) => theme.semantic.bg};
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+
+  strong {
+    font-weight: 900;
+    color: #2f5695;
+  }
+`;
+
+const StEmpty = styled.p`
+  padding: 0.9rem;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+const StResultList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  max-height: 16rem;
+  overflow-y: auto;
+`;
+
+const StResultRow = styled.button<{ $active: boolean }>`
+  width: 100%;
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr) 7.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.blue50 : "transparent"};
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.gray50};
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: 4.9rem minmax(0, 1fr) 6.2rem;
+    gap: 0.45rem;
+    padding: 0.5rem 0.7rem;
+  }
+`;
+
+const StResultDate = styled.span`
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: ${({ theme }) => theme.semantic.subText};
+`;
+
+const StResultText = styled.span`
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.semantic.text};
+
+  b,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  b {
+    font-weight: 800;
+    flex-shrink: 0;
+    max-width: 60%;
+  }
+
+  span {
+    font-size: 0.78rem;
+    color: ${({ theme }) => theme.semantic.subText};
+  }
+`;
+
+const StResultAmount = styled.span<{ $income: boolean }>`
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: ${({ $income, theme }) =>
+    $income ? theme.colors.blue600 : theme.semantic.text};
+`;
 
 const StWrap = styled.div`
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.5rem;
 
   @media (max-width: 767px) {
     flex-wrap: wrap;
