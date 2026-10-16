@@ -22,6 +22,7 @@ export type ServiceId =
   | "daily"
   | "diet"
   | "workout"
+  | "lesson"
   | "inbody"
   | "muscle";
 
@@ -53,6 +54,8 @@ export type ServiceDef = {
   room?: boolean;
   /** hwang_user_links 에 연결을 하나 저장하는 서비스 */
   link?: boolean;
+  /** 개인 메모라 사이트맵(검색)에 올리지 않는다. login 서비스는 따로 적지 않아도 빠진다 */
+  noindex?: boolean;
 };
 
 export type ServiceCategory = {
@@ -252,6 +255,21 @@ export const SERVICES: ServiceDef[] = [
     seoDescription: "러닝과 웨이트 기록을 모아 성장 그래프로 보여주는 운동 수첩",
     access: "room",
     link: true,
+  },
+  {
+    id: "lesson",
+    href: "/lesson",
+    icon: "🎾",
+    name: "테니스 레슨 일지",
+    shortName: "레슨 일지",
+    desc: "레슨 메모 → 팁 모아보기",
+    category: "daily",
+    seoTitle: "황총무 테니스 레슨 일지",
+    seoDescription:
+      "레슨이 끝나면 배운 것을 생각나는 대로 적고, 정리된 팁을 주제별로 모아 보는 테니스 레슨 수첩",
+    // 운동 기록과 같은 운동방을 쓴다 (일지를 쓰면 운동 기록에 테니스로 함께 들어감)
+    access: "room",
+    noindex: true,
   },
   {
     id: "muscle",

@@ -4,9 +4,9 @@ import { SERVICES } from "@/lib/services";
 
 const SITE_URL = "https://www.hwang-lab.kr";
 
-// 로그인해야만 쓰는 서비스(경조사비 장부)는 검색에 올리지 않는다.
+// 로그인해야만 쓰는 서비스(경조사비 장부)와 개인 메모(레슨 일지)는 검색에 올리지 않는다.
 const SERVICE_ROUTES = SERVICES.filter(
-  (service) => service.access !== "login",
+  (service) => service.access !== "login" && !service.noindex,
 ).map((service) => service.href);
 
 const STATIC_ROUTES = [

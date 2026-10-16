@@ -602,6 +602,8 @@ const FRAGMENTS: Record<ServiceId, (c: TonePalette) => React.ReactNode> = {
   daily: DailyFragment,
   diet: DietFragment,
   workout: WorkoutFragment,
+  // 레슨 일지는 같은 테니스라 대회 조각을 같이 쓴다
+  lesson: TennisFragment,
   inbody: InbodyFragment,
   muscle: MuscleFragment,
 };
@@ -629,6 +631,7 @@ export const FRAGMENT_TEXT: Record<ServiceId, string> = {
   daily: "✓",
   diet: "-1.2kg",
   workout: "3주째 증가",
+  lesson: "결승 대진표 자동", // TennisFragment 와 같은 글자
   inbody: "골격근 ↑ 체지방 ↓",
   muscle: "큰가슴근 대흉근 가슴",
 };
