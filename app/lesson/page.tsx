@@ -214,7 +214,7 @@ export default function LessonPage() {
 
   return (
     <ServiceLayout
-      width="narrow"
+      width="wide"
       intro={{
         icon: "🎾",
         title: "테니스 레슨 일지",
