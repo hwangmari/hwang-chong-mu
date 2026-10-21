@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import WorkoutAuthGate from "@/app/workout/components/WorkoutAuthGate";
 import { byId } from "@/lib/services";
 
 // 제목·설명은 lib/services.ts(서비스 단일 출처)에서 가져온다.
@@ -14,10 +13,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// 레슨 일지는 운동 기록과 같은 운동방에 쌓인다 — 저장하면 운동 기록 '활동'에 테니스 한 줄이 함께 들어간다.
-// 그래서 입장도 운동방 입장 화면을 그대로 쓴다.
+// 레슨 일지는 황총무 통합 계정에 쌓인다 — 로그인 확인은 화면(page.tsx)이 경조사비 장부처럼 직접 한다.
+// 운동방은 필요 없다. 계정에 운동방이 이어져 있으면 저장할 때 운동 기록 '활동'에 테니스 한 줄이 함께 들어간다.
 export default function LessonLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <WorkoutAuthGate>{children}</WorkoutAuthGate>;
+  return children;
 }

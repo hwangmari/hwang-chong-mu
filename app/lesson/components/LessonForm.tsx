@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo, type ReactNode } from "react";
 import { Button } from "@hwangchongmu/ui";
-import DatePickerCalendar from "@/app/workout/components/DatePickerCalendar";
+import DatePickerCalendar, { type CalendarMarker } from "@/app/workout/components/DatePickerCalendar";
+import { lessonKinds, type TennisLesson } from "@/data/tennisLessons";
 import { formatDurationMin } from "@/app/workout/helpers";
 import { onlyDigits } from "@/utils/number";
 import {
@@ -37,26 +39,51 @@ export function formMinutes(form: LessonFormState) {
   return form.parts.reduce((sum, p) => sum + (Number(p.minutes) || 0), 0);
 }
 
+const LESSON_MARKER: CalendarMarker = { key: "lesson", label: "레슨", tone: "primary" };
+const GAME_MARKER: CalendarMarker = { key: "game", label: "게임", tone: "warning" };
+
+/** 날짜별 달력 점: 레슨(파랑)·게임(노랑). 같은 날 일지가 여러 개면 합친다 */
+function buildMarkers(lessons: readonly TennisLesson[]) {
+  const kinds = new Map<string, { lesson: boolean; game: boolean }>();
+  for (const l of lessons) {
+    const k = lessonKinds(l);
+    const prev = kinds.get(l.date) ?? { lesson: false, game: false };
+    kinds.set(l.date, { lesson: prev.lesson || k.lesson, game: prev.game || k.game });
+  }
+  const markers = new Map<string, CalendarMarker[]>();
+  kinds.forEach((k, date) => {
+    markers.set(date, [...(k.lesson ? [LESSON_MARKER] : []), ...(k.game ? [GAME_MARKER] : [])]);
+  });
+  return markers;
+}
+
 type Props = {
   form: LessonFormState;
-  lessonDates: ReadonlySet<string>;
+  lessons: readonly TennisLesson[];
   busy: boolean;
   error: string;
   onChange: (patch: Partial<LessonFormState>) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  /** 운동방이 이어져 있어 저장하면 운동 기록에도 들어가는지 */
+  workoutLinked: boolean;
+  /** 저장 버튼 아래 안내 한 줄 (운동방이 없을 때 등) */
+  footnote?: ReactNode;
 };
 
 export default function LessonForm({
   form,
-  lessonDates,
+  lessons,
   busy,
   error,
   onChange,
   onSubmit,
   onCancel,
+  workoutLinked,
+  footnote,
 }: Props) {
   const total = formMinutes(form);
+  const markers = useMemo(() => buildMarkers(lessons), [lessons]);
 
   function patchPart(index: number, patch: Partial<PartInput>) {
     onChange({ parts: form.parts.map((p, i) => (i === index ? { ...p, ...patch } : p)) });
@@ -85,7 +112,8 @@ export default function LessonForm({
         <DatePickerCalendar
           value={form.date}
           onChange={(date) => onChange({ date })}
-          markedDates={lessonDates}
+          markers={markers}
+          markerLegend
         />
       </StLabel>
 
@@ -133,7 +161,7 @@ export default function LessonForm({
       </StLabel>
 
       <StTotalBand>
-        <span>운동 기록에 테니스로 들어가요</span>
+        <span>{workoutLinked ? "운동 기록에 테니스로 들어가요" : "오늘 친 시간"}</span>
         <b>{total > 0 ? `총 ${formatDurationMin(total)}` : "시간 없이"}</b>
       </StTotalBand>
 
@@ -159,6 +187,8 @@ export default function LessonForm({
           {busy ? "저장 중…" : form.id ? "고친 내용 저장" : "일지 저장"}
         </Button>
       </StActions>
+
+      {footnote ? <StCardHint>{footnote}</StCardHint> : null}
 
       <StCardHint>
         팁은 화면에서 쓰지 않아요. 적어 둔 메모를 <b>나중에 클로드가 읽고</b> 주제별로 정리해 채워요.

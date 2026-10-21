@@ -6,11 +6,26 @@ import styled from "styled-components";
 // 기록하기 폼의 날짜 칸 아래에 붙는 "한 주 띠".
 // 선택한 날짜가 든 주(일~토)를 한 줄로 보여 주고, ‹ › 로 한 주씩 옮긴다. '📅 달력' 버튼으로 그 달 전체를 펼칠 수 있다.
 // 점은 이미 기록이 있는 날. 날짜 입력 칸(달력 아이콘)은 그대로 두고 이건 빠른 선택용이다.
+// markers 를 넘기면 한 가지 색 점 대신 날마다 종류별 색 점(최대 3개)을 찍는다 (예: 레슨·게임).
+
+/** 날짜 칸에 찍는 색 점 하나. key 가 같은 것끼리 같은 종류로 본다 */
+export type CalendarMarker = {
+  key: string;
+  label: string;
+  tone: "primary" | "warning" | "success" | "danger";
+};
+
 type Props = {
   value: string; // YYYY-MM-DD
   onChange: (iso: string) => void;
   markedDates?: ReadonlySet<string>;
+  /** 날짜(YYYY-MM-DD)별 색 점. 주면 markedDates 대신 이것으로 표시한다 */
+  markers?: ReadonlyMap<string, readonly CalendarMarker[]>;
+  /** 달력 아래에 점 색 설명(점 + 이름)을 한 줄로 보여 준다 */
+  markerLegend?: boolean;
 };
+
+const MAX_MARKERS = 3;
 
 const DAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -34,7 +49,13 @@ function startOfWeek(d: Date) {
   return s;
 }
 
-export default function DatePickerCalendar({ value, onChange, markedDates }: Props) {
+/** "10월 15일 · 레슨 · 게임" */
+function markerAriaLabel(iso: string, list: readonly CalendarMarker[]) {
+  const [, m, d] = iso.split("-").map(Number);
+  return [`${m}월 ${d}일`, ...list.map((mk) => mk.label)].join(" · ");
+}
+
+export default function DatePickerCalendar({ value, onChange, markedDates, markers, markerLegend }: Props) {
   const todayIso = isoOf(new Date());
   // 보고 있는 주: 선택한 날짜의 주에서 시작하고, 화살표로만 옮긴다
   const [weekStart, setWeekStart] = useState(() => startOfWeek(parseIso(value)));
@@ -85,6 +106,14 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
       }),
     [weekStart],
   );
+
+  // 범례: 보이는 종류만, 처음 나온 순서대로
+  const legend = useMemo(() => {
+    if (!markers || !markerLegend) return [];
+    const seen = new Map<string, CalendarMarker>();
+    markers.forEach((list) => list.forEach((mk) => !seen.has(mk.key) && seen.set(mk.key, mk)));
+    return [...seen.values()];
+  }, [markers, markerLegend]);
 
   // 주가 두 달에 걸치면 "8월 31일 – 9월 6일"처럼, 아니면 "9월 7일 – 13일"
   const first = days[0];
@@ -152,7 +181,11 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
               $today={c.iso === todayIso}
               $weekend={c.dow === 0 || c.dow === 6}
               aria-pressed={c.iso === value}
-              aria-label={`${c.iso}${markedDates?.has(c.iso) ? " · 기록 있음" : ""}`}
+              aria-label={
+                markers
+                  ? markerAriaLabel(c.iso, markers.get(c.iso) ?? [])
+                  : `${c.iso}${markedDates?.has(c.iso) ? " · 기록 있음" : ""}`
+              }
               onClick={() => {
                 onChange(c.iso);
                 setWeekStart(startOfWeek(parseIso(c.iso)));
@@ -160,7 +193,11 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
               }}
             >
               {c.day}
-              {markedDates?.has(c.iso) ? <StDot aria-hidden="true" /> : null}
+              {markers ? (
+                <MarkerDots list={markers.get(c.iso)} selected={c.iso === value} />
+              ) : markedDates?.has(c.iso) ? (
+                <StDot aria-hidden="true" />
+              ) : null}
             </StMonthDay>
           ))}
         </StMonthGrid>
@@ -174,17 +211,46 @@ export default function DatePickerCalendar({ value, onChange, markedDates }: Pro
             $today={d.iso === todayIso}
             $weekend={d.dow === 0 || d.dow === 6}
             aria-pressed={d.iso === value}
-            aria-label={`${d.iso}${markedDates?.has(d.iso) ? " · 기록 있음" : ""}`}
+            aria-label={
+              markers
+                ? markerAriaLabel(d.iso, markers.get(d.iso) ?? [])
+                : `${d.iso}${markedDates?.has(d.iso) ? " · 기록 있음" : ""}`
+            }
             onClick={() => onChange(d.iso)}
           >
             <small>{DAY_HEADERS[d.dow]}</small>
             <strong>{d.day}</strong>
-            {markedDates?.has(d.iso) ? <StDot aria-hidden="true" /> : null}
+            {markers ? (
+              <MarkerDots list={markers.get(d.iso)} selected={d.iso === value} />
+            ) : markedDates?.has(d.iso) ? (
+              <StDot aria-hidden="true" />
+            ) : null}
           </StDay>
         ))}
       </StWeek>
       )}
+      {legend.length > 0 ? (
+        <StLegend aria-hidden="true">
+          {legend.map((mk) => (
+            <span key={mk.key}>
+              <StMarkerDot $tone={mk.tone} $selected={false} />
+              {mk.label}
+            </span>
+          ))}
+        </StLegend>
+      ) : null}
     </StWrap>
+  );
+}
+
+/** 그날의 색 점 묶음. 점이 없어도 같은 자리를 차지해 줄 높이가 흔들리지 않는다 */
+function MarkerDots({ list, selected }: { list?: readonly CalendarMarker[]; selected: boolean }) {
+  return (
+    <StMarkerRow aria-hidden="true" data-markers="">
+      {(list ?? []).slice(0, MAX_MARKERS).map((mk) => (
+        <StMarkerDot key={mk.key} $tone={mk.tone} $selected={selected} />
+      ))}
+    </StMarkerRow>
   );
 }
 
@@ -292,6 +358,12 @@ const StMonthDay = styled.button<{ $selected: boolean; $inMonth: boolean; $today
     bottom: 0.125rem;
     margin-left: -0.125rem;
   }
+
+  /* 색 점 묶음(markers)은 폭이 점 개수만큼이라 가운데를 transform 으로 맞춘다 */
+  > span[data-markers] {
+    margin-left: 0;
+    transform: translateX(-50%);
+  }
 `;
 
 const StWeek = styled.div`
@@ -346,4 +418,40 @@ const StDot = styled.span`
   border-radius: 50%;
   background: currentColor;
   opacity: 0.85;
+`;
+
+/* === 색 점(markers) — markedDates 의 한 가지 점과 따로 둔다 === */
+
+const StMarkerRow = styled.span`
+  display: inline-flex;
+  justify-content: center;
+  gap: 0.125rem; /* 2px */
+  height: 0.3rem;
+`;
+
+/* 고른 날(파란 배경) 위에서도 보이게 글자색(currentColor) 테를 두르고, 배경과 같은 파랑 점은 글자색 점으로 바꾼다 */
+const StMarkerDot = styled.span<{ $tone: CalendarMarker["tone"]; $selected: boolean }>`
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: ${({ $tone, $selected, theme }) =>
+    $selected && $tone === "primary" ? "currentColor" : theme.semantic[$tone]};
+  box-shadow: ${({ $selected }) => ($selected ? "0 0 0 1px currentColor" : "none")};
+`;
+
+const StLegend = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+  padding: 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
 `;

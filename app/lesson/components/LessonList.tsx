@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDurationMin } from "@/app/workout/helpers";
-import { lessonMinutes, lessonPartsLabel } from "@/data/tennisLessons";
+import { lessonKinds, lessonMinutes, lessonPartsLabel } from "@/data/tennisLessons";
 import { SkeletonList } from "@/components/common/Skeleton";
 import {
   StCard,
@@ -68,6 +68,7 @@ export default function LessonList({ loading, lessons, busy, onEdit, onRemove }:
                   <StLessonTitle>
                     <StLessonDate dateTime={lesson.date}>{lessonDateLabel(lesson.date)}</StLessonDate>
                     <StLessonMeta>
+                      {lessonKinds(lesson).game ? <StPill $tone="game">게임</StPill> : null}
                       {lesson.parts.length > 0 ? <span>{lessonPartsLabel(lesson)}</span> : null}
                       {minutes > 0 && lesson.parts.length > 1 ? <span>· 총 {formatDurationMin(minutes)}</span> : null}
                       {pending ? (

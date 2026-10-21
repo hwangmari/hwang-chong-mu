@@ -1,3 +1,4 @@
+import Link from "next/link";
 import styled, { css } from "styled-components";
 
 /*
@@ -166,7 +167,8 @@ export const StLessonMeta = styled.span`
   color: ${({ theme }) => theme.semantic.subText};
 `;
 
-export const StPill = styled.span<{ $tone: "amber" | "teal" | "gray" }>`
+/* game: 달력의 게임 점(semantic.warning)과 같은 노랑 바탕 — 글자는 본문색이라 밝은/어두운 화면 모두 읽힌다 */
+export const StPill = styled.span<{ $tone: "amber" | "teal" | "gray" | "game" }>`
   display: inline-flex;
   align-items: center;
   padding: 0.1rem 0.45rem;
@@ -178,13 +180,17 @@ export const StPill = styled.span<{ $tone: "amber" | "teal" | "gray" }>`
       ? theme.colors.amber600
       : $tone === "teal"
         ? theme.semantic.success
-        : theme.semantic.subText};
+        : $tone === "game"
+          ? theme.semantic.text
+          : theme.semantic.subText};
   background: ${({ $tone, theme }) =>
     $tone === "amber"
       ? theme.colors.amber50
       : $tone === "teal"
         ? theme.semantic.successBg
-        : theme.semantic.bg};
+        : $tone === "game"
+          ? theme.semantic.warningBg
+          : theme.semantic.bg};
 `;
 
 export const StRaw = styled.p`
@@ -266,5 +272,16 @@ export const StLessonTips = styled.div`
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+`;
+
+/* 안내 문구 안의 이동 링크 (운동 기록 열기) */
+export const StHintLink = styled(Link)`
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.primary};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
   }
 `;

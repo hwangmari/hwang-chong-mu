@@ -267,8 +267,8 @@ export const SERVICES: ServiceDef[] = [
     seoTitle: "황총무 테니스 레슨 일지",
     seoDescription:
       "레슨이 끝나면 배운 것을 생각나는 대로 적고, 정리된 팁을 주제별로 모아 보는 테니스 레슨 수첩",
-    // 운동 기록과 같은 운동방을 쓴다 (일지를 쓰면 운동 기록에 테니스로 함께 들어감)
-    access: "room",
+    // 통합 계정 로그인으로 쓴다. 계정에 운동방이 이어져 있으면 운동 기록에도 테니스로 함께 들어감
+    access: "login",
     noindex: true,
   },
   {

@@ -1,7 +1,7 @@
 // 테니스 레슨 일지.
 //
-// 자료 모양(타입)의 단일 출처. 실제 일지는 저장 공간 표 tennis_lessons 에 쌓인다
-// (supabase/20261016_create_tennis_lessons.sql). 일지는 /lesson 화면에서 쓴다.
+// 자료 모양(타입)의 단일 출처. 실제 일지는 황총무 계정별로 저장 공간 표 tennis_lesson_entries 에 쌓인다
+// (supabase/20261016_tennis_lessons_by_account.sql). 일지는 /lesson 화면에서 쓴다.
 // raw 는 생각나는 대로 적은 원문, tips 는 나중에 클로드가 읽고 주제별로 정리해 채운다
 // (주인 결정 2026-10-16 — AI 연동 대신 이 방식, scripts/lesson-tips.mjs).
 //
@@ -75,4 +75,18 @@ export function lessonMinutes(lesson: TennisLesson): number {
 /** "레슨 20분 · 볼머신 20분" */
 export function lessonPartsLabel(lesson: TennisLesson): string {
   return lesson.parts.map((p) => `${p.name} ${p.minutes}분`).join(" · ");
+}
+
+/** 구성 이름에 "게임"이 들어가면 게임, 나머지(레슨·볼머신·랠리·서브 연습…)는 레슨으로 본다 */
+export function isGamePart(name: string): boolean {
+  return name.includes("게임");
+}
+
+/** 그날 한 것: 레슨을 했는지, 게임을 했는지 (둘 다일 수 있다). 구성이 없으면 레슨으로 본다 */
+export function lessonKinds(lesson: TennisLesson): { lesson: boolean; game: boolean } {
+  if (lesson.parts.length === 0) return { lesson: true, game: false };
+  return {
+    lesson: lesson.parts.some((p) => !isGamePart(p.name)),
+    game: lesson.parts.some((p) => isGamePart(p.name)),
+  };
 }
