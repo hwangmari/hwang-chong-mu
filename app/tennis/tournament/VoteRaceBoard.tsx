@@ -101,14 +101,17 @@ export default function VoteRaceBoard({
     return () => window.clearTimeout(t);
   }, [seen.deltas]);
 
-  // 내가 방금 고른 팀 — 그 줄에만 도장을 한 번 찍는다. 처음 불러온 내 표에는 찍지 않는다
+  // 내가 방금 누른 팀 — 그 줄에만 도장을 한 번 찍는다.
+  // "내 표"가 바뀐 것만 보면 안 된다: 다시 들어온 사람은 이름 확인 전(빈 표) → 확인 후(내 표)로
+  // 한 번 바뀌어 누르지도 않았는데 도장이 찍혔다 (2026-10-23 수정). 그래서 누른 팀을 기억해 두고
+  // 저장이 끝나 그 팀이 내 표로 돌아왔을 때만 찍는다
   const myPick = tally.mine[0] ?? null;
   const [pickSeen, setPickSeen] = useState({
-    pick: myPick,
+    pending: null as string | null,
     stamped: null as string | null,
   });
-  if (pickSeen.pick !== myPick) {
-    setPickSeen({ pick: myPick, stamped: myPick });
+  if (pickSeen.pending && pickSeen.pending === myPick) {
+    setPickSeen({ pending: null, stamped: myPick });
   }
   const stamped = pickSeen.stamped;
   useEffect(() => {
@@ -204,7 +207,10 @@ export default function VoteRaceBoard({
                         $mine={mine}
                         $winner={isWinner}
                         $multi={group.length > 1}
-                        onClick={() => onPick(kind, row.value)}
+                        onClick={() => {
+                          setPickSeen((s) => ({ ...s, pending: row.value }));
+                          onPick(kind, row.value);
+                        }}
                         aria-label={`${title} ${row.label} ${row.votes}표 ${rankLabel(row.votes)}${mine ? " (내가 건 팀)" : ""}`}
                       >
                         <StName>
