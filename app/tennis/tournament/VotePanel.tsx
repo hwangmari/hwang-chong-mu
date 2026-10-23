@@ -25,6 +25,7 @@ import {
 } from "@/services/tennisVotes";
 import { useModal } from "@/components/common/ModalProvider";
 import { SkeletonBlock } from "@/components/common/Skeleton";
+import VoteRaceBoard from "./VoteRaceBoard";
 import {
   StCard,
   StCardHead,
@@ -537,6 +538,20 @@ function Section({
         <StEmpty>{live && !revealed ? "아직 건 사람이 없어요." : "표가 하나도 없어요."}</StEmpty>
       ) : null}
 
+      {live ? (
+        <VoteRaceBoard
+          kind={kind}
+          title={title}
+          options={options}
+          tally={tally}
+          locked={locked}
+          busy={busy}
+          canVote={canVote}
+          revealed={revealed}
+          winnerValue={winnerValue}
+          onPick={onPick}
+        />
+      ) : (
       <StOptions>
         {options.map((option) => {
           const mine = tally.mine.includes(option.value);
@@ -605,6 +620,7 @@ function Section({
           );
         })}
       </StOptions>
+      )}
     </StSection>
   );
 }
