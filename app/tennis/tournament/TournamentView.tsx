@@ -826,7 +826,7 @@ export default function TournamentView({ initialEvent }: Props) {
             앞 경기 두 개 사이에 다음 경기 칸이 있고, 이긴 팀의 길이 선으로
             이어져요. 오른쪽으로 갈수록 결승에 가까워요.
           </StCardHint>
-          <BracketTree matches={matches} />
+          <BracketTree matches={matches} blocks={blocks} />
           {/* 그림의 "#3 3팀"이 누구인지 바로 보이게 팀 명단을 붙인다 (주인 요청 2026-10-27) */}
           <StSubTitle>👥 팀 명단</StSubTitle>
           <StTableWrap>

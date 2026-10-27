@@ -2,12 +2,13 @@
 
 import styled from "styled-components";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
-import type { Layout, Link } from "./BracketTree";
+import { ONE_SHEET, ONE_SHEET_LINKS, roundHeads, type Layout, type Link } from "./BracketTree";
 
 /**
  * 픽셀 대진표 — 픽셀 코트 탭 아래의 토너먼트 그림. (주인 요청 2026-10-27)
  * 승자조·패자조를 나누지 않고 한 장에 그린다 (주인 요청 2026-10-27 "안 나누고 그려 줄 수 없어?").
- *  · 열 = 시간대(1~6타임). 같은 시간에 하는 경기가 같은 세로줄에 선다
+ * 배치(ONE_SHEET)는 토너먼트 그림 탭과 같다.
+ *  · 열 = 라운드(1~6). 같은 시간에 하는 경기가 같은 세로줄에 선다
  *  · 위쪽 = 승자조, 아래쪽 = 패자조, 맨 오른쪽 = 그랜드 파이널, 맨 아래 = 순위결정전
  *  · 노란 선 = 이긴 팀이 올라가는 길, 분홍 점선 = 진 팀이 패자조로 내려가는 길
  * 팀 이름 아래에 명단 한 줄 — 토너먼트 그림과 같은 방식.
@@ -27,60 +28,22 @@ const NODE_H = 96;
 const PAD = 6;
 const HEAD_H = 26; // 맨 위 시간대 줄
 
-// 한 장 배치: col = 시간대 - 1, row = 세로 자리 (0.5 단위)
-const ALL: Layout[] = [
-  { no: 1, col: 0, row: 0 },
-  { no: 2, col: 0, row: 1 },
-  { no: 3, col: 0, row: 2 },
-  { no: 4, col: 0, row: 3 },
-  { no: 5, col: 1, row: 0.5 },
-  { no: 6, col: 1, row: 2.5 },
-  { no: 9, col: 2, row: 1.5 },
-  { no: 7, col: 1, row: 4.3 },
-  { no: 8, col: 1, row: 5.3 },
-  { no: 10, col: 2, row: 4.3 },
-  { no: 11, col: 2, row: 5.3 },
-  { no: 13, col: 3, row: 4.8 },
-  { no: 15, col: 4, row: 4.8 },
-  { no: 16, col: 5, row: 3.15 },
-  { no: 12, col: 2, row: 6.5 },
-  { no: 14, col: 3, row: 6.5 },
-];
-const ALL_LINKS: Link[] = [
-  { from: 1, to: 5, kind: "winner" },
-  { from: 2, to: 5, kind: "winner" },
-  { from: 3, to: 6, kind: "winner" },
-  { from: 4, to: 6, kind: "winner" },
-  { from: 5, to: 9, kind: "winner" },
-  { from: 6, to: 9, kind: "winner" },
-  { from: 9, to: 16, kind: "winner" },
-  { from: 7, to: 10, kind: "winner" },
-  { from: 8, to: 11, kind: "winner" },
-  { from: 10, to: 13, kind: "winner" },
-  { from: 11, to: 13, kind: "winner" },
-  { from: 13, to: 15, kind: "winner" },
-  { from: 15, to: 16, kind: "winner" },
-  { from: 1, to: 7, kind: "loser" },
-  { from: 2, to: 7, kind: "loser" },
-  { from: 3, to: 8, kind: "loser" },
-  { from: 4, to: 8, kind: "loser" },
-  { from: 6, to: 10, kind: "loser" },
-  { from: 5, to: 11, kind: "loser" },
-  { from: 9, to: 15, kind: "loser" },
-];
 const DROP = "#ff8fb1";
 
 const PIX = "ui-monospace, Menlo, Consolas, monospace";
-const LED = "#ffcf4a";
-const DIM = "#a9b8b9";
-const LINE_OFF = "#4d5f68";
+// 낮 배경(밝은 바탕) 위 색 (2026-10-27)
+const LED = "#ffcf4a"; // 라운드 줄 바탕
+const GOLD = "#f0a020"; // 이긴 길 선 · 이긴 팀 글자
+const INK = "#24343b";
+const DIM = "#6b7c80";
+const LINE_OFF = "#c2cdd0";
 
 const STATE_EDGE: Record<ResolvedMatch["status"], string> = {
   playing: "#ff6b57",
   ready: LED,
   done: "#7ad3a0",
-  waiting: "#3e5059",
-  hidden: "#2f3f47",
+  waiting: "#cfd8db",
+  hidden: "#e3e8ea",
 };
 const STATE_TEXT: Record<ResolvedMatch["status"], string> = {
   playing: "경기 중",
@@ -153,7 +116,7 @@ function Tree({
                   key={`${lk.from}-${lk.to}`}
                   d={`M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`}
                   fill="none"
-                  stroke={decided ? LED : LINE_OFF}
+                  stroke={decided ? GOLD : LINE_OFF}
                   strokeWidth={decided ? 4 : 2}
                   strokeDasharray={decided ? undefined : "4 4"}
                 />
@@ -220,14 +183,14 @@ export default function PixelBracket({
   blocks: ScheduleBlock[];
 }) {
   const by = new Map(matches.map((m) => [m.template.no, m]));
-  const heads = blocks.map((b) => `${b.no}타임 · ${b.time.split(" — ")[0]}`);
+  const heads = roundHeads(blocks);
   return (
     <StWrap>
       <Tree
         title="한 장 대진표"
         hint="위 승자조 · 아래 패자조 · 노란 선 이긴 길 · 분홍 점선 진 팀이 내려가는 길"
-        layout={ALL}
-        links={ALL_LINKS}
+        layout={ONE_SHEET}
+        links={ONE_SHEET_LINKS}
         by={by}
         colHeads={heads}
       />
@@ -250,7 +213,7 @@ const StTreeTitle = styled.div`
   font-family: ${PIX};
   font-size: 0.82rem;
   font-weight: 800;
-  color: ${LED};
+  color: #e8761c;
 
   span {
     font-family: inherit;
@@ -293,9 +256,9 @@ const StNode = styled.div<{ $dim: boolean }>`
   display: grid;
   grid-template-rows: auto 1fr 1fr;
   padding: 3px 6px;
-  background: #121b20;
+  background: #ffffff;
   border: 2px solid;
-  box-shadow: 3px 3px 0 #0007;
+  box-shadow: 3px 3px 0 #2f7a4f22;
   opacity: ${({ $dim }) => ($dim ? 0.55 : 1)};
 `;
 
@@ -317,7 +280,7 @@ const StRow = styled.div<{ $won: boolean; $lost: boolean; $empty: boolean }>`
   gap: 5px;
   font-size: 0.74rem;
   font-weight: ${({ $won }) => ($won ? 900 : 700)};
-  color: ${({ $won, $lost, $empty }) => ($won ? LED : $lost || $empty ? "#7d8c8e" : "#f3ead6")};
+  color: ${({ $won, $lost, $empty }) => ($won ? GOLD : $lost || $empty ? "#9aa6a9" : INK)};
 `;
 
 const StSwatch = styled.i`

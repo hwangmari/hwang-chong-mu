@@ -544,10 +544,13 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
 
 // ───── 스타일: 코트 그림 영역은 테마와 상관없이 늘 밤의 실내 테니스장 색 ─────
 const PIX = "ui-monospace, Menlo, Consolas, monospace";
-const INK = "#f3ead6";
-const DIM = "#a9b8b9";
-const LED = "#ffcf4a";
-const FLOOR = "#34505c";
+const INK = "#24343b";
+const DIM = "#6b7c80";
+const LED = "#ffcf4a"; // 전광판(어두운 판) 위 글자
+const FLOOR = "#ffffff";
+const ACCENT = "#e8761c"; // 밝은 판 위 강조 글자
+const BOARD_DIM = "#a9b8b9"; // 전광판 위 흐린 글자
+const CARD_SHADOW = "4px 4px 0 #2f7a4f22";
 
 // 픽셀 배경은 흰 카드 없이 화면 좌우 끝까지 깐다 (주인 요청 2026-10-27 — PC 좌우 여백도 픽셀로).
 // 내용 폭은 페이지 폭 그대로 두고, 배경만 ::before 로 화면 너비만큼 넓힌다.
@@ -569,10 +572,12 @@ const StScene = styled.section`
     left: 50%;
     width: 100vw;
     transform: translateX(-50%);
-    background-color: #22313a;
+    /* 낮의 테니스 클럽 — 하늘에서 잔디로 넘어가는 밝은 바탕에 옅은 격자 (주인 요청 2026-10-27 "배경도 낮으로") */
+    background-color: #e6f7ea;
     background-image:
-      linear-gradient(#2b3d48 2px, transparent 2px),
-      linear-gradient(90deg, #2b3d48 2px, transparent 2px);
+      linear-gradient(#d2efdb 2px, transparent 2px),
+      linear-gradient(90deg, #d2efdb 2px, transparent 2px),
+      linear-gradient(#c9ecff, #e6f7ea 360px);
     background-size: 32px 32px;
     background-position: center top;
   }
@@ -599,7 +604,7 @@ const StBoard = styled.div`
   gap: 0.7rem;
   padding: 0.8rem 0.9rem;
   background: #121b20;
-  box-shadow: 0 0 0 3px ${FLOOR};
+  box-shadow: 0 0 0 3px #ffffff, ${CARD_SHADOW};
 `;
 
 const StBoardTop = styled.div`
@@ -621,7 +626,7 @@ const StBoardTitle = styled.div`
 const StBoardMeta = styled.div`
   font-size: 0.78rem;
   font-weight: 700;
-  color: ${DIM};
+  color: ${BOARD_DIM};
 `;
 
 const StClock = styled.div`
@@ -645,7 +650,7 @@ const StBlock = styled.div<{ $state: "done" | "now" | "next" }>`
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
   background: ${({ $state }) => ($state === "now" ? LED : "#1b262c")};
-  color: ${({ $state }) => ($state === "now" ? "#121b20" : $state === "done" ? "#7ad3a0" : DIM)};
+  color: ${({ $state }) => ($state === "now" ? "#121b20" : $state === "done" ? "#7ad3a0" : BOARD_DIM)};
 
   b {
     display: block;
@@ -673,6 +678,7 @@ const StCourt = styled.button`
   color: inherit;
   text-align: left;
   background: ${FLOOR};
+  box-shadow: ${CARD_SHADOW};
   cursor: pointer;
 
   &:disabled {
@@ -681,7 +687,7 @@ const StCourt = styled.button`
 
   &[aria-pressed="true"],
   &:focus-visible {
-    outline: 3px solid ${LED};
+    outline: 3px solid ${ACCENT};
     outline-offset: 2px;
   }
 `;
@@ -733,7 +739,7 @@ const StCourtName = styled.span`
   font-family: ${PIX};
   font-size: 0.78rem;
   font-weight: 800;
-  color: ${LED};
+  color: ${ACCENT};
 `;
 
 const StRound = styled.span`
@@ -750,7 +756,7 @@ const StState = styled.span<{ $tone: "live" | "wait" | "done" }>`
   font-size: 0.72rem;
   font-weight: 800;
   color: #121b20;
-  background: ${({ $tone }) => ($tone === "live" ? "#ff6b57" : $tone === "done" ? "#7ad3a0" : DIM)};
+  background: ${({ $tone }) => ($tone === "live" ? "#ff6b57" : $tone === "done" ? "#7ad3a0" : "#cfd8db")};
 `;
 
 const StCanvas = styled.canvas`
@@ -794,12 +800,12 @@ const StGames = styled.div`
   font-family: ${PIX};
   font-size: 1rem;
   font-weight: 800;
-  color: ${LED};
+  color: ${ACCENT};
   font-variant-numeric: tabular-nums;
 `;
 
 const StGame = styled.span<{ $dim: boolean }>`
-  color: ${({ $dim }) => ($dim ? "#6b6440" : LED)};
+  color: ${({ $dim }) => ($dim ? "#c3cacc" : ACCENT)};
 `;
 
 const StLower = styled.div`
@@ -819,6 +825,7 @@ const StPanel = styled.div`
   padding: 0.8rem;
   min-width: 0;
   background: ${FLOOR};
+  box-shadow: ${CARD_SHADOW};
 `;
 
 const StPanelTitle = styled.h3`
@@ -841,7 +848,7 @@ const StSeat = styled.div<{ $on: boolean }>`
   justify-items: center;
   gap: 0.25rem;
   padding: 0.5rem 0.3rem;
-  background: #2a4049;
+  background: #eef8f1;
   opacity: ${({ $on }) => ($on ? 0.45 : 1)};
 `;
 
@@ -881,7 +888,7 @@ const StLog = styled.ol`
   time {
     font-family: ${PIX};
     font-size: 0.78rem;
-    color: ${LED};
+    color: ${ACCENT};
     font-variant-numeric: tabular-nums;
   }
 `;
@@ -899,11 +906,11 @@ const StMotionBtn = styled.button`
   font-size: 0.78rem;
   font-weight: 700;
   color: #121b20;
-  background: ${INK};
+  background: ${LED};
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid ${LED};
+    outline: 2px solid ${ACCENT};
     outline-offset: 2px;
   }
 `;
