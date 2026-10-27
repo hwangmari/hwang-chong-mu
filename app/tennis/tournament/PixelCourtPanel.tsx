@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styled from "styled-components";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from "./types";
 import { isFinished, type Court, type ScoreMap } from "../types";
@@ -12,6 +12,8 @@ type Props = {
   matches: ResolvedMatch[];
   scores: ScoreMap;
   blocks: ScheduleBlock[];
+  /** 코트를 누르면 그 경기 아래에 여는 시작·점수 입력 칸. 점수 화면과 같은 카드를 위에서 넘겨준다 */
+  renderMatch?: (match: ResolvedMatch) => ReactNode;
 };
 
 /**
@@ -21,6 +23,7 @@ type Props = {
  *  · 이 시간대에 이 코트로 잡힌, 두 팀이 정해진 경기 → 코트 옆에 서서 기다린다
  *  · 그 코트에서 마지막으로 끝난 경기 → 최종 점수, 이긴 팀이 만세
  * 점수는 경기가 끝나야 들어오므로(게임별 기록 없음) 경기 중에는 시작 뒤 지난 시간을 보여 준다.
+ * 코트를 누르면 그 경기의 시작·점수 입력 칸이 코트 바로 아래(두 열이면 그 줄 아래)에 열린다 (주인 요청 2026-10-27).
  */
 
 // 팀 시드별 셔츠 색 — 코트 그림 안에서만 쓰는 픽셀 팔레트
@@ -190,7 +193,7 @@ const hhmm = (iso: string) => {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
-export default function PixelCourtPanel({ event, matches, scores, blocks }: Props) {
+export default function PixelCourtPanel({ event, matches, scores, blocks, renderMatch }: Props) {
   // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림.
   // 탭을 눌러야 그려지는 화면이라 서버 렌더와 어긋날 일이 없다
   const [moving, setMoving] = useState(
@@ -199,6 +202,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks }: Prop
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [now, setNow] = useState(() => Date.now());
+  const [openCourt, setOpenCourt] = useState<Court | null>(null);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
@@ -320,7 +324,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks }: Prop
         </StBoard>
 
         <StCourts>
-          {views.map(([court, view]) => {
+          {views.map(([court, view], idx) => {
             const m = view.kind === "empty" ? null : view.match;
             const sprites = {
               a: m?.teamA ? (spritesByTeam.get(m.teamA.seed) ?? []).slice(0, 2) : [],
@@ -329,8 +333,17 @@ export default function PixelCourtPanel({ event, matches, scores, blocks }: Prop
             const sc = m ? scores[m.template.no] : undefined;
             const done = view.kind === "done";
             const aLost = done && m?.winner?.seed !== m?.teamA?.seed;
+            const open = openCourt === court && !!m;
             return (
-              <StCourt key={court}>
+              <StCourt
+                key={court}
+                type="button"
+                style={{ order: idx * 2 }}
+                disabled={!m || !renderMatch}
+                aria-pressed={open}
+                aria-label={`${court}코트 ${m ? m.template.label : "비어 있음"} — 눌러서 시작·점수 입력`}
+                onClick={() => setOpenCourt(open ? null : court)}
+              >
                 <StCourtHead>
                   <StCourtName>{court} COURT</StCourtName>
                   <StRound>{m ? m.template.label : "비어 있음"}</StRound>
@@ -367,6 +380,27 @@ export default function PixelCourtPanel({ event, matches, scores, blocks }: Prop
               </StCourt>
             );
           })}
+          {(() => {
+            const idx = views.findIndex(([c]) => c === openCourt);
+            const view = idx >= 0 ? views[idx][1] : null;
+            if (!renderMatch || !view || view.kind === "empty") return null;
+            return (
+              <StEntry
+                $desk={(idx | 1) * 2 + 1}
+                $mobile={idx * 2 + 1}
+              >
+                <StEntryHead>
+                  <span>
+                    {openCourt}코트 · {view.match.template.label}
+                  </span>
+                  <StEntryClose type="button" onClick={() => setOpenCourt(null)}>
+                    닫기
+                  </StEntryClose>
+                </StEntryHead>
+                {renderMatch(view.match)}
+              </StEntry>
+            );
+          })()}
         </StCourts>
 
         <StLower>
@@ -433,6 +467,13 @@ const StScene = styled.div`
     linear-gradient(#2b3d48 2px, transparent 2px),
     linear-gradient(90deg, #2b3d48 2px, transparent 2px);
   background-size: 32px 32px;
+
+  /* 휴대폰: 카드 안쪽 흰 여백 없이 화면 좌우 끝까지 (주인 요청 2026-10-27) */
+  @media ${({ theme }) => theme.media.mobile} {
+    margin: 0 -1rem;
+    padding: 0.6rem;
+    border-radius: 0;
+  }
 `;
 
 const StBoard = styled.div`
@@ -504,11 +545,63 @@ const StCourts = styled.div`
   }
 `;
 
-const StCourt = styled.div`
+const StCourt = styled.button`
   display: grid;
   gap: 0.5rem;
+  width: 100%;
   padding: 0.6rem;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   background: ${FLOOR};
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &[aria-pressed="true"],
+  &:focus-visible {
+    outline: 3px solid ${LED};
+    outline-offset: 2px;
+  }
+`;
+
+// 입력 칸: 두 열이면 누른 코트가 있는 줄 바로 아래, 한 열(휴대폰)이면 누른 코트 바로 아래
+const StEntry = styled.div<{ $desk: number; $mobile: number }>`
+  order: ${({ $desk }) => $desk};
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border-radius: 0.6rem;
+  color: ${({ theme }) => theme.semantic.text};
+  background: ${({ theme }) => theme.semantic.bg};
+
+  @media ${({ theme }) => theme.media.mobile} {
+    order: ${({ $mobile }) => $mobile};
+  }
+`;
+
+const StEntryHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+`;
+
+const StEntryClose = styled.button`
+  padding: 0.3rem 0.7rem;
+  border: 0;
+  border-radius: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.semantic.subText};
+  background: transparent;
+  cursor: pointer;
 `;
 
 const StCourtHead = styled.div`

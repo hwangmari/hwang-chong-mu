@@ -800,6 +800,22 @@ export default function TournamentView({ initialEvent }: Props) {
           matches={matches}
           scores={scores}
           blocks={blocks}
+          renderMatch={(m) => (
+            <TournamentMatchCard
+              match={m}
+              score={scores[m.template.no] ?? null}
+              blockTime={blocks.find((b) => b.no === m.template.block)?.time ?? ""}
+              gamesToWin={event.gamesToWin}
+              clock={clock}
+              courts={courts}
+              occupied={occupied}
+              busy={busy}
+              canEdit={canEdit}
+              onStart={startMatch}
+              onSave={saveScore}
+              onClear={clearScore}
+            />
+          )}
         />
       ) : tab === "diagram" ? (
         <StCard>
