@@ -6,7 +6,7 @@ import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from ".
 import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
 import PixelBracket, { shirtOf } from "./PixelBracket";
-import { BLUSH, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
+import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
 
 type Props = {
@@ -29,67 +29,14 @@ type Props = {
  */
 
 
-const W = 160;
-const H = 88;
+const W = COURT_W;
+const H = COURT_H;
 
 type CourtView =
   | { kind: "playing"; match: ResolvedMatch; startedAt: string }
   | { kind: "ready"; match: ResolvedMatch }
   | { kind: "done"; match: ResolvedMatch }
   | { kind: "empty" };
-
-// 코트 색: 대회장(아식스 테니스 아카데미) 2026 코트처럼 안쪽 보라 · 바깥 파랑, 밝고 화사하게 (주인 요청 2026-10-27)
-const OUT_A = "#4fb0f7";
-const OUT_B = "#5ab8fa";
-const IN = "#9a7cff";
-const IN_LIGHT = "#a68bff";
-const LINE = "#ffffff";
-
-function drawCourt(ctx: CanvasRenderingContext2D) {
-  px(ctx, 0, 0, W, H, OUT_A);
-  for (let i = 0; i < W; i += 8) px(ctx, i, 0, 4, H, OUT_B);
-  const cx = 16, cy = 12, cw = W - 32, ch = H - 24;
-  px(ctx, cx, cy, cw, ch, IN);
-  // 반사광 한 줄 — 바닥이 반짝여 보이게
-  px(ctx, cx + 1, cy + 1, cw - 2, 1, IN_LIGHT);
-  px(ctx, cx, cy, cw, 1, LINE);
-  px(ctx, cx, cy + ch - 1, cw, 1, LINE);
-  px(ctx, cx, cy, 1, ch, LINE);
-  px(ctx, cx + cw - 1, cy, 1, ch, LINE);
-  px(ctx, cx, cy + 6, cw, 1, LINE);
-  px(ctx, cx, cy + ch - 7, cw, 1, LINE);
-  const sx = Math.round(cw * 0.23);
-  px(ctx, cx + sx, cy + 6, 1, ch - 12, LINE);
-  px(ctx, cx + cw - sx - 1, cy + 6, 1, ch - 12, LINE);
-  px(ctx, cx + sx, cy + ch / 2, cw - sx * 2, 1, LINE);
-  px(ctx, W / 2 - 1, cy - 4, 2, ch + 8, "#f4f1ea");
-  px(ctx, W / 2 - 1, cy - 5, 2, 2, "#2b3340");
-  px(ctx, W / 2 - 1, cy + ch + 3, 2, 2, "#2b3340");
-  drawDecor(ctx);
-}
-
-// 코트 밖 꾸밈: 네 구석 화분 · 네트 옆 심판 의자 · 공 바구니 · 수건
-function drawDecor(ctx: CanvasRenderingContext2D) {
-  for (const [bx, by] of [[1, 0], [W - 9, 0], [1, H - 9], [W - 9, H - 9]] as const) {
-    px(ctx, bx + 1, by + 1, 6, 4, "#3fbf6e");
-    px(ctx, bx + 2, by, 4, 1, "#3fbf6e");
-    px(ctx, bx + 2, by + 2, 1, 1, "#7be09a");
-    px(ctx, bx + 5, by + 1, 1, 1, "#ff8fb1"); // 꽃 한 송이
-    px(ctx, bx + 2, by + 5, 4, 3, "#ff9f5a");
-    px(ctx, bx + 2, by + 5, 4, 1, "#e07b38");
-  }
-  // 심판 의자
-  px(ctx, W / 2 + 4, 1, 5, 3, "#ffcf4a");
-  px(ctx, W / 2 + 4, 4, 1, 6, "#c98f2a");
-  px(ctx, W / 2 + 8, 4, 1, 6, "#c98f2a");
-  // 공 바구니
-  px(ctx, 22, H - 9, 8, 5, "#ffffff");
-  px(ctx, 22, H - 7, 8, 1, "#d6dde2");
-  for (const bx of [23, 25, 27]) px(ctx, bx, H - 11, 2, 2, "#d8f24a");
-  // 오른쪽 아래 수건
-  px(ctx, W - 32, H - 8, 7, 3, "#ff8fb1");
-  px(ctx, W - 32, H - 7, 7, 1, "#ffffff");
-}
 
 // 빈 코트: 고양이가 낮잠을 잔다
 function drawCat(ctx: CanvasRenderingContext2D) {

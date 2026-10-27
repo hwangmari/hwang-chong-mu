@@ -8,6 +8,7 @@ import TournamentMatchCard from "./TournamentMatchCard";
 import VotePanel from "./VotePanel";
 import PixelCourtPanel from "./PixelCourtPanel";
 import PixelMatchEntry from "./PixelMatchEntry";
+import PixelJourney from "./PixelJourney";
 import StaffBar from "./StaffBar";
 import DemoBar from "./DemoBar";
 import NextUpBar from "../components/NextUpBar";
@@ -992,6 +993,14 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
                   </StCardHint>
                 ) : null}
               </StRosterBand>
+              {/* 끝난 경기를 픽셀 코트에서 다시 보기 (주인 요청 2026-10-28) */}
+              <PixelJourney
+                key={selected.seed}
+                team={selected}
+                matches={matches}
+                scores={scores}
+                roster={event.roster}
+              />
               <StQueueList>
                 {teamPath(matches, selected).map(
                   ({ match, opponent, outcome }) => (
