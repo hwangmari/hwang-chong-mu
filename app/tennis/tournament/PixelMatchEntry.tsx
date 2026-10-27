@@ -136,11 +136,22 @@ export default function PixelMatchEntry({
     if (playing) saveSegs(eventId, no, segs);
   }, [eventId, no, playing, segs]);
 
-  const total: Seg = done && !editing
+  // 손으로 넣은 게임 수
+  const raw: Seg = done && !editing
     ? [match.scoreA ?? 0, match.scoreB ?? 0]
     : editing || !byPair
       ? fix
       : [segs[0][0] + segs[1][0] + segs[2][0], segs[0][1] + segs[1][1] + segs[2][1]];
+  // 5:5 면 7점 타이브레이크. 타이브레이크를 이긴 팀 게임이 저절로 하나 올라 6:5 가 된다
+  // (전에는 6:5 를 손으로 맞춰야 타이브레이크 칸이 떠서 "합계가 안 올라간다"고 느꼈다 — 주인 2026-10-28)
+  const at55 = raw[0] === gamesToWin - 1 && raw[1] === gamesToWin - 1;
+  const tbWinner = tb[0] !== tb[1] && Math.max(tb[0], tb[1]) >= 7 ? (tb[0] > tb[1] ? 0 : 1) : null;
+  const total: Seg =
+    at55 && tbWinner !== null
+      ? tbWinner === 0
+        ? [raw[0] + 1, raw[1]]
+        : [raw[0], raw[1] + 1]
+      : raw;
   const decided = Math.max(total[0], total[1]) >= gamesToWin;
   const check = validateGameScore({
     a: String(total[0]),
@@ -325,11 +336,16 @@ export default function PixelMatchEntry({
       ) : null}
 
       {/* 5:5 → 6:5 로 끝나면 타이브레이크 */}
-      {(playing || editing) && canEdit && check.needsTiebreak ? (
+      {(playing || editing) && canEdit && (at55 || check.needsTiebreak) ? (
         <StPair $now $off={false}>
           <StPairHead>
             <b>
-              타이브레이크 <span>7점 선취 · 모르면 비워 둬도 돼요</span>
+              타이브레이크{" "}
+              <span>
+                {at55
+                  ? "5:5 — 7점 먼저 내면 그 팀 게임이 6이 돼요"
+                  : "7점 선취 · 모르면 비워 둬도 돼요"}
+              </span>
             </b>
           </StPairHead>
           <StPairRow>
