@@ -6,6 +6,7 @@ import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
 import VotePanel from "./VotePanel";
+import PixelCourtPanel from "./PixelCourtPanel";
 import StaffBar from "./StaffBar";
 import NextUpBar from "../components/NextUpBar";
 import {
@@ -98,7 +99,7 @@ import { jumpToMatch } from "../jump";
 import { NoteLines } from "../noteLines";
 
 type Props = { initialEvent: TournamentEvent };
-type Tab = "bracket" | "diagram" | "placements" | "teams" | "vote" | "info";
+type Tab = "bracket" | "pixel" | "diagram" | "placements" | "teams" | "vote" | "info";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -150,6 +151,8 @@ export default function TournamentView({ initialEvent }: Props) {
   const [admins, setAdmins] = useState<string[]>([]);
   const [staffName, setStaffName] = useState("");
   const [phase, setPhase] = useState<TournamentPhase>("before");
+  // 우승팀 토토 마감 — 대회 시작과 따로, 진행 요원이 직접 누른다 (주인 요청 2026-10-27)
+  const [totoClosed, setTotoClosed] = useState(false);
 
   useEffect(() => {
     if (!notice) return;
@@ -181,6 +184,7 @@ export default function TournamentView({ initialEvent }: Props) {
         setScores(toMap(list));
         setAdmins(settings.admins);
         setPhase(settings.phase);
+        setTotoClosed(settings.closed.champion);
         setMode("cloud");
         setError("");
       } catch {
@@ -242,6 +246,19 @@ export default function TournamentView({ initialEvent }: Props) {
       setPhase((await saveVoteSettings(eventId, { phase: next })).phase);
     } catch {
       setError("대회 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changeToto(next: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await saveVoteSettings(eventId, { closed: { champion: next } });
+      setTotoClosed(saved.closed.champion);
+    } catch {
+      setError("토토 마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
     } finally {
       setBusy(false);
     }
@@ -493,8 +510,10 @@ export default function TournamentView({ initialEvent }: Props) {
           admins={admins}
           staffName={admins.includes(staffName) ? staffName : ""}
           phase={phase}
+          totoClosed={totoClosed}
           busy={busy}
           onPhase={changePhase}
+          onToto={changeToto}
           onEnter={setStaffName}
           onExit={() => {
             clearSavedStaff(eventId);
@@ -513,6 +532,13 @@ export default function TournamentView({ initialEvent }: Props) {
           onClick={() => setTab("bracket")}
         >
           경기 진행 · 점수
+        </StTab>
+        <StTab
+          type="button"
+          $active={tab === "pixel"}
+          onClick={() => setTab("pixel")}
+        >
+          픽셀 코트
         </StTab>
         <StTab
           type="button"
@@ -768,6 +794,13 @@ export default function TournamentView({ initialEvent }: Props) {
             </StCardHint>
           ) : null}
         </StCard>
+      ) : tab === "pixel" ? (
+        <PixelCourtPanel
+          event={event}
+          matches={matches}
+          scores={scores}
+          blocks={blocks}
+        />
       ) : tab === "diagram" ? (
         <StCard>
           <StCardHead>
@@ -778,6 +811,46 @@ export default function TournamentView({ initialEvent }: Props) {
             이어져요. 오른쪽으로 갈수록 결승에 가까워요.
           </StCardHint>
           <BracketTree matches={matches} />
+          {/* 그림의 "#3 3팀"이 누구인지 바로 보이게 팀 명단을 붙인다 (주인 요청 2026-10-27) */}
+          <StSubTitle>👥 팀 명단</StSubTitle>
+          <StTableWrap>
+            <StRosterTable>
+              <colgroup>
+                <col className="team" />
+                <col />
+                <col />
+                <col />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="name">팀</th>
+                  {[1, 2, 3, 4].map((sd) => (
+                    <th key={sd}>{sd}번</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {event.teams.map((t) => (
+                  <tr key={t.seed}>
+                    <td className="name">
+                      <StSeedTag>#{t.seed}</StSeedTag> {t.name}
+                    </td>
+                    {[1, 2, 3, 4].map((sd) => {
+                      const exact = t.players.find((p) => p.seed === sd);
+                      const name = exact?.name || playerAtSeed(t, sd)?.name;
+                      return (
+                        <td key={sd} className={exact ? "" : "muted"}>
+                          {name ?? "—"}
+                          {name && !exact ? <small>3번 겸</small> : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </StRosterTable>
+          </StTableWrap>
         </StCard>
       ) : tab === "placements" ? (
         <StCard>
@@ -1021,7 +1094,7 @@ export default function TournamentView({ initialEvent }: Props) {
           )}
         </StCard>
       ) : tab === "vote" ? (
-        <VotePanel event={event} matches={matches} />
+        <VotePanel event={event} matches={matches} totoClosed={totoClosed} />
       ) : null}
       {/* 대회 정보·규칙·참가 팀·안내: 다른 탭을 보고 와도 입력 중이던 팀 이름이 남도록 늘 그려 두고 숨긴다 (리뷰 2026-09-15) */}
       <div hidden={tab !== "info"}>
@@ -1098,6 +1171,48 @@ export default function TournamentView({ initialEvent }: Props) {
     </StPage>
   );
 }
+
+const StSubTitle = styled.h3`
+  margin-top: 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+`;
+
+// 팀 명단: 칸 너비를 고정해 이름 길이와 상관없이 열이 줄을 맞춘다
+const StRosterTable = styled(StTable)`
+  table-layout: fixed;
+
+  col.team {
+    width: 5.5rem;
+  }
+
+  th,
+  td {
+    padding-inline: 0.25rem;
+  }
+
+  td {
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  small {
+    display: block;
+    font-size: 0.7rem;
+  }
+
+  @media ${({ theme }) => theme.media.mobile} {
+    col.team {
+      width: 4.2rem;
+    }
+
+    td {
+      font-size: 0.8rem;
+    }
+  }
+`;
 
 const StTitleRow = styled.div`
   display: flex;

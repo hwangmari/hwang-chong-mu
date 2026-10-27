@@ -35,7 +35,12 @@ import {
   StNotice,
 } from "../page.styles";
 
-type Props = { event: TournamentEvent; matches: ResolvedMatch[] };
+type Props = {
+  event: TournamentEvent;
+  matches: ResolvedMatch[];
+  /** 우승팀 토토 마감 — 진행 요원 띠에서 누르므로 위(대회 화면)가 알려 준다 */
+  totoClosed: boolean;
+};
 
 /**
  * 대회 투표 — 우승팀 토토와 베스트드레서(남성부·여성부). (주인 요청 2026-10-06)
@@ -47,11 +52,12 @@ type Props = { event: TournamentEvent; matches: ResolvedMatch[] };
  *
  * 마감은 관리자 한 명(참가자 명단 중)이 직접 누른다 (주인 결정 2026-10-12).
  * 자동 마감은 없다. 관리자는 본인 이름·비번으로 들어왔을 때만 마감 버튼을 본다.
- *  · 토토: 팀별 표 수·배당은 진짜 토토처럼 늘 보여 준다. 누가 어디에 걸었는지는 대회가 끝나야 공개.
+ *  · 토토: 진행 요원이 "토토 마감"을 눌러 닫는다(대회 시작과 따로, 2026-10-27).
+ *    팀별 표 수·배당은 진짜 토토처럼 늘 보여 준다. 누가 어디에 걸었는지는 대회가 끝나야 공개.
  *  · 베스트드레서: 관리자가 마감하는 순간 득표가 공개된다(시상식).
  */
 const POLL_MS = 15_000;
-export default function VotePanel({ event, matches }: Props) {
+export default function VotePanel({ event, matches, totoClosed }: Props) {
   const [myName, setMyName] = useState("");
   const [pin, setPin] = useState("");
   const [unlocked, setUnlocked] = useState(false);
@@ -91,14 +97,14 @@ export default function VotePanel({ event, matches }: Props) {
   const over = finalDone || dayPassed || phase === "ended";
 
   // "마감"과 "공개"는 다른 순간이다.
-  //  · 토토는 진행 요원이 대회를 시작하면 마감된다. 표 수·배당은 늘 보이지만
+  //  · 토토는 진행 요원이 "토토 마감"을 누르거나 대회가 끝나면 마감된다. 표 수·배당은 늘 보이지만
   //    누가 어디에 걸었는지는 대회가 끝나야 보여 준다 — 응원이 한쪽으로 쏠리지 않게.
   //  · 베스트드레서는 관리자가 마감하는 순간 마감과 공개가 같이 일어난다.
   const closed = settings?.closed ?? { champion: false, dresser: false };
   const admins = settings?.admins ?? [];
   const isAdmin = unlocked && admins.includes(myName);
   const locked: Record<VoteKind, boolean> = {
-    champion: phase !== "before" || closed.champion,
+    champion: totoClosed || over,
     dresser: closed.dresser,
   };
   const revealed: Record<VoteKind, boolean> = {
@@ -350,7 +356,7 @@ export default function VotePanel({ event, matches }: Props) {
       {isAdmin ? (
         <StAdmin>
           <StAdminTitle>
-            🔐 관리자 · 베스트드레서 마감 (토토는 대회 시작과 함께 마감돼요)
+            🔐 관리자 · 베스트드레서 마감 (토토는 위 진행 요원 띠에서 마감해요)
           </StAdminTitle>
           <StAdminRow>
             <span>
@@ -404,8 +410,8 @@ export default function VotePanel({ event, matches }: Props) {
           revealed.champion
             ? "결과 공개!"
             : locked.champion
-              ? "대회가 시작돼 마감됐어요. 맞춘 사람은 대회가 끝나면 공개돼요."
-              : "어느 팀이 우승할까요? 대회가 시작되면 마감돼요."
+              ? "마감됐어요. 맞춘 사람은 대회가 끝나면 공개돼요."
+              : "어느 팀이 우승할까요? 진행 요원이 마감하기 전까지 고칠 수 있어요."
         }
         reveal="팀별 표 수·배당은 실시간으로 보여요. 누가 어디에 걸었는지는 대회가 끝난 뒤 공개돼요."
         live

@@ -18,8 +18,11 @@ type Props = {
   /** 지금 이 폰에서 들어온 관리자 이름. 없으면 빈 문자열 */
   staffName: string;
   phase: TournamentPhase;
+  /** 우승팀 토토가 마감됐는지 */
+  totoClosed: boolean;
   busy: boolean;
   onPhase: (next: TournamentPhase) => Promise<void>;
+  onToto: (closed: boolean) => Promise<void>;
   onEnter: (name: string) => void;
   onExit: () => void;
 };
@@ -32,16 +35,19 @@ const PHASE_TEXT: Record<TournamentPhase, string> = {
 
 /**
  * 진행 요원(관리자) 모드 띠. (주인 요청 2026-10-13 — "누가 미리 눌러놔서")
- * 진행 요원은 "대회 시작"과 "대회 끝"만 누른다. 그 사이 경기 시작·점수는 누구나 한다.
- * 대회 시작과 함께 우승팀 토토가 마감되고, 대회 끝과 함께 토토 결과가 공개된다.
+ * 진행 요원은 "대회 시작"·"대회 끝"과 "토토 마감"을 누른다. 그 사이 경기 시작·점수는 누구나 한다.
+ * 토토 마감은 대회 시작과 따로다 — 첫 경기를 보고 닫아도 된다 (주인 요청 2026-10-27).
+ * 대회 끝과 함께 토토도 닫히고 누가 어디에 걸었는지 공개된다.
  */
 export default function StaffBar({
   eventId,
   admins,
   staffName,
   phase,
+  totoClosed,
   busy,
   onPhase,
+  onToto,
   onEnter,
   onExit,
 }: Props) {
@@ -54,6 +60,13 @@ export default function StaffBar({
 
   async function go(next: TournamentPhase, message: string) {
     if (await openConfirm(message)) await onPhase(next);
+  }
+
+  async function toggleToto() {
+    const message = totoClosed
+      ? "우승팀 토토를 다시 열까요? 다시 팀을 고르거나 바꿀 수 있게 돼요."
+      : "우승팀 토토를 마감할까요? 이제 아무도 팀을 고르거나 바꿀 수 없어요. 누가 어디에 걸었는지는 대회가 끝나면 공개돼요.";
+    if (await openConfirm(message)) await onToto(!totoClosed);
   }
 
   async function enter() {
@@ -87,6 +100,9 @@ export default function StaffBar({
         <StRow>
           <span>
             🔐 진행 요원 · <b>{staffName}</b> · {PHASE_TEXT[phase]}
+            {phase !== "ended"
+              ? ` 토토 ${totoClosed ? "마감됨" : "받는 중"}.`
+              : null}
           </span>
           <StGhostBtn type="button" onClick={onExit}>
             나가기
@@ -100,7 +116,7 @@ export default function StaffBar({
               onClick={() =>
                 void go(
                   "live",
-                  "대회를 시작할까요? 우승팀 토토가 마감되고, 누구나 경기를 시작할 수 있게 돼요.",
+                  "대회를 시작할까요? 누구나 경기를 시작할 수 있게 돼요. 우승팀 토토는 따로 마감해야 닫혀요.",
                 )
               }
             >
@@ -127,7 +143,7 @@ export default function StaffBar({
                 onClick={() =>
                   void go(
                     "before",
-                    "대회 시작을 취소할까요? 경기 시작이 다시 막히고 토토가 다시 열려요. 넣은 점수는 그대로 남아요.",
+                    "대회 시작을 취소할까요? 경기 시작이 다시 막혀요. 넣은 점수는 그대로 남아요.",
                   )
                 }
               >
@@ -147,6 +163,15 @@ export default function StaffBar({
               }
             >
               다시 진행 중으로
+            </StGhostBtn>
+          ) : null}
+          {phase !== "ended" ? (
+            <StGhostBtn
+              type="button"
+              disabled={busy}
+              onClick={() => void toggleToto()}
+            >
+              {totoClosed ? "🎟️ 토토 다시 열기" : "🎟️ 토토 마감"}
             </StGhostBtn>
           ) : null}
         </StActionsRow>
