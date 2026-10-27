@@ -12,7 +12,8 @@
 // 한 줄 형식: 날짜(YYYY-MM-DD, 생략 시 오늘)  항목  [상호]  금액  [결제: 카드|체크|현금]  [분류]  [메모…]
 //   - 금액은 숫자만(콤마 가능). 수입은 금액 앞에 + 를 붙인다: "+ 2026-09-25 월급 3000000 현금 급여"
 //   - 결제 기본값은 카드, 분류 기본값은 "기타".
-// 옵션: --user 닉네임(필수) · --workspace 워크스페이스id(기본: 개인 가계부) · --card 카드사(기본 빈칸) · --dry (저장 없이 미리보기)
+//   또는 내역을 파일로: node scripts/ledger-add.mjs --user 황냥 --file 내역.txt
+// 옵션: --user 닉네임(필수) · --file 내역 파일 · --workspace 워크스페이스id(기본: 개인 가계부) · --card 카드사(기본 빈칸) · --dry (저장 없이 미리보기)
 
 import { createInterface } from "node:readline";
 import { readFileSync, existsSync } from "node:fs";
@@ -79,7 +80,10 @@ function parseLine(line, defaults) {
   return { date, type, item, merchant, amount, payment, category, memo: memoParts.join(" ") };
 }
 
-const input = readFileSync(0, "utf8");
+// --file 로 주면 내역은 파일에서 읽고, 터미널 입력은 비밀번호용으로 남겨 둔다
+// (내역을 < 파일 로 넘기면 비밀번호를 칠 입력이 없어 멈춘다 — 2026-10-27)
+const inputFile = opt("file");
+const input = readFileSync(inputFile ?? 0, "utf8");
 const parsed = input.split("\n").map((l) => parseLine(l, { category: "기타" })).filter(Boolean);
 const bad = parsed.filter((p) => p.error); if (bad.length) { bad.forEach((b) => console.error(b.error)); process.exit(1); }
 if (parsed.length === 0) { console.error("입력된 줄이 없어요."); process.exit(1); }
@@ -93,6 +97,7 @@ console.error(`\n${userName} · 워크스페이스 ${workspaceId} 에 ${parsed.l
 for (const p of parsed) console.error(`  ${p.date}  ${p.type === "income" ? "+" : "-"}${p.amount.toLocaleString()}원  ${p.item}${p.merchant ? " @" + p.merchant : ""}  [${p.category} · ${p.payment}]${p.memo ? "  " + p.memo : ""}`);
 if (dry) process.exit(0);
 
+if (!process.stdin.isTTY) { console.error("비밀번호를 칠 터미널이 없어요. 내역은 --file 파일로 넘기고, 터미널 앱에서 직접 실행해 주세요."); process.exit(1); }
 const password = await askHidden(`${userName} 가계부 비밀번호 (화면에 안 보임): `);
 const login = await rpc("account_book_user_login", { p_user_id: user.id, p_password: password });
 if (!login || !login.ok) { console.error("비밀번호가 맞지 않아요."); process.exit(1); }
