@@ -546,10 +546,9 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
 const PIX = "ui-monospace, Menlo, Consolas, monospace";
 const INK = "#24343b";
 const DIM = "#6b7c80";
-const LED = "#ffcf4a"; // 전광판(어두운 판) 위 글자
+const LED = "#ffcf4a"; // 지금 라운드 칸 · 움직임 버튼 바탕
 const FLOOR = "#ffffff";
 const ACCENT = "#e8761c"; // 밝은 판 위 강조 글자
-const BOARD_DIM = "#a9b8b9"; // 전광판 위 흐린 글자
 const CARD_SHADOW = "4px 4px 0 #2f7a4f22";
 
 // 픽셀 배경은 흰 카드 없이 화면 좌우 끝까지 깐다 (주인 요청 2026-10-27 — PC 좌우 여백도 픽셀로).
@@ -603,8 +602,9 @@ const StBoard = styled.div`
   display: grid;
   gap: 0.7rem;
   padding: 0.8rem 0.9rem;
-  background: #121b20;
-  box-shadow: 0 0 0 3px #ffffff, ${CARD_SHADOW};
+  /* 전광판도 낮 톤으로 — 흰 판 + 코트 보라 제목 (주인 요청 2026-10-27 "상단 배너도 톤앤매너 맞춰") */
+  background: ${FLOOR};
+  box-shadow: ${CARD_SHADOW};
 `;
 
 const StBoardTop = styled.div`
@@ -620,20 +620,20 @@ const StBoardTitle = styled.div`
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: ${LED};
+  color: #7a5cf0;
 `;
 
 const StBoardMeta = styled.div`
   font-size: 0.78rem;
   font-weight: 700;
-  color: ${BOARD_DIM};
+  color: ${DIM};
 `;
 
 const StClock = styled.div`
   font-family: ${PIX};
   font-size: 1rem;
   font-weight: 800;
-  color: ${LED};
+  color: ${ACCENT};
   font-variant-numeric: tabular-nums;
 `;
 
@@ -649,8 +649,8 @@ const StBlock = styled.div<{ $state: "done" | "now" | "next" }>`
   font-family: ${PIX};
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
-  background: ${({ $state }) => ($state === "now" ? LED : "#1b262c")};
-  color: ${({ $state }) => ($state === "now" ? "#121b20" : $state === "done" ? "#7ad3a0" : BOARD_DIM)};
+  background: ${({ $state }) => ($state === "now" ? LED : $state === "done" ? "#e3f6ea" : "#eef3f6")};
+  color: ${({ $state }) => ($state === "now" ? "#24343b" : $state === "done" ? "#2e9e5e" : DIM)};
 
   b {
     display: block;
