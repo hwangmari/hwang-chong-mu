@@ -70,7 +70,7 @@ function isoToMinutes(iso: string) {
 }
 
 // 팀의 페어 구성: 시드 번호 → 선수 이름
-function pairNames(team: TeamEntry | null, seeds: [number, number]) {
+export function pairNames(team: TeamEntry | null, seeds: [number, number]) {
   if (!team) return "-";
   return seeds
     .map((sd) => playerAtSeed(team, sd)?.name || `시드${sd}`)

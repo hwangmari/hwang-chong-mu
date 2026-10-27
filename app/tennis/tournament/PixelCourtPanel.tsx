@@ -698,10 +698,10 @@ const StEntry = styled.div<{ $desk: number; $mobile: number }>`
   grid-column: 1 / -1;
   display: grid;
   gap: 0.6rem;
-  padding: 0.8rem;
-  border-radius: 0.6rem;
-  color: ${({ theme }) => theme.semantic.text};
-  background: ${({ theme }) => theme.semantic.bg};
+  padding: 0.9rem;
+  color: ${INK};
+  background: ${FLOOR};
+  box-shadow: ${CARD_SHADOW}, inset 0 0 0 2px ${ACCENT};
 
   @media ${({ theme }) => theme.media.mobile} {
     order: ${({ $mobile }) => $mobile};
@@ -723,7 +723,7 @@ const StEntryClose = styled.button`
   border-radius: 0.4rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.semantic.subText};
+  color: ${DIM};
   background: transparent;
   cursor: pointer;
 `;

@@ -7,6 +7,7 @@ import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
 import VotePanel from "./VotePanel";
 import PixelCourtPanel from "./PixelCourtPanel";
+import PixelMatchEntry from "./PixelMatchEntry";
 import StaffBar from "./StaffBar";
 import NextUpBar from "../components/NextUpBar";
 import {
@@ -801,16 +802,17 @@ export default function TournamentView({ initialEvent }: Props) {
           scores={scores}
           blocks={blocks}
           renderMatch={(m) => (
-            <TournamentMatchCard
+            <PixelMatchEntry
+              eventId={eventId}
               match={m}
               score={scores[m.template.no] ?? null}
-              blockTime={blocks.find((b) => b.no === m.template.block)?.time ?? ""}
               gamesToWin={event.gamesToWin}
               clock={clock}
               courts={courts}
               occupied={occupied}
               busy={busy}
               canEdit={canEdit}
+              lockedHint={lockedHint}
               onStart={startMatch}
               onSave={saveScore}
               onClear={clearScore}
