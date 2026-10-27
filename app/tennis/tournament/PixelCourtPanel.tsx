@@ -189,8 +189,8 @@ function PixelCourt({
 }
 
 // ───── 응원석 (주인 요청 2026-10-28 "벤치 응원석에 이 녀석들이 응원하게") ─────
-// 주인이 보낸 그림의 다섯 친구를 닮은 오리지널 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡 · 분홍 동글이 ·
-// 쌍안경 든 여자아이 · 손 흔드는 아기. 공개 사이트라 다른 회사 캐릭터를 그대로 베끼지 않았다.
+// 주인이 보낸 그림의 다섯 친구를 닮은 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡 · 분홍 동글이는 오리지널(공개 사이트라
+// 다른 회사 캐릭터를 그대로 베끼지 않음), 옥지·빵빵이는 주인이 보낸 그림의 생김새(옷 색·소용돌이 눈·초록 병)를 따랐다.
 const CW = 160;
 const CH = 36;
 function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
@@ -245,51 +245,60 @@ function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
     px(ctx, x + 2, y + 7, 2, 1, "#f27a9a"); px(ctx, x + 10, y + 7, 2, 1, "#f27a9a");
     px(ctx, x + 4, y + 12, 6, 2, "#ffffff");
   }
-  // ④ 쌍안경 든 여자아이(옥지) — 빵빵이처럼 큰 동글 얼굴·앞머리·볼터치·웃는 입 (주인 요청 2026-10-28)
+  // 소용돌이 눈 3×3 (빵빵이·옥지 특유의 멍한 눈)
+  const swirl = (ex: number, ey: number) => {
+    px(ctx, ex, ey, 3, 3, "#ffffff");
+    px(ctx, ex, ey, 2, 1, "#3a2a22");
+    px(ctx, ex + 2, ey + 1, 1, 2, "#3a2a22");
+    px(ctx, ex + 1, ey + 1, 1, 1, "#3a2a22");
+  };
+  // ④ 옥지 — 주인이 보낸 그림처럼: 웨이브 갈색 머리 · 소용돌이 눈 · 빨간 입술 · 노란 긴팔 · 검은 치마 · 빨간 구두 · 초록 병 (2026-10-28)
   {
-    const x = 92, y = 4 + up(3);
+    const x = 92, y = 3 + up(3);
     const HAIR = "#6b3f2a", HAIR_HI = "#8a5536", FACE = "#f7d9be";
-    // 풍성한 웨이브 머리 (뒷머리가 어깨 아래까지)
-    px(ctx, x + 3, y, 12, 2, HAIR);
-    px(ctx, x + 1, y + 2, 16, 14, HAIR);
-    px(ctx, x, y + 6, 18, 9, HAIR);
-    px(ctx, x + 1, y + 15, 3, 3, HAIR); px(ctx, x + 14, y + 15, 3, 3, HAIR);
-    px(ctx, x + 4, y + 1, 3, 1, HAIR_HI); px(ctx, x + 2, y + 4, 1, 3, HAIR_HI); // 머리 윤기
-    // 큰 동글 얼굴
-    px(ctx, x + 4, y + 4, 10, 9, FACE);
-    px(ctx, x + 3, y + 6, 12, 5, FACE);
-    // 앞머리 (삐죽삐죽)
-    px(ctx, x + 4, y + 4, 10, 1, HAIR);
-    px(ctx, x + 5, y + 5, 2, 1, HAIR); px(ctx, x + 9, y + 5, 3, 1, HAIR);
-    // 작은 쌍안경 — 눈에 대고 있다
-    px(ctx, x + 4, y + 6, 4, 3, "#2b3557"); px(ctx, x + 10, y + 6, 4, 3, "#2b3557");
-    px(ctx, x + 8, y + 7, 2, 1, "#2b3557");
-    px(ctx, x + 5, y + 7, 2, 1, "#8fb4ff"); px(ctx, x + 11, y + 7, 2, 1, "#8fb4ff");
-    px(ctx, x + 5, y + 6, 1, 1, "#ffffff"); px(ctx, x + 11, y + 6, 1, 1, "#ffffff");
-    // 볼터치 · 웃는 입
-    px(ctx, x + 4, y + 10, 2, 1, "#ff9fbf"); px(ctx, x + 12, y + 10, 2, 1, "#ff9fbf");
-    px(ctx, x + 8, y + 10, 2, 2, "#c43d5c"); px(ctx, x + 8, y + 11, 2, 1, "#ff7a8a");
-    // 쌍안경 든 손
-    px(ctx, x + 2, y + 8, 2, 3, FACE); px(ctx, x + 14, y + 8, 2, 3, FACE);
-    // 노란 옷 · 파란 치마 · 발
-    px(ctx, x + 5, y + 13, 8, 5, "#ffd447");
-    px(ctx, x + 7, y + 13, 4, 1, "#ffffff"); // 칼라
-    px(ctx, x + 4, y + 18, 10, 3, "#5a7bd6");
-    px(ctx, x + 6, y + 21, 2, 1, FACE); px(ctx, x + 10, y + 21, 2, 1, FACE);
+    px(ctx, x + 4, y, 10, 2, HAIR);
+    px(ctx, x + 2, y + 2, 14, 11, HAIR);
+    px(ctx, x, y + 7, 18, 6, HAIR);
+    px(ctx, x, y + 13, 4, 2, HAIR); px(ctx, x + 14, y + 13, 4, 2, HAIR); // 바깥으로 뻗친 끝
+    px(ctx, x + 5, y + 1, 3, 1, HAIR_HI);
+    px(ctx, x + 5, y + 3, 9, 9, FACE);
+    px(ctx, x + 4, y + 5, 11, 5, FACE);
+    px(ctx, x + 5, y + 3, 5, 1, HAIR); // 옆 가르마
+    swirl(x + 5, y + 5);
+    swirl(x + 10, y + 5);
+    px(ctx, x + 9, y + 8, 1, 1, "#c98f6a"); // 코
+    px(ctx, x + 5, y + 9, 2, 1, "#ff9fbf"); px(ctx, x + 12, y + 9, 2, 1, "#ff9fbf");
+    px(ctx, x + 8, y + 10, 3, 1, "#d9454f"); // 빨간 입술
+    // 노란 긴팔 · 병 든 손
+    px(ctx, x + 5, y + 12, 8, 6, "#f2d132");
+    px(ctx, x + 3, y + 13, 2, 4, "#f2d132"); px(ctx, x + 13, y + 12 - up(3), 2, 4, "#f2d132");
+    px(ctx, x + 3, y + 17, 2, 1, FACE);
+    px(ctx, x + 3, y + 11, 2, 6, "#3fae4a"); px(ctx, x + 3, y + 10, 2, 1, "#2e8a38"); px(ctx, x + 3, y + 13, 2, 2, "#ffffff"); // 초록 병
+    px(ctx, x + 4, y + 18, 10, 3, "#1b1b1b"); // 검은 치마
+    px(ctx, x + 6, y + 21, 1, 1, FACE); px(ctx, x + 11, y + 21, 1, 1, FACE);
+    px(ctx, x + 5, y + 22, 2, 1, "#d9454f"); px(ctx, x + 11, y + 22, 2, 1, "#d9454f"); // 빨간 구두
   }
-  // ⑤ 손 흔드는 아기
+  // ⑤ 빵빵이 — 머리카락 한 가닥 · 큰 동그란 머리 · 소용돌이 눈 · 빨간 입술 · 초록 티 · 청바지 · 갈색 신발 · 초록 병, 한 손은 만세
   {
-    const x = 122, y = 8 + up(4);
+    const x = 122, y = 2 + up(4);
     const wave = frame % 2;
-    px(ctx, x + 5, y - 1, 2, 1, "#1b1b1b"); px(ctx, x + 6, y - 2, 1, 1, "#1b1b1b"); // 머리카락 한 가닥
-    px(ctx, x + 1, y, 10, 10, "#f7d9be");
-    px(ctx, x, y + 2, 12, 6, "#f7d9be");
-    px(ctx, x + 3, y + 4, 1, 2, "#1b1b1b"); px(ctx, x + 8, y + 4, 1, 2, "#1b1b1b");
-    px(ctx, x + 2, y + 7, 2, 1, "#ff9fbf"); px(ctx, x + 8, y + 7, 2, 1, "#ff9fbf");
-    px(ctx, x + 5, y + 7, 2, 1, "#c43d5c");
-    px(ctx, x + 2, y + 10, 8, 7, "#3fa34d"); // 초록 옷
-    px(ctx, x - 1, y + 6 - wave * 2, 2, 5, "#f7d9be"); // 만세
-    px(ctx, x + 11, y + 6 - (1 - wave) * 2, 2, 5, "#f7d9be");
+    const FACE = "#f7d9be";
+    px(ctx, x + 6, y, 1, 2, "#1b1b1b"); px(ctx, x + 7, y - 1, 1, 1, "#1b1b1b"); // 머리카락 한 가닥
+    px(ctx, x + 2, y + 2, 10, 11, FACE);
+    px(ctx, x + 1, y + 4, 12, 7, FACE);
+    px(ctx, x, y + 7, 1, 2, FACE); // 귀
+    swirl(x + 3, y + 6);
+    swirl(x + 8, y + 6);
+    px(ctx, x + 7, y + 9, 1, 1, "#c98f6a"); // 코
+    px(ctx, x + 2, y + 10, 2, 1, "#ff9fbf"); px(ctx, x + 10, y + 10, 2, 1, "#ff9fbf");
+    px(ctx, x + 6, y + 11, 3, 1, "#d9454f"); // 빨간 입술
+    // 초록 티 · 병 든 손 · 만세 손
+    px(ctx, x + 2, y + 13, 10, 6, "#3f8f3f");
+    px(ctx, x + 7, y + 11, 2, 6, "#3fae4a"); px(ctx, x + 7, y + 13, 2, 2, "#ffffff"); // 입에 댄 초록 병
+    px(ctx, x + 6, y + 15, 2, 2, FACE);
+    px(ctx, x + 12, y + 9 - wave * 2, 2, 5, "#3f8f3f"); px(ctx, x + 12, y + 8 - wave * 2, 2, 1, FACE);
+    px(ctx, x + 2, y + 19, 10, 3, "#2f5aa8"); // 청바지
+    px(ctx, x + 1, y + 22, 4, 1, "#7a4a2a"); px(ctx, x + 9, y + 22, 4, 1, "#7a4a2a"); // 갈색 신발
   }
 }
 
@@ -351,6 +360,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
   const [myName] = useState(() => getSavedVoter()?.name ?? "");
   const myTeam = event.teams.find((t) => t.players.some((p) => p.name === myName)) ?? null;
   const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
+  const [viewBlock, setViewBlock] = useState<number | null>(null);
 
   // 화면 너비로 넓힌 픽셀 배경이 가로 스크롤을 만들지 않게, 이 탭이 열린 동안만 옆으로 넘친 부분을 잘라 둔다
   useEffect(() => {
@@ -434,8 +444,22 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
       : myMatch.status === "done"
         ? { kind: "done", match: myMatch }
         : { kind: "ready", match: myMatch };
-  const mineOnly = scope === "mine" && !!myView;
-  const cards: [Court, CourtView][] = mineOnly && myMatch && myView ? [[courtOf(myMatch), myView]] : views;
+  // 라운드 칸을 누르면 그 라운드 경기들을 코트별로 다시 본다 — 끝난 경기는 점수 고치기까지 (주인 요청 2026-10-28)
+  const roundCards: [Court, CourtView][] | null =
+    viewBlock === null
+      ? null
+      : visible
+          .filter((m) => m.template.block === viewBlock)
+          .map((m): [Court, CourtView] => {
+            const sc = scores[m.template.no];
+            if (m.status === "playing" && sc?.startedAt) return [courtOf(m), { kind: "playing", match: m, startedAt: sc.startedAt }];
+            if (m.status === "done") return [courtOf(m), { kind: "done", match: m }];
+            return [courtOf(m), { kind: "ready", match: m }];
+          })
+          .sort((a, b) => a[0].localeCompare(b[0]));
+  const mineOnly = roundCards === null && scope === "mine" && !!myView;
+  const cards: [Court, CourtView][] =
+    roundCards ?? (mineOnly && myMatch && myView ? [[courtOf(myMatch), myView]] : views);
   const myBlock = myMatch ? blocks.find((b) => b.no === myMatch.template.block) : undefined;
 
   const onCourt = new Set<number>();
@@ -503,8 +527,12 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
             {blocks.map((b) => (
               <StBlock
                 key={b.no}
+                type="button"
                 $state={b.no === nowBlock && !blockDone(b.no) ? "now" : blockDone(b.no) ? "done" : "next"}
+                aria-pressed={viewBlock === b.no}
+                aria-label={`${b.no}라운드 ${b.title} 경기 보기`}
                 title={b.title}
+                onClick={() => setViewBlock((v) => (v === b.no ? null : b.no))}
               >
                 <b>{b.no}</b>
                 {b.time.split(" — ")[0]}
@@ -535,6 +563,17 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           </StBench>
         </StBoard>
 
+        {viewBlock !== null ? (
+          <StRoundBar>
+            <span>
+              📋 <b>{viewBlock}라운드</b> 경기 보는 중 · {blocks.find((b) => b.no === viewBlock)?.time}
+              {roundCards && roundCards.length === 0 ? " · 아직 정해진 경기가 없어요" : ""}
+            </span>
+            <StRoundBack type="button" onClick={() => setViewBlock(null)}>
+              지금 화면으로
+            </StRoundBack>
+          </StRoundBar>
+        ) : null}
         <StCourts $one={mineOnly}>
           {cards.map(([court, view]) => {
             const m = view.kind === "empty" ? null : view.match;
@@ -746,8 +785,10 @@ const StBlocks = styled.div<{ $count: number }>`
   gap: 4px;
 `;
 
-const StBlock = styled.div<{ $state: "done" | "now" | "next" }>`
+const StBlock = styled.button<{ $state: "done" | "now" | "next" }>`
   padding: 0.35rem 0.1rem;
+  border: 0;
+  cursor: pointer;
   text-align: center;
   font-family: ${PIX};
   font-size: 0.68rem;
@@ -759,6 +800,43 @@ const StBlock = styled.div<{ $state: "done" | "now" | "next" }>`
     display: block;
     font-size: 0.78rem;
   }
+
+  &[aria-pressed="true"] {
+    box-shadow: inset 0 0 0 2px ${ACCENT};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${ACCENT};
+    outline-offset: 1px;
+  }
+`;
+
+const StRoundBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.84rem;
+  color: ${INK};
+  background: ${FLOOR};
+  box-shadow: ${CARD_SHADOW}, inset 4px 0 0 ${ACCENT};
+
+  b {
+    font-weight: 900;
+  }
+`;
+
+const StRoundBack = styled.button`
+  padding: 0.3rem 0.7rem;
+  border: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #24343b;
+  background: ${LED};
+  box-shadow: 2px 2px 0 #24343b;
+  cursor: pointer;
 `;
 
 // 우리 팀만 볼 때는 한 면을 가운데에 크게(너무 커지지 않게 폭 제한)
