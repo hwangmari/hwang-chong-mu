@@ -2,7 +2,13 @@
 
 import type React from "react";
 import { STAGE_COLOR, type ResolvedMatch, type TeamEntry } from "./types";
-import { StCardHint, StNode, StNodeHead, StNodeTeam } from "../page.styles";
+import {
+  StCardHint,
+  StNode,
+  StNodeHead,
+  StNodeRoster,
+  StNodeTeam,
+} from "../page.styles";
 
 // 진짜 대진표 모양: 앞 경기 두 개 사이에 다음 경기 칸이 오고, 이긴 팀의 경로가 선으로 이어진다
 type Props = { matches: ResolvedMatch[] };
@@ -11,9 +17,9 @@ type Layout = { no: number; col: number; row: number }; // row는 0.5 단위 가
 type Link = { from: number; to: number; kind: "winner" | "loser" };
 
 const COL_W = 250; // 열 간격
-const ROW_H = 104; // 행 간격
+const ROW_H = 136; // 행 간격 (팀 아래 명단 한 줄씩 넣으며 104 → 136, 2026-10-27)
 const NODE_W = 210;
-const NODE_H = 84;
+const NODE_H = 116;
 const PAD = 12;
 
 // 승자조: 1라운드 4 → 4강 2 → 결승 → 그랜드 파이널 (2026 규칙에서 리셋 재경기는 없앴다)
@@ -86,6 +92,18 @@ const RESULT_BADGE: React.CSSProperties = {
   color: "#fff",
 };
 
+// 팀 이름 아래 작은 명단 한 줄 — 팀 안 시드 순서. 아직 팀이 안 정해진 칸도 같은 높이로 비워 둔다
+function roster(team: TeamEntry | null) {
+  const names = team
+    ? [...team.players].sort((a, b) => a.seed - b.seed).map((p) => p.name)
+    : [];
+  return (
+    <StNodeRoster title={names.join(" · ") || undefined}>
+      {names.length ? names.join(" · ") : "\u00a0"}
+    </StNodeRoster>
+  );
+}
+
 function teamLine(
   team: TeamEntry | null,
   label: string,
@@ -93,20 +111,27 @@ function teamLine(
   result: "win" | "loss" | null,
 ) {
   return (
-    <StNodeTeam $winner={result === "win"} $empty={!team}>
-      <span className="name">
-        {team ? `#${team.seed} ${team.name}` : label}
-      </span>
-      <span
-        className="score"
-        style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-      >
-        {score !== null ? score : ""}
-        {result === "win" ? (
-          <span style={{ ...RESULT_BADGE, background: "#1f8a54" }}>승</span>
-        ) : null}
-      </span>
-    </StNodeTeam>
+    <div>
+      <StNodeTeam $winner={result === "win"} $empty={!team}>
+        <span className="name">
+          {team ? `#${team.seed} ${team.name}` : label}
+        </span>
+        <span
+          className="score"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+          }}
+        >
+          {score !== null ? score : ""}
+          {result === "win" ? (
+            <span style={{ ...RESULT_BADGE, background: "#1f8a54" }}>승</span>
+          ) : null}
+        </span>
+      </StNodeTeam>
+      {roster(team)}
+    </div>
   );
 }
 

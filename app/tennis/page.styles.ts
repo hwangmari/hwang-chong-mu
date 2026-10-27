@@ -1607,6 +1607,18 @@ export const StNodeTeam = styled.div<{ $winner: boolean; $empty: boolean }>`
   }
 `;
 
+/* 대진표 칸: 팀 이름 아래 선수 명단 한 줄 (길면 말줄임, 마우스를 올리면 전체) */
+export const StNodeRoster = styled.div`
+  margin-top: 0.05rem;
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: ${({ theme }) => theme.colors.gray500};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 /* === 대진표 세부 요건 설정 (새 교류전 만들기) === */
 export const StDetailPanel = styled.div`
   display: flex;
