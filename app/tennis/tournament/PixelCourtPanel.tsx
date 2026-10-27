@@ -451,25 +451,6 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
         (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
     );
 
-  // 중계: 점수 기록의 시작·끝 시각으로 만든다
-  const log = visible
-    .flatMap((m) => {
-      const sc = scores[m.template.no];
-      if (!sc) return [];
-      const court = sc.court ?? m.template.court;
-      const vs = `${m.teamA?.name ?? m.aLabel}·${m.teamB?.name ?? m.bLabel}`;
-      const items: { at: string; text: string }[] = [];
-      if (sc.startedAt) items.push({ at: sc.startedAt, text: `${court}코트 ${vs} ${m.template.label} 시작` });
-      if (m.status === "done" && m.winner && sc.finishedAt) {
-        const hi = Math.max(sc.scoreA, sc.scoreB);
-        const lo = Math.min(sc.scoreA, sc.scoreB);
-        items.push({ at: sc.finishedAt, text: `${court}코트 ${m.winner.name}이 ${hi}:${lo}로 이겼어요` });
-      }
-      return items;
-    })
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 6);
-
   const clock = hhmm(new Date(now).toISOString());
 
   return (
@@ -511,7 +492,12 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
                 {event.place} · 코트 {courts.length}면 · {event.gamesToWin}게임 선승
               </StBoardMeta>
             </div>
-            <StClock>{clock}</StClock>
+            <StClockBox>
+              <StClock>{clock}</StClock>
+              <StMotionBtn type="button" onClick={() => setMoving((v) => !v)}>
+                {moving ? "움직임 멈추기" : "움직임 켜기"}
+              </StMotionBtn>
+            </StClockBox>
           </StBoardTop>
           <StBlocks $count={blocks.length}>
             {blocks.map((b) => (
@@ -525,6 +511,28 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
               </StBlock>
             ))}
           </StBlocks>
+          {/* 벤치 · 응원석을 전광판에 합쳤다 (주인 요청 2026-10-28 "여기에 벤치 응원석 합쳐 주라, 중계는 빼도") */}
+          <StCheerRow>
+            <CheerSquad moving={moving} />
+          </StCheerRow>
+          <StBench>
+            {event.teams.map((team) => {
+              const next = onCourt.has(team.seed) ? null : nextFor(team);
+              return (
+                <StSeat key={team.seed} $on={onCourt.has(team.seed)}>
+                  <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
+                  <StSeatName>{team.name}</StSeatName>
+                  <StSeatState>
+                    {onCourt.has(team.seed)
+                      ? "경기 중"
+                      : next
+                        ? `다음 ${next.template.court}코트`
+                        : "쉬는 중"}
+                  </StSeatState>
+                </StSeat>
+              );
+            })}
+          </StBench>
         </StBoard>
 
         <StCourts $one={mineOnly}>
@@ -579,48 +587,6 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           })}
         </StCourts>
 
-        <StLower>
-          <StPanel>
-            <StPanelTitle>벤치 · 응원석</StPanelTitle>
-            <CheerSquad moving={moving} />
-            <StBench>
-              {event.teams.map((team) => {
-                const next = onCourt.has(team.seed) ? null : nextFor(team);
-                return (
-                  <StSeat key={team.seed} $on={onCourt.has(team.seed)}>
-                    <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
-                    <StSeatName>{team.name}</StSeatName>
-                    <StSeatState>
-                      {onCourt.has(team.seed)
-                        ? "코트에서 경기 중"
-                        : next
-                          ? `다음 ${next.template.court}코트`
-                          : "쉬는 중"}
-                    </StSeatState>
-                  </StSeat>
-                );
-              })}
-            </StBench>
-          </StPanel>
-          <StPanel>
-            <StPanelTitle>중계</StPanelTitle>
-            {log.length > 0 ? (
-              <StLog>
-                {log.map((l) => (
-                  <li key={`${l.at}-${l.text}`}>
-                    <time>{hhmm(l.at)}</time>
-                    <span>{l.text}</span>
-                  </li>
-                ))}
-              </StLog>
-            ) : (
-              <StEmpty>아직 시작한 경기가 없어요. 첫 경기를 시작하면 여기에 쌓여요.</StEmpty>
-            )}
-            <StMotionBtn type="button" onClick={() => setMoving((v) => !v)}>
-              {moving ? "움직임 멈추기" : "움직임 켜기"}
-            </StMotionBtn>
-          </StPanel>
-        </StLower>
 
         <StPanel>
           <StPanelTitle>🏆 대진표</StPanelTitle>
@@ -905,15 +871,6 @@ const StGame = styled.span<{ $dim: boolean }>`
   color: ${({ $dim }) => ($dim ? "#c3cacc" : ACCENT)};
 `;
 
-const StLower = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 0.8rem;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: minmax(0, 1fr);
-  }
-`;
 
 const StPanel = styled.div`
   display: grid;
@@ -930,21 +887,34 @@ const StPanelTitle = styled.h3`
   font-weight: 800;
 `;
 
+// 전광판 안 벤치: 넓으면 8팀 한 줄, 휴대폰은 4팀씩 두 줄
 const StBench = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.35rem;
 
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+`;
+
+const StCheerRow = styled.div`
+  display: grid;
+  justify-items: center;
+  padding-top: 0.2rem;
+`;
+
+const StClockBox = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const StSeat = styled.div<{ $on: boolean }>`
   display: grid;
   justify-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.3rem;
+  gap: 0.15rem;
+  padding: 0.35rem 0.2rem;
   background: #eef8f1;
   opacity: ${({ $on }) => ($on ? 0.45 : 1)};
 `;
@@ -975,40 +945,12 @@ const StSeatState = styled.span`
   text-align: center;
 `;
 
-const StLog = styled.ol`
-  display: grid;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.82rem;
-  line-height: 1.5;
 
-  li {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    gap: 0.4rem;
-  }
-
-  time {
-    font-family: ${PIX};
-    font-size: 0.78rem;
-    color: ${ACCENT};
-    font-variant-numeric: tabular-nums;
-  }
-`;
-
-const StEmpty = styled.p`
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: ${DIM};
-`;
 
 const StMotionBtn = styled.button`
-  justify-self: start;
-  padding: 0.4rem 0.8rem;
+  padding: 0.25rem 0.55rem;
   border: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #121b20;
   background: ${LED};
