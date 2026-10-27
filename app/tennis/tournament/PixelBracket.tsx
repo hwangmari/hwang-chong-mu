@@ -7,17 +7,18 @@ import { LB, LB_LINKS, PLACE, WB, WB_LINKS, type Layout, type Link } from "./Bra
 /**
  * 픽셀 대진표 — 픽셀 코트 탭 아래의 토너먼트 그림. (주인 요청 2026-10-27)
  * 칸 배치는 토너먼트 그림(BracketTree)과 같은 WB·LB·PLACE를 쓰고, 모양만 픽셀 전광판처럼 그린다.
- * 칸이 작아 명단은 빼고 팀·점수만 둔다 — 명단은 토너먼트 그림 탭에 있다.
+ * 팀 이름 아래에 명단 한 줄 — 토너먼트 그림과 같은 방식 (주인 요청 2026-10-27).
  */
 
 // 팀 시드별 셔츠 색 — 픽셀 코트와 대진표가 같은 색을 쓴다
 export const SHIRT = ["#e8504a", "#f29b38", "#f2d64b", "#6cc96a", "#4cc3d9", "#9b7bea", "#ef86c1", "#f4f1ea"];
 export const shirtOf = (team: TeamEntry) => SHIRT[(team.seed - 1) % SHIRT.length];
 
-const COL_W = 176;
-const ROW_H = 76;
-const NODE_W = 150;
-const NODE_H = 64;
+// 명단 한 줄씩 넣으며 칸을 넓히고 높였다 (150×64 → 180×96, 2026-10-27)
+const COL_W = 206;
+const ROW_H = 108;
+const NODE_W = 180;
+const NODE_H = 96;
 const PAD = 6;
 
 const PIX = "ui-monospace, Menlo, Consolas, monospace";
@@ -98,12 +99,21 @@ function Tree({
             const done = m.status === "done";
             const row = (team: TeamEntry | null, label: string, score: number | null) => {
               const won = done && !!team && m.winner?.seed === team.seed;
+              // 팀 안 시드 순서. 아직 팀이 안 정해진 칸도 같은 높이로 비워 둔다
+              const names = team
+                ? [...team.players].sort((a, b) => a.seed - b.seed).map((p) => p.name).filter((n) => n.trim())
+                : [];
               return (
-                <StRow $won={won} $lost={done && !won} $empty={!team}>
-                  <StSwatch style={{ background: team ? shirtOf(team) : "transparent" }} />
-                  <StName>{team ? team.name : label}</StName>
-                  <StPts>{score ?? ""}</StPts>
-                </StRow>
+                <div>
+                  <StRow $won={won} $lost={done && !won} $empty={!team}>
+                    <StSwatch style={{ background: team ? shirtOf(team) : "transparent" }} />
+                    <StName>{team ? team.name : label}</StName>
+                    <StPts>{score ?? ""}</StPts>
+                  </StRow>
+                  <StRoster title={names.join(" · ") || undefined}>
+                    {names.length ? names.join("·") : " "}
+                  </StRoster>
+                </div>
               );
             };
             return (
@@ -218,6 +228,16 @@ const StSwatch = styled.i`
 `;
 
 const StName = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const StRoster = styled.div`
+  padding-left: 13px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: ${DIM};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
