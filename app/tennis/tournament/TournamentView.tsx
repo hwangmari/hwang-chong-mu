@@ -811,6 +811,46 @@ export default function TournamentView({ initialEvent }: Props) {
             이어져요. 오른쪽으로 갈수록 결승에 가까워요.
           </StCardHint>
           <BracketTree matches={matches} />
+          {/* 그림의 "#3 3팀"이 누구인지 바로 보이게 팀 명단을 붙인다 (주인 요청 2026-10-27) */}
+          <StSubTitle>👥 팀 명단</StSubTitle>
+          <StTableWrap>
+            <StRosterTable>
+              <colgroup>
+                <col className="team" />
+                <col />
+                <col />
+                <col />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="name">팀</th>
+                  {[1, 2, 3, 4].map((sd) => (
+                    <th key={sd}>{sd}번</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {event.teams.map((t) => (
+                  <tr key={t.seed}>
+                    <td className="name">
+                      <StSeedTag>#{t.seed}</StSeedTag> {t.name}
+                    </td>
+                    {[1, 2, 3, 4].map((sd) => {
+                      const exact = t.players.find((p) => p.seed === sd);
+                      const name = exact?.name || playerAtSeed(t, sd)?.name;
+                      return (
+                        <td key={sd} className={exact ? "" : "muted"}>
+                          {name ?? "—"}
+                          {name && !exact ? <small>3번 겸</small> : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </StRosterTable>
+          </StTableWrap>
         </StCard>
       ) : tab === "placements" ? (
         <StCard>
@@ -1131,6 +1171,48 @@ export default function TournamentView({ initialEvent }: Props) {
     </StPage>
   );
 }
+
+const StSubTitle = styled.h3`
+  margin-top: 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.semantic.text};
+`;
+
+// 팀 명단: 칸 너비를 고정해 이름 길이와 상관없이 열이 줄을 맞춘다
+const StRosterTable = styled(StTable)`
+  table-layout: fixed;
+
+  col.team {
+    width: 5.5rem;
+  }
+
+  th,
+  td {
+    padding-inline: 0.25rem;
+  }
+
+  td {
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  small {
+    display: block;
+    font-size: 0.7rem;
+  }
+
+  @media ${({ theme }) => theme.media.mobile} {
+    col.team {
+      width: 4.2rem;
+    }
+
+    td {
+      font-size: 0.8rem;
+    }
+  }
+`;
 
 const StTitleRow = styled.div`
   display: flex;
