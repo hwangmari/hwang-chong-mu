@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import styled from "styled-components";
+import { drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
 import { ONE_SHEET, ONE_SHEET_LINKS, roundHeads, type Layout, type Link } from "./BracketTree";
 
@@ -53,6 +55,130 @@ const STATE_TEXT: Record<ResolvedMatch["status"], string> = {
   hidden: "조건부",
 };
 
+// ───── 이긴 팀이 다음 칸으로 걸어가서 환호 (주인 요청 2026-10-28) ─────
+// 결과가 난 경기의 이긴 팀 꼬마 둘이 노란 선을 따라 걸어가 다음 경기 칸 앞에 서서 만세를 한다.
+// 다음 경기도 끝나면 거기서 또 이긴 팀이 걸어 나간다(진 팀은 그 자리에서 사라진다).
+// 그랜드 파이널이 끝나면 우승팀이 그 칸 위에서 하트를 띄운다.
+// 걷기는 대진표가 화면에 보일 때 한 번, 새 결과가 들어오면 그 팀만 다시. 그 뒤엔 제자리 환호.
+type Pt = { x: number; y: number };
+type Walker = { key: string; seed: number; path: Pt[] };
+const SCALE = 2; // 꼬마 한 칸 = 화면 2px
+const WALK_MS = 2400;
+
+function along(path: Pt[], d: number): Pt {
+  let left = Math.max(0, d);
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i];
+    const len = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
+    if (left <= len) {
+      const k = len === 0 ? 0 : left / len;
+      return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+    }
+    left -= len;
+  }
+  return path[path.length - 1];
+}
+const lengthOf = (path: Pt[]) =>
+  path.slice(1).reduce((sum, b, i) => sum + Math.abs(b.x - path[i].x) + Math.abs(b.y - path[i].y), 0);
+
+function WalkLayer({
+  width,
+  height,
+  walkers,
+  champion,
+  sprites,
+  moving,
+}: {
+  width: number;
+  height: number;
+  walkers: Walker[];
+  champion: { seed: number; at: Pt } | null;
+  sprites: Map<number, Sprite[]>;
+  moving: boolean;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const started = useRef(new Map<string, number>());
+  const sig = walkers.map((w) => w.key).join("|") + (champion ? `|champ${champion.seed}` : "");
+
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    let visible = false;
+    let raf = 0;
+
+    const draw = (t: number) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const frame = Math.floor(t / 300);
+      for (const w of walkers) {
+        const team = (sprites.get(w.seed) ?? []).slice(0, 2);
+        const total = lengthOf(w.path);
+        const t0 = started.current.get(w.key);
+        const p = !moving ? 1 : t0 === undefined ? 0 : Math.min(1, (t - t0) / WALK_MS);
+        const arrived = p >= 1;
+        team.forEach((sp, i) => {
+          const pt = along(w.path, total * p - i * 20);
+          const x = pt.x / SCALE - 4;
+          const y = pt.y / SCALE - 11;
+          const step = arrived ? frame : Math.floor(t / 140);
+          const lift = arrived && moving && (frame + i) % 2 ? 1 : 0;
+          drawPlayer(ctx, x, y - lift, sp, step, 1, arrived);
+          if (arrived && moving && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 7);
+        });
+      }
+      if (champion) {
+        const team = sprites.get(champion.seed) ?? [];
+        team.forEach((sp, i) => {
+          const x = champion.at.x / SCALE - team.length * 5 + i * 10;
+          const y = champion.at.y / SCALE - 13;
+          const lift = moving && (frame + i) % 2 ? 1 : 0;
+          drawPlayer(ctx, x, y - lift, sp, frame, 1, true);
+          if (moving && (frame + i) % 3 === 0) drawHeart(ctx, x + 2, y - 7 - lift);
+        });
+      }
+    };
+
+    // 처음 보는 걷기만 시작 시각을 적는다 — 20초마다 새로 읽어도 이미 걸은 팀은 다시 걷지 않는다
+    const kick = (t: number) => {
+      for (const w of walkers) if (!started.current.has(w.key)) started.current.set(w.key, t);
+    };
+    const loop = (t: number) => {
+      if (visible) kick(t);
+      draw(t);
+      raf = requestAnimationFrame(loop);
+    };
+
+    if (!moving) {
+      draw(0);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      { threshold: 0.25 },
+    );
+    io.observe(canvas);
+    raf = requestAnimationFrame(loop);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+    // sig 가 걷는 팀·우승팀을 대신한다 (배열은 매 렌더 새로 만들어진다)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, sprites, moving]);
+
+  return (
+    <StWalk
+      ref={ref}
+      width={Math.ceil(width / SCALE)}
+      height={Math.ceil(height / SCALE)}
+      style={{ width, height }}
+      aria-hidden="true"
+    />
+  );
+}
+
 function Tree({
   title,
   hint,
@@ -60,6 +186,8 @@ function Tree({
   links,
   by,
   colHeads,
+  sprites,
+  moving,
 }: {
   title: string;
   hint: string;
@@ -67,6 +195,8 @@ function Tree({
   links: Link[];
   by: Map<number, ResolvedMatch>;
   colHeads: string[];
+  sprites: Map<number, Sprite[]>;
+  moving: boolean;
 }) {
   const cols = Math.max(...layout.map((l) => l.col)) + 1;
   const rows = Math.max(...layout.map((l) => l.row)) + 1;
@@ -75,6 +205,36 @@ function Tree({
   const at = new Map(
     layout.map((l) => [l.no, { x: PAD + l.col * COL_W, y: HEAD_H + PAD + l.row * ROW_H }]),
   );
+
+  // 이긴 팀이 지금 서 있는 곳: 끝난 경기 → 아직 안 끝난 다음 경기 칸 앞
+  const walkers: Walker[] = [];
+  for (const lk of links) {
+    if (lk.kind !== "winner") continue;
+    const fm = by.get(lk.from);
+    const tm = by.get(lk.to);
+    const from = at.get(lk.from);
+    const to = at.get(lk.to);
+    if (!fm || !tm || !from || !to || fm.status !== "done" || !fm.winner) continue;
+    if (tm.status === "done" || tm.status === "hidden") continue;
+    const x1 = from.x + NODE_W;
+    const y1 = Math.round(from.y + NODE_H / 2);
+    const x2 = to.x;
+    // 다음 칸에서 그 팀이 들어갈 줄(위 A팀 / 아래 B팀) 앞에 선다 — 같은 칸으로 가는 두 팀이 겹치지 않게
+    const goesA = tm.teamA?.seed === fm.winner.seed;
+    const y2 = Math.round(to.y + (goesA ? NODE_H * 0.36 : NODE_H * 0.78));
+    const mid = Math.round(x1 + (x2 - x1) / 2);
+    walkers.push({
+      key: `${lk.from}>${lk.to}:${fm.winner.seed}`,
+      seed: fm.winner.seed,
+      path: [{ x: x1 - 24, y: y1 }, { x: mid, y: y1 }, { x: mid, y: y2 }, { x: x2 - 8, y: y2 }],
+    });
+  }
+  const final = by.get(16);
+  const finalAt = at.get(16);
+  const champion =
+    final && finalAt && final.status === "done" && final.winner
+      ? { seed: final.winner.seed, at: { x: finalAt.x + NODE_W / 2, y: finalAt.y - 2 } }
+      : null;
 
   return (
     <StTree>
@@ -123,6 +283,14 @@ function Tree({
               );
             })}
           </svg>
+          <WalkLayer
+            width={width}
+            height={height}
+            walkers={walkers}
+            champion={champion}
+            sprites={sprites}
+            moving={moving}
+          />
           {colHeads.map((h, i) => (
             <StColHead key={h} style={{ left: PAD + i * COL_W, width: NODE_W }}>
               {h}
@@ -178,9 +346,14 @@ function Tree({
 export default function PixelBracket({
   matches,
   blocks,
+  sprites,
+  moving,
 }: {
   matches: ResolvedMatch[];
   blocks: ScheduleBlock[];
+  /** 팀 시드 → 꼬마 선수들 (픽셀 코트와 같은 그림) */
+  sprites: Map<number, Sprite[]>;
+  moving: boolean;
 }) {
   const by = new Map(matches.map((m) => [m.template.no, m]));
   const heads = roundHeads(blocks);
@@ -193,6 +366,8 @@ export default function PixelBracket({
         links={ONE_SHEET_LINKS}
         by={by}
         colHeads={heads}
+        sprites={sprites}
+        moving={moving}
       />
     </StWrap>
   );
@@ -234,6 +409,13 @@ const StColHead = styled.div`
   font-weight: 800;
   color: #121b20;
   background: ${LED};
+`;
+
+const StWalk = styled.canvas`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
 `;
 
 const StScroll = styled.div`

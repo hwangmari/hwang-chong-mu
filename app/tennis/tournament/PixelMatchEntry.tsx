@@ -36,6 +36,8 @@ type Props = {
   onStart: (matchNo: number, court: Court) => Promise<void>;
   onSave: (matchNo: number, scoreA: number, scoreB: number, tiebreak: [number, number] | null) => Promise<void>;
   onClear: (matchNo: number) => Promise<void>;
+  /** 코트 카드 안에 넣을 때 — 카드에 이미 팀·점수 줄이 있어 위쪽 "1팀 3:1 2팀" 줄을 뺀다 */
+  inCard?: boolean;
 };
 
 type Seg = [number, number];
@@ -115,6 +117,7 @@ export default function PixelMatchEntry({
   onStart,
   onSave,
   onClear,
+  inCard = false,
 }: Props) {
   const no = match.template.no;
   const done = match.status === "done";
@@ -171,6 +174,13 @@ export default function PixelMatchEntry({
 
   return (
     <StWrap>
+      {inCard ? (
+        playing || editing ? (
+          <StBig style={{ fontSize: "1.05rem" }}>
+            지금 <span>{total[0]}</span>:<span>{total[1]}</span>
+          </StBig>
+        ) : null
+      ) : (
       <StVersus>
         <TeamTag team={match.teamA} label={match.aLabel} />
         <StBig>
@@ -184,6 +194,7 @@ export default function PixelMatchEntry({
         </StBig>
         <TeamTag team={match.teamB} label={match.bLabel} />
       </StVersus>
+      )}
       {done && score?.tiebreakA !== undefined && score?.tiebreakB !== undefined && !editing ? (
         <StNote>
           타이브레이크 {score.tiebreakA} - {score.tiebreakB}

@@ -6,6 +6,8 @@ import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from ".
 import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
 import PixelBracket, { shirtOf } from "./PixelBracket";
+import { BLUSH, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
+import { getSavedVoter } from "../voterKey";
 
 type Props = {
   event: TournamentEvent;
@@ -27,78 +29,14 @@ type Props = {
  */
 
 
-const SKIN = "#f2c7a0";
-const HAIR_M = "#3a2a22";
-const HAIR_F = "#5a3524";
-const SHORTS = "#2b3340";
 const W = 160;
 const H = 88;
 
-type Sprite = { shirt: string; female: boolean };
 type CourtView =
   | { kind: "playing"; match: ResolvedMatch; startedAt: string }
   | { kind: "ready"; match: ResolvedMatch }
   | { kind: "done"; match: ResolvedMatch }
   | { kind: "empty" };
-
-function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, c: string) {
-  ctx.fillStyle = c;
-  ctx.fillRect(Math.round(x), Math.round(y), w, h);
-}
-
-// 8×12 선수 — 큰 얼굴·두 눈·볼터치·팀 색 머리띠의 꼬마 캐릭터 (주인 요청 2026-10-27 "더 귀엽게").
-// 여성은 머리가 어깨까지 내려오고 흰 치마를 입는다
-const BLUSH = "#f59a9a";
-function drawPlayer(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  s: Sprite,
-  frame: number,
-  facing: 1 | -1,
-  cheer: boolean,
-) {
-  const bob = frame % 2;
-  const hair = s.female ? HAIR_F : HAIR_M;
-  px(ctx, x + 1, y + 11, 6, 1, "#0003");
-  px(ctx, x + 2, y, 4, 1, hair);
-  px(ctx, x + 1, y + 1, 6, 1, s.shirt); // 머리띠
-  px(ctx, x + 1, y + 2, 6, 3, SKIN); // 얼굴
-  if (s.female) {
-    px(ctx, x + 1, y + 2, 1, 4, hair);
-    px(ctx, x + 6, y + 2, 1, 4, hair);
-    px(ctx, x + 2, y + 4, 1, 1, BLUSH);
-    px(ctx, x + 5, y + 4, 1, 1, BLUSH);
-  } else {
-    px(ctx, x + 1, y + 4, 1, 1, BLUSH);
-    px(ctx, x + 6, y + 4, 1, 1, BLUSH);
-  }
-  const ex = facing > 0 ? 1 : 0; // 보는 쪽으로 눈을 한 칸 민다
-  px(ctx, x + 2 + ex, y + 3, 1, 1, "#222");
-  px(ctx, x + 4 + ex, y + 3, 1, 1, "#222");
-  px(ctx, x + 1, y + 5, 6, 3, s.shirt);
-  if (s.female) px(ctx, x + 1, y + 8, 6, 1, "#ffffff");
-  else px(ctx, x + 2, y + 8, 4, 1, SHORTS);
-  px(ctx, x + 2, y + 9, 1, 2 - bob, SKIN);
-  px(ctx, x + 5, y + 9, 1, 1 + bob, SKIN);
-  if (cheer) {
-    px(ctx, x, y + 2 - bob, 1, 3, SKIN);
-    px(ctx, x + 7, y + 2 - bob, 1, 3, SKIN);
-  } else {
-    px(ctx, facing > 0 ? x + 7 : x - 2, y + 5, 2, 3, "#1b1b1b");
-    px(ctx, facing > 0 ? x + 7 : x, y + 7, 1, 2, "#7a5a3a");
-  }
-}
-
-// 5×4 하트 — 이긴 팀 머리 위에 뜬다
-function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const c = "#ff5c8a";
-  px(ctx, x + 1, y, 1, 1, c);
-  px(ctx, x + 3, y, 1, 1, c);
-  px(ctx, x, y + 1, 5, 1, c);
-  px(ctx, x + 1, y + 2, 3, 1, c);
-  px(ctx, x + 2, y + 3, 1, 1, c);
-}
 
 // 코트 색: 대회장(아식스 테니스 아카데미) 2026 코트처럼 안쪽 보라 · 바깥 파랑, 밝고 화사하게 (주인 요청 2026-10-27)
 const OUT_A = "#4fb0f7";
@@ -250,6 +188,112 @@ function PixelCourt({
   return <StCanvas ref={ref} width={W} height={H} aria-hidden="true" />;
 }
 
+// ───── 응원석 (주인 요청 2026-10-28 "벤치 응원석에 이 녀석들이 응원하게") ─────
+// 주인이 보낸 그림의 다섯 친구를 닮은 오리지널 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡 · 분홍 동글이 ·
+// 쌍안경 든 여자아이 · 손 흔드는 아기. 공개 사이트라 다른 회사 캐릭터를 그대로 베끼지 않았다.
+const CW = 160;
+const CH = 36;
+function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
+  ctx.clearRect(0, 0, CW, CH);
+  const up = (i: number) => ((frame + i) % 2 === 0 ? 0 : 1); // 번갈아 통통
+  // 바닥·벤치
+  px(ctx, 0, 31, CW, 5, "#bfe3ff");
+  px(ctx, 10, 26, 140, 3, "#a8763e");
+  px(ctx, 10, 26, 140, 1, "#c99558");
+  for (const lx of [16, 52, 88, 124, 144]) px(ctx, lx, 29, 3, 4, "#7a5230");
+  // 양옆 수건 더미
+  px(ctx, 0, 24, 8, 3, "#9be07a"); px(ctx, 0, 27, 8, 2, "#ffffff"); px(ctx, 0, 29, 8, 2, "#d6dde2");
+  px(ctx, 152, 25, 8, 3, "#ff9fbf"); px(ctx, 152, 28, 8, 2, "#ffffff"); px(ctx, 152, 30, 8, 1, "#ff9fbf");
+
+  // ① 잎사귀 새싹이 — 파란 동글 몸 + 초록 잎
+  {
+    const x = 16, y = 14 + up(0);
+    const sway = frame % 2 ? 1 : -1;
+    px(ctx, x + 4 + sway, y - 7, 2, 5, "#3e9e4f");
+    px(ctx, x + 1, y - 5, 3, 4, "#5cc46b");
+    px(ctx, x + 7, y - 5, 3, 4, "#5cc46b");
+    px(ctx, x - 1 + sway, y - 3, 3, 2, "#7bd389");
+    px(ctx, x + 9 + sway, y - 3, 3, 2, "#7bd389");
+    px(ctx, x + 1, y, 9, 8, "#5b8fd6");
+    px(ctx, x, y + 2, 11, 5, "#5b8fd6");
+    px(ctx, x + 3, y + 3, 1, 1, "#1b1b1b"); px(ctx, x + 7, y + 3, 1, 1, "#1b1b1b");
+    px(ctx, x + 2, y + 5, 1, 1, "#ff9fbf"); px(ctx, x + 8, y + 5, 1, 1, "#ff9fbf");
+    px(ctx, x + 2, y + 8, 2, 2, "#4a78b8"); px(ctx, x + 7, y + 8, 2, 2, "#4a78b8");
+  }
+  // ② 노란 꼬마 공룡
+  {
+    const x = 42, y = 10 + up(1);
+    px(ctx, x + 1, y, 10, 7, "#f6d32b");
+    px(ctx, x + 9, y + 3, 4, 4, "#f6d32b"); // 주둥이
+    px(ctx, x + 6, y + 2, 2, 2, "#2e9e5e"); px(ctx, x + 7, y + 2, 1, 1, "#1b1b1b");
+    px(ctx, x + 10, y + 6, 3, 1, "#c99a12");
+    px(ctx, x + 2, y + 7, 9, 9, "#f6d32b");
+    px(ctx, x + 4, y + 9, 5, 6, "#fff3c4"); // 배
+    px(ctx, x, y + 9 - up(1), 2, 4, "#f6d32b"); px(ctx, x + 11, y + 8 - up(1), 2, 4, "#f6d32b"); // 팔
+    px(ctx, x + 12, y + 8 - up(1), 1, 1, "#ffffff");
+    px(ctx, x + 3, y + 16, 3, 1, "#ffffff"); px(ctx, x + 8, y + 16, 3, 1, "#ffffff"); // 발톱
+  }
+  // ③ 분홍 동글이
+  {
+    const x = 68, y = 11 + up(2);
+    px(ctx, x + 5, y - 2, 2, 2, "#f27a9a"); // 머리 새싹
+    px(ctx, x + 1, y, 12, 13, "#f7a1b5");
+    px(ctx, x, y + 2, 14, 9, "#f7a1b5");
+    px(ctx, x + 1, y, 2, 2, "#f27a9a"); px(ctx, x + 11, y, 2, 2, "#f27a9a"); // 귀
+    px(ctx, x + 4, y + 4, 1, 2, "#1b1b1b"); px(ctx, x + 9, y + 4, 1, 2, "#1b1b1b");
+    px(ctx, x + 5, y + 7, 4, 3, "#c43d5c"); px(ctx, x + 6, y + 7, 2, 1, "#ffffff"); // 입·앞니
+    px(ctx, x + 2, y + 7, 2, 1, "#f27a9a"); px(ctx, x + 10, y + 7, 2, 1, "#f27a9a");
+    px(ctx, x + 4, y + 12, 6, 2, "#ffffff");
+  }
+  // ④ 쌍안경 든 여자아이
+  {
+    const x = 94, y = 7;
+    px(ctx, x, y, 14, 15, "#6b3f2a"); // 긴 머리
+    px(ctx, x + 3, y + 3, 8, 7, "#f2c7a0"); // 얼굴
+    px(ctx, x + 3, y + 4, 8, 3, "#2b3557"); // 쌍안경
+    px(ctx, x + 4, y + 5, 2, 1, "#5a7bd6"); px(ctx, x + 8, y + 5, 2, 1, "#5a7bd6");
+    px(ctx, x + 4, y + 8, 1, 1, "#ff9fbf"); px(ctx, x + 9, y + 8, 1, 1, "#ff9fbf");
+    px(ctx, x + 6, y + 8, 2, 1, "#c43d5c");
+    px(ctx, x + 3, y + 10, 8, 6, "#ffd447"); // 노란 옷
+    px(ctx, x + 2, y + 7, 2, 3, "#f2c7a0"); px(ctx, x + 10, y + 7, 2, 3, "#f2c7a0"); // 쌍안경 든 손
+    px(ctx, x + 3, y + 16, 8, 3, "#5a7bd6");
+  }
+  // ⑤ 손 흔드는 아기
+  {
+    const x = 122, y = 8 + up(4);
+    const wave = frame % 2;
+    px(ctx, x + 5, y - 1, 2, 1, "#1b1b1b"); px(ctx, x + 6, y - 2, 1, 1, "#1b1b1b"); // 머리카락 한 가닥
+    px(ctx, x + 1, y, 10, 10, "#f7d9be");
+    px(ctx, x, y + 2, 12, 6, "#f7d9be");
+    px(ctx, x + 3, y + 4, 1, 2, "#1b1b1b"); px(ctx, x + 8, y + 4, 1, 2, "#1b1b1b");
+    px(ctx, x + 2, y + 7, 2, 1, "#ff9fbf"); px(ctx, x + 8, y + 7, 2, 1, "#ff9fbf");
+    px(ctx, x + 5, y + 7, 2, 1, "#c43d5c");
+    px(ctx, x + 2, y + 10, 8, 7, "#3fa34d"); // 초록 옷
+    px(ctx, x - 1, y + 6 - wave * 2, 2, 5, "#f7d9be"); // 만세
+    px(ctx, x + 11, y + 6 - (1 - wave) * 2, 2, 5, "#f7d9be");
+  }
+}
+
+function CheerSquad({ moving }: { moving: boolean }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const ctx = ref.current?.getContext("2d");
+    if (!ctx) return;
+    if (!moving) {
+      drawCheer(ctx, 0);
+      return;
+    }
+    let raf = 0;
+    const loop = (t: number) => {
+      drawCheer(ctx, Math.floor(t / 420));
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [moving]);
+  return <StCheerCanvas ref={ref} width={CW} height={CH} role="img" aria-label="응원석에서 꼬마 친구들이 응원하고 있어요" />;
+}
+
 function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -283,7 +327,11 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [now, setNow] = useState(() => Date.now());
-  const [openCourt, setOpenCourt] = useState<Court | null>(null);
+  // 투표 탭에서 이 폰에 들어온 "나" — 있으면 우리 팀 경기만 모아 보기를 기본으로 (주인 제안 2026-10-28)
+  // 보기만 거르는 것이라 "전체"로 바꾸면 다른 코트도 입력할 수 있다(권한은 진행 요원 규칙 그대로)
+  const [myName] = useState(() => getSavedVoter()?.name ?? "");
+  const myTeam = event.teams.find((t) => t.players.some((p) => p.name === myName)) ?? null;
+  const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
 
   // 화면 너비로 넓힌 픽셀 배경이 가로 스크롤을 만들지 않게, 이 탭이 열린 동안만 옆으로 넘친 부분을 잘라 둔다
   useEffect(() => {
@@ -346,6 +394,31 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
     return [court, { kind: "empty" }];
   });
 
+  // 우리 팀 경기: 경기 중 → 시작 가능 → 앞 경기 기다리는 중(번호 순) → 마지막으로 끝난 경기
+  const mineList = myTeam
+    ? visible.filter((m) => m.teamA?.seed === myTeam.seed || m.teamB?.seed === myTeam.seed)
+    : [];
+  const myMatch =
+    mineList.find((m) => m.status === "playing") ??
+    mineList.find((m) => m.status === "ready") ??
+    mineList.find((m) => m.status === "waiting") ??
+    mineList
+      .filter((m) => m.status === "done")
+      .sort((x, y) =>
+        (scores[y.template.no]?.finishedAt ?? "").localeCompare(scores[x.template.no]?.finishedAt ?? ""),
+      )[0] ??
+    null;
+  const myView: CourtView | null = !myMatch
+    ? null
+    : myMatch.status === "playing"
+      ? { kind: "playing", match: myMatch, startedAt: scores[myMatch.template.no]?.startedAt ?? new Date(now).toISOString() }
+      : myMatch.status === "done"
+        ? { kind: "done", match: myMatch }
+        : { kind: "ready", match: myMatch };
+  const mineOnly = scope === "mine" && !!myView;
+  const cards: [Court, CourtView][] = mineOnly && myMatch && myView ? [[courtOf(myMatch), myView]] : views;
+  const myBlock = myMatch ? blocks.find((b) => b.no === myMatch.template.block) : undefined;
+
   const onCourt = new Set<number>();
   for (const [, v] of views) {
     if (v.kind !== "playing") continue;
@@ -385,8 +458,31 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
       <StSceneHead>
         <StSceneTitle>👾 픽셀 코트</StSceneTitle>
         <StSceneHint>
-          점수 화면과 같은 기록을 보여 줘요. 코트를 누르면 그 경기를 시작하거나 점수를 넣을 수 있어요.
+          {myTeam
+            ? "점수 화면과 같은 기록을 보여 줘요. 코트 카드 아래에서 바로 시작·점수 입력을 해요."
+            : "점수 화면과 같은 기록을 보여 줘요. 코트 카드 아래에서 바로 시작·점수 입력을 해요. 투표 탭에서 내 이름으로 들어오면 우리 팀 경기만 모아 볼 수 있어요."}
         </StSceneHint>
+        {myTeam ? (
+          <StScopeRow>
+            <StScopes role="group" aria-label="보기">
+              <StScopeBtn type="button" aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>
+                🙋 우리 팀
+              </StScopeBtn>
+              <StScopeBtn type="button" aria-pressed={scope === "all"} onClick={() => setScope("all")}>
+                전체 코트
+              </StScopeBtn>
+            </StScopes>
+            {scope === "mine" ? (
+              <StMine>
+                <StSwatch style={{ background: shirtOf(myTeam) }} />
+                <b>{myTeam.name}</b> · {myName}님
+                {myMatch
+                  ? ` — ${myMatch.status === "playing" ? "지금 경기 중" : myMatch.status === "done" ? "마지막 경기" : "다음 경기"}: ${myMatch.template.label} · ${courtOf(myMatch)}코트${myBlock && myMatch.status !== "done" && myMatch.status !== "playing" ? ` · ${myBlock.time.split(" — ")[0]}` : ""}${myMatch.status === "waiting" ? " (앞 경기 결과를 기다려요)" : ""}`
+                  : " — 아직 정해진 경기가 없어요"}
+              </StMine>
+            ) : null}
+          </StScopeRow>
+        ) : null}
       </StSceneHead>
         <StBoard>
           <StBoardTop>
@@ -412,8 +508,8 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           </StBlocks>
         </StBoard>
 
-        <StCourts>
-          {views.map(([court, view], idx) => {
+        <StCourts $one={mineOnly}>
+          {cards.map(([court, view]) => {
             const m = view.kind === "empty" ? null : view.match;
             const sprites = {
               a: m?.teamA ? (spritesByTeam.get(m.teamA.seed) ?? []).slice(0, 2) : [],
@@ -422,17 +518,8 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
             const sc = m ? scores[m.template.no] : undefined;
             const done = view.kind === "done";
             const aLost = done && m?.winner?.seed !== m?.teamA?.seed;
-            const open = openCourt === court && !!m;
             return (
-              <StCourt
-                key={court}
-                type="button"
-                style={{ order: idx * 2 }}
-                disabled={!m || !renderMatch}
-                aria-pressed={open}
-                aria-label={`${court}코트 ${m ? m.template.label : "비어 있음"} — 눌러서 시작·점수 입력`}
-                onClick={() => setOpenCourt(open ? null : court)}
-              >
+              <StCourt key={court} aria-label={`${court}코트 ${m ? m.template.label : "비어 있음"}`}>
                 <StCourtHead>
                   <StCourtName>{court} COURT</StCourtName>
                   <StRound>{m ? m.template.label : "비어 있음"}</StRound>
@@ -466,35 +553,17 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
                     {m?.teamB ? <StSwatch style={{ background: shirtOf(m.teamB) }} /> : null}
                   </StSide>
                 </StScore>
+                {/* 코트마다 자기 입력 칸 — 코트를 바꿔 누를 일 없이 각자 자기 코트에서 (주인 요청 2026-10-28) */}
+                {m && renderMatch ? <StCardEntry>{renderMatch(m)}</StCardEntry> : null}
               </StCourt>
             );
           })}
-          {(() => {
-            const idx = views.findIndex(([c]) => c === openCourt);
-            const view = idx >= 0 ? views[idx][1] : null;
-            if (!renderMatch || !view || view.kind === "empty") return null;
-            return (
-              <StEntry
-                $desk={(idx | 1) * 2 + 1}
-                $mobile={idx * 2 + 1}
-              >
-                <StEntryHead>
-                  <span>
-                    {openCourt}코트 · {view.match.template.label}
-                  </span>
-                  <StEntryClose type="button" onClick={() => setOpenCourt(null)}>
-                    닫기
-                  </StEntryClose>
-                </StEntryHead>
-                {renderMatch(view.match)}
-              </StEntry>
-            );
-          })()}
         </StCourts>
 
         <StLower>
           <StPanel>
-            <StPanelTitle>벤치</StPanelTitle>
+            <StPanelTitle>벤치 · 응원석</StPanelTitle>
+            <CheerSquad moving={moving} />
             <StBench>
               {event.teams.map((team) => {
                 const next = onCourt.has(team.seed) ? null : nextFor(team);
@@ -536,7 +605,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
 
         <StPanel>
           <StPanelTitle>🏆 대진표</StPanelTitle>
-          <PixelBracket matches={matches} blocks={blocks} />
+          <PixelBracket matches={matches} blocks={blocks} sprites={spritesByTeam} moving={moving} />
         </StPanel>
     </StScene>
   );
@@ -590,6 +659,55 @@ const StSceneHead = styled.div`
 const StSceneTitle = styled.h2`
   font-size: 1rem;
   font-weight: 800;
+`;
+
+const StScopeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
+`;
+
+const StScopes = styled.div`
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  background: #ffffffaa;
+`;
+
+const StScopeBtn = styled.button`
+  padding: 0.35rem 0.8rem;
+  border: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: ${DIM};
+  background: transparent;
+  cursor: pointer;
+
+  &[aria-pressed="true"] {
+    color: ${INK};
+    background: ${LED};
+    box-shadow: 2px 2px 0 ${INK};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${ACCENT};
+    outline-offset: 1px;
+  }
+`;
+
+const StMine = styled.p`
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: ${INK};
+
+  b {
+    font-weight: 900;
+  }
 `;
 
 const StSceneHint = styled.p`
@@ -658,74 +776,34 @@ const StBlock = styled.div<{ $state: "done" | "now" | "next" }>`
   }
 `;
 
-const StCourts = styled.div`
+// 우리 팀만 볼 때는 한 면을 가운데에 크게(너무 커지지 않게 폭 제한)
+const StCourts = styled.div<{ $one?: boolean }>`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: ${({ $one }) => ($one ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))")};
   gap: 0.8rem;
+  width: 100%;
+  max-width: ${({ $one }) => ($one ? "680px" : "none")};
+  margin-inline: auto;
 
   @media ${({ theme }) => theme.media.mobile} {
     grid-template-columns: minmax(0, 1fr);
   }
 `;
 
-const StCourt = styled.button`
+const StCourt = styled.section`
   display: grid;
+  align-content: start;
   gap: 0.5rem;
-  width: 100%;
+  min-width: 0;
   padding: 0.6rem;
-  border: 0;
-  font: inherit;
-  color: inherit;
-  text-align: left;
   background: ${FLOOR};
   box-shadow: ${CARD_SHADOW};
-  cursor: pointer;
-
-  &:disabled {
-    cursor: default;
-  }
-
-  &[aria-pressed="true"],
-  &:focus-visible {
-    outline: 3px solid ${ACCENT};
-    outline-offset: 2px;
-  }
 `;
 
-// 입력 칸: 두 열이면 누른 코트가 있는 줄 바로 아래, 한 열(휴대폰)이면 누른 코트 바로 아래
-const StEntry = styled.div<{ $desk: number; $mobile: number }>`
-  order: ${({ $desk }) => $desk};
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 0.4rem;
-  padding: 0.7rem;
-  color: ${INK};
-  background: ${FLOOR};
-  box-shadow: ${CARD_SHADOW}, inset 0 0 0 2px ${ACCENT};
-
-  @media ${({ theme }) => theme.media.mobile} {
-    order: ${({ $mobile }) => $mobile};
-  }
-`;
-
-const StEntryHead = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 800;
-`;
-
-const StEntryClose = styled.button`
-  padding: 0.3rem 0.7rem;
-  border: 0;
-  border-radius: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${DIM};
-  background: transparent;
-  cursor: pointer;
+// 카드 안 입력 칸: 코트 그림 아래 점선 한 줄로 나눈다
+const StCardEntry = styled.div`
+  padding-top: 0.5rem;
+  border-top: 2px dashed #d8e3e7;
 `;
 
 const StCourtHead = styled.div`
@@ -850,6 +928,14 @@ const StSeat = styled.div<{ $on: boolean }>`
   padding: 0.5rem 0.3rem;
   background: #eef8f1;
   opacity: ${({ $on }) => ($on ? 0.45 : 1)};
+`;
+
+const StCheerCanvas = styled.canvas`
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: ${CW} / ${CH};
+  image-rendering: pixelated;
 `;
 
 const StBenchCanvas = styled.canvas`

@@ -802,7 +802,11 @@ export default function TournamentView({ initialEvent }: Props) {
           scores={scores}
           blocks={blocks}
           renderMatch={(m) => (
+            // 경기마다 새 입력 칸 — key 가 없으면 코트를 바꿔 눌러도 앞 경기에 넣던 숫자가 남아
+            // 다른 코트에 같은 점수가 들어갔다 (주인 발견 2026-10-28)
             <PixelMatchEntry
+              key={m.template.no}
+              inCard
               eventId={eventId}
               match={m}
               score={scores[m.template.no] ?? null}
