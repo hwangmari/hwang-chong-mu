@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import styled from "styled-components";
-import { drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
+import { drawFire, drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
 import { ONE_SHEET, ONE_SHEET_LINKS, roundHeads, type Layout, type Link } from "./BracketTree";
 
@@ -58,10 +58,11 @@ const STATE_TEXT: Record<ResolvedMatch["status"], string> = {
 // ───── 이긴 팀이 다음 칸으로 걸어가서 환호 (주인 요청 2026-10-28) ─────
 // 결과가 난 경기의 이긴 팀 꼬마 둘이 노란 선을 따라 걸어가 다음 경기 칸 앞에 서서 만세를 한다.
 // 다음 경기도 끝나면 거기서 또 이긴 팀이 걸어 나간다(진 팀은 그 자리에서 사라진다).
+// 진 팀은 분홍 점선을 따라 패자조 칸으로 내려가 머리 위에 불꽃을 피운다 — 승부를 불태운다 (주인 요청 2026-10-28).
 // 그랜드 파이널이 끝나면 우승팀이 그 칸 위에서 하트를 띄운다.
 // 걷기는 대진표가 화면에 보일 때 한 번, 새 결과가 들어오면 그 팀만 다시. 그 뒤엔 제자리 환호.
 type Pt = { x: number; y: number };
-type Walker = { key: string; seed: number; path: Pt[] };
+type Walker = { key: string; seed: number; path: Pt[]; mood: "cheer" | "fire" };
 const SCALE = 2; // 꼬마 한 칸 = 화면 2px
 const WALK_MS = 2400;
 
@@ -121,6 +122,12 @@ function WalkLayer({
           const x = pt.x / SCALE - 4;
           const y = pt.y / SCALE - 11;
           const step = arrived ? frame : Math.floor(t / 140);
+          if (w.mood === "fire") {
+            // 진 팀: 라켓을 쥐고 제자리에서 다리를 구르며 머리 위 불꽃
+            drawPlayer(ctx, x, y, sp, step, 1, false);
+            if (arrived) drawFire(ctx, x + 2, y - 7, frame + i);
+            return;
+          }
           const lift = arrived && moving && (frame + i) % 2 ? 1 : 0;
           drawPlayer(ctx, x, y - lift, sp, step, 1, arrived);
           if (arrived && moving && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 7);
@@ -209,24 +216,27 @@ function Tree({
   // 이긴 팀이 지금 서 있는 곳: 끝난 경기 → 아직 안 끝난 다음 경기 칸 앞
   const walkers: Walker[] = [];
   for (const lk of links) {
-    if (lk.kind !== "winner") continue;
     const fm = by.get(lk.from);
     const tm = by.get(lk.to);
     const from = at.get(lk.from);
     const to = at.get(lk.to);
-    if (!fm || !tm || !from || !to || fm.status !== "done" || !fm.winner) continue;
+    const mover = lk.kind === "winner" ? fm?.winner : fm?.loser;
+    if (!fm || !tm || !from || !to || fm.status !== "done" || !mover) continue;
     if (tm.status === "done" || tm.status === "hidden") continue;
     const x1 = from.x + NODE_W;
     const y1 = Math.round(from.y + NODE_H / 2);
     const x2 = to.x;
     // 다음 칸에서 그 팀이 들어갈 줄(위 A팀 / 아래 B팀) 앞에 선다 — 같은 칸으로 가는 두 팀이 겹치지 않게
-    const goesA = tm.teamA?.seed === fm.winner.seed;
+    const goesA = tm.teamA?.seed === mover.seed;
     const y2 = Math.round(to.y + (goesA ? NODE_H * 0.36 : NODE_H * 0.78));
-    const mid = Math.round(x1 + (x2 - x1) / 2);
+    // 이긴 길은 선처럼 열 사이 가운데에서 꺾는다. 진 길은 앞 칸을 나서자마자 내려가서
+    // 받는 칸 앞에 둘이 나란히 서게 한다(선처럼 칸 바로 앞에서 꺾으면 둘이 세로로 겹쳐 섰다)
+    const bend = lk.kind === "winner" ? Math.round(x1 + (x2 - x1) / 2) : x1 + 6;
     walkers.push({
-      key: `${lk.from}>${lk.to}:${fm.winner.seed}`,
-      seed: fm.winner.seed,
-      path: [{ x: x1 - 24, y: y1 }, { x: mid, y: y1 }, { x: mid, y: y2 }, { x: x2 - 8, y: y2 }],
+      key: `${lk.from}>${lk.to}:${mover.seed}`,
+      seed: mover.seed,
+      mood: lk.kind === "winner" ? "cheer" : "fire",
+      path: [{ x: x1 - 24, y: y1 }, { x: bend, y: y1 }, { x: bend, y: y2 }, { x: x2 - 8, y: y2 }],
     });
   }
   const final = by.get(16);

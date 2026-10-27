@@ -65,3 +65,15 @@ export function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number) {
   px(ctx, x + 1, y + 2, 3, 1, c);
   px(ctx, x + 2, y + 3, 1, 1, c);
 }
+
+// 5×6 불꽃 — 패자조로 내려간 팀 머리 위에서 활활 (주인 요청 2026-10-28 "승부를 불태우게")
+export function drawFire(ctx: CanvasRenderingContext2D, x: number, y: number, frame: number) {
+  const f = frame % 2;
+  px(ctx, x + 2, y + f, 1, 1, "#ffe066");
+  px(ctx, x + 1 + f, y + 1, 2, 1, "#ffb020");
+  px(ctx, x + 1, y + 2, 3, 1, "#ffb020");
+  px(ctx, x, y + 3, 5, 2, "#ff5a1f");
+  px(ctx, x + 1, y + 3, 3, 1, "#ffb020");
+  px(ctx, x + 2, y + 3, 1, 1, "#ffe066");
+  px(ctx, x + 1, y + 5, 3, 1, "#e0391a");
+}
