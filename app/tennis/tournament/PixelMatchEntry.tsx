@@ -223,7 +223,8 @@ export default function PixelMatchEntry({
       {/* 경기 중: 페어별 점수 */}
       {playing ? (
         <>
-          {elapsed !== null ? <StLive>🔥 경기 중 · {elapsed}분 경과</StLive> : null}
+          <StBar>
+          {elapsed !== null ? <StLive>🔥 {elapsed}분째</StLive> : null}
           {canEdit ? (
             <StModes role="group" aria-label="점수 넣는 방식">
               <StMode type="button" aria-pressed={!byPair} onClick={() => setByPair(false)}>
@@ -234,6 +235,7 @@ export default function PixelMatchEntry({
               </StMode>
             </StModes>
           ) : null}
+          </StBar>
           {canEdit && !byPair ? (
             <StPair $now $off={false}>
               <StPairHead>
@@ -364,8 +366,7 @@ export default function PixelMatchEntry({
       ) : null}
       {playing && canEdit ? (
         <StNote>
-          한 팀이 {gamesToWin}게임이 되면 저장할 수 있어요 (5:5면 6:5로 적고 타이브레이크).
-          {byPair ? " 페어별 점수는 이 폰에만 남고, 저장하면 합계가 올라가요." : " 페어별로 적어 두고 싶으면 위에서 '페어별로'를 골라요."}
+          {gamesToWin}게임 선취 · 6:5면 타이브레이크{byPair ? " · 페어별 점수는 이 폰에만 남아요" : ""}
         </StNote>
       ) : null}
     </StWrap>
@@ -378,9 +379,10 @@ const DIM = "#6b7c80";
 const ACCENT = "#e8761c";
 const LED = "#ffcf4a";
 
+// 점수 입력 영역은 촘촘하게 (주인 요청 2026-10-27 "좀 줄여져도 좋을 거 같아")
 const StWrap = styled.div`
   display: grid;
-  gap: 0.7rem;
+  gap: 0.45rem;
   color: ${INK};
 `;
 
@@ -400,7 +402,7 @@ const StTeamTag = styled.span`
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 900;
 `;
 
@@ -413,7 +415,7 @@ const StSwatch = styled.i`
 
 const StBig = styled.div`
   font-family: ${PIX};
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: ${ACCENT};
   font-variant-numeric: tabular-nums;
@@ -424,14 +426,20 @@ const StBig = styled.div`
 `;
 
 const StNote = styled.p`
-  font-size: 0.82rem;
-  line-height: 1.6;
+  font-size: 0.76rem;
+  line-height: 1.5;
   color: ${DIM};
 `;
 
+const StBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 const StLive = styled.div`
-  justify-self: start;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.5rem;
   font-size: 0.78rem;
   font-weight: 800;
   color: #fff;
@@ -440,7 +448,6 @@ const StLive = styled.div`
 
 // 합계로 | 페어별로 — 폼 안 두 갈래라 세그먼트 버튼
 const StModes = styled.div`
-  justify-self: start;
   display: inline-flex;
   background: #e6f0f4;
   padding: 3px;
@@ -448,9 +455,9 @@ const StModes = styled.div`
 `;
 
 const StMode = styled.button`
-  padding: 0.35rem 0.9rem;
+  padding: 0.25rem 0.7rem;
   border: 0;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: ${DIM};
   background: transparent;
@@ -470,13 +477,13 @@ const StMode = styled.button`
 
 const StPairs = styled.div`
   display: grid;
-  gap: 0.5rem;
+  gap: 0.3rem;
 `;
 
 const StPair = styled.div<{ $now: boolean; $off: boolean }>`
   display: grid;
-  gap: 0.4rem;
-  padding: 0.6rem;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
   background: ${({ $now }) => ($now ? "#fff7d6" : "#f3f7f9")};
   box-shadow: ${({ $now }) => ($now ? `inset 0 0 0 2px ${LED}` : "none")};
   opacity: ${({ $off }) => ($off ? 0.5 : 1)};
@@ -487,7 +494,7 @@ const StPairHead = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
 
   b {
     font-weight: 800;
@@ -502,52 +509,47 @@ const StPairHead = styled.div`
 const StChange = styled.span`
   padding: 0.1rem 0.5rem;
   font-family: ${PIX};
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 800;
   color: #fff !important;
   background: #7a5cf0;
 `;
 
+// 휴대폰에서도 한 줄: 이름 · 스텝퍼 : 스텝퍼 · 이름
 const StPairRow = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.5rem;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-template-columns: auto auto auto;
-    justify-content: center;
-  }
+  gap: 0.35rem;
 `;
 
 const StWho = styled.span<{ $right?: boolean }>`
   min-width: 0;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 700;
+  line-height: 1.35;
   color: ${DIM};
   text-align: ${({ $right }) => ($right ? "right" : "left")};
   word-break: keep-all;
-
-  @media ${({ theme }) => theme.media.mobile} {
-    grid-column: 1 / -1;
-    text-align: center;
-    order: ${({ $right }) => ($right ? 1 : -1)};
-  }
 `;
 
 const StStepper = styled.div`
   display: inline-grid;
-  grid-template-columns: 2.2rem 2.4rem 2.2rem;
+  grid-template-columns: 1.8rem 2rem 1.8rem;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 1.6rem 1.7rem 1.6rem;
+  }
   align-items: center;
   background: #fff;
   box-shadow: 3px 3px 0 #2f7a4f33;
 `;
 
 const StStep = styled.button`
-  height: 2.4rem;
+  height: 2rem;
   border: 0;
   font-family: ${PIX};
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
   color: ${INK};
   background: #e6f0f4;
@@ -567,7 +569,7 @@ const StStep = styled.button`
 const StNum = styled.span`
   text-align: center;
   font-family: ${PIX};
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 `;
@@ -586,9 +588,9 @@ const StActions = styled.div`
 `;
 
 const StBtn = styled.button<{ $tone: "go" | "plain" }>`
-  padding: 0.6rem 1rem;
+  padding: 0.45rem 0.8rem;
   border: 0;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 800;
   color: ${INK};
   background: ${({ $tone }) => ($tone === "go" ? LED : "#fff")};

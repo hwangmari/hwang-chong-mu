@@ -697,8 +697,8 @@ const StEntry = styled.div<{ $desk: number; $mobile: number }>`
   order: ${({ $desk }) => $desk};
   grid-column: 1 / -1;
   display: grid;
-  gap: 0.6rem;
-  padding: 0.9rem;
+  gap: 0.4rem;
+  padding: 0.7rem;
   color: ${INK};
   background: ${FLOOR};
   box-shadow: ${CARD_SHADOW}, inset 0 0 0 2px ${ACCENT};
