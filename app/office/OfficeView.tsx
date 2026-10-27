@@ -27,6 +27,7 @@ import {
   StZoneTag,
   StZoomBar,
   StGoing,
+  StPad,
 } from "./page.styles";
 
 export type OfficeMode = "pixel" | "animal";
@@ -121,6 +122,11 @@ function toward(name: string) {
   return jong === 0 || jong === 8 ? "로" : "으로";
 }
 
+/** 픽셀은 넓은 화면의 페이지 안에서만 사무실 전체로 시작 — 폰은 너무 작아져서 처음부터 황총무 곁 */
+function startOverview(full: boolean) {
+  return !full && window.innerWidth >= 768;
+}
+
 const KEY_DIR: Record<string, [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0], W: [0, -1], S: [0, 1], A: [-1, 0], D: [1, 0],
@@ -163,6 +169,23 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
   const goingRef = useRef(false);
   const [allTags, setAllTags] = useState(false);
   const [focused, setFocused] = useState(false);
+  // 손가락으로 쓰는 기기(폰·태블릿): 방향 패드를 보여 주고 안내 문구를 바꾼다
+  const [touch, setTouch] = useState(false);
+  // 전체 화면 조작 안내 줄은 들어간 뒤 4초만 — 늘 떠 있으면 사무실을 가린다 (2026-10-27)
+  const [hintOn, setHintOn] = useState(true);
+  useEffect(() => {
+    if (!full) return;
+    setHintOn(true);
+    const id = setTimeout(() => setHintOn(false), 4000);
+    return () => clearTimeout(id);
+  }, [full]);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const read = () => setTouch(mq.matches);
+    read();
+    mq.addEventListener("change", read);
+    return () => mq.removeEventListener("change", read);
+  }, []);
 
   // 걷는 상태는 매 장면 바뀌어서 React 상태가 아니라 ref 에 둔다
   const walker = useRef({
@@ -222,7 +245,7 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
     };
     // 픽셀: 페이지 안에선 사무실 전체(+둘레 풍경), 전체 화면에선 황총무를 따라간다
     if (mode === "pixel" && canvasRef.current && stageRef.current)
-      start(createPixelRenderer(canvasRef.current, stageRef.current, { overview: !fullRef.current, onOverview }));
+      start(createPixelRenderer(canvasRef.current, stageRef.current, { overview: startOverview(fullRef.current), onOverview }));
     if (mode === "animal" && hostRef.current) {
       const host = hostRef.current;
       import("./animal")
@@ -399,7 +422,7 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
     const id = requestAnimationFrame(() => {
       rendererRef.current?.resize();
       // 픽셀: 전체 화면에 들어가면 황총무 따라가기, 나오면 사무실 전체 (동숲은 늘 따라가기로 시작)
-      if (mode === "pixel") rendererRef.current?.setOverview?.(!full);
+      if (mode === "pixel") rendererRef.current?.setOverview?.(startOverview(full));
       if (full) stageRef.current?.focus({ preventScroll: true });
     });
     if (!full) return () => cancelAnimationFrame(id);
@@ -524,6 +547,37 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
           </StGoing>
         )}
 
+        {ready && touch && (
+          <StPad $full={full} aria-label="방향 패드">
+            {(
+              [
+                ["ArrowUp", "▲", "위로"],
+                ["ArrowLeft", "◀", "왼쪽으로"],
+                ["ArrowRight", "▶", "오른쪽으로"],
+                ["ArrowDown", "▼", "아래로"],
+              ] as const
+            ).map(([key, label, name]) => (
+              <button
+                key={key}
+                type="button"
+                className={key}
+                aria-label={name}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                  if (!goingRef.current) walker.current.keys.add(key);
+                }}
+                onPointerUp={() => walker.current.keys.delete(key)}
+                onPointerCancel={() => walker.current.keys.delete(key)}
+                onLostPointerCapture={() => walker.current.keys.delete(key)}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                {label}
+              </button>
+            ))}
+          </StPad>
+        )}
+
         {ready && (
           <StZoomBar $full={full} role="group" aria-label="보는 크기">
             <button type="button" aria-label="축소" onClick={() => rendererRef.current?.zoom?.(-1)}>
@@ -533,15 +587,18 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
               ＋
             </button>
             <button type="button" aria-pressed={overview} onClick={() => rendererRef.current?.setOverview?.(!overview)}>
-              {overview ? "🧍 황총무 곁으로" : "🗺️ 전체 보기"}
+              {overview ? "🧍" : "🗺️"}
+              <span className="more">{overview ? " 황총무 곁으로" : " 전체 보기"}</span>
             </button>
           </StZoomBar>
         )}
       </StStage>
 
-      <StControls $full={full}>
+      <StControls $full={full} $hide={full && (!hintOn || !!near)}>
         <span>
-          {focused ? (
+          {touch ? (
+            <>바닥이나 가구를 누르거나 왼쪽 아래 패드로 걸어요. 가구 앞에서 아래 카드의 &quot;열기&quot;를 눌러요</>
+          ) : focused ? (
             <>
               <kbd>←↑↓→</kbd> 또는 <kbd>WASD</kbd> 로 걷고, 가구 앞에서 <kbd>X</kbd> 로 열어요
             </>
@@ -554,7 +611,7 @@ export default function OfficeView({ full, onFullChange, mode: modeProp, onModeC
         {!full && tagToggle}
       </StControls>
 
-      <StPanel aria-live="polite" $full={full}>
+      <StPanel aria-live="polite" $full={full} $hide={full && !near}>
         {near ? (
           <>
             <StPanelIcon aria-hidden="true">{near.icon}</StPanelIcon>

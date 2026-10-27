@@ -597,7 +597,8 @@ export function createAnimalRenderer(host: HTMLElement, opts: AnimalOptions = {}
   const look = center.clone();
   function goal() {
     const aspect = (host.clientWidth || 1) / (host.clientHeight || 1);
-    return overview ? Math.max(14.2, 22.5 / aspect) : 7.5 / ZOOMS[zoomAt];
+    // 따라가기: 세로 폰에서도 좌우로 바닥 11칸 넘게 보이게 (예전엔 7칸뿐이라 주변 가구가 안 보였다)
+    return overview ? Math.max(14.2, 22.5 / aspect) : Math.max(7.5, 5.6 / aspect) / ZOOMS[zoomAt];
   }
   function applyHalf() {
     const aspect = (host.clientWidth || 1) / (host.clientHeight || 1);

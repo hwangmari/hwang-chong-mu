@@ -47,7 +47,7 @@ export const StBar = styled.div<{ $full: boolean }>`
     $full &&
     css`
       position: absolute;
-      top: 0.75rem;
+      top: calc(0.75rem + env(safe-area-inset-top));
       left: 50%;
       z-index: 3;
       transform: translateX(-50%);
@@ -124,6 +124,10 @@ export const StStage = styled.div<{ $animal?: boolean; $full?: boolean }>`
   position: relative;
   width: 100%;
   aspect-ratio: ${MAP_W} / ${MAP_H};
+  /* 폰: 가로로 납작하면 가구가 깨알 같아서 세로로 길게 (카메라는 황총무를 따라간다) */
+  @media ${({ theme }) => theme.media.mobile} {
+    aspect-ratio: 4 / 5;
+  }
   border-radius: 1rem;
   overflow: hidden;
   outline: none;
@@ -232,6 +236,52 @@ export const StGoing = styled.div`
   }
 `;
 
+/* 폰 방향 패드 (왼쪽 아래) — 누르고 있는 동안 걷는다. 전체 화면에선 아래 카드 위로 */
+export const StPad = styled.div<{ $full: boolean }>`
+  position: absolute;
+  left: 0.75rem;
+  bottom: ${({ $full }) => ($full ? "calc(9rem + env(safe-area-inset-bottom))" : "0.75rem")};
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, 2.6rem);
+  grid-template-rows: repeat(3, 2.6rem);
+  gap: 0.2rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+
+  button {
+    border: 0;
+    border-radius: 0.75rem;
+    background: rgba(30, 33, 41, 0.55);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    touch-action: none;
+  }
+  button:active {
+    background: rgba(30, 33, 41, 0.8);
+  }
+  .ArrowUp {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ArrowLeft {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .ArrowRight {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .ArrowDown {
+    grid-column: 2;
+    grid-row: 3;
+  }
+`;
+
 /* 동숲 화면 오른쪽 아래: － ＋ 전체 보기 */
 export const StZoomBar = styled.div<{ $full: boolean }>`
   position: absolute;
@@ -261,6 +311,16 @@ export const StZoomBar = styled.div<{ $full: boolean }>`
   button[aria-pressed="true"] {
     background: #fff;
     color: #1e2129;
+  }
+  @media ${({ theme }) => theme.media.mobile} {
+    .more {
+      display: none;
+    }
+    button {
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 0.5rem;
+    }
   }
 
   /* 전체 화면: 아래 카드와 겹치지 않게 오른쪽 가운데에 세로로 */
@@ -340,7 +400,7 @@ export const StNameTag = styled.span<{ $show: boolean; $active: boolean }>`
 `;
 
 /* 그림 아래: 가까이 있는 것 카드 — 비어 있어도 높이를 지켜 화면이 뛰지 않게 */
-export const StPanel = styled.div<{ $full?: boolean }>`
+export const StPanel = styled.div<{ $full?: boolean; $hide?: boolean }>`
   display: grid;
   grid-template-columns: 2.75rem minmax(0, 1fr) auto;
   align-items: center;
@@ -356,7 +416,7 @@ export const StPanel = styled.div<{ $full?: boolean }>`
     $full &&
     css`
       position: absolute;
-      bottom: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom));
       left: 50%;
       z-index: 3;
       transform: translateX(-50%);
@@ -364,6 +424,16 @@ export const StPanel = styled.div<{ $full?: boolean }>`
       margin: 0;
       border: 0;
       box-shadow: 0 8px 28px rgba(30, 33, 41, 0.28);
+      /* 가구 앞에 섰을 때만 아래에서 쏙 올라온다 */
+      transition: transform 0.22s ease, opacity 0.22s ease;
+    `}
+  ${({ $full, $hide }) =>
+    $full &&
+    $hide &&
+    css`
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 1.25rem);
     `}
 `;
 
@@ -421,7 +491,7 @@ export const StOpen = styled(Link)`
 `;
 
 /* 조작 안내 줄 + 이름표 토글 */
-export const StControls = styled.div<{ $full?: boolean }>`
+export const StControls = styled.div<{ $full?: boolean; $hide?: boolean }>`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -441,12 +511,12 @@ export const StControls = styled.div<{ $full?: boolean }>`
     font-weight: 700;
   }
 
-  /* 전체 화면: 조작 안내 한 줄만 카드 바로 위에 */
+  /* 전체 화면: 조작 안내 한 줄만 화면 아래에 (처음 4초) */
   ${({ $full }) =>
     $full &&
     css`
       position: absolute;
-      bottom: calc(1rem + 4.75rem + 0.5rem);
+      bottom: calc(1rem + env(safe-area-inset-bottom));
       left: 50%;
       z-index: 3;
       transform: translateX(-50%);
@@ -461,7 +531,9 @@ export const StControls = styled.div<{ $full?: boolean }>`
         background: rgba(255, 255, 255, 0.18);
         color: #fff;
       }
+      transition: opacity 0.4s ease;
     `}
+  ${({ $hide }) => $hide && "opacity: 0; pointer-events: none;"}
 
   /* 폰 전체 화면에선 안내 줄을 빼고 카드만 (누르면 걸어가요는 카드 문구가 대신한다) */
   @media ${({ theme }) => theme.media.mobile} {
