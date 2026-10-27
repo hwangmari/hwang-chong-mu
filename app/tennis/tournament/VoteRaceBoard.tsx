@@ -185,7 +185,7 @@ export default function VoteRaceBoard({
                 layout="position"
                 transition={SPRING}
               >
-                <StRank $lead={place?.rank === 1}>
+                <StRank $lead={place?.rank === 1} $won={groupWon}>
                   {groupWon ? "🏆" : place ? place.rank : "–"}
                   {place && group.length > 1 ? <small>공동</small> : null}
                 </StRank>
@@ -215,10 +215,22 @@ export default function VoteRaceBoard({
                       >
                         <StName>
                           <b>{row.label}</b>
-                          {who.length > 0 ? (
-                            <StWho>{who.join(" · ")}</StWho>
-                          ) : row.sub ? (
-                            <StSub>{row.sub}</StSub>
+                          {isWinner ? <StWinBadge>🏆 우승</StWinBadge> : null}
+                          {row.sub ? <StSub>{row.sub}</StSub> : null}
+                          {/* 우승팀 칸에만 맞춘 사람을 칩으로 — 시상할 사람을 한눈에 (주인 요청 2026-10-23) */}
+                          {isWinner ? (
+                            <StWho>
+                              <StWhoLabel>
+                                🎯 맞춘 사람 {who.length}명
+                              </StWhoLabel>
+                              {who.length > 0 ? (
+                                who.map((name) => (
+                                  <StWhoChip key={name}>{name}</StWhoChip>
+                                ))
+                              ) : (
+                                <StWhoLabel>아무도 못 맞혔어요</StWhoLabel>
+                              )}
+                            </StWho>
                           ) : null}
                         </StName>
                         <StVotes>
@@ -241,6 +253,7 @@ export default function VoteRaceBoard({
                         <StTrack aria-hidden="true">
                           <StFill
                             $mine={mine}
+                            $winner={isWinner}
                             initial={{ width: 0 }}
                             animate={{ width: inView ? `${share * 100}%` : 0 }}
                             transition={{
@@ -372,11 +385,12 @@ const StCell = styled(motion.button)<{
   padding: 0.85rem 0.85rem 0.9rem;
   border-radius: 0.6rem;
   text-align: left;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid
+  background: ${({ theme, $winner }) =>
+    $winner ? theme.colors.amber50 : theme.colors.white};
+  border: ${({ $winner }) => ($winner ? "2px" : "1px")} solid
     ${({ theme, $mine, $winner }) =>
       $winner
-        ? theme.semantic.warning
+        ? theme.colors.amber500
         : $mine
           ? theme.semantic.primary
           : "transparent"};
@@ -388,8 +402,21 @@ const StCell = styled(motion.button)<{
   }
 
   &:not(:disabled):hover {
-    background: ${({ theme }) => theme.colors.gray50};
+    background: ${({ theme, $winner }) =>
+      $winner ? theme.colors.amber50 : theme.colors.gray50};
   }
+
+  /* 우승팀 — 팀 이름·표를 한 단계 크게 (주인 요청 2026-10-23 "1등은 더 잘 보이게") */
+  ${({ $winner }) =>
+    $winner
+      ? `
+    padding-top: 1rem;
+    padding-bottom: 1.05rem;
+    & > span:first-child > b { font-size: 1.15rem; font-weight: 900; }
+    & > span:nth-child(2) { font-size: 0.95rem; }
+    & > span:nth-child(3) { font-size: 0.82rem; }
+  `
+      : ""}
 
   /* 폰에서 나란히 놓이면 칸이 좁아 간격만 줄인다 — 선수 이름은 줄바꿈으로 다 보여 준다 (주인 요청 2026-10-22) */
   @media ${({ theme }) => theme.media.mobile} {
@@ -403,10 +430,10 @@ const StCell = styled(motion.button)<{
   }
 `;
 
-const StRank = styled.span<{ $lead: boolean }>`
+const StRank = styled.span<{ $lead: boolean; $won?: boolean }>`
   align-self: center;
   text-align: center;
-  font-size: 0.95rem;
+  font-size: ${({ $won }) => ($won ? "1.5rem" : "0.95rem")};
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -447,9 +474,40 @@ const StSub = styled.span`
   overflow-wrap: anywhere;
 `;
 
-const StWho = styled(StSub)`
-  color: ${({ theme }) => theme.semantic.primary};
+/* 맞춘 사람 — 이름 줄 아래 한 줄을 통째로 쓰고, 이름마다 테두리 없는 칩 */
+const StWho = styled.span`
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+`;
+
+const StWhoLabel = styled.span`
+  margin-right: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.amber600};
+`;
+
+const StWhoChip = styled.span`
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.amber100};
+  font-size: 0.82rem;
   font-weight: 700;
+  color: ${({ theme }) => theme.colors.gray900};
+`;
+
+const StWinBadge = styled.span`
+  flex-shrink: 0;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.amber500};
+  font-size: 0.74rem;
+  font-weight: 900;
+  color: ${({ theme }) => theme.colors.white};
 `;
 
 const StVotes = styled.span`
@@ -484,15 +542,21 @@ const StTrack = styled.span`
   position: relative;
   height: 0.5rem;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.gray100};
+  /* gray100 은 다크 모드에서 칸 바탕과 같은 색이라 막대 바탕이 사라진다 */
+  background: ${({ theme }) => theme.colors.gray200};
   overflow: hidden;
 `;
 
-const StFill = styled(motion.span)<{ $mine: boolean }>`
+const StFill = styled(motion.span)<{ $mine: boolean; $winner?: boolean }>`
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: 999px;
-  background: ${({ theme, $mine }) => ($mine ? theme.semantic.primary : theme.colors.blue200)};
+  background: ${({ theme, $mine, $winner }) =>
+    $winner
+      ? theme.colors.amber500
+      : $mine
+        ? theme.semantic.primary
+        : theme.colors.blue200};
 `;
 
 const StStamp = styled(motion.span)`

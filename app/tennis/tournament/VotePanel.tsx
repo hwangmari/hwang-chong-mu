@@ -26,6 +26,7 @@ import {
 import { useModal } from "@/components/common/ModalProvider";
 import { SkeletonBlock } from "@/components/common/Skeleton";
 import VoteRaceBoard from "./VoteRaceBoard";
+import DresserResult from "./DresserResult";
 import {
   StCard,
   StCardHead,
@@ -550,6 +551,13 @@ function Section({
           revealed={revealed}
           winnerValue={winnerValue}
           onPick={onPick}
+        />
+      ) : kind === "dresser" && revealed ? (
+        // 공개 뒤에는 명단 대신 시상대 + 득표 순위 (주인 요청 2026-10-23)
+        <DresserResult
+          options={options}
+          tally={tally}
+          winnerCount={winnerCount}
         />
       ) : (
       <StOptions>
