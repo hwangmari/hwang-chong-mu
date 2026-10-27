@@ -6,7 +6,7 @@ export const ANALYSIS_HISTORY_DATA: ProjectItemList[] = [
     date: "2026.10.19",
     title: "최종 배포 · 인수인계",
     description: [
-      "10/19 운영 배포 후 보장분석·HSP·D2F 업무 인수인계 (라이프엔지니어링실 이동)",
+      "10/19 운영 배포 후 보장분석·HSP·D2F 업무 인수인계 (PLUS 엔지니어링실 이동)",
     ],
   },
   {
@@ -67,7 +67,7 @@ export const HSP_HISTORY_DATA: ProjectItemList[] = [
     id: "2026-10-19",
     date: "2026.10.19",
     title: "최종 배포 · HSP·D2F 인수인계",
-    description: ["10/19 운영 배포 후 HSP·D2F 업무 인수인계 (라이프엔지니어링실 이동)"],
+    description: ["10/19 운영 배포 후 HSP·D2F 업무 인수인계 (PLUS 엔지니어링실 이동)"],
   },
   {
     id: "2026-09-01",
