@@ -245,18 +245,37 @@ function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
     px(ctx, x + 2, y + 7, 2, 1, "#f27a9a"); px(ctx, x + 10, y + 7, 2, 1, "#f27a9a");
     px(ctx, x + 4, y + 12, 6, 2, "#ffffff");
   }
-  // ④ 쌍안경 든 여자아이
+  // ④ 쌍안경 든 여자아이(옥지) — 빵빵이처럼 큰 동글 얼굴·앞머리·볼터치·웃는 입 (주인 요청 2026-10-28)
   {
-    const x = 94, y = 7;
-    px(ctx, x, y, 14, 15, "#6b3f2a"); // 긴 머리
-    px(ctx, x + 3, y + 3, 8, 7, "#f2c7a0"); // 얼굴
-    px(ctx, x + 3, y + 4, 8, 3, "#2b3557"); // 쌍안경
-    px(ctx, x + 4, y + 5, 2, 1, "#5a7bd6"); px(ctx, x + 8, y + 5, 2, 1, "#5a7bd6");
-    px(ctx, x + 4, y + 8, 1, 1, "#ff9fbf"); px(ctx, x + 9, y + 8, 1, 1, "#ff9fbf");
-    px(ctx, x + 6, y + 8, 2, 1, "#c43d5c");
-    px(ctx, x + 3, y + 10, 8, 6, "#ffd447"); // 노란 옷
-    px(ctx, x + 2, y + 7, 2, 3, "#f2c7a0"); px(ctx, x + 10, y + 7, 2, 3, "#f2c7a0"); // 쌍안경 든 손
-    px(ctx, x + 3, y + 16, 8, 3, "#5a7bd6");
+    const x = 92, y = 4 + up(3);
+    const HAIR = "#6b3f2a", HAIR_HI = "#8a5536", FACE = "#f7d9be";
+    // 풍성한 웨이브 머리 (뒷머리가 어깨 아래까지)
+    px(ctx, x + 3, y, 12, 2, HAIR);
+    px(ctx, x + 1, y + 2, 16, 14, HAIR);
+    px(ctx, x, y + 6, 18, 9, HAIR);
+    px(ctx, x + 1, y + 15, 3, 3, HAIR); px(ctx, x + 14, y + 15, 3, 3, HAIR);
+    px(ctx, x + 4, y + 1, 3, 1, HAIR_HI); px(ctx, x + 2, y + 4, 1, 3, HAIR_HI); // 머리 윤기
+    // 큰 동글 얼굴
+    px(ctx, x + 4, y + 4, 10, 9, FACE);
+    px(ctx, x + 3, y + 6, 12, 5, FACE);
+    // 앞머리 (삐죽삐죽)
+    px(ctx, x + 4, y + 4, 10, 1, HAIR);
+    px(ctx, x + 5, y + 5, 2, 1, HAIR); px(ctx, x + 9, y + 5, 3, 1, HAIR);
+    // 작은 쌍안경 — 눈에 대고 있다
+    px(ctx, x + 4, y + 6, 4, 3, "#2b3557"); px(ctx, x + 10, y + 6, 4, 3, "#2b3557");
+    px(ctx, x + 8, y + 7, 2, 1, "#2b3557");
+    px(ctx, x + 5, y + 7, 2, 1, "#8fb4ff"); px(ctx, x + 11, y + 7, 2, 1, "#8fb4ff");
+    px(ctx, x + 5, y + 6, 1, 1, "#ffffff"); px(ctx, x + 11, y + 6, 1, 1, "#ffffff");
+    // 볼터치 · 웃는 입
+    px(ctx, x + 4, y + 10, 2, 1, "#ff9fbf"); px(ctx, x + 12, y + 10, 2, 1, "#ff9fbf");
+    px(ctx, x + 8, y + 10, 2, 2, "#c43d5c"); px(ctx, x + 8, y + 11, 2, 1, "#ff7a8a");
+    // 쌍안경 든 손
+    px(ctx, x + 2, y + 8, 2, 3, FACE); px(ctx, x + 14, y + 8, 2, 3, FACE);
+    // 노란 옷 · 파란 치마 · 발
+    px(ctx, x + 5, y + 13, 8, 5, "#ffd447");
+    px(ctx, x + 7, y + 13, 4, 1, "#ffffff"); // 칼라
+    px(ctx, x + 4, y + 18, 10, 3, "#5a7bd6");
+    px(ctx, x + 6, y + 21, 2, 1, FACE); px(ctx, x + 10, y + 21, 2, 1, FACE);
   }
   // ⑤ 손 흔드는 아기
   {
