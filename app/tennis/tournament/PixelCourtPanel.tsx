@@ -135,140 +135,6 @@ function PixelCourt({
   return <StCanvas ref={ref} width={W} height={H} aria-hidden="true" />;
 }
 
-// ───── 응원석 (주인 요청 2026-10-28 "벤치 응원석에 이 녀석들이 응원하게") ─────
-// 주인이 보낸 그림의 다섯 친구를 닮은 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡 · 분홍 동글이는 오리지널(공개 사이트라
-// 다른 회사 캐릭터를 그대로 베끼지 않음), 옥지·빵빵이는 주인이 보낸 그림의 생김새(옷 색·소용돌이 눈·초록 병)를 따랐다.
-const CW = 160;
-const CH = 36;
-function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
-  ctx.clearRect(0, 0, CW, CH);
-  const up = (i: number) => ((frame + i) % 2 === 0 ? 0 : 1); // 번갈아 통통
-  // 바닥·벤치
-  px(ctx, 0, 31, CW, 5, "#bfe3ff");
-  px(ctx, 10, 26, 140, 3, "#a8763e");
-  px(ctx, 10, 26, 140, 1, "#c99558");
-  for (const lx of [16, 52, 88, 124, 144]) px(ctx, lx, 29, 3, 4, "#7a5230");
-  // 양옆 수건 더미
-  px(ctx, 0, 24, 8, 3, "#9be07a"); px(ctx, 0, 27, 8, 2, "#ffffff"); px(ctx, 0, 29, 8, 2, "#d6dde2");
-  px(ctx, 152, 25, 8, 3, "#ff9fbf"); px(ctx, 152, 28, 8, 2, "#ffffff"); px(ctx, 152, 30, 8, 1, "#ff9fbf");
-
-  // ① 잎사귀 새싹이 — 파란 동글 몸 + 초록 잎
-  {
-    const x = 16, y = 14 + up(0);
-    const sway = frame % 2 ? 1 : -1;
-    px(ctx, x + 4 + sway, y - 7, 2, 5, "#3e9e4f");
-    px(ctx, x + 1, y - 5, 3, 4, "#5cc46b");
-    px(ctx, x + 7, y - 5, 3, 4, "#5cc46b");
-    px(ctx, x - 1 + sway, y - 3, 3, 2, "#7bd389");
-    px(ctx, x + 9 + sway, y - 3, 3, 2, "#7bd389");
-    px(ctx, x + 1, y, 9, 8, "#5b8fd6");
-    px(ctx, x, y + 2, 11, 5, "#5b8fd6");
-    px(ctx, x + 3, y + 3, 1, 1, "#1b1b1b"); px(ctx, x + 7, y + 3, 1, 1, "#1b1b1b");
-    px(ctx, x + 2, y + 5, 1, 1, "#ff9fbf"); px(ctx, x + 8, y + 5, 1, 1, "#ff9fbf");
-    px(ctx, x + 2, y + 8, 2, 2, "#4a78b8"); px(ctx, x + 7, y + 8, 2, 2, "#4a78b8");
-  }
-  // ② 노란 꼬마 공룡
-  {
-    const x = 42, y = 10 + up(1);
-    px(ctx, x + 1, y, 10, 7, "#f6d32b");
-    px(ctx, x + 9, y + 3, 4, 4, "#f6d32b"); // 주둥이
-    px(ctx, x + 6, y + 2, 2, 2, "#2e9e5e"); px(ctx, x + 7, y + 2, 1, 1, "#1b1b1b");
-    px(ctx, x + 10, y + 6, 3, 1, "#c99a12");
-    px(ctx, x + 2, y + 7, 9, 9, "#f6d32b");
-    px(ctx, x + 4, y + 9, 5, 6, "#fff3c4"); // 배
-    px(ctx, x, y + 9 - up(1), 2, 4, "#f6d32b"); px(ctx, x + 11, y + 8 - up(1), 2, 4, "#f6d32b"); // 팔
-    px(ctx, x + 12, y + 8 - up(1), 1, 1, "#ffffff");
-    px(ctx, x + 3, y + 16, 3, 1, "#ffffff"); px(ctx, x + 8, y + 16, 3, 1, "#ffffff"); // 발톱
-  }
-  // ③ 분홍 동글이
-  {
-    const x = 68, y = 11 + up(2);
-    px(ctx, x + 5, y - 2, 2, 2, "#f27a9a"); // 머리 새싹
-    px(ctx, x + 1, y, 12, 13, "#f7a1b5");
-    px(ctx, x, y + 2, 14, 9, "#f7a1b5");
-    px(ctx, x + 1, y, 2, 2, "#f27a9a"); px(ctx, x + 11, y, 2, 2, "#f27a9a"); // 귀
-    px(ctx, x + 4, y + 4, 1, 2, "#1b1b1b"); px(ctx, x + 9, y + 4, 1, 2, "#1b1b1b");
-    px(ctx, x + 5, y + 7, 4, 3, "#c43d5c"); px(ctx, x + 6, y + 7, 2, 1, "#ffffff"); // 입·앞니
-    px(ctx, x + 2, y + 7, 2, 1, "#f27a9a"); px(ctx, x + 10, y + 7, 2, 1, "#f27a9a");
-    px(ctx, x + 4, y + 12, 6, 2, "#ffffff");
-  }
-  // 소용돌이 눈 3×3 (빵빵이·옥지 특유의 멍한 눈)
-  const swirl = (ex: number, ey: number) => {
-    px(ctx, ex, ey, 3, 3, "#ffffff");
-    px(ctx, ex, ey, 2, 1, "#3a2a22");
-    px(ctx, ex + 2, ey + 1, 1, 2, "#3a2a22");
-    px(ctx, ex + 1, ey + 1, 1, 1, "#3a2a22");
-  };
-  // ④ 옥지 — 주인이 보낸 그림처럼: 웨이브 갈색 머리 · 소용돌이 눈 · 빨간 입술 · 노란 긴팔 · 검은 치마 · 빨간 구두 · 초록 병 (2026-10-28)
-  {
-    const x = 92, y = 3 + up(3);
-    const HAIR = "#6b3f2a", HAIR_HI = "#8a5536", FACE = "#f7d9be";
-    px(ctx, x + 4, y, 10, 2, HAIR);
-    px(ctx, x + 2, y + 2, 14, 11, HAIR);
-    px(ctx, x, y + 7, 18, 6, HAIR);
-    px(ctx, x, y + 13, 4, 2, HAIR); px(ctx, x + 14, y + 13, 4, 2, HAIR); // 바깥으로 뻗친 끝
-    px(ctx, x + 5, y + 1, 3, 1, HAIR_HI);
-    px(ctx, x + 5, y + 3, 9, 9, FACE);
-    px(ctx, x + 4, y + 5, 11, 5, FACE);
-    px(ctx, x + 5, y + 3, 5, 1, HAIR); // 옆 가르마
-    swirl(x + 5, y + 5);
-    swirl(x + 10, y + 5);
-    px(ctx, x + 9, y + 8, 1, 1, "#c98f6a"); // 코
-    px(ctx, x + 5, y + 9, 2, 1, "#ff9fbf"); px(ctx, x + 12, y + 9, 2, 1, "#ff9fbf");
-    px(ctx, x + 8, y + 10, 3, 1, "#d9454f"); // 빨간 입술
-    // 노란 긴팔 · 병 든 손
-    px(ctx, x + 5, y + 12, 8, 6, "#f2d132");
-    px(ctx, x + 3, y + 13, 2, 4, "#f2d132"); px(ctx, x + 13, y + 12 - up(3), 2, 4, "#f2d132");
-    px(ctx, x + 3, y + 17, 2, 1, FACE);
-    px(ctx, x + 3, y + 11, 2, 6, "#3fae4a"); px(ctx, x + 3, y + 10, 2, 1, "#2e8a38"); px(ctx, x + 3, y + 13, 2, 2, "#ffffff"); // 초록 병
-    px(ctx, x + 4, y + 18, 10, 3, "#1b1b1b"); // 검은 치마
-    px(ctx, x + 6, y + 21, 1, 1, FACE); px(ctx, x + 11, y + 21, 1, 1, FACE);
-    px(ctx, x + 5, y + 22, 2, 1, "#d9454f"); px(ctx, x + 11, y + 22, 2, 1, "#d9454f"); // 빨간 구두
-  }
-  // ⑤ 빵빵이 — 머리카락 한 가닥 · 큰 동그란 머리 · 소용돌이 눈 · 빨간 입술 · 초록 티 · 청바지 · 갈색 신발 · 초록 병, 한 손은 만세
-  {
-    const x = 122, y = 2 + up(4);
-    const wave = frame % 2;
-    const FACE = "#f7d9be";
-    px(ctx, x + 6, y, 1, 2, "#1b1b1b"); px(ctx, x + 7, y - 1, 1, 1, "#1b1b1b"); // 머리카락 한 가닥
-    px(ctx, x + 2, y + 2, 10, 11, FACE);
-    px(ctx, x + 1, y + 4, 12, 7, FACE);
-    px(ctx, x, y + 7, 1, 2, FACE); // 귀
-    swirl(x + 3, y + 6);
-    swirl(x + 8, y + 6);
-    px(ctx, x + 7, y + 9, 1, 1, "#c98f6a"); // 코
-    px(ctx, x + 2, y + 10, 2, 1, "#ff9fbf"); px(ctx, x + 10, y + 10, 2, 1, "#ff9fbf");
-    px(ctx, x + 6, y + 11, 3, 1, "#d9454f"); // 빨간 입술
-    // 초록 티 · 병 든 손 · 만세 손
-    px(ctx, x + 2, y + 13, 10, 6, "#3f8f3f");
-    px(ctx, x + 7, y + 11, 2, 6, "#3fae4a"); px(ctx, x + 7, y + 13, 2, 2, "#ffffff"); // 입에 댄 초록 병
-    px(ctx, x + 6, y + 15, 2, 2, FACE);
-    px(ctx, x + 12, y + 9 - wave * 2, 2, 5, "#3f8f3f"); px(ctx, x + 12, y + 8 - wave * 2, 2, 1, FACE);
-    px(ctx, x + 2, y + 19, 10, 3, "#2f5aa8"); // 청바지
-    px(ctx, x + 1, y + 22, 4, 1, "#7a4a2a"); px(ctx, x + 9, y + 22, 4, 1, "#7a4a2a"); // 갈색 신발
-  }
-}
-
-function CheerSquad({ moving }: { moving: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const ctx = ref.current?.getContext("2d");
-    if (!ctx) return;
-    if (!moving) {
-      drawCheer(ctx, 0);
-      return;
-    }
-    let raf = 0;
-    const loop = (t: number) => {
-      drawCheer(ctx, Math.floor(t / 420));
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [moving]);
-  return <StCheerCanvas ref={ref} width={CW} height={CH} role="img" aria-label="응원석에서 꼬마 친구들이 응원하고 있어요" />;
-}
-
 function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -486,10 +352,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
               </StBlock>
             ))}
           </StBlocks>
-          {/* 벤치 · 응원석을 전광판에 합쳤다 (주인 요청 2026-10-28 "여기에 벤치 응원석 합쳐 주라, 중계는 빼도") */}
-          <StCheerRow>
-            <CheerSquad moving={moving} />
-          </StCheerRow>
+          {/* 팀 벤치를 전광판에 합쳤다 (주인 요청 2026-10-28). 응원석 꼬마들은 탭 위로 옮김(CheerSquad) */}
           <StBench>
             {event.teams.map((team) => {
               const next = onCourt.has(team.seed) ? null : nextFor(team);
@@ -923,11 +786,6 @@ const StBench = styled.div`
   }
 `;
 
-const StCheerRow = styled.div`
-  display: grid;
-  justify-items: center;
-  padding-top: 0.2rem;
-`;
 
 const StClockBox = styled.div`
   display: inline-flex;
@@ -944,13 +802,6 @@ const StSeat = styled.div<{ $on: boolean }>`
   opacity: ${({ $on }) => ($on ? 0.45 : 1)};
 `;
 
-const StCheerCanvas = styled.canvas`
-  display: block;
-  width: 100%;
-  max-width: 520px;
-  aspect-ratio: ${CW} / ${CH};
-  image-rendering: pixelated;
-`;
 
 const StBenchCanvas = styled.canvas`
   width: 66px;

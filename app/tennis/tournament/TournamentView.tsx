@@ -9,6 +9,7 @@ import VotePanel from "./VotePanel";
 import PixelCourtPanel from "./PixelCourtPanel";
 import PixelMatchEntry from "./PixelMatchEntry";
 import PixelJourney from "./PixelJourney";
+import CheerSquad from "./CheerSquad";
 import StaffBar from "./StaffBar";
 import DemoBar from "./DemoBar";
 import NextUpBar from "../components/NextUpBar";
@@ -549,6 +550,10 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       {error ? <StNotice $tone="error">{error}</StNotice> : null}
       {notice ? <StNotice $tone="info">{notice}</StNotice> : null}
 
+      {/* 응원석 꼬마들 — 탭 줄 위 빈자리 오른쪽 */}
+      <StMascots>
+        <CheerSquad />
+      </StMascots>
       <StTabRow>
         {/* 픽셀 코트를 첫 탭으로 (주인 요청 2026-10-28) */}
         <StTab
@@ -1230,6 +1235,17 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
     </StPage>
   );
 }
+
+const StMascots = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -1rem;
+  pointer-events: none;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    margin-bottom: -0.6rem;
+  }
+`;
 
 const StSubTitle = styled.h3`
   margin-top: 0.4rem;
