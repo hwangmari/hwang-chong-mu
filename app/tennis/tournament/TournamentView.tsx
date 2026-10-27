@@ -6,6 +6,7 @@ import TeamEditor from "./TeamEditor";
 import TournamentGuide from "./TournamentGuide";
 import TournamentMatchCard from "./TournamentMatchCard";
 import VotePanel from "./VotePanel";
+import PixelCourtPanel from "./PixelCourtPanel";
 import StaffBar from "./StaffBar";
 import NextUpBar from "../components/NextUpBar";
 import {
@@ -98,7 +99,7 @@ import { jumpToMatch } from "../jump";
 import { NoteLines } from "../noteLines";
 
 type Props = { initialEvent: TournamentEvent };
-type Tab = "bracket" | "diagram" | "placements" | "teams" | "vote" | "info";
+type Tab = "bracket" | "pixel" | "diagram" | "placements" | "teams" | "vote" | "info";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -534,6 +535,13 @@ export default function TournamentView({ initialEvent }: Props) {
         </StTab>
         <StTab
           type="button"
+          $active={tab === "pixel"}
+          onClick={() => setTab("pixel")}
+        >
+          픽셀 코트
+        </StTab>
+        <StTab
+          type="button"
           $active={tab === "diagram"}
           onClick={() => setTab("diagram")}
         >
@@ -786,6 +794,13 @@ export default function TournamentView({ initialEvent }: Props) {
             </StCardHint>
           ) : null}
         </StCard>
+      ) : tab === "pixel" ? (
+        <PixelCourtPanel
+          event={event}
+          matches={matches}
+          scores={scores}
+          blocks={blocks}
+        />
       ) : tab === "diagram" ? (
         <StCard>
           <StCardHead>
