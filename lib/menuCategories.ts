@@ -35,6 +35,7 @@ export const MENU_CATEGORIES: MenuCategory[] = [...CATEGORIES]
 
 // 기타 독립 페이지 (카테고리 외) — 서비스가 아니라서 등록소에 없다.
 export const EXTRA_MENU: MenuItem[] = [
+  { href: "/office", icon: "🏢", title: "황총무 오피스", desc: "" },
   { href: "/portfolio", icon: "👩‍💻", title: "포트폴리오", desc: "" },
   { href: "/blog", icon: "📝", title: "블로그", desc: "" },
   { href: "/ui-kit", icon: "🎨", title: "UI Kit 모음집", desc: "" },

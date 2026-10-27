@@ -13,6 +13,7 @@ const STATIC_ROUTES = [
   "",
   ...SERVICE_ROUTES,
   "/blog",
+  "/office",
   "/portfolio",
   "/privacy",
   "/terms",

@@ -19,6 +19,7 @@ const ROUTE_CONFIG: { path: string; label: string; exact?: boolean }[] = [
   { path: "/", label: "황총무의 실험실", exact: true }, // 메인은 정확히 일치할 때만
   { path: "/my", label: "내 서비스 요약" },
   ...SERVICES.map((service) => ({ path: service.href, label: service.name })),
+  { path: "/office", label: "황총무 오피스" },
   { path: "/portfolio", label: "포트폴리오" },
   { path: "/blog", label: "블로그" },
   { path: "/login", label: "로그인" },
