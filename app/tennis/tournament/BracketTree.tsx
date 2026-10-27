@@ -11,7 +11,7 @@ import {
 } from "../page.styles";
 
 // 진짜 대진표 모양: 앞 경기 두 개 사이에 다음 경기 칸이 오고, 이긴 팀의 경로가 선으로 이어진다
-// 칸 배치(WB·LB·PLACE)는 픽셀 코트 탭의 픽셀 대진표(PixelBracket)도 같이 쓴다
+// 칸 타입(Layout·Link)은 픽셀 대진표(PixelBracket)도 같이 쓴다
 type Props = { matches: ResolvedMatch[] };
 
 export type Layout = { no: number; col: number; row: number }; // row는 0.5 단위 가능
@@ -24,7 +24,7 @@ const NODE_H = 116;
 const PAD = 12;
 
 // 승자조: 1라운드 4 → 4강 2 → 결승 → 그랜드 파이널 (2026 규칙에서 리셋 재경기는 없앴다)
-export const WB: Layout[] = [
+const WB: Layout[] = [
   { no: 1, col: 0, row: 0 },
   { no: 2, col: 0, row: 1 },
   { no: 3, col: 0, row: 2 },
@@ -34,7 +34,7 @@ export const WB: Layout[] = [
   { no: 9, col: 2, row: 1.5 },
   { no: 16, col: 3, row: 1.5 },
 ];
-export const WB_LINKS: Link[] = [
+const WB_LINKS: Link[] = [
   { from: 1, to: 5, kind: "winner" },
   { from: 2, to: 5, kind: "winner" },
   { from: 3, to: 6, kind: "winner" },
@@ -44,7 +44,7 @@ export const WB_LINKS: Link[] = [
   { from: 9, to: 16, kind: "winner" },
 ];
 // 패자조: 1R 2 → 2R 2 → 준결승 → 결승 → (그랜드 파이널로)
-export const LB: Layout[] = [
+const LB: Layout[] = [
   { no: 7, col: 0, row: 0 },
   { no: 8, col: 0, row: 1 },
   { no: 10, col: 1, row: 0 },
@@ -52,7 +52,7 @@ export const LB: Layout[] = [
   { no: 13, col: 2, row: 0.5 },
   { no: 15, col: 3, row: 0.5 },
 ];
-export const LB_LINKS: Link[] = [
+const LB_LINKS: Link[] = [
   { from: 7, to: 10, kind: "winner" },
   { from: 8, to: 11, kind: "winner" },
   { from: 10, to: 13, kind: "winner" },
@@ -60,7 +60,7 @@ export const LB_LINKS: Link[] = [
   { from: 13, to: 15, kind: "winner" },
 ];
 // 순위결정전: 각각 독립
-export const PLACE: Layout[] = [
+const PLACE: Layout[] = [
   { no: 12, col: 0, row: 0 },
   { no: 14, col: 1, row: 0 },
 ];

@@ -1,25 +1,74 @@
 "use client";
 
 import styled from "styled-components";
-import type { ResolvedMatch, TeamEntry } from "./types";
-import { LB, LB_LINKS, PLACE, WB, WB_LINKS, type Layout, type Link } from "./BracketTree";
+import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
+import type { Layout, Link } from "./BracketTree";
 
 /**
  * 픽셀 대진표 — 픽셀 코트 탭 아래의 토너먼트 그림. (주인 요청 2026-10-27)
- * 칸 배치는 토너먼트 그림(BracketTree)과 같은 WB·LB·PLACE를 쓰고, 모양만 픽셀 전광판처럼 그린다.
- * 팀 이름 아래에 명단 한 줄 — 토너먼트 그림과 같은 방식 (주인 요청 2026-10-27).
+ * 승자조·패자조를 나누지 않고 한 장에 그린다 (주인 요청 2026-10-27 "안 나누고 그려 줄 수 없어?").
+ *  · 열 = 시간대(1~6타임). 같은 시간에 하는 경기가 같은 세로줄에 선다
+ *  · 위쪽 = 승자조, 아래쪽 = 패자조, 맨 오른쪽 = 그랜드 파이널, 맨 아래 = 순위결정전
+ *  · 노란 선 = 이긴 팀이 올라가는 길, 분홍 점선 = 진 팀이 패자조로 내려가는 길
+ * 팀 이름 아래에 명단 한 줄 — 토너먼트 그림과 같은 방식.
  */
 
 // 팀 시드별 셔츠 색 — 픽셀 코트와 대진표가 같은 색을 쓴다
-export const SHIRT = ["#e8504a", "#f29b38", "#f2d64b", "#6cc96a", "#4cc3d9", "#9b7bea", "#ef86c1", "#f4f1ea"];
+// 6팀은 보라 코트 위에서 묻혀 진한 남색으로 (2026-10-27)
+export const SHIRT = ["#e8504a", "#f29b38", "#f2d64b", "#6cc96a", "#4cc3d9", "#2f4ab8", "#ef86c1", "#f4f1ea"];
 export const shirtOf = (team: TeamEntry) => SHIRT[(team.seed - 1) % SHIRT.length];
 
-// 명단 한 줄씩 넣으며 칸을 넓히고 높였다 (150×64 → 180×96, 2026-10-27)
-const COL_W = 206;
+// 명단 한 줄씩 넣으며 칸을 넓히고 높였다 (150×64 → 180×96). 한 장으로 합치며 열 사이를 넓혀
+// 이긴 길(가운데)과 진 길(오른쪽 칸 바로 앞) 세로선이 겹치지 않게 했다 (2026-10-27)
+const COL_W = 232;
 const ROW_H = 108;
 const NODE_W = 180;
 const NODE_H = 96;
 const PAD = 6;
+const HEAD_H = 26; // 맨 위 시간대 줄
+
+// 한 장 배치: col = 시간대 - 1, row = 세로 자리 (0.5 단위)
+const ALL: Layout[] = [
+  { no: 1, col: 0, row: 0 },
+  { no: 2, col: 0, row: 1 },
+  { no: 3, col: 0, row: 2 },
+  { no: 4, col: 0, row: 3 },
+  { no: 5, col: 1, row: 0.5 },
+  { no: 6, col: 1, row: 2.5 },
+  { no: 9, col: 2, row: 1.5 },
+  { no: 7, col: 1, row: 4.3 },
+  { no: 8, col: 1, row: 5.3 },
+  { no: 10, col: 2, row: 4.3 },
+  { no: 11, col: 2, row: 5.3 },
+  { no: 13, col: 3, row: 4.8 },
+  { no: 15, col: 4, row: 4.8 },
+  { no: 16, col: 5, row: 3.15 },
+  { no: 12, col: 2, row: 6.5 },
+  { no: 14, col: 3, row: 6.5 },
+];
+const ALL_LINKS: Link[] = [
+  { from: 1, to: 5, kind: "winner" },
+  { from: 2, to: 5, kind: "winner" },
+  { from: 3, to: 6, kind: "winner" },
+  { from: 4, to: 6, kind: "winner" },
+  { from: 5, to: 9, kind: "winner" },
+  { from: 6, to: 9, kind: "winner" },
+  { from: 9, to: 16, kind: "winner" },
+  { from: 7, to: 10, kind: "winner" },
+  { from: 8, to: 11, kind: "winner" },
+  { from: 10, to: 13, kind: "winner" },
+  { from: 11, to: 13, kind: "winner" },
+  { from: 13, to: 15, kind: "winner" },
+  { from: 15, to: 16, kind: "winner" },
+  { from: 1, to: 7, kind: "loser" },
+  { from: 2, to: 7, kind: "loser" },
+  { from: 3, to: 8, kind: "loser" },
+  { from: 4, to: 8, kind: "loser" },
+  { from: 6, to: 10, kind: "loser" },
+  { from: 5, to: 11, kind: "loser" },
+  { from: 9, to: 15, kind: "loser" },
+];
+const DROP = "#ff8fb1";
 
 const PIX = "ui-monospace, Menlo, Consolas, monospace";
 const LED = "#ffcf4a";
@@ -47,18 +96,22 @@ function Tree({
   layout,
   links,
   by,
+  colHeads,
 }: {
   title: string;
   hint: string;
   layout: Layout[];
   links: Link[];
   by: Map<number, ResolvedMatch>;
+  colHeads: string[];
 }) {
   const cols = Math.max(...layout.map((l) => l.col)) + 1;
   const rows = Math.max(...layout.map((l) => l.row)) + 1;
   const width = PAD * 2 + (cols - 1) * COL_W + NODE_W;
-  const height = PAD * 2 + (rows - 1) * ROW_H + NODE_H;
-  const at = new Map(layout.map((l) => [l.no, { x: PAD + l.col * COL_W, y: PAD + l.row * ROW_H }]));
+  const height = HEAD_H + PAD * 2 + (rows - 1) * ROW_H + NODE_H;
+  const at = new Map(
+    layout.map((l) => [l.no, { x: PAD + l.col * COL_W, y: HEAD_H + PAD + l.row * ROW_H }]),
+  );
 
   return (
     <StTree>
@@ -78,8 +131,23 @@ function Tree({
               const y1 = Math.round(from.y + NODE_H / 2);
               const x2 = to.x;
               const y2 = Math.round(to.y + NODE_H / 2);
-              const mid = Math.round(x1 + (x2 - x1) / 2);
               const decided = fm.status === "done";
+              if (lk.kind === "loser") {
+                // 진 팀 길: 받는 칸 바로 앞에서 꺾어 내려간다 — 이긴 길 세로선(열 사이 가운데)과 겹치지 않게
+                const drop = x2 - 12;
+                return (
+                  <path
+                    key={`${lk.from}-${lk.to}-l`}
+                    d={`M ${x1} ${y1 + 8} H ${drop} V ${y2 - 8} H ${x2}`}
+                    fill="none"
+                    stroke={DROP}
+                    strokeWidth={decided ? 2 : 1}
+                    strokeDasharray="3 3"
+                    opacity={decided ? 1 : 0.55}
+                  />
+                );
+              }
+              const mid = Math.round(x1 + (x2 - x1) / 2);
               return (
                 <path
                   key={`${lk.from}-${lk.to}`}
@@ -92,6 +160,11 @@ function Tree({
               );
             })}
           </svg>
+          {colHeads.map((h, i) => (
+            <StColHead key={h} style={{ left: PAD + i * COL_W, width: NODE_W }}>
+              {h}
+            </StColHead>
+          ))}
           {layout.map((l) => {
             const m = by.get(l.no);
             if (!m) return null;
@@ -139,13 +212,25 @@ function Tree({
   );
 }
 
-export default function PixelBracket({ matches }: { matches: ResolvedMatch[] }) {
+export default function PixelBracket({
+  matches,
+  blocks,
+}: {
+  matches: ResolvedMatch[];
+  blocks: ScheduleBlock[];
+}) {
   const by = new Map(matches.map((m) => [m.template.no, m]));
+  const heads = blocks.map((b) => `${b.no}타임 · ${b.time.split(" — ")[0]}`);
   return (
     <StWrap>
-      <Tree title="승자조" hint="이기면 오른쪽으로 · 노란 선이 올라간 길" layout={WB} links={WB_LINKS} by={by} />
-      <Tree title="패자조" hint="한 번 진 팀 · 끝까지 이기면 그랜드 파이널" layout={LB} links={LB_LINKS} by={by} />
-      <Tree title="순위결정전" hint="7-8위 · 5-6위" layout={PLACE} links={[]} by={by} />
+      <Tree
+        title="한 장 대진표"
+        hint="위 승자조 · 아래 패자조 · 노란 선 이긴 길 · 분홍 점선 진 팀이 내려가는 길"
+        layout={ALL}
+        links={ALL_LINKS}
+        by={by}
+        colHeads={heads}
+      />
     </StWrap>
   );
 }
@@ -173,6 +258,19 @@ const StTreeTitle = styled.div`
     font-weight: 600;
     color: ${DIM};
   }
+`;
+
+const StColHead = styled.div`
+  position: absolute;
+  top: 0;
+  height: ${HEAD_H - 6}px;
+  display: grid;
+  place-items: center;
+  font-family: ${PIX};
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #121b20;
+  background: ${LED};
 `;
 
 const StScroll = styled.div`

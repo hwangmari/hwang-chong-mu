@@ -46,7 +46,9 @@ function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   ctx.fillRect(Math.round(x), Math.round(y), w, h);
 }
 
-// 8×12 선수. 여성은 머리가 어깨까지 내려온다
+// 8×12 선수 — 큰 얼굴·두 눈·볼터치·팀 색 머리띠의 꼬마 캐릭터 (주인 요청 2026-10-27 "더 귀엽게").
+// 여성은 머리가 어깨까지 내려오고 흰 치마를 입는다
+const BLUSH = "#f59a9a";
 function drawPlayer(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -58,46 +60,118 @@ function drawPlayer(
 ) {
   const bob = frame % 2;
   const hair = s.female ? HAIR_F : HAIR_M;
-  px(ctx, x + 1, y + 11, 6, 1, "#0004");
-  px(ctx, x + 2, y, 4, 2, hair);
-  px(ctx, x + 2, y + 2, 4, 2, SKIN);
+  px(ctx, x + 1, y + 11, 6, 1, "#0003");
+  px(ctx, x + 2, y, 4, 1, hair);
+  px(ctx, x + 1, y + 1, 6, 1, s.shirt); // 머리띠
+  px(ctx, x + 1, y + 2, 6, 3, SKIN); // 얼굴
   if (s.female) {
-    px(ctx, x + 1, y + 1, 1, 4, hair);
-    px(ctx, x + 6, y + 1, 1, 4, hair);
+    px(ctx, x + 1, y + 2, 1, 4, hair);
+    px(ctx, x + 6, y + 2, 1, 4, hair);
+    px(ctx, x + 2, y + 4, 1, 1, BLUSH);
+    px(ctx, x + 5, y + 4, 1, 1, BLUSH);
+  } else {
+    px(ctx, x + 1, y + 4, 1, 1, BLUSH);
+    px(ctx, x + 6, y + 4, 1, 1, BLUSH);
   }
-  px(ctx, facing > 0 ? x + 5 : x + 2, y + 2, 1, 1, "#222");
-  px(ctx, x + 1, y + 4, 6, 4, s.shirt);
-  px(ctx, x + 2, y + 8, 4, 1, SHORTS);
+  const ex = facing > 0 ? 1 : 0; // 보는 쪽으로 눈을 한 칸 민다
+  px(ctx, x + 2 + ex, y + 3, 1, 1, "#222");
+  px(ctx, x + 4 + ex, y + 3, 1, 1, "#222");
+  px(ctx, x + 1, y + 5, 6, 3, s.shirt);
+  if (s.female) px(ctx, x + 1, y + 8, 6, 1, "#ffffff");
+  else px(ctx, x + 2, y + 8, 4, 1, SHORTS);
   px(ctx, x + 2, y + 9, 1, 2 - bob, SKIN);
   px(ctx, x + 5, y + 9, 1, 1 + bob, SKIN);
   if (cheer) {
-    px(ctx, x, y + 1 - bob, 1, 3, SKIN);
-    px(ctx, x + 7, y + 1 - bob, 1, 3, SKIN);
+    px(ctx, x, y + 2 - bob, 1, 3, SKIN);
+    px(ctx, x + 7, y + 2 - bob, 1, 3, SKIN);
   } else {
     px(ctx, facing > 0 ? x + 7 : x - 2, y + 5, 2, 3, "#1b1b1b");
     px(ctx, facing > 0 ? x + 7 : x, y + 7, 1, 2, "#7a5a3a");
   }
 }
 
+// 5×4 하트 — 이긴 팀 머리 위에 뜬다
+function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  const c = "#ff5c8a";
+  px(ctx, x + 1, y, 1, 1, c);
+  px(ctx, x + 3, y, 1, 1, c);
+  px(ctx, x, y + 1, 5, 1, c);
+  px(ctx, x + 1, y + 2, 3, 1, c);
+  px(ctx, x + 2, y + 3, 1, 1, c);
+}
+
+// 코트 색: 대회장(아식스 테니스 아카데미) 2026 코트처럼 안쪽 보라 · 바깥 파랑, 밝고 화사하게 (주인 요청 2026-10-27)
+const OUT_A = "#4fb0f7";
+const OUT_B = "#5ab8fa";
+const IN = "#9a7cff";
+const IN_LIGHT = "#a68bff";
+const LINE = "#ffffff";
+
 function drawCourt(ctx: CanvasRenderingContext2D) {
-  px(ctx, 0, 0, W, H, "#3c8a62");
-  for (let i = 0; i < W; i += 8) px(ctx, i, 0, 4, H, "#3f9066");
+  px(ctx, 0, 0, W, H, OUT_A);
+  for (let i = 0; i < W; i += 8) px(ctx, i, 0, 4, H, OUT_B);
   const cx = 16, cy = 12, cw = W - 32, ch = H - 24;
-  const L = "#f3ead6";
-  px(ctx, cx, cy, cw, ch, "#3f74c2");
-  px(ctx, cx, cy, cw, 1, L);
-  px(ctx, cx, cy + ch - 1, cw, 1, L);
-  px(ctx, cx, cy, 1, ch, L);
-  px(ctx, cx + cw - 1, cy, 1, ch, L);
-  px(ctx, cx, cy + 6, cw, 1, L);
-  px(ctx, cx, cy + ch - 7, cw, 1, L);
+  px(ctx, cx, cy, cw, ch, IN);
+  // 반사광 한 줄 — 바닥이 반짝여 보이게
+  px(ctx, cx + 1, cy + 1, cw - 2, 1, IN_LIGHT);
+  px(ctx, cx, cy, cw, 1, LINE);
+  px(ctx, cx, cy + ch - 1, cw, 1, LINE);
+  px(ctx, cx, cy, 1, ch, LINE);
+  px(ctx, cx + cw - 1, cy, 1, ch, LINE);
+  px(ctx, cx, cy + 6, cw, 1, LINE);
+  px(ctx, cx, cy + ch - 7, cw, 1, LINE);
   const sx = Math.round(cw * 0.23);
-  px(ctx, cx + sx, cy + 6, 1, ch - 12, L);
-  px(ctx, cx + cw - sx - 1, cy + 6, 1, ch - 12, L);
-  px(ctx, cx + sx, cy + ch / 2, cw - sx * 2, 1, L);
-  px(ctx, W / 2 - 1, cy - 4, 2, ch + 8, "#e9e4d8");
-  px(ctx, W / 2 - 1, cy - 5, 2, 2, "#1b1b1b");
-  px(ctx, W / 2 - 1, cy + ch + 3, 2, 2, "#1b1b1b");
+  px(ctx, cx + sx, cy + 6, 1, ch - 12, LINE);
+  px(ctx, cx + cw - sx - 1, cy + 6, 1, ch - 12, LINE);
+  px(ctx, cx + sx, cy + ch / 2, cw - sx * 2, 1, LINE);
+  px(ctx, W / 2 - 1, cy - 4, 2, ch + 8, "#f4f1ea");
+  px(ctx, W / 2 - 1, cy - 5, 2, 2, "#2b3340");
+  px(ctx, W / 2 - 1, cy + ch + 3, 2, 2, "#2b3340");
+  drawDecor(ctx);
+}
+
+// 코트 밖 꾸밈: 네 구석 화분 · 네트 옆 심판 의자 · 공 바구니 · 수건
+function drawDecor(ctx: CanvasRenderingContext2D) {
+  for (const [bx, by] of [[1, 0], [W - 9, 0], [1, H - 9], [W - 9, H - 9]] as const) {
+    px(ctx, bx + 1, by + 1, 6, 4, "#3fbf6e");
+    px(ctx, bx + 2, by, 4, 1, "#3fbf6e");
+    px(ctx, bx + 2, by + 2, 1, 1, "#7be09a");
+    px(ctx, bx + 5, by + 1, 1, 1, "#ff8fb1"); // 꽃 한 송이
+    px(ctx, bx + 2, by + 5, 4, 3, "#ff9f5a");
+    px(ctx, bx + 2, by + 5, 4, 1, "#e07b38");
+  }
+  // 심판 의자
+  px(ctx, W / 2 + 4, 1, 5, 3, "#ffcf4a");
+  px(ctx, W / 2 + 4, 4, 1, 6, "#c98f2a");
+  px(ctx, W / 2 + 8, 4, 1, 6, "#c98f2a");
+  // 공 바구니
+  px(ctx, 22, H - 9, 8, 5, "#ffffff");
+  px(ctx, 22, H - 7, 8, 1, "#d6dde2");
+  for (const bx of [23, 25, 27]) px(ctx, bx, H - 11, 2, 2, "#d8f24a");
+  // 오른쪽 아래 수건
+  px(ctx, W - 32, H - 8, 7, 3, "#ff8fb1");
+  px(ctx, W - 32, H - 7, 7, 1, "#ffffff");
+}
+
+// 빈 코트: 고양이가 낮잠을 잔다
+function drawCat(ctx: CanvasRenderingContext2D) {
+  const x = W / 2 - 18, y = H / 2 + 4;
+  px(ctx, x, y, 10, 4, "#ffb15c");
+  px(ctx, x + 1, y - 2, 1, 2, "#ffb15c");
+  px(ctx, x + 4, y - 2, 1, 2, "#ffb15c");
+  px(ctx, x + 1, y - 1, 4, 1, "#ffb15c");
+  px(ctx, x + 2, y + 1, 1, 1, "#7a4a2a");
+  px(ctx, x + 4, y + 1, 1, 1, "#7a4a2a");
+  px(ctx, x + 1, y + 2, 1, 1, BLUSH);
+  px(ctx, x + 10, y + 2, 3, 1, "#ffb15c");
+  px(ctx, x + 6, y, 1, 4, "#e8923e");
+  px(ctx, x + 1, y + 4, 9, 1, "#0002");
+  const z = "#ffffff";
+  px(ctx, x + 6, y - 6, 3, 1, z);
+  px(ctx, x + 7, y - 5, 1, 1, z);
+  px(ctx, x + 6, y - 4, 3, 1, z);
+  px(ctx, x + 11, y - 10, 2, 1, z);
+  px(ctx, x + 11, y - 9, 2, 1, z);
 }
 
 function paint(
@@ -108,15 +182,18 @@ function paint(
   moving: boolean,
 ) {
   drawCourt(ctx);
-  if (view.kind === "empty") return;
+  if (view.kind === "empty") {
+    drawCat(ctx);
+    return;
+  }
   const frame = moving ? Math.floor(t / 260) : 0;
   const playing = view.kind === "playing";
   const sway = (k: number) => (moving && playing ? Math.round(Math.sin(t / 700 + k) * 4) : 0);
 
   if (view.kind === "ready") {
-    // 코트 밖 아래쪽 라인에 나란히 서서 기다린다
-    sprites.a.forEach((s, i) => drawPlayer(ctx, 22 + i * 10, H - 14, s, 0, 1, false));
-    sprites.b.forEach((s, i) => drawPlayer(ctx, W - 30 - i * 10, H - 14, s, 0, -1, false));
+    // 코트 밖 아래쪽 라인에 나란히 서서 기다린다. 한 명씩 번갈아 손을 흔든다
+    sprites.a.forEach((s, i) => drawPlayer(ctx, 36 + i * 10, H - 14, s, frame, 1, moving && (frame + i) % 4 === 0));
+    sprites.b.forEach((s, i) => drawPlayer(ctx, W - 44 - i * 10, H - 14, s, frame, -1, moving && (frame + i + 2) % 4 === 0));
     return;
   }
 
@@ -129,7 +206,9 @@ function paint(
   ];
   for (const [x, y, s, facing, cheer] of spots) {
     if (!s) continue;
-    drawPlayer(ctx, x, y - (cheer && frame % 2 ? 2 : 0), s, frame, facing, cheer);
+    const lift = cheer && frame % 2 ? 2 : 0;
+    drawPlayer(ctx, x, y - lift, s, frame, facing, cheer);
+    if (cheer) drawHeart(ctx, x + 2, y - 7 - lift - (frame % 3));
   }
   if (playing) {
     // 공: 양쪽을 포물선으로 오간다
@@ -155,7 +234,7 @@ function PixelCourt({
   useEffect(() => {
     const ctx = ref.current?.getContext("2d");
     if (!ctx) return;
-    const animate = moving && (view.kind === "playing" || view.kind === "done");
+    const animate = moving && view.kind !== "empty";
     if (!animate) {
       paint(ctx, view, sprites, 0, false);
       return;
@@ -181,6 +260,11 @@ function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
     px(ctx, 2, 16, 2, 4, "#5a4430");
     px(ctx, 40, 16, 2, 4, "#5a4430");
     sprites.forEach((s, i) => drawPlayer(ctx, 2 + i * 10, 2, s, 0, 1, false));
+    // 벤치 밑 물병
+    for (const bx of [10, 31]) {
+      px(ctx, bx, 16, 2, 4, "#5ab4e8");
+      px(ctx, bx, 15, 2, 1, "#ffffff");
+    }
   }, [sprites, team.seed]);
   return <StBenchCanvas ref={ref} width={44} height={20} aria-hidden="true" />;
 }
@@ -452,7 +536,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
 
         <StPanel>
           <StPanelTitle>🏆 대진표</StPanelTitle>
-          <PixelBracket matches={matches} />
+          <PixelBracket matches={matches} blocks={blocks} />
         </StPanel>
     </StScene>
   );
