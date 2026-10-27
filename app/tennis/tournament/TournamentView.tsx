@@ -141,7 +141,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
     );
   }, [initialEvent]);
   const eventId = event.id;
-  const [tab, setTab] = useState<Tab>(demo ? "pixel" : "bracket");
+  const [tab, setTab] = useState<Tab>("pixel");
   const [scores, setScores] = useState<ScoreMap>({});
   const [mode, setMode] = useState<StorageMode>("cloud");
   const [loading, setLoading] = useState(true);
@@ -549,19 +549,20 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       {notice ? <StNotice $tone="info">{notice}</StNotice> : null}
 
       <StTabRow>
-        <StTab
-          type="button"
-          $active={tab === "bracket"}
-          onClick={() => setTab("bracket")}
-        >
-          경기 진행 · 점수
-        </StTab>
+        {/* 픽셀 코트를 첫 탭으로 (주인 요청 2026-10-28) */}
         <StTab
           type="button"
           $active={tab === "pixel"}
           onClick={() => setTab("pixel")}
         >
           픽셀 코트
+        </StTab>
+        <StTab
+          type="button"
+          $active={tab === "bracket"}
+          onClick={() => setTab("bracket")}
+        >
+          경기 진행 · 점수
         </StTab>
         <StTab
           type="button"
