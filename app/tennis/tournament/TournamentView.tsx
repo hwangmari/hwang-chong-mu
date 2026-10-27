@@ -9,6 +9,7 @@ import VotePanel from "./VotePanel";
 import PixelCourtPanel from "./PixelCourtPanel";
 import PixelMatchEntry from "./PixelMatchEntry";
 import StaffBar from "./StaffBar";
+import DemoBar from "./DemoBar";
 import NextUpBar from "../components/NextUpBar";
 import {
   countFinishedTournament,
@@ -99,7 +100,11 @@ import { courtLetters } from "../timeline";
 import { jumpToMatch } from "../jump";
 import { NoteLines } from "../noteLines";
 
-type Props = { initialEvent: TournamentEvent };
+type Props = {
+  initialEvent: TournamentEvent;
+  /** 체험 모드(/tennis/pixel-demo): 저장 공간을 부르지 않고 이 브라우저에만 가짜 점수를 둔다 */
+  demo?: boolean;
+};
 type Tab = "bracket" | "pixel" | "diagram" | "placements" | "teams" | "vote" | "info";
 type StorageMode = "cloud" | "local";
 
@@ -124,7 +129,7 @@ function saveLocal(id: string, map: ScoreMap) {
   window.localStorage.setItem(localKey(id), JSON.stringify(Object.values(map)));
 }
 
-export default function TournamentView({ initialEvent }: Props) {
+export default function TournamentView({ initialEvent, demo = false }: Props) {
   const [event, setEvent] = useState<TournamentEvent>(initialEvent);
 
   // 저장 공간 버전이 뒤늦게 도착하면 갈아탄다 (ExchangeView와 같은 이유)
@@ -136,7 +141,7 @@ export default function TournamentView({ initialEvent }: Props) {
     );
   }, [initialEvent]);
   const eventId = event.id;
-  const [tab, setTab] = useState<Tab>("bracket");
+  const [tab, setTab] = useState<Tab>(demo ? "pixel" : "bracket");
   const [scores, setScores] = useState<ScoreMap>({});
   const [mode, setMode] = useState<StorageMode>("cloud");
   const [loading, setLoading] = useState(true);
@@ -177,6 +182,13 @@ export default function TournamentView({ initialEvent }: Props) {
   const reload = useCallback(
     async (quiet = false) => {
       if (!quiet) setLoading(true);
+      if (demo) {
+        // 체험 모드는 저장 공간을 부르지 않는다 — 이 브라우저에 둔 가짜 점수만
+        setScores(loadLocal(eventId));
+        setMode("local");
+        if (!quiet) setLoading(false);
+        return;
+      }
       try {
         const [list, settings] = await Promise.all([
           fetchTennisScores(eventId),
@@ -197,7 +209,7 @@ export default function TournamentView({ initialEvent }: Props) {
         if (!quiet) setLoading(false);
       }
     },
-    [eventId],
+    [eventId, demo],
   );
 
   useEffect(() => {
@@ -499,7 +511,17 @@ export default function TournamentView({ initialEvent }: Props) {
         </StNotice>
       ) : null}
 
-      {mode === "local" ? (
+      {demo ? (
+        <DemoBar
+          matches={matches}
+          scores={scores}
+          courts={event.courts}
+          onChange={(next) => {
+            setScores(next);
+            saveLocal(eventId, next);
+          }}
+        />
+      ) : mode === "local" ? (
         <StNotice $tone="warn">
           아직 공용 저장 공간(tennis_scores 표)이 준비되지 않아 진행 기록을 이
           기기에만 저장하고 있어요.
@@ -562,20 +584,25 @@ export default function TournamentView({ initialEvent }: Props) {
         >
           팀별 여정
         </StTab>
-        <StTab
-          type="button"
-          $active={tab === "vote"}
-          onClick={() => setTab("vote")}
-        >
-          투표
-        </StTab>
-        <StTab
-          type="button"
-          $active={tab === "info"}
-          onClick={() => setTab("info")}
-        >
-          대회 정보 · 규칙
-        </StTab>
+        {/* 체험 모드에서는 저장 공간에 쓰는 투표·팀 편집 탭을 숨긴다 */}
+        {demo ? null : (
+          <>
+            <StTab
+              type="button"
+              $active={tab === "vote"}
+              onClick={() => setTab("vote")}
+            >
+              투표
+            </StTab>
+            <StTab
+              type="button"
+              $active={tab === "info"}
+              onClick={() => setTab("info")}
+            >
+              대회 정보 · 규칙
+            </StTab>
+          </>
+        )}
       </StTabRow>
 
       {loading ? (
