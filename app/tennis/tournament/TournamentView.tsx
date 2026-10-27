@@ -150,6 +150,8 @@ export default function TournamentView({ initialEvent }: Props) {
   const [admins, setAdmins] = useState<string[]>([]);
   const [staffName, setStaffName] = useState("");
   const [phase, setPhase] = useState<TournamentPhase>("before");
+  // 우승팀 토토 마감 — 대회 시작과 따로, 진행 요원이 직접 누른다 (주인 요청 2026-10-27)
+  const [totoClosed, setTotoClosed] = useState(false);
 
   useEffect(() => {
     if (!notice) return;
@@ -181,6 +183,7 @@ export default function TournamentView({ initialEvent }: Props) {
         setScores(toMap(list));
         setAdmins(settings.admins);
         setPhase(settings.phase);
+        setTotoClosed(settings.closed.champion);
         setMode("cloud");
         setError("");
       } catch {
@@ -242,6 +245,19 @@ export default function TournamentView({ initialEvent }: Props) {
       setPhase((await saveVoteSettings(eventId, { phase: next })).phase);
     } catch {
       setError("대회 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changeToto(next: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await saveVoteSettings(eventId, { closed: { champion: next } });
+      setTotoClosed(saved.closed.champion);
+    } catch {
+      setError("토토 마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
     } finally {
       setBusy(false);
     }
@@ -493,8 +509,10 @@ export default function TournamentView({ initialEvent }: Props) {
           admins={admins}
           staffName={admins.includes(staffName) ? staffName : ""}
           phase={phase}
+          totoClosed={totoClosed}
           busy={busy}
           onPhase={changePhase}
+          onToto={changeToto}
           onEnter={setStaffName}
           onExit={() => {
             clearSavedStaff(eventId);
@@ -1021,7 +1039,7 @@ export default function TournamentView({ initialEvent }: Props) {
           )}
         </StCard>
       ) : tab === "vote" ? (
-        <VotePanel event={event} matches={matches} />
+        <VotePanel event={event} matches={matches} totoClosed={totoClosed} />
       ) : null}
       {/* 대회 정보·규칙·참가 팀·안내: 다른 탭을 보고 와도 입력 중이던 팀 이름이 남도록 늘 그려 두고 숨긴다 (리뷰 2026-09-15) */}
       <div hidden={tab !== "info"}>
