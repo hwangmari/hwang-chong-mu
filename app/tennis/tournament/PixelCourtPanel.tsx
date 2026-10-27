@@ -5,7 +5,7 @@ import styled from "styled-components";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from "./types";
 import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
-import { StCard, StCardHead, StCardHint, StCardTitle } from "../page.styles";
+import PixelBracket, { shirtOf } from "./PixelBracket";
 
 type Props = {
   event: TournamentEvent;
@@ -26,9 +26,6 @@ type Props = {
  * 코트를 누르면 그 경기의 시작·점수 입력 칸이 코트 바로 아래(두 열이면 그 줄 아래)에 열린다 (주인 요청 2026-10-27).
  */
 
-// 팀 시드별 셔츠 색 — 코트 그림 안에서만 쓰는 픽셀 팔레트
-const SHIRT = ["#e8504a", "#f29b38", "#f2d64b", "#6cc96a", "#4cc3d9", "#9b7bea", "#ef86c1", "#f4f1ea"];
-const shirtOf = (team: TeamEntry) => SHIRT[(team.seed - 1) % SHIRT.length];
 
 const SKIN = "#f2c7a0";
 const HAIR_M = "#3a2a22";
@@ -203,6 +200,16 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
   );
   const [now, setNow] = useState(() => Date.now());
   const [openCourt, setOpenCourt] = useState<Court | null>(null);
+
+  // 화면 너비로 넓힌 픽셀 배경이 가로 스크롤을 만들지 않게, 이 탭이 열린 동안만 옆으로 넘친 부분을 잘라 둔다
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overflowX;
+    html.style.overflowX = "clip";
+    return () => {
+      html.style.overflowX = prev;
+    };
+  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
@@ -290,15 +297,13 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
   const clock = hhmm(new Date(now).toISOString());
 
   return (
-    <StCard>
-      <StCardHead>
-        <StCardTitle>👾 픽셀 코트</StCardTitle>
-      </StCardHead>
-      <StCardHint>
-        점수 화면과 같은 기록을 보여 줘요. 경기를 시작하면 코트에 선수가 나오고, 점수를 넣으면 이긴 팀이 만세를 해요.
-      </StCardHint>
-
-      <StScene>
+    <StScene>
+      <StSceneHead>
+        <StSceneTitle>👾 픽셀 코트</StSceneTitle>
+        <StSceneHint>
+          점수 화면과 같은 기록을 보여 줘요. 코트를 누르면 그 경기를 시작하거나 점수를 넣을 수 있어요.
+        </StSceneHint>
+      </StSceneHead>
         <StBoard>
           <StBoardTop>
             <div>
@@ -444,8 +449,12 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
             </StMotionBtn>
           </StPanel>
         </StLower>
-      </StScene>
-    </StCard>
+
+        <StPanel>
+          <StPanelTitle>🏆 대진표</StPanelTitle>
+          <PixelBracket matches={matches} />
+        </StPanel>
+    </StScene>
   );
 }
 
@@ -456,24 +465,49 @@ const DIM = "#a9b8b9";
 const LED = "#ffcf4a";
 const FLOOR = "#34505c";
 
-const StScene = styled.div`
+// 픽셀 배경은 흰 카드 없이 화면 좌우 끝까지 깐다 (주인 요청 2026-10-27 — PC 좌우 여백도 픽셀로).
+// 내용 폭은 페이지 폭 그대로 두고, 배경만 ::before 로 화면 너비만큼 넓힌다.
+// 넓힌 배경이 가로 스크롤을 만들지 않게 이 탭이 열린 동안 html 에 overflow-x: clip 을 건다(아래 effect).
+const StScene = styled.section`
+  position: relative;
+  isolation: isolate;
   display: grid;
   gap: 0.9rem;
-  padding: 0.9rem;
-  border-radius: 0.8rem;
+  padding-block: 1rem 1.4rem;
   color: ${INK};
-  background-color: #22313a;
-  background-image:
-    linear-gradient(#2b3d48 2px, transparent 2px),
-    linear-gradient(90deg, #2b3d48 2px, transparent 2px);
-  background-size: 32px 32px;
 
-  /* 휴대폰: 카드 안쪽 흰 여백 없이 화면 좌우 끝까지 (주인 요청 2026-10-27) */
-  @media ${({ theme }) => theme.media.mobile} {
-    margin: 0 -1rem;
-    padding: 0.6rem;
-    border-radius: 0;
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background-color: #22313a;
+    background-image:
+      linear-gradient(#2b3d48 2px, transparent 2px),
+      linear-gradient(90deg, #2b3d48 2px, transparent 2px);
+    background-size: 32px 32px;
+    background-position: center top;
   }
+`;
+
+const StSceneHead = styled.div`
+  display: grid;
+  gap: 0.3rem;
+`;
+
+const StSceneTitle = styled.h2`
+  font-size: 1rem;
+  font-weight: 800;
+`;
+
+const StSceneHint = styled.p`
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: ${DIM};
 `;
 
 const StBoard = styled.div`
