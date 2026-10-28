@@ -1317,7 +1317,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
 // 토너먼트 화면에서는 맨 위 메뉴 줄(GNB)을 화면에 붙여 두지 않는다 — 내리면 같이 올라가 컨텐츠에 가려진다
 // (주인 요청 2026-10-28 "63오픈일 때 gnb 메뉴바가 컨텐츠에 가려지면 좋겠어"). 이 화면을 떠나면 원래대로.
 const StGnbScrolls = createGlobalStyle`
-  [data-gnb] {
+  header[data-gnb] {
     position: relative;
   }
 `;
