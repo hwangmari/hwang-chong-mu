@@ -114,7 +114,8 @@ export default function PixelJourney({ team, matches, scores, roster }: Props) {
     const begin = performance.now();
 
     const draw = (t: number) => {
-      const elapsed = still ? total * GAME_MS + 1 : t - begin;
+      // rAF 시각이 시작 시각보다 살짝 앞설 수 있어 0 아래로 내려가지 않게 (음수면 -1게임째가 되어 페어를 못 찾았다)
+      const elapsed = still ? total * GAME_MS + 1 : Math.max(0, t - begin);
       const done = Math.min(total, Math.floor(elapsed / GAME_MS));
       const ended = done >= total;
       if (done !== lastShown) {

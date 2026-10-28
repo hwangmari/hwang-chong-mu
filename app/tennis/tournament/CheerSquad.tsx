@@ -5,8 +5,8 @@ import styled from "styled-components";
 import { px } from "./pixelSprites";
 
 // ───── 응원석 (주인 요청 2026-10-28 "벤치 응원석에 이 녀석들이 응원하게") ─────
-// 주인이 보낸 그림의 다섯 친구를 닮은 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡 · 분홍 동글이는 오리지널(공개 사이트라
-// 다른 회사 캐릭터를 그대로 베끼지 않음), 옥지·빵빵이는 주인이 보낸 그림의 생김새(옷 색·소용돌이 눈·초록 병)를 따랐다.
+// 주인이 보낸 그림의 다섯 친구를 닮은 꼬마들: 잎사귀 새싹이 · 노란 꼬마 공룡은 오리지널(다른 회사 캐릭터를 그대로 베끼지 않음),
+// 분홍 비버·옥지·빵빵이는 주인이 보낸 사진·그림의 생김새를 따랐다.
 const CW = 160;
 const CH = 36;
 function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
@@ -49,17 +49,30 @@ function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
     px(ctx, x + 12, y + 8 - up(1), 1, 1, "#ffffff");
     px(ctx, x + 3, y + 16, 3, 1, "#ffffff"); px(ctx, x + 8, y + 16, 3, 1, "#ffffff"); // 발톱
   }
-  // ③ 분홍 동글이
+  // ③ 분홍 비버 — 주인이 보낸 사진처럼: 머리 위 삐죽 털 · 둥근 귀 · 한쪽 윙크 · 큰 자줏빛 코 · 빼꼼 혀 ·
+  //    하얀 배 · 목걸이 · 한 손 들어 인사 · 보라 발 (2026-10-28)
   {
-    const x = 68, y = 11 + up(2);
-    px(ctx, x + 5, y - 2, 2, 2, "#f27a9a"); // 머리 새싹
-    px(ctx, x + 1, y, 12, 13, "#f7a1b5");
-    px(ctx, x, y + 2, 14, 9, "#f7a1b5");
-    px(ctx, x + 1, y, 2, 2, "#f27a9a"); px(ctx, x + 11, y, 2, 2, "#f27a9a"); // 귀
-    px(ctx, x + 4, y + 4, 1, 2, "#1b1b1b"); px(ctx, x + 9, y + 4, 1, 2, "#1b1b1b");
-    px(ctx, x + 5, y + 7, 4, 3, "#c43d5c"); px(ctx, x + 6, y + 7, 2, 1, "#ffffff"); // 입·앞니
-    px(ctx, x + 2, y + 7, 2, 1, "#f27a9a"); px(ctx, x + 10, y + 7, 2, 1, "#f27a9a");
-    px(ctx, x + 4, y + 12, 6, 2, "#ffffff");
+    const x = 65, y = 3 + up(2);
+    const PINK = "#f39bb0", PINK_D = "#e27f98", wave = frame % 2;
+    px(ctx, x + 7, y, 1, 2, PINK_D); px(ctx, x + 8, y - 1, 1, 3, PINK_D); px(ctx, x + 9, y, 1, 2, PINK_D); // 삐죽 털
+    px(ctx, x + 1, y + 1, 3, 3, PINK_D); px(ctx, x + 13, y + 1, 3, 3, PINK_D); // 둥근 귀
+    px(ctx, x + 2, y + 2, 1, 1, "#f7b8c7"); px(ctx, x + 14, y + 2, 1, 1, "#f7b8c7");
+    px(ctx, x + 2, y + 2, 13, 10, PINK); // 넓적한 머리
+    px(ctx, x + 1, y + 4, 15, 6, PINK);
+    px(ctx, x + 5, y + 6, 2, 2, "#2b2b2b"); px(ctx, x + 5, y + 6, 1, 1, "#ffffff"); // 뜬 눈
+    px(ctx, x + 10, y + 7, 1, 1, "#2b2b2b"); px(ctx, x + 11, y + 6, 1, 1, "#2b2b2b"); px(ctx, x + 12, y + 7, 1, 1, "#2b2b2b"); // 윙크
+    px(ctx, x + 7, y + 8, 3, 1, "#8e4a6a"); px(ctx, x + 6, y + 9, 5, 2, "#8e4a6a"); px(ctx, x + 7, y + 9, 1, 1, "#b36d8c"); // 큰 코
+    px(ctx, x + 8, y + 11, 2, 1, "#e05a6a"); // 빼꼼 혀
+    px(ctx, x + 3, y + 12, 11, 9, PINK); // 몸
+    px(ctx, x + 5, y + 14, 7, 6, "#fff5f7"); // 하얀 배
+    px(ctx, x + 6, y + 12, 1, 1, "#e05a6a"); px(ctx, x + 10, y + 12, 1, 1, "#e05a6a"); // 목걸이 줄
+    px(ctx, x + 8, y + 13, 1, 2, "#ffffff"); // 목걸이 패
+    px(ctx, x + 1, y + 13, 2, 5, PINK); px(ctx, x + 1, y + 18, 2, 1, "#5a3a4a"); // 내린 팔
+    // 머리 옆으로 든 인사 손 (손톱 세 개)
+    px(ctx, x + 15, y + 7 + wave, 2, 6, PINK);
+    px(ctx, x + 15, y + 5 + wave, 3, 2, PINK);
+    px(ctx, x + 15, y + 4 + wave, 1, 1, "#5a3a4a"); px(ctx, x + 16, y + 4 + wave, 1, 1, "#5a3a4a"); px(ctx, x + 17, y + 5 + wave, 1, 1, "#5a3a4a");
+    px(ctx, x + 3, y + 21, 4, 1, "#6b4a6e"); px(ctx, x + 10, y + 21, 4, 1, "#6b4a6e"); // 보라 발
   }
   // 소용돌이 눈 3×3 (빵빵이·옥지 특유의 멍한 눈)
   const swirl = (ex: number, ey: number) => {

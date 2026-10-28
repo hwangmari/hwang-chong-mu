@@ -9,7 +9,6 @@ import VotePanel from "./VotePanel";
 import PixelCourtPanel from "./PixelCourtPanel";
 import PixelMatchEntry from "./PixelMatchEntry";
 import PixelJourney from "./PixelJourney";
-import CheerSquad from "./CheerSquad";
 import StaffBar from "./StaffBar";
 import DemoBar from "./DemoBar";
 import NextUpBar from "../components/NextUpBar";
@@ -107,7 +106,7 @@ type Props = {
   /** 체험 모드(/tennis/pixel-demo): 저장 공간을 부르지 않고 이 브라우저에만 가짜 점수를 둔다 */
   demo?: boolean;
 };
-type Tab = "bracket" | "pixel" | "diagram" | "placements" | "teams" | "vote" | "info";
+type Tab = "bracket" | "pixel" | "diagram" | "placements" | "vote" | "info";
 type StorageMode = "cloud" | "local";
 
 const POLL_MS = 20_000;
@@ -280,6 +279,11 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
   }
   const blocks = useMemo(() => scheduleBlocks(event), [event]);
   const ranks = useMemo(() => placements(matches), [matches]);
+  // 그랜드 파이널이 끝나면 대회 끝 — 최종 순위 아래에 모든 팀 여정을 순위 순으로 쫙 (주인 요청 2026-10-28)
+  const tournamentOver = matches.some(
+    (m) => m.template.stage === "grand-final" && m.status === "done",
+  );
+  const [replayTeam, setReplayTeam] = useState<number | null>(null);
   const progress = countFinishedTournament(matches);
   const anyStarted = Object.keys(scores).length > 0;
   const courts = courtLetters(event.courts);
@@ -550,10 +554,6 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       {error ? <StNotice $tone="error">{error}</StNotice> : null}
       {notice ? <StNotice $tone="info">{notice}</StNotice> : null}
 
-      {/* 응원석 꼬마들 — 탭 줄 위 빈자리 오른쪽 */}
-      <StMascots>
-        <CheerSquad />
-      </StMascots>
       <StTabRow>
         {/* 픽셀 코트를 첫 탭으로 (주인 요청 2026-10-28) */}
         <StTab
@@ -577,19 +577,13 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
         >
           토너먼트 그림
         </StTab>
+        {/* 최종 순위와 팀별 여정을 한 탭에 (주인 요청 2026-10-28) */}
         <StTab
           type="button"
           $active={tab === "placements"}
           onClick={() => setTab("placements")}
         >
-          최종 순위
-        </StTab>
-        <StTab
-          type="button"
-          $active={tab === "teams"}
-          onClick={() => setTab("teams")}
-        >
-          팀별 여정
+          순위 · 팀별 여정
         </StTab>
         {/* 체험 모드에서는 저장 공간에 쓰는 투표·팀 편집 탭을 숨긴다 */}
         {demo ? null : (
@@ -909,19 +903,39 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
           </StTableWrap>
         </StCard>
       ) : tab === "placements" ? (
+        <>
         <StCard>
           <StCardHead>
             <StCardTitle>🏅 최종 순위</StCardTitle>
           </StCardHead>
           <StCardHint>
             결과가 들어오는 대로 채워져요. 1·2위는 그랜드 파이널 한 판으로,
-            3·4위는 패자조에서 떨어진 순서로 정해요.
+            3·4위는 패자조에서 떨어진 순서로 정해요. 팀을 누르면 아래 팀별
+            여정에서 그 팀을 볼 수 있어요.
           </StCardHint>
           <StQueueList>
             {ranks.map((r) => (
               <StPlacementRow
                 key={r.rank}
                 $top={r.rank <= 3 && r.team !== null}
+                role={r.team ? "button" : undefined}
+                tabIndex={r.team ? 0 : undefined}
+                onClick={() => {
+                  if (!r.team) return;
+                  setSelectedTeam(r.team.seed);
+                  setReplayTeam(r.team.seed);
+                  document
+                    .getElementById("team-journey")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && r.team) {
+                    setSelectedTeam(r.team.seed);
+                    setReplayTeam(r.team.seed);
+                    document.getElementById("team-journey")?.scrollIntoView({ block: "start" });
+                  }
+                }}
+                style={{ cursor: r.team ? "pointer" : undefined }}
               >
                 <StRank>
                   {r.rank === 1
@@ -947,8 +961,69 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
             ))}
           </StQueueList>
         </StCard>
-      ) : tab === "teams" ? (
-        <StCard>
+        {tournamentOver ? (
+          <StCard id="team-journey">
+            <StCardHead>
+              <StCardTitle>🧭 모든 팀의 여정</StCardTitle>
+            </StCardHead>
+            <StCardHint>
+              순위 순서로 팀마다 치른 경기를 모았어요. 🎬을 누르면 그 팀 경기를
+              픽셀 코트에서 다시 볼 수 있어요.
+            </StCardHint>
+            <StJourneyList>
+              {ranks
+                .filter((r) => r.team)
+                .map((r) => {
+                  const t = r.team!;
+                  const path = teamPath(matches, t).filter((p) => p.outcome);
+                  const open = replayTeam === t.seed;
+                  return (
+                    <li key={t.seed}>
+                      <StJourneyRow>
+                        <StRank>
+                          {r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : `${r.rank}위`}
+                        </StRank>
+                        <StTeamName>
+                          <StSeedTag>#{t.seed}</StSeedTag> {t.name}
+                        </StTeamName>
+                        <StJourneySteps>
+                          {path.map((p) => {
+                            const mine = p.side === "A" ? p.match.scoreA : p.match.scoreB;
+                            const theirs = p.side === "A" ? p.match.scoreB : p.match.scoreA;
+                            return (
+                              <StJourneyStep key={p.match.template.no} $win={p.outcome === "win"}>
+                                {p.match.template.label} · vs {p.opponent?.name ?? "-"}{" "}
+                                <b>
+                                  {p.outcome === "win" ? "승" : "패"} {mine}:{theirs}
+                                </b>
+                              </StJourneyStep>
+                            );
+                          })}
+                        </StJourneySteps>
+                        <StGhostBtn
+                          type="button"
+                          aria-expanded={open}
+                          onClick={() => setReplayTeam(open ? null : t.seed)}
+                        >
+                          {open ? "닫기" : "🎬 다시 보기"}
+                        </StGhostBtn>
+                      </StJourneyRow>
+                      {open ? (
+                        <PixelJourney
+                          key={t.seed}
+                          team={t}
+                          matches={matches}
+                          scores={scores}
+                          roster={event.roster}
+                        />
+                      ) : null}
+                    </li>
+                  );
+                })}
+            </StJourneyList>
+          </StCard>
+        ) : (
+        <StCard id="team-journey">
           <StCardHead>
             <StCardTitle>🧭 팀별 여정</StCardTitle>
           </StCardHead>
@@ -1157,6 +1232,8 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
             <StCardHint>위에서 팀을 골라 주세요.</StCardHint>
           )}
         </StCard>
+        )}
+        </>
       ) : tab === "vote" ? (
         <VotePanel event={event} matches={matches} totoClosed={totoClosed} />
       ) : null}
@@ -1236,14 +1313,56 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
   );
 }
 
-const StMascots = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: -1rem;
-  pointer-events: none;
+const StJourneyList = styled.ol`
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    gap: 0.5rem;
+  }
+`;
+
+const StJourneyRow = styled.div`
+  display: grid;
+  grid-template-columns: 2.6rem 6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.7rem;
+  background: ${({ theme }) => theme.semantic.bg};
 
   @media ${({ theme }) => theme.media.mobile} {
-    margin-bottom: -0.6rem;
+    grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+
+    & > :nth-child(3) {
+      grid-column: 1 / -1;
+      order: 4;
+    }
+  }
+`;
+
+const StJourneySteps = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+`;
+
+const StJourneyStep = styled.span<{ $win: boolean }>`
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.semantic.subText};
+  background: ${({ theme }) => theme.colors.white};
+
+  b {
+    font-weight: 800;
+    color: ${({ $win, theme }) => ($win ? theme.semantic.success : theme.semantic.danger)};
   }
 `;
 

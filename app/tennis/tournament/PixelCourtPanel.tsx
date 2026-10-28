@@ -6,6 +6,7 @@ import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from ".
 import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
 import PixelBracket, { shirtOf } from "./PixelBracket";
+import CheerSquad from "./CheerSquad";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
 
@@ -154,15 +155,11 @@ function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
   return <StBenchCanvas ref={ref} width={44} height={20} aria-hidden="true" />;
 }
 
-const hhmm = (iso: string) => {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-};
 
 export default function PixelCourtPanel({ event, matches, scores, blocks, renderMatch }: Props) {
-  // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림.
+  // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림 (멈춤 버튼은 응원석 자리로 바뀌며 뺐다 — 2026-10-28).
   // 탭을 눌러야 그려지는 화면이라 서버 렌더와 어긋날 일이 없다
-  const [moving, setMoving] = useState(
+  const [moving] = useState(
     () =>
       typeof window === "undefined" ||
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -288,7 +285,6 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
         (m.teamA?.seed === team.seed || m.teamB?.seed === team.seed),
     );
 
-  const clock = hhmm(new Date(now).toISOString());
 
   return (
     <StScene>
@@ -329,12 +325,8 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
                 {event.place} · 코트 {courts.length}면 · {event.gamesToWin}게임 선승
               </StBoardMeta>
             </div>
-            <StClockBox>
-              <StClock>{clock}</StClock>
-              <StMotionBtn type="button" onClick={() => setMoving((v) => !v)}>
-                {moving ? "움직임 멈추기" : "움직임 켜기"}
-              </StMotionBtn>
-            </StClockBox>
+            {/* 시계·움직임 버튼 자리에 응원석 꼬마들 (주인 요청 2026-10-28) */}
+            <CheerSquad />
           </StBoardTop>
           <StBlocks $count={blocks.length}>
             {blocks.map((b) => (
@@ -581,13 +573,6 @@ const StBoardMeta = styled.div`
   color: ${DIM};
 `;
 
-const StClock = styled.div`
-  font-family: ${PIX};
-  font-size: 1rem;
-  font-weight: 800;
-  color: ${ACCENT};
-  font-variant-numeric: tabular-nums;
-`;
 
 const StBlocks = styled.div<{ $count: number }>`
   display: grid;
@@ -787,11 +772,6 @@ const StBench = styled.div`
 `;
 
 
-const StClockBox = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
 
 const StSeat = styled.div<{ $on: boolean }>`
   display: grid;
@@ -823,17 +803,3 @@ const StSeatState = styled.span`
 
 
 
-const StMotionBtn = styled.button`
-  padding: 0.25rem 0.55rem;
-  border: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #121b20;
-  background: ${LED};
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid ${ACCENT};
-    outline-offset: 2px;
-  }
-`;
