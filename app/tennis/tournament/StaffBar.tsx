@@ -69,6 +69,7 @@ export default function StaffBar({
   const [msg, setMsg] = useState("");
   const [checking, setChecking] = useState(false);
   const [resetName, setResetName] = useState("");
+  const [resetOpen, setResetOpen] = useState(false); // 평소엔 단추만, 누르면 이름 고르는 칸 (주인 요청 2026-10-28)
   const { openConfirm } = useModal();
 
   async function go(next: TournamentPhase, message: string) {
@@ -98,6 +99,7 @@ export default function StaffBar({
     if (!ok) return;
     await onResetPin(resetName);
     setResetName("");
+    setResetOpen(false);
   }
 
   async function enter() {
@@ -213,8 +215,16 @@ export default function StaffBar({
           >
             {dresserClosed ? "👗 베스트드레서 다시 열기" : "👗 베스트드레서 마감"}
           </StGhostBtn>
+          <StGhostBtn
+            type="button"
+            aria-expanded={resetOpen}
+            onClick={() => setResetOpen((v) => !v)}
+          >
+            {resetOpen ? "닫기" : "🔑 비번 초기화"}
+          </StGhostBtn>
         </StActionsRow>
         {/* 비번을 잊은 참가자 풀어 주기 (주인 요청 2026-10-28) */}
+        {resetOpen ? (
         <StForm>
           <StSelect
             aria-label="비번 초기화할 사람"
@@ -235,9 +245,10 @@ export default function StaffBar({
             disabled={busy || !resetName}
             onClick={() => void resetPinOf()}
           >
-            🔑 비번 초기화
+            초기화
           </StGhostBtn>
         </StForm>
+        ) : null}
       </StBar>
     );
   }
