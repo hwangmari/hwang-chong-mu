@@ -80,7 +80,9 @@ function draw(ctx: CanvasRenderingContext2D, t: number, full: number, cols: Col[
     if (decided && i === winIdx) px(ctx, c.x - 3, BASE - BAR_MAX - 14, 16, BAR_MAX + 14, "#ffcf4a33");
     px(ctx, c.x, BASE - h, 10, h, blink ? "#ffffff" : dim ? "#4a5578" : c.shirt);
     if (h > 0) px(ctx, c.x, BASE - h, 10, 1, "#ffffff88");
-    drawNumber(ctx, c.votes, c.x + 5, BASE - h - 7, dim ? "#6b76a0" : "#ffffff");
+    // 우승팀 꼬마가 막대 위에 올라서면 표 수는 머리 위로
+    const onTop = t >= 4200 && i === winIdx;
+    drawNumber(ctx, c.votes, c.x + 5, BASE - h - (onTop ? 30 : 7), dim ? "#6b76a0" : "#ffffff");
     drawNumber(ctx, c.seed, c.x + 5, BASE + 4, dim ? "#6b76a0" : "#ffcf4a");
   });
   // 우승팀 꼬마들이 막대 위로 폴짝 → 만세
@@ -90,10 +92,10 @@ function draw(ctx: CanvasRenderingContext2D, t: number, full: number, cols: Col[
     const p = Math.min(1, (t - 4200) / 300);
     team.slice(0, 4).forEach((sp, i) => {
       const x = c.x + 5 - (Math.min(4, team.length) * 9) / 2 + i * 9;
-      const y = BASE - h - 22 - Math.sin(p * Math.PI) * 6;
+      const y = BASE - h - 12 - Math.sin(p * Math.PI) * 6; // 막대 꼭대기에 선다
       const lift = t < END_MS ? (frame + i) % 2 : 0;
       drawPlayer(ctx, x, y - lift, sp, frame, 1, true);
-      if (t < END_MS && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 7);
+      if (t < END_MS && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 14);
     });
   }
   ctx.restore();
