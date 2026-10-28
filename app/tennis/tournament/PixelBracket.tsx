@@ -221,6 +221,7 @@ function Tree({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [col, setCol] = useState(0);
   const [canSlide, setCanSlide] = useState(false);
+  const [atEnd, setAtEnd] = useState(false);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -232,9 +233,9 @@ function Tree({
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    // 끝까지 밀었으면 마지막 라운드로 친다(마지막 열은 왼쪽 끝에 붙일 수 없다)
-    const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 4;
-    setCol(atEnd ? colHeads.length - 1 : Math.min(colHeads.length - 1, Math.round(el.scrollLeft / COL_W)));
+    // 왼쪽 끝에서 처음으로 온전히 보이는 라운드 (끝까지 밀면 마지막 열은 왼쪽 끝에 못 붙어서 올림으로 센다)
+    setCol(Math.min(colHeads.length - 1, Math.max(0, Math.ceil((el.scrollLeft - 20) / COL_W))));
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
   };
   const goCol = (next: number) => {
     const el = scrollRef.current;
@@ -303,7 +304,7 @@ function Tree({
           <StArrow
             type="button"
             aria-label="다음 라운드"
-            disabled={col >= colHeads.length - 1}
+            disabled={atEnd}
             onClick={() => goCol(col + 1)}
           >
             ▶
