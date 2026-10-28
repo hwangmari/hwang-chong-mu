@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry, TournamentEvent } from "./types";
 import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
@@ -172,15 +172,6 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
   const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
   const [viewBlock, setViewBlock] = useState<number | null>(null);
 
-  // 화면 너비로 넓힌 픽셀 배경이 가로 스크롤을 만들지 않게, 이 탭이 열린 동안만 옆으로 넘친 부분을 잘라 둔다
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflowX;
-    html.style.overflowX = "clip";
-    return () => {
-      html.style.overflowX = prev;
-    };
-  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
@@ -288,6 +279,7 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
 
   return (
     <StScene>
+      <StDayPage />
       <StSceneHead>
         <StSceneTitle>👾 픽셀 코트</StSceneTitle>
         <StSceneHint>
@@ -447,34 +439,27 @@ const ACCENT = "#e8761c"; // 밝은 판 위 강조 글자
 const CARD_SHADOW = "4px 4px 0 #2f7a4f22";
 
 // 픽셀 배경은 흰 카드 없이 화면 좌우 끝까지 깐다 (주인 요청 2026-10-27 — PC 좌우 여백도 픽셀로).
-// 내용 폭은 페이지 폭 그대로 두고, 배경만 ::before 로 화면 너비만큼 넓힌다.
-// 넓힌 배경이 가로 스크롤을 만들지 않게 이 탭이 열린 동안 html 에 overflow-x: clip 을 건다(아래 effect).
-const StScene = styled.section`
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  gap: 0.9rem;
-  padding-block: 1rem 1.4rem;
-  color: ${INK};
-
-  &::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 100vw;
-    transform: translateX(-50%);
-    /* 낮의 테니스 클럽 — 하늘에서 잔디로 넘어가는 밝은 바탕에 옅은 격자 (주인 요청 2026-10-27 "배경도 낮으로") */
+// 낮의 테니스 클럽 바탕을 페이지 전체(body)에 깐다 — 제목·탭이 있는 윗부분까지 덮는다
+// (주인 요청 2026-10-27 "배경도 낮으로", 2026-10-28 "픽셀 코트는 header 덮게").
+// 이 탭이 열린 동안만 붙고, 다른 탭으로 가면 원래 바탕으로 돌아간다.
+const StDayPage = createGlobalStyle`
+  body {
     background-color: #e6f7ea;
     background-image:
       linear-gradient(#d2efdb 2px, transparent 2px),
       linear-gradient(90deg, #d2efdb 2px, transparent 2px),
-      linear-gradient(#c9ecff, #e6f7ea 360px);
-    background-size: 32px 32px;
+      linear-gradient(#c9ecff, #e6f7ea 520px);
+    background-size: 32px 32px, 32px 32px, 100% 100%;
     background-position: center top;
   }
+`;
+
+const StScene = styled.section`
+  position: relative;
+  display: grid;
+  gap: 0.9rem;
+  padding-block: 1rem 1.4rem;
+  color: ${INK};
 `;
 
 const StSceneHead = styled.div`

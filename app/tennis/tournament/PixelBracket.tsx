@@ -47,10 +47,18 @@ const STATE_EDGE: Record<ResolvedMatch["status"], string> = {
   waiting: "#cfd8db",
   hidden: "#e3e8ea",
 };
+// 칸 머리 띠 바탕 — 상태가 한눈에 보이게 옅은 색으로 (주인 요청 2026-10-28 "대진표도 픽셀로 더 귀엽게")
+const STATE_BAND: Record<ResolvedMatch["status"], string> = {
+  playing: "#ffe1db",
+  ready: "#fff3c4",
+  done: "#dcf5e6",
+  waiting: "#eef3f4",
+  hidden: "#f3f6f7",
+};
 const STATE_TEXT: Record<ResolvedMatch["status"], string> = {
-  playing: "경기 중",
-  ready: "시작 가능",
-  done: "끝",
+  playing: "🎾 경기 중",
+  ready: "▶ 시작 가능",
+  done: "✔ 끝",
   waiting: "",
   hidden: "조건부",
 };
@@ -239,6 +247,13 @@ function Tree({
       path: [{ x: x1 - 24, y: y1 }, { x: bend, y: y1 }, { x: bend, y: y2 }, { x: x2 - 8, y: y2 }],
     });
   }
+  // 승자조(위)와 패자조(아래) 사이 빈 줄에 울타리를 친다 — 위 칸 바닥과 아래 칸 꼭대기의 가운데
+  const winBottom = Math.max(...layout.filter((l) => l.row < 4).map((l) => l.row));
+  const loseTop = Math.min(...layout.filter((l) => l.row >= 4).map((l) => l.row));
+  const fenceY = Number.isFinite(loseTop)
+    ? Math.round(HEAD_H + PAD + (winBottom * ROW_H + NODE_H + loseTop * ROW_H) / 2)
+    : 0;
+
   const final = by.get(16);
   const finalAt = at.get(16);
   const champion =
@@ -252,7 +267,7 @@ function Tree({
         {title} <span>{hint}</span>
       </StTreeTitle>
       <StScroll>
-        <StBoard style={{ width, height }}>
+        <StBoard style={{ width, height, backgroundPositionX: PAD - (COL_W - NODE_W) / 2 }}>
           <svg width={width} height={height} shapeRendering="crispEdges" aria-hidden="true">
             {links.map((lk) => {
               const from = at.get(lk.from);
@@ -301,6 +316,12 @@ function Tree({
             sprites={sprites}
             moving={moving}
           />
+          {fenceY ? (
+            <StFence style={{ top: fenceY }}>
+              <span>▲ 승자조</span>
+              <span>▼ 패자조</span>
+            </StFence>
+          ) : null}
           {colHeads.map((h, i) => (
             <StColHead key={h} style={{ left: PAD + i * COL_W, width: NODE_W }}>
               {h}
@@ -320,8 +341,11 @@ function Tree({
               return (
                 <div>
                   <StRow $won={won} $lost={done && !won} $empty={!team}>
-                    <StSwatch style={{ background: team ? shirtOf(team) : "transparent" }} />
-                    <StName>{team ? team.name : label}</StName>
+                    <StShirt style={{ background: team ? shirtOf(team) : "transparent" }} />
+                    <StName>
+                      {team ? team.name : label}
+                      {won ? <StCrown aria-label="승리"> 👑</StCrown> : null}
+                    </StName>
                     <StPts>{score ?? ""}</StPts>
                   </StRow>
                   <StRoster title={names.join(" · ") || undefined}>
@@ -333,11 +357,13 @@ function Tree({
             return (
               <StNode
                 key={l.no}
-                style={{ left: p.x, top: p.y, borderColor: STATE_EDGE[m.status] }}
+                style={{ left: p.x, top: p.y }}
+                $edge={m.template.stage === "grand-final" ? GOLD : STATE_EDGE[m.status]}
                 $dim={m.status === "hidden"}
               >
-                <StHead>
+                <StHead style={{ background: STATE_BAND[m.status] }}>
                   <span>
+                    {m.template.stage === "grand-final" ? "🏆 " : ""}
                     {m.template.no} · {m.template.label}
                   </span>
                   <span>{STATE_TEXT[m.status] || `${m.template.block}타임`}</span>
@@ -408,6 +434,7 @@ const StTreeTitle = styled.div`
   }
 `;
 
+// 라운드 머리: 양 끝이 V 자로 파인 노란 리본
 const StColHead = styled.div`
   position: absolute;
   top: 0;
@@ -419,6 +446,43 @@ const StColHead = styled.div`
   font-weight: 800;
   color: #121b20;
   background: ${LED};
+  clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%, 7px 50%);
+`;
+
+// 승자조 / 패자조 사이 하얀 픽셀 울타리
+const StFence = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+  transform: translateY(-50%);
+  background:
+    linear-gradient(#ffffff, #ffffff) 0 2px / 100% 2px no-repeat,
+    linear-gradient(#ffffff, #ffffff) 0 6px / 100% 2px no-repeat,
+    repeating-linear-gradient(90deg, #ffffff 0 4px, transparent 4px 16px);
+  filter: drop-shadow(0 2px 0 #9fd3b0);
+
+  span {
+    position: absolute;
+    top: 50%;
+    padding: 1px 6px;
+    font-family: ${PIX};
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #ffffff;
+    transform: translateY(-120%);
+  }
+
+  span:first-child {
+    left: ${PAD}px;
+    background: ${GOLD};
+  }
+
+  span:last-child {
+    left: ${PAD}px;
+    background: ${DROP};
+    transform: translateY(20%);
+  }
 `;
 
 const StWalk = styled.canvas`
@@ -432,8 +496,10 @@ const StScroll = styled.div`
   overflow-x: auto;
 `;
 
+// 바탕은 라운드마다 번갈아 깎은 잔디 줄무늬 — 한 줄 = 한 라운드
 const StBoard = styled.div`
   position: relative;
+  background: repeating-linear-gradient(90deg, #e9f8e4 0 ${COL_W}px, #dcf2d4 ${COL_W}px ${COL_W * 2}px);
 
   svg {
     position: absolute;
@@ -441,16 +507,21 @@ const StBoard = styled.div`
   }
 `;
 
-const StNode = styled.div<{ $dim: boolean }>`
+// 칸 테두리는 모서리가 한 칸씩 깎인 픽셀 상자 (그림자 4개로 테두리, 하나로 아래 그림자)
+const StNode = styled.div<{ $dim: boolean; $edge: string }>`
   position: absolute;
   width: ${NODE_W}px;
   height: ${NODE_H}px;
   display: grid;
   grid-template-rows: auto 1fr 1fr;
-  padding: 3px 6px;
+  padding: 0 6px 3px;
   background: #ffffff;
-  border: 2px solid;
-  box-shadow: 3px 3px 0 #2f7a4f22;
+  box-shadow:
+    0 -3px 0 0 ${({ $edge }) => $edge},
+    0 3px 0 0 ${({ $edge }) => $edge},
+    -3px 0 0 0 ${({ $edge }) => $edge},
+    3px 0 0 0 ${({ $edge }) => $edge},
+    0 7px 0 0 #2f7a4f2e;
   opacity: ${({ $dim }) => ($dim ? 0.55 : 1)};
 `;
 
@@ -458,6 +529,8 @@ const StHead = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 4px;
+  margin-inline: -6px;
+  padding: 2px 6px;
   font-family: ${PIX};
   font-size: 0.6rem;
   color: ${DIM};
@@ -467,7 +540,7 @@ const StHead = styled.div`
 
 const StRow = styled.div<{ $won: boolean; $lost: boolean; $empty: boolean }>`
   display: grid;
-  grid-template-columns: 8px minmax(0, 1fr) 1.4rem;
+  grid-template-columns: 10px minmax(0, 1fr) 1.4rem;
   align-items: center;
   gap: 5px;
   font-size: 0.74rem;
@@ -475,9 +548,15 @@ const StRow = styled.div<{ $won: boolean; $lost: boolean; $empty: boolean }>`
   color: ${({ $won, $lost, $empty }) => ($won ? GOLD : $lost || $empty ? "#9aa6a9" : INK)};
 `;
 
-const StSwatch = styled.i`
-  width: 8px;
-  height: 8px;
+// 팀 색 꼬마 티셔츠
+const StShirt = styled.i`
+  width: 10px;
+  height: 9px;
+  clip-path: polygon(30% 0, 70% 0, 100% 22%, 100% 48%, 80% 48%, 80% 100%, 20% 100%, 20% 48%, 0 48%, 0 22%);
+`;
+
+const StCrown = styled.span`
+  font-size: 0.7rem;
 `;
 
 const StName = styled.span`
@@ -487,7 +566,7 @@ const StName = styled.span`
 `;
 
 const StRoster = styled.div`
-  padding-left: 13px;
+  padding-left: 15px;
   font-size: 0.6rem;
   font-weight: 500;
   color: ${DIM};
