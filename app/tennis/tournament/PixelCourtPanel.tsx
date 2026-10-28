@@ -13,6 +13,7 @@ import PixelDresserResult from "./PixelDresserResult";
 import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
+import { DRESSER_PICKS } from "@/services/tennisVotes";
 import { usePixelToto } from "./usePixelToto";
 import PixelVoterGate from "./PixelVoterGate";
 
@@ -190,9 +191,14 @@ export default function PixelCourtPanel({
   const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
   const [viewBlock, setViewBlock] = useState<number | null>(null);
   // 전광판 벤치를 눌러 우승팀 토토 걸기 (주인 요청 2026-10-28 "여기서 투표 모드로")
-  const [totoMode, setTotoMode] = useState(false);
-  const toto = usePixelToto(event, totoMode, demo);
+  // 베스트드레서 고르기도 같은 자리에서 (주인 요청 2026-10-28) — 한 번에 하나만 연다
+  const [voteMode, setVoteMode] = useState<"off" | "toto" | "dresser">("off");
+  const totoMode = voteMode === "toto";
+  const dresserMode = voteMode === "dresser";
+  const toto = usePixelToto(event, voteMode !== "off", demo);
   const canPick = toto.canVote && !totoLocked && !toto.busy;
+  const canDress = toto.canVote && !toto.dresserClosed && !toto.busy;
+  const modeLocked = totoMode ? totoLocked : toto.dresserClosed;
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -362,9 +368,32 @@ export default function PixelCourtPanel({
           </StBlocks>
           {/* 팀 벤치를 전광판에 합쳤다 (주인 요청 2026-10-28). 응원석 꼬마들은 탭 위로 옮김(CheerSquad) */}
           <StTotoBar>
-            <StTotoToggle type="button" aria-pressed={totoMode} $on={totoMode} onClick={() => setTotoMode((v) => !v)}>
-              🎟️ {totoMode ? "토토 걸기 끝" : "우승팀 토토 걸기"}
+            <StTotoToggle
+              type="button"
+              aria-pressed={totoMode}
+              $on={totoMode}
+              onClick={() => setVoteMode((v) => (v === "toto" ? "off" : "toto"))}
+            >
+              🎟️ 우승팀 토토
             </StTotoToggle>
+            <StTotoToggle
+              type="button"
+              aria-pressed={dresserMode}
+              $on={dresserMode}
+              onClick={() => setVoteMode((v) => (v === "dresser" ? "off" : "dresser"))}
+            >
+              👗 베스트드레서
+            </StTotoToggle>
+            {dresserMode ? (
+              <StTotoHint>
+                {toto.dresserClosed
+                  ? "베스트드레서 투표가 마감됐어요. 발표는 대회가 끝나면 맨 아래에서!"
+                  : !toto.canVote
+                    ? "내 이름과 비번으로 들어오면 바로 고를 수 있어요."
+                    : `벤치 아래 이름을 눌러 ${DRESSER_PICKS}명까지 골라 주세요 (나는 빼고) · ${toto.dresserMine.length}/${DRESSER_PICKS}명. 표 수는 마감 뒤에 공개돼요.`}
+                {toto.error ? ` ${toto.error}` : ""}
+              </StTotoHint>
+            ) : null}
             {totoMode ? (
               <StTotoHint>
                 {totoLocked
@@ -378,13 +407,43 @@ export default function PixelCourtPanel({
               </StTotoHint>
             ) : null}
             {/* 투표 탭과 같은 이름·비번 확인 (주인 요청 2026-10-28). 체험·마감 뒤에는 필요 없다 */}
-            {totoMode && !demo && !totoLocked ? (
+            {voteMode !== "off" && !demo && !modeLocked ? (
               <PixelVoterGate event={event} myName={toto.myName} onChange={toto.setVoter} />
             ) : null}
           </StTotoBar>
           <StBench>
             {event.teams.map((team) => {
               const next = onCourt.has(team.seed) ? null : nextFor(team);
+              if (dresserMode) {
+                const names = team.players.map((pl) => pl.name).filter((n) => n.trim());
+                return (
+                  <StSeat key={team.seed} $on={false}>
+                    <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
+                    <StSeatName>{team.name}</StSeatName>
+                    <StChips>
+                      {names.map((n) => {
+                        const picked = toto.dresserMine.includes(n);
+                        const self = n === toto.myName;
+                        const full = !picked && toto.dresserMine.length >= DRESSER_PICKS;
+                        return (
+                          <StChip
+                            key={n}
+                            type="button"
+                            $picked={picked}
+                            aria-pressed={picked}
+                            disabled={!canDress || self || full}
+                            title={self ? "나는 고를 수 없어요" : undefined}
+                            onClick={() => void toto.pickDresser(n)}
+                          >
+                            {picked ? "✓ " : ""}
+                            {n}
+                          </StChip>
+                        );
+                      })}
+                    </StChips>
+                  </StSeat>
+                );
+              }
               if (totoMode) {
                 const mine = toto.mine === String(team.seed);
                 return (
@@ -905,6 +964,30 @@ const StSeatBtn = styled.button<{ $mine: boolean }>`
   }
 
   &:disabled {
+    cursor: default;
+  }
+`;
+
+// 베스트드레서 고르기: 벤치 아래 선수 이름 칩 (고른 사람은 노란 칩)
+const StChips = styled.div`
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  margin-top: 0.15rem;
+`;
+
+const StChip = styled.button<{ $picked: boolean }>`
+  padding: 0.25rem 0.2rem;
+  border: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: ${INK};
+  background: ${({ $picked }) => ($picked ? "#ffcf4a" : "#ffffff")};
+  box-shadow: ${({ $picked }) => ($picked ? `2px 2px 0 ${INK}` : "none")};
+  cursor: pointer;
+
+  &:disabled {
+    color: #b3bec1;
     cursor: default;
   }
 `;
