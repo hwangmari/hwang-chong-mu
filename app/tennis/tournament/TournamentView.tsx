@@ -894,8 +894,8 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
                       const name = exact?.name || playerAtSeed(t, sd)?.name;
                       return (
                         <td key={sd} className={exact ? "" : "muted"}>
-                          {name ?? "—"}
-                          {name && !exact ? <small>3번 겸</small> : null}
+                          {/* 세 명인 팀의 4번 자리는 이름을 되풀이하지 않고 "3번 겸"만 (주인 요청 2026-10-28) */}
+                          {exact ? exact.name : name ? "3번 겸" : "—"}
                         </td>
                       );
                     })}
@@ -1401,11 +1401,6 @@ const StRosterTable = styled(StTable)`
     font-size: 0.85rem;
     white-space: normal;
     word-break: keep-all;
-  }
-
-  small {
-    display: block;
-    font-size: 0.7rem;
   }
 
   @media ${({ theme }) => theme.media.mobile} {
