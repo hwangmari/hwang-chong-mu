@@ -20,9 +20,12 @@ type Props = {
   phase: TournamentPhase;
   /** 우승팀 토토가 마감됐는지 */
   totoClosed: boolean;
+  /** 베스트드레서가 마감(=공개)됐는지 */
+  dresserClosed: boolean;
   busy: boolean;
   onPhase: (next: TournamentPhase) => Promise<void>;
   onToto: (closed: boolean) => Promise<void>;
+  onDresser: (closed: boolean) => Promise<void>;
   onEnter: (name: string) => void;
   onExit: () => void;
 };
@@ -38,6 +41,8 @@ const PHASE_TEXT: Record<TournamentPhase, string> = {
  * 진행 요원은 "대회 시작"·"대회 끝"과 "토토 마감"을 누른다. 그 사이 경기 시작·점수는 누구나 한다.
  * 토토 마감은 대회 시작과 따로다 — 첫 경기를 보고 닫아도 된다 (주인 요청 2026-10-27).
  * 대회 끝과 함께 토토도 닫히고 누가 어디에 걸었는지 공개된다.
+ * 베스트드레서 마감도 여기서 (주인 요청 2026-10-28) — 투표 탭 관리자 칸의 "마감하고 공개"와 같은 값(closed.dresser).
+ * 시상식 뒤에 발표하므로 대회가 끝나도 단추가 남는다.
  */
 export default function StaffBar({
   eventId,
@@ -45,9 +50,11 @@ export default function StaffBar({
   staffName,
   phase,
   totoClosed,
+  dresserClosed,
   busy,
   onPhase,
   onToto,
+  onDresser,
   onEnter,
   onExit,
 }: Props) {
@@ -67,6 +74,13 @@ export default function StaffBar({
       ? "우승팀 토토를 다시 열까요? 다시 팀을 고르거나 바꿀 수 있게 돼요."
       : "우승팀 토토를 마감할까요? 이제 아무도 팀을 고르거나 바꿀 수 없어요. 누가 어디에 걸었는지는 대회가 끝나면 공개돼요.";
     if (await openConfirm(message)) await onToto(!totoClosed);
+  }
+
+  async function toggleDresser() {
+    const message = dresserClosed
+      ? "베스트드레서를 다시 열까요? 다시 고르거나 바꿀 수 있게 돼요."
+      : "베스트드레서를 마감할까요? 이제 아무도 고르거나 바꿀 수 없고, 픽셀 코트·투표 탭에서 결과를 발표할 수 있게 돼요.";
+    if (await openConfirm(message)) await onDresser(!dresserClosed);
   }
 
   async function enter() {
@@ -103,6 +117,7 @@ export default function StaffBar({
             {phase !== "ended"
               ? ` 토토 ${totoClosed ? "마감됨" : "받는 중"}.`
               : null}
+            {` 베스트드레서 ${dresserClosed ? "마감됨" : "받는 중"}.`}
           </span>
           <StGhostBtn type="button" onClick={onExit}>
             나가기
@@ -174,6 +189,13 @@ export default function StaffBar({
               {totoClosed ? "🎟️ 토토 다시 열기" : "🎟️ 토토 마감"}
             </StGhostBtn>
           ) : null}
+          <StGhostBtn
+            type="button"
+            disabled={busy}
+            onClick={() => void toggleDresser()}
+          >
+            {dresserClosed ? "👗 베스트드레서 다시 열기" : "👗 베스트드레서 마감"}
+          </StGhostBtn>
         </StActionsRow>
       </StBar>
     );

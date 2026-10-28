@@ -115,7 +115,16 @@ function draw(ctx: CanvasRenderingContext2D, t: number, full: number, list: Nomi
   ctx.restore();
 }
 
-export default function PixelDresserResult({ event, demo = false }: { event: TournamentEvent; demo?: boolean }) {
+export default function PixelDresserResult({
+  event,
+  demo = false,
+  closed,
+}: {
+  event: TournamentEvent;
+  demo?: boolean;
+  /** 대회 화면이 아는 마감 여부 — 진행 요원이 마감하면 새로고침 없이 바로 발표 단추가 생긴다 */
+  closed?: boolean;
+}) {
   const [tally, setTally] = useState<VoteTally | null>(() => (demo ? demoTally(event) : null));
   const [open, setOpen] = useState<boolean | null>(() => (demo ? true : null));
   const [run, setRun] = useState(0);
@@ -134,7 +143,8 @@ export default function PixelDresserResult({ event, demo = false }: { event: Tou
         setOpen(settings.closed.dresser);
       })
       .catch(() => setOpen(false));
-  }, [demo, event.id]);
+    // 마감되는 순간 표를 다시 읽는다 — 그 전에 읽어 둔 표는 마감 직전 표와 다를 수 있다
+  }, [demo, event.id, closed]);
 
   useEffect(() => {
     const box = ref.current?.parentElement;
@@ -191,8 +201,9 @@ export default function PixelDresserResult({ event, demo = false }: { event: Tou
     setRun((n) => n + 1);
   };
 
-  if (open === null) return <StNote>베스트드레서 결과를 불러오는 중…</StNote>;
-  if (!open) return <StNote>관리자가 베스트드레서 투표를 마감하면 여기서 발표해요.</StNote>;
+  const isOpen = closed ?? open;
+  if (isOpen === null) return <StNote>베스트드레서 결과를 불러오는 중…</StNote>;
+  if (!isOpen) return <StNote>관리자가 베스트드레서 투표를 마감하면 여기서 발표해요.</StNote>;
   if (list.length === 0) return <StNote>베스트드레서 표가 하나도 없어요.</StNote>;
 
   if (run === 0) {

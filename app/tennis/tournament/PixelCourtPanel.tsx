@@ -28,6 +28,8 @@ type Props = {
   demo?: boolean;
   /** 토토가 마감됐는지 (진행 요원 마감 또는 대회 끝) — 전광판 토토 걸기를 막는다 */
   totoLocked?: boolean;
+  /** 진행 요원이 베스트드레서를 마감했는지 (대회 화면이 읽어 둔 값). 체험 페이지는 없음 */
+  dresserClosed?: boolean;
 };
 
 /**
@@ -175,6 +177,7 @@ export default function PixelCourtPanel({
   renderMatch,
   demo = false,
   totoLocked = false,
+  dresserClosed,
 }: Props) {
   // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림 (멈춤 버튼은 응원석 자리로 바뀌며 뺐다 — 2026-10-28).
   // 탭을 눌러야 그려지는 화면이라 서버 렌더와 어긋날 일이 없다
@@ -572,7 +575,7 @@ export default function PixelCourtPanel({
         {ranks[0].team ? (
           <StPanel>
             <StPanelTitle>👗 베스트드레서</StPanelTitle>
-            <PixelDresserResult event={event} demo={demo} />
+            <PixelDresserResult event={event} demo={demo} closed={dresserClosed} />
           </StPanel>
         ) : null}
     </StScene>

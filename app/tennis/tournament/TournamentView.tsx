@@ -160,6 +160,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
   const [phase, setPhase] = useState<TournamentPhase>("before");
   // 우승팀 토토 마감 — 대회 시작과 따로, 진행 요원이 직접 누른다 (주인 요청 2026-10-27)
   const [totoClosed, setTotoClosed] = useState(false);
+  const [dresserClosed, setDresserClosed] = useState(false);
 
   useEffect(() => {
     if (!notice) return;
@@ -199,6 +200,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
         setAdmins(settings.admins);
         setPhase(settings.phase);
         setTotoClosed(settings.closed.champion);
+        setDresserClosed(settings.closed.dresser);
         setMode("cloud");
         setError("");
       } catch {
@@ -273,6 +275,19 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       setTotoClosed(saved.closed.champion);
     } catch {
       setError("토토 마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  // 베스트드레서 마감도 진행 요원이 (주인 요청 2026-10-28) — 토토 마감과 같은 방식
+  async function changeDresser(next: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await saveVoteSettings(eventId, { closed: { dresser: next } });
+      setDresserClosed(saved.closed.dresser);
+    } catch {
+      setError("베스트드레서 마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
     } finally {
       setBusy(false);
     }
@@ -541,9 +556,11 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
           staffName={admins.includes(staffName) ? staffName : ""}
           phase={phase}
           totoClosed={totoClosed}
+          dresserClosed={dresserClosed}
           busy={busy}
           onPhase={changePhase}
           onToto={changeToto}
+          onDresser={changeDresser}
           onEnter={setStaffName}
           onExit={() => {
             clearSavedStaff(eventId);
@@ -828,6 +845,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
         <PixelCourtPanel
           demo={demo}
           totoLocked={totoClosed || phase === "ended" || tournamentOver}
+          dresserClosed={demo ? undefined : dresserClosed}
           event={event}
           matches={matches}
           scores={scores}
