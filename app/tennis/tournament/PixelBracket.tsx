@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { drawFire, drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
@@ -215,6 +215,33 @@ function Tree({
   moving: boolean;
 }) {
   const cols = Math.max(...layout.map((l) => l.col)) + 1;
+
+  // 라운드 넘기기 (주인 요청 2026-10-28 "스크롤 말고 스와이프처럼 라운드 넘길 수 있게")
+  // 밀면 라운드 머리(StColHead)에 딱 멈추고, ◀ ▶ 로도 한 라운드씩 넘긴다. 화면에 다 들어오면 버튼은 숨긴다
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [col, setCol] = useState(0);
+  const [canSlide, setCanSlide] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => setCanSlide(el.scrollWidth - el.clientWidth > 4);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // 끝까지 밀었으면 마지막 라운드로 친다(마지막 열은 왼쪽 끝에 붙일 수 없다)
+    const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 4;
+    setCol(atEnd ? colHeads.length - 1 : Math.min(colHeads.length - 1, Math.round(el.scrollLeft / COL_W)));
+  };
+  const goCol = (next: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const c = Math.max(0, Math.min(colHeads.length - 1, next));
+    el.scrollTo({ left: c * COL_W, behavior: "smooth" });
+  };
   const rows = Math.max(...layout.map((l) => l.row)) + 1;
   const width = PAD * 2 + (cols - 1) * COL_W + NODE_W;
   const height = HEAD_H + PAD * 2 + (rows - 1) * ROW_H + NODE_H;
@@ -267,7 +294,23 @@ function Tree({
       <StTreeTitle>
         {title} <span>{hint}</span>
       </StTreeTitle>
-      <StScroll>
+      {canSlide ? (
+        <StSlide>
+          <StArrow type="button" aria-label="이전 라운드" disabled={col === 0} onClick={() => goCol(col - 1)}>
+            ◀
+          </StArrow>
+          <StSlideLabel aria-live="polite">{colHeads[col]}</StSlideLabel>
+          <StArrow
+            type="button"
+            aria-label="다음 라운드"
+            disabled={col >= colHeads.length - 1}
+            onClick={() => goCol(col + 1)}
+          >
+            ▶
+          </StArrow>
+        </StSlide>
+      ) : null}
+      <StScroll ref={scrollRef} onScroll={onScroll}>
         <StBoard style={{ width, height, backgroundPositionX: PAD - (COL_W - NODE_W) / 2 }}>
           <svg width={width} height={height} shapeRendering="crispEdges" aria-hidden="true">
             {links.map((lk) => {
@@ -447,6 +490,8 @@ const StColHead = styled.div`
   font-weight: 800;
   color: #121b20;
   background: ${LED};
+  scroll-snap-align: start;
+  scroll-margin-left: ${PAD}px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%, 7px 50%);
 `;
 
@@ -493,8 +538,48 @@ const StWalk = styled.canvas`
   image-rendering: pixelated;
 `;
 
+// 밀면 라운드 단위로 딱 멈춘다
 const StScroll = styled.div`
   overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+`;
+
+const StSlide = styled.div`
+  display: grid;
+  grid-template-columns: 2.4rem 1fr 2.4rem;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
+const StSlideLabel = styled.div`
+  text-align: center;
+  font-family: ${PIX};
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: ${INK};
+`;
+
+const StArrow = styled.button`
+  height: 2rem;
+  border: 0;
+  font-size: 0.8rem;
+  color: ${INK};
+  background: ${LED};
+  box-shadow: 2px 2px 0 ${INK};
+  cursor: pointer;
+
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    color: #9aa6a9;
+    background: #eef3f4;
+    box-shadow: 2px 2px 0 #c2cdd0;
+    cursor: default;
+  }
 `;
 
 // 바탕은 라운드마다 번갈아 깎은 잔디 줄무늬 — 한 줄 = 한 라운드
