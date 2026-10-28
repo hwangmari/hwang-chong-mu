@@ -826,6 +826,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
         </StCard>
       ) : tab === "pixel" ? (
         <PixelCourtPanel
+          demo={demo}
           event={event}
           matches={matches}
           scores={scores}

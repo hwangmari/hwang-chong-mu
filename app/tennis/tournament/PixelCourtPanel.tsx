@@ -8,6 +8,7 @@ import { courtLetters } from "../timeline";
 import PixelBracket, { shirtOf } from "./PixelBracket";
 import CheerSquad from "./CheerSquad";
 import PixelPodium from "./PixelPodium";
+import PixelTotoResult from "./PixelTotoResult";
 import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
@@ -19,6 +20,8 @@ type Props = {
   blocks: ScheduleBlock[];
   /** 코트를 누르면 그 경기 아래에 여는 시작·점수 입력 칸. 점수 화면과 같은 카드를 위에서 넘겨준다 */
   renderMatch?: (match: ResolvedMatch) => ReactNode;
+  /** 체험 페이지: 토토 결과를 저장 공간 대신 가짜 표로 */
+  demo?: boolean;
 };
 
 /**
@@ -158,7 +161,7 @@ function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
 }
 
 
-export default function PixelCourtPanel({ event, matches, scores, blocks, renderMatch }: Props) {
+export default function PixelCourtPanel({ event, matches, scores, blocks, renderMatch, demo = false }: Props) {
   // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림 (멈춤 버튼은 응원석 자리로 바뀌며 뺐다 — 2026-10-28).
   // 탭을 눌러야 그려지는 화면이라 서버 렌더와 어긋날 일이 없다
   const [moving] = useState(
@@ -435,6 +438,14 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           <StPanel>
             <StPanelTitle>🏅 시상식</StPanelTitle>
             <PixelPodium ranks={ranks} sprites={spritesByTeam} />
+          </StPanel>
+        ) : null}
+
+        {/* 시상식 다음은 토토 결과 (주인 요청 2026-10-28) */}
+        {ranks[0].team ? (
+          <StPanel>
+            <StPanelTitle>🎟️ 토토 결과</StPanelTitle>
+            <PixelTotoResult event={event} winner={ranks[0].team} sprites={spritesByTeam} demo={demo} />
           </StPanel>
         ) : null}
     </StScene>
