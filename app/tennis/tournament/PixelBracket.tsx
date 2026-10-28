@@ -173,7 +173,8 @@ function WalkLayer({
       },
       { threshold: 0.25 },
     );
-    io.observe(canvas);
+    // 대진표는 휴대폰 화면보다 훨씬 넓어 그림 자체로는 25%가 안 보인다 → 옆으로 미는 틀(StScroll) 기준으로 본다
+    io.observe(canvas.parentElement?.parentElement ?? canvas);
     raf = requestAnimationFrame(loop);
     return () => {
       io.disconnect();
