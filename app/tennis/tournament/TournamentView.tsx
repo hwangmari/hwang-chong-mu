@@ -298,7 +298,9 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
     setBusy(true);
     setError("");
     try {
-      await resetPin(eventId, name);
+      const staff = getSavedStaff(eventId);
+      if (!staff) throw new Error("NOT_STAFF");
+      await resetPin(eventId, name, staff);
       setNotice(`${name}님 비번을 초기화했어요. 다음에 들어올 때 새 네 자리를 정하면 돼요.`);
     } catch {
       setError("비번을 초기화하지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");

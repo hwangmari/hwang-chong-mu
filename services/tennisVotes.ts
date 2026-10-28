@@ -243,15 +243,13 @@ export async function verifyPin(
   name: string,
   pin: string,
 ): Promise<"ok" | "wrong" | "none"> {
-  const { data, error } = await supabase
-    .from("tennis_vote_pins")
-    .select("pin_hash")
-    .eq("event_id", eventId)
-    .eq("name", name)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("tennis_pin_verify", {
+    p_event: eventId,
+    p_name: name,
+    p_hash: await hashPin(eventId, name, pin),
+  });
   if (error) throw error;
-  if (!data) return "none";
-  return data.pin_hash === (await hashPin(eventId, name, pin)) ? "ok" : "wrong";
+  return data as "ok" | "wrong" | "none";
 }
 
 /**
@@ -264,43 +262,32 @@ export async function checkOrCreatePin(
   name: string,
   pin: string,
 ): Promise<PinCheck> {
-  const hash = await hashPin(eventId, name, pin);
-  const { data, error } = await supabase
-    .from("tennis_vote_pins")
-    .select("pin_hash")
-    .eq("event_id", eventId)
-    .eq("name", name)
-    .maybeSingle();
+  // 표는 잠겨 있고 함수만 다룬다 (supabase/20261028_tennis_vote_pins_rpc.sql) — 동시에 처음 넣는 경우도 함수가 처리
+  const { data, error } = await supabase.rpc("tennis_pin_check", {
+    p_event: eventId,
+    p_name: name,
+    p_hash: await hashPin(eventId, name, pin),
+  });
   if (error) throw error;
-
-  if (data) return data.pin_hash === hash ? "ok" : "wrong";
-
-  const { error: insErr } = await supabase
-    .from("tennis_vote_pins")
-    .insert({ event_id: eventId, name, pin_hash: hash });
-  if (!insErr) return "created";
-
-  // 두 기기에서 동시에 처음 넣으면 한쪽이 중복으로 막힌다. 그땐 맞는지 다시 본다
-  const { data: again } = await supabase
-    .from("tennis_vote_pins")
-    .select("pin_hash")
-    .eq("event_id", eventId)
-    .eq("name", name)
-    .maybeSingle();
-  return again?.pin_hash === hash ? "ok" : "wrong";
+  return data as PinCheck;
 }
 
 /**
  * 비번 초기화 — 진행 요원이 비번을 잊은 사람의 비번 기록만 지운다 (주인 요청 2026-10-28).
  * 그 사람이 다음에 이름을 골라 넣는 네 자리가 새 비번이 된다(checkOrCreatePin 의 "created").
  * 표(tennis_votes)는 이름 기준이라 그대로 남는다. 비번은 해시라 진행 요원도 원래 번호는 볼 수 없다.
- * 진행 요원 이름은 화면에서 막는다 — 지우면 아무나 그 이름으로 새 비번을 정해 진행 요원이 될 수 있다.
+ * 함수(tennis_pin_reset)가 진행 요원 이름·비번을 다시 확인하고, 진행 요원 이름은 지우지 못하게 막는다.
  */
-export async function resetPin(eventId: string, name: string): Promise<void> {
-  const { error } = await supabase
-    .from("tennis_vote_pins")
-    .delete()
-    .eq("event_id", eventId)
-    .eq("name", name);
+export async function resetPin(
+  eventId: string,
+  name: string,
+  staff: { name: string; pin: string },
+): Promise<void> {
+  const { error } = await supabase.rpc("tennis_pin_reset", {
+    p_event: eventId,
+    p_target: name,
+    p_staff: staff.name,
+    p_staff_hash: await hashPin(eventId, staff.name, staff.pin),
+  });
   if (error) throw error;
 }
