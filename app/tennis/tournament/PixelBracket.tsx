@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import styled from "styled-components";
 import { drawFire, drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
@@ -260,6 +260,29 @@ function Tree({
       g.settled = el.scrollLeft;
     }, 140);
   };
+  // PC 마우스로 잡아끌기 — 끄는 동안만 멈춤(snap)을 꺼서 손에 붙어 움직이고, 놓으면 위 한 칸 규칙으로 선다
+  const drag = useRef<{ x: number; left: number } | null>(null);
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el || e.pointerType !== "mouse" || e.button !== 0) return;
+    drag.current = { x: e.clientX, left: el.scrollLeft };
+    el.style.scrollSnapType = "none";
+    el.style.scrollBehavior = "auto";
+    el.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el || !drag.current) return;
+    el.scrollLeft = drag.current.left - (e.clientX - drag.current.x);
+  };
+  const onPointerUp = () => {
+    const el = scrollRef.current;
+    if (!el || !drag.current) return;
+    drag.current = null;
+    el.style.scrollSnapType = "";
+    el.style.scrollBehavior = "";
+    onScroll();
+  };
   const goCol = (next: number) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -334,7 +357,15 @@ function Tree({
           </StArrow>
         </StSlide>
       ) : null}
-      <StScroll ref={scrollRef} onScroll={onScroll}>
+      <StScroll
+        ref={scrollRef}
+        onScroll={onScroll}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        $grab={canSlide}
+      >
         <StBoard style={{ width, height, backgroundPositionX: PAD - (COL_W - NODE_W) / 2 }}>
           <svg width={width} height={height} shapeRendering="crispEdges" aria-hidden="true">
             {links.map((lk) => {
@@ -564,8 +595,18 @@ const StWalk = styled.canvas`
 `;
 
 // 밀면 스르륵 미끄러지다 라운드 단위로 딱 멈춘다 — 세게 밀어도 한 번에 한 라운드만 (주인 요청 2026-10-28)
-const StScroll = styled.div`
+// 스크롤 막대는 숨기고 스와이퍼처럼만 쓴다 (주인 요청 2026-10-28 "가로 스크롤 빼고 스와이퍼만")
+const StScroll = styled.div<{ $grab: boolean }>`
   overflow-x: auto;
+  scrollbar-width: none;
+  cursor: ${({ $grab }) => ($grab ? "grab" : "auto")};
+  user-select: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  &:active {
+    cursor: ${({ $grab }) => ($grab ? "grabbing" : "auto")};
+  }
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
