@@ -8,14 +8,15 @@ import type { Placement } from "./types";
 /**
  * 픽셀 시상식 — 대회가 다 끝나면 픽셀 코트 맨 아래에 (주인 요청 2026-10-28 "시상대 만들어서 시상식 퍼포먼스도").
  * 화면에 보이면 한 번만 공연하고 마지막 장면에서 멈춘다 (움직임은 한 번, 그다음 고정 — 화면 규칙).
- *  1) 4위 → 3위 → 2위 → 1위 순서로 걸어 들어와 단상에 폴짝
+ *  0) 4~8위 팀은 단상 아래 앞줄로 걸어 나와 만세하며 축하 (주인 요청 2026-10-28 "3등까지만, 나머지는 시상대 아래에서 축하")
+ *  1) 3위 → 2위 → 1위 순서로 걸어 들어와 단상에 폴짝
  *  2) 3·2·1위 메달이 위에서 떨어져 목에 걸림
  *  3) 우승 트로피가 내려오고 조명이 켜짐 → 폭죽 세 번 + 꽃가루
  * 동작 줄이기 설정이면 처음부터 마지막 장면만 보여 준다. "다시 보기"로 처음부터 다시.
  */
 
 const W = 240;
-const H = 120;
+const H = 138; // 단상 앞 바닥에 축하하는 팀들이 설 자리를 둔다
 const FLOOR = 104;
 const END_MS = 9800;
 
@@ -26,12 +27,13 @@ const STEPS: Step[] = [
   { rank: 1, x0: 95, x1: 145, top: 68, from: 1, delay: 1500 },
   { rank: 2, x0: 45, x1: 95, top: 80, from: 1, delay: 1000 },
   { rank: 3, x0: 145, x1: 195, top: 88, from: -1, delay: 500 },
-  { rank: 4, x0: 196, x1: 232, top: 96, from: -1, delay: 0 },
 ];
+const CROWD_FEET = H - 3; // 앞줄 꼬마들 발 위치
+const CROWD_GAP = 8; // 앞줄은 조금 촘촘하게
 const WALK = 1400;
 const HOP = 350;
 const MEDAL: Record<number, string> = { 1: "#ffd34a", 2: "#d9e2e6", 3: "#d9904f" };
-const BLOCK: Record<number, string> = { 1: "#ffcf4a", 2: "#e9eef0", 3: "#f2b77e", 4: "#d7f0dd" };
+const BLOCK: Record<number, string> = { 1: "#ffcf4a", 2: "#e9eef0", 3: "#f2b77e" };
 const CONFETTI = ["#ff5c8a", "#ffcf4a", "#4fb0f7", "#6cc96a", "#9a7cff", "#ffffff"];
 
 // 3×5 숫자 (단상 앞면 번호)
@@ -39,7 +41,6 @@ const DIGIT: Record<number, string[]> = {
   1: ["010", "110", "010", "010", "111"],
   2: ["111", "001", "111", "100", "111"],
   3: ["111", "001", "111", "001", "111"],
-  4: ["101", "101", "111", "001", "001"],
 };
 function drawDigit(ctx: CanvasRenderingContext2D, n: number, x: number, y: number, c: string) {
   DIGIT[n].forEach((row, j) =>
@@ -104,13 +105,40 @@ function drawBlocks(ctx: CanvasRenderingContext2D) {
     px(ctx, s.x0, s.top, w, FLOOR - s.top, BLOCK[s.rank]);
     px(ctx, s.x0, s.top, w, 2, "#ffffff");
     px(ctx, s.x1 - 2, s.top, 2, FLOOR - s.top, "#0000001a");
-    // 낮은 4위 자리는 번호가 안 들어가서 바로 앞 바닥에 쓴다
-    if (FLOOR - s.top >= 14) drawDigit(ctx, s.rank, s.x0 + w / 2 - 3, s.top + (FLOOR - s.top) / 2 - 4, "#24343b");
-    else drawDigit(ctx, s.rank, s.x0 + w / 2 - 3, FLOOR + 3, "#ffffffcc");
+    drawDigit(ctx, s.rank, s.x0 + w / 2 - 3, s.top + (FLOOR - s.top) / 2 - 4, "#24343b");
   }
 }
 
-function draw(ctx: CanvasRenderingContext2D, t: number, places: { rank: number; team: Sprite[] }[]) {
+// 4~8위: 단상 앞 바닥 한 줄. 왼쪽 절반 팀은 왼쪽에서, 오른쪽 절반은 오른쪽에서 걸어 나온다
+function drawCrowd(ctx: CanvasRenderingContext2D, t: number, crowd: Sprite[][], frame: number) {
+  const widths = crowd.map((team) => team.length * CROWD_GAP);
+  const total = widths.reduce((a, b) => a + b, 0) + Math.max(0, crowd.length - 1) * 6;
+  let cursor = W / 2 - total / 2;
+  crowd.forEach((team, k) => {
+    const fromLeft = k < crowd.length / 2;
+    team.forEach((sp, i) => {
+      const fx = cursor + i * CROWD_GAP;
+      const edge = fromLeft ? -10 - (team.length - i) * CROWD_GAP : W + 2 + i * CROWD_GAP;
+      const p = Math.min(1, t / WALK);
+      const x = edge + (fx - edge) * p;
+      const y = CROWD_FEET - 12;
+      const arrived = p >= 1;
+      // 도착하면 번갈아 만세, 단상 공연이 끝나면 다 같이 만세 자세로 멈춘다
+      const cheer = arrived && (t >= END_MS || (frame + i + k) % 3 !== 0);
+      const lift = cheer && t < END_MS ? (frame + i + k) % 2 : 0;
+      drawPlayer(ctx, x, y - lift, sp, arrived ? frame : Math.floor(t / 120), fromLeft ? 1 : -1, cheer);
+      if (arrived && t < END_MS && (frame + i * 3 + k) % 7 === 0) drawHeart(ctx, x + 2, y - 7);
+    });
+    cursor += widths[k] + 6;
+  });
+}
+
+function draw(
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  places: { rank: number; team: Sprite[] }[],
+  crowd: Sprite[][],
+) {
   ctx.clearRect(0, 0, W, H);
   drawStage(ctx);
   const frame = Math.floor(t / 280);
@@ -167,9 +195,10 @@ function draw(ctx: CanvasRenderingContext2D, t: number, places: { rank: number; 
           px(ctx, x + 3, my, 2, 2, medal);
         }
       }
-      if (s.rank === 4 && landed && t >= 3400 && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 7);
     });
   }
+
+  drawCrowd(ctx, t, crowd, frame);
 
   // 트로피: 1위 단상 위로 내려와 머리 위에 멈춘다
   if (t >= 4000) {
@@ -215,25 +244,27 @@ export default function PixelPodium({
   const [run, setRun] = useState(0); // 다시 보기 누를 때마다 1 증가
   const ref = useRef<HTMLCanvasElement>(null);
   const places = ranks
-    .filter((r) => r.rank <= 4 && r.team)
+    .filter((r) => r.rank <= 3 && r.team)
     .map((r) => ({ rank: r.rank, team: sprites.get(r.team!.seed) ?? [] }));
-  const sig = places.map((p) => `${p.rank}:${p.team.length}`).join("|");
+  const crowd = ranks.filter((r) => r.rank > 3 && r.team).map((r) => sprites.get(r.team!.seed) ?? []);
+  const sig =
+    places.map((p) => `${p.rank}:${p.team.length}`).join("|") + "/" + crowd.map((c) => c.length).join(",");
 
   useEffect(() => {
     const canvas = ref.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     if (!moving) {
-      draw(ctx, END_MS, places);
+      draw(ctx, END_MS, places, crowd);
       return;
     }
-    draw(ctx, 0, places);
+    draw(ctx, 0, places, crowd);
     let raf = 0;
     let begin: number | null = null;
     const loop = (now: number) => {
       if (begin === null) begin = now;
       const t = now - begin;
-      draw(ctx, Math.min(t, END_MS), places);
+      draw(ctx, Math.min(t, END_MS), places, crowd);
       if (t < END_MS) raf = requestAnimationFrame(loop);
     };
     // 화면에 25% 이상 보일 때 한 번 시작
@@ -248,7 +279,7 @@ export default function PixelPodium({
       io.disconnect();
       cancelAnimationFrame(raf);
     };
-    // places 는 매 렌더 새로 만들어지므로 sig 로 대신한다
+    // places·crowd 는 매 렌더 새로 만들어지므로 sig 로 대신한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, moving, run]);
 
@@ -259,14 +290,15 @@ export default function PixelPodium({
         width={W}
         height={H}
         role="img"
-        aria-label="시상식: 우승팀이 가장 높은 단상에서 트로피를 들고, 2·3위가 메달을 받아요"
+        aria-label="시상식: 우승팀이 가장 높은 단상에서 트로피를 들고, 2·3위가 메달을 받고, 나머지 팀이 단상 아래에서 축하해요"
       />
       <StList>
+        {/* 순위결정전(5-6위·7-8위)까지 하므로 1~8위 전부 */}
         {ranks
-          .filter((r) => r.rank <= 4 && r.team)
+          .filter((r) => r.team)
           .map((r) => (
             <li key={r.rank}>
-              <StMedal>{["🥇", "🥈", "🥉", "🎖️"][r.rank - 1]}</StMedal>
+              <StMedal>{["🥇", "🥈", "🥉"][r.rank - 1] ?? "👏"}</StMedal>
               <b>
                 {r.rank}위 · {r.team!.name}
               </b>
