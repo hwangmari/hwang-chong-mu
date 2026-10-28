@@ -492,6 +492,7 @@ const StColHead = styled.div`
   color: #121b20;
   background: ${LED};
   scroll-snap-align: start;
+  scroll-snap-stop: always;
   scroll-margin-left: ${PAD}px;
   clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%, 7px 50%);
 `;
@@ -539,10 +540,12 @@ const StWalk = styled.canvas`
   image-rendering: pixelated;
 `;
 
-// 밀면 라운드 단위로 딱 멈춘다
+// 밀면 스르륵 미끄러지다 라운드 단위로 딱 멈춘다 — 세게 밀어도 한 번에 한 라운드만 (주인 요청 2026-10-28)
 const StScroll = styled.div`
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
 `;
 
