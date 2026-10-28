@@ -22,9 +22,10 @@ const END_MS = 9800;
 type Step = { rank: number; x0: number; x1: number; top: number; from: 1 | -1; delay: number };
 // 단상: 가운데 1위가 제일 높고, 왼쪽 2위, 오른쪽 3위, 맨 오른쪽 낮은 4위 자리
 const STEPS: Step[] = [
-  { rank: 1, x0: 90, x1: 140, top: 68, from: 1, delay: 1500 },
-  { rank: 2, x0: 40, x1: 90, top: 80, from: 1, delay: 1000 },
-  { rank: 3, x0: 140, x1: 190, top: 88, from: -1, delay: 500 },
+  // 1위 단상 가운데가 그림 가운데(120)에 오게 (주인 요청 2026-10-28 "가운데 정렬")
+  { rank: 1, x0: 95, x1: 145, top: 68, from: 1, delay: 1500 },
+  { rank: 2, x0: 45, x1: 95, top: 80, from: 1, delay: 1000 },
+  { rank: 3, x0: 145, x1: 195, top: 88, from: -1, delay: 500 },
   { rank: 4, x0: 196, x1: 232, top: 96, from: -1, delay: 0 },
 ];
 const WALK = 1400;
@@ -120,8 +121,8 @@ function draw(ctx: CanvasRenderingContext2D, t: number, places: { rank: number; 
     ctx.beginPath();
     ctx.moveTo(108, 0);
     ctx.lineTo(132, 0);
-    ctx.lineTo(146, FLOOR);
-    ctx.lineTo(84, FLOOR);
+    ctx.lineTo(151, FLOOR);
+    ctx.lineTo(89, FLOOR);
     ctx.closePath();
     ctx.fill();
   }
@@ -174,8 +175,8 @@ function draw(ctx: CanvasRenderingContext2D, t: number, places: { rank: number; 
   if (t >= 4000) {
     const p = Math.min(1, (t - 4000) / 600);
     const ty = -10 + (68 - 12 - 12 - -10) * p;
-    drawTrophy(ctx, 111, ty);
-    if (p >= 1 && t < END_MS && frame % 3 === 0) drawHeart(ctx, 100, ty - 2);
+    drawTrophy(ctx, 116, ty);
+    if (p >= 1 && t < END_MS && frame % 3 === 0) drawHeart(ctx, 105, ty - 2);
   }
 
   // 폭죽: 점들이 원으로 퍼지며 사라진다
@@ -296,7 +297,6 @@ const StWrap = styled.div`
 const StCanvas = styled.canvas`
   display: block;
   width: 100%;
-  max-width: 720px;
   aspect-ratio: ${W} / ${H};
   image-rendering: pixelated;
   box-shadow: 4px 4px 0 #2f7a4f22;
@@ -306,7 +306,6 @@ const StList = styled.ol`
   display: grid;
   gap: 0.35rem;
   list-style: none;
-  max-width: 720px;
 
   li {
     display: grid;
@@ -336,7 +335,7 @@ const StMedal = styled.span`
 `;
 
 const StReplay = styled.button`
-  justify-self: start;
+  justify-self: center;
   padding: 0.45rem 0.8rem;
   border: 0;
   font-size: 0.82rem;
