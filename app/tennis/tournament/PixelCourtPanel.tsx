@@ -730,14 +730,12 @@ const StGame = styled.span<{ $dim: boolean }>`
 `;
 
 
+// 대진표 묶음: 흰 판·테두리·안쪽 여백 없이 잔디 대진표가 바로 바탕 위에 놓인다 (주인 요청 2026-10-28 "흰 박스 여백")
 const StPanel = styled.div`
   display: grid;
   align-content: start;
   gap: 0.6rem;
-  padding: 0.8rem;
   min-width: 0;
-  background: ${FLOOR};
-  box-shadow: ${CARD_SHADOW};
 `;
 
 const StPanelTitle = styled.h3`
