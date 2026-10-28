@@ -33,6 +33,7 @@ import {
 } from "@/services/tennis";
 import {
   fetchVoteSettings,
+  resetPin,
   saveVoteSettings,
   verifyPin,
   type TournamentPhase,
@@ -288,6 +289,19 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       setDresserClosed(saved.closed.dresser);
     } catch {
       setError("베스트드레서 마감 상태를 바꾸지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  // 비번 잊은 참가자 풀어 주기 — 진행 요원 띠에서 (주인 요청 2026-10-28)
+  async function resetPinFor(name: string) {
+    setBusy(true);
+    setError("");
+    try {
+      await resetPin(eventId, name);
+      setNotice(`${name}님 비번을 초기화했어요. 다음에 들어올 때 새 네 자리를 정하면 돼요.`);
+    } catch {
+      setError("비번을 초기화하지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.");
     } finally {
       setBusy(false);
     }
@@ -561,6 +575,8 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
           onPhase={changePhase}
           onToto={changeToto}
           onDresser={changeDresser}
+          names={[...event.roster].map((r) => r.name).sort((a, b) => a.localeCompare(b, "ko"))}
+          onResetPin={resetPinFor}
           onEnter={setStaffName}
           onExit={() => {
             clearSavedStaff(eventId);

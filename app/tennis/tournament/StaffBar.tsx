@@ -26,6 +26,9 @@ type Props = {
   onPhase: (next: TournamentPhase) => Promise<void>;
   onToto: (closed: boolean) => Promise<void>;
   onDresser: (closed: boolean) => Promise<void>;
+  /** 참가자 이름들 — 비번 초기화에서 고른다 */
+  names: string[];
+  onResetPin: (name: string) => Promise<void>;
   onEnter: (name: string) => void;
   onExit: () => void;
 };
@@ -55,6 +58,8 @@ export default function StaffBar({
   onPhase,
   onToto,
   onDresser,
+  names,
+  onResetPin,
   onEnter,
   onExit,
 }: Props) {
@@ -63,6 +68,7 @@ export default function StaffBar({
   const [pin, setPin] = useState("");
   const [msg, setMsg] = useState("");
   const [checking, setChecking] = useState(false);
+  const [resetName, setResetName] = useState("");
   const { openConfirm } = useModal();
 
   async function go(next: TournamentPhase, message: string) {
@@ -81,6 +87,17 @@ export default function StaffBar({
       ? "베스트드레서를 다시 열까요? 다시 고르거나 바꿀 수 있게 돼요."
       : "베스트드레서를 마감할까요? 이제 아무도 고르거나 바꿀 수 없고, 픽셀 코트·투표 탭에서 결과를 발표할 수 있게 돼요.";
     if (await openConfirm(message)) await onDresser(!dresserClosed);
+  }
+
+  // 비번 초기화: 진행 요원 이름은 고를 수 없다 (지우면 아무나 그 이름으로 진행 요원이 될 수 있다)
+  async function resetPinOf() {
+    if (!resetName) return;
+    const ok = await openConfirm(
+      `${resetName}님 비번을 초기화할까요? 넣은 표는 그대로고, 다음에 들어올 때 넣는 네 자리가 새 비번이 돼요.`,
+    );
+    if (!ok) return;
+    await onResetPin(resetName);
+    setResetName("");
   }
 
   async function enter() {
@@ -197,6 +214,30 @@ export default function StaffBar({
             {dresserClosed ? "👗 베스트드레서 다시 열기" : "👗 베스트드레서 마감"}
           </StGhostBtn>
         </StActionsRow>
+        {/* 비번을 잊은 참가자 풀어 주기 (주인 요청 2026-10-28) */}
+        <StForm>
+          <StSelect
+            aria-label="비번 초기화할 사람"
+            value={resetName}
+            onChange={(e) => setResetName(e.target.value)}
+          >
+            <option value="">비번 잊은 사람 고르기</option>
+            {names
+              .filter((n) => !admins.includes(n))
+              .map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+          </StSelect>
+          <StGhostBtn
+            type="button"
+            disabled={busy || !resetName}
+            onClick={() => void resetPinOf()}
+          >
+            🔑 비번 초기화
+          </StGhostBtn>
+        </StForm>
       </StBar>
     );
   }

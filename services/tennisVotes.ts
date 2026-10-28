@@ -289,3 +289,18 @@ export async function checkOrCreatePin(
     .maybeSingle();
   return again?.pin_hash === hash ? "ok" : "wrong";
 }
+
+/**
+ * 비번 초기화 — 진행 요원이 비번을 잊은 사람의 비번 기록만 지운다 (주인 요청 2026-10-28).
+ * 그 사람이 다음에 이름을 골라 넣는 네 자리가 새 비번이 된다(checkOrCreatePin 의 "created").
+ * 표(tennis_votes)는 이름 기준이라 그대로 남는다. 비번은 해시라 진행 요원도 원래 번호는 볼 수 없다.
+ * 진행 요원 이름은 화면에서 막는다 — 지우면 아무나 그 이름으로 새 비번을 정해 진행 요원이 될 수 있다.
+ */
+export async function resetPin(eventId: string, name: string): Promise<void> {
+  const { error } = await supabase
+    .from("tennis_vote_pins")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("name", name);
+  if (error) throw error;
+}
