@@ -827,6 +827,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
       ) : tab === "pixel" ? (
         <PixelCourtPanel
           demo={demo}
+          totoLocked={totoClosed || phase === "ended" || tournamentOver}
           event={event}
           matches={matches}
           scores={scores}

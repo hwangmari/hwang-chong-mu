@@ -39,8 +39,8 @@ function drawNumber(ctx: CanvasRenderingContext2D, n: number, cx: number, y: num
   );
 }
 
-// 체험용 가짜 표: 이름마다 늘 같은 팀에 건다
-function demoTally(event: TournamentEvent): VoteTally {
+// 체험용 가짜 표: 이름마다 늘 같은 팀에 건다 (전광판 토토 걸기 usePixelToto 도 같이 쓴다)
+export function demoTotoTally(event: TournamentEvent): VoteTally {
   const names: Record<string, string[]> = {};
   for (const r of event.roster) {
     let h = 7;
@@ -121,7 +121,7 @@ export default function PixelTotoResult({
   sprites: Map<number, Sprite[]>;
   demo?: boolean;
 }) {
-  const [tally, setTally] = useState<VoteTally | null>(() => (demo ? demoTally(event) : null));
+  const [tally, setTally] = useState<VoteTally | null>(() => (demo ? demoTotoTally(event) : null));
   const [failed, setFailed] = useState(false);
   const [run, setRun] = useState(0); // 0 = 아직 안 봄
   const [showNames, setShowNames] = useState(false);

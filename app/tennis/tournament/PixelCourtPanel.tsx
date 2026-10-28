@@ -13,6 +13,7 @@ import PixelDresserResult from "./PixelDresserResult";
 import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
+import { usePixelToto } from "./usePixelToto";
 
 type Props = {
   event: TournamentEvent;
@@ -23,6 +24,8 @@ type Props = {
   renderMatch?: (match: ResolvedMatch) => ReactNode;
   /** 체험 페이지: 토토 결과를 저장 공간 대신 가짜 표로 */
   demo?: boolean;
+  /** 토토가 마감됐는지 (진행 요원 마감 또는 대회 끝) — 전광판 토토 걸기를 막는다 */
+  totoLocked?: boolean;
 };
 
 /**
@@ -162,7 +165,15 @@ function BenchSeat({ team, sprites }: { team: TeamEntry; sprites: Sprite[] }) {
 }
 
 
-export default function PixelCourtPanel({ event, matches, scores, blocks, renderMatch, demo = false }: Props) {
+export default function PixelCourtPanel({
+  event,
+  matches,
+  scores,
+  blocks,
+  renderMatch,
+  demo = false,
+  totoLocked = false,
+}: Props) {
   // 움직임을 줄여 달라고 설정한 기기에서는 처음부터 멈춘 그림 (멈춤 버튼은 응원석 자리로 바뀌며 뺐다 — 2026-10-28).
   // 탭을 눌러야 그려지는 화면이라 서버 렌더와 어긋날 일이 없다
   const [moving] = useState(
@@ -177,6 +188,10 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
   const myTeam = event.teams.find((t) => t.players.some((p) => p.name === myName)) ?? null;
   const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
   const [viewBlock, setViewBlock] = useState<number | null>(null);
+  // 전광판 벤치를 눌러 우승팀 토토 걸기 (주인 요청 2026-10-28 "여기서 투표 모드로")
+  const [totoMode, setTotoMode] = useState(false);
+  const toto = usePixelToto(event, totoMode, demo);
+  const canPick = toto.canVote && !totoLocked && !toto.busy;
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -345,9 +360,47 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
             ))}
           </StBlocks>
           {/* 팀 벤치를 전광판에 합쳤다 (주인 요청 2026-10-28). 응원석 꼬마들은 탭 위로 옮김(CheerSquad) */}
+          <StTotoBar>
+            <StTotoToggle type="button" aria-pressed={totoMode} $on={totoMode} onClick={() => setTotoMode((v) => !v)}>
+              🎟️ {totoMode ? "토토 걸기 끝" : "우승팀 토토 걸기"}
+            </StTotoToggle>
+            {totoMode ? (
+              <StTotoHint>
+                {totoLocked
+                  ? "토토가 마감됐어요. 표 수만 볼 수 있어요."
+                  : !toto.canVote
+                    ? "투표 탭에서 내 이름으로 한 번 들어오면 여기서 바로 걸 수 있어요."
+                    : toto.mine
+                      ? `${demo ? "체험 중 · " : `${toto.myName}님 · `}${toto.mine}팀에 걸었어요. 다른 벤치를 누르면 바뀌어요.`
+                      : "우승할 것 같은 팀 벤치를 눌러 주세요!"}
+                {toto.error ? ` ${toto.error}` : ""}
+              </StTotoHint>
+            ) : null}
+          </StTotoBar>
           <StBench>
             {event.teams.map((team) => {
               const next = onCourt.has(team.seed) ? null : nextFor(team);
+              if (totoMode) {
+                const mine = toto.mine === String(team.seed);
+                return (
+                  <StSeatBtn
+                    key={team.seed}
+                    type="button"
+                    $mine={mine}
+                    disabled={!canPick}
+                    aria-pressed={mine}
+                    aria-label={`${team.name}에 토토 걸기 · ${toto.votesOf(team.seed)}표`}
+                    onClick={() => void toto.pick(team.seed)}
+                  >
+                    <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
+                    <StSeatName>{team.name}</StSeatName>
+                    <StSeatState>
+                      {mine ? "🎟️ 내 픽 · " : ""}
+                      {toto.votesOf(team.seed)}표 · {toto.oddsOf(team.seed)}
+                    </StSeatState>
+                  </StSeatBtn>
+                );
+              }
               return (
                 <StSeat key={team.seed} $on={onCourt.has(team.seed)}>
                   <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
@@ -797,6 +850,58 @@ const StSeat = styled.div<{ $on: boolean }>`
   opacity: ${({ $on }) => ($on ? 0.45 : 1)};
 `;
 
+
+// 토토 걸기 줄: 켜고 끄는 단추 + 지금 상태 한 줄
+const StTotoBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.7rem;
+`;
+
+const StTotoToggle = styled.button<{ $on: boolean }>`
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: ${INK};
+  background: ${({ $on }) => ($on ? "#ffffff" : "#ffcf4a")};
+  box-shadow: 3px 3px 0 ${INK};
+  cursor: pointer;
+
+  &:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 ${INK};
+  }
+`;
+
+const StTotoHint = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: ${DIM};
+`;
+
+// 토토 걸기 중 벤치: 누를 수 있는 칸, 내가 건 팀은 노란 바탕
+const StSeatBtn = styled.button<{ $mine: boolean }>`
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.2rem;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  background: ${({ $mine }) => ($mine ? "#ffcf4a" : "#eef8f1")};
+  box-shadow: ${({ $mine }) => ($mine ? `3px 3px 0 ${INK}` : "none")};
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${({ $mine }) => ($mine ? "#ffcf4a" : "#fff3c4")};
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+`;
 
 const StBenchCanvas = styled.canvas`
   width: 66px;
