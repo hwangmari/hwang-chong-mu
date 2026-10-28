@@ -344,12 +344,8 @@ export default function PixelCourtPanel({
       </StSceneHead>
         <StBoard>
           <StBoardTop>
-            <div>
-              <StBoardTitle>{event.title}</StBoardTitle>
-              <StBoardMeta>
-                {event.place} · 코트 {courts.length}면 · {event.gamesToWin}게임 선승
-              </StBoardMeta>
-            </div>
+            {/* 장소·코트 수·게임 수 줄은 뺐다 — 제목 아래 대회 정보에 이미 있다 (주인 요청 2026-10-28) */}
+            <StBoardTitle>{event.title}</StBoardTitle>
             {/* 시계·움직임 버튼 자리에 응원석 꼬마들 (주인 요청 2026-10-28) */}
             <CheerSquad />
           </StBoardTop>
@@ -704,13 +700,6 @@ const StBoardTitle = styled.div`
   letter-spacing: 0.04em;
   color: #7a5cf0;
 `;
-
-const StBoardMeta = styled.div`
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${DIM};
-`;
-
 
 const StBlocks = styled.div<{ $count: number }>`
   display: grid;

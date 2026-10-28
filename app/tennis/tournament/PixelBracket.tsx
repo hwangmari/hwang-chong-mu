@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import styled from "styled-components";
 import { drawFire, drawHeart, drawPlayer, type Sprite } from "./pixelSprites";
+import { MASCOTS, MASCOT_SIZE } from "./CheerSquad";
 import type { ResolvedMatch, ScheduleBlock, TeamEntry } from "./types";
 import { ONE_SHEET, ONE_SHEET_LINKS, roundHeads, type Layout, type Link } from "./BracketTree";
 
@@ -72,6 +73,16 @@ const STATE_TEXT: Record<ResolvedMatch["status"], string> = {
 type Pt = { x: number; y: number };
 type Walker = { key: string; seed: number; path: Pt[]; mood: "cheer" | "fire" };
 const SCALE = 2; // 꼬마 한 칸 = 화면 2px
+
+// 응원단: 전광판 응원석의 다섯 친구가 대진표 빈자리 곳곳에서 통통 뛰며 응원 (주인 요청 2026-10-28 "대진표에 응원자들이 중간중간")
+// 한 장 대진표(ONE_SHEET)에서 칸이 없는 자리 — 열·줄 단위 (열 가운데에 선다)
+const CHEER_SPOTS = [
+  { col: 2, row: 0.25 }, // 승자조 결승 위
+  { col: 3, row: 1.3 },
+  { col: 5, row: 1.0 }, // 그랜드 파이널 위
+  { col: 4, row: 2.4 },
+  { col: 0, row: 4.65 }, // 패자조 왼쪽 빈칸
+];
 const WALK_MS = 2400;
 
 function along(path: Pt[], d: number): Pt {
@@ -97,6 +108,7 @@ function WalkLayer({
   champion,
   sprites,
   moving,
+  cheer,
 }: {
   width: number;
   height: number;
@@ -104,6 +116,8 @@ function WalkLayer({
   champion: { seed: number; at: Pt } | null;
   sprites: Map<number, Sprite[]>;
   moving: boolean;
+  /** 응원단이 설 자리 (화면 좌표, 발밑 가운데) */
+  cheer: Pt[];
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const started = useRef(new Map<string, number>());
@@ -141,6 +155,15 @@ function WalkLayer({
           if (arrived && moving && (frame + i) % 4 === 0) drawHeart(ctx, x + 2, y - 7);
         });
       }
+      // 응원단: 번갈아 통통, 가끔 머리 위 하트
+      cheer.forEach((at, k) => {
+        const size = MASCOT_SIZE[k % MASCOTS.length];
+        const bob = moving ? (frame + k) % 2 : 0;
+        const x = Math.round(at.x / SCALE - size.w / 2);
+        const y = Math.round(at.y / SCALE - size.h) + bob;
+        MASCOTS[k % MASCOTS.length](ctx, x, y, bob, moving ? frame + k : 0);
+        if (moving && (frame + k) % 5 === 0) drawHeart(ctx, x + Math.round(size.w / 2) - 2, y - 8);
+      });
       if (champion) {
         const team = sprites.get(champion.seed) ?? [];
         team.forEach((sp, i) => {
@@ -414,6 +437,10 @@ function Tree({
             champion={champion}
             sprites={sprites}
             moving={moving}
+            cheer={CHEER_SPOTS.filter((c) => c.col < cols).map((c) => ({
+              x: PAD + c.col * COL_W + NODE_W / 2,
+              y: HEAD_H + PAD + c.row * ROW_H + 46,
+            }))}
           />
           {fenceY ? (
             <StFence style={{ top: fenceY }}>
