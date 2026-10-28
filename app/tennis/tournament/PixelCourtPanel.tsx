@@ -14,6 +14,7 @@ import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
 import { usePixelToto } from "./usePixelToto";
+import PixelVoterGate from "./PixelVoterGate";
 
 type Props = {
   event: TournamentEvent;
@@ -369,12 +370,16 @@ export default function PixelCourtPanel({
                 {totoLocked
                   ? "토토가 마감됐어요. 표 수만 볼 수 있어요."
                   : !toto.canVote
-                    ? "투표 탭에서 내 이름으로 한 번 들어오면 여기서 바로 걸 수 있어요."
+                    ? "내 이름과 비번으로 들어오면 바로 걸 수 있어요."
                     : toto.mine
                       ? `${demo ? "체험 중 · " : `${toto.myName}님 · `}${toto.mine}팀에 걸었어요. 다른 벤치를 누르면 바뀌어요.`
                       : "우승할 것 같은 팀 벤치를 눌러 주세요!"}
                 {toto.error ? ` ${toto.error}` : ""}
               </StTotoHint>
+            ) : null}
+            {/* 투표 탭과 같은 이름·비번 확인 (주인 요청 2026-10-28). 체험·마감 뒤에는 필요 없다 */}
+            {totoMode && !demo && !totoLocked ? (
+              <PixelVoterGate event={event} myName={toto.myName} onChange={toto.setVoter} />
             ) : null}
           </StTotoBar>
           <StBench>

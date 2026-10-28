@@ -8,15 +8,16 @@ import type { TournamentEvent } from "./types";
 
 /**
  * 픽셀 코트 전광판에서 우승팀 토토 걸기 (주인 요청 2026-10-28 "픽셀 코트에서 투표도 할 수 있게, 투표 모드로").
- * 투표 탭(VotePanel)과 같은 저장 방식(castVote)·같은 "나"(투표 탭에서 이름·비번으로 들어온 폰)를 쓴다.
- * 이름·비번 확인은 투표 탭에만 있다 — 여기서는 이 폰에 저장된 "나"가 없으면 걸 수 없다고 안내만 한다.
+ * 투표 탭(VotePanel)과 같은 저장 방식(castVote)·같은 "나"(이름·비번으로 들어온 폰)를 쓴다.
+ * 이름·비번은 투표 탭 또는 전광판의 PixelVoterGate 에서 넣는다 — 어느 쪽이든 같은 확인·같은 저장.
  * 체험 페이지는 저장 공간에 쓰지 않고 이 화면 안에서만 가짜로 건다.
  */
 
 const POLL_MS = 20_000; // 투표 탭과 같은 주기로 표 수를 따라간다
 
 export function usePixelToto(event: TournamentEvent, active: boolean, demo: boolean) {
-  const [voter] = useState(() => getSavedVoter());
+  // 이 폰의 "나". 픽셀 코트 로그인 칸(PixelVoterGate)에서 들어오거나 "다른 사람"으로 나가면 바뀐다
+  const [voter, setVoter] = useState(() => getSavedVoter());
   const myKey = voter ? playerVoterKey(voter.name) : "";
   const [tally, setTally] = useState<VoteTally | null>(null);
   const [busy, setBusy] = useState(false);
@@ -83,6 +84,7 @@ export function usePixelToto(event: TournamentEvent, active: boolean, demo: bool
 
   return {
     canVote: demo || !!myKey,
+    setVoter,
     myName: voter?.name ?? "",
     tally,
     mine: tally?.mine[0] ?? "",
