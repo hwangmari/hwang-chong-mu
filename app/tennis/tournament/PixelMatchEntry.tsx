@@ -342,17 +342,18 @@ export default function PixelMatchEntry({
             <b>
               타이브레이크{" "}
               <span>
+                {/* 63OPEN 규칙: 2점 차 없이 7점 먼저 (6:6이면 다음 1점) — 운영진 확인 2026-10-28 */}
                 {at55
-                  ? "5:5 — 7점 먼저 내면 그 팀 게임이 6이 돼요"
-                  : "7점 선취 · 모르면 비워 둬도 돼요"}
+                  ? "5:5 — 7점 먼저 내면 그 팀 게임이 6이 돼요 (6:6이면 다음 1점)"
+                  : "7점 먼저 · 모르면 비워 둬도 돼요"}
               </span>
             </b>
           </StPairHead>
           <StPairRow>
             <StWho>{match.teamA?.name}</StWho>
-            <Stepper value={tb[0]} label="A팀 타이브레이크" canUp={tb[0] < 20} disabled={busy} onChange={(v) => setTb([v, tb[1]])} />
+            <Stepper value={tb[0]} label="A팀 타이브레이크" canUp={tb[0] < 7} disabled={busy} onChange={(v) => setTb([v, tb[1]])} />
             <StColon>-</StColon>
-            <Stepper value={tb[1]} label="B팀 타이브레이크" canUp={tb[1] < 20} disabled={busy} onChange={(v) => setTb([tb[0], v])} />
+            <Stepper value={tb[1]} label="B팀 타이브레이크" canUp={tb[1] < 7} disabled={busy} onChange={(v) => setTb([tb[0], v])} />
             <StWho $right>{match.teamB?.name}</StWho>
           </StPairRow>
         </StPair>
