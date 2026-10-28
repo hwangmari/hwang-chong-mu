@@ -36,18 +36,24 @@ function drawCheer(ctx: CanvasRenderingContext2D, frame: number) {
     px(ctx, x + 2, y + 5, 1, 1, "#ff9fbf"); px(ctx, x + 8, y + 5, 1, 1, "#ff9fbf");
     px(ctx, x + 2, y + 8, 2, 2, "#4a78b8"); px(ctx, x + 7, y + 8, 2, 2, "#4a78b8");
   }
-  // ② 노란 꼬마 공룡
+  // ② 노란 꼬마 공룡 — 분홍 비버와 같은 키(약 22칸)로 키움 (주인 요청 2026-10-28)
   {
-    const x = 42, y = 10 + up(1);
-    px(ctx, x + 1, y, 10, 7, "#f6d32b");
-    px(ctx, x + 9, y + 3, 4, 4, "#f6d32b"); // 주둥이
-    px(ctx, x + 6, y + 2, 2, 2, "#2e9e5e"); px(ctx, x + 7, y + 2, 1, 1, "#1b1b1b");
-    px(ctx, x + 10, y + 6, 3, 1, "#c99a12");
-    px(ctx, x + 2, y + 7, 9, 9, "#f6d32b");
-    px(ctx, x + 4, y + 9, 5, 6, "#fff3c4"); // 배
-    px(ctx, x, y + 9 - up(1), 2, 4, "#f6d32b"); px(ctx, x + 11, y + 8 - up(1), 2, 4, "#f6d32b"); // 팔
-    px(ctx, x + 12, y + 8 - up(1), 1, 1, "#ffffff");
-    px(ctx, x + 3, y + 16, 3, 1, "#ffffff"); px(ctx, x + 8, y + 16, 3, 1, "#ffffff"); // 발톱
+    const x = 40, y = 3 + up(1);
+    const Y = "#f6d32b", Y_D = "#d9b21a";
+    px(ctx, x + 2, y + 1, 11, 8, Y); // 머리
+    px(ctx, x + 3, y, 9, 1, Y);
+    px(ctx, x + 12, y + 3, 4, 5, Y); // 주둥이
+    px(ctx, x + 14, y + 3, 1, 1, Y_D); // 콧구멍
+    px(ctx, x + 11, y + 7, 5, 1, Y_D); // 입
+    px(ctx, x + 12, y + 8, 1, 1, "#ffffff"); px(ctx, x + 14, y + 8, 1, 1, "#ffffff"); // 이빨
+    px(ctx, x + 7, y + 2, 3, 3, "#2e9e5e"); px(ctx, x + 8, y + 3, 1, 1, "#1b1b1b"); px(ctx, x + 7, y + 2, 1, 1, "#ffffff"); // 초록 눈
+    px(ctx, x + 3, y + 9, 10, 11, Y); // 몸
+    px(ctx, x + 5, y + 11, 6, 8, "#fff3c4"); // 배
+    px(ctx, x, y + 16, 3, 2, Y); // 꼬리
+    px(ctx, x + 1, y + 11 - up(1), 2, 5, Y); px(ctx, x + 13, y + 10 - up(1), 2, 5, Y); // 팔
+    px(ctx, x + 1, y + 16 - up(1), 2, 1, "#ffffff"); px(ctx, x + 13, y + 15 - up(1), 2, 1, "#ffffff"); // 손톱
+    px(ctx, x + 3, y + 20, 4, 2, Y); px(ctx, x + 9, y + 20, 4, 2, Y); // 다리
+    px(ctx, x + 3, y + 22, 4, 1, "#ffffff"); px(ctx, x + 9, y + 22, 4, 1, "#ffffff"); // 발톱
   }
   // ③ 분홍 비버 — 주인이 보낸 사진처럼: 머리 위 삐죽 털 · 둥근 귀 · 한쪽 윙크 · 큰 자줏빛 코 · 빼꼼 혀 ·
   //    하얀 배 · 목걸이 · 한 손 들어 인사 · 보라 발 (2026-10-28)
