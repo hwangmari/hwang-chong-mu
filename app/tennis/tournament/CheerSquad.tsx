@@ -33,7 +33,7 @@ const m0: Draw = (ctx, x, y, bob, frame) => {
   px(ctx, x + 2, y + 8, 2, 2, "#4a78b8"); px(ctx, x + 7, y + 8, 2, 2, "#4a78b8");
 };
 // ② 노란 꼬마 공룡 — 분홍 비버와 같은 키(약 22칸)로 키움 (주인 요청 2026-10-28)
-const m1: Draw = (ctx, x, y, bob, frame) => {
+const m1: Draw = (ctx, x, y, bob) => {
   const Y = "#f6d32b", Y_D = "#d9b21a";
   px(ctx, x + 2, y + 1, 11, 8, Y); // 머리
   px(ctx, x + 3, y, 9, 1, Y);
@@ -75,7 +75,7 @@ const m2: Draw = (ctx, x, y, bob, frame) => {
   px(ctx, x + 3, y + 21, 4, 1, "#6b4a6e"); px(ctx, x + 10, y + 21, 4, 1, "#6b4a6e"); // 보라 발
 };
 // ④ 옥지 — 주인이 보낸 그림처럼: 웨이브 갈색 머리 · 소용돌이 눈 · 빨간 입술 · 노란 긴팔 · 검은 치마 · 빨간 구두 · 초록 병 (2026-10-28)
-const m3: Draw = (ctx, x, y, bob, frame) => {
+const m3: Draw = (ctx, x, y, bob) => {
   const HAIR = "#6b3f2a", HAIR_HI = "#8a5536", FACE = "#f7d9be";
   px(ctx, x + 4, y, 10, 2, HAIR);
   px(ctx, x + 2, y + 2, 14, 11, HAIR);
