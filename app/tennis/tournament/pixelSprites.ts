@@ -13,8 +13,12 @@ export function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.fillRect(Math.round(x), Math.round(y), w, h);
 }
 
-// 8×12 선수 — 큰 얼굴·두 눈·볼터치·팀 색 머리띠의 꼬마 캐릭터 (주인 요청 2026-10-27 "더 귀엽게").
-// 여성은 머리가 어깨까지 내려오고 흰 치마를 입는다
+// 8×12 선수 — 머리가 몸보다 큰 2등신 꼬마 (주인 요청 2026-10-27 "더 귀엽게", 2026-10-28 "픽셀 인간들 좀 더 귀엽게").
+// 위 머리카락 → 팀 색 머리띠 → 얼굴 4줄(세로 콩 눈·볼터치·작은 입) → 작은 몸. 남성은 삐죽 머리 한 가닥,
+// 여성은 긴 옆머리 + 분홍 리본 + 흰 치마. 크기(8×12)는 그대로라 코트·벤치·대진표·시상식 자리 계산은 안 바뀐다
+const MOUTH = "#d4626c";
+const RIBBON = "#ff6fa5";
+
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -26,33 +30,47 @@ export function drawPlayer(
 ) {
   const bob = frame % 2;
   const hair = s.female ? HAIR_F : HAIR_M;
-  px(ctx, x + 1, y + 11, 6, 1, "#0003");
+  px(ctx, x + 1, y + 11, 6, 1, "#0003"); // 그림자
+  // 큰 머리
   px(ctx, x + 2, y, 4, 1, hair);
-  px(ctx, x + 1, y + 1, 6, 1, s.shirt); // 머리띠
-  px(ctx, x + 1, y + 2, 6, 3, SKIN); // 얼굴
+  px(ctx, x + 1, y + 1, 6, 1, hair);
+  px(ctx, x + 1, y + 2, 6, 1, s.shirt); // 머리띠
+  px(ctx, x + 1, y + 3, 6, 3, SKIN);
+  px(ctx, x + 2, y + 6, 4, 1, SKIN); // 동그란 턱
   if (s.female) {
-    px(ctx, x + 1, y + 2, 1, 4, hair);
-    px(ctx, x + 6, y + 2, 1, 4, hair);
-    px(ctx, x + 2, y + 4, 1, 1, BLUSH);
-    px(ctx, x + 5, y + 4, 1, 1, BLUSH);
+    px(ctx, x, y + 2, 1, 5, hair); // 긴 옆머리
+    px(ctx, x + 7, y + 2, 1, 5, hair);
+    px(ctx, x + 1, y + 3, 1, 1, hair); // 앞머리 끝
+    px(ctx, x + 6, y + 3, 1, 1, hair);
+    px(ctx, x + 6, y, 2, 1, RIBBON); // 리본
+    px(ctx, x + 7, y + 1, 1, 1, RIBBON);
   } else {
-    px(ctx, x + 1, y + 4, 1, 1, BLUSH);
-    px(ctx, x + 6, y + 4, 1, 1, BLUSH);
+    px(ctx, x + 4, y - 1, 1, 1, hair); // 삐죽 머리 한 가닥
   }
-  const ex = facing > 0 ? 1 : 0; // 보는 쪽으로 눈을 한 칸 민다
-  px(ctx, x + 2 + ex, y + 3, 1, 1, "#222");
-  px(ctx, x + 4 + ex, y + 3, 1, 1, "#222");
-  px(ctx, x + 1, y + 5, 6, 3, s.shirt);
-  if (s.female) px(ctx, x + 1, y + 8, 6, 1, "#ffffff");
-  else px(ctx, x + 2, y + 8, 4, 1, SHORTS);
-  px(ctx, x + 2, y + 9, 1, 2 - bob, SKIN);
-  px(ctx, x + 5, y + 9, 1, 1 + bob, SKIN);
+  // 세로 콩 눈 + 볼터치 + 보는 쪽으로 살짝 치우친 입
+  px(ctx, x + 2, y + 4, 1, 2, "#222");
+  px(ctx, x + 5, y + 4, 1, 2, "#222");
+  px(ctx, x + 1, y + 5, 1, 1, BLUSH);
+  px(ctx, x + 6, y + 5, 1, 1, BLUSH);
+  px(ctx, x + (facing > 0 ? 4 : 3), y + 6, 1, 1, MOUTH);
+  // 작은 몸
+  px(ctx, x + 2, y + 7, 4, 2, s.shirt);
+  if (s.female) px(ctx, x + 1, y + 9, 6, 1, "#ffffff");
+  else px(ctx, x + 2, y + 9, 4, 1, SHORTS);
+  px(ctx, x + 2, y + 10, 1, 2 - bob, SKIN);
+  px(ctx, x + 5, y + 10, 1, 1 + bob, SKIN);
   if (cheer) {
-    px(ctx, x, y + 2 - bob, 1, 3, SKIN);
-    px(ctx, x + 7, y + 2 - bob, 1, 3, SKIN);
+    px(ctx, x, y + 4 - bob, 1, 3, SKIN); // 만세 손
+    px(ctx, x + 7, y + 4 - bob, 1, 3, SKIN);
+    px(ctx, x + 1, y + 7, 1, 1, s.shirt);
+    px(ctx, x + 6, y + 7, 1, 1, s.shirt);
   } else {
-    px(ctx, facing > 0 ? x + 7 : x - 2, y + 5, 2, 3, "#1b1b1b");
-    px(ctx, facing > 0 ? x + 7 : x, y + 7, 1, 2, "#7a5a3a");
+    px(ctx, x + 1, y + 7, 1, 2, s.shirt); // 소매
+    px(ctx, x + 6, y + 7, 1, 2, s.shirt);
+    const rx = facing > 0 ? x + 7 : x - 2;
+    px(ctx, rx, y + 5, 2, 3, "#1b1b1b"); // 라켓 머리
+    px(ctx, rx, y + 5, 2, 1, "#3a3a3a");
+    px(ctx, facing > 0 ? x + 7 : x, y + 8, 1, 2, "#7a5a3a"); // 손잡이
   }
 }
 
