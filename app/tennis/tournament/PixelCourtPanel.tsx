@@ -7,6 +7,8 @@ import { isFinished, type Court, type ScoreMap } from "../types";
 import { courtLetters } from "../timeline";
 import PixelBracket, { shirtOf } from "./PixelBracket";
 import CheerSquad from "./CheerSquad";
+import PixelPodium from "./PixelPodium";
+import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
 
@@ -194,6 +196,8 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
     }
     return map;
   }, [event.teams, female]);
+
+  const ranks = useMemo(() => placements(matches), [matches]);
 
   const visible = matches.filter((m) => m.status !== "hidden");
   // 지금 시간대: 아직 안 끝난 경기가 있는 가장 앞 시간대. 다 끝났으면 마지막
@@ -425,6 +429,14 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           <StPanelTitle>🏆 대진표</StPanelTitle>
           <PixelBracket matches={matches} blocks={blocks} sprites={spritesByTeam} moving={moving} />
         </StPanel>
+
+        {/* 그랜드 파이널까지 끝나면 맨 아래에 시상식 (주인 요청 2026-10-28) */}
+        {ranks[0].team ? (
+          <StPanel>
+            <StPanelTitle>🏅 시상식</StPanelTitle>
+            <PixelPodium ranks={ranks} sprites={spritesByTeam} />
+          </StPanel>
+        ) : null}
     </StScene>
   );
 }
