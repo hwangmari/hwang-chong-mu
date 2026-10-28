@@ -230,12 +230,35 @@ function Tree({
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
+  // 왼쪽 끝에서 처음으로 온전히 보이는 라운드 (끝까지 밀면 마지막 열은 왼쪽 끝에 못 붙어서 올림으로 센다)
+  const colAt = (left: number) => Math.min(colHeads.length - 1, Math.max(0, Math.ceil((left - 20) / COL_W)));
+  // 한 번 밀 때 한 라운드만: 밀기가 멈추면 시작한 라운드에서 밀린 방향으로 딱 한 칸 옆에 세운다.
+  // (CSS 멈춤만으로는 휴대폰에서 세게 밀면 두세 라운드씩 건너뛰었다 — 2026-10-28 확인)
+  const gesture = useRef<{ from: number | null; timer: number; settled: number }>({ from: null, timer: 0, settled: 0 });
+  useEffect(() => () => window.clearTimeout(gesture.current.timer), []);
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    // 왼쪽 끝에서 처음으로 온전히 보이는 라운드 (끝까지 밀면 마지막 열은 왼쪽 끝에 못 붙어서 올림으로 센다)
-    setCol(Math.min(colHeads.length - 1, Math.max(0, Math.ceil((el.scrollLeft - 20) / COL_W))));
+    setCol(colAt(el.scrollLeft));
     setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
+    const g = gesture.current;
+    if (g.from === null) g.from = g.settled;
+    window.clearTimeout(g.timer);
+    g.timer = window.setTimeout(() => {
+      const start = g.from ?? 0;
+      g.from = null;
+      const moved = el.scrollLeft - start;
+      if (Math.abs(moved) > 4) {
+        const max = el.scrollWidth - el.clientWidth;
+        const target = Math.min(max, Math.max(0, (colAt(start) + Math.sign(moved)) * COL_W));
+        if (Math.abs(el.scrollLeft - target) > 2) {
+          g.settled = target;
+          el.scrollTo({ left: target, behavior: "smooth" });
+          return;
+        }
+      }
+      g.settled = el.scrollLeft;
+    }, 140);
   };
   const goCol = (next: number) => {
     const el = scrollRef.current;
