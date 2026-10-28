@@ -14,6 +14,7 @@ import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { DRESSER_PICKS } from "@/services/tennisVotes";
 import { usePixelToto } from "./usePixelToto";
+import { clearSavedVoter } from "../voterKey";
 import PixelVoterGate from "./PixelVoterGate";
 
 type Props = {
@@ -202,6 +203,13 @@ export default function PixelCourtPanel({
   const onVoter = (voter: { name: string; pin: string } | null) => {
     toto.setVoter(voter);
     setScope(voter ? "mine" : "all");
+    setLoginOpen(false);
+  };
+  // 우리 팀 보기 줄 옆 로그인 (주인 요청 2026-10-28 "여기 옆에다 로그인하기를 넣을까?")
+  const [loginOpen, setLoginOpen] = useState(false);
+  const logout = () => {
+    clearSavedVoter();
+    onVoter(null);
   };
   const canPick = toto.canVote && !totoLocked && !toto.busy;
   const canDress = toto.canVote && !toto.dresserClosed && !toto.busy;
@@ -322,7 +330,7 @@ export default function PixelCourtPanel({
         <StSceneHint>
           {myTeam
             ? "점수 화면과 같은 기록을 보여 줘요. 코트 카드 아래에서 바로 시작·점수 입력을 해요."
-            : "점수 화면과 같은 기록을 보여 줘요. 코트 카드 아래에서 바로 시작·점수 입력을 해요. 투표 탭에서 내 이름으로 들어오면 우리 팀 경기만 모아 볼 수 있어요."}
+            : "점수 화면과 같은 기록을 보여 줘요. 코트 카드 아래에서 바로 시작·점수 입력을 해요. 로그인하면 우리 팀 경기만 모아 볼 수 있어요."}
         </StSceneHint>
         {myTeam ? (
           <StScopeRow>
@@ -343,6 +351,25 @@ export default function PixelCourtPanel({
                   : " — 아직 정해진 경기가 없어요"}
               </StMine>
             ) : null}
+            <StLogout type="button" onClick={logout}>
+              다른 사람
+            </StLogout>
+          </StScopeRow>
+        ) : myName ? (
+          <StScopeRow>
+            <StMine>
+              {myName}님 · 참가 팀 명단에 없는 이름이라 우리 팀 보기는 없어요
+            </StMine>
+            <StLogout type="button" onClick={logout}>
+              다른 사람
+            </StLogout>
+          </StScopeRow>
+        ) : !demo ? (
+          <StScopeRow>
+            <StTotoToggle type="button" $on={loginOpen} aria-expanded={loginOpen} onClick={() => setLoginOpen((v) => !v)}>
+              {loginOpen ? "닫기" : "🙋 로그인하고 우리 팀 보기"}
+            </StTotoToggle>
+            {loginOpen ? <PixelVoterGate event={event} myName="" onChange={onVoter} /> : null}
           </StScopeRow>
         ) : null}
       </StSceneHead>
@@ -630,6 +657,16 @@ const StScopeRow = styled.div`
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.8rem;
+`;
+
+const StLogout = styled.button`
+  padding: 0.25rem 0.55rem;
+  border: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: ${DIM};
+  background: #ffffffaa;
+  cursor: pointer;
 `;
 
 const StScopes = styled.div`
