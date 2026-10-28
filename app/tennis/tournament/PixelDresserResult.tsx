@@ -26,16 +26,15 @@ const MAX_NOMINEES = 5;
 
 type Nominee = { name: string; votes: number; win: boolean; sprite: Sprite };
 
-// 체험용 가짜 표: 이름마다 정해진 표 수
+// 체험용 가짜 표: 실제처럼 1·2등이 갈리게 — 이름 순서를 섞어 9, 7, 5, 4, 3, 3, 2, 2, 1, 1표를 나눠 준다
+// (처음엔 이름마다 0~8표를 막 줘서 5명이 8표 동점으로 다 수상해 버렸다 — 주인 지적 2026-10-28)
+const DEMO_VOTES = [9, 7, 5, 4, 3, 3, 2, 2, 1, 1];
 function demoTally(event: TournamentEvent): VoteTally {
-  const counts = event.roster
-    .map((r) => {
-      let h = 11;
-      for (const ch of r.name) h = (h * 37 + ch.charCodeAt(0)) % 7919;
-      return { choice: r.name, votes: h % 9 };
-    })
-    .filter((c) => c.votes > 0)
-    .sort((a, b) => b.votes - a.votes || a.choice.localeCompare(b.choice, "ko"));
+  const hash = (name: string) => [...name].reduce((h, ch) => (h * 37 + ch.charCodeAt(0)) % 7919, 11);
+  const counts = [...event.roster]
+    .sort((a, b) => hash(a.name) - hash(b.name))
+    .slice(0, DEMO_VOTES.length)
+    .map((r, i) => ({ choice: r.name, votes: DEMO_VOTES[i] }));
   return { kind: "dresser", total: event.roster.length, counts, mine: [], names: {} };
 }
 
