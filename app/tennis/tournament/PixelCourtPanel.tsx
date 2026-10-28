@@ -12,7 +12,6 @@ import PixelTotoResult from "./PixelTotoResult";
 import PixelDresserResult from "./PixelDresserResult";
 import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
-import { getSavedVoter } from "../voterKey";
 import { DRESSER_PICKS } from "@/services/tennisVotes";
 import { usePixelToto } from "./usePixelToto";
 import PixelVoterGate from "./PixelVoterGate";
@@ -187,18 +186,23 @@ export default function PixelCourtPanel({
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [now, setNow] = useState(() => Date.now());
-  // 투표 탭에서 이 폰에 들어온 "나" — 있으면 우리 팀 경기만 모아 보기를 기본으로 (주인 제안 2026-10-28)
-  // 보기만 거르는 것이라 "전체"로 바꾸면 다른 코트도 입력할 수 있다(권한은 진행 요원 규칙 그대로)
-  const [myName] = useState(() => getSavedVoter()?.name ?? "");
-  const myTeam = event.teams.find((t) => t.players.some((p) => p.name === myName)) ?? null;
-  const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
-  const [viewBlock, setViewBlock] = useState<number | null>(null);
   // 전광판 벤치를 눌러 우승팀 토토 걸기 (주인 요청 2026-10-28 "여기서 투표 모드로")
   // 베스트드레서 고르기도 같은 자리에서 (주인 요청 2026-10-28) — 한 번에 하나만 연다
   const [voteMode, setVoteMode] = useState<"off" | "toto" | "dresser">("off");
   const totoMode = voteMode === "toto";
   const dresserMode = voteMode === "dresser";
   const toto = usePixelToto(event, voteMode !== "off", demo);
+  // 이 폰에 들어온 "나"(투표 탭 또는 전광판 로그인 칸) — 있으면 우리 팀 경기만 모아 보기를 기본으로 (주인 제안 2026-10-28)
+  // 전광판에서 로그인하면 바로 우리 팀 보기로 바뀐다 (주인 지적 2026-10-28 "로그인한 상태면 내 코트 보기가 나와야").
+  // 보기만 거르는 것이라 "전체"로 바꾸면 다른 코트도 입력할 수 있다(권한은 진행 요원 규칙 그대로)
+  const myName = toto.myName;
+  const myTeam = event.teams.find((t) => t.players.some((p) => p.name === myName)) ?? null;
+  const [scope, setScope] = useState<"mine" | "all">(() => (myTeam ? "mine" : "all"));
+  const [viewBlock, setViewBlock] = useState<number | null>(null);
+  const onVoter = (voter: { name: string; pin: string } | null) => {
+    toto.setVoter(voter);
+    setScope(voter ? "mine" : "all");
+  };
   const canPick = toto.canVote && !totoLocked && !toto.busy;
   const canDress = toto.canVote && !toto.dresserClosed && !toto.busy;
   const modeLocked = totoMode ? totoLocked : toto.dresserClosed;
@@ -407,7 +411,7 @@ export default function PixelCourtPanel({
             ) : null}
             {/* 투표 탭과 같은 이름·비번 확인 (주인 요청 2026-10-28). 체험·마감 뒤에는 필요 없다 */}
             {voteMode !== "off" && !demo && !modeLocked ? (
-              <PixelVoterGate event={event} myName={toto.myName} onChange={toto.setVoter} />
+              <PixelVoterGate event={event} myName={toto.myName} onChange={onVoter} />
             ) : null}
           </StTotoBar>
           <StBench>
