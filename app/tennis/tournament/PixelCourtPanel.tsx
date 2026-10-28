@@ -366,7 +366,7 @@ export default function PixelCourtPanel({
           </StScopeRow>
         ) : !demo ? (
           <StScopeRow>
-            <StTotoToggle type="button" $on={loginOpen} aria-expanded={loginOpen} onClick={() => setLoginOpen((v) => !v)}>
+            <StTotoToggle type="button" $on={!loginOpen} aria-expanded={loginOpen} onClick={() => setLoginOpen((v) => !v)}>
               {loginOpen ? "닫기" : "🙋 로그인하고 우리 팀 보기"}
             </StTotoToggle>
             {loginOpen ? <PixelVoterGate event={event} myName="" onChange={onVoter} /> : null}
@@ -964,8 +964,10 @@ const StTotoToggle = styled.button<{ $on: boolean }>`
   font-size: 0.8rem;
   font-weight: 800;
   color: ${INK};
-  background: ${({ $on }) => ($on ? "#ffffff" : "#ffcf4a")};
-  box-shadow: 3px 3px 0 ${INK};
+  /* 켜진 쪽이 노랗고 눌린 모양 (주인 요청 2026-10-28 — 전엔 켜진 쪽이 흰색이라 거꾸로 보였다) */
+  background: ${({ $on }) => ($on ? "#ffcf4a" : "#ffffff")};
+  box-shadow: ${({ $on }) => ($on ? `1px 1px 0 ${INK}` : `3px 3px 0 ${INK}`)};
+  transform: ${({ $on }) => ($on ? "translate(2px, 2px)" : "none")};
   cursor: pointer;
 
   &:active {
