@@ -437,8 +437,9 @@ export default function PixelCourtPanel({
               </StTotoHint>
             ) : null}
             {/* 투표 탭과 같은 이름·비번 확인 (주인 요청 2026-10-28). 체험·마감 뒤에는 필요 없다 */}
-            {voteMode !== "off" && !demo && !modeLocked ? (
-              <PixelVoterGate event={event} myName={toto.myName} onChange={onVoter} />
+            {/* 로그인한 폰은 위 "우리 팀" 줄에 이름·다른 사람이 있어서 여기선 로그인 칸만 (주인 요청 2026-10-28) */}
+            {voteMode !== "off" && !demo && !modeLocked && !toto.myName ? (
+              <PixelVoterGate event={event} myName="" onChange={onVoter} />
             ) : null}
           </StTotoBar>
           <StBench>
