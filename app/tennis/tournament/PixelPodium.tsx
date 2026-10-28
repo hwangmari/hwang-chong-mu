@@ -15,7 +15,11 @@ import type { Placement } from "./types";
  * 동작 줄이기 설정이면 처음부터 마지막 장면만 보여 준다. "다시 보기"로 처음부터 다시.
  */
 
+// 단상·꼬마가 서는 장면 폭. 넓은 화면에서는 그림 폭(full)만 늘려 무대 배경을 옆으로 넓히고
+// 장면은 가운데에 둔다 — 픽셀 한 칸이 커지지 않게 (주인 요청 2026-10-28 "배경은 딱 좋은데 시상대랑 픽셀 크기가 좀 큰 거 같아")
 const W = 240;
+const PX_CSS = 2.4; // 넓은 화면에서 픽셀 한 칸 ≈ 2.4px
+const MAX_FULL = 520;
 const H = 138; // 단상 앞 바닥에 축하하는 팀들이 설 자리를 둔다
 const FLOOR = 104;
 const END_MS = 9800;
@@ -83,20 +87,20 @@ const BURSTS = [
   { x: 120, y: 16, at: 6000, c: "#ffcf4a" },
 ];
 
-function drawStage(ctx: CanvasRenderingContext2D) {
+function drawStage(ctx: CanvasRenderingContext2D, full: number) {
   // 보라 커튼 벽 + 세로 주름
-  px(ctx, 0, 0, W, FLOOR, "#8f74ff");
-  for (let x = 0; x < W; x += 12) px(ctx, x, 0, 4, FLOOR, "#9c84ff");
+  px(ctx, 0, 0, full, FLOOR, "#8f74ff");
+  for (let x = 0; x < full; x += 12) px(ctx, x, 0, 4, FLOOR, "#9c84ff");
   // 줄줄이 삼각 깃발
-  px(ctx, 0, 5, W, 1, "#ffffff");
-  for (let x = 2, k = 0; x < W; x += 12, k++) {
+  px(ctx, 0, 5, full, 1, "#ffffff");
+  for (let x = 2, k = 0; x < full; x += 12, k++) {
     const c = CONFETTI[k % 5];
     for (let r = 0; r < 5; r++) px(ctx, x + r, 6 + r, 7 - r * 2 > 0 ? 7 - r * 2 : 1, 1, c);
   }
   // 바닥: 나무 무대 + 가운데 빨간 카펫
-  px(ctx, 0, FLOOR, W, H - FLOOR, "#c98d5a");
-  px(ctx, 0, FLOOR, W, 1, "#a8703f");
-  px(ctx, 70, FLOOR + 1, 100, H - FLOOR - 1, "#e8504a");
+  px(ctx, 0, FLOOR, full, H - FLOOR, "#c98d5a");
+  px(ctx, 0, FLOOR, full, 1, "#a8703f");
+  px(ctx, Math.round(full / 2) - 50, FLOOR + 1, 100, H - FLOOR - 1, "#e8504a");
 }
 
 function drawBlocks(ctx: CanvasRenderingContext2D) {
@@ -110,7 +114,7 @@ function drawBlocks(ctx: CanvasRenderingContext2D) {
 }
 
 // 4~8위: 단상 앞 바닥 한 줄. 왼쪽 절반 팀은 왼쪽에서, 오른쪽 절반은 오른쪽에서 걸어 나온다
-function drawCrowd(ctx: CanvasRenderingContext2D, t: number, crowd: Sprite[][], frame: number) {
+function drawCrowd(ctx: CanvasRenderingContext2D, t: number, crowd: Sprite[][], frame: number, ox: number) {
   const widths = crowd.map((team) => team.length * CROWD_GAP);
   const total = widths.reduce((a, b) => a + b, 0) + Math.max(0, crowd.length - 1) * 6;
   let cursor = W / 2 - total / 2;
@@ -118,7 +122,7 @@ function drawCrowd(ctx: CanvasRenderingContext2D, t: number, crowd: Sprite[][], 
     const fromLeft = k < crowd.length / 2;
     team.forEach((sp, i) => {
       const fx = cursor + i * CROWD_GAP;
-      const edge = fromLeft ? -10 - (team.length - i) * CROWD_GAP : W + 2 + i * CROWD_GAP;
+      const edge = fromLeft ? -ox - 10 - (team.length - i) * CROWD_GAP : W + ox + 2 + i * CROWD_GAP;
       const p = Math.min(1, t / WALK);
       const x = edge + (fx - edge) * p;
       const y = CROWD_FEET - 12;
@@ -138,10 +142,15 @@ function draw(
   t: number,
   places: { rank: number; team: Sprite[] }[],
   crowd: Sprite[][],
+  full: number,
 ) {
-  ctx.clearRect(0, 0, W, H);
-  drawStage(ctx);
+  ctx.clearRect(0, 0, full, H);
+  drawStage(ctx, full);
   const frame = Math.floor(t / 280);
+  // 장면(단상·꼬마·트로피·폭죽)은 넓은 그림 가운데로 옮겨 그린다
+  const ox = Math.round((full - W) / 2);
+  ctx.save();
+  ctx.translate(ox, 0);
 
   // 조명: 트로피가 내려온 뒤 1위 단상에
   if (t >= 4400) {
@@ -170,7 +179,7 @@ function draw(
       let walking = false;
       if (local < WALK) {
         // 무대 밖에서 걸어 들어온다 (한 줄로, 앞사람과 9칸 간격)
-        const edge = s.from > 0 ? -12 - (n - i) * 9 : W + 4 + i * 9;
+        const edge = s.from > 0 ? -ox - 12 - (n - i) * 9 : W + ox + 4 + i * 9;
         const p = Math.max(0, local) / WALK;
         x = edge + (fx - edge) * p;
         y = FLOOR - 12;
@@ -198,7 +207,7 @@ function draw(
     });
   }
 
-  drawCrowd(ctx, t, crowd, frame);
+  drawCrowd(ctx, t, crowd, frame, ox);
 
   // 트로피: 1위 단상 위로 내려와 머리 위에 멈춘다
   if (t >= 4000) {
@@ -219,13 +228,15 @@ function draw(
     }
   }
 
-  // 꽃가루: 내려와 바닥에 쌓인다 (마지막 장면에도 바닥에 남아 있음)
+  ctx.restore();
+
+  // 꽃가루: 그림 전체 폭에 내려와 바닥에 쌓인다 (마지막 장면에도 바닥에 남아 있음)
   if (t >= 4600) {
     const age = (t - 4600) / 1000;
     for (const c of PIECES) {
       const y = Math.min(FLOOR + 2 + (c.x % 12), c.y0 + c.speed * age);
       const landedPiece = y >= FLOOR + 2;
-      const x = c.x + (landedPiece ? 0 : Math.sin(age * 4 + c.x) * 2);
+      const x = (c.x / W) * full + (landedPiece ? 0 : Math.sin(age * 4 + c.x) * 2);
       if (y > -2) px(ctx, x, y, 2, landedPiece ? 1 : 2, c.c);
     }
   }
@@ -243,6 +254,18 @@ export default function PixelPodium({
   );
   const [run, setRun] = useState(0); // 다시 보기 누를 때마다 1 증가
   const ref = useRef<HTMLCanvasElement>(null);
+  // 그림 폭: 화면 폭 ÷ 2.4 (휴대폰은 최소 240, 넓어도 520까지)
+  const [full, setFull] = useState(W);
+  useEffect(() => {
+    const box = ref.current?.parentElement;
+    if (!box) return;
+    const measure = () =>
+      setFull(Math.max(W, Math.min(MAX_FULL, Math.round(box.clientWidth / PX_CSS / 2) * 2)));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, []);
   const places = ranks
     .filter((r) => r.rank <= 3 && r.team)
     .map((r) => ({ rank: r.rank, team: sprites.get(r.team!.seed) ?? [] }));
@@ -255,16 +278,16 @@ export default function PixelPodium({
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     if (!moving) {
-      draw(ctx, END_MS, places, crowd);
+      draw(ctx, END_MS, places, crowd, full);
       return;
     }
-    draw(ctx, 0, places, crowd);
+    draw(ctx, 0, places, crowd, full);
     let raf = 0;
     let begin: number | null = null;
     const loop = (now: number) => {
       if (begin === null) begin = now;
       const t = now - begin;
-      draw(ctx, Math.min(t, END_MS), places, crowd);
+      draw(ctx, Math.min(t, END_MS), places, crowd, full);
       if (t < END_MS) raf = requestAnimationFrame(loop);
     };
     // 화면에 25% 이상 보일 때 한 번 시작
@@ -281,14 +304,15 @@ export default function PixelPodium({
     };
     // places·crowd 는 매 렌더 새로 만들어지므로 sig 로 대신한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig, moving, run]);
+  }, [sig, moving, run, full]);
 
   return (
     <StWrap>
       <StCanvas
         ref={ref}
-        width={W}
+        width={full}
         height={H}
+        style={{ aspectRatio: `${full} / ${H}` }}
         role="img"
         aria-label="시상식: 우승팀이 가장 높은 단상에서 트로피를 들고, 2·3위가 메달을 받고, 나머지 팀이 단상 아래에서 축하해요"
       />
@@ -329,7 +353,6 @@ const StWrap = styled.div`
 const StCanvas = styled.canvas`
   display: block;
   width: 100%;
-  aspect-ratio: ${W} / ${H};
   image-rendering: pixelated;
   box-shadow: 4px 4px 0 #2f7a4f22;
 `;
