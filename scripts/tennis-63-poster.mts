@@ -43,7 +43,7 @@ const COURTS = ["A", "B", "C", "D"] as const;
 const SCHEDULE = scheduleBlocks(E);
 
 /* ===== 개회식 때 하는 웜업 게임 "RACKET OUT" =====
-   대회 8팀을 둘씩 묶어 4팀으로 만든다. 7+8+7+7 = 29명. */
+   대회 8팀을 둘씩 묶어 4팀으로 만든다. 7+8+6+7 = 28명 (2026-10-29 최윤희 불참 뒤). */
 const WARMUP_PAIRS = [
   { name: "A", seeds: [1, 6], court: "COURT 1" },
   { name: "B", seeds: [2, 5], court: "COURT 1" },
@@ -83,6 +83,11 @@ const men = E.roster.filter((r) => r.gender === "M").length;
 const women = E.roster.filter((r) => r.gender === "F").length;
 const assigned = E.teams.reduce((n, t) => n + t.players.filter((p) => p.name.trim()).length, 0);
 const realMatches = DOUBLE_ELIM_8;
+// 3명 팀 번호 (예: "3·6·7·8") — 명단이 바뀌면 팀편성 카드 꼬리 안내도 따라 바뀐다
+const threeTeams = E.teams
+  .filter((t) => t.players.filter((p) => p.name.trim()).length === 3)
+  .map((t) => t.seed)
+  .join("·");
 
 /** 카드 한 장 — 보라 바탕 위 흰 종이, 머리(번호·제목) + 내용 + 꼬리 안내 */
 function card(no: string, title: string, sub: string, body: string, foot: string) {
@@ -239,7 +244,7 @@ const cards = [
     `4인 1팀 ${E.teams.length}개 팀 · 총 ${assigned}명 (남 ${men} · 여 ${women})`,
     `<div class="sheet">${teamBlock(E.teams.slice(0, 4))}</div>
      <div class="sheet">${teamBlock(E.teams.slice(4))}</div>`,
-    "6·7·8팀은 3명이라 3번 시드가 4번 자리까지 맡습니다.",
+    `${threeTeams}팀은 3명이라 3번 시드가 4번 자리까지 맡습니다.`,
   ),
 
   card(
