@@ -149,7 +149,8 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <StHeaderWrapper>
+      {/* data-gnb: 특정 화면이 이 줄을 붙여 두지 않게 고를 때 쓰는 이름표 (예: 테니스 토너먼트, 2026-10-28) */}
+      <StHeaderWrapper data-gnb>
         <div className="center-box">
           <StLeftArea>
             {showBack && (

@@ -96,7 +96,7 @@ import {
   type MatchScore,
   type ScoreMap,
 } from "../types";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import { courtLetters } from "../timeline";
 import { jumpToMatch } from "../jump";
 import { NoteLines } from "../noteLines";
@@ -476,6 +476,7 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
 
   return (
     <StPage>
+      <StGnbScrolls />
       <StHeader>
         {/* 교류전과 같은 구조: 제목 오른쪽에 링크 복사, 규칙·참가 팀·안내는 '대회 정보' 탭으로 (2026-09-15) */}
         <StTitleRow>
@@ -1312,6 +1313,14 @@ export default function TournamentView({ initialEvent, demo = false }: Props) {
     </StPage>
   );
 }
+
+// 토너먼트 화면에서는 맨 위 메뉴 줄(GNB)을 화면에 붙여 두지 않는다 — 내리면 같이 올라가 컨텐츠에 가려진다
+// (주인 요청 2026-10-28 "63오픈일 때 gnb 메뉴바가 컨텐츠에 가려지면 좋겠어"). 이 화면을 떠나면 원래대로.
+const StGnbScrolls = createGlobalStyle`
+  [data-gnb] {
+    position: relative;
+  }
+`;
 
 const StJourneyList = styled.ol`
   display: grid;
