@@ -9,6 +9,7 @@ import PixelBracket, { shirtOf } from "./PixelBracket";
 import CheerSquad from "./CheerSquad";
 import PixelPodium from "./PixelPodium";
 import PixelTotoResult from "./PixelTotoResult";
+import PixelDresserResult from "./PixelDresserResult";
 import { placements } from "./resolve";
 import { BLUSH, COURT_H, COURT_W, drawCourt, drawHeart, drawPlayer, px, type Sprite } from "./pixelSprites";
 import { getSavedVoter } from "../voterKey";
@@ -446,6 +447,14 @@ export default function PixelCourtPanel({ event, matches, scores, blocks, render
           <StPanel>
             <StPanelTitle>🎟️ 토토 결과</StPanelTitle>
             <PixelTotoResult event={event} winner={ranks[0].team} sprites={spritesByTeam} demo={demo} />
+          </StPanel>
+        ) : null}
+
+        {/* 토토 다음은 베스트드레서 발표 (주인 요청 2026-10-28) */}
+        {ranks[0].team ? (
+          <StPanel>
+            <StPanelTitle>👗 베스트드레서</StPanelTitle>
+            <PixelDresserResult event={event} demo={demo} />
           </StPanel>
         ) : null}
     </StScene>
