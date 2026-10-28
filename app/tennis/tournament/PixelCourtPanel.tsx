@@ -400,7 +400,8 @@ export default function PixelCourtPanel({
                     <BenchSeat team={team} sprites={spritesByTeam.get(team.seed) ?? []} />
                     <StSeatName>{team.name}</StSeatName>
                     <StSeatState>
-                      {mine ? "🎟️ 내 픽 · " : ""}
+                      {/* 휴대폰 칸이 좁아 "내 픽" 글자 대신 표 한 장만 — 노란 칸이 내 픽 (2026-10-28) */}
+                      {mine ? "🎟️ " : ""}
                       {toto.votesOf(team.seed)}표 · {toto.oddsOf(team.seed)}
                     </StSeatState>
                   </StSeatBtn>
