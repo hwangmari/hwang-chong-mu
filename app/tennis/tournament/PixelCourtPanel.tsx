@@ -942,6 +942,7 @@ const StBench = styled.div`
 
 const StSeat = styled.div<{ $on: boolean }>`
   display: grid;
+  align-content: start; /* 같은 줄 칸이 높아져도 벤치·이름이 위에 붙는다 (베스트드레서 칩 3명/4명 팀 줄 맞춤) */
   justify-items: center;
   gap: 0.15rem;
   padding: 0.35rem 0.2rem;
