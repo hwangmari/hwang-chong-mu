@@ -73,7 +73,7 @@ export const OPEN_63: TournamentEvent = {
       players: [
         { name: "김종광", seed: 1 },
         { name: "이필환", seed: 2 },
-        { name: "이선민", seed: 3 },
+        { name: "황혜경", seed: 3 }, // 2026-10-30 이선민과 자리 맞바꿈
         { name: "김순종", seed: 4 },
       ],
     },
@@ -83,7 +83,7 @@ export const OPEN_63: TournamentEvent = {
       players: [
         { name: "윤여현", seed: 1 },
         { name: "조현서", seed: 2 },
-        { name: "황혜경", seed: 3 },
+        { name: "이선민", seed: 3 }, // 2026-10-30 황혜경과 자리 맞바꿈
       ],
     },
     {
