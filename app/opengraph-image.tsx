@@ -25,7 +25,7 @@ export default async function Image() {
   const title = "황총무의 실험실";
   const brand = "복잡한 건 제가 할게요, 총총총";
   const subtitle = `약속 잡기부터 정산·기록까지, 도구 ${SERVICES.length}개`;
-  const url = "hwang-lab.kr";
+  const url = "www.hwang-lab.kr";
 
   const fonts = await loadOgFonts(`${title}${brand}${subtitle}${url}`);
 

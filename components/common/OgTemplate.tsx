@@ -161,7 +161,7 @@ export interface OgTemplateProps {
   tone: OgTone;
   /** 맨 위 작은 줄. 기본은 사이트 이름 */
   brand?: string;
-  /** 왼쪽 아래 주소. 예: "hwang-lab.kr/calc" */
+  /** 왼쪽 아래 주소. 예: "www.hwang-lab.kr/calc" */
   url?: string;
   /** 타일 안 이모지 아래에 들어가는 작은 조각 (그 도구를 알아보게 하는 힌트) */
   fragment?: React.ReactNode;
@@ -293,7 +293,7 @@ export const OgTemplate = ({
               letterSpacing: "0.01em",
             }}
           >
-            {url ?? "hwang-lab.kr"}
+            {url ?? "www.hwang-lab.kr"}
           </div>
         </div>
 

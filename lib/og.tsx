@@ -16,7 +16,9 @@ import { loadOgFonts } from "@/lib/og-font";
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
-const SITE = "hwang-lab.kr";
+// www 를 붙인다 — www 없는 주소(hwang-lab.kr)는 일부 회사망에서 막힌 IP(216.198.79.x)만 받아
+// 접속 시간 초과가 난다. 미리보기 글자를 보고 직접 치는 사람도 열리는 주소로 (2026-11-02)
+const SITE = "www.hwang-lab.kr";
 
 /** 서비스별 색. 도구의 성격에 맞춰 골랐다. */
 const TONE_BY_SERVICE: Record<ServiceId, OgTone> = {

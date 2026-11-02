@@ -5,7 +5,6 @@ import { byId } from "@/lib/services";
 const service = byId("meeting");
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hwang-lab.kr"),
   title: service.seoTitle,
   description: service.seoDescription,
   openGraph: {

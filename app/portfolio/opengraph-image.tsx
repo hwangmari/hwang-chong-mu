@@ -19,7 +19,7 @@ export default async function Image() {
   const title = "황혜경";
   const brand = "황총무의 실험실";
   const subtitle = "프론트엔드 개발자";
-  const url = "hwang-lab.kr/portfolio";
+  const url = "www.hwang-lab.kr/portfolio";
 
   const facts: [string, string][] = [
     ["회사", `${companyCount}곳`],
