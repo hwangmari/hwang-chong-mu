@@ -46,6 +46,14 @@ type Props = {
 const W = COURT_W;
 const H = COURT_H;
 
+// 코트 카드 팀 이름 아래 선수 줄 — 시드 순, " · " 사이에서 줄이 바뀐다
+const memberLine = (team: TeamEntry) =>
+  [...team.players]
+    .sort((a, b) => a.seed - b.seed)
+    .map((p) => p.name)
+    .filter((n) => n.trim())
+    .join(" · ");
+
 type CourtView =
   | { kind: "playing"; match: ResolvedMatch; startedAt: string }
   | { kind: "ready"; match: ResolvedMatch }
@@ -550,11 +558,14 @@ export default function PixelCourtPanel({
                     <StState $tone="done">끝</StState>
                   ) : null}
                 </StCourtHead>
-                <PixelCourt view={view} sprites={sprites} moving={moving} />
+                {/* 점수·팀·선수 이름을 코트 그림 위에 크게 — 모바일에서 그림에 묻혀 안 보였다 (주인 후기 2026-11-02) */}
                 <StScore>
                   <StSide>
                     {m?.teamA ? <StSwatch style={{ background: shirtOf(m.teamA) }} /> : null}
-                    <StTeam>{m ? (m.teamA?.name ?? m.aLabel) : "—"}</StTeam>
+                    <StWho>
+                      <StTeam>{m ? (m.teamA?.name ?? m.aLabel) : "—"}</StTeam>
+                      {m?.teamA ? <StMembers>{memberLine(m.teamA)}</StMembers> : null}
+                    </StWho>
                   </StSide>
                   <StGames>
                     {done && sc ? (
@@ -566,10 +577,14 @@ export default function PixelCourtPanel({
                     )}
                   </StGames>
                   <StSide $right>
-                    <StTeam>{m ? (m.teamB?.name ?? m.bLabel) : "—"}</StTeam>
+                    <StWho $right>
+                      <StTeam>{m ? (m.teamB?.name ?? m.bLabel) : "—"}</StTeam>
+                      {m?.teamB ? <StMembers>{memberLine(m.teamB)}</StMembers> : null}
+                    </StWho>
                     {m?.teamB ? <StSwatch style={{ background: shirtOf(m.teamB) }} /> : null}
                   </StSide>
                 </StScore>
+                <PixelCourt view={view} sprites={sprites} moving={moving} />
                 {/* 코트마다 자기 입력 칸 — 코트를 바꿔 누를 일 없이 각자 자기 코트에서 (주인 요청 2026-10-28) */}
                 {m && renderMatch ? <StCardEntry>{renderMatch(m)}</StCardEntry> : null}
               </StCourt>
@@ -864,23 +879,31 @@ const StState = styled.span<{ $tone: "live" | "wait" | "done" }>`
   background: ${({ $tone }) => ($tone === "live" ? "#ff6b57" : $tone === "done" ? "#7ad3a0" : "#cfd8db")};
 `;
 
+// 코트 그림은 분위기용이라 폭을 줄여 가운데 — 카드의 주인공은 위의 점수·이름 (주인 후기 2026-11-02 "픽셀 영역이 너무 커서")
 const StCanvas = styled.canvas`
   display: block;
+  justify-self: center;
   width: 100%;
+  max-width: 340px;
   aspect-ratio: ${W} / ${H};
   image-rendering: pixelated;
+
+  @media ${({ theme }) => theme.media.mobile} {
+    max-width: 240px;
+  }
 `;
 
+// 양쪽 팀 이름은 같은 윗줄에서 시작 — 선수 줄 길이가 달라도 이름 높이가 맞는다
 const StScore = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.5rem minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.5rem;
 `;
 
 const StSide = styled.div<{ $right?: boolean }>`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: ${({ $right }) => ($right ? "flex-end" : "flex-start")};
   gap: 0.4rem;
   min-width: 0;
@@ -888,25 +911,46 @@ const StSide = styled.div<{ $right?: boolean }>`
 
 const StSwatch = styled.i`
   flex: none;
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.4rem;
+`;
+
+const StWho = styled.div<{ $right?: boolean }>`
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: ${({ $right }) => ($right ? "right" : "left")};
 `;
 
 const StTeam = styled.span`
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.6rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
 
+// 그 팀 선수 이름 — 낱말 단위로 줄을 바꿔 두 줄까지
+const StMembers = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: ${DIM};
+  word-break: keep-all;
+  text-wrap: balance;
+`;
+
 const StGames = styled.div`
   text-align: center;
   font-family: ${PIX};
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 800;
+  line-height: 1.6rem;
   color: ${ACCENT};
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 `;
 
 const StGame = styled.span<{ $dim: boolean }>`
