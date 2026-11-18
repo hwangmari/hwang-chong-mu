@@ -76,9 +76,13 @@ export default function CalcDetailParamsPage() {
     updateAndSave(members, newExpenses);
   };
 
-  const handleUpdateExpense = (id: number, amount: number) => {
+  // 수정: 사용 내역(날짜 포함)과 금액을 함께 바꾼다
+  const handleUpdateExpense = (
+    id: number,
+    patch: { description: string; amount: number },
+  ) => {
     const newExpenses = expenses.map((e) =>
-      e.id === id ? { ...e, amount } : e,
+      e.id === id ? { ...e, ...patch } : e,
     );
     updateAndSave(members, newExpenses);
   };

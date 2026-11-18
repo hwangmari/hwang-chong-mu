@@ -29,7 +29,10 @@ interface CalcMainContentProps {
     type: ExpenseType,
   ) => void;
   onDeleteExpense: (id: number) => void;
-  onUpdateExpense: (id: number, amount: number) => void;
+  onUpdateExpense: (
+    id: number,
+    patch: { description: string; amount: number },
+  ) => void;
   onToggleExpenseType: (id: number) => void;
 }
 

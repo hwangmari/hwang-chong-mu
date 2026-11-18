@@ -11,7 +11,8 @@ import SectionTitle from "./ui/SectionTitle";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useModal } from "@/components/common/ModalProvider";
 import MoreMenu from "@/components/common/MoreMenu";
-import { splitDate, weekdayOf } from "./expenseDate";
+import { onlyDigits } from "@/utils/number";
+import { splitDate, toDateKey, weekdayOf, withDate } from "./expenseDate";
 
 type ViewMode = "list" | "date";
 
@@ -23,7 +24,10 @@ const sumAmount = (items: Expense[]) =>
 interface Props {
   expenses: Expense[];
   onDelete: (id: number) => void;
-  onUpdate: (id: number, amount: number) => void;
+  onUpdate: (
+    id: number,
+    patch: { description: string; amount: number },
+  ) => void;
   onToggleType: (id: number) => void;
 }
 
@@ -36,6 +40,8 @@ export default function ExpenseList({
   const { openAlert } = useModal();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editDesc, setEditDesc] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
@@ -75,12 +81,26 @@ export default function ExpenseList({
     return expenses.reduce((acc, cur) => acc + cur.amount, 0);
   }, [expenses]);
 
-  const startEditing = (id: number, currentAmount: number) => {
-    setEditingId(id);
-    setEditAmount(currentAmount.toString());
+  // 수정 칸의 날짜 고르기: 이 방에서 쓴 날짜들 + 오늘
+  const dateOptions = useMemo(() => {
+    const keys = dateGroups.filter((g) => g.order >= 0).map((g) => g.key);
+    const today = toDateKey(new Date());
+    return keys.includes(today) ? keys : [...keys, today];
+  }, [dateGroups]);
+
+  const startEditing = (e: Expense) => {
+    const { key, rest } = splitDate(e.description);
+    setEditingId(e.id);
+    setEditDate(key ?? "");
+    setEditDesc(rest);
+    setEditAmount(e.amount.toString());
   };
 
   const saveEditing = async (id: number) => {
+    if (!editDesc.trim()) {
+      await openAlert("사용 내역을 입력해주세요.");
+      return;
+    }
     const parsedAmount = Number(editAmount);
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       await openAlert("금액은 0보다 큰 숫자여야 합니다.");
@@ -90,73 +110,107 @@ export default function ExpenseList({
       await openAlert("금액은 정수로 입력해주세요.");
       return;
     }
-    onUpdate(id, parsedAmount);
+    onUpdate(id, {
+      description: withDate(editDate, editDesc.trim()),
+      amount: parsedAmount,
+    });
     setEditingId(null);
   };
 
-  /** 한 줄(내역 + 금액 + 수정/삭제). 날짜별 보기에서는 낸 사람 배지를 붙이고 날짜를 뗀 이름을 쓴다 */
-  const renderRow = (e: Expense, showPayer = false, label?: string) => (
-    <StListItem key={e.id} $isPersonal={e.type === "PERSONAL"}>
-      <div className="row-main">
-        <div className="content">
-          {showPayer && <StPayerBadge>{e.payer}</StPayerBadge>}
-          <span className="desc">{label ?? e.description}</span>
-          {e.type === "PERSONAL" && <StGrayBadge>개인</StGrayBadge>}
-        </div>
-
-        <StRightSection>
-          {editingId === e.id ? (
-            <>
-              <input
-                type="text"
-                value={editAmount}
-                autoFocus
-                onChange={(ev) => setEditAmount(ev.target.value)}
-                onKeyDown={(ev) => {
-                  if (ev.key === "Enter") saveEditing(e.id);
-                  if (ev.key === "Escape") setEditingId(null);
-                }}
-              />
-              <span className="unit">원</span>
-              <StFixedBtnGroup>
-                <button onClick={() => saveEditing(e.id)}>완료</button>
-                <span className="divider">|</span>
-                <button onClick={() => setEditingId(null)}>취소</button>
-              </StFixedBtnGroup>
-            </>
-          ) : (
-            <>
-              <span className="amount">{e.amount.toLocaleString()}원</span>
-              <MoreMenu
-                label={`${e.description} 더보기`}
-                items={[
-                  {
-                    key: "edit",
-                    label: "금액 수정",
-                    onClick: () => startEditing(e.id, e.amount),
-                  },
-                  {
-                    key: "type",
-                    label:
-                      e.type === "PERSONAL"
-                        ? "공통으로 바꾸기 (같이 나눔)"
-                        : "개인으로 바꾸기 (정산 제외)",
-                    onClick: () => onToggleType(e.id),
-                  },
-                  {
-                    key: "delete",
-                    label: "삭제",
-                    danger: true,
-                    onClick: () => onDelete(e.id),
-                  },
-                ]}
-              />
-            </>
+  /** 수정 중인 줄: 날짜 · 사용 내역 · 금액을 한 번에 고친다 */
+  const renderEditRow = (e: Expense) => (
+    <StListItem key={e.id} $isPersonal={false}>
+      <StEditForm
+        onSubmit={(ev) => {
+          ev.preventDefault();
+          saveEditing(e.id);
+        }}
+        onKeyDown={(ev) => ev.key === "Escape" && setEditingId(null)}
+      >
+        <select
+          className="date"
+          aria-label="날짜"
+          value={editDate}
+          onChange={(ev) => setEditDate(ev.target.value)}
+        >
+          <option value="">날짜 없음</option>
+          {[...new Set([...dateOptions, editDate].filter(Boolean))].map(
+            (key) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ),
           )}
-        </StRightSection>
-      </div>
+        </select>
+        <input
+          className="desc"
+          aria-label="사용 내역"
+          value={editDesc}
+          autoFocus
+          onChange={(ev) => setEditDesc(ev.target.value)}
+        />
+        <input
+          className="amount"
+          aria-label="금액"
+          inputMode="numeric"
+          value={editAmount}
+          onChange={(ev) => setEditAmount(onlyDigits(ev.target.value))}
+        />
+        <div className="actions">
+          <button type="button" onClick={() => setEditingId(null)}>
+            취소
+          </button>
+          <button type="submit" className="save">
+            저장
+          </button>
+        </div>
+      </StEditForm>
     </StListItem>
   );
+
+  /** 한 줄(내역 + 금액 + 더보기). 날짜별 보기에서는 낸 사람 배지를 붙이고 날짜를 뗀 이름을 쓴다 */
+  const renderRow = (e: Expense, showPayer = false, label?: string) =>
+    editingId === e.id ? (
+      renderEditRow(e)
+    ) : (
+      <StListItem key={e.id} $isPersonal={e.type === "PERSONAL"}>
+        <div className="row-main">
+          <div className="content">
+            {showPayer && <StPayerBadge>{e.payer}</StPayerBadge>}
+            <span className="desc">{label ?? e.description}</span>
+            {e.type === "PERSONAL" && <StGrayBadge>개인</StGrayBadge>}
+          </div>
+
+          <StRightSection>
+            <span className="amount">{e.amount.toLocaleString()}원</span>
+            <MoreMenu
+              label={`${e.description} 더보기`}
+              items={[
+                {
+                  key: "edit",
+                  label: "수정 (날짜·내용·금액)",
+                  onClick: () => startEditing(e),
+                },
+                {
+                  key: "type",
+                  label:
+                    e.type === "PERSONAL"
+                      ? "공통으로 바꾸기 (같이 나눔)"
+                      : "개인으로 바꾸기 (정산 제외)",
+                  onClick: () => onToggleType(e.id),
+                },
+                {
+                  key: "delete",
+                  label: "삭제",
+                  danger: true,
+                  onClick: () => onDelete(e.id),
+                },
+              ]}
+            />
+          </StRightSection>
+        </div>
+      </StListItem>
+    );
 
   if (expenses.length === 0) return null;
 
@@ -471,43 +525,13 @@ const StRightSection = styled.div`
   flex-shrink: 0;
   height: 1.65rem;
 
-  .amount,
-  .unit {
+  .amount {
+    margin-right: 0.8rem; /* 더보기 버튼과 간격 */
     font-weight: 600;
     font-size: 0.95rem;
     font-variant-numeric: tabular-nums;
     text-align: right;
     line-height: 1.5rem;
-  }
-
-  .unit {
-    font-size: 0.9rem;
-    color: ${({ theme }) => theme.colors.gray600};
-    margin-right: 0.8rem; /* 버튼과 간격 */
-    margin-left: 0.1rem;
-  }
-
-  .amount {
-    margin-right: 0.8rem; /* 버튼과 간격 */
-  }
-
-  input {
-    width: 70px;
-    height: 1.5rem;
-    padding: 0;
-    border: none;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.gray800};
-    border-radius: 0;
-    text-align: right;
-    font-size: 0.95rem;
-    font-weight: 600;
-    background: transparent;
-    outline: none;
-    font-family: inherit;
-
-    &:focus {
-      border-bottom-color: ${({ theme }) => theme.semantic.primary};
-    }
   }
 `;
 
@@ -521,31 +545,70 @@ const StGrayBadge = styled.span`
   flex-shrink: 0;
 `;
 
-const StFixedBtnGroup = styled.div`
-  display: flex;
+/* 수정 칸: 넓은 화면은 날짜 · 내용 · 금액 · 버튼 한 줄, 폰은 두 줄(날짜+금액 / 내용+버튼) */
+const StEditForm = styled.form`
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 8rem auto;
+  grid-template-areas: "date desc amount actions";
+  gap: 0.5rem;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  width: 60px; /* 고정 너비 */
 
-  .divider {
-    color: ${({ theme }) => theme.colors.gray300};
-    font-size: 0.7rem;
+  @media ${({ theme }) => theme.media.mobile} {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    grid-template-areas:
+      "date amount"
+      "desc desc"
+      "actions actions";
   }
 
-  button {
-    font-size: 0.8rem;
-    color: ${({ theme }) => theme.colors.gray400};
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: color 0.2s;
-    white-space: nowrap;
-
-    &:hover {
-      color: ${({ theme }) => theme.colors.gray800};
-      text-decoration: underline;
+  select,
+  input {
+    height: 2.25rem;
+    padding: 0 0.6rem;
+    border: 1px solid ${({ theme }) => theme.semantic.border};
+    border-radius: 0.5rem;
+    background: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.semantic.text};
+    font-family: inherit;
+    font-size: 0.9rem;
+    min-width: 0;
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.semantic.primary};
     }
+  }
+  .date {
+    grid-area: date;
+  }
+  .desc {
+    grid-area: desc;
+  }
+  .amount {
+    grid-area: amount;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .actions {
+    grid-area: actions;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+  button {
+    height: 2.25rem;
+    padding: 0 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid ${({ theme }) => theme.semantic.border};
+    background: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.semantic.subText};
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .save {
+    border-color: ${({ theme }) => theme.semantic.primary};
+    background: ${({ theme }) => theme.semantic.primary};
+    color: #fff;
   }
 `;
