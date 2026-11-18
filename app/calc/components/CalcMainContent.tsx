@@ -62,7 +62,11 @@ export default function CalcMainContent({
           onAddMember={onAddMember}
           onDeleteMember={onDeleteMember}
         />
-        <ExpenseInput members={members} onAddExpense={onAddExpense} />
+        <ExpenseInput
+          members={members}
+          expenses={expenses}
+          onAddExpense={onAddExpense}
+        />
       </StCalcStack>
 
       <StCalcStack $area="side">

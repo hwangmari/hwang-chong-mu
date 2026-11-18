@@ -11,28 +11,11 @@ import SectionTitle from "./ui/SectionTitle";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useModal } from "@/components/common/ModalProvider";
 import MoreMenu from "@/components/common/MoreMenu";
+import { splitDate, weekdayOf } from "./expenseDate";
 
 type ViewMode = "list" | "date";
 
 const UNDATED = "날짜 없음";
-
-/** 사용 내역 앞의 "11/14 " 같은 날짜를 떼어 낸다. 날짜가 없으면 key 는 null */
-function splitDate(description: string) {
-  const m = description.match(/^(\d{1,2})\/(\d{1,2})\s+(.*)$/);
-  if (!m) return { key: null, month: 0, day: 0, rest: description };
-  return { key: `${+m[1]}/${+m[2]}`, month: +m[1], day: +m[2], rest: m[3] };
-}
-
-const WEEKDAYS = "일월화수목금토";
-/** order(= 월*100+일)로 요일. 연도는 정보가 없어 올해로 본다 */
-function weekdayOf(order: number) {
-  const d = new Date(
-    new Date().getFullYear(),
-    Math.floor(order / 100) - 1,
-    order % 100,
-  );
-  return WEEKDAYS[d.getDay()];
-}
 
 const sumAmount = (items: Expense[]) =>
   items.reduce((acc, cur) => acc + cur.amount, 0);
@@ -72,10 +55,10 @@ export default function ExpenseList({
       { key: string; order: number; items: Expense[] }
     >();
     expenses.forEach((e) => {
-      const { key, month, day } = splitDate(e.description);
+      const { key, order } = splitDate(e.description);
       const k = key ?? UNDATED;
       if (!map.has(k)) {
-        map.set(k, { key: k, order: key ? month * 100 + day : -1, items: [] });
+        map.set(k, { key: k, order, items: [] });
       }
       map.get(k)!.items.push(e);
     });
