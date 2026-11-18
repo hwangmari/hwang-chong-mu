@@ -934,12 +934,9 @@ const StSummaryGrid = styled.div`
   grid-template-columns: calc((100% - 1.5rem) / 3) minmax(0, 1fr);
   gap: 0.75rem;
 
+  /* minmax(0, 1fr): 한 줄 고정 문구가 길어도 칸이 화면 밖으로 늘어나지 않게 */
   @media (max-width: 1080px) {
-    grid-template-columns: 1fr;
-  }
-
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
@@ -949,7 +946,7 @@ const StSummaryRightGrid = styled.div`
   gap: 0.75rem;
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
@@ -1078,6 +1075,16 @@ const StGoalMeta = styled.div`
 
   strong.over {
     color: #e11d48;
+  }
+
+  /* 모바일: 왼쪽 설명이 '…'로 잘리지 않게, 자리가 모자라면 오른쪽 결과를 다음 줄로 내린다 */
+  @media (max-width: 720px) {
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+
+    span {
+      white-space: normal;
+    }
   }
 `;
 

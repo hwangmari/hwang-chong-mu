@@ -24,6 +24,12 @@ export const StHeader = styled.header`
   gap: 0.7rem;
   align-items: center;
   margin-bottom: 1rem;
+
+  /* 모바일: 가운데(연도 이동)가 남는 폭을 쓰고, 양옆은 내용만큼만 차지 */
+  @media (max-width: 640px) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.4rem;
+  }
 `;
 
 export const StHeaderLeft = styled.div`
@@ -51,6 +57,7 @@ export const StAmountToggle = styled.button`
   padding: 0.5rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -61,6 +68,11 @@ export const StAmountToggle = styled.button`
     border-color: #d3d5d8;
     background: #f5f6f7;
     color: #656971;
+  }
+
+  @media (max-width: 640px) {
+    padding: 0.42rem 0.65rem;
+    font-size: 0.74rem;
   }
 `;
 
@@ -87,6 +99,16 @@ export const StYearNav = styled.div`
       fill: currentColor;
     }
   }
+
+  @media (max-width: 640px) {
+    gap: 0.25rem;
+
+    button {
+      width: 2rem;
+      height: 2rem;
+      flex-shrink: 0;
+    }
+  }
 `;
 
 export const StEyebrow = styled.p`
@@ -97,7 +119,12 @@ export const StEyebrow = styled.p`
   padding: 0 0.15rem;
 
   @media (max-width: 640px) {
-    font-size: 0.86rem;
+    font-size: 0.84rem;
+    /* 아주 좁은 폰(360px 이하)에선 화면 밖으로 밀지 않고 두 줄로 */
+    white-space: normal;
+    text-align: center;
+    word-break: keep-all;
+    line-height: 1.3;
   }
 `;
 
