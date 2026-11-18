@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import styled from "styled-components";
+import MoreMenu from "@/components/common/MoreMenu";
 import { ResolvedAccountEntry } from "../types";
 import {
   formatPreviewDate,
@@ -71,7 +71,6 @@ export default function DetailEntriesPanel({
     ...(monthlyTracking?.map((row) => row.amount) || [0]),
   );
   const hasAssetEntries = (assetEntries?.length || 0) > 0;
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const formatEntryRawText = (entry: ResolvedAccountEntry) => {
     if (!entry.rawText) return "";
@@ -248,7 +247,6 @@ export default function DetailEntriesPanel({
         danger: true,
       });
     }
-    const isMenuOpen = openMenuId === entry.resolvedId;
     const isShared = actions.some(
       (action) => action.active && action.label.includes("공유"),
     );
@@ -316,47 +314,12 @@ export default function DetailEntriesPanel({
         </StEntryAmount>
         <StEntryDateRow>
             {showDateMeta ? <StEntryMeta>{entry.date}</StEntryMeta> : null}
-            {menuItems.length > 0 ? (
-            <StEntryMenuAnchor>
-              <StKebabButton
-                type="button"
-                aria-label="더보기"
-                aria-expanded={isMenuOpen}
-                onClick={() =>
-                  setOpenMenuId(isMenuOpen ? null : entry.resolvedId)
-                }
-              >
-                ⋯
-              </StKebabButton>
-              {isMenuOpen ? (
-                <>
-                  <StMenuBackdrop
-                    type="button"
-                    aria-label="메뉴 닫기"
-                    onClick={() => setOpenMenuId(null)}
-                  />
-                  <StMenuPopover role="menu">
-                    {menuItems.map((item) => (
-                      <StMenuItem
-                        key={`${entry.resolvedId}-${item.key}`}
-                        type="button"
-                        role="menuitem"
-                        $danger={item.danger}
-                        $active={item.active}
-                        onClick={() => {
-                          item.onClick();
-                          setOpenMenuId(null);
-                        }}
-                      >
-                        <span>{item.label}</span>
-                        {item.active ? <StMenuCheck aria-hidden>✓</StMenuCheck> : null}
-                      </StMenuItem>
-                    ))}
-                  </StMenuPopover>
-                </>
-              ) : null}
-            </StEntryMenuAnchor>
-            ) : null}
+            <MoreMenu
+              items={menuItems.map((item) => ({
+                ...item,
+                key: `${entry.resolvedId}-${item.key}`,
+              }))}
+            />
           </StEntryDateRow>
       </StEntryItem>
     );
@@ -726,83 +689,6 @@ const StEntryDateRow = styled.div`
   align-items: center;
   justify-content: flex-end;
   gap: 0.45rem;
-`;
-const StEntryMenuAnchor = styled.div`
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-`;
-const StKebabButton = styled.button`
-  width: 1.65rem;
-  height: 1.65rem;
-  border: 1px solid #e6e7e9;
-  background: ${({ theme }) => theme.colors.white};
-  color: #6b6f77;
-  border-radius: 999px;
-  font-size: 0.95rem;
-  line-height: 1;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-
-  &:hover {
-    border-color: #d3d5d9;
-    background: ${({ theme }) => theme.colors.gray100};
-  }
-`;
-const StMenuBackdrop = styled.button`
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  border: none;
-  background: transparent;
-  cursor: default;
-`;
-const StMenuPopover = styled.div`
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  right: 0;
-  z-index: 41;
-  min-width: 9.5rem;
-  display: flex;
-  flex-direction: column;
-  padding: 0.3rem;
-  border: 1px solid #e9eaec;
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.white};
-  box-shadow: 0 12px 28px rgba(26, 34, 49, 0.14);
-`;
-const StMenuItem = styled.button<{ $danger?: boolean; $active?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  width: 100%;
-  border: none;
-  background: ${({ $active, theme }) =>
-    $active ? theme.colors.gray100 : "transparent"};
-  color: ${({ $danger }) => ($danger ? "#f04452" : "#3a3f47")};
-  border-radius: 8px;
-  padding: 0.5rem 0.6rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: ${({ $danger }) => ($danger ? "#fef2f3" : "#f4f5f7")};
-  }
-`;
-const StMenuCheck = styled.span`
-  color: #3182f6;
-  font-size: 0.78rem;
-  font-weight: 900;
 `;
 const StTrackingRow = styled.article`
   border: 1px solid ${({ theme }) => theme.colors.gray100};
