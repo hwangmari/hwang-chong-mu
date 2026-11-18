@@ -1,23 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ExpenseType } from "@/types";
+import { Expense, ExpenseType } from "@/types";
 import { isUuid, toSlug } from "@/lib/slug";
 
-import FooterGuide from "@/components/common/FooterGuide";
-import { StContainer, StWrapper } from "@/components/styled/layout.styled";
+import ServiceLayout from "@/components/common/ServiceLayout";
 
 import { useCalculator } from "@/hooks/useCalculator";
 import { useCalcPersistence } from "@/hooks/useCalcPersistence";
 import CalcMainContent from "../components/CalcMainContent";
-
-interface Expense {
-  id: number;
-  payer: string;
-  description: string;
-  amount: number;
-  type: ExpenseType;
-}
 
 export default function CalcDetailParamsPage() {
   const params = useParams();
@@ -34,7 +25,8 @@ export default function CalcDetailParamsPage() {
       fetchRoomData(roomId).then((data) => {
         if (data) {
           if (isUuid(roomId) && data.room?.short_code) {
-            const slug = data.room.slug || toSlug(data.room.room_name || "calc");
+            const slug =
+              data.room.slug || toSlug(data.room.room_name || "calc");
             router.replace(`/calc/${slug}-${data.room.short_code}`);
           }
           if (data.roomId) setResolvedRoomId(data.roomId);
@@ -43,6 +35,9 @@ export default function CalcDetailParamsPage() {
         }
       });
     }
+    // 방 주소가 바뀔 때만 한 번 불러온다. fetchRoomData 는 렌더마다 새로 만들어져서
+    // 의존성에 넣으면 무한히 다시 불러온다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   const updateAndSave = (newMembers: string[], newExpenses: Expense[]) => {
@@ -88,52 +83,68 @@ export default function CalcDetailParamsPage() {
     updateAndSave(members, newExpenses);
   };
 
+  // 공통 ↔ 개인 전환. 개인 지출은 정산(1/N)에서 빠진다
+  const handleToggleExpenseType = (id: number) => {
+    const newExpenses = expenses.map((e) =>
+      e.id === id
+        ? {
+            ...e,
+            type: (e.type === "PERSONAL"
+              ? "COMMON"
+              : "PERSONAL") as ExpenseType,
+          }
+        : e,
+    );
+    updateAndSave(members, newExpenses);
+  };
+
   const settlementResult = useCalculator(members, expenses);
 
   return (
-    <StContainer>
-      <StWrapper>
-        <CalcMainContent
-          members={members}
-          expenses={expenses}
-          settlementResult={settlementResult}
-          onAddMember={handleAddMember}
-          onDeleteMember={handleDeleteMember}
-          onAddExpense={handleAddExpense}
-          onDeleteExpense={handleDeleteExpense}
-          onUpdateExpense={handleUpdateExpense}
-        />
-
-        <FooterGuide
-          title="💡 정산 꿀팁"
-          tips={[
-            {
-              icon: "📋",
-              title: "내역 복사하기",
-              description:
-                "복사 버튼을 누르면 카톡에 바로 붙여넣을 수 있는 텍스트가 복사돼요.",
-            },
-            {
-              icon: "🔗",
-              title: "카톡으로 초대하기",
-              description:
-                "상단 공유 버튼을 통해 친구들을 초대하면 실시간으로 정산 현황을 볼 수 있어요.",
-            },
-            {
-              icon: "⚡",
-              title: "실시간 자동 저장",
-              description:
-                "새로고침을 하거나 창을 닫아도 마지막으로 입력한 내역이 안전하게 보관되어 있어요.",
-            },
-            {
-              icon: "✅",
-              title: "공통 비용만 정확하게",
-              description:
-                "개인 지출은 '개인'으로 설정해 보세요. 공통 비용만 똑똑하게 계산해 드릴게요.",
-            },
-          ]}
-        />
-      </StWrapper>
-    </StContainer>
+    // 정산 결과를 옆에 두는 두 열 화면이라 넓은 폭(wide)을 쓴다
+    <ServiceLayout
+      width="wide"
+      guide={{
+        title: "💡 정산 꿀팁",
+        tips: [
+          {
+            icon: "📋",
+            title: "내역 복사하기",
+            description:
+              "복사 버튼을 누르면 카톡에 바로 붙여넣을 수 있는 텍스트가 복사돼요.",
+          },
+          {
+            icon: "🔗",
+            title: "카톡으로 초대하기",
+            description:
+              "상단 공유 버튼을 통해 친구들을 초대하면 실시간으로 정산 현황을 볼 수 있어요.",
+          },
+          {
+            icon: "⚡",
+            title: "실시간 자동 저장",
+            description:
+              "새로고침을 하거나 창을 닫아도 마지막으로 입력한 내역이 안전하게 보관되어 있어요.",
+          },
+          {
+            icon: "✅",
+            title: "공통 비용만 정확하게",
+            description:
+              "개인 지출은 '개인'으로 설정해 보세요. 공통 비용만 똑똑하게 계산해 드릴게요.",
+          },
+        ],
+      }}
+    >
+      <CalcMainContent
+        members={members}
+        expenses={expenses}
+        settlementResult={settlementResult}
+        onAddMember={handleAddMember}
+        onDeleteMember={handleDeleteMember}
+        onAddExpense={handleAddExpense}
+        onDeleteExpense={handleDeleteExpense}
+        onUpdateExpense={handleUpdateExpense}
+        onToggleExpenseType={handleToggleExpenseType}
+      />
+    </ServiceLayout>
   );
 }

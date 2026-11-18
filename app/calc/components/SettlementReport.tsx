@@ -13,6 +13,8 @@ interface SettlementReportProps {
   settlements: { from: string; to: string; amount: number }[];
   remainder: number;
   remainderReceiver: string | null;
+  /** 옆 칸과 아래 끝을 맞추려고 남는 높이를 이 카드가 채운다(숫자는 가운데) */
+  fill?: boolean;
 }
 
 export default function SettlementReport({
@@ -22,9 +24,10 @@ export default function SettlementReport({
   totalAmount,
   remainder,
   remainderReceiver,
+  fill = false,
 }: SettlementReportProps) {
   return (
-    <StTotalCard>
+    <StTotalCard $fill={fill}>
       <Card
         padding="0"
         radius="1rem"
@@ -87,11 +90,25 @@ export default function SettlementReport({
   );
 }
 
-const StTotalCard = styled.div`
+const StTotalCard = styled.div<{ $fill: boolean }>`
   margin-bottom: 1.5rem;
+
+  ${({ $fill }) =>
+    $fill
+      ? `
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    & > * { flex: 1; display: flex; flex-direction: column; }
+  `
+      : ""}
 `;
 
 const StSummarySection = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 1.5rem;
   background-color: ${({ theme }) => theme.colors.white};
 
